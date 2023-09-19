@@ -22,10 +22,10 @@ class ClassifyOutput(BaseOutput):
 
 
 class Classify(BaseTask):
-    def definition():
+    def definition(self):
         return ""
 
-    def examples():
+    def examples(self):
         return [ClassifyInput(text="This is good", labels=["positive", "negative"])]
 
     def run(self, classify_input: ClassifyInput):

@@ -12,6 +12,12 @@ app = FastAPI()
 FORM = Form(...)
 
 
+@app.get("/classify")
+async def frame_prediction():
+    classify = Classify()
+    return classify.as_dict()
+
+
 @app.post("/classify")
 async def frame_prediction(classify_input: ClassifyInput) -> ClassifyOutput:
     classify = Classify()

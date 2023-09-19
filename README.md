@@ -10,3 +10,10 @@ mypy src
 mypy tests
 pytest
 ```
+
+
+Next steps:
+- Typing of generic classes
+- Put classify in
+- UI for classify with audit trail, examples, ...
+- Generate + classify the output
