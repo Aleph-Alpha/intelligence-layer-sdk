@@ -1,10 +1,11 @@
+from typing import List
 from setuptools import setup, find_packages  # type: ignore
 from pathlib import Path
 
 reqs_dir = Path("./requirements")
 
 
-def read_requirements(filename: str):
+def read_requirements(filename: str) -> List[str]:
     requirements_file = reqs_dir / filename
     if requirements_file.is_file():
         requirements_list = requirements_file.read_text().splitlines()

@@ -21,14 +21,14 @@ class ClassifyOutput(BaseOutput):
     results: List[ClassifyOutputLabel]
 
 
-class Classify(BaseTask):
-    def definition(self):
+class Classify(BaseTask[ClassifyInput, ClassifyOutput]):
+    def definition(self) -> str:
         return ""
 
-    def examples(self):
-        return [ClassifyInput(text="This is good", labels=["positive", "negative"])]
+    def examples(self) -> List[ClassifyInput]:
+        return [ClassifyInput(text="This is good", labels={"positive", "negative"})]
 
-    def run(self, classify_input: ClassifyInput):
+    def run(self, classify_input: ClassifyInput) -> ClassifyOutput:
         # do python stuff / api calls
         return ClassifyOutput(
             results=[

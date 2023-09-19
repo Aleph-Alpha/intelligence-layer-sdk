@@ -18,7 +18,7 @@ def client() -> Iterable[TestClient]:
         pass
 
 
-def test_classify(client: TestClient):
+def test_classify(client: TestClient) -> None:
     response = client.post("/classify", json={"text": "Hello", "labels": ["yes", "no"]})
     assert response.status_code == HTTPStatus.OK
     assert response.headers.get("content-type", "") == "application/json"
