@@ -1,0 +1,27 @@
+repos:
+  - repo: https://github.com/peterdemin/pip-compile-multi
+    rev: v2.4.5
+    hooks:
+      - id: pip-compile-multi-verify
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v3.4.0
+    hooks:
+      - id: check-json
+        exclude: frontend/
+      - id: pretty-format-json
+        args:
+          - --autofix
+        exclude: frontend/
+      - id: end-of-file-fixer
+        exclude: frontend/
+      - id: trailing-whitespace
+        exclude: frontend/
+  - repo: https://github.com/psf/black
+    rev: 23.7.0
+    hooks:
+      - id: black
+  - repo: https://github.com/kynan/nbstripout
+    rev: 0.4.0
+    hooks:
+      - id: nbstripout
+        files: ".ipynb"
