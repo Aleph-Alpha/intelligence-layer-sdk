@@ -6,5 +6,5 @@ class AuditTrail(BaseModel):
     pass
 
 
-class Output(BaseModel):
+class BaseOutput(BaseModel):
     audit_trail: AuditTrail = Field(description="audit trail log of a process")

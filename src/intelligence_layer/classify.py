@@ -1,8 +1,8 @@
 from typing import Set, List, Tuple, Dict
 from pydantic import BaseModel, Field
 
-from ._output import Output, AuditTrail
-from ._task import Task
+from ._output import BaseOutput, AuditTrail
+from ._task import BaseTask
 
 
 class ClassifyInput(BaseModel):
@@ -17,11 +17,11 @@ class ClassifyOutputLabel(BaseModel):
     score: float
 
 
-class ClassifyOutput(Output):
+class ClassifyOutput(BaseOutput):
     results: List[ClassifyOutputLabel]
 
 
-class Classify(Task):
+class Classify(BaseTask):
     def definition():
         return ""
 
@@ -29,6 +29,7 @@ class Classify(Task):
         return [ClassifyInput(text="This is good", labels=["positive", "negative"])]
 
     def run(self, classify_input: ClassifyInput):
+        # do python stuff / api calls
         return ClassifyOutput(
             results=[
                 ClassifyOutputLabel(label=label, score=0.0)

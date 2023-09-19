@@ -3,7 +3,7 @@ from typing import List, Dict, Any
 from pydantic import BaseModel, Field
 
 
-class Task:
+class BaseTask:
     @abstractmethod
     def definition():
         raise NotImplementedError
