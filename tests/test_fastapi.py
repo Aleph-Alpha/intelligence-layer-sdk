@@ -2,8 +2,6 @@
 from pytest import fixture
 from typing import Iterable
 from http import HTTPStatus
-from pathlib import Path
-import json
 
 from fastapi.testclient import TestClient
 from run import app
@@ -23,3 +21,5 @@ def test_classify(client: TestClient) -> None:
     assert response.status_code == HTTPStatus.OK
     assert response.headers.get("content-type", "") == "application/json"
     data = response.json()
+    assert "debug_log" in data
+    assert "results" in data

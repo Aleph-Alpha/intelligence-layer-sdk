@@ -1,26 +1,45 @@
 from abc import abstractmethod
-from typing import Generic, Sequence, Any, TypeVar, Mapping
-from pydantic import BaseModel, Field
+from typing import Generic, TypeVar, Protocol, runtime_checkable
+from pydantic import BaseModel
+
+
+class DebugLog(BaseModel):
+    """Provides key steps, decisions, and intermediate outputs of a task's process."""
+
+    pass
+
+
+@runtime_checkable
+class OutputProtocol(Protocol):
+    """Minimum interface for a `Task`'s output."""
+
+    debug_log: DebugLog
+    """Provides key steps, decisions, and intermediate outputs of a task's process."""
+
 
 Input = TypeVar("Input")
-Output = TypeVar("Output")
+"""Interface to be passed to the task with all data needed to run the process.
+Ideally, these are specified in terms related to the use-case, rather than lower-level
+configuration options."""
+Output = TypeVar("Output", bound=OutputProtocol)
+"""Interface of the output returned by the task.
+It is required to adhere to the `OutputProtocol` and provide a `DebugLog` of key steps
+and decisions made in the process of generating the output."""
 
 
-class BaseTask(Generic[Input, Output]):
-    @abstractmethod
-    def definition(self) -> str:
-        raise NotImplementedError
+class Task(Generic[Input, Output]):
+    """Base task interface. This may consist of several sub-tasks to accomplish the given task.
 
-    @abstractmethod
-    def examples(self) -> Sequence[Input]:
-        raise NotImplementedError
+    Generics:
+        Input: Interface to be passed to the task with all data needed to run the process.
+            Ideally, these are specified in terms related to the use-case, rather than lower-level
+            configuration options.
+        Output: Interface of the output returned by the task.
+            It is required to adhere to the `OutputProtocol` and provide a `DebugLog` of key steps
+            and decisions made in the process of generating the output.
+    """
 
     @abstractmethod
     def run(self, input: Input) -> Output:
+        """Executes the process for this use-case."""
         raise NotImplementedError
-
-    def as_dict(self) -> Mapping[str, Any]:
-        return {
-            "definition": self.definition(),
-            "examples": self.examples(),
-        }
