@@ -4,7 +4,7 @@ from fastapi import FastAPI, status, Form, UploadFile, File, Depends, Body
 from pydantic import ValidationError
 from fastapi.exceptions import HTTPException
 from fastapi.encoders import jsonable_encoder
-from typing import List, Union, Dict, Any
+from typing import List, Union, Mapping, Any
 
 from intelligence_layer.classify import ClassifyInput, ClassifyOutput, Classify
 
@@ -13,7 +13,7 @@ FORM = Form(...)
 
 
 @app.get("/classify")
-async def get_classify_options() -> Dict[str, Any]:
+async def get_classify_options() -> Mapping[str, Any]:
     classify = Classify()
     return classify.as_dict()
 

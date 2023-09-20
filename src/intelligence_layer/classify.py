@@ -1,4 +1,4 @@
-from typing import Set, List, Tuple, Dict
+from typing import Set, Sequence, Tuple
 from pydantic import BaseModel, Field
 
 from ._output import BaseOutput, AuditTrail
@@ -18,14 +18,14 @@ class ClassifyOutputLabel(BaseModel):
 
 
 class ClassifyOutput(BaseOutput):
-    results: List[ClassifyOutputLabel]
+    results: Sequence[ClassifyOutputLabel]
 
 
 class Classify(BaseTask[ClassifyInput, ClassifyOutput]):
     def definition(self) -> str:
         return ""
 
-    def examples(self) -> List[ClassifyInput]:
+    def examples(self) -> Sequence[ClassifyInput]:
         return [ClassifyInput(text="This is good", labels={"positive", "negative"})]
 
     def run(self, classify_input: ClassifyInput) -> ClassifyOutput:
