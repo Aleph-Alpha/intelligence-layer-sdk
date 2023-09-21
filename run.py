@@ -16,7 +16,7 @@ FORM = Form(...)
 
 load_dotenv()
 token = os.getenv("AA_API_TOKEN")
-assert isinstance(token, str)
+assert token is not None, "Define AA_API_TOKEN in your .env file"
 CLIENT = Client(token=token)
 
 

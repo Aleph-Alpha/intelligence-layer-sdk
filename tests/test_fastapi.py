@@ -11,12 +11,9 @@ load_dotenv()
 
 
 @fixture
-def client() -> Iterable[TestClient]:
+def client() -> TestClient:
     """Provide fixture for api."""
-    try:
-        yield TestClient(app)
-    finally:
-        pass
+    return TestClient(app)
 
 
 def test_classify(client: TestClient) -> None:

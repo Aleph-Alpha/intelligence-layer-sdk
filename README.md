@@ -7,7 +7,7 @@ pip install -e .[test]
 pre-commit install
 pre-commit run -a
 
-mypy src tests --strict
+mypy
 pytest
 ```
 
