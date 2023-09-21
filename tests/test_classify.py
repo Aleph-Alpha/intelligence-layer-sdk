@@ -27,7 +27,10 @@ def client() -> Iterable[Client]:
 
 def test_single_label_classify_returns_score_for_all_labels(client: Client) -> None:
     classify = SingleLabelClassify(client=client)
-    classify_input = ClassifyInput(text="This is good", labels={"positive", "negative"})
+    classify_input = ClassifyInput(
+        text="This is good",
+        labels={"positive", "negative"},
+    )
 
     classify_output = classify.run(classify_input)
 
@@ -86,3 +89,17 @@ def test_single_label_classify_emotion_classification(client: Client) -> None:
 
     # Verify it correctly calculated happy
     assert classify_output.scores["happy"] == max(classify_output.scores.values())
+
+
+def test_single_label_classify_handles_labels_starting_with_same_token(
+    client: Client,
+) -> None:
+    classify = SingleLabelClassify(client=client)
+    classify_input = ClassifyInput(
+        text="This is good",
+        labels={"positive", "positive positive"},
+    )
+
+    classify_output = classify.run(classify_input)
+
+    assert classify_input.labels == set(r for r in classify_output.scores)

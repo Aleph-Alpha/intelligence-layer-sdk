@@ -130,7 +130,9 @@ Reply with only the class label.
         """Turn a single label into list of token ids. Important so that we know how many tokens
         the label is and can retrieve the last N log probs for the label"""
         response = self.client.tokenize(
-            request=TokenizationRequest(label, tokens=False, token_ids=True),
+            request=TokenizationRequest(
+                label + "<|endoftext|>", tokens=False, token_ids=True
+            ),
             model=self.MODEL,
         )
         assert isinstance(response.token_ids, list)
@@ -184,10 +186,13 @@ class TreeNode:
                 child_paths = child.calculate_path_prob(new_normalized_prob)
                 for path, normal_prob in child_paths:
                     path_probs.append(
-                        ([self.value] + path if self.value else path, normal_prob)
+                        (
+                            [self.value] + path if self.value is not None else path,
+                            normal_prob,
+                        )
                     )
 
-        if not path_probs and self.value and self.normalized_prob:
-            return [([self.value], self.normalized_prob)]
+        if not path_probs and self.value is not None and self.normalized_prob:
+            return [([self.value], normalized_prob)]
 
         return path_probs
