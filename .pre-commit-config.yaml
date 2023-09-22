@@ -9,6 +9,7 @@ repos:
       - id: check-json
         exclude: frontend/
       - id: pretty-format-json
+        files: .json
         args:
           - --autofix
         exclude: frontend/

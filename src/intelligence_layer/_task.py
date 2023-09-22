@@ -1,12 +1,59 @@
 from abc import abstractmethod
-from typing import Generic, TypeVar, Protocol, runtime_checkable
-from pydantic import BaseModel
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    Generic,
+    Mapping,
+    Sequence,
+    Type,
+    TypeVar,
+    Protocol,
+    Union,
+    runtime_checkable,
+)
+from pydantic import BaseModel, SerializeAsAny
+from typing_extensions import TypeAliasType
+
+if TYPE_CHECKING:
+    PydanticSerializable = (
+        int
+        | float
+        | str
+        | Sequence["PydanticSerializable"]
+        | Mapping[str, "PydanticSerializable"]
+        | None
+        | bool
+    )
+else:
+    PydanticSerializable = TypeAliasType(
+        "PydanticSerializable",
+        int
+        | float
+        | str
+        | Sequence["PydanticSerializable"]
+        | Mapping[str, "PydanticSerializable"]
+        | None
+        | bool,
+    )
+
+
+class LogEntry(BaseModel):
+    message: str
+    value: SerializeAsAny[PydanticSerializable | BaseModel]
+
+
+import json
+
+json.JSONEncoder.default
 
 
 class DebugLog(BaseModel):
     """Provides key steps, decisions, and intermediate outputs of a task's process."""
 
-    pass
+    log: list[LogEntry] = []
+
+    def add(self, message: str, value: BaseModel | PydanticSerializable) -> None:
+        self.log.append(LogEntry(message=message, value=value))
 
 
 @runtime_checkable

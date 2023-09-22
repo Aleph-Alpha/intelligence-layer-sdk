@@ -15,6 +15,8 @@ from ._task import Task, DebugLog
 
 
 class ClassifyInput(BaseModel):
+    """Input for a classification task."""
+
     text: str
     """Text to be classified"""
     labels: Set[str]
@@ -55,19 +57,29 @@ Reply with only the class label.
     client: Client
 
     def __init__(self, client: Client) -> None:
+        """Initializes the Task.
+
+        Args:
+        - client: the aleph alpha client
+        """
         super().__init__()
         self.client = client
 
     def run(self, input: ClassifyInput) -> ClassifyOutput:
+        log = DebugLog()
+        scores = self._calculate_scores(input, log)
         return ClassifyOutput(
-            scores=self._calculate_scores(input),
-            debug_log=DebugLog(),
+            scores=scores,
+            debug_log=log,
         )
 
-    def _calculate_scores(self, input: ClassifyInput) -> Mapping[str, float]:
+    def _calculate_scores(
+        self, input: ClassifyInput, log: DebugLog
+    ) -> Mapping[str, float]:
         """Generates log probs for each label and generates a relative score for each"""
         tree = TreeNode()
         prompts = self._generate_prompts(input)
+        log.add("The labels", [prompt[0] for prompt in prompts])
         for label, prompt, tokens in prompts:
             tree.insert_path(self._generate_log_probs(prompt, tokens=tokens))
         tree.normalize_probs()
@@ -111,9 +123,9 @@ Reply with only the class label.
     ) -> Sequence[Tuple[str, Prompt, Tokens]]:
         """Embeds each label in a prompt. Label is tokenized separately so we know how many tokens
         to look at in the log probs"""
-        tokenized_labels = [
+        tokenized_labels = (
             (label, self._tokenize_label(label)) for label in input.labels
-        ]
+        )
         return [
             (
                 label,
