@@ -9,13 +9,13 @@ from typing import (
     Protocol,
     runtime_checkable,
 )
-from aleph_alpha_client import Prompt
+from aleph_alpha_client import Prompt, Text, Tokens
 from pydantic import (
     BaseModel,
-    ConfigDict,
     SerializeAsAny,
 )
 from typing_extensions import TypeAliasType
+
 
 if TYPE_CHECKING:
     PydanticSerializable = (
@@ -46,7 +46,7 @@ else:
 
 class LogEntry(BaseModel):
     message: str
-    value: PydanticSerializable
+    value: SerializeAsAny[PydanticSerializable]
 
 
 class DebugLog(BaseModel):
