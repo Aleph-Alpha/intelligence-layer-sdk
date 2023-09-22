@@ -79,7 +79,7 @@ Reply with only the class label.
         """Generates log probs for each label and generates a relative score for each"""
         tree = TreeNode()
         prompts = self._generate_prompts(input)
-        log.add("The labels", [prompt[0] for prompt in prompts])
+        log.add("The labels", [(prompt[0], prompt[1]) for prompt in prompts])
         for label, prompt, tokens in prompts:
             tree.insert_path(self._generate_log_probs(prompt, tokens=tokens))
         tree.normalize_probs()

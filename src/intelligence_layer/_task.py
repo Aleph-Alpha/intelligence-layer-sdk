@@ -5,13 +5,16 @@ from typing import (
     Generic,
     Mapping,
     Sequence,
-    Type,
     TypeVar,
     Protocol,
-    Union,
     runtime_checkable,
 )
-from pydantic import BaseModel, SerializeAsAny
+from aleph_alpha_client import Prompt
+from pydantic import (
+    BaseModel,
+    ConfigDict,
+    SerializeAsAny,
+)
 from typing_extensions import TypeAliasType
 
 if TYPE_CHECKING:
@@ -23,6 +26,8 @@ if TYPE_CHECKING:
         | Mapping[str, "PydanticSerializable"]
         | None
         | bool
+        | BaseModel
+        | Prompt
     )
 else:
     PydanticSerializable = TypeAliasType(
@@ -33,18 +38,15 @@ else:
         | Sequence["PydanticSerializable"]
         | Mapping[str, "PydanticSerializable"]
         | None
-        | bool,
+        | bool
+        | BaseModel
+        | Prompt,
     )
 
 
 class LogEntry(BaseModel):
     message: str
-    value: SerializeAsAny[PydanticSerializable | BaseModel]
-
-
-import json
-
-json.JSONEncoder.default
+    value: PydanticSerializable
 
 
 class DebugLog(BaseModel):
@@ -52,7 +54,7 @@ class DebugLog(BaseModel):
 
     log: list[LogEntry] = []
 
-    def add(self, message: str, value: BaseModel | PydanticSerializable) -> None:
+    def add(self, message: str, value: PydanticSerializable) -> None:
         self.log.append(LogEntry(message=message, value=value))
 
 
