@@ -9,7 +9,7 @@ from typing import (
     Protocol,
     runtime_checkable,
 )
-from aleph_alpha_client import Prompt, Text, Tokens
+from aleph_alpha_client import Prompt
 from pydantic import (
     BaseModel,
     SerializeAsAny,

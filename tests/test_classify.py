@@ -3,13 +3,17 @@ from typing import Iterable
 
 from aleph_alpha_client import Client
 from dotenv import load_dotenv
+from pydantic import BaseModel
 from pytest import fixture
 
 from intelligence_layer.classify import (
+    Probability,
     SingleLabelClassify,
     ClassifyInput,
     ClassifyOutput,
+    Token,
 )
+from intelligence_layer._task import LogEntry
 from intelligence_layer._task import DebugLog
 
 
@@ -29,7 +33,7 @@ def test_single_label_classify_returns_score_for_all_labels(client: Client) -> N
     classify = SingleLabelClassify(client=client)
     classify_input = ClassifyInput(
         text="This is good",
-        labels={"positive", "negative"},
+        labels=frozenset({"positive", "negative"}),
     )
 
     classify_output = classify.run(classify_input)
@@ -49,7 +53,7 @@ def test_single_label_classify_accomodates_labels_starting_with_spaces(
 ) -> None:
     classify = SingleLabelClassify(client=client)
     classify_input = ClassifyInput(
-        text="This is good", labels={" positive", "negative"}
+        text="This is good", labels=frozenset({" positive", "negative"})
     )
 
     classify_output = classify.run(classify_input)
@@ -63,7 +67,7 @@ def test_single_label_classify_accomodates_labels_starting_with_different_spaces
 ) -> None:
     classify = SingleLabelClassify(client=client)
     classify_input = ClassifyInput(
-        text="This is good", labels={" positive", "  positive"}
+        text="This is good", labels=frozenset({" positive", "  positive"})
     )
 
     classify_output = classify.run(classify_input)
@@ -75,7 +79,9 @@ def test_single_label_classify_accomodates_labels_starting_with_different_spaces
 
 def test_single_label_classify_sentiment_classification(client: Client) -> None:
     classify = SingleLabelClassify(client=client)
-    classify_input = ClassifyInput(text="This is good", labels={"positive", "negative"})
+    classify_input = ClassifyInput(
+        text="This is good", labels=frozenset({"positive", "negative"})
+    )
 
     classify_output = classify.run(classify_input)
 
@@ -86,7 +92,7 @@ def test_single_label_classify_sentiment_classification(client: Client) -> None:
 def test_single_label_classify_emotion_classification(client: Client) -> None:
     classify = SingleLabelClassify(client=client)
     classify_input = ClassifyInput(
-        text="I love my job", labels={"happy", "sad", "frustrated", "angry"}
+        text="I love my job", labels=frozenset({"happy", "sad", "frustrated", "angry"})
     )
 
     classify_output = classify.run(classify_input)
@@ -101,7 +107,7 @@ def test_single_label_classify_handles_labels_starting_with_same_token(
     classify = SingleLabelClassify(client=client)
     classify_input = ClassifyInput(
         text="This is good",
-        labels={"positive", "positive positive"},
+        labels=frozenset({"positive", "positive positive"}),
     )
 
     classify_output = classify.run(classify_input)
