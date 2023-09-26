@@ -9,7 +9,7 @@ from typing import (
     Protocol,
     runtime_checkable,
 )
-from aleph_alpha_client import Prompt
+from aleph_alpha_client import CompletionRequest, CompletionResponse, Prompt
 from pydantic import (
     BaseModel,
     SerializeAsAny,
@@ -28,6 +28,8 @@ if TYPE_CHECKING:
         | bool
         | BaseModel
         | Prompt
+        | CompletionRequest
+        | CompletionResponse
     )
 else:
     PydanticSerializable = TypeAliasType(
@@ -40,7 +42,9 @@ else:
         | None
         | bool
         | BaseModel
-        | Prompt,
+        | Prompt
+        | CompletionRequest
+        | CompletionResponse,
     )
 
 

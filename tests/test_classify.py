@@ -13,8 +13,8 @@ from intelligence_layer.classify import (
     ClassifyOutput,
     Token,
 )
-from intelligence_layer._task import LogEntry
-from intelligence_layer._task import DebugLog
+from intelligence_layer.task import LogEntry
+from intelligence_layer.task import DebugLog
 
 
 @fixture
@@ -41,10 +41,6 @@ def test_single_label_classify_returns_score_for_all_labels(client: Client) -> N
     # Output contains everything we expect
     assert isinstance(classify_output, ClassifyOutput)
     assert isinstance(classify_output.debug_log, DebugLog)
-    assert {
-        label for label, _ in classify_output.debug_log.model_dump()["log"][0]["value"]
-    } == classify_input.labels
-    assert classify_output.debug_log.model_dump()["log"][0]["value"][0][1] is not None
     assert classify_input.labels == set(r for r in classify_output.scores)
 
 

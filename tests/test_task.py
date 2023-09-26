@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-from intelligence_layer._task import DebugLog
+from intelligence_layer.task import DebugLog
 
 
 def test_add_debug_log_with_non_base_model() -> None:
