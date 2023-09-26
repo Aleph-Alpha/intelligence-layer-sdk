@@ -3,6 +3,7 @@ from typing import (
     TYPE_CHECKING,
     Any,
     Generic,
+    Literal,
     Mapping,
     Sequence,
     TypeVar,
@@ -47,9 +48,12 @@ else:
         | CompletionResponse,
     )
 
+LogLevel = Literal["info", "debug"]
+
 
 class LogEntry(BaseModel):
     message: str
+    level: LogLevel
     value: SerializeAsAny[PydanticSerializable]
 
 
@@ -58,8 +62,31 @@ class DebugLog(BaseModel):
 
     log: list[LogEntry] = []
 
-    def add(self, message: str, value: PydanticSerializable) -> None:
-        self.log.append(LogEntry(message=message, value=value))
+    def info(self, message: str, value: PydanticSerializable) -> None:
+        self.log.append(LogEntry(message=message, level="info", value=value))
+
+    def debug(self, message: str, value: PydanticSerializable) -> None:
+        self.log.append(LogEntry(message=message, level="debug", value=value))
+
+    def filter(self, level: LogLevel) -> "DebugLog":
+        return DebugLog(
+            log=[
+                self.handle_debug_log(entry, level)
+                for entry in self.log
+                if entry.level == level or level == "debug"
+            ]
+        )
+
+    def handle_debug_log(self, entry: LogEntry, level: LogLevel) -> LogEntry:
+        return (
+            LogEntry(
+                message=entry.message,
+                level=entry.level,
+                value=entry.value.filter(level),
+            )
+            if isinstance(entry.value, DebugLog)
+            else entry
+        )
 
 
 @runtime_checkable

@@ -142,7 +142,7 @@ Reply with only the class label.
             )
             for label in log_probs_per_label
         }
-        debug_log.add("Normalized Probs", normalized_probs)
+        debug_log.info("Normalized Probs", normalized_probs)
         return normalized_probs
 
     def _complete_per_label(
@@ -153,7 +153,7 @@ Reply with only the class label.
         tokenized_labels: Mapping[str, Sequence[Token]],
         debug_log: DebugLog,
     ) -> Mapping[str, CompletionOutput]:
-        debug_log.add(
+        debug_log.info(
             "Completion",
             {
                 "model": model,
@@ -172,7 +172,7 @@ Reply with only the class label.
             )
             for label, tokens in tokenized_labels.items()
         }
-        debug_log.add(
+        debug_log.debug(
             "Completion Request/Response",
             {label: output.debug_log for label, output in completion_per_label.items()},
         )
@@ -206,7 +206,7 @@ Reply with only the class label.
             )
             for label, tokens in tokenized_labels.items()
         }
-        debug_log.add("Raw log probs per label", logs_probs_per_label)
+        debug_log.info("Raw log probs per label", logs_probs_per_label)
         return logs_probs_per_label
 
     def _get_log_probs_of_label(
@@ -233,7 +233,7 @@ Reply with only the class label.
         self, labels: frozenset[str], debug_log: DebugLog
     ) -> Mapping[str, Sequence[Token]]:
         tokens_per_label = {label: self._tokenize_label(label) for label in labels}
-        debug_log.add("Tokenized Labels", tokens_per_label)
+        debug_log.info("Tokenized Labels", tokens_per_label)
         return tokens_per_label
 
     def _tokenize_label(self, label: str) -> Sequence[Token]:
