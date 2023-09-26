@@ -98,7 +98,7 @@ Reply with only the class label.
         self.completion_task = Completion(client, log_level)
 
     def run(self, input: ClassifyInput) -> ClassifyOutput:
-        debug_log = DebugLog(level=self.log_level)
+        debug_log = DebugLog.enabled(level=self.log_level)
         tokenized_labels = self._tokenize_labels(input.labels, debug_log)
         completion_responses_per_label = self._complete_per_label(
             self.MODEL, self.PROMPT_TEMPLATE, input.text, tokenized_labels, debug_log

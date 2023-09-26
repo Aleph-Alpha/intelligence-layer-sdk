@@ -20,7 +20,7 @@ class Completion(Task[CompletionInput, CompletionOutput]):
         self.log_level = log_level
 
     def run(self, input: CompletionInput) -> CompletionOutput:
-        debug_log = DebugLog(level=self.log_level)
+        debug_log = DebugLog.enabled(level=self.log_level)
         debug_log.info("Request", {"request": input.request, "model": input.model})
         response = self.client.complete(
             input.request,

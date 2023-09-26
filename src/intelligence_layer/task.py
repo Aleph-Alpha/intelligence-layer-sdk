@@ -1,4 +1,4 @@
-from abc import abstractmethod
+from abc import ABC, abstractmethod
 from typing import (
     TYPE_CHECKING,
     Any,
@@ -14,6 +14,7 @@ from aleph_alpha_client import CompletionRequest, CompletionResponse, Prompt
 from pydantic import (
     BaseModel,
     Field,
+    RootModel,
     SerializeAsAny,
 )
 from typing_extensions import TypeAliasType
@@ -60,18 +61,28 @@ class LogEntry(BaseModel):
     value: SerializeAsAny[PydanticSerializable]
 
 
-class DebugLog(BaseModel):
-    """Provides key steps, decisions, and intermediate outputs of a task's process."""
+class DebugLog(ABC, RootModel[list[LogEntry]]):
+    @abstractmethod
+    def info(self, message: str, value: PydanticSerializable) -> None:
+        pass
 
-    level: LogLevel = Field(exclude=True)
-    log: list[LogEntry] = []
+    @abstractmethod
+    def debug(self, message: str, value: PydanticSerializable) -> None:
+        pass
+
+    @staticmethod
+    def enabled(level: LogLevel) -> "DebugLog":
+        return DebugEnabledLog() if level == "debug" else InfoEnabledLog()
+
+
+class DebugEnabledLog(DebugLog, RootModel[list[LogEntry]]):
+    root: list[LogEntry] = []
 
     def info(self, message: str, value: PydanticSerializable) -> None:
-        self.log.append(LogEntry(message=message, level="info", value=value))
+        self.root.append(LogEntry(message=message, level="info", value=value))
 
     def debug(self, message: str, value: PydanticSerializable) -> None:
-        if self.level == "debug":
-            self.log.append(LogEntry(message=message, level="debug", value=value))
+        self.root.append(LogEntry(message=message, level="debug", value=value))
 
     def _ipython_display_(self) -> None:
         from IPython.display import display_javascript, display_html  # type: ignore
@@ -84,7 +95,33 @@ class DebugLog(BaseModel):
         display_javascript(  # type: ignore
             f"""
         renderjson.set_show_to_level(2);
-        document.getElementById('{uuid}').appendChild(renderjson({dumps(self.model_dump(mode="json")["log"])}));
+        document.getElementById('{uuid}').appendChild(renderjson({self.model_dump_json()}));
+        """,
+            raw=True,
+        )
+
+
+class InfoEnabledLog(DebugLog, RootModel[list[LogEntry]]):
+    root: list[LogEntry] = []
+
+    def info(self, message: str, value: PydanticSerializable) -> None:
+        self.root.append(LogEntry(message=message, level="info", value=value))
+
+    def debug(self, message: str, value: PydanticSerializable) -> None:
+        pass
+
+    def _ipython_display_(self) -> None:
+        from IPython.display import display_javascript, display_html  # type: ignore
+
+        uuid = uuid4()
+        display_html(  # type: ignore
+            f'<script src="https://rawgit.com/caldwell/renderjson/master/renderjson.js"></script><div id="{uuid}" style="height: 600px; width:100%;"></div>',
+            raw=True,
+        )
+        display_javascript(  # type: ignore
+            f"""
+        renderjson.set_show_to_level(2);
+        document.getElementById('{uuid}').appendChild(renderjson({self.model_dump_json()}));
         """,
             raw=True,
         )

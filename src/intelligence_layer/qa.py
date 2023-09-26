@@ -36,7 +36,7 @@ class Qa(Task[QaInput, QaOutput]):
         self.completion = Completion(client, log_level)
 
     def run(self, input: QaInput) -> QaOutput:
-        debug_log = DebugLog(level=self.log_level)
+        debug_log = DebugLog.enabled(level=self.log_level)
         prompt = PromptTemplate(self.TEMPLATE_STR).to_prompt(
             question=input.question, text=input.text, no_answer_text=NO_ANSWER_TEXT
         )
