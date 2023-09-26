@@ -18,15 +18,6 @@ from intelligence_layer.task import DebugLog
 
 
 @fixture
-def client() -> Client:
-    """Provide fixture for api."""
-    load_dotenv()
-    token = os.getenv("AA_API_TOKEN")
-    assert isinstance(token, str)
-    return Client(token=token)
-
-
-@fixture
 def single_label_classify(client: Client) -> SingleLabelClassify:
     return SingleLabelClassify(client, "info")
 
