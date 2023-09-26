@@ -3,15 +3,17 @@ from typing import (
     TYPE_CHECKING,
     Any,
     Generic,
+    Literal,
     Mapping,
     Sequence,
     TypeVar,
     Protocol,
     runtime_checkable,
 )
-from aleph_alpha_client import Prompt, Text, Tokens
+from aleph_alpha_client import CompletionRequest, CompletionResponse, Prompt
 from pydantic import (
     BaseModel,
+    Field,
     SerializeAsAny,
 )
 from typing_extensions import TypeAliasType
@@ -28,6 +30,8 @@ if TYPE_CHECKING:
         | bool
         | BaseModel
         | Prompt
+        | CompletionRequest
+        | CompletionResponse
     )
 else:
     PydanticSerializable = TypeAliasType(
@@ -40,22 +44,32 @@ else:
         | None
         | bool
         | BaseModel
-        | Prompt,
+        | Prompt
+        | CompletionRequest
+        | CompletionResponse,
     )
+
+LogLevel = Literal["info", "debug"]
 
 
 class LogEntry(BaseModel):
     message: str
+    level: LogLevel
     value: SerializeAsAny[PydanticSerializable]
 
 
 class DebugLog(BaseModel):
     """Provides key steps, decisions, and intermediate outputs of a task's process."""
 
+    level: LogLevel = Field(exclude=True)
     log: list[LogEntry] = []
 
-    def add(self, message: str, value: PydanticSerializable) -> None:
-        self.log.append(LogEntry(message=message, value=value))
+    def info(self, message: str, value: PydanticSerializable) -> None:
+        self.log.append(LogEntry(message=message, level="info", value=value))
+
+    def debug(self, message: str, value: PydanticSerializable) -> None:
+        if self.level == "debug":
+            self.log.append(LogEntry(message=message, level="debug", value=value))
 
 
 @runtime_checkable

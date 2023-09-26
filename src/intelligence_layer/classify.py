@@ -1,17 +1,49 @@
 import math
-from typing import Set, Mapping, Tuple, Optional, Sequence
+from pprint import pprint
+from typing import (
+    Any,
+    FrozenSet,
+    Iterable,
+    NewType,
+    Set,
+    Mapping,
+    Tuple,
+    Optional,
+    Sequence,
+)
 
 from aleph_alpha_client import (
     Client,
+    CompletionResponse,
     PromptTemplate,
-    Tokens,
+    Tokens as AATokens,
     Prompt,
     TokenizationRequest,
     CompletionRequest,
 )
 from pydantic import BaseModel
 
-from ._task import Task, DebugLog
+from intelligence_layer.completion import Completion, CompletionInput, CompletionOutput
+
+from .task import LogLevel, Task, DebugLog
+
+
+class Token(BaseModel):
+    token: str
+    token_id: int
+
+
+Probability = NewType("Probability", float)
+LogProb = NewType("LogProb", float)
+
+
+class TokenWithProb(BaseModel):
+    token: Token
+    prob: Probability | LogProb
+
+
+def to_aa_tokens(tokens: Sequence[Token]) -> Prompt:
+    return Prompt.from_tokens([token.token_id for token in tokens])
 
 
 class ClassifyInput(BaseModel):
@@ -19,12 +51,12 @@ class ClassifyInput(BaseModel):
 
     text: str
     """Text to be classified"""
-    labels: Set[str]
+    labels: frozenset[str]
     """Possible labels into which the text should be classified."""
 
 
 class ClassifyOutput(BaseModel):
-    scores: Mapping[str, float]
+    scores: Mapping[str, Probability]
     """Mapping of the provided label (key) to corresponding score (value)
 
     The score represents how sure the model is that this is the correct label.
@@ -43,8 +75,7 @@ class SingleLabelClassify(Task[ClassifyInput, ClassifyOutput]):
     This methodology works best for classes that are easily understood, and don't require an
     explanation or examples."""
 
-    PROMPT_TEMPLATE: PromptTemplate = PromptTemplate(
-        """### Instruction:
+    PROMPT_TEMPLATE: str = """### Instruction:
 Identify a class that describes the text adequately.
 Reply with only the class label.
 
@@ -52,11 +83,10 @@ Reply with only the class label.
 {{text}}
 
 ### Response:{{label}}"""
-    )
     MODEL: str = "luminous-base-control"
     client: Client
 
-    def __init__(self, client: Client) -> None:
+    def __init__(self, client: Client, log_level: LogLevel) -> None:
         """Initializes the Task.
 
         Args:
@@ -64,147 +94,204 @@ Reply with only the class label.
         """
         super().__init__()
         self.client = client
+        self.log_level = log_level
+        self.completion_task = Completion(client, log_level)
 
     def run(self, input: ClassifyInput) -> ClassifyOutput:
-        log = DebugLog()
-        scores = self._calculate_scores(input, log)
+        debug_log = DebugLog(level=self.log_level)
+        tokenized_labels = self._tokenize_labels(input.labels, debug_log)
+        completion_responses_per_label = self._complete_per_label(
+            self.MODEL, self.PROMPT_TEMPLATE, input.text, tokenized_labels, debug_log
+        )
+        log_probs_per_label = self._get_log_probs_of_labels(
+            completion_responses_per_label, tokenized_labels, debug_log
+        )
+        normalized_probs_per_label = self._normalize(log_probs_per_label, debug_log)
+        scores = self._compute_scores(normalized_probs_per_label)
         return ClassifyOutput(
             scores=scores,
-            debug_log=log,
+            debug_log=debug_log,
         )
 
-    def _calculate_scores(
-        self, input: ClassifyInput, log: DebugLog
-    ) -> Mapping[str, float]:
-        """Generates log probs for each label and generates a relative score for each"""
-        tree = TreeNode()
-        prompts = self._generate_prompts(input)
-        log.add("The labels", [(prompt[0], prompt[1]) for prompt in prompts])
-        for label, prompt, tokens in prompts:
-            tree.insert_path(self._generate_log_probs(prompt, tokens=tokens))
-        tree.normalize_probs()
-        scores = tree.calculate_path_prob()
-
+    def _compute_scores(
+        self,
+        normalized_probs_per_score: Mapping[str, Sequence[TokenWithProb]],
+    ) -> Mapping[str, Probability]:
         return {
-            # Make sure we are actually matching the correct label
-            label: next(
-                score for token_list, score in scores if token_list == tokens.tokens
+            label: Probability(
+                math.prod(token_with_prob.prob for token_with_prob in tokens_with_probs)
             )
-            for label, _, tokens in prompts
+            for label, tokens_with_probs in normalized_probs_per_score.items()
         }
 
-    def _generate_log_probs(
-        self, prompt: Prompt, tokens: Tokens
-    ) -> Sequence[Tuple[int, float]]:
-        """Generates a completion request that returns log probs via echo"""
-        completion = self.client.complete(
-            CompletionRequest(
-                prompt=prompt, maximum_tokens=0, log_probs=0, tokens=True, echo=True
-            ),
-            self.MODEL,
-        ).completions[0]
+    def _normalize(
+        self,
+        log_probs_per_label: Mapping[str, Sequence[TokenWithProb]],
+        debug_log: DebugLog,
+    ) -> Mapping[str, Sequence[TokenWithProb]]:
+        node = TreeNode()
+        for label, log_probs in log_probs_per_label.items():
+            node.insert_path(log_probs)
 
-        assert isinstance(completion.log_probs, list)
-        assert isinstance(completion.completion_tokens, list)
-        assert len(completion.log_probs) == len(completion.completion_tokens)
-
-        return [
-            (token_id, log_probs[token] or 0.0)
-            for token_id, log_probs, token in zip(
-                tokens.tokens,
-                completion.log_probs[-len(tokens.tokens) :],
-                completion.completion_tokens[-len(tokens.tokens) :],
+        node.normalize_probs()
+        normalized_probs = {
+            label: list(
+                node.path(
+                    token_with_prob.token
+                    for token_with_prob in log_probs_per_label[label]
+                )
             )
-            if log_probs[token] is not None
-        ]
+            for label in log_probs_per_label
+        }
+        debug_log.info("Normalized Probs", normalized_probs)
+        return normalized_probs
 
-    def _generate_prompts(
-        self, input: ClassifyInput
-    ) -> Sequence[Tuple[str, Prompt, Tokens]]:
-        """Embeds each label in a prompt. Label is tokenized separately so we know how many tokens
-        to look at in the log probs"""
-        tokenized_labels = (
-            (label, self._tokenize_label(label)) for label in input.labels
+    def _complete_per_label(
+        self,
+        model: str,
+        prompt_template_str: str,
+        text: str,
+        tokenized_labels: Mapping[str, Sequence[Token]],
+        debug_log: DebugLog,
+    ) -> Mapping[str, CompletionOutput]:
+        debug_log.info(
+            "Completion",
+            {
+                "model": model,
+                "template": prompt_template_str,
+                "text": text,
+            },
         )
-        return [
-            (
-                label,
-                self.PROMPT_TEMPLATE.to_prompt(
-                    text=input.text,
-                    label=self.PROMPT_TEMPLATE.placeholder(tokens),
-                ),
-                tokens,
+        prompt_template = PromptTemplate(prompt_template_str)
+        completion_per_label = {
+            label: self._complete(
+                model,
+                prompt_template,
+                debug_log,
+                text=text,
+                label=prompt_template.embed_prompt(to_aa_tokens(tokens)),
             )
-            for (label, tokens) in tokenized_labels
+            for label, tokens in tokenized_labels.items()
+        }
+        debug_log.debug(
+            "Completion Request/Response",
+            {label: output.debug_log for label, output in completion_per_label.items()},
+        )
+        return completion_per_label
+
+    def _complete(
+        self,
+        model: str,
+        prompt_template: PromptTemplate,
+        debug_log: DebugLog,
+        **kwargs: Any
+    ) -> CompletionOutput:
+        request = CompletionRequest(
+            prompt=prompt_template.to_prompt(**kwargs),
+            maximum_tokens=0,
+            log_probs=0,
+            tokens=True,
+            echo=True,
+        )
+        return self.completion_task.run(CompletionInput(request=request, model=model))
+
+    def _get_log_probs_of_labels(
+        self,
+        completion_responses: Mapping[str, CompletionOutput],
+        tokenized_labels: Mapping[str, Sequence[Token]],
+        debug_log: DebugLog,
+    ) -> Mapping[str, Sequence[TokenWithProb]]:
+        logs_probs_per_label = {
+            label: self._get_log_probs_of_label(
+                completion_responses[label].response, tokens
+            )
+            for label, tokens in tokenized_labels.items()
+        }
+        debug_log.info("Raw log probs per label", logs_probs_per_label)
+        return logs_probs_per_label
+
+    def _get_log_probs_of_label(
+        self, completion_response: CompletionResponse, tokens: Sequence[Token]
+    ) -> Sequence[TokenWithProb]:
+        assert completion_response.completions[0].log_probs
+        assert completion_response.completions[0].completion_tokens
+
+        log_prob_dicts = completion_response.completions[0].log_probs[-len(tokens) :]
+        completion_tokens = completion_response.completions[0].completion_tokens[
+            -len(tokens) :
+        ]
+        return [
+            TokenWithProb(
+                token=token,
+                prob=LogProb(log_prob_dict.get(completion_token, 0.0) or 0.0),
+            )
+            for token, log_prob_dict, completion_token in zip(
+                tokens, log_prob_dicts, completion_tokens
+            )
         ]
 
-    def _tokenize_label(self, label: str) -> Tokens:
+    def _tokenize_labels(
+        self, labels: frozenset[str], debug_log: DebugLog
+    ) -> Mapping[str, Sequence[Token]]:
+        tokens_per_label = {label: self._tokenize_label(label) for label in labels}
+        debug_log.info("Tokenized Labels", tokens_per_label)
+        return tokens_per_label
+
+    def _tokenize_label(self, label: str) -> Sequence[Token]:
         """Turn a single label into list of token ids. Important so that we know how many tokens
         the label is and can retrieve the last N log probs for the label"""
         response = self.client.tokenize(
             request=TokenizationRequest(
-                label + "<|endoftext|>", tokens=False, token_ids=True
+                label + "<|endoftext|>", tokens=True, token_ids=True
             ),
             model=self.MODEL,
         )
-        assert isinstance(response.token_ids, list)
-        return Tokens.from_token_ids(response.token_ids)
+        assert response.token_ids and response.tokens
+        return [
+            Token(token=token, token_id=token_id)
+            for token, token_id in zip(response.tokens, response.token_ids)
+        ]
 
 
 class TreeNode:
-    def __init__(self, value: Optional[int] = None, log_prob: Optional[float] = None):
-        self.value = value
-        self.log_prob = log_prob
-        self.normalized_prob: Optional[float] = None
+    def __init__(
+        self, token: Optional[Token] = None, prob: Optional[Probability] = None
+    ):
+        self.token = token
+        self.prob = prob
+        self.normalized_prob: Optional[Probability] = None
         self.children: list[TreeNode] = []
 
-    def find_child(self, value: int) -> Optional["TreeNode"]:
-        for child in self.children:
-            if child.value == value:
-                return child
-        return None
+    def find_child(self, token: Token) -> Optional["TreeNode"]:
+        return next((child for child in self.children if child.token == token), None)
 
-    def insert_path(self, path: Sequence[tuple[int, float]]) -> None:
+    def insert_path(self, path: Sequence[TokenWithProb]) -> None:
         if not path:
             return
-        value, log_prob = path[0]
-        log_prob = math.exp(log_prob)
+        token_with_prob = path[0]
+        prob = Probability(math.exp(token_with_prob.prob))
 
-        child = self.find_child(value)
+        child = self.find_child(token_with_prob.token)
         if child is None:
-            child = TreeNode(value, log_prob)
+            child = TreeNode(token_with_prob.token, prob)
             self.children.append(child)
 
         child.insert_path(path[1:])
 
     def normalize_probs(self) -> None:
         total_prob = sum(
-            child.log_prob for child in self.children if child.log_prob is not None
+            child.prob for child in self.children if child.prob is not None
         )
         for child in self.children:
-            if child.log_prob is not None:
-                child.normalized_prob = child.log_prob / total_prob
+            if child.prob is not None:
+                child.normalized_prob = Probability(child.prob / total_prob)
             child.normalize_probs()
 
-    def calculate_path_prob(
-        self, normalized_prob: float = 1.0
-    ) -> Sequence[tuple[list[int], float]]:
-        path_probs = []
-
-        for child in self.children:
-            if child.normalized_prob is not None and child.log_prob is not None:
-                new_normalized_prob = normalized_prob * child.normalized_prob
-
-                child_paths = child.calculate_path_prob(new_normalized_prob)
-                for path, normal_prob in child_paths:
-                    path_probs.append(
-                        (
-                            [self.value] + path if self.value is not None else path,
-                            normal_prob,
-                        )
-                    )
-
-        if not path_probs and self.value is not None and self.normalized_prob:
-            return [([self.value], normalized_prob)]
-
-        return path_probs
+    def path(self, tokens: Iterable[Token]) -> Iterable[TokenWithProb]:
+        node = self
+        for token in tokens:
+            child = node.find_child(token)
+            assert child
+            node = child
+            assert node.token and node.normalized_prob
+            yield TokenWithProb(token=node.token, prob=node.normalized_prob)
