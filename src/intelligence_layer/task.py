@@ -17,6 +17,8 @@ from pydantic import (
     SerializeAsAny,
 )
 from typing_extensions import TypeAliasType
+from uuid import uuid4
+from json import dumps
 
 
 if TYPE_CHECKING:
@@ -70,6 +72,22 @@ class DebugLog(BaseModel):
     def debug(self, message: str, value: PydanticSerializable) -> None:
         if self.level == "debug":
             self.log.append(LogEntry(message=message, level="debug", value=value))
+
+    def _ipython_display_(self) -> None:
+        from IPython.display import display_javascript, display_html  # type: ignore
+
+        uuid = uuid4()
+        display_html(  # type: ignore
+            f'<script src="https://rawgit.com/caldwell/renderjson/master/renderjson.js"></script><div id="{uuid}" style="height: 600px; width:100%;"></div>',
+            raw=True,
+        )
+        display_javascript(  # type: ignore
+            f"""
+        renderjson.set_show_to_level(2);
+        document.getElementById('{uuid}').appendChild(renderjson({dumps(self.model_dump(mode="json")["log"])}));
+        """,
+            raw=True,
+        )
 
 
 @runtime_checkable
