@@ -25,7 +25,7 @@ from pydantic import BaseModel
 
 from intelligence_layer.completion import Completion, CompletionInput, CompletionOutput
 
-from .task import Task, DebugLog
+from .task import LogLevel, Task, DebugLog
 
 
 class Token(BaseModel):
@@ -86,7 +86,7 @@ Reply with only the class label.
     MODEL: str = "luminous-base-control"
     client: Client
 
-    def __init__(self, client: Client) -> None:
+    def __init__(self, client: Client, log_level: LogLevel) -> None:
         """Initializes the Task.
 
         Args:
@@ -94,10 +94,11 @@ Reply with only the class label.
         """
         super().__init__()
         self.client = client
-        self.completion_task = Completion(client)
+        self.log_level = log_level
+        self.completion_task = Completion(client, log_level)
 
     def run(self, input: ClassifyInput) -> ClassifyOutput:
-        debug_log = DebugLog()
+        debug_log = DebugLog(level=self.log_level)
         tokenized_labels = self._tokenize_labels(input.labels, debug_log)
         completion_responses_per_label = self._complete_per_label(
             self.MODEL, self.PROMPT_TEMPLATE, input.text, tokenized_labels, debug_log

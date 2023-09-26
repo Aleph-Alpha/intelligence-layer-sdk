@@ -3,7 +3,7 @@ from intelligence_layer.task import DebugLog
 
 
 def test_add_debug_log_with_non_base_model() -> None:
-    log = DebugLog()
+    log = DebugLog(level="info")
     message = "Hello"
     value = ["World"]
     log.info(message, value)
@@ -17,7 +17,7 @@ def test_add_debug_log_with_base_model_is_serialized_correctly() -> None:
     class Demo(BaseModel):
         text: str
 
-    log = DebugLog()
+    log = DebugLog(level="info")
     message = "Hello"
     value_text = "World"
     log.info(message, Demo(text=value_text))

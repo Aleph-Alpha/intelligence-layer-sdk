@@ -13,6 +13,7 @@ from typing import (
 from aleph_alpha_client import CompletionRequest, CompletionResponse, Prompt
 from pydantic import (
     BaseModel,
+    Field,
     SerializeAsAny,
 )
 from typing_extensions import TypeAliasType
@@ -60,33 +61,15 @@ class LogEntry(BaseModel):
 class DebugLog(BaseModel):
     """Provides key steps, decisions, and intermediate outputs of a task's process."""
 
+    level: LogLevel = Field(exclude=True)
     log: list[LogEntry] = []
 
     def info(self, message: str, value: PydanticSerializable) -> None:
         self.log.append(LogEntry(message=message, level="info", value=value))
 
     def debug(self, message: str, value: PydanticSerializable) -> None:
-        self.log.append(LogEntry(message=message, level="debug", value=value))
-
-    def filter(self, level: LogLevel) -> "DebugLog":
-        return DebugLog(
-            log=[
-                self.handle_debug_log(entry, level)
-                for entry in self.log
-                if entry.level == level or level == "debug"
-            ]
-        )
-
-    def handle_debug_log(self, entry: LogEntry, level: LogLevel) -> LogEntry:
-        return (
-            LogEntry(
-                message=entry.message,
-                level=entry.level,
-                value=entry.value.filter(level),
-            )
-            if isinstance(entry.value, DebugLog)
-            else entry
-        )
+        if self.level == "debug":
+            self.log.append(LogEntry(message=message, level="debug", value=value))
 
 
 @runtime_checkable

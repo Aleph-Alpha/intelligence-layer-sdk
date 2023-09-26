@@ -18,25 +18,28 @@ from intelligence_layer.task import DebugLog
 
 
 @fixture
-def client() -> Iterable[Client]:
+def client() -> Client:
     """Provide fixture for api."""
-    try:
-        load_dotenv()
-        token = os.getenv("AA_API_TOKEN")
-        assert isinstance(token, str)
-        yield Client(token=token)
-    finally:
-        pass
+    load_dotenv()
+    token = os.getenv("AA_API_TOKEN")
+    assert isinstance(token, str)
+    return Client(token=token)
 
 
-def test_single_label_classify_returns_score_for_all_labels(client: Client) -> None:
-    classify = SingleLabelClassify(client=client)
+@fixture
+def single_label_classify(client: Client) -> SingleLabelClassify:
+    return SingleLabelClassify(client, "info")
+
+
+def test_single_label_classify_returns_score_for_all_labels(
+    single_label_classify: SingleLabelClassify,
+) -> None:
     classify_input = ClassifyInput(
         text="This is good",
         labels=frozenset({"positive", "negative"}),
     )
 
-    classify_output = classify.run(classify_input)
+    classify_output = single_label_classify.run(classify_input)
 
     # Output contains everything we expect
     assert isinstance(classify_output, ClassifyOutput)
@@ -45,67 +48,66 @@ def test_single_label_classify_returns_score_for_all_labels(client: Client) -> N
 
 
 def test_single_label_classify_accomodates_labels_starting_with_spaces(
-    client: Client,
+    single_label_classify: SingleLabelClassify,
 ) -> None:
-    classify = SingleLabelClassify(client=client)
     classify_input = ClassifyInput(
         text="This is good", labels=frozenset({" positive", "negative"})
     )
 
-    classify_output = classify.run(classify_input)
+    classify_output = single_label_classify.run(classify_input)
 
     # Output contains everything we expect
     assert classify_input.labels == set(r for r in classify_output.scores)
 
 
 def test_single_label_classify_accomodates_labels_starting_with_different_spaces(
-    client: Client,
+    single_label_classify: SingleLabelClassify,
 ) -> None:
-    classify = SingleLabelClassify(client=client)
     classify_input = ClassifyInput(
         text="This is good", labels=frozenset({" positive", "  positive"})
     )
 
-    classify_output = classify.run(classify_input)
+    classify_output = single_label_classify.run(classify_input)
 
     # Output contains everything we expect
     assert classify_input.labels == set(r for r in classify_output.scores)
     assert classify_output.scores[" positive"] != classify_output.scores["  positive"]
 
 
-def test_single_label_classify_sentiment_classification(client: Client) -> None:
-    classify = SingleLabelClassify(client=client)
+def test_single_label_classify_sentiment_classification(
+    single_label_classify: SingleLabelClassify,
+) -> None:
     classify_input = ClassifyInput(
         text="This is good", labels=frozenset({"positive", "negative"})
     )
 
-    classify_output = classify.run(classify_input)
+    classify_output = single_label_classify.run(classify_input)
 
     # Verify we got a higher positive score
     assert classify_output.scores["positive"] > classify_output.scores["negative"]
 
 
-def test_single_label_classify_emotion_classification(client: Client) -> None:
-    classify = SingleLabelClassify(client=client)
+def test_single_label_classify_emotion_classification(
+    single_label_classify: SingleLabelClassify,
+) -> None:
     classify_input = ClassifyInput(
         text="I love my job", labels=frozenset({"happy", "sad", "frustrated", "angry"})
     )
 
-    classify_output = classify.run(classify_input)
+    classify_output = single_label_classify.run(classify_input)
 
     # Verify it correctly calculated happy
     assert classify_output.scores["happy"] == max(classify_output.scores.values())
 
 
 def test_single_label_classify_handles_labels_starting_with_same_token(
-    client: Client,
+    single_label_classify: SingleLabelClassify,
 ) -> None:
-    classify = SingleLabelClassify(client=client)
     classify_input = ClassifyInput(
         text="This is good",
         labels=frozenset({"positive", "positive positive"}),
     )
 
-    classify_output = classify.run(classify_input)
+    classify_output = single_label_classify.run(classify_input)
 
     assert classify_input.labels == set(r for r in classify_output.scores)
