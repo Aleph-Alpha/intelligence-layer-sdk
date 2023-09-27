@@ -46,6 +46,6 @@ class Qa(Task[QaInput, QaOutput]):
         debug_log.debug("Completion", output.debug_log)
         completion = output.response.completions[0].completion
         return QaOutput(
-            answer=completion if completion != NO_ANSWER_TEXT else None,
+            answer=completion.strip() if completion != NO_ANSWER_TEXT else None,
             debug_log=debug_log,
         )
