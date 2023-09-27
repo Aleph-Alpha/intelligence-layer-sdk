@@ -1,6 +1,0 @@
-pydantic
-fastapi
-uvicorn
-aleph-alpha-client==3.4.2a1 # comes with types
-python-dotenv
-httpx # leads to conflicts if only added to test.in

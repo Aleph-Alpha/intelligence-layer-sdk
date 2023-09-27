@@ -1,0 +1,33 @@
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.poetry]
+name = "intelligence-layer"
+version = "0.1.0"
+description = ""
+authors = ["Aleph Alpha Engineering <engineering@aleph-alpha.com>"]
+readme = "README.md"
+license = "Aleph Alpha Licensed"
+
+[tool.poetry.dependencies]
+python = "^3.10"
+pydantic = "*"
+fastapi = "*"
+uvicorn = "*"
+aleph-alpha-client = "*"
+python-dotenv = "*"
+
+[tool.poetry.group.dev.dependencies]
+pytest = "*"
+black = "*"
+mypy = "*"
+pre-commit = "*"
+httpx = "*"
+
+[tool.mypy]
+files = "src,tests"
+strict = "True"
+
+[tool.pytest.ini_options]
+addopts = "--capture=tee-sys"
