@@ -8,9 +8,7 @@ def test_add_debug_log_with_non_base_model() -> None:
     value = ["World"]
     log.info(message, value)
 
-    assert log.model_dump() == {
-        "log": [{"message": message, "value": value, "level": "info"}]
-    }
+    assert log.model_dump() == [{"message": message, "value": value, "level": "info"}]
 
 
 def test_add_debug_log_with_base_model_is_serialized_correctly() -> None:
@@ -22,6 +20,6 @@ def test_add_debug_log_with_base_model_is_serialized_correctly() -> None:
     value_text = "World"
     log.info(message, Demo(text=value_text))
 
-    assert log.model_dump() == {
-        "log": [{"message": message, "value": {"text": value_text}, "level": "info"}]
-    }
+    assert log.model_dump() == [
+        {"message": message, "value": {"text": value_text}, "level": "info"}
+    ]
