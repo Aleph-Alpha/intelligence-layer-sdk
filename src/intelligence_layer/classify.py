@@ -1,13 +1,9 @@
 import math
-from pprint import pprint
 from typing import (
     Any,
-    FrozenSet,
     Iterable,
     NewType,
-    Set,
     Mapping,
-    Tuple,
     Optional,
     Sequence,
 )
@@ -16,7 +12,6 @@ from aleph_alpha_client import (
     Client,
     CompletionResponse,
     PromptTemplate,
-    Tokens as AATokens,
     Prompt,
     TokenizationRequest,
     CompletionRequest,
@@ -106,7 +101,8 @@ Reply with only the class label.
         log_probs_per_label = self._get_log_probs_of_labels(
             completion_responses_per_label, tokenized_labels, debug_log
         )
-        normalized_probs_per_label = self._normalize(log_probs_per_label, debug_log)
+        normalized_probs_per_label = self._normalize(
+            log_probs_per_label, debug_log)
         scores = self._compute_scores(normalized_probs_per_label)
         return ClassifyOutput(
             scores=scores,
@@ -119,7 +115,8 @@ Reply with only the class label.
     ) -> Mapping[str, Probability]:
         return {
             label: Probability(
-                math.prod(token_with_prob.prob for token_with_prob in tokens_with_probs)
+                math.prod(
+                    token_with_prob.prob for token_with_prob in tokens_with_probs)
             )
             for label, tokens_with_probs in normalized_probs_per_score.items()
         }
@@ -130,7 +127,7 @@ Reply with only the class label.
         debug_log: DebugLog,
     ) -> Mapping[str, Sequence[TokenWithProb]]:
         node = TreeNode()
-        for label, log_probs in log_probs_per_label.items():
+        for log_probs in log_probs_per_label.values():
             node.insert_path(log_probs)
 
         node.normalize_probs()
@@ -175,7 +172,8 @@ Reply with only the class label.
         }
         debug_log.debug(
             "Completion Request/Response",
-            {label: output.debug_log for label, output in completion_per_label.items()},
+            {label: output.debug_log for label,
+                output in completion_per_label.items()},
         )
         return completion_per_label
 
@@ -216,9 +214,10 @@ Reply with only the class label.
         assert completion_response.completions[0].log_probs
         assert completion_response.completions[0].completion_tokens
 
-        log_prob_dicts = completion_response.completions[0].log_probs[-len(tokens) :]
+        log_prob_dicts = completion_response.completions[0].log_probs[-len(
+            tokens):]
         completion_tokens = completion_response.completions[0].completion_tokens[
-            -len(tokens) :
+            -len(tokens):
         ]
         return [
             TokenWithProb(
@@ -233,7 +232,8 @@ Reply with only the class label.
     def _tokenize_labels(
         self, labels: frozenset[str], debug_log: DebugLog
     ) -> Mapping[str, Sequence[Token]]:
-        tokens_per_label = {label: self._tokenize_label(label) for label in labels}
+        tokens_per_label = {label: self._tokenize_label(
+            label) for label in labels}
         debug_log.info("Tokenized Labels", tokens_per_label)
         return tokens_per_label
 
