@@ -84,11 +84,11 @@ class InfoEnabledLog(DebugLog):
         from IPython.display import display_javascript, display_html  # type: ignore
 
         uuid = uuid4()
-        display_html(  # type: ignore
+        display_html(
             f'<script src="https://rawgit.com/caldwell/renderjson/master/renderjson.js"></script><div id="{uuid}" style="height: 600px; width:100%;"></div>',
             raw=True,
         )
-        display_javascript(  # type: ignore
+        display_javascript(
             f"""
         renderjson.set_show_to_level(2);
         document.getElementById('{uuid}').appendChild(renderjson({self.model_dump_json()}));
