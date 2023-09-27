@@ -66,7 +66,6 @@ class DebugLog(ABC, RootModel[list[LogEntry]]):
     def info(self, message: str, value: PydanticSerializable) -> None:
         pass
 
-    @abstractmethod
     def debug(self, message: str, value: PydanticSerializable) -> None:
         pass
 
@@ -75,56 +74,32 @@ class DebugLog(ABC, RootModel[list[LogEntry]]):
         return DebugEnabledLog() if level == "debug" else InfoEnabledLog()
 
 
-class DebugEnabledLog(DebugLog, RootModel[list[LogEntry]]):
+class InfoEnabledLog(DebugLog):
     root: list[LogEntry] = []
 
     def info(self, message: str, value: PydanticSerializable) -> None:
         self.root.append(LogEntry(message=message, level="info", value=value))
 
+    def _ipython_display_(self) -> None:
+        from IPython.display import display_javascript, display_html  # type: ignore
+
+        uuid = uuid4()
+        display_html(  # type: ignore
+            f'<script src="https://rawgit.com/caldwell/renderjson/master/renderjson.js"></script><div id="{uuid}" style="height: 600px; width:100%;"></div>',
+            raw=True,
+        )
+        display_javascript(  # type: ignore
+            f"""
+        renderjson.set_show_to_level(2);
+        document.getElementById('{uuid}').appendChild(renderjson({self.model_dump_json()}));
+        """,
+            raw=True,
+        )
+
+
+class DebugEnabledLog(InfoEnabledLog):
     def debug(self, message: str, value: PydanticSerializable) -> None:
         self.root.append(LogEntry(message=message, level="debug", value=value))
-
-    def _ipython_display_(self) -> None:
-        from IPython.display import display_javascript, display_html  # type: ignore
-
-        uuid = uuid4()
-        display_html(  # type: ignore
-            f'<script src="https://rawgit.com/caldwell/renderjson/master/renderjson.js"></script><div id="{uuid}" style="height: 600px; width:100%;"></div>',
-            raw=True,
-        )
-        display_javascript(  # type: ignore
-            f"""
-        renderjson.set_show_to_level(2);
-        document.getElementById('{uuid}').appendChild(renderjson({self.model_dump_json()}));
-        """,
-            raw=True,
-        )
-
-
-class InfoEnabledLog(DebugLog, RootModel[list[LogEntry]]):
-    root: list[LogEntry] = []
-
-    def info(self, message: str, value: PydanticSerializable) -> None:
-        self.root.append(LogEntry(message=message, level="info", value=value))
-
-    def debug(self, message: str, value: PydanticSerializable) -> None:
-        pass
-
-    def _ipython_display_(self) -> None:
-        from IPython.display import display_javascript, display_html  # type: ignore
-
-        uuid = uuid4()
-        display_html(  # type: ignore
-            f'<script src="https://rawgit.com/caldwell/renderjson/master/renderjson.js"></script><div id="{uuid}" style="height: 600px; width:100%;"></div>',
-            raw=True,
-        )
-        display_javascript(  # type: ignore
-            f"""
-        renderjson.set_show_to_level(2);
-        document.getElementById('{uuid}').appendChild(renderjson({self.model_dump_json()}));
-        """,
-            raw=True,
-        )
 
 
 @runtime_checkable
