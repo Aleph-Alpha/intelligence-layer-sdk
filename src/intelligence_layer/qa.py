@@ -26,14 +26,15 @@ class Qa(Task[QaInput, QaOutput]):
 ### Input:
 {{text}}
 
-### Response:
-"""
-    MODEL = "luminous-extended-control"
+### Response:"""
 
-    def __init__(self, client: Client, log_level: LogLevel):
+    def __init__(
+        self, client: Client, log_level: LogLevel, model="luminous-supreme-control"
+    ):
         self.client = client
         self.log_level = log_level
         self.completion = Completion(client, log_level)
+        self.model = model
 
     def run(self, input: QaInput) -> QaOutput:
         debug_log = DebugLog.enabled(level=self.log_level)
@@ -41,7 +42,7 @@ class Qa(Task[QaInput, QaOutput]):
             question=input.question, text=input.text, no_answer_text=NO_ANSWER_TEXT
         )
         request = CompletionRequest(prompt)
-        output = self.completion.run(CompletionInput(request=request, model=self.MODEL))
+        output = self.completion.run(CompletionInput(request=request, model=self.model))
         debug_log.debug("Completion", output.debug_log)
         completion = output.response.completions[0].completion
         return QaOutput(
