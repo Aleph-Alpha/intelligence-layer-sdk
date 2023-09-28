@@ -12,6 +12,9 @@ class CompletionOutput(BaseModel):
     response: CompletionResponse
     debug_log: DebugLog
 
+    def completion(self) -> str:
+        return self.response.completions[0].completion or ""
+
 
 class Completion(Task[CompletionInput, CompletionOutput]):
     def __init__(self, client: Client, log_level: LogLevel) -> None:

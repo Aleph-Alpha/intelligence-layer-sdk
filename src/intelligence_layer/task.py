@@ -10,16 +10,20 @@ from typing import (
     Protocol,
     runtime_checkable,
 )
-from aleph_alpha_client import CompletionRequest, CompletionResponse, Prompt
+from aleph_alpha_client import (
+    CompletionRequest,
+    CompletionResponse,
+    ExplanationRequest,
+    ExplanationResponse,
+    Prompt,
+)
 from pydantic import (
     BaseModel,
-    Field,
     RootModel,
     SerializeAsAny,
 )
 from typing_extensions import TypeAliasType
 from uuid import uuid4
-from json import dumps
 
 
 if TYPE_CHECKING:
@@ -35,6 +39,8 @@ if TYPE_CHECKING:
         | Prompt
         | CompletionRequest
         | CompletionResponse
+        | ExplanationRequest
+        | ExplanationResponse
     )
 else:
     PydanticSerializable = TypeAliasType(
@@ -49,7 +55,9 @@ else:
         | BaseModel
         | Prompt
         | CompletionRequest
-        | CompletionResponse,
+        | CompletionResponse
+        | ExplanationRequest
+        | ExplanationResponse,
     )
 
 LogLevel = Literal["info", "debug"]
@@ -84,11 +92,11 @@ class InfoEnabledLog(DebugLog):
         from IPython.display import display_javascript, display_html  # type: ignore
 
         uuid = uuid4()
-        display_html(
+        display_html(  # type: ignore
             f'<script src="https://rawgit.com/caldwell/renderjson/master/renderjson.js"></script><div id="{uuid}" style="height: 600px; width:100%;"></div>',
             raw=True,
         )
-        display_javascript(
+        display_javascript(  # type: ignore
             f"""
         renderjson.set_show_to_level(2);
         document.getElementById('{uuid}').appendChild(renderjson({self.model_dump_json()}));

@@ -17,6 +17,8 @@ def test_qa_with_answer(qa: SingleDocumentQa) -> None:
 
     assert output.answer
     assert "Henri" in output.answer
+    assert any("Henri" in highlight for highlight in output.highlights)
+    assert len(output.highlights) == 1
 
 
 def test_qa_with_no_answer(qa: SingleDocumentQa) -> None:
