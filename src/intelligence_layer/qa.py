@@ -6,7 +6,7 @@ from intelligence_layer.completion import Completion, CompletionInput
 from intelligence_layer.task import DebugLog, LogLevel, Task
 
 
-class QaInput(BaseModel):
+class SingleDocumentQaInput(BaseModel):
     text: str
     question: str
 
@@ -19,7 +19,7 @@ class QaOutput(BaseModel):
 NO_ANSWER_TEXT = "NO_ANSWER_IN_TEXT"
 
 
-class Qa(Task[QaInput, QaOutput]):
+class SingleDocumentQa(Task[SingleDocumentQaInput, QaOutput]):
     TEMPLATE_STR = """### Instruction:
 {{question}} If there's no answer, say "{{no_answer_text}}".
 
@@ -36,7 +36,7 @@ class Qa(Task[QaInput, QaOutput]):
         self.completion = Completion(client, log_level)
         self.model = model
 
-    def run(self, input: QaInput) -> QaOutput:
+    def run(self, input: SingleDocumentQaInput) -> QaOutput:
         debug_log = DebugLog.enabled(level=self.log_level)
         prompt = PromptTemplate(self.TEMPLATE_STR).to_prompt(
             question=input.question, text=input.text, no_answer_text=NO_ANSWER_TEXT
