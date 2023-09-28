@@ -261,6 +261,9 @@ class TreeNode:
         return next((child for child in self.children if child.token == token), None)
 
     def insert_without_calculation(self, path: Sequence[TokenWithProb]) -> None:
+        """Inserts a path into the tree without changing the original probability
+        
+        Temporarily here until we change this data structure to be more versatile"""
         if not path:
             return
         token_with_prob = path[0]
