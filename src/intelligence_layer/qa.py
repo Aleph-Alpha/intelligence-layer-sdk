@@ -29,7 +29,10 @@ class SingleDocumentQa(Task[SingleDocumentQaInput, QaOutput]):
 ### Response:"""
 
     def __init__(
-        self, client: Client, log_level: LogLevel, model="luminous-supreme-control"
+        self,
+        client: Client,
+        log_level: LogLevel,
+        model: str = "luminous-supreme-control",
     ):
         self.client = client
         self.log_level = log_level
@@ -44,7 +47,7 @@ class SingleDocumentQa(Task[SingleDocumentQaInput, QaOutput]):
         request = CompletionRequest(prompt)
         output = self.completion.run(CompletionInput(request=request, model=self.model))
         debug_log.debug("Completion", output.debug_log)
-        completion = output.response.completions[0].completion.strip()
+        completion = (output.response.completions[0].completion or "").strip()
         return QaOutput(
             answer=completion if completion != NO_ANSWER_TEXT else None,
             debug_log=debug_log,
