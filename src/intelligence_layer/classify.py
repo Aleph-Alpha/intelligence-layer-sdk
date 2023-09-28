@@ -265,6 +265,18 @@ class TreeNode:
     def find_child(self, token: Token) -> Optional["TreeNode"]:
         return next((child for child in self.children if child.token == token), None)
 
+    def insert_without_calculation(self, path: Sequence[TokenWithProb]) -> None:
+        if not path:
+            return
+        token_with_prob = path[0]
+        child = self.find_child(token_with_prob.token)
+        if child is None:
+            child = TreeNode(token_with_prob.token, Probability(token_with_prob.prob))
+            self.children.append(child)
+
+        child.insert_without_calculation(path[1:])
+
+
     def insert_path(self, path: Sequence[TokenWithProb]) -> None:
         if not path:
             return
