@@ -1,7 +1,4 @@
-from typing import Optional
-from intelligence_layer.classify import TreeNode
 from pydantic import BaseModel
-import matplotlib.pyplot as plt
 from intelligence_layer.task import DebugLog
 
 
