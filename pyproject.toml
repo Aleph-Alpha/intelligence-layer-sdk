@@ -24,6 +24,10 @@ black = "*"
 mypy = "*"
 pre-commit = "*"
 httpx = "*"
+types-Pygments="*"
+types-colorama="*"
+types-docutils="*"
+types-setuptools="*"
 
 [tool.mypy]
 files = "src,tests"
