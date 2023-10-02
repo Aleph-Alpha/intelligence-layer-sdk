@@ -89,14 +89,14 @@ class InfoEnabledLog(DebugLog):
         self.root.append(LogEntry(message=message, level="info", value=value))
 
     def _ipython_display_(self) -> None:
-        from IPython.display import display_javascript, display_html  # type: ignore
+        from IPython.display import display_javascript, display_html
 
         uuid = uuid4()
-        display_html(
-            f'<script src="https://rawgit.com/caldwell/renderjson/master/renderjson.js"></script><div id="{uuid}" style="height: 600px; width:100%;"></div>',
+        display_html(  # type: ignore
+            f'<script src="https://rawgit.com/caldwell/renderjson/master/renderjson.js"></script><div id="{uuid}"></div>',
             raw=True,
         )
-        display_javascript(
+        display_javascript(  # type: ignore
             f"""
         renderjson.set_show_to_level(2);
         document.getElementById('{uuid}').appendChild(renderjson({self.model_dump_json()}));

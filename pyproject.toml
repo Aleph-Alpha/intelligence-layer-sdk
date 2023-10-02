@@ -28,6 +28,8 @@ types-Pygments="*"
 types-colorama="*"
 types-docutils="*"
 types-setuptools="*"
+jupyterlab = "*"
+types-decorator = "*"
 
 [tool.mypy]
 files = "src,tests"
