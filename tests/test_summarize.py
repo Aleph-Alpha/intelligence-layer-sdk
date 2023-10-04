@@ -5,8 +5,9 @@ from intelligence_layer.summarize import (
     ShortBodySummarize,
 )
 
+
 @fixture
-def qa(client: Client) -> ShortBodySummarize:
+def summarize(client: Client) -> ShortBodySummarize:
     return ShortBodySummarize(client, "info")
 
 
@@ -19,4 +20,4 @@ While the brown bear's range has shrunk, and it has faced local extinctions acro
     output = summarize.run(input)
 
     assert output.summary
-    assert "bear" in output.summary.lower
+    assert "bear" in output.summary.lower()
