@@ -29,7 +29,7 @@ Summarize in just one or two sentences.
 ### Response:"""
     MODEL: str = "luminous-supreme-control"
     client: Client
-    
+
     def __init__(self, client: Client, log_level: LogLevel) -> None:
         super().__init__()
         self.client = client
@@ -60,7 +60,9 @@ Summarize in just one or two sentences.
             maximum_tokens=128,
             log_probs=3,
         )
-        response = self.completion_task.run(CompletionInput(request=request, model=self.MODEL))
+        response = self.completion_task.run(
+            CompletionInput(request=request, model=self.MODEL)
+        )
         debug_log.debug(
             "Completion Request/Response",
             response.debug_log,
