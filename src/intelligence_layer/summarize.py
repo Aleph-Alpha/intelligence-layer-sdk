@@ -1,4 +1,4 @@
-from aleph_alpha_client import Client, CompletionRequest, Prompt
+from aleph_alpha_client import Client, CompletionRequest, Prompt, PromptTemplate
 from pydantic import BaseModel
 
 from .completion import Completion, CompletionInput, CompletionOutput
@@ -24,7 +24,7 @@ class ShortBodySummarize(Task[SummarizeInput, SummarizeOutput]):
 Summarize in just one or two sentences.
 
 ### Input:
-{text}
+{{text}}
 
 ### Response:"""
     MODEL: str = "luminous-supreme-control"
@@ -38,21 +38,16 @@ Summarize in just one or two sentences.
 
     def run(self, input: SummarizeInput) -> SummarizeOutput:
         debug_log = DebugLog.enabled(level=self.log_level)
-        formatted_prompt = self._format_prompt(text=input.text, debug_log=debug_log)
-        completion = self._complete(prompt=formatted_prompt, debug_log=debug_log)
-        summary = completion.completion()
-        return SummarizeOutput(summary=summary, debug_log=debug_log)
+        prompt = self._format_prompt(text=input.text, debug_log=debug_log)
+        completion = self._complete(prompt=prompt, debug_log=debug_log)
+        return SummarizeOutput(summary=completion.completion(), debug_log=debug_log)
 
     def _format_prompt(self, text: str, debug_log: DebugLog) -> Prompt:
-        prompt_str = self.PROMPT_TEMPLATE.format(text=text)
         debug_log.info(
-            "Formatted prompt string",
-            {
-                "template": self.PROMPT_TEMPLATE,
-                "formatted": prompt_str,
-            },
+            "Prompt template/text", {"template": self.PROMPT_TEMPLATE, "text": text}
         )
-        return Prompt.from_text(prompt_str)
+        prompt = PromptTemplate(self.PROMPT_TEMPLATE).to_prompt(text=text)
+        return prompt
 
     def _complete(self, prompt: Prompt, debug_log: DebugLog) -> CompletionOutput:
         request = CompletionRequest(

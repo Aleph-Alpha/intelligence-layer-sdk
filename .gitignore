@@ -155,6 +155,3 @@ wandb/
 envs*
 scratch
 pyrightconfig.json
-
-# others
-sandbox.py
