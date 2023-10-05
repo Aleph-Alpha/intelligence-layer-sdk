@@ -1,15 +1,10 @@
-from math import exp
-from typing import Optional, Sequence
+import math
+from typing import Sequence, Union
 
 from aleph_alpha_client import Client, ExplanationRequest, ExplanationResponse, TextScore, Prompt
-import numpy as np
 from pydantic import BaseModel
 
 from intelligence_layer.task import DebugLog, LogLevel, Task
-
-
-def sigmoid(x):
-  return 1 / (1 + exp(-x))
 
 
 class TextRange(BaseModel):
@@ -33,9 +28,16 @@ class HighlightInput(BaseModel):
     highlight_range: TextRange
 
 
+class ScoredHighlight(BaseModel):
+    text: str
+    score: Union[float, int]
+    sigmoid_score: Union[float, int]
+    text_range: TextRange
+
+
 class HighlightOutput(BaseModel):
     """Output of for a highlight task"""
-    highlights: Sequence[str]
+    highlights: Sequence[ScoredHighlight]
     debug_log: DebugLog
     """Provides key steps, decisions, and intermediate outputs of a task's process."""
 
@@ -57,7 +59,7 @@ class Highlight(Task[HighlightInput, HighlightOutput]):
         self, input: HighlightInput
     ) -> HighlightOutput:
         debug_log = DebugLog.enabled(level=self.log_level)
-        aa_explanation = self._aa_explain(prompt=input.prompt, target=input.target, debug_log=debug_log)
+        aa_explanation = self._explain(prompt=input.prompt, target=input.target, debug_log=debug_log)
         highlights = self._to_highlights(
             explanation=aa_explanation,
             text=input.highlight_range.get_text(input.prompt),
@@ -68,13 +70,8 @@ class Highlight(Task[HighlightInput, HighlightOutput]):
             highlights=highlights,
             debug_log=debug_log
         )
-    
-    def _determine_highlight_range(self, prompt: str, highlight_text: str) -> TextRange:
-        return TextRange.from_prompt_and_highlight_text(
-            prompt=prompt, highlight_text=highlight_text
-        )
 
-    def _aa_explain(self, prompt: str, target: str, debug_log: DebugLog) -> ExplanationResponse:
+    def _explain(self, prompt: str, target: str, debug_log: DebugLog) -> ExplanationResponse:
         request = ExplanationRequest(Prompt.from_text(prompt), target)
         response = self.client.explain(request, "luminous-base-control")
         debug_log.debug(
@@ -90,7 +87,7 @@ class Highlight(Task[HighlightInput, HighlightOutput]):
         debug_log: DebugLog,
     ) -> Sequence[str]:
         scores = explanation.explanations[0].items[0].scores
-        overlapping = [
+        overlapping_scores = [
             text_score
             for text_score in scores
             if isinstance(text_score, TextScore) and text_range.overlaps(text_score)
@@ -99,19 +96,47 @@ class Highlight(Task[HighlightInput, HighlightOutput]):
             "Explanation-Scores",
             [
                 {
-                    "text": self._chop_highlight(text, text_score, text_range),
+                    "highlight": self._to_highlight(text, text_score, text_range),
                     "score": text_score.score,
                 }
-                for text_score in overlapping
+                for text_score in overlapping_scores
             ],
         )
-        best_test_score = max(text_score.score for text_score in overlapping)
+        relevant_scores = self._filter_values(overlapping_scores, 1, debug_log)
         return [
-            self._chop_highlight(text, text_score, text_range)
-            for text_score in overlapping
-            if text_score.score == best_test_score
+            self._to_highlight(text, text_score, text_range)
+            for text_score in relevant_scores
         ]
 
-    def _chop_highlight(self, text: str, score: TextScore, range: TextRange) -> str:
+    @staticmethod
+    def _z_scores(data: Sequence[float], debug_log: DebugLog) -> Sequence[float]:
+        mean = sum(data) / len(data)
+        std_dev = math.sqrt(sum([(x - mean) ** 2 for x in data]) / (len(data) - 1))
+        z_scores = [(x - mean) / std_dev for x in data]
+        debug_log.info(
+            "Explanation-Statistics",
+            {
+                "mean": mean,
+                "std_dev": std_dev,
+                "z_scores": z_scores
+            }
+        )
+        return z_scores
+
+    def _filter_values(self, data: Sequence[TextScore], z_score_limit: Union[float, int], debug_log: DebugLog) -> Sequence[TextScore]:
+        z_scores = self._z_scores([d.score for d in data], debug_log)
+        return [d for d, z in zip(data, z_scores) if abs(z) >= z_score_limit]
+
+    @staticmethod
+    def _sigmoid(x: Union[float, int]) -> Union[float, int]:
+        return 1 / (1 + math.exp(-x))
+
+    def _to_highlight(self, text: str, score: TextScore, range: TextRange) -> str:
         start = score.start - range.start
-        return text[max(0, start) : start + score.length]
+        start_idx, end_idx = max(0, start), start + score.length
+        return ScoredHighlight(
+            text=text[start_idx:end_idx],
+            score=score.score,
+            sigmoid_score=self._sigmoid(score.score),
+            text_range=TextRange(start=start_idx, end=end_idx)
+        )
