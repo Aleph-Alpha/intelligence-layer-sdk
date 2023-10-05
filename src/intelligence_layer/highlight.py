@@ -95,16 +95,16 @@ class Highlight(Task[HighlightInput, HighlightOutput]):
         debug_log: DebugLog,
     ) -> Sequence[ScoredHighlight]:
         scores = [
-            s for s in explanation.explanations[0].items[0].scores if isinstance(s, TextScore)
+            s
+            for s in explanation.explanations[0].items[0].scores
+            if isinstance(s, TextScore)
         ]
         debug_log.info(
             "All scored highlights",
             self._score_highlights(prompt, scores, debug_log),
         )
         overlapping = [
-            text_score
-            for text_score in scores
-            if highlight_range.overlaps(text_score)
+            text_score for text_score in scores if highlight_range.overlaps(text_score)
         ]
         highlights = self._score_highlights(prompt, overlapping, debug_log)
         return self._filter_highlights(highlights)
@@ -125,7 +125,9 @@ class Highlight(Task[HighlightInput, HighlightOutput]):
         debug_log.info("Highlight statistics", {"mean": mean, "std_dev": std_dev})
         return [(x - mean) / std_dev for x in data]
 
-    def _to_highlight(self, prompt: str, score: TextScore, z_score: float) -> ScoredHighlight:
+    def _to_highlight(
+        self, prompt: str, score: TextScore, z_score: float
+    ) -> ScoredHighlight:
         text_range = TextRange(start=score.start, end=score.start + score.length)
         return ScoredHighlight(
             text=text_range.get_text(prompt),
