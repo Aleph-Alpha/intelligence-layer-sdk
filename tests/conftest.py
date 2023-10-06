@@ -1,5 +1,7 @@
 from os import getenv
-from aleph_alpha_client import Client
+from pathlib import Path
+from typing import cast
+from aleph_alpha_client import Client, Image
 from dotenv import load_dotenv
 from pytest import fixture
 
@@ -11,3 +13,9 @@ def client() -> Client:
     token = getenv("AA_API_TOKEN")
     assert isinstance(token, str)
     return Client(token=token)
+
+
+@fixture(scope="session")
+def prompt_image() -> Image:
+    image_source_path = Path(__file__).parent / "dog-and-cat-cover.jpg"
+    return cast(Image, Image.from_file(image_source_path))  # from_file lacks type-hint
