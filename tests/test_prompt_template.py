@@ -2,7 +2,13 @@ from pathlib import Path
 from typing import List
 from pytest import raises
 from aleph_alpha_client.prompt import Prompt, Image, PromptItem, Text, Tokens
-from intelligence_layer.prompt_template import TextPosition, PromptTemplate
+from intelligence_layer.prompt_template import (
+    PromptItemCursor,
+    PromptRange,
+    TextCursor,
+    TextPosition,
+    PromptTemplate,
+)
 from liquid.exceptions import LiquidTypeError
 
 
@@ -176,35 +182,33 @@ def test_to_prompt_resets_template(prompt_image: Image) -> None:
 
 
 def test_to_prompt_returns_position_of_embedded_texts(prompt_image: Image) -> None:
-    embedded = "Embedded"
+    embedded_text = "Embedded"
     prefix_items: List[PromptItem] = [
         Text.from_text("Prefix Text Item"),
         prompt_image,
     ]
+    prefix_text = "Prefix text"
     prefix_merged = Text.from_text("Merged Prefix Item")
-    postfix_merged = Text.from_text("Merged Postfix Item")
-    postfix_items: List[PromptItem] = [prompt_image]
+    embedded_merged = Text.from_text("Merged Postfix Item")
+    embedded_items: List[PromptItem] = [prompt_image]
     template = PromptTemplate(
-        "{{prefix_items}}{{embedded_text}} more text {{postfix_items}}{{embedded_text}}"
+        "{{prefix_items}}{{prefix_text}}{% promptrange r1 %}{{embedded_text}}{{embedded_items}}{% endpromptrange %}",
     )
 
     prompt_data = template.to_prompt_data(
         prefix_items=template.embed_prompt(Prompt(prefix_items + [prefix_merged])),
-        embedded_text=template.placeholder(embedded),
-        postfix_items=template.embed_prompt(Prompt([postfix_merged] + postfix_items)),
+        prefix_text=prefix_text,
+        embedded_text=embedded_text,
+        embedded_items=template.embed_prompt(
+            Prompt([embedded_merged] + embedded_items)
+        ),
     )
 
-    positions = prompt_data.positions.get("embedded_text")
+    ranges = prompt_data.ranges.get("r1")
 
-    assert positions == [
-        TextPosition(
-            item=len(prefix_items),
-            start=len(prefix_merged.text),
-            length=len(embedded),
-        ),
-        TextPosition(
-            item=len(prefix_items) + len(postfix_items) + 1,
-            start=0,
-            length=len(embedded),
+    assert ranges == [
+        PromptRange(
+            start=TextCursor(item=len(prefix_items), position=len(prefix_text)),
+            end=PromptItemCursor(item=len(prefix_items) + len(embedded_items)),
         ),
     ]
