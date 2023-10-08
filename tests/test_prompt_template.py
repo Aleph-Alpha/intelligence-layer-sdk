@@ -189,7 +189,7 @@ def test_to_prompt_returns_position_of_embedded_texts(prompt_image: Image) -> No
     ]
     prefix_text = "Prefix text"
     prefix_merged = Text.from_text("Merged Prefix Item")
-    embedded_merged = Text.from_text("Merged Postfix Item")
+    embedded_merged = Text.from_text("Merged Embedded Item")
     embedded_items: List[PromptItem] = [prompt_image]
     template = PromptTemplate(
         "{{prefix_items}}{{prefix_text}}{% promptrange r1 %}{{embedded_text}}{{embedded_items}}{% endpromptrange %}",
@@ -208,7 +208,15 @@ def test_to_prompt_returns_position_of_embedded_texts(prompt_image: Image) -> No
 
     assert ranges == [
         PromptRange(
-            start=TextCursor(item=len(prefix_items), position=len(prefix_text)),
+            start=TextCursor(
+                item=len(prefix_items),
+                position=len(prefix_merged.text) + len(prefix_text),
+            ),
             end=PromptItemCursor(item=len(prefix_items) + len(embedded_items)),
         ),
     ]
+
+
+def print_items(prompt: Prompt) -> None:
+    for index, item in enumerate(prompt.items):
+        print(f"{index}. {item.text if isinstance(item, Text) else type(item)}")

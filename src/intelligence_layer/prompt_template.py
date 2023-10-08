@@ -1,5 +1,5 @@
 from collections import defaultdict
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from itertools import chain
 from re import finditer
 from sys import intern
@@ -117,7 +117,13 @@ class PromptRangeContext(Context):
             local_namespace_size_carry,
             template,
         )
-        self.range_name_per_placeholder: dict[Placeholder, str] = {}
+        self._placeholder_range_names: dict[Placeholder, str] = {}
+
+    def add_placeholder_range(self, placeholder: Placeholder, name: str) -> None:
+        self._placeholder_range_names[placeholder] = name
+
+    def placeholder_range_names(self) -> Mapping[Placeholder, str]:
+        return self._placeholder_range_names
 
 
 class PromptRangeNode(Node):
@@ -130,7 +136,7 @@ class PromptRangeNode(Node):
     def render_to_output(self, context: Context, buffer: TextIO) -> Optional[bool]:
         if not isinstance(context, PromptRangeContext):
             raise LiquidTypeError("Context not of expected type")
-        context.range_name_per_placeholder[self.placeholder] = self.name
+        context.add_placeholder_range(self.placeholder, self.name)
         buffer.write(str(self.placeholder))
         self.inner.render(context, buffer)
         buffer.write(str(self.placeholder))
@@ -163,7 +169,9 @@ class PromptTemplate:
         Parameters:
             template_str: the liquid template string
         """
-        self.template = Template(template_str)
+        env = Environment()
+        env.add_tag(PromptRangeTag)
+        self.template = env.from_string(template_str)
         self.prompt_item_placeholders: Dict[Placeholder, Union[Image, Tokens]] = {}
 
     def placeholder(self, value: Union[Image, Tokens]) -> Placeholder:
@@ -237,28 +245,15 @@ class PromptTemplate:
         placeholder_indices = self._compute_indices(
             chain(
                 self.prompt_item_placeholders.keys(),
-                context.range_name_per_placeholder.keys(),
+                context.placeholder_range_names().keys(),
             ),
             liquid_prompt,
         )
-        positions_by_placeholder: Dict[Placeholder, List[PromptRange]] = defaultdict(
-            list
+        modalities, placeholder_ranges = self._compute_modalities_and_ranges(
+            placeholder_indices, context.placeholder_range_names(), liquid_prompt
         )
-        modalities = self._modalities_from(
-            placeholder_indices,
-            context.range_name_per_placeholder,
-            positions_by_placeholder,
-            liquid_prompt,
-        )
-        result = PromptData(
-            Prompt(list(modalities)),
-            {
-                # context.range_name_per_placeholder.get(placeholder) cannot be None as None-s are filtered
-                context.range_name_per_placeholder.get(placeholder): ranges  # type: ignore
-                for placeholder, ranges in positions_by_placeholder.items()
-                if context.range_name_per_placeholder.get(placeholder)
-            },
-        )
+
+        result = PromptData(Prompt(modalities), placeholder_ranges)
         self.prompt_item_placeholders = {}
         return result
 
@@ -277,11 +272,39 @@ class PromptTemplate:
         pattern = f"({'|'.join(str(placeholder) for placeholder in placeholders)})"
         return ((match.start(), match.end()) for match in finditer(pattern, template))
 
+    def _compute_modalities_and_ranges(
+        self,
+        placeholder_indices: Iterable[Tuple[int, int]],
+        placeholder_range_names: Mapping[Placeholder, str],
+        template: str,
+    ) -> Tuple[Sequence[PromptItem], Mapping[str, Sequence[PromptRange]]]:
+        placeholder_ranges: Dict[Placeholder, List[PromptRange]] = defaultdict(list)
+        modalities = list(
+            self._modalities_from(placeholder_indices, placeholder_ranges, template)
+        )
+        self.replace_start_cursors_of_non_text_items(modalities, placeholder_ranges)
+        return modalities, {
+            placeholder_range_names[placeholder]: ranges
+            for placeholder, ranges in placeholder_ranges.items()
+            if placeholder_range_names.get(placeholder)
+        }
+
+    @staticmethod
+    def replace_start_cursors_of_non_text_items(
+        modalities: Sequence[PromptItem],
+        placeholder_ranges: Dict[Placeholder, List[PromptRange]],
+    ) -> None:
+        for prompt_ranges in placeholder_ranges.values():
+            for index, range in enumerate(prompt_ranges):
+                if not isinstance(modalities[range.start.item], Text):
+                    prompt_ranges[index] = replace(
+                        range, start=PromptItemCursor(range.start.item)
+                    )
+
     def _modalities_from(
         self,
         placeholder_indices: Iterable[Tuple[int, int]],
-        range_placeholders: Mapping[Placeholder, str],
-        positions_by_placeholder: dict[Placeholder, List[PromptRange]],
+        placeholder_ranges: dict[Placeholder, List[PromptRange]],
         template: str,
     ) -> Iterable[PromptItem]:
         last_to = 0
@@ -295,46 +318,28 @@ class PromptTemplate:
             accumulated_text = ""
             return item
 
-        def start_cursor(text: bool) -> Union[TextCursor, PromptItemCursor]:
-            return (
-                TextCursor(item=item_cnt, position=len(accumulated_text))
-                if text
-                else PromptItemCursor(item_cnt)
-            )
+        def initial_start_text_cursor() -> Union[TextCursor, PromptItemCursor]:
+            return TextCursor(item=item_cnt, position=len(accumulated_text))
 
         def end_cursor() -> Union[TextCursor, PromptItemCursor]:
             return (
                 TextCursor(item=item_cnt, position=len(accumulated_text))
                 if accumulated_text
-                else PromptItemCursor(item_cnt)
+                else PromptItemCursor(item_cnt - 1)
             )
 
-        def current_text_position(value: str) -> Iterable[TextPosition]:
-            nonlocal item_cnt, accumulated_text
-            yield TextPosition(
-                item=item_cnt,
-                start=len(accumulated_text),
-                length=len(value),
-            )
-            accumulated_text += value
-
-        for placeholder_from, placeholder_to, text_follows in pre_process(
-            placeholder_indices, self.prompt_item_placeholders, range_placeholders
-        ):
+        for placeholder_from, placeholder_to in placeholder_indices:
             placeholder = Placeholder(UUID(template[placeholder_from:placeholder_to]))
             accumulated_text += template[last_to:placeholder_from]
             placeholder_prompt_item = self.prompt_item_placeholders.get(placeholder)
-            range = range_placeholders.get(placeholder)
-
             if placeholder_prompt_item:
                 if accumulated_text:
                     yield new_prompt_item(Text.from_text(accumulated_text))
 
                 yield new_prompt_item(placeholder_prompt_item)
             else:
-                assert range
                 if range_starts.get(placeholder):
-                    positions_by_placeholder[placeholder].append(
+                    placeholder_ranges[placeholder].append(
                         PromptRange(
                             start=range_starts[placeholder],
                             end=end_cursor(),
@@ -342,42 +347,7 @@ class PromptTemplate:
                     )
                     del range_starts[placeholder]
                 else:
-                    range_starts[placeholder] = start_cursor(text_follows)
+                    range_starts[placeholder] = initial_start_text_cursor()
             last_to = placeholder_to
         if last_to < len(template):
             yield Text.from_text(accumulated_text + template[last_to:])
-
-
-def pre_process(
-    placeholder_indices: Sequence[Tuple[int, int]],
-    text: str,
-    prompt_item_placeholders: Mapping[Placeholder, Union[Image, Tokens]],
-    range_placeholders: Mapping[Placeholder, str],
-) -> Iterable[Union[str, Tuple[Placeholder, bool]]]:
-    last_to = 0
-
-    placeholder = Placeholder(UUID(text[placeholder_from:placeholder_to]))
-    placeholder_prompt_item = prompt_item_placeholders.get(placeholder)
-    range = range_placeholders.get(placeholder)
-
-    for current, (placeholder_from, placeholder_to, is_range) in enumerate(
-        placeholder_indices
-    ):
-        inner_text = text[last_to:placeholder_from]
-        if inner_text:
-            yield inner_text
-        if current == len(placeholder_indices) - 1:
-            text_follows = placeholder_to < len(text)
-        if placeholder_indices[current + 1][0] > placeholder_to:
-            text_follows = True
-        if is_range:
-            i = current + 1
-            while (
-                placeholder_indices[i][0] == placeholder[i - 1][1] and placeholder[i][2]
-            ):
-                i += 1
-            text_follows = placeholder_indices[i][0] > placeholder[i - 1][1]
-        yield placeholder, text_follows
-        last_to = placeholder_to
-    if last_to < len(text):
-        yield text[last_to:]
