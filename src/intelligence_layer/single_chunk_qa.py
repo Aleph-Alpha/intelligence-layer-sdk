@@ -9,13 +9,13 @@ from aleph_alpha_client import (
 )
 from pydantic import BaseModel
 from intelligence_layer.completion import Completion, CompletionInput, CompletionOutput
-from intelligence_layer.avalible_models import ControlModels
+from intelligence_layer.available_models import ControlModels
 
 from intelligence_layer.task import DebugLog, LogLevel, Task
 
 
-class SingleDocumentQaInput(BaseModel):
-    text: str
+class SingleChunkQaInput(BaseModel):
+    chunk: str
     question: str
 
 
@@ -39,7 +39,7 @@ class TextRange(BaseModel):
 NO_ANSWER_TEXT = "NO_ANSWER_IN_TEXT"
 
 
-class SingleChunkQa(Task[SingleDocumentQaInput, QaOutput]):
+class SingleChunkQa(Task[SingleChunkQaInput, QaOutput]):
     """
     Perform Question answering on a text chunk that fits into the contex length (<2048 tokens for text prompt, question and answer)
     """
@@ -64,17 +64,17 @@ class SingleChunkQa(Task[SingleDocumentQaInput, QaOutput]):
         self.completion = Completion(client, log_level)
         self.model = model
 
-    def run(self, input: SingleDocumentQaInput) -> QaOutput:
+    def run(self, input: SingleChunkQaInput) -> QaOutput:
         debug_log = DebugLog.enabled(level=self.log_level)
         prompt_text, text_range = self._prompt_text(
-            input.text, input.question, NO_ANSWER_TEXT
+            input.chunk, input.question, NO_ANSWER_TEXT
         )
         output = self._complete(prompt_text, debug_log)
         explanation = self._explain(prompt_text, output.completion(), debug_log)
         return QaOutput(
             answer=self._no_answer_to_none(output.completion().strip()),
             highlights=self._to_highlights(
-                explanation, input.text, text_range, debug_log
+                explanation, input.chunk, text_range, debug_log
             ),
             debug_log=debug_log,
         )
@@ -145,3 +145,22 @@ class SingleChunkQa(Task[SingleDocumentQaInput, QaOutput]):
     def chop_highlight(self, text: str, score: TextScore, range: TextRange) -> str:
         start = score.start - range.start
         return text[max(0, start) : start + score.length]
+
+
+if __name__ == "__main__":
+    import os
+    token = os.getenv("AA_TOKEN")
+    client = Client(token=token)
+
+    qa = SingleChunkQa(client, "info")
+    
+    input = SingleChunkQaInput(
+        chunk="Paul Nicolas lost his mother at the age of 3, and then his father in 1914.[3] He was raised by his mother-in-law together with his brother Henri. He began his football career with Saint-Mandé Club in 1916. Initially, he played as a defender, but he quickly realized that his destiny laid at the forefront since he scored many goals.[3] In addition to his goal-scoring instinct, Nicolas also stood out for his strong character on the pitch, and these two qualities combined eventually drew the attention of Mr. Fort, the then president of the Gallia Club, who signed him as a centre-forward in 1916.",
+        question="What is the name of Paul Nicolas' brother?",
+    )
+    output = qa.run(input)
+
+    assert output.answer
+    assert "Henri" in output.answer
+    assert any("Henri" in highlight for highlight in output.highlights)
+    assert len(output.highlights) == 1

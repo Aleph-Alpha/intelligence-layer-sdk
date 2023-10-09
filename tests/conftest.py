@@ -10,7 +10,7 @@ from pytest import fixture
 def client() -> Client:
     """Provide fixture for api."""
     load_dotenv()
-    token = getenv("AA_API_TOKEN")
+    token = getenv("AA_TOKEN")
     assert isinstance(token, str)
     return Client(token=token)
 

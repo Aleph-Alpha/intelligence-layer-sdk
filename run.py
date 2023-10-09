@@ -17,8 +17,8 @@ load_dotenv()
 
 
 def client() -> Client:
-    token = os.getenv("AA_API_TOKEN")
-    assert token is not None, "Define AA_API_TOKEN in your .env file"
+    token = os.getenv("AA_TOKEN")
+    assert token is not None, "Define AA_TOKEN in your .env file"
     return Client(token=token)
 
 
