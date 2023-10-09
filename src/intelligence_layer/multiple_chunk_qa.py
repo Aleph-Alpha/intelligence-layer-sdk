@@ -1,6 +1,5 @@
-from intelligence_layer.single_chunk_qa import SingleChunkQaInput, QaOutput, SingleChunkQa
+from intelligence_layer.single_chunk_qa import SingleChunkQaInput, QaOutput, SingleChunkQa, TextRange
 from intelligence_layer.task import DebugLog, LogLevel, Task
-from intelligence_layer.available_models import ControlModels
 from aleph_alpha_client import (
     Client,
     CompletionRequest,
@@ -10,7 +9,7 @@ from aleph_alpha_client import (
     TextScore,
 )
 from intelligence_layer.completion import Completion, CompletionInput, CompletionOutput
-from typing import List
+from typing import List, Tuple
 from pydantic import BaseModel
 
 class MultipleChunkQaInput(BaseModel):
@@ -36,7 +35,7 @@ Final answer:"""
         self,
         client: Client,
         log_level: LogLevel,
-        model: ControlModels = ControlModels.SUPREME_CONTROL,
+        model: str = "luminous-supreme-control"
     ):
 
         self.client = client
@@ -44,6 +43,15 @@ Final answer:"""
         self.completion = Completion(client, log_level)
         self.single_chunk_qa = SingleChunkQa(client, log_level, model)
     
+    def _prompt_text(
+        self, text: str, question: str, no_answer_text: str
+    ) -> Tuple[str, TextRange]:
+        prefix = self.PROMPT_TEMPLATE.format(
+            question=question, no_answer_text=no_answer_text
+        )
+        return prefix + text + self.POSTFIX_TEMPLATE_STR, TextRange(
+            start=len(prefix), end=len(prefix) + len(text)
+        )
 
     def run(self, input: MultipleChunkQaInput) -> QaOutput:
         """Executes the process for this use-case."""

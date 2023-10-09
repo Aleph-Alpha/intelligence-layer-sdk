@@ -1,12 +1,11 @@
 from aleph_alpha_client import Client, CompletionRequest, CompletionResponse
 from pydantic import BaseModel
 from intelligence_layer.task import DebugLog, LogLevel, Task
-from intelligence_layer.available_models import ControlModels
 
 
 class CompletionInput(BaseModel):
     request: CompletionRequest
-    model: ControlModels
+    model: str
 
 
 class CompletionOutput(BaseModel):
