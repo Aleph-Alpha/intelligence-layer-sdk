@@ -1,3 +1,4 @@
+from typing import Optional, Sequence, Tuple
 from intelligence_layer.single_chunk_qa import (
     SingleChunkQaInput,
     QaOutput,
@@ -21,6 +22,13 @@ from pydantic import BaseModel
 class MultipleChunkQaInput(BaseModel):
     chunks: List[str]
     question: str
+
+
+class MutipleChunkQaOutput(BaseModel):
+    final_answer: Optional[str]
+    sources: Sequence[Optional[str]]
+    sources_highlights: Sequence[Sequence[str]]
+    debug_log: DebugLog
 
 
 class MultipleChunkQa(Task[MultipleChunkQaInput, QaOutput]):
@@ -48,14 +56,19 @@ Final answer:"""
         self.completion = Completion(client, log_level)
         self.single_chunk_qa = SingleChunkQa(client, log_level, model)
 
-    def _prompt_text(
-        self, text: str, question: str, no_answer_text: str
-    ) -> Tuple[str, TextRange]:
-        prompt = self.PROMPT_TEMPLATE.format(
-            question=question, no_answer_text=no_answer_text
+    def _prompt_text(self, question: str, answers: Sequence[str]) -> str:
+        prompt = self.PROMPT_TEMPLATE.format(question=question, answers=answers)
+        return prompt
+
+    def _complete(self, prompt: str, debug_log: DebugLog) -> CompletionOutput:
+        request = CompletionRequest(Prompt.from_text(prompt))
+        output = self.completion.run(CompletionInput(request=request, model=self.model))
+        debug_log.debug("Completion", output.debug_log)
+        debug_log.info(
+            "Completion Input/Output",
+            {"prompt": prompt, "completion": output.completion()},
         )
-        # need to calculate the range differently
-        return prompt, TextRange(start=len(prompt), end=len(prompt) + len(text))
+        return output
 
     def run(self, input: MultipleChunkQaInput) -> QaOutput:
         """Executes the process for this use-case."""
@@ -69,8 +82,15 @@ Final answer:"""
 
         answers: List[str | None] = [output.answer for output in qa_outputs]
 
+        debug_log = DebugLog.enabled(level=self.log_level)
+        prompt_text = self._prompt_text(
+            input.question, [answer for answer in answers if answer is not None]
+        )
+        output = self._complete(prompt_text, debug_log)
+        # TODO fix the prompt execution
+        explanation = None
         return QaOutput(
-            answer="XXX",
-            highlights=["xxxx", "zzzz"],
-            debug_log=DebugLog.enabled(level=self.log_level),
+            answer=self._no_answer_to_none(output.completion().strip()),
+            highlights=self._to_highlights(explanation, input.chunk, [], debug_log),
+            debug_log=debug_log,
         )
