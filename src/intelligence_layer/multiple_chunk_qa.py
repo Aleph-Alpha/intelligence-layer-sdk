@@ -23,7 +23,7 @@ class MultipleChunkQaInput(BaseModel):
     question: str
 
 
-class MultipleChunkQa(Task[SingleChunkQaInput, QaOutput]):
+class MultipleChunkQa(Task[MultipleChunkQaInput, QaOutput]):
     PROMPT_TEMPLATE = """### Instruction:
 You will be given a number of Answers to a Question. Based on them, generate a single final answer.
 Condense multiple answers into a single answer. Rely only on the provided answers. Don't use the world's knowledge. The answer should combine the individual answers. If the answers contradict each other, e.g., one saying that the colour is green and the other saying that the colour is black, say that there are contradicting answers saying the colour is green or the colour is black.
@@ -51,12 +51,11 @@ Final answer:"""
     def _prompt_text(
         self, text: str, question: str, no_answer_text: str
     ) -> Tuple[str, TextRange]:
-        prefix = self.PROMPT_TEMPLATE.format(
+        prompt = self.PROMPT_TEMPLATE.format(
             question=question, no_answer_text=no_answer_text
         )
-        return prefix + text + self.POSTFIX_TEMPLATE_STR, TextRange(
-            start=len(prefix), end=len(prefix) + len(text)
-        )
+        # need to calculate the range differently
+        return prompt, TextRange(start=len(prompt), end=len(prompt) + len(text))
 
     def run(self, input: MultipleChunkQaInput) -> QaOutput:
         """Executes the process for this use-case."""
@@ -68,7 +67,7 @@ Final answer:"""
             for chunk in input.chunks
         ]
 
-        answers: List[str] = [output.answer for output in qa_outputs]
+        answers: List[str | None] = [output.answer for output in qa_outputs]
 
         return QaOutput(
             answer="XXX",
