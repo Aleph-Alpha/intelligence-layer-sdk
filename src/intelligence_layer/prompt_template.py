@@ -36,35 +36,53 @@ Placeholder = NewType("Placeholder", UUID)
 
 @dataclass(frozen=True)
 class TextCursor:
+    """Defines a position with a `Text` prompt item.
+
+    Args:
+        item: the index of the prompt item within the `Prompt`
+        position: the character position in the text of the item.
+
+    Example:
+    >>> Prompt.from_text("This is a text")
+    >>> TextCursor(item=0, start=5)
+    >>> # This denotes the "i" in "is" in the text-item of the `Prompt` above
+    """
+
     item: int
     position: int
 
 
 @dataclass(frozen=True)
 class PromptItemCursor:
+    """Defines a position with a non-`Text` prompt item.
+
+    Args:
+        item: the index of the prompt item within the `Prompt`
+    """
+
     item: int
+
+
+Cursor = Union[TextCursor, PromptItemCursor]
 
 
 @dataclass
 class PromptRange:
-    start: Union[TextCursor, PromptItemCursor]
-    end: Union[TextCursor, PromptItemCursor]
+    """Defines a range within a `Prompt`."""
+
+    start: Cursor
+    end: Cursor
 
 
 @dataclass(frozen=True)
-class TextPosition:
-    item: int
-    start: int
-    length: int
+class PromptWithMetadata:
+    """The `Prompt` along with some metadata generated when a `PromptTemplate` is turned into a `Prompt`.
 
+    Args:
+      prompt: The actual `Prompt`.
+      ranges: A mapping of range name to a `Sequence` of corresponding `PromptRange`s.
+    """
 
-@dataclass(frozen=True)
-class PromptItemPosition:
-    item: int
-
-
-@dataclass(frozen=True)
-class PromptData:
     prompt: Prompt
     ranges: Mapping[str, Sequence[PromptRange]]
 
@@ -74,6 +92,8 @@ PROMPT_RANGE_END_TAG = intern("endpromptrange")
 
 
 class PromptRangeTag(Tag):
+    """Defines the liquid tag for the promptrange."""
+
     name = PROMPT_RANGE_TAG
     end = PROMPT_RANGE_END_TAG
 
@@ -96,6 +116,8 @@ class PromptRangeTag(Tag):
 
 
 class PromptRangeContext(Context):
+    """A liquid `Context` with some additional state used by the `PromptRangeNode`."""
+
     def __init__(
         self,
         env: Environment,
@@ -127,6 +149,8 @@ class PromptRangeContext(Context):
 
 
 class PromptRangeNode(Node):
+    """A liquid `Node` representing a promptrange."""
+
     def __init__(self, inner: BlockNode, name: str) -> None:
         super().__init__()
         self.inner = inner
@@ -135,7 +159,9 @@ class PromptRangeNode(Node):
 
     def render_to_output(self, context: Context, buffer: TextIO) -> Optional[bool]:
         if not isinstance(context, PromptRangeContext):
-            raise LiquidTypeError("Context not of expected type")
+            raise LiquidTypeError(
+                f"Context not of expected type: {PromptRangeContext} (is: {type(context)})"
+            )
         context.add_placeholder_range(self.placeholder, self.name)
         buffer.write(str(self.placeholder))
         self.inner.render(context, buffer)
@@ -166,8 +192,21 @@ class PromptTemplate:
     def __init__(self, template_str: str) -> None:
         """Initialize with the liquid template string.
 
-        Parameters:
+        The template supports the custom liquid tag `promptrange`. This can be used to determine ranges
+        within the `Prompt` primarily for downstream explainability tasks.
+
+        Args:
             template_str: the liquid template string
+
+        Example:
+        >>> template = PromptTemplate(
+            '''Answer the following question given the input.
+
+            Input: {% promptrange input %}{{text}}{% endpromptrange %}
+            Question: {% promptrange question %}{{question}}{% endpromptrange %}
+            Answer:''')
+        >>> prompt_data = template.to_prompt_data(text="Some text...", question="A question ...")
+        >>> input_range = prompt_data.range.get("input")
         """
         env = Environment()
         env.add_tag(PromptRangeTag)
@@ -229,9 +268,10 @@ class PromptTemplate:
             last_item = item
         return prompt_text
 
-    def to_prompt_data(self, **kwargs: Any) -> PromptData:
-        """Creates a `PromptData` from the template string and the given parameters.
+    def to_prompt_data(self, **kwargs: Any) -> PromptWithMetadata:
+        """Creates a `Prompt` along with metadata from the template string and the given parameters.
 
+        Currently the only metadata returned is information about ranges that are marked in the template.
         Provided parameters are passed to `liquid.Template.render`.
         """
         context = PromptRangeContext(
@@ -253,8 +293,8 @@ class PromptTemplate:
             placeholder_indices, context.placeholder_range_names(), liquid_prompt
         )
 
-        result = PromptData(Prompt(modalities), placeholder_ranges)
-        self.prompt_item_placeholders = {}
+        result = PromptWithMetadata(Prompt(modalities), placeholder_ranges)
+        self._reset_placeholder_state()
         return result
 
     def to_prompt(self, **kwargs: Any) -> Prompt:
@@ -263,6 +303,9 @@ class PromptTemplate:
         Provided parameters are passed to `liquid.Template.render`.
         """
         return self.to_prompt_data(**kwargs).prompt
+
+    def _reset_placeholder_state(self) -> None:
+        self.prompt_item_placeholders = {}
 
     def _compute_indices(
         self, placeholders: Iterable[Placeholder], template: str
@@ -287,7 +330,7 @@ class PromptTemplate:
         modalities = list(
             self._modalities_from(placeholder_indices, placeholder_ranges, template)
         )
-        self.replace_start_cursors_of_non_text_items(modalities, placeholder_ranges)
+        self._replace_start_cursors_of_non_text_items(modalities, placeholder_ranges)
         return modalities, {
             placeholder_range_names[placeholder]: ranges
             for placeholder, ranges in placeholder_ranges.items()
@@ -295,7 +338,7 @@ class PromptTemplate:
         }
 
     @staticmethod
-    def replace_start_cursors_of_non_text_items(
+    def _replace_start_cursors_of_non_text_items(
         modalities: Sequence[PromptItem],
         placeholder_ranges: Dict[Placeholder, List[PromptRange]],
     ) -> None:
@@ -326,7 +369,7 @@ class PromptTemplate:
         def initial_start_text_cursor() -> TextCursor:
             return TextCursor(item=item_cnt, position=len(accumulated_text))
 
-        def end_cursor() -> Union[TextCursor, PromptItemCursor]:
+        def end_cursor() -> Cursor:
             return (
                 TextCursor(item=item_cnt, position=len(accumulated_text))
                 if accumulated_text
@@ -334,7 +377,7 @@ class PromptTemplate:
             )
 
         def valid_range_for(
-            placeholder: Placeholder, end: Union[TextCursor, PromptItemCursor]
+            placeholder: Placeholder, end: Cursor
         ) -> Iterable[PromptRange]:
             if end.item >= range_starts[placeholder].item:
                 yield PromptRange(start=range_starts[placeholder], end=end)
