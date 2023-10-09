@@ -171,3 +171,7 @@ If there's no answer, say "{{no_answer_text}}".
             for text_score in overlapping
             if text_score.score == best_test_score
         ]
+
+    def chop_highlight(self, text: str, score: TextScore, range: TextRange) -> str:
+        start = score.start - range.start
+        return text[max(0, start) : start + score.length]
