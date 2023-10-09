@@ -7,7 +7,6 @@ from intelligence_layer.prompt_template import (
     PromptItemCursor,
     PromptRange,
     TextCursor,
-    TextPosition,
     PromptTemplate,
 )
 from liquid.exceptions import LiquidTypeError, LiquidSyntaxError
