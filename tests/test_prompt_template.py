@@ -199,7 +199,7 @@ def test_to_prompt_data_returns_ranges(prompt_image: Image) -> None:
         "{{prefix_items}}{{prefix_text}}{% promptrange r1 %}{{embedded_text}}{{embedded_items}}{% endpromptrange %}",
     )
 
-    prompt_data = template.to_prompt_data(
+    prompt_data = template.to_prompt_with_metadata(
         prefix_items=template.embed_prompt(Prompt(prefix_items + [prefix_merged])),
         prefix_text=prefix_text,
         embedded_text=embedded_text,
@@ -235,7 +235,9 @@ def test_to_prompt_data_returns_ranges_for_image_only_prompt(
         ).lstrip()
     )
 
-    prompt_data = template.to_prompt_data(image=template.placeholder(prompt_image))
+    prompt_data = template.to_prompt_with_metadata(
+        image=template.placeholder(prompt_image)
+    )
     r1 = prompt_data.ranges.get("r1")
 
     assert r1 == [PromptRange(start=PromptItemCursor(0), end=PromptItemCursor(0))]
@@ -245,7 +247,7 @@ def test_to_prompt_data_returns_ranges_for_image_only_prompt(
 def test_to_prompt_data_returns_no_range_with_empty_template() -> None:
     template = PromptTemplate("{% promptrange r1 %}{% endpromptrange %}")
 
-    assert template.to_prompt_data().ranges.get("r1") == []
+    assert template.to_prompt_with_metadata().ranges.get("r1") == []
 
 
 def test_to_prompt_data_returns_no_empty_ranges(prompt_image: Image) -> None:
@@ -254,9 +256,9 @@ def test_to_prompt_data_returns_no_empty_ranges(prompt_image: Image) -> None:
     )
 
     assert (
-        template.to_prompt_data(image=template.placeholder(prompt_image)).ranges.get(
-            "r1"
-        )
+        template.to_prompt_with_metadata(
+            image=template.placeholder(prompt_image)
+        ).ranges.get("r1")
         == []
     )
 
@@ -274,7 +276,7 @@ def test_to_prompt_data_returns_multiple_text_ranges_in_for_loop() -> None:
         "{% for i in (1..4) %}{% promptrange r1 %}{{embedded}}{% endpromptrange %}{% endfor %}"
     )
 
-    prompt_data = template.to_prompt_data(embedded=embedded)
+    prompt_data = template.to_prompt_with_metadata(embedded=embedded)
 
     assert prompt_data.ranges.get("r1") == [
         PromptRange(
@@ -292,7 +294,9 @@ def test_to_prompt_data_returns_multiple_imgae_ranges_in_for_loop(
         "{% for i in (1..4) %}{% promptrange r1 %}{{embedded}}{% endpromptrange %}{% endfor %}"
     )
 
-    prompt_data = template.to_prompt_data(embedded=template.placeholder(prompt_image))
+    prompt_data = template.to_prompt_with_metadata(
+        embedded=template.placeholder(prompt_image)
+    )
 
     assert prompt_data.ranges.get("r1") == [
         PromptRange(

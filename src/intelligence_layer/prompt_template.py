@@ -268,7 +268,7 @@ class PromptTemplate:
             last_item = item
         return prompt_text
 
-    def to_prompt_data(self, **kwargs: Any) -> PromptWithMetadata:
+    def to_prompt_with_metadata(self, **kwargs: Any) -> PromptWithMetadata:
         """Creates a `Prompt` along with metadata from the template string and the given parameters.
 
         Currently the only metadata returned is information about ranges that are marked in the template.
@@ -302,7 +302,7 @@ class PromptTemplate:
 
         Provided parameters are passed to `liquid.Template.render`.
         """
-        return self.to_prompt_data(**kwargs).prompt
+        return self.to_prompt_with_metadata(**kwargs).prompt
 
     def _reset_placeholder_state(self) -> None:
         self.prompt_item_placeholders = {}

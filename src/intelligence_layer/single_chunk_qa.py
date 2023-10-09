@@ -5,10 +5,20 @@ from aleph_alpha_client import (
     ExplanationRequest,
     ExplanationResponse,
     Prompt,
+    Text,
+    TextPromptItemExplanation,
     TextScore,
 )
+from aleph_alpha_client.explanation import TextScoreWithRaw
 from pydantic import BaseModel
+
 from intelligence_layer.completion import Completion, CompletionInput, CompletionOutput
+from intelligence_layer.prompt_template import (
+    PromptRange,
+    PromptTemplate,
+    PromptWithMetadata,
+    TextCursor,
+)
 from intelligence_layer.task import DebugLog, LogLevel, Task
 
 
@@ -38,18 +48,15 @@ NO_ANSWER_TEXT = "NO_ANSWER_IN_TEXT"
 
 
 class SingleChunkQa(Task[SingleChunkQaInput, QaOutput]):
-    """
-    Perform Question answering on a text chunk that fits into the contex length (<2048 tokens for text prompt, question and answer)
-    """
-
-    PREFIX_TEMPLATE_STR = """### Instruction:
-{question} If there's no answer, say "{no_answer_text}".
+    PROMPT_TEMPLATE_STR = """### Instruction:
+{{question}}
+If there's no answer, say "{{no_answer_text}}".
 
 ### Input:
-"""
-    POSTFIX_TEMPLATE_STR = """
+{% promptrange text %}{{text}}{% endpromptrange %}
 
 ### Response:"""
+    NO_ANSWER_STR = "NO_ANSWER_IN_TEXT"
 
     def __init__(
         self,
@@ -64,34 +71,50 @@ class SingleChunkQa(Task[SingleChunkQaInput, QaOutput]):
 
     def run(self, input: SingleChunkQaInput) -> QaOutput:
         debug_log = DebugLog.enabled(level=self.log_level)
-        prompt_text, text_range = self._prompt_text(
-            input.chunk, input.question, NO_ANSWER_TEXT
+        prompt_with_metadata = self._to_prompt_with_metadata(
+            input.chunk, input.question
         )
-        output = self._complete(prompt_text, debug_log)
-        explanation = self._explain(prompt_text, output.completion(), debug_log)
+        output = self._complete(prompt_with_metadata.prompt, debug_log)
+        explanation = self._explain(
+            prompt_with_metadata.prompt, output.completion(), debug_log
+        )
         return QaOutput(
             answer=self._no_answer_to_none(output.completion().strip()),
             highlights=self._to_highlights(
-                explanation, input.chunk, text_range, debug_log
+                *self._extract_explanation_and_range(prompt_with_metadata, explanation),
+                debug_log,
             ),
             debug_log=debug_log,
         )
 
+    def _extract_explanation_and_range(
+        self,
+        prompt_with_metadata: PromptWithMetadata,
+        explanation_response: ExplanationResponse,
+    ) -> tuple[TextPromptItemExplanation, PromptRange]:
+        item_index = 0
+        prompt_text = prompt_with_metadata.prompt.items[item_index]
+        assert isinstance(
+            prompt_text, Text
+        ), f"Expected `Text` prompt item, got {type(prompt_text)}."
+        prompt_range = prompt_with_metadata.ranges["text"][item_index]
+        text_prompt_item_explanation = explanation_response.explanations[0].items[
+            item_index
+        ]  # explanations[0], because one explanation for each target
+        assert isinstance(text_prompt_item_explanation, TextPromptItemExplanation)
+        return text_prompt_item_explanation.with_text(prompt_text), prompt_range
+
     def _no_answer_to_none(self, completion: str) -> Optional[str]:
-        return completion if completion != NO_ANSWER_TEXT else None
+        return completion if completion != self.NO_ANSWER_STR else None
 
-    def _prompt_text(
-        self, text: str, question: str, no_answer_text: str
-    ) -> Tuple[str, TextRange]:
-        prefix = self.PREFIX_TEMPLATE_STR.format(
-            question=question, no_answer_text=no_answer_text
-        )
-        return prefix + text + self.POSTFIX_TEMPLATE_STR, TextRange(
-            start=len(prefix), end=len(prefix) + len(text)
+    def _to_prompt_with_metadata(self, text: str, question: str) -> PromptWithMetadata:
+        template = PromptTemplate(self.PROMPT_TEMPLATE_STR)
+        return template.to_prompt_with_metadata(
+            text=text, question=question, no_answer_text=self.NO_ANSWER_STR
         )
 
-    def _complete(self, prompt: str, debug_log: DebugLog) -> CompletionOutput:
-        request = CompletionRequest(Prompt.from_text(prompt))
+    def _complete(self, prompt: Prompt, debug_log: DebugLog) -> CompletionOutput:
+        request = CompletionRequest(prompt)
         output = self.completion.run(CompletionInput(request=request, model=self.model))
         debug_log.debug("Completion", output.debug_log)
         debug_log.info(
@@ -101,9 +124,9 @@ class SingleChunkQa(Task[SingleChunkQaInput, QaOutput]):
         return output
 
     def _explain(
-        self, prompt: str, target: str, debug_log: DebugLog
+        self, prompt: Prompt, target: str, debug_log: DebugLog
     ) -> ExplanationResponse:
-        request = ExplanationRequest(Prompt.from_text(prompt), target)
+        request = ExplanationRequest(prompt, target)
         response = self.client.explain(request, self.model)
         debug_log.debug(
             "Explanation Request/Response", {"request": request, "response": response}
@@ -112,22 +135,31 @@ class SingleChunkQa(Task[SingleChunkQaInput, QaOutput]):
 
     def _to_highlights(
         self,
-        explanation: ExplanationResponse,
-        text: str,
-        text_range: TextRange,
+        text_prompt_item_explanation: TextPromptItemExplanation,
+        prompt_range: PromptRange,
         debug_log: DebugLog,
     ) -> Sequence[str]:
-        scores = explanation.explanations[0].items[0].scores
+        def prompt_range_contains_position(pos: int) -> bool:
+            assert isinstance(prompt_range.start, TextCursor)
+            assert isinstance(prompt_range.end, TextCursor)
+            return prompt_range.start.position <= pos < prompt_range.end.position
+
+        def prompt_range_overlaps_with_text_score(text_score: TextScoreWithRaw) -> bool:
+            return prompt_range_contains_position(
+                text_score.start
+            ) or prompt_range_contains_position(text_score.start + text_score.length)
+
         overlapping = [
             text_score
-            for text_score in scores
-            if isinstance(text_score, TextScore) and text_range.overlaps(text_score)
+            for text_score in text_prompt_item_explanation.scores
+            if isinstance(text_score, TextScoreWithRaw)
+            and prompt_range_overlaps_with_text_score(text_score)
         ]
         debug_log.info(
             "Explanation-Scores",
             [
                 {
-                    "text": self.chop_highlight(text, text_score, text_range),
+                    "text": text_score.text,
                     "score": text_score.score,
                 }
                 for text_score in overlapping
@@ -135,11 +167,7 @@ class SingleChunkQa(Task[SingleChunkQaInput, QaOutput]):
         )
         best_test_score = max(text_score.score for text_score in overlapping)
         return [
-            self.chop_highlight(text, text_score, text_range)
+            text_score.text
             for text_score in overlapping
             if text_score.score == best_test_score
         ]
-
-    def chop_highlight(self, text: str, score: TextScore, range: TextRange) -> str:
-        start = score.start - range.start
-        return text[max(0, start) : start + score.length]
