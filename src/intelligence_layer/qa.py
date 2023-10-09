@@ -9,6 +9,7 @@ from aleph_alpha_client import (
 )
 from pydantic import BaseModel
 from intelligence_layer.completion import Completion, CompletionInput, CompletionOutput
+from intelligence_layer.avalible_models import ControlModels
 
 from intelligence_layer.task import DebugLog, LogLevel, Task
 
@@ -52,7 +53,7 @@ class SingleDocumentQa(Task[SingleDocumentQaInput, QaOutput]):
         self,
         client: Client,
         log_level: LogLevel,
-        model: str = "luminous-supreme-control",
+        model: ControlModels = ControlModels.SUPREME_CONTROL,
     ):
         self.client = client
         self.log_level = log_level
