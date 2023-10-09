@@ -1,0 +1,3 @@
+from intelligence_layer.multiple_document_qa import MultipleDocumentQa
+
+
