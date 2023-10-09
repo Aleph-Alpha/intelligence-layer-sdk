@@ -39,7 +39,11 @@ class TextRange(BaseModel):
 NO_ANSWER_TEXT = "NO_ANSWER_IN_TEXT"
 
 
-class SingleDocumentQa(Task[SingleDocumentQaInput, QaOutput]):
+class SingleChunkQa(Task[SingleDocumentQaInput, QaOutput]):
+    """
+    Perform Question answering on a text chunk that fits into the contex length (<2048 tokens for text prompt, question and answer)
+    """
+
     PREFIX_TEMPLATE_STR = """### Instruction:
 {question} If there's no answer, say "{no_answer_text}".
 

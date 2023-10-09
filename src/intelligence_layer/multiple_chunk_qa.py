@@ -1,4 +1,4 @@
-from intelligence_layer.qa import SingleDocumentQaInput, QaOutput, SingleDocumentQa
+from intelligence_layer.qa import SingleDocumentQaInput, QaOutput, SingleChunkQa
 from intelligence_layer.task import DebugLog, LogLevel, Task
 from intelligence_layer.avalible_models import ControlModels
 from aleph_alpha_client import (
@@ -38,7 +38,7 @@ Final answer:"""
     ):
 
         
-        self.single_document_qa = SingleDocumentQa(client, log_level, model)
+        self.single_document_qa = SingleChunkQa(client, log_level, model)
     
 
     def run(self, input: MultipleDocumentQaInput) -> QaOutput:
