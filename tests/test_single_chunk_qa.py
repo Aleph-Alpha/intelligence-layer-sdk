@@ -1,6 +1,6 @@
 from aleph_alpha_client import Client
 from pytest import fixture
-from intelligence_layer.qa import SingleChunkQa, SingleDocumentQaInput
+from intelligence_layer.single_chunk_qa import SingleChunkQa, SingleDocumentQaInput
 
 
 @fixture
