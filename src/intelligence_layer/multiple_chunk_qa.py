@@ -1,4 +1,4 @@
-from intelligence_layer.qa import SingleDocumentQaInput, QaOutput, SingleChunkQa
+from intelligence_layer.single_chunk_qa import SingleDocumentQaInput, QaOutput, SingleChunkQa
 from intelligence_layer.task import DebugLog, LogLevel, Task
 from intelligence_layer.avalible_models import ControlModels
 from aleph_alpha_client import (
