@@ -1,4 +1,5 @@
 from pathlib import Path
+from textwrap import dedent
 from typing import List
 from pytest import raises
 from aleph_alpha_client.prompt import Prompt, Image, PromptItem, Text, Tokens
@@ -9,7 +10,7 @@ from intelligence_layer.prompt_template import (
     TextPosition,
     PromptTemplate,
 )
-from liquid.exceptions import LiquidTypeError
+from liquid.exceptions import LiquidTypeError, LiquidSyntaxError
 
 
 def test_to_prompt_with_text_array() -> None:
@@ -171,6 +172,10 @@ def test_to_prompt_works_with_tokens() -> None:
     assert prompt == user_prompt
 
 
+def test_to_prompt_with_empty_template() -> None:
+    assert PromptTemplate("").to_prompt() == Prompt([])
+
+
 def test_to_prompt_resets_template(prompt_image: Image) -> None:
     template = PromptTemplate("{{image}}")
     placeholder = template.placeholder(prompt_image)
@@ -181,7 +186,7 @@ def test_to_prompt_resets_template(prompt_image: Image) -> None:
     assert prompt_with_reset_template != prompt
 
 
-def test_to_prompt_returns_position_of_embedded_texts(prompt_image: Image) -> None:
+def test_to_prompt_data_returns_ranges(prompt_image: Image) -> None:
     embedded_text = "Embedded"
     prefix_items: List[PromptItem] = [
         Text.from_text("Prefix Text Item"),
@@ -217,6 +222,83 @@ def test_to_prompt_returns_position_of_embedded_texts(prompt_image: Image) -> No
     ]
 
 
-def print_items(prompt: Prompt) -> None:
-    for index, item in enumerate(prompt.items):
-        print(f"{index}. {item.text if isinstance(item, Text) else type(item)}")
+def test_to_prompt_data_returns_ranges_for_image_only_prompt(
+    prompt_image: Image,
+) -> None:
+    template = PromptTemplate(
+        dedent(
+            """
+        {%- promptrange r1 -%}
+          {%- promptrange r2 -%}
+            {{image}}
+          {%- endpromptrange -%}
+        {%- endpromptrange -%}"""
+        ).lstrip()
+    )
+
+    prompt_data = template.to_prompt_data(image=template.placeholder(prompt_image))
+    r1 = prompt_data.ranges.get("r1")
+
+    assert r1 == [PromptRange(start=PromptItemCursor(0), end=PromptItemCursor(0))]
+    assert r1 == prompt_data.ranges.get("r2")
+
+
+def test_to_prompt_data_returns_no_range_with_empty_template() -> None:
+    template = PromptTemplate("{% promptrange r1 %}{% endpromptrange %}")
+
+    assert template.to_prompt_data().ranges.get("r1") == []
+
+
+def test_to_prompt_data_returns_no_empty_ranges(prompt_image: Image) -> None:
+    template = PromptTemplate(
+        "{{image}}{% promptrange r1 %}{% endpromptrange %} Some Text"
+    )
+
+    assert (
+        template.to_prompt_data(image=template.placeholder(prompt_image)).ranges.get(
+            "r1"
+        )
+        == []
+    )
+
+
+def test_prompt_template_raises_liquid_error_on_illeagal_range() -> None:
+    with raises(LiquidSyntaxError):
+        PromptTemplate(
+            "{% for i in (1..4) %}{% promptrange r1 %}{% endfor %}{% endpromptrange %}"
+        )
+
+
+def test_to_prompt_data_returns_multiple_text_ranges_in_for_loop() -> None:
+    embedded = "Some Content"
+    template = PromptTemplate(
+        "{% for i in (1..4) %}{% promptrange r1 %}{{embedded}}{% endpromptrange %}{% endfor %}"
+    )
+
+    prompt_data = template.to_prompt_data(embedded=embedded)
+
+    assert prompt_data.ranges.get("r1") == [
+        PromptRange(
+            start=TextCursor(item=0, position=i * len(embedded)),
+            end=TextCursor(item=0, position=(i + 1) * len(embedded)),
+        )
+        for i in range(4)
+    ]
+
+
+def test_to_prompt_data_returns_multiple_imgae_ranges_in_for_loop(
+    prompt_image: Image,
+) -> None:
+    template = PromptTemplate(
+        "{% for i in (1..4) %}{% promptrange r1 %}{{embedded}}{% endpromptrange %}{% endfor %}"
+    )
+
+    prompt_data = template.to_prompt_data(embedded=template.placeholder(prompt_image))
+
+    assert prompt_data.ranges.get("r1") == [
+        PromptRange(
+            start=PromptItemCursor(item=i),
+            end=PromptItemCursor(item=i),
+        )
+        for i in range(4)
+    ]

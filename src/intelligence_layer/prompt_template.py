@@ -267,10 +267,15 @@ class PromptTemplate:
     def _compute_indices(
         self, placeholders: Iterable[Placeholder], template: str
     ) -> Iterable[Tuple[int, int]]:
-        if not self.prompt_item_placeholders:
-            return []
-        pattern = f"({'|'.join(str(placeholder) for placeholder in placeholders)})"
-        return ((match.start(), match.end()) for match in finditer(pattern, template))
+        pattern = "|".join(str(placeholder) for placeholder in placeholders)
+        return (
+            (
+                (match.start(), match.end())
+                for match in finditer(f"({pattern})", template)
+            )
+            if pattern
+            else []
+        )
 
     def _compute_modalities_and_ranges(
         self,
@@ -310,7 +315,7 @@ class PromptTemplate:
         last_to = 0
         accumulated_text = ""
         item_cnt = 0
-        range_starts: Dict[Placeholder, Union[TextCursor, PromptItemCursor]] = {}
+        range_starts: Dict[Placeholder, TextCursor] = {}
 
         def new_prompt_item(item: PromptItem) -> PromptItem:
             nonlocal item_cnt, accumulated_text
@@ -318,7 +323,7 @@ class PromptTemplate:
             accumulated_text = ""
             return item
 
-        def initial_start_text_cursor() -> Union[TextCursor, PromptItemCursor]:
+        def initial_start_text_cursor() -> TextCursor:
             return TextCursor(item=item_cnt, position=len(accumulated_text))
 
         def end_cursor() -> Union[TextCursor, PromptItemCursor]:
@@ -327,6 +332,13 @@ class PromptTemplate:
                 if accumulated_text
                 else PromptItemCursor(item_cnt - 1)
             )
+
+        def valid_range_for(
+            placeholder: Placeholder, end: Union[TextCursor, PromptItemCursor]
+        ) -> Iterable[PromptRange]:
+            if end.item >= range_starts[placeholder].item:
+                yield PromptRange(start=range_starts[placeholder], end=end)
+            del range_starts[placeholder]
 
         for placeholder_from, placeholder_to in placeholder_indices:
             placeholder = Placeholder(UUID(template[placeholder_from:placeholder_to]))
@@ -339,15 +351,11 @@ class PromptTemplate:
                 yield new_prompt_item(placeholder_prompt_item)
             else:
                 if range_starts.get(placeholder):
-                    placeholder_ranges[placeholder].append(
-                        PromptRange(
-                            start=range_starts[placeholder],
-                            end=end_cursor(),
-                        )
+                    placeholder_ranges[placeholder].extend(
+                        valid_range_for(placeholder, end_cursor())
                     )
-                    del range_starts[placeholder]
                 else:
                     range_starts[placeholder] = initial_start_text_cursor()
             last_to = placeholder_to
-        if last_to < len(template):
+        if last_to < len(template) or accumulated_text:
             yield Text.from_text(accumulated_text + template[last_to:])
