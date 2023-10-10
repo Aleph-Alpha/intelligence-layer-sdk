@@ -8,7 +8,7 @@ from aleph_alpha_client import (
 from pydantic import BaseModel
 
 from intelligence_layer.completion import Completion, CompletionInput, CompletionOutput
-from intelligence_layer.highlight import (
+from intelligence_layer.text_highlight import (
     TextHighlight,
     TextHighlightInput,
 )
