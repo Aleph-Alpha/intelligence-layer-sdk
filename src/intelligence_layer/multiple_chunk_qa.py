@@ -31,8 +31,7 @@ class MultipleChunkQaInput(BaseModel):
 
 class MultipleChunkQaOutput(BaseModel):
     answer: Optional[str]
-    sources: Sequence[Optional[str]]
-    sources_highlights: Sequence[Sequence[str]]
+    highlights: Sequence[str]
     debug_log: DebugLog
 
 
@@ -95,12 +94,18 @@ Final answer:"""
             output.answer for output in qa_outputs if output.answer is not None
         ]
 
+        if len(answers) == 0:
+            return MultipleChunkQaOutput(
+                answer=None,
+                highlights=[],
+                debug_log=debug_log,
+            )
+
         prompt_text = self._format_prompt(input.question, answers)
         output = self._complete(prompt_text, debug_log)
 
         return MultipleChunkQaOutput(
             answer=output.completion().strip(),
-            sources=input.chunks,
-            sources_highlights=[],
+            highlights=[],
             debug_log=debug_log,
         )
