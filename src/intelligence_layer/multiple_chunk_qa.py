@@ -14,6 +14,11 @@ from aleph_alpha_client import (
     Prompt,
     TextScore,
 )
+
+from intelligence_layer.prompt_template import (
+    PromptRange,
+    PromptTemplate,
+)
 from intelligence_layer.completion import Completion, CompletionInput, CompletionOutput
 from typing import List, Tuple
 from pydantic import BaseModel
@@ -58,11 +63,11 @@ Final answer:"""
         self.model = model
 
     def _prompt_text(self, question: str, answers: Sequence[str]) -> str:
-        prompt = self.PROMPT_TEMPLATE.format(question=question, answers=answers)
-        return prompt
+        template = PromptTemplate(self.PROMPT_TEMPLATE)
+        return template.to_prompt(question=question, answers=answers)
 
-    def _complete(self, prompt: str, debug_log: DebugLog) -> CompletionOutput:
-        request = CompletionRequest(Prompt.from_text(prompt))
+    def _complete(self, prompt: Prompt, debug_log: DebugLog) -> CompletionOutput:
+        request = CompletionRequest(prompt)
         output = self.completion.run(CompletionInput(request=request, model=self.model))
         debug_log.debug("Completion", output.debug_log)
         debug_log.info(
@@ -72,7 +77,7 @@ Final answer:"""
         return output
 
     def run(self, input: MultipleChunkQaInput) -> MultipleChunkQaOutput:
-        """Executes the process for this use-case."""
+        debug_log = DebugLog.enabled(level=self.log_level)
 
         qa_outputs: Sequence[SingleChunkQaOutput] = [
             self.single_chunk_qa.run(
@@ -81,11 +86,14 @@ Final answer:"""
             for chunk in input.chunks
         ]
 
+        debug_log.debug(
+            "Intermediate Debug Logs", [output.debug_log for output in qa_outputs]
+        )
+        debug_log.info("Intermediate Answers", [output.answer for output in qa_outputs])
+
         answers: List[str] = [
             output.answer for output in qa_outputs if output.answer is not None
         ]
-
-        debug_log = DebugLog.enabled(level=self.log_level)
 
         prompt_text = self._prompt_text(input.question, answers)
         output = self._complete(prompt_text, debug_log)

@@ -1,6 +1,7 @@
 from intelligence_layer.multiple_chunk_qa import MultipleChunkQa, MultipleChunkQaInput
 from aleph_alpha_client import Client
 from pytest import fixture
+from pprint import pprint
 
 
 @fixture
@@ -20,7 +21,10 @@ def test_qa_with_answer(qa: MultipleChunkQa) -> None:
     input = MultipleChunkQaInput(chunks=chunks, question=question)
     output = qa.run(input)
 
+    pprint(output.debug_log)
+    print(output.answer)
+
     assert output.answer
-    # assert "Henri" in output.answer
+    assert "Henri" in output.answer
     # assert any("Henri" in highlight for highlight in output.highlights)
     # assert len(output.highlights) == 1
