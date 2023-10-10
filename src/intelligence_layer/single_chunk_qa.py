@@ -27,7 +27,7 @@ class SingleChunkQaInput(BaseModel):
     question: str
 
 
-class QaOutput(BaseModel):
+class SingleChunkQaOutput(BaseModel):
     answer: Optional[str]
     highlights: Sequence[str]
     debug_log: DebugLog
@@ -69,7 +69,7 @@ If there's no answer, say "{{no_answer_text}}".
         self.completion = Completion(client, log_level)
         self.model = model
 
-    def run(self, input: SingleChunkQaInput) -> QaOutput:
+    def run(self, input: SingleChunkQaInput) -> SingleChunkQaOutput:
         debug_log = DebugLog.enabled(level=self.log_level)
         prompt_with_metadata = self._to_prompt_with_metadata(
             input.chunk, input.question
