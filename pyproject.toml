@@ -11,12 +11,14 @@ readme = "README.md"
 license = "Aleph Alpha Licensed"
 
 [tool.poetry.dependencies]
-python = "^3.10"
+python = ">=3.10,<3.13"
 pydantic = "*"
 fastapi = "*"
 uvicorn = "*"
 aleph-alpha-client = "*"
 python-dotenv = "*"
+semantic-text-splitter = "^0.2.3"
+qdrant-client = "^1.6.0"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "*"
