@@ -62,7 +62,7 @@ Final answer:"""
         self.single_chunk_qa = SingleChunkQa(client, log_level, model)
         self.model = model
 
-    def _prompt_text(self, question: str, answers: Sequence[str]) -> str:
+    def _format_prompt(self, question: str, answers: Sequence[str]) -> Prompt:
         template = PromptTemplate(self.PROMPT_TEMPLATE)
         return template.to_prompt(question=question, answers=answers)
 
@@ -95,7 +95,7 @@ Final answer:"""
             output.answer for output in qa_outputs if output.answer is not None
         ]
 
-        prompt_text = self._prompt_text(input.question, answers)
+        prompt_text = self._format_prompt(input.question, answers)
         output = self._complete(prompt_text, debug_log)
 
         return MultipleChunkQaOutput(
