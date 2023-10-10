@@ -24,7 +24,7 @@ def test_qa_with_answer(qa: LongContextQa) -> None:
     input = LongContextQaInput(text=LONG_TEXT, question=question)
     output = qa.run(input)
     assert output.answer
-    #assert "The Power Broker" in output.answer
+    assert "The Power Broker" in output.answer
     # highlights TODO
 
 
@@ -33,5 +33,5 @@ def test_qa_with_no_answer(qa: LongContextQa) -> None:
     input = LongContextQaInput(text=LONG_TEXT, question=question)
     output = qa.run(input)
 
-    #assert output.answer is None
-    assert True
+    assert output.answer is None
+

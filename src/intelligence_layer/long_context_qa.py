@@ -1,5 +1,6 @@
 from typing import Optional, Sequence
 from qdrant_client import QdrantClient
+from qdrant_client.conversions.common_types import ScoredPoint
 from qdrant_client.http.models import Distance, VectorParams, PointStruct
 from aleph_alpha_client import (
     Client,
@@ -63,15 +64,19 @@ class LongContextQa(Task[LongContextQaInput, MultipleChunkQaOutput]):
             )
         
         # should we add something from the chunking to debug log? this debug log is duplicate for now
-        debug_log.info("Input", {"question": input.queaddestion, "text": input.text})
+        debug_log.info("Input", {"question": input.question, "text": input.text})
         qa_output = self.multi_chunk_qa.run(multi_chunk_qa_input)
         debug_log.debug("Multi Chunk QA", qa_output.debug_log)
         
         qa_output.debug_log = debug_log
         
         return qa_output
-    
-    def find_relevant_chunks(self, chunks: Sequence[str], question: str): 
+
+    def find_relevant_chunks(self, chunks: Sequence[str], question: str) -> Sequence[SearchResult]:
+        def _point_to_search_result(point: ScoredPoint) -> SearchResult:
+            assert point.payload
+            return SearchResult(score=point.score, chunk=point.payload["text"])
+        
         chunk_embeddings = []
         for chunk in chunks:
             chunk_embedding_request = SemanticEmbeddingRequest(
@@ -102,14 +107,14 @@ class LongContextQa(Task[LongContextQaInput, MultipleChunkQaOutput]):
                     PointStruct(id=idx, vector=chunk_embedding, payload={"text": chunk}) for idx, (chunk_embedding, chunk) in enumerate(zip(chunk_embeddings, chunks))
                 ]
         )
-        print(operation_info)
         search_result =self.search_client.search(
             collection_name="lokal_chunks",
             query_vector=question_embedding,
             score_threshold=self.threshold,
             limit=self.k
         )
-        output = [SearchResult(score=point.score, chunk=point.payload["text"]) for point in search_result]
+
+        output = [_point_to_search_result(point) for point in search_result]
         return output
 
 
