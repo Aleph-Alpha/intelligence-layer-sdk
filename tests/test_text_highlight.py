@@ -1,9 +1,6 @@
 from aleph_alpha_client import Client, Image
 from pytest import fixture
-from intelligence_layer.highlight import (
-    TextHighlight,
-    TextHighlightInput
-)
+from intelligence_layer.highlight import TextHighlight, TextHighlightInput
 from intelligence_layer.prompt_template import PromptTemplate
 
 
@@ -13,7 +10,6 @@ def text_highlight(client: Client) -> TextHighlight:
 
 
 def test_text_highlight(text_highlight: TextHighlight) -> None:
-    
     prompt_template_str = """Question: What is the Latin name of the brown bear?{% promptrange r1 %} Explanation should only highlight this. Latin name: Ursus Arctos.{% endpromptrange %} This should also not be highlighted.
 Answer:"""
     template = PromptTemplate(prompt_template_str)
@@ -21,12 +17,16 @@ Answer:"""
     completion = " Ursus Arctos"
     model = "luminous-base"
 
-    input = TextHighlightInput(prompt_with_metadata=prompt_with_metadata, target=completion, model=model)
+    input = TextHighlightInput(
+        prompt_with_metadata=prompt_with_metadata, target=completion, model=model
+    )
     output = text_highlight.run(input)
 
     assert output.highlights
     top_highlight = next(h for h in output.highlights if "Ursus" in h.text)
-    assert all(top_highlight.score >= highlight.score for highlight in output.highlights)
+    assert all(
+        top_highlight.score >= highlight.score for highlight in output.highlights
+    )
 
 
 def test_text_highlight_with_only_one_sentence(text_highlight: TextHighlight) -> None:
@@ -37,24 +37,32 @@ Answer:"""
     completion = " Ursus Arctos"
     model = "luminous-base"
 
-    input = TextHighlightInput(prompt_with_metadata=prompt_with_metadata, target=completion, model=model)
+    input = TextHighlightInput(
+        prompt_with_metadata=prompt_with_metadata, target=completion, model=model
+    )
     output = text_highlight.run(input)
 
     assert not output.highlights
 
 
-def test_text_highlight_with_image_prompt(text_highlight: TextHighlight, prompt_image: Image) -> None:
+def test_text_highlight_with_image_prompt(
+    text_highlight: TextHighlight, prompt_image: Image
+) -> None:
     prompt_template_str = """Question: {% promptrange question %}What is the Latin name of the brown bear?{% endpromptrange %}
 Text: {% promptrange text %}The brown bear (Ursus arctos) is a large bear species found across Eurasia and North America.
 Here is an image, just for LOLs: {{image}}
 {% endpromptrange %}
 Answer:"""
     template = PromptTemplate(prompt_template_str)
-    prompt_with_metadata = template.to_prompt_with_metadata(image=template.placeholder(prompt_image))
+    prompt_with_metadata = template.to_prompt_with_metadata(
+        image=template.placeholder(prompt_image)
+    )
     completion = " The latin name of the brown bear is Ursus arctos."
     model = "luminous-base"
 
-    input = TextHighlightInput(prompt_with_metadata=prompt_with_metadata, target=completion, model=model)
+    input = TextHighlightInput(
+        prompt_with_metadata=prompt_with_metadata, target=completion, model=model
+    )
     output = text_highlight.run(input)
 
     assert output.highlights

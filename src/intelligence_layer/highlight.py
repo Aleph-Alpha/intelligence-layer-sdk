@@ -63,7 +63,9 @@ class TextHighlight(Task[TextHighlightInput, TextHighlightOutput]):
             model=input.model,
             debug_log=debug_log,
         )
-        prompt_ranges = self._flatten_prompt_ranges(input.prompt_with_metadata.ranges.values())
+        prompt_ranges = self._flatten_prompt_ranges(
+            input.prompt_with_metadata.ranges.values()
+        )
         text_prompt_item_explanations_and_indices = (
             self._extract_text_prompt_item_explanations_and_item_index(
                 input.prompt_with_metadata.prompt, explanation
@@ -90,10 +92,10 @@ class TextHighlight(Task[TextHighlightInput, TextHighlightOutput]):
         )
         return response
 
-    def _flatten_prompt_ranges(self, prompt_ranges: Iterable[Sequence[PromptRange]]) -> Sequence[PromptRange]:
-        return [
-            pr for prs in prompt_ranges for pr in prs
-        ]
+    def _flatten_prompt_ranges(
+        self, prompt_ranges: Iterable[Sequence[PromptRange]]
+    ) -> Sequence[PromptRange]:
+        return [pr for prs in prompt_ranges for pr in prs]
 
     def _extract_text_prompt_item_explanations_and_item_index(
         self,
