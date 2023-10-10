@@ -14,6 +14,11 @@ from aleph_alpha_client import (
     Prompt,
     TextScore,
 )
+
+from intelligence_layer.prompt_template import (
+    PromptRange,
+    PromptTemplate,
+)
 from intelligence_layer.completion import Completion, CompletionInput, CompletionOutput
 from typing import List, Tuple
 from pydantic import BaseModel
@@ -26,8 +31,7 @@ class MultipleChunkQaInput(BaseModel):
 
 class MultipleChunkQaOutput(BaseModel):
     answer: Optional[str]
-    sources: Sequence[Optional[str]]
-    sources_highlights: Sequence[Sequence[str]]
+    highlights: Sequence[str]
     debug_log: DebugLog
 
 
@@ -57,12 +61,12 @@ Final answer:"""
         self.single_chunk_qa = SingleChunkQa(client, log_level, model)
         self.model = model
 
-    def _prompt_text(self, question: str, answers: Sequence[str]) -> str:
-        prompt = self.PROMPT_TEMPLATE.format(question=question, answers=answers)
-        return prompt
+    def _format_prompt(self, question: str, answers: Sequence[str]) -> Prompt:
+        template = PromptTemplate(self.PROMPT_TEMPLATE)
+        return template.to_prompt(question=question, answers=answers)
 
-    def _complete(self, prompt: str, debug_log: DebugLog) -> CompletionOutput:
-        request = CompletionRequest(Prompt.from_text(prompt))
+    def _complete(self, prompt: Prompt, debug_log: DebugLog) -> CompletionOutput:
+        request = CompletionRequest(prompt)
         output = self.completion.run(CompletionInput(request=request, model=self.model))
         debug_log.debug("Completion", output.debug_log)
         debug_log.info(
@@ -72,7 +76,7 @@ Final answer:"""
         return output
 
     def run(self, input: MultipleChunkQaInput) -> MultipleChunkQaOutput:
-        """Executes the process for this use-case."""
+        debug_log = DebugLog.enabled(level=self.log_level)
 
         qa_outputs: Sequence[SingleChunkQaOutput] = [
             self.single_chunk_qa.run(
@@ -81,18 +85,25 @@ Final answer:"""
             for chunk in input.chunks
         ]
 
+        debug_log.debug("Single Chunk Qa", [output.debug_log for output in qa_outputs])
+        debug_log.info("Intermediate Answers", [output.answer for output in qa_outputs])
+
         answers: List[str] = [
             output.answer for output in qa_outputs if output.answer is not None
         ]
 
-        debug_log = DebugLog.enabled(level=self.log_level)
+        if len(answers) == 0:
+            return MultipleChunkQaOutput(
+                answer=None,
+                highlights=[],
+                debug_log=debug_log,
+            )
 
-        prompt_text = self._prompt_text(input.question, answers)
+        prompt_text = self._format_prompt(input.question, answers)
         output = self._complete(prompt_text, debug_log)
 
         return MultipleChunkQaOutput(
             answer=output.completion().strip(),
-            sources=input.chunks,
-            sources_highlights=[],
+            highlights=[],
             debug_log=debug_log,
         )
