@@ -85,9 +85,7 @@ Final answer:"""
             for chunk in input.chunks
         ]
 
-        debug_log.debug(
-            "Intermediate Debug Logs", [output.debug_log for output in qa_outputs]
-        )
+        debug_log.debug("Single Chunk Qa", [output.debug_log for output in qa_outputs])
         debug_log.info("Intermediate Answers", [output.answer for output in qa_outputs])
 
         answers: List[str] = [
