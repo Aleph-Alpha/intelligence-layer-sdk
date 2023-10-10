@@ -44,9 +44,6 @@ class TextRange(BaseModel):
         return self.contains(score.start) or self.contains(score.start + score.length)
 
 
-NO_ANSWER_TEXT = "NO_ANSWER_IN_TEXT"
-
-
 class SingleChunkQa(Task[SingleChunkQaInput, SingleChunkQaOutput]):
     PROMPT_TEMPLATE_STR = """### Instruction:
 {{question}}
