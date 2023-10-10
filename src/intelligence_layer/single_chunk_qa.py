@@ -106,6 +106,6 @@ If there's no answer, say "{{no_answer_text}}".
         )
         highlight_output = self.text_highlight.run(highlight_input, logger)
         return [h.text for h in highlight_output.highlights if h.score > 0]
-    
+
     def _no_answer_to_none(self, completion: str) -> Optional[str]:
         return completion if completion != self.NO_ANSWER_STR else None
