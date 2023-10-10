@@ -19,8 +19,7 @@ from aleph_alpha_client import (
 from pydantic import BaseModel
 
 from intelligence_layer.completion import Completion, CompletionInput, CompletionOutput
-
-from .task import LogLevel, Task, DebugLog
+from intelligence_layer.task import Task, DebugLogger
 
 
 class Token(BaseModel):
@@ -56,8 +55,6 @@ class ClassifyOutput(BaseModel):
 
     The score represents how sure the model is that this is the correct label.
     Will be a value between 0 and 1"""
-    debug_log: DebugLog
-    """Provides key steps, decisions, and intermediate outputs of a task's process."""
 
 
 class SingleLabelClassify(Task[ClassifyInput, ClassifyOutput]):
@@ -81,7 +78,7 @@ Reply with only the class label.
     MODEL: str = "luminous-base-control"
     client: Client
 
-    def __init__(self, client: Client, log_level: LogLevel) -> None:
+    def __init__(self, client: Client) -> None:
         """Initializes the Task.
 
         Args:
@@ -89,23 +86,20 @@ Reply with only the class label.
         """
         super().__init__()
         self.client = client
-        self.log_level = log_level
-        self.completion_task = Completion(client, log_level)
+        self.completion_task = Completion(client)
 
-    def run(self, input: ClassifyInput) -> ClassifyOutput:
-        debug_log = DebugLog.enabled(level=self.log_level)
-        tokenized_labels = self._tokenize_labels(input.labels, debug_log)
+    def run(self, input: ClassifyInput, logger: DebugLogger) -> ClassifyOutput:
+        tokenized_labels = self._tokenize_labels(input.labels, logger)
         completion_responses_per_label = self._complete_per_label(
-            self.MODEL, self.PROMPT_TEMPLATE, input.text, tokenized_labels, debug_log
+            self.MODEL, self.PROMPT_TEMPLATE, input.text, tokenized_labels, logger
         )
         log_probs_per_label = self._get_log_probs_of_labels(
-            completion_responses_per_label, tokenized_labels, debug_log
+            completion_responses_per_label, tokenized_labels, logger
         )
-        normalized_probs_per_label = self._normalize(log_probs_per_label, debug_log)
+        normalized_probs_per_label = self._normalize(log_probs_per_label, logger)
         scores = self._compute_scores(normalized_probs_per_label)
         return ClassifyOutput(
             scores=scores,
-            debug_log=debug_log,
         )
 
     def _compute_scores(
@@ -122,7 +116,7 @@ Reply with only the class label.
     def _normalize(
         self,
         log_probs_per_label: Mapping[str, Sequence[TokenWithProb]],
-        debug_log: DebugLog,
+        logger: DebugLogger,
     ) -> Mapping[str, Sequence[TokenWithProb]]:
         node = TreeNode()
         for log_probs in log_probs_per_label.values():
@@ -138,7 +132,7 @@ Reply with only the class label.
             )
             for label in log_probs_per_label
         }
-        debug_log.info("Normalized Probs", normalized_probs)
+        logger.log("Normalized Probs", normalized_probs)
         return normalized_probs
 
     def _complete_per_label(
@@ -147,9 +141,9 @@ Reply with only the class label.
         prompt_template_str: str,
         text: str,
         tokenized_labels: Mapping[str, Sequence[Token]],
-        debug_log: DebugLog,
+        logger: DebugLogger,
     ) -> Mapping[str, CompletionOutput]:
-        debug_log.info(
+        logger.log(
             "Completion",
             {
                 "model": model,
@@ -162,24 +156,20 @@ Reply with only the class label.
             label: self._complete(
                 model,
                 prompt_template,
-                debug_log,
+                logger.child_logger(f"Completion {label}"),
                 text=text,
                 label=prompt_template.embed_prompt(to_aa_tokens(tokens)),
             )
             for label, tokens in tokenized_labels.items()
         }
-        debug_log.debug(
-            "Completion Request/Response",
-            {label: output.debug_log for label, output in completion_per_label.items()},
-        )
         return completion_per_label
 
     def _complete(
         self,
         model: str,
         prompt_template: PromptTemplate,
-        debug_log: DebugLog,
-        **kwargs: Any
+        logger: DebugLogger,
+        **kwargs: Any,
     ) -> CompletionOutput:
         request = CompletionRequest(
             prompt=prompt_template.to_prompt(**kwargs),
@@ -188,13 +178,15 @@ Reply with only the class label.
             tokens=True,
             echo=True,
         )
-        return self.completion_task.run(CompletionInput(request=request, model=model))
+        return self.completion_task.run(
+            CompletionInput(request=request, model=model), logger
+        )
 
     def _get_log_probs_of_labels(
         self,
         completion_responses: Mapping[str, CompletionOutput],
         tokenized_labels: Mapping[str, Sequence[Token]],
-        debug_log: DebugLog,
+        logger: DebugLogger,
     ) -> Mapping[str, Sequence[TokenWithProb]]:
         logs_probs_per_label = {
             label: self._get_log_probs_of_label(
@@ -202,7 +194,7 @@ Reply with only the class label.
             )
             for label, tokens in tokenized_labels.items()
         }
-        debug_log.info("Raw log probs per label", logs_probs_per_label)
+        logger.log("Raw log probs per label", logs_probs_per_label)
         return logs_probs_per_label
 
     def _get_log_probs_of_label(
@@ -226,10 +218,10 @@ Reply with only the class label.
         ]
 
     def _tokenize_labels(
-        self, labels: frozenset[str], debug_log: DebugLog
+        self, labels: frozenset[str], logger: DebugLogger
     ) -> Mapping[str, Sequence[Token]]:
         tokens_per_label = {label: self._tokenize_label(label) for label in labels}
-        debug_log.info("Tokenized Labels", tokens_per_label)
+        logger.log("Tokenized Labels", tokens_per_label)
         return tokens_per_label
 
     def _tokenize_label(self, label: str) -> Sequence[Token]:

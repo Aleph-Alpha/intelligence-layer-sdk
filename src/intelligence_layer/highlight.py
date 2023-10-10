@@ -18,7 +18,7 @@ from intelligence_layer.prompt_template import (
     PromptWithMetadata,
     TextCursor,
 )
-from intelligence_layer.task import DebugLog, LogLevel, Task
+from intelligence_layer.task import DebugLogger, Task
 
 
 class TextHighlightInput(BaseModel):
@@ -38,14 +38,13 @@ class TextHighlightOutput(BaseModel):
     """Output of for a highlight task"""
 
     highlights: Sequence[ScoredTextHighlight]
-    debug_log: DebugLog
     """Provides key steps, decisions, and intermediate outputs of a task's process."""
 
 
 class TextHighlight(Task[TextHighlightInput, TextHighlightOutput]):
     client: Client
 
-    def __init__(self, client: Client, log_level: LogLevel) -> None:
+    def __init__(self, client: Client) -> None:
         """Initializes the Task.
 
         Args:
@@ -53,15 +52,15 @@ class TextHighlight(Task[TextHighlightInput, TextHighlightOutput]):
         """
         super().__init__()
         self.client = client
-        self.log_level = log_level
 
-    def run(self, input: TextHighlightInput) -> TextHighlightOutput:
-        debug_log = DebugLog.enabled(level=self.log_level)
+    def run(
+        self, input: TextHighlightInput, logger: DebugLogger
+    ) -> TextHighlightOutput:
         explanation = self._explain(
             prompt=input.prompt_with_metadata.prompt,
             target=input.target,
             model=input.model,
-            debug_log=debug_log,
+            logger=logger,
         )
         prompt_ranges = self._flatten_prompt_ranges(
             input.prompt_with_metadata.ranges.values()
@@ -74,12 +73,12 @@ class TextHighlight(Task[TextHighlightInput, TextHighlightOutput]):
         highlights = self._to_highlights(
             prompt_ranges,
             text_prompt_item_explanations_and_indices,
-            debug_log,
+            logger,
         )
-        return TextHighlightOutput(highlights=highlights, debug_log=debug_log)
+        return TextHighlightOutput(highlights=highlights)
 
     def _explain(
-        self, prompt: Prompt, target: str, model: str, debug_log: DebugLog
+        self, prompt: Prompt, target: str, model: str, logger: DebugLogger
     ) -> ExplanationResponse:
         request = ExplanationRequest(
             prompt,
@@ -87,8 +86,9 @@ class TextHighlight(Task[TextHighlightInput, TextHighlightOutput]):
             prompt_granularity=PromptGranularity.Sentence,
         )
         response = self.client.explain(request, model)
-        debug_log.debug(
-            "Explanation Request/Response", {"request": request, "response": response}
+        logger.log(
+            "Explanation Request/Response",
+            {"request": request.to_json(), "response": response._asdict()},
         )
         return response
 
@@ -168,7 +168,7 @@ class TextHighlight(Task[TextHighlightInput, TextHighlightOutput]):
         text_prompt_item_explanations_and_indices: Sequence[
             tuple[TextPromptItemExplanation, int]
         ],
-        debug_log: DebugLog,
+        logger: DebugLogger,
     ) -> Sequence[ScoredTextHighlight]:
         overlapping_and_flat = [
             text_score
@@ -182,7 +182,7 @@ class TextHighlight(Task[TextHighlightInput, TextHighlightOutput]):
                 for prompt_range in prompt_ranges
             )
         ]
-        debug_log.info(
+        logger.log(
             "Explanation scores",
             [
                 {
@@ -192,21 +192,21 @@ class TextHighlight(Task[TextHighlightInput, TextHighlightOutput]):
                 for text_score in overlapping_and_flat
             ],
         )
-        z_scores = self._z_scores([s.score for s in overlapping_and_flat], debug_log)
+        z_scores = self._z_scores([s.score for s in overlapping_and_flat], logger)
         scored_highlights = [
             ScoredTextHighlight(text=text_score.text, score=z_score)
             for text_score, z_score in zip(overlapping_and_flat, z_scores)
         ]
-        debug_log.info("Unfiltered highlights", scored_highlights)
+        logger.log("Unfiltered highlights", scored_highlights)
         return self._filter_highlights(scored_highlights)
 
     @staticmethod
-    def _z_scores(data: Sequence[float], debug_log: DebugLog) -> Sequence[float]:
+    def _z_scores(data: Sequence[float], logger: DebugLogger) -> Sequence[float]:
         mean = statistics.mean(data)
         stdev = (
             statistics.stdev(data) if len(data) > 1 else 0
         )  # standard deviation not defined for n < 2
-        debug_log.info("Highlight statistics", {"mean": mean, "std_dev": stdev})
+        logger.log("Highlight statistics", {"mean": mean, "std_dev": stdev})
         return [((x - mean) / stdev if stdev > 0 else 0) for x in data]
 
     def _filter_highlights(

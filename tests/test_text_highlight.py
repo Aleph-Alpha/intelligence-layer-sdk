@@ -3,10 +3,12 @@ from pytest import fixture
 from intelligence_layer.highlight import TextHighlight, TextHighlightInput
 from intelligence_layer.prompt_template import PromptTemplate
 
+from intelligence_layer.task import JsonDebugLogger
+
 
 @fixture
 def text_highlight(client: Client) -> TextHighlight:
-    return TextHighlight(client, "info")
+    return TextHighlight(client)
 
 
 def test_text_highlight(text_highlight: TextHighlight) -> None:
@@ -20,7 +22,7 @@ Answer:"""
     input = TextHighlightInput(
         prompt_with_metadata=prompt_with_metadata, target=completion, model=model
     )
-    output = text_highlight.run(input)
+    output = text_highlight.run(input, JsonDebugLogger(name="highlights"))
 
     assert output.highlights
     top_highlight = next(h for h in output.highlights if "Ursus" in h.text)
@@ -40,7 +42,7 @@ Answer:"""
     input = TextHighlightInput(
         prompt_with_metadata=prompt_with_metadata, target=completion, model=model
     )
-    output = text_highlight.run(input)
+    output = text_highlight.run(input, JsonDebugLogger(name="highlights"))
 
     assert not output.highlights
 
@@ -63,7 +65,7 @@ Answer:"""
     input = TextHighlightInput(
         prompt_with_metadata=prompt_with_metadata, target=completion, model=model
     )
-    output = text_highlight.run(input)
+    output = text_highlight.run(input, JsonDebugLogger(name="highlights"))
 
     assert output.highlights
     assert any("bear" in highlight.text.lower() for highlight in output.highlights)

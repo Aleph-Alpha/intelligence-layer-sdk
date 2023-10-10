@@ -19,7 +19,7 @@ from intelligence_layer.prompt_template import (
     PromptWithMetadata,
     TextCursor,
 )
-from intelligence_layer.task import DebugLog, LogLevel, Task
+from intelligence_layer.task import DebugLogger, Task
 
 
 class SingleChunkQaInput(BaseModel):
@@ -30,7 +30,6 @@ class SingleChunkQaInput(BaseModel):
 class SingleChunkQaOutput(BaseModel):
     answer: Optional[str]
     highlights: Sequence[str]
-    debug_log: DebugLog
 
 
 class TextRange(BaseModel):
@@ -58,30 +57,32 @@ If there's no answer, say "{{no_answer_text}}".
     def __init__(
         self,
         client: Client,
-        log_level: LogLevel,
         model: str = "luminous-supreme-control",
     ):
         self.client = client
-        self.log_level = log_level
-        self.completion = Completion(client, log_level)
+        self.completion = Completion(client)
         self.model = model
 
-    def run(self, input: SingleChunkQaInput) -> SingleChunkQaOutput:
-        debug_log = DebugLog.enabled(level=self.log_level)
+    def run(
+        self, input: SingleChunkQaInput, logger: DebugLogger
+    ) -> SingleChunkQaOutput:
         prompt_with_metadata = self._to_prompt_with_metadata(
             input.chunk, input.question
         )
-        output = self._complete(prompt_with_metadata.prompt, debug_log)
+        output = self._complete(
+            prompt_with_metadata.prompt, logger.child_logger("Generate Answer")
+        )
         explanation = self._explain(
-            prompt_with_metadata.prompt, output.completion(), debug_log
+            prompt_with_metadata.prompt,
+            output.completion(),
+            logger.child_logger("Explain Answer"),
         )
         return SingleChunkQaOutput(
             answer=self._no_answer_to_none(output.completion().strip()),
             highlights=self._to_highlights(
                 *self._extract_explanation_and_range(prompt_with_metadata, explanation),
-                debug_log,
+                logger,
             ),
-            debug_log=debug_log,
         )
 
     def _extract_explanation_and_range(
@@ -110,23 +111,21 @@ If there's no answer, say "{{no_answer_text}}".
             text=text, question=question, no_answer_text=self.NO_ANSWER_STR
         )
 
-    def _complete(self, prompt: Prompt, debug_log: DebugLog) -> CompletionOutput:
+    def _complete(self, prompt: Prompt, logger: DebugLogger) -> CompletionOutput:
         request = CompletionRequest(prompt)
-        output = self.completion.run(CompletionInput(request=request, model=self.model))
-        debug_log.debug("Completion", output.debug_log)
-        debug_log.info(
-            "Completion Input/Output",
-            {"prompt": prompt, "completion": output.completion()},
+        output = self.completion.run(
+            CompletionInput(request=request, model=self.model), logger
         )
         return output
 
     def _explain(
-        self, prompt: Prompt, target: str, debug_log: DebugLog
+        self, prompt: Prompt, target: str, logger: DebugLogger
     ) -> ExplanationResponse:
         request = ExplanationRequest(prompt, target)
         response = self.client.explain(request, self.model)
-        debug_log.debug(
-            "Explanation Request/Response", {"request": request, "response": response}
+        logger.log(
+            "Explanation Request/Response",
+            {"request": request.to_json(), "response": response._asdict()},
         )
         return response
 
@@ -134,7 +133,7 @@ If there's no answer, say "{{no_answer_text}}".
         self,
         text_prompt_item_explanation: TextPromptItemExplanation,
         prompt_range: PromptRange,
-        debug_log: DebugLog,
+        logger: DebugLogger,
     ) -> Sequence[str]:
         def prompt_range_contains_position(pos: int) -> bool:
             assert isinstance(prompt_range.start, TextCursor)
@@ -152,7 +151,7 @@ If there's no answer, say "{{no_answer_text}}".
             if isinstance(text_score, TextScoreWithRaw)
             and prompt_range_overlaps_with_text_score(text_score)
         ]
-        debug_log.info(
+        logger.log(
             "Explanation-Scores",
             [
                 {

@@ -2,6 +2,8 @@ from aleph_alpha_client import Client
 from pytest import fixture
 from intelligence_layer.long_context_qa import LongContextQa, LongContextQaInput
 
+from intelligence_layer.task import JsonDebugLogger
+
 LONG_TEXT = """Robert Moses (December 18, 1888 – July 29, 1981) was an American urban planner and public official who worked in the New York metropolitan area during the early to mid 20th century. Despite never being elected to any office, Moses is regarded as one of the most powerful and influential individuals in the history of New York City and New York State. The grand scale of his infrastructural projects and his philosophy of urban development influenced a generation of engineers, architects, and urban planners across the United States.[2]
 
 Moses held various positions throughout his more than forty-year long career. He at times held up to 12 titles simultaneously, including New York City Parks Commissioner and chairman of the Long Island State Park Commission.[3] Having worked closely with New York governor Al Smith early in his career, Moses became expert in writing laws and navigating and manipulating the inner workings of state government. He created and led numerous semi-autonomous public authorities, through which he controlled millions of dollars in revenue and directly issued bonds to fund new ventures with little outside input or oversight.
@@ -16,13 +18,13 @@ Moses was born in New Haven, Connecticut, on December 18, 1888, to German Jewish
 
 @fixture
 def qa(client: Client) -> LongContextQa:
-    return LongContextQa(client, "info")
+    return LongContextQa(client)
 
 
 def test_qa_with_answer(qa: LongContextQa) -> None:
     question = "What is the name of the book about Robert Moses?"
     input = LongContextQaInput(text=LONG_TEXT, question=question)
-    output = qa.run(input)
+    output = qa.run(input, JsonDebugLogger(name="qa"))
     assert output.answer
     assert "The Power Broker" in output.answer
     # highlights TODO
@@ -31,6 +33,6 @@ def test_qa_with_answer(qa: LongContextQa) -> None:
 def test_qa_with_no_answer(qa: LongContextQa) -> None:
     question = "Who is the President of the united states?"
     input = LongContextQaInput(text=LONG_TEXT, question=question)
-    output = qa.run(input)
+    output = qa.run(input, JsonDebugLogger(name="qa"))
 
     assert output.answer is None

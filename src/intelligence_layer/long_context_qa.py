@@ -21,7 +21,7 @@ from intelligence_layer.prompt_template import (
     PromptWithMetadata,
     TextCursor,
 )
-from intelligence_layer.task import DebugLog, LogLevel, Task
+from intelligence_layer.task import DebugLogger, Task
 from semantic_text_splitter import HuggingFaceTextSplitter
 
 
@@ -42,7 +42,6 @@ class LongContextQa(Task[LongContextQaInput, MultipleChunkQaOutput]):
     def __init__(
         self,
         client: Client,
-        log_level: LogLevel,
         max_tokens_in_chunk: int = 512,
         k: int = 4,
         threshold: float = 0.5,
@@ -50,17 +49,17 @@ class LongContextQa(Task[LongContextQaInput, MultipleChunkQaOutput]):
     ):
         self.client = client
         self.search_client = QdrantClient(":memory:")
-        self.log_level = log_level
         self.model = model
         self.max_tokens_in_chunk = max_tokens_in_chunk
         self.tokenizer = self.client.tokenizer(model)
         self.splitter = HuggingFaceTextSplitter(self.tokenizer, trim_chunks=True)
-        self.multi_chunk_qa = MultipleChunkQa(self.client, self.log_level, self.model)
+        self.multi_chunk_qa = MultipleChunkQa(self.client, self.model)
         self.k = k
         self.threshold = threshold
 
-    def run(self, input: LongContextQaInput) -> MultipleChunkQaOutput:
-        debug_log = DebugLog.enabled(level=self.log_level)
+    def run(
+        self, input: LongContextQaInput, logger: DebugLogger
+    ) -> MultipleChunkQaOutput:
         chunks = self.splitter.chunks(input.text, self.max_tokens_in_chunk)
         relevant_chunks_with_scores = self.find_relevant_chunks(
             chunks=chunks, question=input.question
@@ -72,11 +71,10 @@ class LongContextQa(Task[LongContextQaInput, MultipleChunkQaOutput]):
         )
 
         # should we add something from the chunking to debug log? this debug log is duplicate for now
-        debug_log.info("Input", {"question": input.question, "text": input.text})
-        qa_output = self.multi_chunk_qa.run(multi_chunk_qa_input)
-        debug_log.debug("Multi Chunk QA", qa_output.debug_log)
-
-        qa_output.debug_log = debug_log
+        logger.log("Input", {"question": input.question, "text": input.text})
+        qa_output = self.multi_chunk_qa.run(
+            multi_chunk_qa_input, logger.child_logger("Multi Chunk QA")
+        )
 
         return qa_output
 

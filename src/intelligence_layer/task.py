@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+from datetime import datetime
 from typing import (
     TYPE_CHECKING,
     Any,
@@ -8,6 +9,7 @@ from typing import (
     Sequence,
     TypeVar,
     Protocol,
+    Union,
     runtime_checkable,
 )
 from aleph_alpha_client import (
@@ -20,8 +22,11 @@ from aleph_alpha_client import (
 from pydantic import (
     BaseModel,
     RootModel,
+    Field,
     SerializeAsAny,
 )
+from rich.panel import Panel
+from rich.tree import Tree
 from typing_extensions import TypeAliasType
 from uuid import uuid4
 
@@ -36,11 +41,6 @@ if TYPE_CHECKING:
         | None
         | bool
         | BaseModel
-        | Prompt
-        | CompletionRequest
-        | CompletionResponse
-        | ExplanationRequest
-        | ExplanationResponse
     )
 else:
     PydanticSerializable = TypeAliasType(
@@ -52,80 +52,67 @@ else:
         | Mapping[str, "PydanticSerializable"]
         | None
         | bool
-        | BaseModel
-        | Prompt
-        | CompletionRequest
-        | CompletionResponse
-        | ExplanationRequest
-        | ExplanationResponse,
+        | BaseModel,
     )
-
-LogLevel = Literal["info", "debug"]
 
 
 class LogEntry(BaseModel):
     message: str
-    level: LogLevel
     value: SerializeAsAny[PydanticSerializable]
+    timestamp: datetime = Field(default_factory=datetime.utcnow)
 
-
-class DebugLog(ABC, RootModel[list[LogEntry]]):
-    @abstractmethod
-    def info(self, message: str, value: PydanticSerializable) -> None:
-        pass
-
-    def debug(self, message: str, value: PydanticSerializable) -> None:
-        pass
-
-    @staticmethod
-    def enabled(level: LogLevel) -> "DebugLog":
-        return DebugEnabledLog() if level == "debug" else InfoEnabledLog()
-
-
-class InfoEnabledLog(DebugLog):
-    root: list[LogEntry] = []
-
-    def info(self, message: str, value: PydanticSerializable) -> None:
-        self.root.append(LogEntry(message=message, level="info", value=value))
+    def _render_(self) -> Panel:
+        return Panel(str(self.value), title=self.message)
 
     def _ipython_display_(self) -> None:
-        from IPython.display import display_javascript, display_html
+        from rich import print
 
-        uuid = uuid4()
-        display_html(  # type: ignore
-            f'<script src="https://rawgit.com/caldwell/renderjson/master/renderjson.js"></script><div id="{uuid}"></div>',
-            raw=True,
-        )
-        display_javascript(  # type: ignore
-            f"""
-        renderjson.set_show_to_level(2);
-        document.getElementById('{uuid}').appendChild(renderjson({self.model_dump_json()}));
-        """,
-            raw=True,
-        )
-
-
-class DebugEnabledLog(InfoEnabledLog):
-    def debug(self, message: str, value: PydanticSerializable) -> None:
-        self.root.append(LogEntry(message=message, level="debug", value=value))
+        print(self._render_())
 
 
 @runtime_checkable
-class OutputProtocol(Protocol):
-    """Minimum interface for a `Task`'s output."""
+class DebugLogger(Protocol):
+    name: str
 
-    debug_log: DebugLog
-    """Provides key steps, decisions, and intermediate outputs of a task's process."""
+    def log(self, message: str, value: PydanticSerializable) -> None:
+        ...
+
+    def child_logger(self, name: str) -> "DebugLogger":
+        ...
+
+
+class JsonDebugLogger(BaseModel):
+    name: str
+    logs: list[Union[LogEntry, "JsonDebugLogger"]] = []
+
+    def log(self, message: str, value: PydanticSerializable) -> None:
+        self.logs.append(LogEntry(message=message, value=value))
+
+    def child_logger(self, name: str) -> "JsonDebugLogger":
+        child = JsonDebugLogger(name=name)
+        self.logs.append(child)
+        return child
+
+    def _render_(self) -> Tree:
+        tree = Tree(label=self.name)
+
+        for log in self.logs:
+            tree.add(log._render_())
+
+        return tree
+
+    def _ipython_display_(self) -> None:
+        from rich import print
+
+        print(self._render_())
 
 
 Input = TypeVar("Input")
 """Interface to be passed to the task with all data needed to run the process.
 Ideally, these are specified in terms related to the use-case, rather than lower-level
 configuration options."""
-Output = TypeVar("Output", bound=OutputProtocol)
-"""Interface of the output returned by the task.
-It is required to adhere to the `OutputProtocol` and provide a `DebugLog` of key steps
-and decisions made in the process of generating the output."""
+Output = TypeVar("Output")
+"""Interface of the output returned by the task."""
 
 
 class Task(Generic[Input, Output]):
@@ -136,11 +123,9 @@ class Task(Generic[Input, Output]):
             Ideally, these are specified in terms related to the use-case, rather than lower-level
             configuration options.
         Output: Interface of the output returned by the task.
-            It is required to adhere to the `OutputProtocol` and provide a `DebugLog` of key steps
-            and decisions made in the process of generating the output.
     """
 
     @abstractmethod
-    def run(self, input: Input) -> Output:
+    def run(self, input: Input, logger: DebugLogger) -> Output:
         """Executes the process for this use-case."""
         raise NotImplementedError

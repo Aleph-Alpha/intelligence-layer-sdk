@@ -21,5 +21,4 @@ def test_classify(client: TestClient) -> None:
     assert response.status_code == HTTPStatus.OK
     assert response.headers.get("content-type", "") == "application/json"
     data = response.json()
-    assert "debug_log" in data
     assert "scores" in data

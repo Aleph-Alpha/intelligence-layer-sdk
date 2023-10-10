@@ -11,6 +11,8 @@ from intelligence_layer.classify import (
     SingleLabelClassify,
 )
 
+from intelligence_layer.task import JsonDebugLogger
+
 app = FastAPI()
 
 load_dotenv()
@@ -26,6 +28,6 @@ def client() -> Client:
 async def classify(
     classify_input: ClassifyInput, client: Client = Depends(client)
 ) -> ClassifyOutput:
-    classify = SingleLabelClassify(client, "info")
-    classify_output = classify.run(classify_input)
+    classify = SingleLabelClassify(client)
+    classify_output = classify.run(classify_input, JsonDebugLogger(name="classify"))
     return classify_output
