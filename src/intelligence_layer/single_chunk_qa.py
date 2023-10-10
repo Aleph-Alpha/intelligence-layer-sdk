@@ -47,7 +47,7 @@ class TextRange(BaseModel):
 NO_ANSWER_TEXT = "NO_ANSWER_IN_TEXT"
 
 
-class SingleChunkQa(Task[SingleChunkQaInput, QaOutput]):
+class SingleChunkQa(Task[SingleChunkQaInput, SingleChunkQaOutput]):
     PROMPT_TEMPLATE_STR = """### Instruction:
 {{question}}
 If there's no answer, say "{{no_answer_text}}".
@@ -78,7 +78,7 @@ If there's no answer, say "{{no_answer_text}}".
         explanation = self._explain(
             prompt_with_metadata.prompt, output.completion(), debug_log
         )
-        return QaOutput(
+        return SingleChunkQaOutput(
             answer=self._no_answer_to_none(output.completion().strip()),
             highlights=self._to_highlights(
                 *self._extract_explanation_and_range(prompt_with_metadata, explanation),
