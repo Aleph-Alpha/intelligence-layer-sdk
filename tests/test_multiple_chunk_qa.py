@@ -3,7 +3,7 @@ from aleph_alpha_client import Client
 from pytest import fixture
 from pprint import pprint
 
-from intelligence_layer.task import JsonDebugLogger
+from intelligence_layer.task import JsonDebugLogger, NoOpDebugLogger
 
 
 @fixture
@@ -19,7 +19,7 @@ def test_multiple_chunk_qa_with_answer(qa: MultipleChunkQa) -> None:
     ]
 
     input = MultipleChunkQaInput(chunks=chunks, question=question)
-    output = qa.run(input, JsonDebugLogger(name="qa"))
+    output = qa.run(input, NoOpDebugLogger())
 
     assert output.answer
     assert "Henri" in output.answer
@@ -51,7 +51,7 @@ def test_multiple_chunk_qa_with_mulitple_chunks(qa: MultipleChunkQa) -> None:
     ]
 
     input = MultipleChunkQaInput(chunks=chunks, question=question)
-    output = qa.run(input, JsonDebugLogger(name="qa"))
+    output = qa.run(input, NoOpDebugLogger())
 
     assert output.answer
     assert "Henri" in output.answer

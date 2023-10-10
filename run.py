@@ -11,7 +11,7 @@ from intelligence_layer.classify import (
     SingleLabelClassify,
 )
 
-from intelligence_layer.task import JsonDebugLogger
+from intelligence_layer.task import NoOpDebugLogger
 
 app = FastAPI()
 
@@ -29,5 +29,5 @@ async def classify(
     classify_input: ClassifyInput, client: Client = Depends(client)
 ) -> ClassifyOutput:
     classify = SingleLabelClassify(client)
-    classify_output = classify.run(classify_input, JsonDebugLogger(name="classify"))
+    classify_output = classify.run(classify_input, NoOpDebugLogger())
     return classify_output

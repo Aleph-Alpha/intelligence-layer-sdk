@@ -81,6 +81,16 @@ class DebugLogger(Protocol):
         ...
 
 
+class NoOpDebugLogger:
+    name = "NoOp"
+
+    def log(self, message: str, value: PydanticSerializable) -> None:
+        pass
+
+    def child_logger(self, name: str) -> "NoOpDebugLogger":
+        return NoOpDebugLogger()
+
+
 class JsonDebugLogger(BaseModel):
     name: str
     logs: list[Union[LogEntry, "JsonDebugLogger"]] = []

@@ -2,7 +2,7 @@ from aleph_alpha_client import Client
 from pytest import fixture
 from intelligence_layer.long_context_qa import LongContextQa, LongContextQaInput
 
-from intelligence_layer.task import JsonDebugLogger
+from intelligence_layer.task import NoOpDebugLogger
 
 LONG_TEXT = """Robert Moses (December 18, 1888 – July 29, 1981) was an American urban planner and public official who worked in the New York metropolitan area during the early to mid 20th century. Despite never being elected to any office, Moses is regarded as one of the most powerful and influential individuals in the history of New York City and New York State. The grand scale of his infrastructural projects and his philosophy of urban development influenced a generation of engineers, architects, and urban planners across the United States.[2]
 
@@ -24,7 +24,7 @@ def qa(client: Client) -> LongContextQa:
 def test_qa_with_answer(qa: LongContextQa) -> None:
     question = "What is the name of the book about Robert Moses?"
     input = LongContextQaInput(text=LONG_TEXT, question=question)
-    output = qa.run(input, JsonDebugLogger(name="qa"))
+    output = qa.run(input, NoOpDebugLogger())
     assert output.answer
     assert "The Power Broker" in output.answer
     # highlights TODO
@@ -33,6 +33,6 @@ def test_qa_with_answer(qa: LongContextQa) -> None:
 def test_qa_with_no_answer(qa: LongContextQa) -> None:
     question = "Who is the President of the united states?"
     input = LongContextQaInput(text=LONG_TEXT, question=question)
-    output = qa.run(input, JsonDebugLogger(name="qa"))
+    output = qa.run(input, NoOpDebugLogger())
 
     assert output.answer is None

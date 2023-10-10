@@ -13,8 +13,7 @@ from intelligence_layer.classify import (
     ClassifyOutput,
     Token,
 )
-from intelligence_layer.task import JsonDebugLogger, LogEntry
-from intelligence_layer.task import DebugLogger
+from intelligence_layer.task import DebugLogger, NoOpDebugLogger, LogEntry
 
 
 @fixture
@@ -30,9 +29,7 @@ def test_single_label_classify_returns_score_for_all_labels(
         labels=frozenset({"positive", "negative"}),
     )
 
-    classify_output = single_label_classify.run(
-        classify_input, JsonDebugLogger(name="classify")
-    )
+    classify_output = single_label_classify.run(classify_input, NoOpDebugLogger())
 
     # Output contains everything we expect
     assert isinstance(classify_output, ClassifyOutput)
@@ -46,9 +43,7 @@ def test_single_label_classify_accomodates_labels_starting_with_spaces(
         text="This is good", labels=frozenset({" positive", "negative"})
     )
 
-    classify_output = single_label_classify.run(
-        classify_input, JsonDebugLogger(name="classify")
-    )
+    classify_output = single_label_classify.run(classify_input, NoOpDebugLogger())
 
     # Output contains everything we expect
     assert classify_input.labels == set(r for r in classify_output.scores)
@@ -61,9 +56,7 @@ def test_single_label_classify_accomodates_labels_starting_with_different_spaces
         text="This is good", labels=frozenset({" positive", "  positive"})
     )
 
-    classify_output = single_label_classify.run(
-        classify_input, JsonDebugLogger(name="classify")
-    )
+    classify_output = single_label_classify.run(classify_input, NoOpDebugLogger())
 
     # Output contains everything we expect
     assert classify_input.labels == set(r for r in classify_output.scores)
@@ -77,9 +70,7 @@ def test_single_label_classify_sentiment_classification(
         text="This is good", labels=frozenset({"positive", "negative"})
     )
 
-    classify_output = single_label_classify.run(
-        classify_input, JsonDebugLogger(name="classify")
-    )
+    classify_output = single_label_classify.run(classify_input, NoOpDebugLogger())
 
     # Verify we got a higher positive score
     assert classify_output.scores["positive"] > classify_output.scores["negative"]
@@ -92,9 +83,7 @@ def test_single_label_classify_emotion_classification(
         text="I love my job", labels=frozenset({"happy", "sad", "frustrated", "angry"})
     )
 
-    classify_output = single_label_classify.run(
-        classify_input, JsonDebugLogger(name="classify")
-    )
+    classify_output = single_label_classify.run(classify_input, NoOpDebugLogger())
 
     # Verify it correctly calculated happy
     assert classify_output.scores["happy"] == max(classify_output.scores.values())
@@ -108,8 +97,6 @@ def test_single_label_classify_handles_labels_starting_with_same_token(
         labels=frozenset({"positive", "positive positive"}),
     )
 
-    classify_output = single_label_classify.run(
-        classify_input, JsonDebugLogger(name="classify")
-    )
+    classify_output = single_label_classify.run(classify_input, NoOpDebugLogger())
 
     assert classify_input.labels == set(r for r in classify_output.scores)
