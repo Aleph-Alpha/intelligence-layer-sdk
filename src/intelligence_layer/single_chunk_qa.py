@@ -27,7 +27,7 @@ class SingleChunkQaInput(BaseModel):
     question: str
 
 
-class QaOutput(BaseModel):
+class SingleChunkQaOutput(BaseModel):
     answer: Optional[str]
     highlights: Sequence[str]
     debug_log: DebugLog
@@ -47,7 +47,7 @@ class TextRange(BaseModel):
 NO_ANSWER_TEXT = "NO_ANSWER_IN_TEXT"
 
 
-class SingleChunkQa(Task[SingleChunkQaInput, QaOutput]):
+class SingleChunkQa(Task[SingleChunkQaInput, SingleChunkQaOutput]):
     PROMPT_TEMPLATE_STR = """### Instruction:
 {{question}}
 If there's no answer, say "{{no_answer_text}}".
@@ -69,7 +69,7 @@ If there's no answer, say "{{no_answer_text}}".
         self.completion = Completion(client, log_level)
         self.model = model
 
-    def run(self, input: SingleChunkQaInput) -> QaOutput:
+    def run(self, input: SingleChunkQaInput) -> SingleChunkQaOutput:
         debug_log = DebugLog.enabled(level=self.log_level)
         prompt_with_metadata = self._to_prompt_with_metadata(
             input.chunk, input.question
@@ -78,7 +78,7 @@ If there's no answer, say "{{no_answer_text}}".
         explanation = self._explain(
             prompt_with_metadata.prompt, output.completion(), debug_log
         )
-        return QaOutput(
+        return SingleChunkQaOutput(
             answer=self._no_answer_to_none(output.completion().strip()),
             highlights=self._to_highlights(
                 *self._extract_explanation_and_range(prompt_with_metadata, explanation),
@@ -171,3 +171,7 @@ If there's no answer, say "{{no_answer_text}}".
             for text_score in overlapping
             if text_score.score == best_test_score
         ]
+
+    def chop_highlight(self, text: str, score: TextScore, range: TextRange) -> str:
+        start = score.start - range.start
+        return text[max(0, start) : start + score.length]

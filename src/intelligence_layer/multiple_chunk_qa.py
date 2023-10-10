@@ -1,6 +1,7 @@
+from typing import Optional, Sequence, Tuple
 from intelligence_layer.single_chunk_qa import (
     SingleChunkQaInput,
-    QaOutput,
+    SingleChunkQaOutput,
     SingleChunkQa,
     TextRange,
 )
@@ -23,7 +24,14 @@ class MultipleChunkQaInput(BaseModel):
     question: str
 
 
-class MultipleChunkQa(Task[MultipleChunkQaInput, QaOutput]):
+class MultipleChunkQaOutput(BaseModel):
+    answer: Optional[str]
+    sources: Sequence[Optional[str]]
+    sources_highlights: Sequence[Sequence[str]]
+    debug_log: DebugLog
+
+
+class MultipleChunkQa(Task[MultipleChunkQaInput, MultipleChunkQaOutput]):
     PROMPT_TEMPLATE = """### Instruction:
 You will be given a number of Answers to a Question. Based on them, generate a single final answer.
 Condense multiple answers into a single answer. Rely only on the provided answers. Don't use the world's knowledge. The answer should combine the individual answers. If the answers contradict each other, e.g., one saying that the colour is green and the other saying that the colour is black, say that there are contradicting answers saying the colour is green or the colour is black.
@@ -47,30 +55,44 @@ Final answer:"""
         self.log_level = log_level
         self.completion = Completion(client, log_level)
         self.single_chunk_qa = SingleChunkQa(client, log_level, model)
+        self.model = model
 
-    def _prompt_text(
-        self, text: str, question: str, no_answer_text: str
-    ) -> Tuple[str, TextRange]:
-        prompt = self.PROMPT_TEMPLATE.format(
-            question=question, no_answer_text=no_answer_text
+    def _prompt_text(self, question: str, answers: Sequence[str]) -> str:
+        prompt = self.PROMPT_TEMPLATE.format(question=question, answers=answers)
+        return prompt
+
+    def _complete(self, prompt: str, debug_log: DebugLog) -> CompletionOutput:
+        request = CompletionRequest(Prompt.from_text(prompt))
+        output = self.completion.run(CompletionInput(request=request, model=self.model))
+        debug_log.debug("Completion", output.debug_log)
+        debug_log.info(
+            "Completion Input/Output",
+            {"prompt": prompt, "completion": output.completion()},
         )
-        # need to calculate the range differently
-        return prompt, TextRange(start=len(prompt), end=len(prompt) + len(text))
+        return output
 
-    def run(self, input: MultipleChunkQaInput) -> QaOutput:
+    def run(self, input: MultipleChunkQaInput) -> MultipleChunkQaOutput:
         """Executes the process for this use-case."""
 
-        qa_outputs: List[QaOutput] = [
+        qa_outputs: Sequence[SingleChunkQaOutput] = [
             self.single_chunk_qa.run(
                 SingleChunkQaInput(question=input.question, chunk=chunk)
             )
             for chunk in input.chunks
         ]
 
-        answers: List[str | None] = [output.answer for output in qa_outputs]
+        answers: List[str] = [
+            output.answer for output in qa_outputs if output.answer is not None
+        ]
 
-        return QaOutput(
-            answer="XXX",
-            highlights=["xxxx", "zzzz"],
-            debug_log=DebugLog.enabled(level=self.log_level),
+        debug_log = DebugLog.enabled(level=self.log_level)
+
+        prompt_text = self._prompt_text(input.question, answers)
+        output = self._complete(prompt_text, debug_log)
+
+        return MultipleChunkQaOutput(
+            answer=output.completion().strip(),
+            sources=input.chunks,
+            sources_highlights=[],
+            debug_log=debug_log,
         )
