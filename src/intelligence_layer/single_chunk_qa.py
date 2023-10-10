@@ -80,6 +80,19 @@ If there's no answer, say "{{no_answer_text}}".
             highlights=highlights,
         )
 
+    def _to_prompt_with_metadata(self, text: str, question: str) -> PromptWithMetadata:
+        template = PromptTemplate(self.PROMPT_TEMPLATE_STR)
+        return template.to_prompt_with_metadata(
+            text=text, question=question, no_answer_text=self.NO_ANSWER_STR
+        )
+
+    def _complete(self, prompt: Prompt, logger: DebugLogger) -> CompletionOutput:
+        request = CompletionRequest(prompt)
+        output = self.completion.run(
+            CompletionInput(request=request, model=self.model), logger
+        )
+        return output
+
     def _get_highlights(
         self,
         prompt_with_metadata: PromptWithMetadata,
@@ -93,19 +106,6 @@ If there's no answer, say "{{no_answer_text}}".
         )
         highlight_output = self.text_highlight.run(highlight_input, logger)
         return [h.text for h in highlight_output.highlights if h.score > 0]
-
+    
     def _no_answer_to_none(self, completion: str) -> Optional[str]:
         return completion if completion != self.NO_ANSWER_STR else None
-
-    def _to_prompt_with_metadata(self, text: str, question: str) -> PromptWithMetadata:
-        template = PromptTemplate(self.PROMPT_TEMPLATE_STR)
-        return template.to_prompt_with_metadata(
-            text=text, question=question, no_answer_text=self.NO_ANSWER_STR
-        )
-
-    def _complete(self, prompt: Prompt, logger: DebugLogger) -> CompletionOutput:
-        request = CompletionRequest(prompt)
-        output = self.completion.run(
-            CompletionInput(request=request, model=self.model), logger
-        )
-        return output
