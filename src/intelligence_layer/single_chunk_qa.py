@@ -1,23 +1,20 @@
-from typing import Optional, Sequence, Tuple
+from typing import Optional, Sequence
 from aleph_alpha_client import (
     Client,
     CompletionRequest,
-    ExplanationRequest,
-    ExplanationResponse,
     Prompt,
-    Text,
-    TextPromptItemExplanation,
     TextScore,
 )
-from aleph_alpha_client.explanation import TextScoreWithRaw
 from pydantic import BaseModel
 
 from intelligence_layer.completion import Completion, CompletionInput, CompletionOutput
+from intelligence_layer.highlight import (
+    TextHighlight,
+    TextHighlightInput,
+)
 from intelligence_layer.prompt_template import (
-    PromptRange,
     PromptTemplate,
     PromptWithMetadata,
-    TextCursor,
 )
 from intelligence_layer.task import DebugLogger, Task
 
@@ -61,6 +58,7 @@ If there's no answer, say "{{no_answer_text}}".
     ):
         self.client = client
         self.completion = Completion(client)
+        self.text_highlight = TextHighlight(client)
         self.model = model
 
     def run(
@@ -72,35 +70,27 @@ If there's no answer, say "{{no_answer_text}}".
         output = self._complete(
             prompt_with_metadata.prompt, logger.child_logger("Generate Answer")
         )
-        explanation = self._explain(
-            prompt_with_metadata.prompt,
-            output.completion(),
-            logger.child_logger("Explain Answer"),
+        highlights = self._get_highlights(
+            prompt_with_metadata, output.completion(), logger.child_logger("Explain Answer"),
         )
         return SingleChunkQaOutput(
             answer=self._no_answer_to_none(output.completion().strip()),
-            highlights=self._to_highlights(
-                *self._extract_explanation_and_range(prompt_with_metadata, explanation),
-                logger,
-            ),
+            highlights=highlights
         )
 
-    def _extract_explanation_and_range(
+    def _get_highlights(
         self,
         prompt_with_metadata: PromptWithMetadata,
-        explanation_response: ExplanationResponse,
-    ) -> tuple[TextPromptItemExplanation, PromptRange]:
-        item_index = 0
-        prompt_text = prompt_with_metadata.prompt.items[item_index]
-        assert isinstance(
-            prompt_text, Text
-        ), f"Expected `Text` prompt item, got {type(prompt_text)}."
-        prompt_range = prompt_with_metadata.ranges["text"][item_index]
-        text_prompt_item_explanation = explanation_response.explanations[0].items[
-            item_index
-        ]  # explanations[0], because one explanation for each target
-        assert isinstance(text_prompt_item_explanation, TextPromptItemExplanation)
-        return text_prompt_item_explanation.with_text(prompt_text), prompt_range
+        completion: str,
+        logger: DebugLogger,
+    ) -> Sequence[str]:
+        highlight_input = TextHighlightInput(
+            prompt_with_metadata=prompt_with_metadata,
+            target=completion,
+            model=self.model,
+        )
+        highlight_output = self.text_highlight.run(highlight_input, logger)
+        return [h.text for h in highlight_output.highlights if h.score > 0]
 
     def _no_answer_to_none(self, completion: str) -> Optional[str]:
         return completion if completion != self.NO_ANSWER_STR else None
@@ -117,57 +107,3 @@ If there's no answer, say "{{no_answer_text}}".
             CompletionInput(request=request, model=self.model), logger
         )
         return output
-
-    def _explain(
-        self, prompt: Prompt, target: str, logger: DebugLogger
-    ) -> ExplanationResponse:
-        request = ExplanationRequest(prompt, target)
-        response = self.client.explain(request, self.model)
-        logger.log(
-            "Explanation Request/Response",
-            {"request": request.to_json(), "response": response._asdict()},
-        )
-        return response
-
-    def _to_highlights(
-        self,
-        text_prompt_item_explanation: TextPromptItemExplanation,
-        prompt_range: PromptRange,
-        logger: DebugLogger,
-    ) -> Sequence[str]:
-        def prompt_range_contains_position(pos: int) -> bool:
-            assert isinstance(prompt_range.start, TextCursor)
-            assert isinstance(prompt_range.end, TextCursor)
-            return prompt_range.start.position <= pos < prompt_range.end.position
-
-        def prompt_range_overlaps_with_text_score(text_score: TextScoreWithRaw) -> bool:
-            return prompt_range_contains_position(
-                text_score.start
-            ) or prompt_range_contains_position(text_score.start + text_score.length)
-
-        overlapping = [
-            text_score
-            for text_score in text_prompt_item_explanation.scores
-            if isinstance(text_score, TextScoreWithRaw)
-            and prompt_range_overlaps_with_text_score(text_score)
-        ]
-        logger.log(
-            "Explanation-Scores",
-            [
-                {
-                    "text": text_score.text,
-                    "score": text_score.score,
-                }
-                for text_score in overlapping
-            ],
-        )
-        best_test_score = max(text_score.score for text_score in overlapping)
-        return [
-            text_score.text
-            for text_score in overlapping
-            if text_score.score == best_test_score
-        ]
-
-    def chop_highlight(self, text: str, score: TextScore, range: TextRange) -> str:
-        start = score.start - range.start
-        return text[max(0, start) : start + score.length]
