@@ -13,13 +13,13 @@ Moses's reputation declined following the publication of Robert Caro's Pulitzer 
 Early life and career
 Moses was born in New Haven, Connecticut, on December 18, 1888, to German Jewish parents, Bella (Silverman) and Emanuel Moses.[5][6] He spent the first nine years of his life living at 83 Dwight Street in New Haven, two blocks from Yale University. In 1897, the Moses family moved to New York City,[7] where they lived on East 46th Street off Fifth Avenue.[8] Moses's father was a successful department store owner and real estate speculator in New Haven. In order for the family to move to New York City, he sold his real estate holdings and store, then retired.[7] Moses's mother was active in the settlement movement, with her own love of building. Robert Moses and his brother Paul attended several schools for their elementary and secondary education, including the Ethical Culture School, the Dwight School and the Mohegan Lake School, a military academy near Peekskill.[9]"""
 
+
 @fixture
 def qa(client: Client) -> LongContextQa:
     return LongContextQa(client, "info")
 
 
 def test_qa_with_answer(qa: LongContextQa) -> None:
-    
     question = "What is the name of the book about Robert Moses?"
     input = LongContextQaInput(text=LONG_TEXT, question=question)
     output = qa.run(input)
@@ -34,4 +34,3 @@ def test_qa_with_no_answer(qa: LongContextQa) -> None:
     output = qa.run(input)
 
     assert output.answer is None
-
