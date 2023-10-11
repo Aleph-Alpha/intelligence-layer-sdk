@@ -14,7 +14,7 @@ from intelligence_layer.multiple_chunk_qa import (
     MultipleChunkQaOutput,
 )
 from intelligence_layer.retrivers.base import BaseRetriver
-from intelligence_layer.task import DebugLogger, Task
+from intelligence_layer.task import DebugLogger, Task, log_run_input_output
 from semantic_text_splitter import HuggingFaceTextSplitter
 from intelligence_layer.retrivers.qdrant import QdrantRetriver
 
@@ -52,6 +52,7 @@ class LongContextQa(Task[LongContextQaInput, MultipleChunkQaOutput]):
 
         self.qdrant_retriver = retriver or QdrantRetriver(client, threshold=0.5)
 
+    @log_run_input_output
     def run(
         self, input: LongContextQaInput, logger: DebugLogger
     ) -> MultipleChunkQaOutput:

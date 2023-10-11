@@ -1,6 +1,6 @@
 from aleph_alpha_client import Client, CompletionRequest, CompletionResponse
 from pydantic import BaseModel
-from intelligence_layer.task import DebugLogger, Task
+from intelligence_layer.task import DebugLogger, Task, log_run_input_output
 
 
 class CompletionInput(BaseModel):
@@ -20,13 +20,10 @@ class Completion(Task[CompletionInput, CompletionOutput]):
         super().__init__()
         self.client = client
 
+    @log_run_input_output
     def run(self, input: CompletionInput, logger: DebugLogger) -> CompletionOutput:
-        logger.log(
-            "Request", {"request": input.request.to_json(), "model": input.model}
-        )
         response = self.client.complete(
             input.request,
             model=input.model,
         )
-        logger.log("Response", response.to_json())
         return CompletionOutput(response=response)

@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
 from datetime import datetime
+import functools
 from typing import (
     TYPE_CHECKING,
     Any,
@@ -11,6 +12,10 @@ from typing import (
     Protocol,
     Union,
     runtime_checkable,
+    Self,
+    Callable,
+    Type,
+    ParamSpec,
 )
 from aleph_alpha_client import (
     CompletionRequest,
@@ -67,9 +72,14 @@ class LogEntry(BaseModel):
     timestamp: datetime = Field(default_factory=datetime.utcnow)
 
     def _render_(self) -> Panel:
+        value = (
+            self.value
+            if isinstance(self.value, BaseModel)
+            else JsonSerializer(root=self.value)
+        )
         return Panel(
             Syntax(
-                JsonSerializer(root=self.value).model_dump_json(indent=2),
+                value.model_dump_json(indent=2),
                 "json",
                 word_wrap=True,
             ),
@@ -129,12 +139,31 @@ class JsonDebugLogger(BaseModel):
         print(self._render_())
 
 
-Input = TypeVar("Input")
+Input = TypeVar("Input", bound=PydanticSerializable)
 """Interface to be passed to the task with all data needed to run the process.
 Ideally, these are specified in terms related to the use-case, rather than lower-level
 configuration options."""
-Output = TypeVar("Output")
+Output = TypeVar("Output", bound=PydanticSerializable)
 """Interface of the output returned by the task."""
+P = ParamSpec("P")
+
+
+def log_run_input_output(
+    func: Callable[P, Output],
+) -> Callable[P, Output]:
+    @functools.wraps(func)
+    def inner(*args: P.args, **kwargs: P.kwargs) -> Output:
+        input = args[1]
+        logger = args[2]
+        assert isinstance(input, BaseModel)
+        assert isinstance(logger, DebugLogger)
+
+        logger.log("Input", input)
+        output = func(*args, **kwargs)
+        logger.log("Output", output)
+        return output
+
+    return inner
 
 
 class Task(Generic[Input, Output]):
@@ -148,6 +177,7 @@ class Task(Generic[Input, Output]):
     """
 
     @abstractmethod
+    @log_run_input_output
     def run(self, input: Input, logger: DebugLogger) -> Output:
         """Executes the process for this use-case."""
         raise NotImplementedError

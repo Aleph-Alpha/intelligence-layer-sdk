@@ -16,7 +16,7 @@ from intelligence_layer.prompt_template import (
     PromptTemplate,
     PromptWithMetadata,
 )
-from intelligence_layer.task import DebugLogger, Task
+from intelligence_layer.task import DebugLogger, Task, log_run_input_output
 
 
 class SingleChunkQaInput(BaseModel):
@@ -61,6 +61,7 @@ If there's no answer, say "{{no_answer_text}}".
         self.text_highlight = TextHighlight(client)
         self.model = model
 
+    @log_run_input_output
     def run(
         self, input: SingleChunkQaInput, logger: DebugLogger
     ) -> SingleChunkQaOutput:
