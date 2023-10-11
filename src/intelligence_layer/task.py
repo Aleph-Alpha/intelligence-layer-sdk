@@ -63,7 +63,7 @@ else:
 
 
 class JsonSerializer(RootModel[PydanticSerializable]):
-    root: PydanticSerializable
+    root: SerializeAsAny[PydanticSerializable]
 
 
 class LogEntry(BaseModel):
