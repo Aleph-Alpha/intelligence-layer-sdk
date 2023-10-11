@@ -1,19 +1,13 @@
-import os
-from typing import Iterable
 
 from aleph_alpha_client import Client
-from dotenv import load_dotenv
-from pydantic import BaseModel
 from pytest import fixture
 
 from intelligence_layer.classify import (
-    Probability,
     SingleLabelClassify,
     ClassifyInput,
     ClassifyOutput,
-    Token,
 )
-from intelligence_layer.task import DebugLogger, NoOpDebugLogger, LogEntry
+from intelligence_layer.task import NoOpDebugLogger 
 
 
 @fixture
