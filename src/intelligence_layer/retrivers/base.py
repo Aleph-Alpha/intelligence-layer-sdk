@@ -10,7 +10,9 @@ class SearchResult(BaseModel):
 
 class BaseRetriver(ABC):
     @abstractmethod
-    def get_relevant_documents_with_scores(self, query: str) -> Sequence[SearchResult]:
+    def get_relevant_documents_with_scores(
+        self, query: str, *, k: int
+    ) -> Sequence[SearchResult]:
         pass
 
     @abstractmethod

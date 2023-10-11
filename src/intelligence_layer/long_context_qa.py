@@ -1,4 +1,4 @@
-from typing import Sequence
+from typing import Optional, Sequence
 from qdrant_client.conversions.common_types import ScoredPoint
 from qdrant_client.http.models import Distance, VectorParams, PointStruct
 from aleph_alpha_client import (
@@ -13,6 +13,7 @@ from intelligence_layer.multiple_chunk_qa import (
     MultipleChunkQaInput,
     MultipleChunkQaOutput,
 )
+from intelligence_layer.retrivers.base import BaseRetriver
 from intelligence_layer.task import DebugLogger, Task
 from semantic_text_splitter import HuggingFaceTextSplitter
 from intelligence_layer.retrivers.qdrant import QdrantRetriver
@@ -37,7 +38,7 @@ class LongContextQa(Task[LongContextQaInput, MultipleChunkQaOutput]):
         client: Client,
         max_tokens_in_chunk: int = 512,
         k: int = 4,
-        threshold: float = 0.5,
+        retriver: Optional[BaseRetriver] = None,
         model: str = "luminous-supreme-control",
     ):
         self.client = client
@@ -48,9 +49,8 @@ class LongContextQa(Task[LongContextQaInput, MultipleChunkQaOutput]):
         self.multi_chunk_qa = MultipleChunkQa(self.client, self.model)
 
         self.k = k
-        self.threshold = threshold
 
-        self.qdrant_retriver = QdrantRetriver(client)
+        self.qdrant_retriver = retriver or QdrantRetriver(client, threshold=0.5)
 
     def run(
         self, input: LongContextQaInput, logger: DebugLogger
@@ -60,7 +60,9 @@ class LongContextQa(Task[LongContextQaInput, MultipleChunkQaOutput]):
         self.qdrant_retriver.add_documents(chunks)
 
         relevant_chunks_with_scores = (
-            self.qdrant_retriver.get_relevant_documents_with_scores(input.question)
+            self.qdrant_retriver.get_relevant_documents_with_scores(
+                input.question, k=self.k
+            )
         )
 
         multi_chunk_qa_input = MultipleChunkQaInput(
