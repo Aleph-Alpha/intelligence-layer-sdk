@@ -1,26 +1,21 @@
-from typing import Optional, Sequence, Tuple
+from typing import Optional, Sequence 
 from intelligence_layer.single_chunk_qa import (
     SingleChunkQaInput,
     SingleChunkQaOutput,
     SingleChunkQa,
-    TextRange,
 )
 from intelligence_layer.task import DebugLogger, Task
 from aleph_alpha_client import (
     Client,
     CompletionRequest,
-    ExplanationRequest,
-    ExplanationResponse,
     Prompt,
-    TextScore,
 )
 
 from intelligence_layer.prompt_template import (
-    PromptRange,
     PromptTemplate,
 )
 from intelligence_layer.completion import Completion, CompletionInput, CompletionOutput
-from typing import List, Tuple
+from typing import List 
 from pydantic import BaseModel
 
 
@@ -29,10 +24,13 @@ class MultipleChunkQaInput(BaseModel):
     question: str
 
 
+class Source(BaseModel):
+    text: str
+    highlights: list[str]
+
 class MultipleChunkQaOutput(BaseModel):
     answer: Optional[str]
-    highlights: Sequence[str]
-
+    sources: Sequence[Source]
 
 class MultipleChunkQa(Task[MultipleChunkQaInput, MultipleChunkQaOutput]):
     PROMPT_TEMPLATE = """### Instruction:
@@ -67,7 +65,7 @@ Final answer:"""
         return self.completion.run(
             CompletionInput(request=request, model=self.model), logger
         )
-
+    
     def run(
         self, input: MultipleChunkQaInput, logger: DebugLogger
     ) -> MultipleChunkQaOutput:
@@ -78,6 +76,7 @@ Final answer:"""
             )
             for chunk in input.chunks
         ]
+        sources = [Source(text=chunk, highlights=qa_output.highlights) for qa_output, chunk in zip(qa_outputs, input.chunks)]
 
         logger.log("Intermediate Answers", [output.answer for output in qa_outputs])
 
@@ -88,7 +87,7 @@ Final answer:"""
         if len(answers) == 0:
             return MultipleChunkQaOutput(
                 answer=None,
-                highlights=[],
+                sources=[],
             )
 
         prompt_text = self._format_prompt(input.question, answers)
@@ -96,5 +95,5 @@ Final answer:"""
 
         return MultipleChunkQaOutput(
             answer=output.completion().strip(),
-            highlights=[],
+            sources=sources
         )
