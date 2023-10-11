@@ -56,13 +56,20 @@ else:
     )
 
 
+class JsonSerializer(RootModel[PydanticSerializable]):
+    root: PydanticSerializable
+
+
 class LogEntry(BaseModel):
     message: str
     value: SerializeAsAny[PydanticSerializable]
     timestamp: datetime = Field(default_factory=datetime.utcnow)
 
     def _render_(self) -> Panel:
-        return Panel(str(self.value), title=self.message)
+        return Panel(
+            JsonSerializer(root=self.value).model_dump_json(indent=2),
+            title=self.message,
+        )
 
     def _ipython_display_(self) -> None:
         from rich import print
