@@ -26,6 +26,7 @@ from pydantic import (
     SerializeAsAny,
 )
 from rich.panel import Panel
+from rich.syntax import Syntax
 from rich.tree import Tree
 from typing_extensions import TypeAliasType
 from uuid import uuid4
@@ -67,7 +68,11 @@ class LogEntry(BaseModel):
 
     def _render_(self) -> Panel:
         return Panel(
-            JsonSerializer(root=self.value).model_dump_json(indent=2),
+            Syntax(
+                JsonSerializer(root=self.value).model_dump_json(indent=2),
+                "json",
+                word_wrap=True,
+            ),
             title=self.message,
         )
 
