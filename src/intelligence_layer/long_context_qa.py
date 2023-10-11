@@ -1,5 +1,4 @@
-from typing import Optional, Sequence
-from qdrant_client import QdrantClient
+from typing import Sequence
 from qdrant_client.conversions.common_types import ScoredPoint
 from qdrant_client.http.models import Distance, VectorParams, PointStruct
 from aleph_alpha_client import (
@@ -14,15 +13,9 @@ from intelligence_layer.multiple_chunk_qa import (
     MultipleChunkQaInput,
     MultipleChunkQaOutput,
 )
-from intelligence_layer.completion import Completion, CompletionInput, CompletionOutput
-from intelligence_layer.prompt_template import (
-    PromptRange,
-    PromptTemplate,
-    PromptWithMetadata,
-    TextCursor,
-)
 from intelligence_layer.task import DebugLogger, Task
 from semantic_text_splitter import HuggingFaceTextSplitter
+from intelligence_layer.retrivers.qdrant import QdrantRetriver
 
 
 class LongContextQaInput(BaseModel):
@@ -48,21 +41,26 @@ class LongContextQa(Task[LongContextQaInput, MultipleChunkQaOutput]):
         model: str = "luminous-supreme-control",
     ):
         self.client = client
-        self.search_client = QdrantClient(":memory:")
         self.model = model
         self.max_tokens_in_chunk = max_tokens_in_chunk
         self.tokenizer = self.client.tokenizer(model)
         self.splitter = HuggingFaceTextSplitter(self.tokenizer, trim_chunks=True)
         self.multi_chunk_qa = MultipleChunkQa(self.client, self.model)
+
         self.k = k
         self.threshold = threshold
+
+        self.qdrant_retriver = QdrantRetriver(client)
 
     def run(
         self, input: LongContextQaInput, logger: DebugLogger
     ) -> MultipleChunkQaOutput:
         chunks = self.splitter.chunks(input.text, self.max_tokens_in_chunk)
-        relevant_chunks_with_scores = self.find_relevant_chunks(
-            chunks=chunks, question=input.question
+
+        self.qdrant_retriver.add_documents(chunks)
+
+        relevant_chunks_with_scores = (
+            self.qdrant_retriver.get_relevant_documents_with_scores(input.question)
         )
 
         multi_chunk_qa_input = MultipleChunkQaInput(
@@ -77,57 +75,3 @@ class LongContextQa(Task[LongContextQaInput, MultipleChunkQaOutput]):
         )
 
         return qa_output
-
-    def find_relevant_chunks(
-        self, chunks: Sequence[str], question: str
-    ) -> Sequence[SearchResult]:
-        def _point_to_search_result(point: ScoredPoint) -> SearchResult:
-            assert point.payload
-            return SearchResult(score=point.score, chunk=point.payload["text"])
-
-        chunk_embeddings = []
-        for chunk in chunks:
-            chunk_embedding_request = SemanticEmbeddingRequest(
-                prompt=Prompt.from_text(chunk),
-                representation=SemanticRepresentation.Document,
-                compress_to_size=128,
-                normalize=True,
-            )
-            chunk_embedding_response = self.client.semantic_embed(
-                request=chunk_embedding_request, model="luminous-base"
-            )
-            chunk_embeddings.append(chunk_embedding_response.embedding)
-
-        question_embedding_request = SemanticEmbeddingRequest(
-            prompt=Prompt.from_text(question),
-            representation=SemanticRepresentation.Query,
-            compress_to_size=128,
-            normalize=True,
-        )
-        question_embedding = self.client.semantic_embed(
-            request=question_embedding_request, model="luminous-base"
-        ).embedding
-
-        self.search_client.recreate_collection(
-            collection_name="lokal_chunks",
-            vectors_config=VectorParams(size=128, distance=Distance.COSINE),
-        )
-        operation_info = self.search_client.upsert(
-            collection_name="lokal_chunks",
-            wait=True,
-            points=[
-                PointStruct(id=idx, vector=chunk_embedding, payload={"text": chunk})
-                for idx, (chunk_embedding, chunk) in enumerate(
-                    zip(chunk_embeddings, chunks)
-                )
-            ],
-        )
-        search_result = self.search_client.search(
-            collection_name="lokal_chunks",
-            query_vector=question_embedding,
-            score_threshold=self.threshold,
-            limit=self.k,
-        )
-
-        output = [_point_to_search_result(point) for point in search_result]
-        return output
