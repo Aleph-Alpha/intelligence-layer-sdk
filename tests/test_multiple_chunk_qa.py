@@ -24,7 +24,10 @@ def test_multiple_chunk_qa_with_answer(qa: MultipleChunkQa) -> None:
     assert output.answer
     assert "Henri" in output.answer
     print(output.sources[0].highlights)
-    assert any(any("Henri" in highlight for highlight in source.highlights) for source in output.sources)
+    assert any(
+        any("Henri" in highlight for highlight in source.highlights)
+        for source in output.sources
+    )
     assert len(output.sources) == 1
 
 
@@ -58,5 +61,8 @@ def test_multiple_chunk_qa_with_mulitple_chunks(qa: MultipleChunkQa) -> None:
 
     assert output.answer
     assert "Henri" in output.answer
-    assert any(any("Henri" in highlight for highlight in source.highlights) for source in output.sources)
+    assert any(
+        any("Henri" in highlight for highlight in source.highlights)
+        for source in output.sources
+    )
     assert len(output.sources) == 2
