@@ -1,4 +1,3 @@
-
 from aleph_alpha_client import Client
 from pytest import fixture
 
@@ -8,7 +7,7 @@ from intelligence_layer.classify import (
     ClassifyOutput,
     SingleLabelClassifyEvaluator,
 )
-from intelligence_layer.task import NoOpDebugLogger 
+from intelligence_layer.task import NoOpDebugLogger
 
 
 @fixture
@@ -96,6 +95,7 @@ def test_single_label_classify_handles_labels_starting_with_same_token(
 
     assert classify_input.labels == set(r for r in classify_output.scores)
 
+
 def test_can_evaluate_classify(single_label_classify: SingleLabelClassify) -> None:
     classify_input = ClassifyInput(
         text="This is good",
@@ -103,7 +103,8 @@ def test_can_evaluate_classify(single_label_classify: SingleLabelClassify) -> No
     )
     evaluator = SingleLabelClassifyEvaluator(task=single_label_classify)
 
-    evaluation = evaluator.evaluate(input=classify_input, logger=NoOpDebugLogger(), expected_output=["positive"])
+    evaluation = evaluator.evaluate(
+        input=classify_input, logger=NoOpDebugLogger(), expected_output=["positive"]
+    )
 
-    assert evaluation.correct == True
-
+    assert evaluation["correct"] == True

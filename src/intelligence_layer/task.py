@@ -6,6 +6,7 @@ from typing import (
     Any,
     Generic,
     Mapping,
+    NewType,
     Optional,
     Sequence,
     TypeVar,
@@ -174,10 +175,10 @@ class Task(Generic[Input, Output]):
 
 
 ExpectedOutput = TypeVar("ExpectedOutput")
-Evaluation = TypeVar("Evaluation", bound=BaseModel)
+Evaluation = NewType("Evaluation", Mapping[str, int | float | bool | str])
 
 
-class Evaluator(Generic[Input, ExpectedOutput, Evaluation]):
+class Evaluator(Generic[Input, ExpectedOutput]):
     """Base evaluator interface. This should run certain evaluation steps for some job.
 
     Generics:
@@ -193,7 +194,7 @@ class Evaluator(Generic[Input, ExpectedOutput, Evaluation]):
         self,
         input: Input,
         logger: DebugLogger,
-        expected_output: Optional[ExpectedOutput] = None,
+        expected_output: ExpectedOutput,
     ) -> Evaluation:
         """Executes the evaluation for this use-case."""
         raise NotImplementedError

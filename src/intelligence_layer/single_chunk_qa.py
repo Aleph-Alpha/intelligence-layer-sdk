@@ -20,7 +20,13 @@ from intelligence_layer.prompt_template import (
     PromptTemplate,
     PromptWithMetadata,
 )
-from intelligence_layer.task import DebugLogger, Evaluator, Task, log_run_input_output
+from intelligence_layer.task import (
+    DebugLogger,
+    Evaluation,
+    Evaluator,
+    Task,
+    log_run_input_output,
+)
 
 
 class SingleChunkQaInput(BaseModel):
@@ -105,13 +111,7 @@ If there's no answer, say "{{no_answer_text}}".
         return completion if completion != self.NO_ANSWER_STR else None
 
 
-class QaEvaluation(BaseModel):
-    exact_match: bool
-    random: float
-    llama: str
-
-
-class QaEvaluator(Evaluator[SingleChunkQaInput, Optional[str], QaEvaluation]):
+class QaEvaluator(Evaluator[SingleChunkQaInput, Optional[str]]):
     """
     First version of what we imagine an evaluator to look for a given task.
     All current metrics delivered by the graders are mock metrics.
@@ -128,7 +128,7 @@ class QaEvaluator(Evaluator[SingleChunkQaInput, Optional[str], QaEvaluation]):
         input: SingleChunkQaInput,
         logger: DebugLogger,
         expected_output: Optional[str] = None,
-    ) -> QaEvaluation:
+    ) -> Evaluation:
         qa_output = self.task.run(input, logger)
         actual_output = qa_output.answer
         exact_match_result = self.exact_match_grader.grade(
@@ -144,6 +144,10 @@ class QaEvaluator(Evaluator[SingleChunkQaInput, Optional[str], QaEvaluation]):
             actual=actual_output,
             expected=expected_output,
         )
-        return QaEvaluation(
-            exact_match=exact_match_result, random=random_result, llama=llama_result
+        return Evaluation(
+            {
+                "exact_match": exact_match_result,
+                "random": random_result,
+                "llama": llama_result,
+            }
         )
