@@ -19,9 +19,6 @@ class QdrantRetriver(BaseRetriver):
         threshold: float = 0.5,
         collection_name: str = "default_collection",
     ) -> None:
-        super().__init__()
-        # TODO make it more generic, so can connect to a DB
-
         self.client = client
         self.search_client = QdrantClient(location)
         self.collection_name = collection_name
