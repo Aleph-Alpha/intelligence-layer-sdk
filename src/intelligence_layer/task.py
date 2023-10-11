@@ -1,28 +1,18 @@
-from abc import ABC, abstractmethod
+from abc import abstractmethod
 from datetime import datetime
 import functools
 from typing import (
     TYPE_CHECKING,
     Any,
     Generic,
-    Literal,
     Mapping,
     Sequence,
     TypeVar,
     Protocol,
     Union,
     runtime_checkable,
-    Self,
     Callable,
-    Type,
     ParamSpec,
-)
-from aleph_alpha_client import (
-    CompletionRequest,
-    CompletionResponse,
-    ExplanationRequest,
-    ExplanationResponse,
-    Prompt,
 )
 from pydantic import (
     BaseModel,
@@ -34,7 +24,6 @@ from rich.panel import Panel
 from rich.syntax import Syntax
 from rich.tree import Tree
 from typing_extensions import TypeAliasType
-from uuid import uuid4
 
 
 if TYPE_CHECKING:
