@@ -6,6 +6,7 @@ from typing import (
     Any,
     Generic,
     Mapping,
+    Optional,
     Sequence,
     TypeVar,
     Protocol,
@@ -169,4 +170,30 @@ class Task(Generic[Input, Output]):
     @log_run_input_output
     def run(self, input: Input, logger: DebugLogger) -> Output:
         """Executes the process for this use-case."""
+        raise NotImplementedError
+
+
+ExpectedOutput = TypeVar("ExpectedOutput")
+Evaluation = TypeVar("Evaluation", bound=BaseModel)
+
+
+class Evaluator(Generic[Input, ExpectedOutput, Evaluation]):
+    """Base evaluator interface. This should run certain evaluation steps for some job.
+
+    Generics:
+        Input: Interface to be passed to the task that shall be evaluated.
+        ExpectedOutput: Output that is expected from the task run with the supplied input.
+        Evaluation: Interface of the metrics that come from the evaluated task.
+
+    We suggest supplying a `Task` and a number of `Grader`s in the `__init__` method.
+    """
+
+    @abstractmethod
+    def evaluate(
+        self,
+        input: Input,
+        logger: DebugLogger,
+        expected_output: Optional[ExpectedOutput] = None,
+    ) -> Evaluation:
+        """Executes the evaluation for this use-case."""
         raise NotImplementedError
