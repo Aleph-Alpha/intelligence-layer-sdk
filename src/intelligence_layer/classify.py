@@ -1,3 +1,4 @@
+from abc import abstractmethod
 import math
 from typing import (
     Any,
@@ -19,7 +20,7 @@ from aleph_alpha_client import (
 from pydantic import BaseModel
 
 from intelligence_layer.completion import Completion, CompletionInput, CompletionOutput
-from intelligence_layer.task import Task, DebugLogger, log_run_input_output
+from intelligence_layer.task import Evaluator, Task, DebugLogger, log_run_input_output
 
 
 class Token(BaseModel):
@@ -297,3 +298,26 @@ class TreeNode:
             node = child
             assert node.token and node.normalized_prob
             yield TokenWithProb(token=node.token, prob=node.normalized_prob)
+
+class ClassifyEvaluation(BaseModel):
+    correct: bool
+
+class SingleLabelClassifyEvaluator(Evaluator[ClassifyInput, Sequence[str], ClassifyEvaluation]):
+    def __init__(self, task: SingleLabelClassify):
+        self.task = task
+
+    @abstractmethod
+    def evaluate(
+        self,
+        input: ClassifyInput,
+        logger: DebugLogger,
+        expected_output: Sequence[str],
+    ) -> ClassifyEvaluation:
+        output = self.task.run(input, logger)
+        sorted_classes = sorted(output.scores.items(), key=lambda item: item[1], reverse=True)
+        if sorted_classes[0][0] in expected_output:
+            correct = True
+        else:
+            correct = False
+        return ClassifyEvaluation(correct=correct)
+
