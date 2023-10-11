@@ -129,7 +129,7 @@ class QaEvaluator(Evaluator[SingleChunkQaInput, Optional[str], QaEvaluation]):
         logger: DebugLogger,
         expected_output: Optional[str] = None,
     ) -> QaEvaluation:
-        qa_output = self.task.run(input, logger=logger)
+        qa_output = self.task.run(input, logger)
         actual_output = qa_output.answer
         exact_match_result = self.exact_match_grader.grade(
             actual=actual_output, expected=expected_output
