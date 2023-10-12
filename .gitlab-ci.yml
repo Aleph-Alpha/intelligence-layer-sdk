@@ -23,9 +23,7 @@ precommit-and-mypy:
     - poetry install
     - source `poetry env info --path`/bin/activate
   script:
-    - mypy
-    - pre-commit run --all-files
-    - pytest
+    - ./scripts/precommit-and-mypy-and-pytest.sh
 
 run-notebooks:
   stage: lint-and-test
