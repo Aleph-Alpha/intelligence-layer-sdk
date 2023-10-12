@@ -49,7 +49,7 @@ def test_task_automatically_logs_input_and_output(client: Client) -> None:
         request=CompletionRequest(prompt=Prompt.from_text("test")),
         model="luminous-base",
     )
-    Completion(client=client).run(input, logger)
+    Completion(client=client).run(input=input, logger=logger)
 
     assert len(logger.logs) == 2
     assert isinstance(logger.logs[0], LogEntry) and logger.logs[0].message == "Input"

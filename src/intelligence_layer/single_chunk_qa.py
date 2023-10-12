@@ -25,7 +25,6 @@ from intelligence_layer.task import (
     Evaluation,
     Evaluator,
     Task,
-    log_run_input_output,
 )
 
 
@@ -60,7 +59,6 @@ If there's no answer, say "{{no_answer_text}}".
         self.text_highlight = TextHighlight(client)
         self.model = model
 
-    @log_run_input_output
     def run(
         self, input: SingleChunkQaInput, logger: DebugLogger
     ) -> SingleChunkQaOutput:

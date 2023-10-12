@@ -22,7 +22,6 @@ from intelligence_layer.task import (
     DebugLogger,
     JsonSerializer,
     Task,
-    log_run_input_output,
 )
 
 
@@ -58,7 +57,6 @@ class TextHighlight(Task[TextHighlightInput, TextHighlightOutput]):
         super().__init__()
         self.client = client
 
-    @log_run_input_output
     def run(
         self, input: TextHighlightInput, logger: DebugLogger
     ) -> TextHighlightOutput:

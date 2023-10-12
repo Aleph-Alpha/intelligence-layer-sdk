@@ -4,7 +4,7 @@ from intelligence_layer.single_chunk_qa import (
     SingleChunkQaOutput,
     SingleChunkQa,
 )
-from intelligence_layer.task import DebugLogger, Task, log_run_input_output
+from intelligence_layer.task import DebugLogger, Task
 from aleph_alpha_client import (
     Client,
     CompletionRequest,
@@ -68,7 +68,6 @@ Final answer:"""
             CompletionInput(request=request, model=self.model), logger
         )
 
-    @log_run_input_output
     def run(
         self, input: MultipleChunkQaInput, logger: DebugLogger
     ) -> MultipleChunkQaOutput:

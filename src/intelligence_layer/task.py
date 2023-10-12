@@ -14,7 +14,6 @@ from typing import (
     Union,
     runtime_checkable,
     Callable,
-    ParamSpec,
 )
 from pydantic import (
     BaseModel,
@@ -136,25 +135,6 @@ Ideally, these are specified in terms related to the use-case, rather than lower
 configuration options."""
 Output = TypeVar("Output", bound=PydanticSerializable)
 """Interface of the output returned by the task."""
-P = ParamSpec("P")
-
-
-def log_run_input_output(
-    func: Callable[P, Output],
-) -> Callable[P, Output]:
-    @functools.wraps(func)
-    def inner(*args: P.args, **kwargs: P.kwargs) -> Output:
-        input = args[1]
-        logger = args[2]
-        assert isinstance(input, BaseModel)
-        assert isinstance(logger, DebugLogger)
-
-        logger.log("Input", input)
-        output = func(*args, **kwargs)
-        logger.log("Output", output)
-        return output
-
-    return inner
 
 
 class Task(Generic[Input, Output]):
@@ -167,8 +147,27 @@ class Task(Generic[Input, Output]):
         Output: Interface of the output returned by the task.
     """
 
+    def __init_subclass__(cls, **kwargs: Any) -> None:
+        """Decorates run method to auto log input and output for the task"""
+        super().__init_subclass__(**kwargs)
+
+        def log_run_input_output(
+            func: Callable[["Task[Input, Output]", Input, DebugLogger], Output]
+        ) -> Callable[["Task[Input, Output]", Input, DebugLogger], Output]:
+            @functools.wraps(func)
+            def inner(
+                self: "Task[Input, Output]", input: Input, logger: DebugLogger
+            ) -> Output:
+                logger.log("Input", input)
+                output = func(self, input, logger)
+                logger.log("Output", output)
+                return output
+
+            return inner
+
+        cls.run = log_run_input_output(cls.run)  # type: ignore
+
     @abstractmethod
-    @log_run_input_output
     def run(self, input: Input, logger: DebugLogger) -> Output:
         """Executes the process for this use-case."""
         raise NotImplementedError

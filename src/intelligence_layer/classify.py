@@ -25,7 +25,6 @@ from intelligence_layer.task import (
     Evaluator,
     Task,
     DebugLogger,
-    log_run_input_output,
 )
 
 
@@ -95,7 +94,6 @@ Reply with only the class label.
         self.client = client
         self.completion_task = Completion(client)
 
-    @log_run_input_output
     def run(self, input: ClassifyInput, logger: DebugLogger) -> ClassifyOutput:
         tokenized_labels = self._tokenize_labels(input.labels, logger)
         completion_responses_per_label = self._complete_per_label(
