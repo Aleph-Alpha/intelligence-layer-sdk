@@ -146,6 +146,8 @@ def test_can_aggregate_evaluations(
         task=single_label_classify
     )
 
-    aggregated_evaluations = single_label_classify_evaluator.evaluate_dataset([inputs], logger=NoOpDebugLogger())
+    aggregated_evaluations = single_label_classify_evaluator.evaluate_dataset(
+        [inputs], logger=NoOpDebugLogger()
+    )
 
     assert isinstance(aggregated_evaluations.percentage_correct, float)

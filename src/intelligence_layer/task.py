@@ -220,7 +220,9 @@ class Evaluator(
     ) -> AggregatedEvaluation:
         evaluations = []
         for input, expected_output in dataset:
-            evaluation = self.evaluate(input, logger.child_logger(str(uuid.uuid4())), expected_output)
+            evaluation = self.evaluate(
+                input, logger.child_logger(str(uuid.uuid4())), expected_output
+            )
             evaluations.append(evaluation)
         return self.aggregate(evaluations)
 
