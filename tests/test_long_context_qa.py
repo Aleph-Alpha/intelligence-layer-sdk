@@ -44,7 +44,7 @@ Moses was a highly influential figure in the initiation of many of the reforms t
 
 @fixture
 def qa(client: Client) -> LongContextQa:
-    return LongContextQa(client)
+    return LongContextQa(client, model="luminous-base-control")
 
 
 def test_qa_with_answer(qa: LongContextQa) -> None:
@@ -59,6 +59,19 @@ def test_qa_with_answer(qa: LongContextQa) -> None:
 def test_qa_with_no_answer(qa: LongContextQa) -> None:
     question = "Who is the President of the united states?"
     input = LongContextQaInput(text=LONG_TEXT, question=question)
+    output = qa.run(input, NoOpDebugLogger())
+
+    assert output.answer is None
+
+
+def test_multiple_qa_on_single_task_instance(qa: LongContextQa) -> None:
+    question = "Where was Robert Moses born?"
+    input = LongContextQaInput(text=LONG_TEXT, question=question)
+    output = qa.run(input, NoOpDebugLogger())
+
+    input = LongContextQaInput(
+        text="This is some arbitrary text without content,", question=question
+    )
     output = qa.run(input, NoOpDebugLogger())
 
     assert output.answer is None

@@ -11,7 +11,7 @@ from intelligence_layer.multiple_chunk_qa import (
 from intelligence_layer.retrievers.base import BaseRetriver
 from intelligence_layer.task import DebugLogger, Task, log_run_input_output
 from semantic_text_splitter import HuggingFaceTextSplitter
-from intelligence_layer.retrievers.qdrant import QdrantRetriver
+from intelligence_layer.retrievers.qdrant import QdrantRetriever
 
 
 class LongContextQaInput(BaseModel):
@@ -42,10 +42,9 @@ class LongContextQa(Task[LongContextQaInput, MultipleChunkQaOutput]):
         self.tokenizer = self.client.tokenizer(model)
         self.splitter = HuggingFaceTextSplitter(self.tokenizer, trim_chunks=True)
         self.multi_chunk_qa = MultipleChunkQa(self.client, self.model)
-
         self.k = k
 
-        self.qdrant_retriver = retriever or QdrantRetriver(client, threshold=0.5)
+        self.qdrant_retriever = retriever or QdrantRetriever(client, threshold=0.5)
 
     @log_run_input_output
     def run(
@@ -53,21 +52,20 @@ class LongContextQa(Task[LongContextQaInput, MultipleChunkQaOutput]):
     ) -> MultipleChunkQaOutput:
         chunks = self.splitter.chunks(input.text, self.max_tokens_in_chunk)
 
-        self.qdrant_retriver.add_documents(chunks)
+        self.qdrant_retriever.add_documents(chunks)
 
         relevant_chunks_with_scores = (
-            self.qdrant_retriver.get_relevant_documents_with_scores(
+            self.qdrant_retriever.get_relevant_documents_with_scores(
                 input.question, k=self.k
             )
         )
+        self.qdrant_retriever.clear()
 
         multi_chunk_qa_input = MultipleChunkQaInput(
             chunks=[result.chunk for result in relevant_chunks_with_scores],
             question=input.question,
         )
 
-        # should we add something from the chunking to debug log? this debug log is duplicate for now
-        logger.log("Input", {"question": input.question, "text": input.text})
         qa_output = self.multi_chunk_qa.run(
             multi_chunk_qa_input, logger.child_logger("Multi Chunk QA")
         )
