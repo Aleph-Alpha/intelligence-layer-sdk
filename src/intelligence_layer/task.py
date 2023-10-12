@@ -15,6 +15,7 @@ from typing import (
     runtime_checkable,
     Callable,
 )
+import uuid
 from pydantic import (
     BaseModel,
     RootModel,
@@ -215,12 +216,11 @@ class Evaluator(
         pass
 
     def evaluate_dataset(
-        self, dataset: Sequence[tuple[Input, ExpectedOutput]]
+        self, dataset: Sequence[tuple[Input, ExpectedOutput]], logger: DebugLogger
     ) -> AggregatedEvaluation:
         evaluations = []
         for input, expected_output in dataset:
-            logger = JsonDebugLogger(name="evaluation logger")
-            evaluation = self.evaluate(input, logger, expected_output)
+            evaluation = self.evaluate(input, logger.child_logger(str(uuid.uuid4())), expected_output)
             evaluations.append(evaluation)
         return self.aggregate(evaluations)
 
