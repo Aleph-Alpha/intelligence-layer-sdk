@@ -1,5 +1,5 @@
 from typing import Sequence
-from intelligence_layer.retrivers.base import BaseRetriver, SearchResult
+from intelligence_layer.retrievers.base import BaseRetriver, SearchResult
 from qdrant_client import QdrantClient
 from aleph_alpha_client import (
     Client,
