@@ -47,6 +47,7 @@ class LongContextQa(Task[LongContextQaInput, MultipleChunkQaOutput]):
 
         self.qdrant_retriver = retriever or QdrantRetriver(client, threshold=0.5)
 
+    @log_run_input_output
     def run(
         self, input: LongContextQaInput, logger: DebugLogger
     ) -> MultipleChunkQaOutput:

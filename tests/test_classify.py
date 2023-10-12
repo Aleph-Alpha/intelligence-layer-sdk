@@ -1,19 +1,13 @@
-import os
-from typing import Iterable
-
 from aleph_alpha_client import Client
-from dotenv import load_dotenv
-from pydantic import BaseModel
 from pytest import fixture
 
 from intelligence_layer.classify import (
-    Probability,
     SingleLabelClassify,
     ClassifyInput,
     ClassifyOutput,
-    Token,
+    SingleLabelClassifyEvaluator,
 )
-from intelligence_layer.task import DebugLogger, NoOpDebugLogger, LogEntry
+from intelligence_layer.task import NoOpDebugLogger
 
 
 @fixture
@@ -100,3 +94,17 @@ def test_single_label_classify_handles_labels_starting_with_same_token(
     classify_output = single_label_classify.run(classify_input, NoOpDebugLogger())
 
     assert classify_input.labels == set(r for r in classify_output.scores)
+
+
+def test_can_evaluate_classify(single_label_classify: SingleLabelClassify) -> None:
+    classify_input = ClassifyInput(
+        text="This is good",
+        labels=frozenset({"positive", "negative"}),
+    )
+    evaluator = SingleLabelClassifyEvaluator(task=single_label_classify)
+
+    evaluation = evaluator.evaluate(
+        input=classify_input, logger=NoOpDebugLogger(), expected_output=["positive"]
+    )
+
+    assert evaluation["correct"] == True

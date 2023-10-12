@@ -1,7 +1,6 @@
 from intelligence_layer.multiple_chunk_qa import MultipleChunkQa, MultipleChunkQaInput
 from aleph_alpha_client import Client
 from pytest import fixture
-from pprint import pprint
 
 from intelligence_layer.task import JsonDebugLogger, NoOpDebugLogger
 
@@ -41,9 +40,6 @@ def test_multiple_chunk_qa_without_answer(qa: MultipleChunkQa) -> None:
     input = MultipleChunkQaInput(chunks=chunks, question=question)
     debug_log = JsonDebugLogger(name="qa")
     output = qa.run(input, debug_log)
-
-    print(output.answer)
-    pprint(debug_log)
 
     assert output.answer is None
 

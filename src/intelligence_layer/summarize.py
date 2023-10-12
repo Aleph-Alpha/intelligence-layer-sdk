@@ -5,7 +5,7 @@ from pydantic import BaseModel
 from .completion import Completion, CompletionInput, CompletionOutput
 from .prompt_template import PromptTemplate, PromptWithMetadata
 from .text_highlight import TextHighlight, TextHighlightInput
-from .task import DebugLogger, Task
+from .task import DebugLogger, Task, log_run_input_output
 
 
 class SummarizeInput(BaseModel):
@@ -39,6 +39,7 @@ Summarize in just one or two sentences.
         self.completion = Completion(client)
         self.text_highlight = TextHighlight(client)
 
+    @log_run_input_output
     def run(self, input: SummarizeInput, logger: DebugLogger) -> SummarizeOutput:
         prompt_with_metadata = self._format_prompt(text=input.text, logger=logger)
         completion = self._complete(

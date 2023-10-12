@@ -1,6 +1,10 @@
 from datetime import datetime
+from aleph_alpha_client import Prompt
+from aleph_alpha_client.aleph_alpha_client import Client
+from aleph_alpha_client.completion import CompletionRequest
 
 from intelligence_layer.task import DebugLogger, JsonDebugLogger, LogEntry
+from intelligence_layer.completion import Completion, CompletionInput
 
 
 def test_debug_add_log_entries() -> None:
@@ -37,3 +41,16 @@ def test_can_add_parent_and_child_logs() -> None:
     assert isinstance(parent.logs[0], LogEntry)
     assert isinstance(parent.logs[1], DebugLogger)
     assert isinstance(parent.logs[1].logs[0], LogEntry)
+
+
+def test_task_automatically_logs_input_and_output(client: Client) -> None:
+    logger = JsonDebugLogger(name="completion")
+    input = CompletionInput(
+        request=CompletionRequest(prompt=Prompt.from_text("test")),
+        model="luminous-base",
+    )
+    Completion(client=client).run(input, logger)
+
+    assert len(logger.logs) == 2
+    assert isinstance(logger.logs[0], LogEntry) and logger.logs[0].message == "Input"
+    assert isinstance(logger.logs[1], LogEntry) and logger.logs[1].message == "Output"

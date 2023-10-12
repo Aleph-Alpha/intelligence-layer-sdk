@@ -3,11 +3,15 @@ from aleph_alpha_client import (
     Client,
     CompletionRequest,
     Prompt,
-    TextScore,
 )
 from pydantic import BaseModel
 
 from intelligence_layer.completion import Completion, CompletionInput, CompletionOutput
+from intelligence_layer.grading import (
+    ExactMatchGrader,
+    MockLlamaGrader,
+    RandomListGrader,
+)
 from intelligence_layer.text_highlight import (
     TextHighlight,
     TextHighlightInput,
@@ -16,7 +20,13 @@ from intelligence_layer.prompt_template import (
     PromptTemplate,
     PromptWithMetadata,
 )
-from intelligence_layer.task import DebugLogger, Task
+from intelligence_layer.task import (
+    DebugLogger,
+    Evaluation,
+    Evaluator,
+    Task,
+    log_run_input_output,
+)
 
 
 class SingleChunkQaInput(BaseModel):
@@ -27,17 +37,6 @@ class SingleChunkQaInput(BaseModel):
 class SingleChunkQaOutput(BaseModel):
     answer: Optional[str]
     highlights: Sequence[str]
-
-
-class TextRange(BaseModel):
-    start: int
-    end: int
-
-    def contains(self, pos: int) -> bool:
-        return self.start <= pos < self.end
-
-    def overlaps(self, score: TextScore) -> bool:
-        return self.contains(score.start) or self.contains(score.start + score.length)
 
 
 class SingleChunkQa(Task[SingleChunkQaInput, SingleChunkQaOutput]):
@@ -61,6 +60,7 @@ If there's no answer, say "{{no_answer_text}}".
         self.text_highlight = TextHighlight(client)
         self.model = model
 
+    @log_run_input_output
     def run(
         self, input: SingleChunkQaInput, logger: DebugLogger
     ) -> SingleChunkQaOutput:
@@ -109,3 +109,45 @@ If there's no answer, say "{{no_answer_text}}".
 
     def _no_answer_to_none(self, completion: str) -> Optional[str]:
         return completion if completion != self.NO_ANSWER_STR else None
+
+
+class QaEvaluator(Evaluator[SingleChunkQaInput, Optional[str]]):
+    """
+    First version of what we imagine an evaluator to look for a given task.
+    All current metrics delivered by the graders are mock metrics.
+    """
+
+    def __init__(self, client: Client, task: SingleChunkQa):
+        self.task = task
+        self.exact_match_grader = ExactMatchGrader()
+        self.random_grader = RandomListGrader()
+        self.llama_grader = MockLlamaGrader(client)
+
+    def evaluate(
+        self,
+        input: SingleChunkQaInput,
+        logger: DebugLogger,
+        expected_output: Optional[str] = None,
+    ) -> Evaluation:
+        qa_output = self.task.run(input, logger)
+        actual_output = qa_output.answer
+        exact_match_result = self.exact_match_grader.grade(
+            actual=actual_output, expected=expected_output
+        )
+        random_result = self.random_grader.grade(
+            actual=actual_output,
+            expected_list=[expected_output] if expected_output else [],
+        )
+        llama_result = self.llama_grader.grade(
+            instruction=input.question,
+            input=input.chunk,
+            actual=actual_output,
+            expected=expected_output,
+        )
+        return Evaluation(
+            {
+                "exact_match": exact_match_result,
+                "random": random_result,
+                "llama": llama_result,
+            }
+        )

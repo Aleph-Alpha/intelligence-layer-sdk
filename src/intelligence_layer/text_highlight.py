@@ -18,7 +18,7 @@ from intelligence_layer.prompt_template import (
     PromptWithMetadata,
     TextCursor,
 )
-from intelligence_layer.task import DebugLogger, Task
+from intelligence_layer.task import DebugLogger, Task, log_run_input_output
 
 
 class TextHighlightInput(BaseModel):
@@ -53,6 +53,7 @@ class TextHighlight(Task[TextHighlightInput, TextHighlightOutput]):
         super().__init__()
         self.client = client
 
+    @log_run_input_output
     def run(
         self, input: TextHighlightInput, logger: DebugLogger
     ) -> TextHighlightOutput:
