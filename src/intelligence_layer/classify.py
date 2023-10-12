@@ -2,6 +2,7 @@ from abc import abstractmethod
 import math
 from typing import (
     Any,
+    Generic,
     Iterable,
     NewType,
     Mapping,
@@ -22,6 +23,7 @@ from pydantic import BaseModel
 from intelligence_layer.completion import Completion, CompletionInput, CompletionOutput
 from intelligence_layer.task import (
     Evaluation,
+    EvaluationCase,
     Evaluator,
     Task,
     DebugLogger,
@@ -304,6 +306,15 @@ class TreeNode:
             yield TokenWithProb(token=node.token, prob=node.normalized_prob)
 
 
+class ClassifyEvaluationCase(EvaluationCase[ClassifyInput, Sequence[str]]):
+    input: ClassifyInput
+    expected_output: Sequence[str]
+
+
+class ClassifyDataset(BaseModel):
+    cases: Sequence[ClassifyEvaluationCase]
+
+
 class SingleLabelClassifyEvaluator(Evaluator[ClassifyInput, Sequence[str]]):
     def __init__(self, task: SingleLabelClassify):
         self.task = task
@@ -323,3 +334,9 @@ class SingleLabelClassifyEvaluator(Evaluator[ClassifyInput, Sequence[str]]):
         else:
             correct = False
         return Evaluation({"correct": correct})
+
+    # def aggregate_data(self) -> None:
+    # pass
+
+    # def evaluate_dataset(self, dataset):
+    # evaluations = [self.evaluate() for data in dataset.data()]
