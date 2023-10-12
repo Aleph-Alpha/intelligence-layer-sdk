@@ -1,4 +1,4 @@
-from abc import abstractmethod
+from abc import ABC, abstractmethod
 from datetime import datetime
 import functools
 from typing import (
@@ -137,7 +137,7 @@ Output = TypeVar("Output", bound=PydanticSerializable)
 """Interface of the output returned by the task."""
 
 
-class Task(Generic[Input, Output]):
+class Task(ABC, Generic[Input, Output]):
     """Base task interface. This may consist of several sub-tasks to accomplish the given task.
 
     Generics:
@@ -170,14 +170,14 @@ class Task(Generic[Input, Output]):
     @abstractmethod
     def run(self, input: Input, logger: DebugLogger) -> Output:
         """Executes the process for this use-case."""
-        raise NotImplementedError
+        ...
 
 
 ExpectedOutput = TypeVar("ExpectedOutput")
 Evaluation = NewType("Evaluation", Mapping[str, int | float | bool | str])
 
 
-class Evaluator(Generic[Input, ExpectedOutput]):
+class Evaluator(ABC, Generic[Input, ExpectedOutput]):
     """Base evaluator interface. This should run certain evaluation steps for some job.
 
     Generics:
@@ -196,4 +196,4 @@ class Evaluator(Generic[Input, ExpectedOutput]):
         expected_output: ExpectedOutput,
     ) -> Evaluation:
         """Executes the evaluation for this use-case."""
-        raise NotImplementedError
+        ...
