@@ -1,4 +1,5 @@
 import random
+from typing import Sequence
 from aleph_alpha_client import Client
 from pytest import fixture
 
@@ -130,17 +131,21 @@ def test_can_evaluate_classify(single_label_classify: SingleLabelClassify) -> No
     assert evaluation.correct == True
 
 
-def test_can_compare_classifiers(
-    random_label_classify: RandomLabelClassify,
+def test_can_aggregate_evaluations(
     single_label_classify: SingleLabelClassify,
 ) -> None:
-    inputs = [
+    # Mypy doesn't recognize a sequence of tuples, so we ignore the error here
+    inputs: tuple[ClassifyInput, Sequence[str]] = [
         ClassifyInput(
             text="This is good",
             labels=frozenset({"positive", "negative"}),
-        )
-        for _ in range(3)
-    ]
+        ),
+        ["positive"],
+    ]  # type: ignore
     single_label_classify_evaluator = SingleLabelClassifyEvaluator(
         task=single_label_classify
     )
+
+    aggregated_evaluations = single_label_classify_evaluator.evaluate_dataset([inputs])
+
+    assert isinstance(aggregated_evaluations.percentage_correct, float)
