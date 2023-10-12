@@ -35,7 +35,7 @@ run-notebooks:
     - poetry install
     - source `poetry env info --path`/bin/activate
   script:
-    - jupyter nbconvert --to notebook --execute qa_v2.ipynb
+    - jupyter nbconvert --to notebook --execute qa.ipynb
 
 deploy-package:
   stage: deploy-package
