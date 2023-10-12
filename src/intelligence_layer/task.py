@@ -174,10 +174,20 @@ class Task(ABC, Generic[Input, Output]):
 
 
 ExpectedOutput = TypeVar("ExpectedOutput")
-Evaluation = NewType("Evaluation", Mapping[str, int | float | bool | str])
+# Add constraint for basemodel
+Evaluation = TypeVar("Evaluation")
 
 
-class Evaluator(ABC, Generic[Input, ExpectedOutput]):
+class EvaluationCase(BaseModel, Generic[Input, ExpectedOutput]):
+    input: Input
+    expected_output: ExpectedOutput
+
+
+class Dataset(Generic[Input, ExpectedOutput]):
+    cases: Sequence[EvaluationCase[Input, ExpectedOutput]]
+
+
+class Evaluator(Generic[Input, ExpectedOutput, Evaluation]):
     """Base evaluator interface. This should run certain evaluation steps for some job.
 
     Generics:

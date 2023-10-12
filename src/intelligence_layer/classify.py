@@ -311,11 +311,17 @@ class ClassifyEvaluationCase(EvaluationCase[ClassifyInput, Sequence[str]]):
     expected_output: Sequence[str]
 
 
+class ClassifyEvaluation(BaseModel):
+    correct: bool
+
+
 class ClassifyDataset(BaseModel):
     cases: Sequence[ClassifyEvaluationCase]
 
 
-class SingleLabelClassifyEvaluator(Evaluator[ClassifyInput, Sequence[str]]):
+class SingleLabelClassifyEvaluator(
+    Evaluator[ClassifyInput, Sequence[str], ClassifyEvaluation]
+):
     def __init__(self, task: SingleLabelClassify):
         self.task = task
 
@@ -324,7 +330,7 @@ class SingleLabelClassifyEvaluator(Evaluator[ClassifyInput, Sequence[str]]):
         input: ClassifyInput,
         logger: DebugLogger,
         expected_output: Sequence[str],
-    ) -> Evaluation:
+    ) -> ClassifyEvaluation:
         output = self.task.run(input, logger)
         sorted_classes = sorted(
             output.scores.items(), key=lambda item: item[1], reverse=True
@@ -333,7 +339,7 @@ class SingleLabelClassifyEvaluator(Evaluator[ClassifyInput, Sequence[str]]):
             correct = True
         else:
             correct = False
-        return Evaluation({"correct": correct})
+        return ClassifyEvaluation(correct=correct)
 
     # def aggregate_data(self) -> None:
     # pass
