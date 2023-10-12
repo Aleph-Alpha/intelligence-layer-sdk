@@ -18,3 +18,7 @@ class BaseRetriver(ABC):
     @abstractmethod
     def add_documents(self, texts: Sequence[str]) -> None:
         pass
+
+    @abstractmethod
+    def clear(self) -> None:
+        pass

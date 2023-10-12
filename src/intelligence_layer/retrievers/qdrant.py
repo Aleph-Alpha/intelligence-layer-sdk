@@ -22,12 +22,8 @@ class QdrantRetriver(BaseRetriver):
         self.client = client
         self.search_client = QdrantClient(location)
         self.collection_name = collection_name
-
-        self.search_client.recreate_collection(
-            collection_name=collection_name,
-            vectors_config=VectorParams(size=128, distance=Distance.COSINE),
-        )
         self.threshold = threshold
+        self.clear()
 
     def get_relevant_documents_with_scores(
         self, query: str, k: int
@@ -71,4 +67,10 @@ class QdrantRetriver(BaseRetriver):
                 PointStruct(id=idx, vector=text_embedding, payload={"text": text})
                 for idx, (text_embedding, text) in enumerate(zip(embeddings, texts))
             ],
+        )
+
+    def clear(self) -> None:
+        self.search_client.recreate_collection(
+            collection_name=self.collection_name,
+            vectors_config=VectorParams(size=128, distance=Distance.COSINE),
         )
