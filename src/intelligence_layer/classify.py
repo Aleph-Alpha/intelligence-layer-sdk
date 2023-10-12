@@ -1,7 +1,10 @@
 from abc import abstractmethod
+from datetime import timedelta
 import math
+import random
 from typing import (
     Any,
+    Callable,
     Generic,
     Iterable,
     NewType,
@@ -18,13 +21,14 @@ from aleph_alpha_client import (
     TokenizationRequest,
     CompletionRequest,
 )
+from annotated_types import T
 from pydantic import BaseModel
 
 from intelligence_layer.completion import Completion, CompletionInput, CompletionOutput
 from intelligence_layer.task import (
     Evaluation,
-    EvaluationCase,
     Evaluator,
+    Output,
     Task,
     DebugLogger,
 )
@@ -306,32 +310,33 @@ class TreeNode:
             yield TokenWithProb(token=node.token, prob=node.normalized_prob)
 
 
-class ClassifyEvaluationCase(EvaluationCase[ClassifyInput, Sequence[str]]):
-    input: ClassifyInput
-    expected_output: Sequence[str]
-
-
 class ClassifyEvaluation(BaseModel):
     correct: bool
 
 
-class ClassifyDataset(BaseModel):
-    cases: Sequence[ClassifyEvaluationCase]
+class AggregatedClassifyEvaluation(BaseModel):
+    percentage_correct: float
 
 
 class SingleLabelClassifyEvaluator(
-    Evaluator[ClassifyInput, Sequence[str], ClassifyEvaluation]
+    Evaluator[
+        ClassifyInput,
+        ClassifyOutput,
+        Sequence[str],
+        ClassifyEvaluation,
+        AggregatedClassifyEvaluation,
+    ]
 ):
     def __init__(self, task: SingleLabelClassify):
         self.task = task
 
-    def evaluate(
+    def compare(
         self,
-        input: ClassifyInput,
-        logger: DebugLogger,
+        _: ClassifyInput,
+        output: ClassifyOutput,
         expected_output: Sequence[str],
+        __: DebugLogger,
     ) -> ClassifyEvaluation:
-        output = self.task.run(input, logger)
         sorted_classes = sorted(
             output.scores.items(), key=lambda item: item[1], reverse=True
         )
@@ -341,8 +346,7 @@ class SingleLabelClassifyEvaluator(
             correct = False
         return ClassifyEvaluation(correct=correct)
 
-    # def aggregate_data(self) -> None:
-    # pass
-
-    # def evaluate_dataset(self, dataset):
-    # evaluations = [self.evaluate() for data in dataset.data()]
+    def aggregate(
+        self, evaluations: Sequence[ClassifyEvaluation]
+    ) -> AggregatedClassifyEvaluation:
+        return AggregatedClassifyEvaluation(percentage_correct=0.0)

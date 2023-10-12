@@ -115,7 +115,21 @@ class QaEvaluation(BaseModel):
     llama: str
 
 
-class QaEvaluator(Evaluator[SingleChunkQaInput, Optional[str], QaEvaluation]):
+class AggregatedQaEvaluation(BaseModel):
+    percentage_exact_match: float
+    percentage_random: float
+    llama_distribution: float
+
+
+class QaEvaluator(
+    Evaluator[
+        SingleChunkQaInput,
+        SingleChunkQaOutput,
+        Optional[str],
+        QaEvaluation,
+        AggregatedQaEvaluation,
+    ]
+):
     """
     First version of what we imagine an evaluator to look for a given task.
     All current metrics delivered by the graders are mock metrics.
@@ -127,14 +141,14 @@ class QaEvaluator(Evaluator[SingleChunkQaInput, Optional[str], QaEvaluation]):
         self.random_grader = RandomListGrader()
         self.llama_grader = MockLlamaGrader(client)
 
-    def evaluate(
+    def compare(
         self,
         input: SingleChunkQaInput,
+        output: SingleChunkQaOutput,
+        expected_output: Optional[str],
         logger: DebugLogger,
-        expected_output: Optional[str] = None,
     ) -> QaEvaluation:
-        qa_output = self.task.run(input, logger)
-        actual_output = qa_output.answer
+        actual_output = output.answer
         exact_match_result = self.exact_match_grader.grade(
             actual=actual_output, expected=expected_output
         )
@@ -147,7 +161,13 @@ class QaEvaluator(Evaluator[SingleChunkQaInput, Optional[str], QaEvaluation]):
             input=input.chunk,
             actual=actual_output,
             expected=expected_output,
+            logger=logger,
         )
         return QaEvaluation(
             exact_match=exact_match_result, random=random_result, llama=llama_result
+        )
+
+    def aggregate(self, evaluations: Sequence[QaEvaluation]) -> AggregatedQaEvaluation:
+        return AggregatedQaEvaluation(
+            percentage_exact_match=0.0, percentage_random=0.0, llama_distribution=0.0
         )

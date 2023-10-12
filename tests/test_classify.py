@@ -1,13 +1,33 @@
+import random
 from aleph_alpha_client import Client
 from pytest import fixture
 
 from intelligence_layer.classify import (
+    Probability,
     SingleLabelClassify,
     ClassifyInput,
     ClassifyOutput,
     SingleLabelClassifyEvaluator,
 )
-from intelligence_layer.task import NoOpDebugLogger
+from intelligence_layer.task import (
+    DebugLogger,
+    NoOpDebugLogger,
+    Task,
+    log_run_input_output,
+)
+
+
+class RandomLabelClassify(Task[ClassifyInput, ClassifyOutput]):
+    @log_run_input_output
+    def run(self, input: ClassifyInput, logger: DebugLogger) -> ClassifyOutput:
+        return ClassifyOutput(
+            scores={label: Probability(random.random()) for label in input.labels},
+        )
+
+
+@fixture
+def random_label_classify() -> RandomLabelClassify:
+    return RandomLabelClassify()
 
 
 @fixture
@@ -108,3 +128,19 @@ def test_can_evaluate_classify(single_label_classify: SingleLabelClassify) -> No
     )
 
     assert evaluation.correct == True
+
+
+def test_can_compare_classifiers(
+    random_label_classify: RandomLabelClassify,
+    single_label_classify: SingleLabelClassify,
+) -> None:
+    inputs = [
+        ClassifyInput(
+            text="This is good",
+            labels=frozenset({"positive", "negative"}),
+        )
+        for _ in range(3)
+    ]
+    single_label_classify_evaluator = SingleLabelClassifyEvaluator(
+        task=single_label_classify
+    )

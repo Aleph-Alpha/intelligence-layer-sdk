@@ -173,21 +173,14 @@ class Task(ABC, Generic[Input, Output]):
         ...
 
 
-ExpectedOutput = TypeVar("ExpectedOutput")
-# Add constraint for basemodel
+ExpectedOutput = TypeVar("ExpectedOutput", bound=PydanticSerializable)
 Evaluation = TypeVar("Evaluation", bound=PydanticSerializable)
+AggregatedEvaluation = TypeVar("AggregatedEvaluation", bound=PydanticSerializable)
 
 
-class EvaluationCase(BaseModel, Generic[Input, ExpectedOutput]):
-    input: Input
-    expected_output: ExpectedOutput
-
-
-class Dataset(Generic[Input, ExpectedOutput]):
-    cases: Sequence[EvaluationCase[Input, ExpectedOutput]]
-
-
-class Evaluator(Generic[Input, ExpectedOutput, Evaluation]):
+class Evaluator(
+    ABC, Generic[Input, Output, ExpectedOutput, Evaluation, AggregatedEvaluation]
+):
     """Base evaluator interface. This should run certain evaluation steps for some job.
 
     Generics:
@@ -198,7 +191,9 @@ class Evaluator(Generic[Input, ExpectedOutput, Evaluation]):
     We suggest supplying a `Task` and a number of `Grader`s in the `__init__` method.
     """
 
-    @abstractmethod
+    def __init__(self, task: Task[Input, Output]) -> None:
+        self.task = task
+
     def evaluate(
         self,
         input: Input,
@@ -206,4 +201,29 @@ class Evaluator(Generic[Input, ExpectedOutput, Evaluation]):
         expected_output: ExpectedOutput,
     ) -> Evaluation:
         """Executes the evaluation for this use-case."""
-        ...
+        output = self.task.run(input, logger)
+        return self.compare(input, output, expected_output, logger)
+
+    @abstractmethod
+    def compare(
+        self,
+        input: Input,
+        output: Output,
+        expected_output: ExpectedOutput,
+        logger: DebugLogger,
+    ) -> Evaluation:
+        pass
+
+    def evaluate_dataset(
+        self, dataset: Sequence[tuple[Input, ExpectedOutput]]
+    ) -> AggregatedEvaluation:
+        evaluations = []
+        for input, expected_output in dataset:
+            logger = JsonDebugLogger(name="evaluation logger")
+            evaluation = self.evaluate(input, logger, expected_output)
+            evaluations.append(evaluation)
+        return self.aggregate(evaluations)
+
+    @abstractmethod
+    def aggregate(self, evaluations: Sequence[Evaluation]) -> AggregatedEvaluation:
+        pass
