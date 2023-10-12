@@ -41,7 +41,3 @@ strict = "True"
 
 [tool.pytest.ini_options]
 addopts = "--capture=tee-sys"
-
-[tool.codespell]
-ignore-words-list = "newyorker"
-exclude = "poetry.lock"
