@@ -11,7 +11,7 @@ from qdrant_client.conversions.common_types import ScoredPoint
 from qdrant_client.http.models import Distance, VectorParams, PointStruct
 
 
-class QdrantRetriver(BaseRetriver):
+class QdrantRetriever(BaseRetriver):
     def __init__(
         self,
         client: Client,
