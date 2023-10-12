@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime
 import functools
 from typing import (
@@ -26,6 +27,8 @@ from rich.panel import Panel
 from rich.syntax import Syntax
 from rich.tree import Tree
 from typing_extensions import TypeAliasType
+
+from tqdm import tqdm  # type: ignore
 
 
 if TYPE_CHECKING:
@@ -218,12 +221,19 @@ class Evaluator(
     def evaluate_dataset(
         self, dataset: Sequence[tuple[Input, ExpectedOutput]], logger: DebugLogger
     ) -> AggregatedEvaluation:
-        evaluations = []
-        for input, expected_output in dataset:
-            evaluation = self.evaluate(
-                input, logger.child_logger(str(uuid.uuid4())), expected_output
+        with ThreadPoolExecutor(max_workers=10) as executor:
+            evaluations = list(
+                tqdm(
+                    executor.map(
+                        lambda req: self.evaluate(
+                            req[0], logger.child_logger(str(uuid.uuid4())), req[1]
+                        ),
+                        dataset,
+                    ),
+                    total=len(dataset),
+                    desc="Evaluating",
+                )
             )
-            evaluations.append(evaluation)
         return self.aggregate(evaluations)
 
     @abstractmethod
