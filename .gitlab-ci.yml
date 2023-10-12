@@ -35,7 +35,8 @@ run-notebooks:
     - poetry install
     - source `poetry env info --path`/bin/activate
   script:
-    - AA_TOKEN=$(echo $AA_TOKEN) jupyter nbconvert --to notebook --execute src/intelligence_layer/qa.ipynb
+    - ./scripts/notebook_runner.sh
+
 
 deploy-package:
   stage: deploy-package
