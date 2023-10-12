@@ -27,6 +27,16 @@ precommit-and-mypy:
     - pre-commit run --all-files
     - pytest
 
+run-notebooks:
+  stage: lint-and-test
+  image: python:3.10
+  before_script:
+    - pip install poetry
+    - poetry install
+    - source `poetry env info --path`/bin/activate
+  script:
+    - jupyter nbconvert --to notebook --execute qa_v2.ipynb
+
 deploy-package:
   stage: deploy-package
   image: python:3.10
@@ -43,3 +53,4 @@ deploy-package:
   rules:
     - if: $CI_COMMIT_TAG
     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+
