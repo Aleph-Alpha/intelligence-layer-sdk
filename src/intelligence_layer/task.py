@@ -175,7 +175,7 @@ class Task(ABC, Generic[Input, Output]):
 
 ExpectedOutput = TypeVar("ExpectedOutput")
 # Add constraint for basemodel
-Evaluation = TypeVar("Evaluation")
+Evaluation = TypeVar("Evaluation", bound=PydanticSerializable)
 
 
 class EvaluationCase(BaseModel, Generic[Input, ExpectedOutput]):
