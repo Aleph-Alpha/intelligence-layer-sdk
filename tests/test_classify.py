@@ -1,34 +1,16 @@
-import random
 from typing import Sequence
 from aleph_alpha_client import Client
 from pytest import fixture
 
 from intelligence_layer.classify import (
-    Probability,
     SingleLabelClassify,
     ClassifyInput,
     ClassifyOutput,
     SingleLabelClassifyEvaluator,
 )
 from intelligence_layer.task import (
-    DebugLogger,
     NoOpDebugLogger,
-    Task,
-    log_run_input_output,
 )
-
-
-class RandomLabelClassify(Task[ClassifyInput, ClassifyOutput]):
-    @log_run_input_output
-    def run(self, input: ClassifyInput, logger: DebugLogger) -> ClassifyOutput:
-        return ClassifyOutput(
-            scores={label: Probability(random.random()) for label in input.labels},
-        )
-
-
-@fixture
-def random_label_classify() -> RandomLabelClassify:
-    return RandomLabelClassify()
 
 
 @fixture
