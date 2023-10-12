@@ -348,4 +348,10 @@ class SingleLabelClassifyEvaluator(
     def aggregate(
         self, evaluations: Sequence[ClassifyEvaluation]
     ) -> AggregatedClassifyEvaluation:
-        return AggregatedClassifyEvaluation(percentage_correct=0.0)
+        if len(evaluations) != 0:
+            correct_answers = len(
+                [eval.correct for eval in evaluations if eval.correct == True]
+            ) / len(evaluations)
+        else:
+            correct_answers = 0
+        return AggregatedClassifyEvaluation(percentage_correct=correct_answers)

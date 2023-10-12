@@ -117,19 +117,41 @@ def test_can_aggregate_evaluations(
     single_label_classify: SingleLabelClassify,
 ) -> None:
     # Mypy doesn't recognize a sequence of tuples, so we ignore the error here
-    inputs: tuple[ClassifyInput, Sequence[str]] = [
+    correct_input: tuple[ClassifyInput, Sequence[str]] = [
         ClassifyInput(
             text="This is good",
             labels=frozenset({"positive", "negative"}),
         ),
         ["positive"],
     ]  # type: ignore
+    incorrect_input: tuple[ClassifyInput, Sequence[str]] = [
+        ClassifyInput(
+            text="This is extremely bad",
+            labels=frozenset({"positive", "negative"}),
+        ),
+        ["positive"],
+    ]  # type: ignore
+
     single_label_classify_evaluator = SingleLabelClassifyEvaluator(
         task=single_label_classify
     )
 
     aggregated_evaluations = single_label_classify_evaluator.evaluate_dataset(
-        [inputs], logger=NoOpDebugLogger()
+        [correct_input, incorrect_input], logger=NoOpDebugLogger()
     )
 
-    assert isinstance(aggregated_evaluations.percentage_correct, float)
+    assert aggregated_evaluations.percentage_correct == 0.5
+
+
+def test_aggregating_evaluations_works_with_empty_list(
+    single_label_classify: SingleLabelClassify,
+) -> None:
+    single_label_classify_evaluator = SingleLabelClassifyEvaluator(
+        task=single_label_classify
+    )
+
+    aggregated_evaluations = single_label_classify_evaluator.evaluate_dataset(
+        [], logger=NoOpDebugLogger()
+    )
+
+    assert aggregated_evaluations.percentage_correct == 0
