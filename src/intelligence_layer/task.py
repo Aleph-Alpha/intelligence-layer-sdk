@@ -1,4 +1,4 @@
-from abc import abstractmethod
+from abc import ABC, abstractmethod
 from datetime import datetime
 import functools
 from typing import (
@@ -14,8 +14,8 @@ from typing import (
     Union,
     runtime_checkable,
     Callable,
-    ParamSpec,
 )
+import uuid
 from pydantic import (
     BaseModel,
     RootModel,
@@ -136,28 +136,9 @@ Ideally, these are specified in terms related to the use-case, rather than lower
 configuration options."""
 Output = TypeVar("Output", bound=PydanticSerializable)
 """Interface of the output returned by the task."""
-P = ParamSpec("P")
 
 
-def log_run_input_output(
-    func: Callable[P, Output],
-) -> Callable[P, Output]:
-    @functools.wraps(func)
-    def inner(*args: P.args, **kwargs: P.kwargs) -> Output:
-        input = args[1]
-        logger = args[2]
-        assert isinstance(input, BaseModel)
-        assert isinstance(logger, DebugLogger)
-
-        logger.log("Input", input)
-        output = func(*args, **kwargs)
-        logger.log("Output", output)
-        return output
-
-    return inner
-
-
-class Task(Generic[Input, Output]):
+class Task(ABC, Generic[Input, Output]):
     """Base task interface. This may consist of several sub-tasks to accomplish the given task.
 
     Generics:
@@ -167,18 +148,40 @@ class Task(Generic[Input, Output]):
         Output: Interface of the output returned by the task.
     """
 
+    def __init_subclass__(cls, **kwargs: Any) -> None:
+        """Decorates run method to auto log input and output for the task"""
+        super().__init_subclass__(**kwargs)
+
+        def log_run_input_output(
+            func: Callable[["Task[Input, Output]", Input, DebugLogger], Output]
+        ) -> Callable[["Task[Input, Output]", Input, DebugLogger], Output]:
+            @functools.wraps(func)
+            def inner(
+                self: "Task[Input, Output]", input: Input, logger: DebugLogger
+            ) -> Output:
+                logger.log("Input", input)
+                output = func(self, input, logger)
+                logger.log("Output", output)
+                return output
+
+            return inner
+
+        cls.run = log_run_input_output(cls.run)  # type: ignore
+
     @abstractmethod
-    @log_run_input_output
     def run(self, input: Input, logger: DebugLogger) -> Output:
         """Executes the process for this use-case."""
-        raise NotImplementedError
+        ...
 
 
-ExpectedOutput = TypeVar("ExpectedOutput")
-Evaluation = NewType("Evaluation", Mapping[str, int | float | bool | str])
+ExpectedOutput = TypeVar("ExpectedOutput", bound=PydanticSerializable)
+Evaluation = TypeVar("Evaluation", bound=PydanticSerializable)
+AggregatedEvaluation = TypeVar("AggregatedEvaluation", bound=PydanticSerializable)
 
 
-class Evaluator(Generic[Input, ExpectedOutput]):
+class Evaluator(
+    ABC, Generic[Input, Output, ExpectedOutput, Evaluation, AggregatedEvaluation]
+):
     """Base evaluator interface. This should run certain evaluation steps for some job.
 
     Generics:
@@ -189,7 +192,9 @@ class Evaluator(Generic[Input, ExpectedOutput]):
     We suggest supplying a `Task` and a number of `Grader`s in the `__init__` method.
     """
 
-    @abstractmethod
+    def __init__(self, task: Task[Input, Output]) -> None:
+        self.task = task
+
     def evaluate(
         self,
         input: Input,
@@ -197,4 +202,30 @@ class Evaluator(Generic[Input, ExpectedOutput]):
         expected_output: ExpectedOutput,
     ) -> Evaluation:
         """Executes the evaluation for this use-case."""
-        raise NotImplementedError
+        output = self.task.run(input, logger)
+        return self.compare(input, output, expected_output, logger)
+
+    @abstractmethod
+    def compare(
+        self,
+        input: Input,
+        output: Output,
+        expected_output: ExpectedOutput,
+        logger: DebugLogger,
+    ) -> Evaluation:
+        pass
+
+    def evaluate_dataset(
+        self, dataset: Sequence[tuple[Input, ExpectedOutput]], logger: DebugLogger
+    ) -> AggregatedEvaluation:
+        evaluations = []
+        for input, expected_output in dataset:
+            evaluation = self.evaluate(
+                input, logger.child_logger(str(uuid.uuid4())), expected_output
+            )
+            evaluations.append(evaluation)
+        return self.aggregate(evaluations)
+
+    @abstractmethod
+    def aggregate(self, evaluations: Sequence[Evaluation]) -> AggregatedEvaluation:
+        pass

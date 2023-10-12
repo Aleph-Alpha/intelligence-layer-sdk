@@ -5,6 +5,7 @@ from typing import Any, Optional, Sequence
 from aleph_alpha_client import Client
 
 from intelligence_layer.completion import Completion
+from intelligence_layer.task import DebugLogger
 
 
 class Grader:
@@ -33,6 +34,7 @@ class InstructionGrader(Grader):
         input: Optional[str],
         actual: Optional[str],
         expected: Optional[str],
+        logger: DebugLogger,
     ) -> Any:
         pass
 
@@ -60,5 +62,6 @@ class MockLlamaGrader(InstructionGrader):
         input: Optional[str],
         actual: Optional[str],
         expected: Optional[str],
+        logger: DebugLogger,
     ) -> str:
         return random.choice(["GREAT", "OK", "BAD"])

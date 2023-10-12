@@ -1,3 +1,4 @@
+from typing import Sequence
 from aleph_alpha_client import Client
 from pytest import fixture
 
@@ -7,7 +8,9 @@ from intelligence_layer.classify import (
     ClassifyOutput,
     SingleLabelClassifyEvaluator,
 )
-from intelligence_layer.task import NoOpDebugLogger
+from intelligence_layer.task import (
+    NoOpDebugLogger,
+)
 
 
 @fixture
@@ -107,4 +110,26 @@ def test_can_evaluate_classify(single_label_classify: SingleLabelClassify) -> No
         input=classify_input, logger=NoOpDebugLogger(), expected_output=["positive"]
     )
 
-    assert evaluation["correct"] == True
+    assert evaluation.correct == True
+
+
+def test_can_aggregate_evaluations(
+    single_label_classify: SingleLabelClassify,
+) -> None:
+    # Mypy doesn't recognize a sequence of tuples, so we ignore the error here
+    inputs: tuple[ClassifyInput, Sequence[str]] = [
+        ClassifyInput(
+            text="This is good",
+            labels=frozenset({"positive", "negative"}),
+        ),
+        ["positive"],
+    ]  # type: ignore
+    single_label_classify_evaluator = SingleLabelClassifyEvaluator(
+        task=single_label_classify
+    )
+
+    aggregated_evaluations = single_label_classify_evaluator.evaluate_dataset(
+        [inputs], logger=NoOpDebugLogger()
+    )
+
+    assert isinstance(aggregated_evaluations.percentage_correct, float)

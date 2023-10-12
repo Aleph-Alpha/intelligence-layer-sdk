@@ -48,6 +48,6 @@ def test_qa_evaluate(qa: SingleChunkQa) -> None:
     eval_output = qa_evaluator.evaluate(
         input=input, logger=NoOpDebugLogger(), expected_output=expected_output
     )
-    assert isinstance(eval_output["exact_match"], bool)
-    assert isinstance(eval_output["random"], float)
-    assert isinstance(eval_output["llama"], str)
+    assert isinstance(eval_output.exact_match, bool)
+    assert isinstance(eval_output.random, float)
+    assert isinstance(eval_output.llama, str)
