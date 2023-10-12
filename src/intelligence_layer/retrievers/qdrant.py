@@ -1,5 +1,5 @@
 from typing import Sequence
-from intelligence_layer.retrievers.base import BaseRetriver, SearchResult
+from intelligence_layer.retrievers.base import BaseRetriever, SearchResult
 from qdrant_client import QdrantClient
 from aleph_alpha_client import (
     Client,
@@ -10,8 +10,10 @@ from aleph_alpha_client import (
 from qdrant_client.conversions.common_types import ScoredPoint
 from qdrant_client.http.models import Distance, VectorParams, PointStruct
 
+from intelligence_layer.task import DebugLogger
 
-class QdrantRetriever(BaseRetriver):
+
+class QdrantRetriever(BaseRetriever):
     def __init__(
         self,
         client: Client,
@@ -26,7 +28,7 @@ class QdrantRetriever(BaseRetriver):
         self.clear()
 
     def get_relevant_documents_with_scores(
-        self, query: str, k: int
+        self, query: str, logger: DebugLogger, *, k: int
     ) -> Sequence[SearchResult]:
         def _point_to_search_result(point: ScoredPoint) -> SearchResult:
             assert point.payload
@@ -34,12 +36,16 @@ class QdrantRetriever(BaseRetriver):
 
         query_embedding = self._embed(query, SemanticRepresentation.Query)
 
+        logger.log("Query", query)
+        logger.log("k", k)
+
         search_result = self.search_client.search(
             collection_name=self.collection_name,
             query_vector=query_embedding,
             score_threshold=self.threshold,
             limit=k,
         )
+        logger.log('output', search_result)
 
         return [_point_to_search_result(point) for point in search_result]
 

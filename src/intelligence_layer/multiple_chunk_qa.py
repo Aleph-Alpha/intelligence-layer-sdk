@@ -74,12 +74,10 @@ Final answer:"""
         qa_outputs: Sequence[SingleChunkQaOutput] = [
             self.single_chunk_qa.run(
                 SingleChunkQaInput(question=input.question, chunk=chunk),
-                logger.child_logger("Single Chunk QA"),
+                logger.child_logger(f"Single Chunk QA for Chunk {chunk_number}"),
             )
-            for chunk in input.chunks
+            for chunk_number, chunk in enumerate(input.chunks)
         ]
-
-        logger.log("Intermediate Answers", [output.answer for output in qa_outputs])
 
         answers: List[str] = [
             output.answer for output in qa_outputs if output.answer is not None
