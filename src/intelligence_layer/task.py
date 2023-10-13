@@ -181,9 +181,8 @@ ExpectedOutput = TypeVar("ExpectedOutput", bound=PydanticSerializable)
 Evaluation = TypeVar("Evaluation", bound=PydanticSerializable)
 AggregatedEvaluation = TypeVar("AggregatedEvaluation", bound=PydanticSerializable)
 
-
 class Evaluator(
-    ABC, Generic[Input, Output, ExpectedOutput, Evaluation, AggregatedEvaluation]
+    ABC, Generic[Input, ExpectedOutput, Evaluation, AggregatedEvaluation]
 ):
     """Base evaluator interface. This should run certain evaluation steps for some job.
 
@@ -195,9 +194,7 @@ class Evaluator(
     We suggest supplying a `Task` and a number of `Grader`s in the `__init__` method.
     """
 
-    def __init__(self, task: Task[Input, Output]) -> None:
-        self.task = task
-
+    @abstractmethod
     def evaluate(
         self,
         input: Input,
@@ -205,18 +202,8 @@ class Evaluator(
         expected_output: ExpectedOutput,
     ) -> Evaluation:
         """Executes the evaluation for this use-case."""
-        output = self.task.run(input, logger)
-        return self.compare(input, output, expected_output, logger)
-
-    @abstractmethod
-    def compare(
-        self,
-        input: Input,
-        output: Output,
-        expected_output: ExpectedOutput,
-        logger: DebugLogger,
-    ) -> Evaluation:
         pass
+
 
     def evaluate_dataset(
         self, dataset: Sequence[tuple[Input, ExpectedOutput]], logger: DebugLogger

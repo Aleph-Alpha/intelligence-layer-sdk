@@ -321,7 +321,6 @@ class AggregatedClassifyEvaluation(BaseModel):
 class SingleLabelClassifyEvaluator(
     Evaluator[
         ClassifyInput,
-        ClassifyOutput,
         Sequence[str],
         ClassifyEvaluation,
         AggregatedClassifyEvaluation,
@@ -330,13 +329,13 @@ class SingleLabelClassifyEvaluator(
     def __init__(self, task: SingleLabelClassify):
         self.task = task
 
-    def compare(
+    def evaluate(
         self,
-        _: ClassifyInput,
-        output: ClassifyOutput,
+        input: ClassifyInput,
+        logger: DebugLogger,
         expected_output: Sequence[str],
-        __: DebugLogger,
-    ) -> ClassifyEvaluation:
+    ) ->  ClassifyEvaluation:
+        output = self.task.run(input, logger) 
         sorted_classes = sorted(
             output.scores.items(), key=lambda item: item[1], reverse=True
         )

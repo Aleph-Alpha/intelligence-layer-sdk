@@ -7,11 +7,6 @@ from aleph_alpha_client import (
 from pydantic import BaseModel
 
 from intelligence_layer.completion import Completion, CompletionInput, CompletionOutput
-from intelligence_layer.grading import (
-    ExactMatchGrader,
-    MockLlamaGrader,
-    RandomListGrader,
-)
 from intelligence_layer.text_highlight import (
     TextHighlight,
     TextHighlightInput,
@@ -107,67 +102,3 @@ If there's no answer, say "{{no_answer_text}}".
 
     def _no_answer_to_none(self, completion: str) -> Optional[str]:
         return completion if completion != self.NO_ANSWER_STR else None
-
-
-class QaEvaluation(BaseModel):
-    exact_match: bool
-    random: float
-    llama: str
-
-
-class AggregatedQaEvaluation(BaseModel):
-    percentage_exact_match: float
-    percentage_random: float
-    llama_distribution: float
-
-
-class QaEvaluator(
-    Evaluator[
-        SingleChunkQaInput,
-        SingleChunkQaOutput,
-        Optional[str],
-        QaEvaluation,
-        AggregatedQaEvaluation,
-    ]
-):
-    """
-    First version of what we imagine an evaluator to look for a given task.
-    All current metrics delivered by the graders are mock metrics.
-    """
-
-    def __init__(self, client: Client, task: SingleChunkQa):
-        self.task = task
-        self.exact_match_grader = ExactMatchGrader()
-        self.random_grader = RandomListGrader()
-        self.llama_grader = MockLlamaGrader(client)
-
-    def compare(
-        self,
-        input: SingleChunkQaInput,
-        output: SingleChunkQaOutput,
-        expected_output: Optional[str],
-        logger: DebugLogger,
-    ) -> QaEvaluation:
-        actual_output = output.answer
-        exact_match_result = self.exact_match_grader.grade(
-            actual=actual_output, expected=expected_output
-        )
-        random_result = self.random_grader.grade(
-            actual=actual_output,
-            expected_list=[expected_output] if expected_output else [],
-        )
-        llama_result = self.llama_grader.grade(
-            instruction=input.question,
-            input=input.chunk,
-            actual=actual_output,
-            expected=expected_output,
-            logger=logger,
-        )
-        return QaEvaluation(
-            exact_match=exact_match_result, random=random_result, llama=llama_result
-        )
-
-    def aggregate(self, evaluations: Sequence[QaEvaluation]) -> AggregatedQaEvaluation:
-        return AggregatedQaEvaluation(
-            percentage_exact_match=0.0, percentage_random=0.0, llama_distribution=0.0
-        )
