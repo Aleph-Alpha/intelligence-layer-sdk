@@ -334,8 +334,8 @@ class SingleLabelClassifyEvaluator(
         input: ClassifyInput,
         logger: DebugLogger,
         expected_output: Sequence[str],
-    ) ->  ClassifyEvaluation:
-        output = self.task.run(input, logger) 
+    ) -> ClassifyEvaluation:
+        output = self.task.run(input, logger)
         sorted_classes = sorted(
             output.scores.items(), key=lambda item: item[1], reverse=True
         )

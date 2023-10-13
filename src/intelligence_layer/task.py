@@ -181,9 +181,8 @@ ExpectedOutput = TypeVar("ExpectedOutput", bound=PydanticSerializable)
 Evaluation = TypeVar("Evaluation", bound=PydanticSerializable)
 AggregatedEvaluation = TypeVar("AggregatedEvaluation", bound=PydanticSerializable)
 
-class Evaluator(
-    ABC, Generic[Input, ExpectedOutput, Evaluation, AggregatedEvaluation]
-):
+
+class Evaluator(ABC, Generic[Input, ExpectedOutput, Evaluation, AggregatedEvaluation]):
     """Base evaluator interface. This should run certain evaluation steps for some job.
 
     Generics:
@@ -203,7 +202,6 @@ class Evaluator(
     ) -> Evaluation:
         """Executes the evaluation for this use-case."""
         pass
-
 
     def evaluate_dataset(
         self, dataset: Sequence[tuple[Input, ExpectedOutput]], logger: DebugLogger

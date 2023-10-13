@@ -67,9 +67,7 @@ class InMemoryRetriever(BaseRetriever):
         ).embedding
 
     def _add_chunks_to_memory(self, chunks: Sequence[str]) -> None:
-        embeddings = [
-            self._embed(c, SemanticRepresentation.Document) for c in chunks
-        ]
+        embeddings = [self._embed(c, SemanticRepresentation.Document) for c in chunks]
 
         self.search_client.upsert(
             collection_name=self.collection_name,
