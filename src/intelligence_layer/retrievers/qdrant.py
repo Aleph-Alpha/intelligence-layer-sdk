@@ -45,7 +45,7 @@ class QdrantRetriever(BaseRetriever):
             score_threshold=self.threshold,
             limit=k,
         )
-        logger.log('output', search_result)
+        logger.log("output", search_result)
 
         return [_point_to_search_result(point) for point in search_result]
 
