@@ -11,7 +11,7 @@ from intelligence_layer.multiple_chunk_qa import (
 from intelligence_layer.retrievers.base import BaseRetriever
 from intelligence_layer.task import DebugLogger, Task
 from semantic_text_splitter import HuggingFaceTextSplitter
-from intelligence_layer.retrievers.qdrant import QdrantRetriever
+from intelligence_layer.retrievers.in_memory_retriever import InMemoryRetriever
 
 
 class LongContextQaInput(BaseModel):
@@ -33,7 +33,6 @@ class LongContextQa(Task[LongContextQaInput, MultipleChunkQaOutput]):
         client: Client,
         max_tokens_in_chunk: int = 512,
         k: int = 4,
-        retriever: Optional[BaseRetriever] = None,
         model: str = "luminous-supreme-control",
     ):
         self.client = client
@@ -44,20 +43,17 @@ class LongContextQa(Task[LongContextQaInput, MultipleChunkQaOutput]):
         self.multi_chunk_qa = MultipleChunkQa(self.client, self.model)
         self.k = k
 
-        self.retriever = retriever or QdrantRetriever(client, threshold=0.5)
-
     def run(
         self, input: LongContextQaInput, logger: DebugLogger
     ) -> MultipleChunkQaOutput:
         chunks = self.splitter.chunks(input.text, self.max_tokens_in_chunk)
         logger.log("chunks", chunks)
 
-        self.retriever.add_documents(chunks)
+        retriever = InMemoryRetriever(self.client, chunks=chunks, threshold=0.5)
 
-        relevant_chunks_with_scores = self.retriever.get_relevant_documents_with_scores(
+        relevant_chunks_with_scores = retriever.get_relevant_documents_with_scores(
             input.question, k=self.k, logger=logger.child_logger("Retriever")
         )
-        self.retriever.clear()
 
         multi_chunk_qa_input = MultipleChunkQaInput(
             chunks=[result.chunk for result in relevant_chunks_with_scores],

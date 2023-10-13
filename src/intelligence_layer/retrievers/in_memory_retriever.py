@@ -13,19 +13,24 @@ from qdrant_client.http.models import Distance, VectorParams, PointStruct
 from intelligence_layer.task import DebugLogger
 
 
-class QdrantRetriever(BaseRetriever):
+class InMemoryRetriever(BaseRetriever):
     def __init__(
         self,
         client: Client,
-        location: str = ":memory:",  # follows the default qdrant setting for location
+        chunks: Sequence[str],
         threshold: float = 0.5,
         collection_name: str = "default_collection",
     ) -> None:
         self.client = client
-        self.search_client = QdrantClient(location)
+        self.search_client = QdrantClient(":memory:")
         self.collection_name = collection_name
         self.threshold = threshold
-        self.clear()
+
+        self.search_client.recreate_collection(
+            collection_name=self.collection_name,
+            vectors_config=VectorParams(size=128, distance=Distance.COSINE),
+        )
+        self._add_chunks_to_memory(chunks)
 
     def get_relevant_documents_with_scores(
         self, query: str, logger: DebugLogger, *, k: int
@@ -61,9 +66,9 @@ class QdrantRetriever(BaseRetriever):
             request=embedding_request, model="luminous-base"
         ).embedding
 
-    def add_documents(self, texts: Sequence[str]) -> None:
+    def _add_chunks_to_memory(self, chunks: Sequence[str]) -> None:
         embeddings = [
-            self._embed(text, SemanticRepresentation.Document) for text in texts
+            self._embed(c, SemanticRepresentation.Document) for c in chunks
         ]
 
         self.search_client.upsert(
@@ -71,12 +76,6 @@ class QdrantRetriever(BaseRetriever):
             wait=True,
             points=[
                 PointStruct(id=idx, vector=text_embedding, payload={"text": text})
-                for idx, (text_embedding, text) in enumerate(zip(embeddings, texts))
+                for idx, (text_embedding, text) in enumerate(zip(embeddings, chunks))
             ],
-        )
-
-    def clear(self) -> None:
-        self.search_client.recreate_collection(
-            collection_name=self.collection_name,
-            vectors_config=VectorParams(size=128, distance=Distance.COSINE),
         )
