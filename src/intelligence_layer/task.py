@@ -7,7 +7,6 @@ from typing import (
     Any,
     Generic,
     Mapping,
-    NewType,
     Optional,
     Sequence,
     TypeVar,
@@ -181,17 +180,28 @@ ExpectedOutput = TypeVar("ExpectedOutput", bound=PydanticSerializable)
 Evaluation = TypeVar("Evaluation", bound=PydanticSerializable)
 AggregatedEvaluation = TypeVar("AggregatedEvaluation", bound=PydanticSerializable)
 
-class Evaluator(
-    ABC, Generic[Input, ExpectedOutput, Evaluation, AggregatedEvaluation]
-):
+
+class Example(BaseModel, Generic[Input, ExpectedOutput]):
+    input: Input
+    expected_output: ExpectedOutput
+    ident: Optional[str] = Field(default_factory=lambda: str(uuid.uuid4()))
+
+
+class Dataset(BaseModel, Generic[Input, ExpectedOutput]):
+    name: str
+    examples: Sequence[Example[Input, ExpectedOutput]]
+
+
+class Evaluator(ABC, Generic[Input, ExpectedOutput, Evaluation, AggregatedEvaluation]):
     """Base evaluator interface. This should run certain evaluation steps for some job.
 
     Generics:
         Input: Interface to be passed to the task that shall be evaluated.
         ExpectedOutput: Output that is expected from the task run with the supplied input.
         Evaluation: Interface of the metrics that come from the evaluated task.
+        AggregatedEvaluation: The aggregated results of an evaluation run with a dataset.
 
-    We suggest supplying a `Task` and a number of `Grader`s in the `__init__` method.
+    We suggest supplying a `Task` in the `__init__` method and running it in the `evaluate` method.
     """
 
     @abstractmethod
@@ -204,20 +214,22 @@ class Evaluator(
         """Executes the evaluation for this use-case."""
         pass
 
-
     def evaluate_dataset(
-        self, dataset: Sequence[tuple[Input, ExpectedOutput]], logger: DebugLogger
+        self, dataset: Dataset[Input, ExpectedOutput], logger: DebugLogger
     ) -> AggregatedEvaluation:
+        """Evaluates an entire datasets in a threaded manner and aggregates the results into an `AggregatedEvaluation`."""
         with ThreadPoolExecutor(max_workers=10) as executor:
             evaluations = list(
                 tqdm(
                     executor.map(
-                        lambda req: self.evaluate(
-                            req[0], logger.child_logger(str(uuid.uuid4())), req[1]
+                        lambda idx_example: self.evaluate(
+                            idx_example[1].input,
+                            logger.child_logger(str(idx_example[0])),
+                            idx_example[1].expected_output,
                         ),
-                        dataset,
+                        enumerate(dataset.examples),
                     ),
-                    total=len(dataset),
+                    total=len(dataset.examples),
                     desc="Evaluating",
                 )
             )
@@ -225,4 +237,5 @@ class Evaluator(
 
     @abstractmethod
     def aggregate(self, evaluations: Sequence[Evaluation]) -> AggregatedEvaluation:
+        """`Evaluator`-specific method for aggregating individual `Evaluations` into report-like `Aggregated Evaluation`."""
         pass

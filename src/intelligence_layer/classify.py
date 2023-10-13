@@ -1,11 +1,6 @@
-from abc import abstractmethod
-from datetime import timedelta
 import math
-import random
 from typing import (
     Any,
-    Callable,
-    Generic,
     Iterable,
     NewType,
     Mapping,
@@ -21,14 +16,11 @@ from aleph_alpha_client import (
     TokenizationRequest,
     CompletionRequest,
 )
-from annotated_types import T
 from pydantic import BaseModel
 
 from intelligence_layer.completion import Completion, CompletionInput, CompletionOutput
 from intelligence_layer.task import (
-    Evaluation,
     Evaluator,
-    Output,
     Task,
     DebugLogger,
 )
@@ -312,10 +304,12 @@ class TreeNode:
 
 class ClassifyEvaluation(BaseModel):
     correct: bool
+    output: ClassifyOutput
 
 
 class AggregatedClassifyEvaluation(BaseModel):
     percentage_correct: float
+    evaluations: Sequence[ClassifyEvaluation]
 
 
 class SingleLabelClassifyEvaluator(
@@ -334,8 +328,8 @@ class SingleLabelClassifyEvaluator(
         input: ClassifyInput,
         logger: DebugLogger,
         expected_output: Sequence[str],
-    ) ->  ClassifyEvaluation:
-        output = self.task.run(input, logger) 
+    ) -> ClassifyEvaluation:
+        output = self.task.run(input, logger)
         sorted_classes = sorted(
             output.scores.items(), key=lambda item: item[1], reverse=True
         )
@@ -343,7 +337,7 @@ class SingleLabelClassifyEvaluator(
             correct = True
         else:
             correct = False
-        return ClassifyEvaluation(correct=correct)
+        return ClassifyEvaluation(correct=correct, output=output)
 
     def aggregate(
         self, evaluations: Sequence[ClassifyEvaluation]
@@ -354,4 +348,6 @@ class SingleLabelClassifyEvaluator(
             ) / len(evaluations)
         else:
             correct_answers = 0
-        return AggregatedClassifyEvaluation(percentage_correct=correct_answers)
+        return AggregatedClassifyEvaluation(
+            percentage_correct=correct_answers, evaluations=evaluations
+        )
