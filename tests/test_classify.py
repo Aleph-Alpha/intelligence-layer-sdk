@@ -9,6 +9,8 @@ from intelligence_layer.classify import (
     SingleLabelClassifyEvaluator,
 )
 from intelligence_layer.task import (
+    Dataset,
+    Example,
     NoOpDebugLogger,
 )
 
@@ -116,28 +118,32 @@ def test_can_evaluate_classify(single_label_classify: SingleLabelClassify) -> No
 def test_can_aggregate_evaluations(
     single_label_classify: SingleLabelClassify,
 ) -> None:
-    # Mypy doesn't recognize a sequence of tuples, so we ignore the error here
-    correct_input: tuple[ClassifyInput, Sequence[str]] = [
-        ClassifyInput(
+    positive_lst: Sequence[str] = ["positive"]
+    correct_example = Example(
+        input=ClassifyInput(
             text="This is good",
             labels=frozenset({"positive", "negative"}),
         ),
-        ["positive"],
-    ]  # type: ignore
-    incorrect_input: tuple[ClassifyInput, Sequence[str]] = [
-        ClassifyInput(
+        expected_output=positive_lst,
+    )
+    incorrect_example = Example(
+        input=ClassifyInput(
             text="This is extremely bad",
             labels=frozenset({"positive", "negative"}),
         ),
-        ["positive"],
-    ]  # type: ignore
+        expected_output=positive_lst,
+    )
 
     single_label_classify_evaluator = SingleLabelClassifyEvaluator(
         task=single_label_classify
     )
 
+    dataset = Dataset(
+        name="classify_test", examples=[correct_example, incorrect_example]
+    )
+
     aggregated_evaluations = single_label_classify_evaluator.evaluate_dataset(
-        [correct_input, incorrect_input], logger=NoOpDebugLogger()
+        dataset, logger=NoOpDebugLogger()
     )
 
     assert aggregated_evaluations.percentage_correct == 0.5
@@ -151,7 +157,7 @@ def test_aggregating_evaluations_works_with_empty_list(
     )
 
     aggregated_evaluations = single_label_classify_evaluator.evaluate_dataset(
-        [], logger=NoOpDebugLogger()
+        Dataset(name="empty_dataset", examples=[]), logger=NoOpDebugLogger()
     )
 
     assert aggregated_evaluations.percentage_correct == 0
