@@ -10,6 +10,22 @@ The key features of the intelligence layer are:
 
 - **Auditability** The foundation assumption behind the Intelligence Layer is to give you access to the internal states of a [Task](./src/intelligence_layer/task.py) at every step of a workflow execution. This enables you to easier debug a [Task](./src/intelligence_layer/task.py) and gives you more control post deployment when you want to investigate how the model replies were produced.
 
+## Tasks
+
+Out of the box you get access to the following tasks:
+
+
+
+| Task                | Description                                   | Notebook                                       |
+|---------------------|-----------------------------------------------|------------------------------------------------|
+| Classification      | We show how to utilize | [Classification Notebook](https://example.com/classification) |
+| Question Answering  | Task description for QA goes here.            | [QA Notebook](https://example.com/question-answering)        |
+| Summarization       | Task description for Summarization goes here. | [Summarization Notebook](https://example.com/summarization)   |
+
+
+
+
+
 
 ## Quickstart
 
