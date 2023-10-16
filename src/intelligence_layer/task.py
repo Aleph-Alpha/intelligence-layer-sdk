@@ -60,11 +60,28 @@ class JsonSerializer(RootModel[PydanticSerializable]):
 
 
 class LogEntry(BaseModel):
-    message: str
-    value: SerializeAsAny[PydanticSerializable]
-    timestamp: datetime = Field(default_factory=datetime.utcnow)
+    """An individual log entry, currently used to represent individual logs by the
+    `InMemoryDebugLogger`.
 
-    def _render_(self) -> Panel:
+    Attributes:
+        message: A description of the value you are logging, such as the step in the task this
+            is related to.
+        value: The relevant data you want to log. Can be anything that is serializable by
+            Pydantic, which gives the loggers flexibility in how they store and emit the logs.
+        timestamp: The time that the log was emitted.
+    """
+
+    message: str
+    """A description of the value you are logging, such as the step in the task this
+        is related to."""
+    value: SerializeAsAny[PydanticSerializable]
+    """The relevant data you want to log. Can be anything that is serializable by
+        Pydantic, which gives the loggers flexibility in how they store and emit the logs."""
+    timestamp: datetime = Field(default_factory=datetime.utcnow)
+    """The time that the log was emitted."""
+
+    def _rich_render_(self) -> Panel:
+        """Renders the debug log via classes in the `rich` package"""
         value = (
             self.value
             if isinstance(self.value, BaseModel)
@@ -80,56 +97,159 @@ class LogEntry(BaseModel):
         )
 
     def _ipython_display_(self) -> None:
+        """Default rendering for Jupyter notebooks"""
         from rich import print
 
-        print(self._render_())
+        print(self._rich_render_())
 
 
 @runtime_checkable
 class DebugLogger(Protocol):
+    """A protocol for instrumenting `Task`s with structured logging.
+
+    A logger needs to provide a way to collect an individual log, which should be serializable, and
+    a way to generate nested loggers, so that sub-tasks can emit logs that are grouped together.
+
+    Each `DebugLogger` is given a `name` to distinguish them from each other, and for nested logs.
+
+    Implementations of how logs are collected and stored may differ. Refer to the individual
+    documentation of each implementation to see how to use the resulting logger.
+
+    Attributes:
+        name: The name of the `DebugLogger` instance.
+    """
+
     name: str
 
     def log(self, message: str, value: PydanticSerializable) -> None:
+        """Record a log of relevant information as part of a step within a task.
+
+        By default, the `Input` and `Output` of each `Task` are logged automatically, but you can
+        log anything else that seems relevant to understanding the output of a given task.
+
+        Args:
+            message: A description of the value you are logging, such as the step in the task this
+                is related to.
+            value: The relevant data you want to log. Can be anything that is serializable by
+                Pydantic, which gives the loggers flexibility in how they store and emit the logs.
+        """
         ...
 
     def child_logger(self, name: str) -> "DebugLogger":
+        """Generate a sub-logger from the current logging instance.
+
+        Each logger implementation can decide on how it wants to represent this, but they should
+        all allow for representing logs of a child task within the scope of the current task.
+
+        Args:
+            name: A descriptive name of what this child logger will contain logs about.
+
+        Returns:
+            An instance of something that also meets the protocol of DebugLogger. Most likely, it
+            will create an instance of the same type, but this is dependent on the actual
+            implementation.
+        """
         ...
 
 
 class NoOpDebugLogger:
+    """A no-op logger. Useful for cases, like testing, where a logger is needed for a task, but you
+    don't have a need to collect or inspect the actual logs.
+
+    All calls to `log` won't actually do anything.
+
+    Attributes:
+        name: Will always be the default string of "NoOp"
+    """
+
     name = "NoOp"
 
     def log(self, message: str, value: PydanticSerializable) -> None:
+        """Record a log of relevant information as part of a step within a task.
+
+        By default, the `Input` and `Output` of each `Task` are logged automatically, but you can
+        log anything else that seems relevant to understanding the output of a given task.
+
+        Args:
+            message: A description of the value you are logging, such as the step in the task this
+                is related to.
+            value: The relevant data you want to log. Can be anything that is serializable by
+                Pydantic, which gives the loggers flexibility in how they store and emit the logs.
+        """
         pass
 
     def child_logger(self, name: str) -> "NoOpDebugLogger":
-        return NoOpDebugLogger()
+        """Generate a sub-logger from the current logging instance.
+
+        Args:
+            name: A descriptive name of what this child logger will contain logs about.
+
+        Returns:
+            Another `NoOpDebugLogger`
+        """
+        return self
 
 
-class JsonDebugLogger(BaseModel):
+class InMemoryDebugLogger(BaseModel):
+    """Collects log entries in a nested structure, and keeps them in memory.
+
+    If desired, the structure is serializable with Pydantic, so you can write out the JSON
+    representation to a file, or return via an API, or something similar.
+
+    Attributes:
+        name: A descriptive name of what the logger contains log entries about.
+        logs: A sequential list of log entries and/or nested InMemoryDebugLoggers with their own
+            log entries.
+    """
+
     name: str
-    logs: list[Union[LogEntry, "JsonDebugLogger"]] = []
+    """A descriptive name of what the logger contains log entries about."""
+    logs: list[Union[LogEntry, "InMemoryDebugLogger"]] = []
+    """A sequential list of log entries and/or nested InMemoryDebugLoggers with their own log
+        entries."""
 
     def log(self, message: str, value: PydanticSerializable) -> None:
+        """Record a log of relevant information as part of a step within a task.
+
+        By default, the `Input` and `Output` of each `Task` are logged automatically, but you can
+        log anything else that seems relevant to understanding the output of a given task.
+
+        Args:
+            message: A description of the value you are logging, such as the step in the task this
+                is related to.
+            value: The relevant data you want to log. Can be anything that is serializable by
+                Pydantic, which gives the loggers flexibility in how they store and emit the logs.
+        """
         self.logs.append(LogEntry(message=message, value=value))
 
-    def child_logger(self, name: str) -> "JsonDebugLogger":
-        child = JsonDebugLogger(name=name)
+    def child_logger(self, name: str) -> "InMemoryDebugLogger":
+        """Generate a sub-logger from the current logging instance.
+
+        Args:
+            name: A descriptive name of what this child logger will contain logs about.
+
+        Returns:
+            A nested `InMemoryDebugLogger` that is stored in a nested position as part of the parent
+            logger.
+        """
+        child = InMemoryDebugLogger(name=name)
         self.logs.append(child)
         return child
 
-    def _render_(self) -> Tree:
+    def _rich_render_(self) -> Tree:
+        """Renders the debug log via classes in the `rich` package"""
         tree = Tree(label=self.name)
 
         for log in self.logs:
-            tree.add(log._render_())
+            tree.add(log._rich_render_())
 
         return tree
 
     def _ipython_display_(self) -> None:
+        """Default rendering for Jupyter notebooks"""
         from rich import print
 
-        print(self._render_())
+        print(self._rich_render_())
 
 
 Input = TypeVar("Input", bound=PydanticSerializable)
