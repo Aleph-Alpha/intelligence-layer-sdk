@@ -1,6 +1,6 @@
-# Intelligence Layer
+# Intelligence Layer ☯️
 
-Intelligence Layer is a suite of development tools designed by [Aleph Alpha](https://aleph-alpha.com/) enabling you to build end-to-end solutions utilizing the power of large language models (LLMs). Our goal here is to empower you to apply LLMs to solve various practical problems by providing a consistent framework for prompt engineering. The tool should enable you to go quickly through all the phases of AI product development, from prototyping and playing with prompts, through setting up experiments and evaluating their results, to solution deployment.
+Intelligence Layer ☯️ is a suite of development tools designed by [Aleph Alpha](https://aleph-alpha.com/) enabling you to build end-to-end solutions utilizing the power of large language models (LLMs). Our goal here is to empower you to apply LLMs to solve various practical problems by providing a consistent framework for prompt engineering. The tool should enable you to go quickly through all the phases of AI product development, from prototyping and playing with prompts, through setting up experiments and evaluating their results, to solution deployment.
 
 The key features of the intelligence layer are:
 
@@ -16,11 +16,15 @@ Out of the box you get access to the following tasks:
 
 
 
-| Task                | Description                                   | Notebook                                       |
+| Task                | Description                                   | Notebook📓                                       |
 |---------------------|-----------------------------------------------|------------------------------------------------|
-| Classification      | We show how to utilize | [Classification Notebook](https://example.com/classification) |
-| Question Answering  | Task description for QA goes here.            | [QA Notebook](https://example.com/question-answering)        |
-| Summarization       | Task description for Summarization goes here. | [Summarization Notebook](https://example.com/summarization)   |
+| Summarization       | Use an LLM to summarize                       | [summarize.ipynb](./src/examples/summarize.ipynb)   |
+| Question Answering  | Various approaches for QA                     | [qa.ipynb](./src/examples/qa.ipynb)        |
+| Custom task         | We show you how to build a Task from scratch; for your own custom use case | [custom_task.ipynb](./src/examples/custom_task.ipynb) |
+| Classification      | Use an LLM to conduct zero-shot text classification. | [classify.ipynb](./src/examples/classify.ipynb) |
+
+
+
 
 
 
@@ -49,7 +53,7 @@ Set up the Aleph Alpha token value
 export AA_TOKEN = <YOUR TOKEN HERE>
 ```
 
-Run the `jupytyer notebook`, and go to the `Examples` dir.
+Run the `jupytyer notebook`, and go to the [examples](http://127.0.0.1:8888/tree/src/examples) dir.
 
 ```cmd
 poetry run jupyter notebook
