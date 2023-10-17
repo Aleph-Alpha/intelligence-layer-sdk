@@ -22,6 +22,7 @@ qdrant-client = "^1.6.0"
 rich = "^13.6.0"
 nbconvert = "^7.9.2"
 datasets = "^2.14.5"
+jupyter = "^1.0.0"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "*"
@@ -33,7 +34,6 @@ types-Pygments="*"
 types-colorama="*"
 types-docutils="*"
 types-setuptools="*"
-jupyterlab = "*"
 types-decorator = "*"
 
 [tool.mypy]
