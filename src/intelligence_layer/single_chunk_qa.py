@@ -43,7 +43,7 @@ class SingleChunkQaInput(BaseModel):
     """The input for a single chunk QA task.
 
     Attributes:
-        chunk: The (short) text to be asked about.
+        chunk: The (short) text to be asked about. Usually measures one or a few paragraph(s).
         question: The question being asked.
         
     """
@@ -70,7 +70,7 @@ class SingleChunkQa(Task[SingleChunkQaInput, SingleChunkQaOutput]):
 
     Depends on SingleChunkQaInput and SingleChunkQaOutput. Uses Aleph Alpha models to generate a natural language answer for a text chunk.
 
-    Includes logic to return 'answer = None' if the language model determines that the question cannot be answered on the basis of the ctext.
+    Includes logic to return 'answer = None' if the language model determines that the question cannot be answered on the basis of the text.
 
     Note:
         'model' provided should be a control-type model.
