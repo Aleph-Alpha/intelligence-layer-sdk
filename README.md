@@ -6,14 +6,14 @@ The key features of the intelligence layer are:
 
 - **Best practices** - we give you access to *state-of-the-art* methods for addressing some of the most popular LLM use cases. You get access to off-the-shelf methods, enabling you to quickly build the first prototypes based on your primary data. We build on top of the best industry practices, optimizing the last bit of performance from LLMs.
 
-- **Composibility**: The Intelligence Layer enables you to easily go from the prototyping phase to a scallable deployed solution. We seamlessly integrate with various evaluation methods, handle concurrency, and compose smaller [Tasks](./src/intelligence_layer/task.py) into more complicated workflows.
+- **Composability**: The Intelligence Layer enables you to easily go from the prototyping phase to a scallable deployed solution. We seamlessly integrate with various evaluation methods, handle concurrency, and compose smaller [Tasks](./src/intelligence_layer/task.py) into more complicated workflows.
 
 - **Auditability** The foundation assumption behind the Intelligence Layer is to give you access to the internal states of a [Task](./src/intelligence_layer/task.py) at every step of a workflow execution. This enables you to easier debug a [Task](./src/intelligence_layer/task.py) and gives you more control post deployment when you want to investigate how the model replies were produced.
 
 
 ## Quickstart
 
-Set up the poetry environement
+Set up the poetry environment
 
 ```bash
 poetry shell
@@ -42,7 +42,7 @@ Install [pre-commit](https://pre-commit.com/)
 pre-commit install
 ```
 
-Run the CI scripts to ensure the typing is correct, linting follows the pattern, tests and jupyter notebooks run. 
+Run the CI scripts to ensure the typing is correct, linting follows the pattern, tests and jupyter notebooks run.
 
 ```bash
 chmod +x scripts/precommit-and-mypy-and-pytest.sh
