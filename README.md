@@ -24,51 +24,57 @@ Out of the box you get access to the following tasks:
 
 
 
-
-
-
 ## Quickstart
+
+
+Copy the files from the `intelligence-layer`
+
+```cmd
+cp -r intelligence-layer my-intelligence-layer
+```
+
+```cmd
+cd my-intelligence-layer
+```
 
 Set up the poetry environment
 
-```bash
-poetry shell
+```cmd
+poetry install
 ```
 
-```bash
-poetry install
+Set up the Aleph Alpha token value
+
+```cmd
+export AA_TOKEN = <YOUR TOKEN HERE>
 ```
 
 Run the `jupytyer notebook`, and go to the `Examples` dir.
 
-```
-jupyter notebook
+```cmd
+poetry run jupyter notebook
 ```
 
 
 
 ## Development
 
-Fork this repo
-
-![Alt text](./assets/fork.png)
-
 Install [pre-commit](https://pre-commit.com/)
-```bash
+```cmd
 pre-commit install
 ```
 
 Run the CI scripts to ensure the typing is correct, linting follows the pattern, tests and jupyter notebooks run.
 
-```bash
+```cmd
 chmod +x scripts/precommit-and-mypy-and-pytest.sh
 ```
-```bash
-chmod +x scripts/precommit-and-mypy-and-pytest.sh
+```cmd
+chmod +x scripts/notebook_runner.sh
 ```
-```bash
-. scripts/notebook_runner.sh
+```cmd
+scripts/precommit-and-mypy-and-pytest.sh
 ```
-```bash
-. scripts/notebook_runner.sh
+```cmd
+scripts/notebook_runner.sh
 ```
