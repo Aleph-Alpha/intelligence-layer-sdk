@@ -45,7 +45,7 @@ class LongContextQa(Task[LongContextQaInput, MultipleChunkQaOutput]):
                 into n smaller chunks, then we use the text embeddings to find k chunks that are most similar.
                 to a given question, and we feed them into 'MultipleChunkQa', which handles question answering.
 
-                For spliting we use the semantic_text_splitter that consumes the tokenizer and
+                For splitting we use the semantic_text_splitter that consumes the tokenizer and
                 prevents the chunk from being too long (having too many tokens)semantic_text_splitter
 
                 What it does under the hood is answer questions about each individual chunk, and
