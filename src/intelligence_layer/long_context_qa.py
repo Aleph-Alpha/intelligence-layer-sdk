@@ -1,4 +1,3 @@
-from typing import Optional
 from aleph_alpha_client import (
     Client,
 )
@@ -8,7 +7,6 @@ from intelligence_layer.multiple_chunk_qa import (
     MultipleChunkQaInput,
     MultipleChunkQaOutput,
 )
-from intelligence_layer.retrievers.base import BaseRetriever
 from intelligence_layer.task import DebugLogger, Task
 from semantic_text_splitter import HuggingFaceTextSplitter
 from intelligence_layer.retrievers.in_memory_retriever import InMemoryRetriever
@@ -28,6 +26,38 @@ NO_ANSWER_TEXT = "NO_ANSWER_IN_TEXT"
 
 
 class LongContextQa(Task[LongContextQaInput, MultipleChunkQaOutput]):
+    """
+    LongContextQa is a task answering a question for a long document, where the length
+    of text exceeds the context length of a model (e.g. 2048 tokens for the luminous models).
+
+
+    Attributes:
+        NO_ANSWER_TEXT: A constant representing no answer in the context.
+
+    Args:
+        client: An instance of the Aleph Alpha client.
+        max_tokens_in_chunk: Maximum number of tokens in each chunk.
+        k: The number of top relevant chunks to retrieve.
+        model: Identifier of the model to be used.
+
+    Methods:
+        run(): The main question-answering method It first splits the text.
+                into smaller chunks, then we use the text embeddings to find chunks that are most similar.
+                to a given question, and we feed them into 'MultipleChunkQa', which handles question answering.
+
+                What it does under the hood is answer questions about each individual chunk, and
+                feeds the individual answers into a prompt combining multiple answers.
+                After that, this final answer is added to the output.
+
+    Example:
+        >>> client = Client(api_key="YOUR_API_KEY")
+        >>> task = LongContextQa(client)
+        >>> input_data = LongContextQaInput(text="Lengthy text goes here...", question="What is the main point?")
+        >>> logger = DebugLogger()
+        >>> output = task.run(input_data, logger)
+        >>> print(output.answer)
+    """
+
     def __init__(
         self,
         client: Client,
