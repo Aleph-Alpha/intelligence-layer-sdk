@@ -20,12 +20,8 @@ Out of the box you get access to the following tasks:
 |---------------------|-----------------------------------------------|------------------------------------------------|
 | Summarization       | Use an LLM to summarize                       | [summarize.ipynb](./src/examples/summarize.ipynb)   |
 | Question Answering  | Various approaches for QA                     | [qa.ipynb](./src/examples/qa.ipynb)        |
-| Custom task         | We show you how to build a Task from scratch; for your own custom use case | [custom_task.ipynb](./src/examples/custom_task.ipynb) |
+| Quickstart task         | We show you how to build a Task from scratch for your own custom use case | [quickstart_task.ipynb](./src/examples/quickstart_task.ipynb) |
 | Classification      | Use an LLM to conduct zero-shot text classification. | [classify.ipynb](./src/examples/classify.ipynb) |
-
-
-
-
 
 
 ## Quickstart
