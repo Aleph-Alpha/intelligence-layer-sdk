@@ -69,7 +69,27 @@ class SingleLabelClassify(Task[ClassifyInput, ClassifyOutput]):
     score is given to the most likely task.
 
     This methodology works best for classes that are easily understood, and don't require an
-    explanation or examples."""
+    explanation or examples.
+    
+    Args:
+        client: Aleph Alpha client instance for running model related API calls.
+
+    Attributes:
+        PROMPT_TEMPLATE_STR: The prompt template used for answering the question. 
+            'text' and 'labels' will be inserted here. 
+
+    Example:
+        >>> client = Client(token="AA_TOKEN")
+        >>> task = SingleLabelClassify(client)
+        >>> input = SingleLabelClassifyInput(
+        >>>     text="This is a happy text.",
+        >>>     labels={"positive", "negative"}
+        >>> )
+        >>> logger = InMemoryLogger(name="Classify")
+        >>> output = task.run(input, logger)
+        >>> print(output.scores["positive"])
+        0.9 
+    """
 
     PROMPT_TEMPLATE: str = """### Instruction:
 Identify a class that describes the text adequately.
