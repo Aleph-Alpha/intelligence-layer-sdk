@@ -2,7 +2,7 @@ from typing import Sequence
 from aleph_alpha_client import Client
 from pytest import fixture
 
-from intelligence_layer.classify import (
+from intelligence_layer.single_label_classify import (
     SingleLabelClassify,
     ClassifyInput,
     ClassifyOutput,
