@@ -4,25 +4,41 @@
 
 Generally, adhere to this [guideline](https://www.sphinx-doc.org/en/master/usage/extensions/example_google.html).
 
-## What documentation goes where?
+## Documentation Guide: Jupyter Notebooks vs. Docstrings
 
-Our documentation shall consist of two major streams: Jupyter notebooks & docstrings.
-As a general rule of thumb, here's what goes where:
+When documenting our codebase, we focus on two primary channels: Jupyter notebooks and docstrings.
+The objective is to provide both a high-level understanding and detailed implementation specifics.
+Here's how we differentiate and allocate content between them:
 
-**Jupyter notebooks**:
-- High-level aspects:
-    - What problem does this task solve?
-    - Optional: How does it differ from other tasks?
-- Detailed run through
-    - What goes in the `Input`/`Output`?
-    - What is in the debug log?
-    - Optional: How can I evaluate this?
+### Jupyter Notebooks
 
-**Docstrings**:
-- Implementation details:
-    - Why does this function take these parameters?
-    - What do these parameters mean?
-    - What is important when using this implementation?
+**Purpose**: Jupyter notebooks are used to provide a comprehensive overview and walkthrough of the tasks. They are ideal for understanding the purpose, usage, and evaluation of a task.
+
+- **High-level Overview**:
+    - **Problem Definition**: Describe the specific problem or challenge this task addresses.
+    - **Comparison**: (Optional) Highlight how this task stands out or differs from other tasks in our codebase.
+- **Detailed Walkthrough**:
+    - **Input/Output Specifications**: Clearly define the expected input format and the resulting output. Mention any constraints or specific requirements.
+    - **Debugging Insights**: Explain what information is available in the debug log and how it can aid in troubleshooting.
+    - **Use-case Examples**: What are concrete use-cases I can solve with this task? Run through examples.
+    - **Evaluation Metrics**: (Optional) Suggest methods or metrics to evaluate the performance or accuracy of this task.
+
+### Docstrings
+
+**Purpose**: Docstrings give a quickstart overview. They provide the necessary information for user to be able to use this class/function in a correct manner. Not more, not less.
+
+- **Summary**:
+    - **One-Liner**: What does this class/function do?
+    - **Brief Description**: What actually happens when I run this? What are need-to-know specifics?
+- **Implementation Specifics**:
+    - **Parameters & Their Significance**: List all parameters the class/function accepts. For each parameter, describe its role and why it's necessary.
+    - **Requirements & Limitations**: What does this parameter require? Are there any limitations, such as text length? Is there anything else a user must know to use this?
+    - **Usage Guidelines**: (Optional) Provide notes, insights or warnings about how to correctly use this class/function. Mention any nuances, potential pitfalls, or best practices.
+
+---
+
+By maintaining clear distinctions between the two documentation streams, we ensure that both users and developers have the necessary tools and information at their disposal for efficient task execution and code modification.
+
 
 ## Jupyter notebooks
 
