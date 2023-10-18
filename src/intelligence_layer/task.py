@@ -317,12 +317,13 @@ class Example(BaseModel, Generic[Input, ExpectedOutput]):
 
 class Dataset(BaseModel, Generic[Input, ExpectedOutput]):
     """A dataset of examples used for evaluation of a task.
-    
+
     Attributes:
         name: This a human readable identifier for a dataset.
         examples: The actual examples that a task will be evaluated on.
 
     """
+
     name: str
     examples: Sequence[Example[Input, ExpectedOutput]]
 
