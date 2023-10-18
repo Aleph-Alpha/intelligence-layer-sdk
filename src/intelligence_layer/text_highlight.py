@@ -69,7 +69,7 @@ class TextHighlight(Task[TextHighlightInput, TextHighlightOutput]):
 
     For a given prompt and target (completion), extracts the parts of the prompt responsible for generation.
 
-    A range can be provided in the input. In this case, the highlights will only refer to text within this range.
+    A range can be provided in the input 'PromptWithMetadata' via use of the liquid language (see the example). In this case, the highlights will only refer to text within this range.
 
     Args:
         client: Aleph Alpha client instance for running model related API calls.
@@ -83,7 +83,7 @@ class TextHighlight(Task[TextHighlightInput, TextHighlightOutput]):
     >>> input = TextHighlightInput(
     >>>     prompt_with_metadata=prompt_with_metadata, target=completion, model=model
     >>> )
-    >>> output = text_highlight.run(input, NoOpDebugLogger())
+    >>> output = text_highlight.run(input, InMemoryLogger(name="Highlight"))
 
     """
 
