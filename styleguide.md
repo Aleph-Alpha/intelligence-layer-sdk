@@ -45,7 +45,6 @@ Here's how we differentiate and allocate content between them:
 
 By maintaining clear distinctions between the two documentation streams, we ensure that both users and developers have the necessary tools and information at their disposal for efficient task execution and code modification.
 
-
 ## Jupyter notebooks
 
 Notebooks shall be used in a tutorial-like manner to educate users about certain tasks, functionalities & more.
