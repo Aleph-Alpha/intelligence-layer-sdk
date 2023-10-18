@@ -2,7 +2,14 @@ from typing import Sequence
 from aleph_alpha_client import Client, CompletionRequest, Prompt
 from pydantic import BaseModel
 
-from .completion import RawCompletion, RawCompletionInput, RawCompletionOutput
+from .completion import (
+    Instruction,
+    InstructionInput,
+    InstructionOutput,
+    RawCompletion,
+    RawCompletionInput,
+    RawCompletionOutput,
+)
 from .prompt_template import PromptTemplate, PromptWithMetadata
 from .text_highlight import TextHighlight, TextHighlightInput
 from .task import DebugLogger, Task
@@ -70,6 +77,8 @@ Summarize in just one or two sentences.
 {% promptrange text %}{{text}}{% endpromptrange %}
 
 ### Response:"""
+    MAXIMUM_RESPONSE_TOKENS = 128
+    INSTRUCTION = "Summarize in just one or two sentences."
     _client: Client
 
     def __init__(self, client: Client, model: str = "luminous-supreme-control") -> None:
@@ -77,17 +86,17 @@ Summarize in just one or two sentences.
         self._client = client
         self._model = model
         self._completion = RawCompletion(client)
+        self._instruction = Instruction(client)
         self._text_highlight = TextHighlight(client)
 
     def run(self, input: SummarizeInput, logger: DebugLogger) -> SummarizeOutput:
-        prompt_with_metadata = self._format_prompt(text=input.text, logger=logger)
-        completion = self._complete(
-            prompt_with_metadata.prompt, logger.child_logger("Generate Summary")
-        )
+        instruction_output = self._instruct(input.text, logger)
         highlights = self._get_highlights(
-            prompt_with_metadata, completion.completion, logger
+            instruction_output.prompt_with_metadata, instruction_output.response, logger
         )
-        return SummarizeOutput(summary=completion.completion, highlights=highlights)
+        return SummarizeOutput(
+            summary=instruction_output.response, highlights=highlights
+        )
 
     def _format_prompt(self, text: str, logger: DebugLogger) -> PromptWithMetadata:
         logger.log(
@@ -97,6 +106,17 @@ Summarize in just one or two sentences.
             self.PROMPT_TEMPLATE
         ).to_prompt_with_metadata(text=text)
         return prompt_with_metadata
+
+    def _instruct(self, input: str, logger: DebugLogger) -> InstructionOutput:
+        return self._instruction.run(
+            InstructionInput(
+                instruction=self.INSTRUCTION,
+                input=input,
+                maximum_response_tokens=self.MAXIMUM_RESPONSE_TOKENS,
+                model=self._model,
+            ),
+            logger,
+        )
 
     def _complete(self, prompt: Prompt, logger: DebugLogger) -> RawCompletionOutput:
         request = CompletionRequest(
