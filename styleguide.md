@@ -26,7 +26,7 @@ class MyTask:
     Example:
         >>> var = "Describe here how to use this task end to end"
         >>> print("End on two newlines.")
-        End on two newlines.    
+        End on two newlines.
 
     """
 ```
