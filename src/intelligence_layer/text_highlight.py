@@ -11,7 +11,7 @@ from aleph_alpha_client import (
     Prompt,
 )
 from aleph_alpha_client.explanation import TextScoreWithRaw
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from intelligence_layer.prompt_template import (
     PromptRange,
@@ -32,12 +32,14 @@ class TextHighlightInput(BaseModel):
             Supports liquid-template-language-style {% promptrange range_name %}/{% endpromptrange %} for range.
         target: The target that should be explained. Expected to follow the prompt.
         model: A valid Aleph Alpha model name.
-
+        focus_ranges: The ranges contained in `prompt_with_metadata` the returned highlights stem from. That means that each returned
+            highlight overlaps with at least one character with one of the ranges listed here.
     """
 
     prompt_with_metadata: PromptWithMetadata
     target: str
     model: str
+    focus_ranges: set[str] = Field(default_factory=set)
 
 
 class ScoredTextHighlight(BaseModel):
