@@ -89,7 +89,7 @@ class LogEntry(BaseModel):
         )
         return Panel(
             Syntax(
-                value.model_dump_json(indent=2),
+                value.model_dump_json(indent=2, exclude_defaults=True),
                 "json",
                 word_wrap=True,
             ),
