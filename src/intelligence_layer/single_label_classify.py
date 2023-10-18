@@ -28,12 +28,14 @@ from intelligence_layer.task import (
 Probability = NewType("Probability", float)
 LogProb = NewType("LogProb", float)
 
+
 class Token(BaseModel):
     """A token class containing it's id and the raw token.
 
     This is used instead of the Aleph Alpha client Token class since this one is serializable,
     while the one from the client is not.
     """
+
     token: str
     token_id: int
 
@@ -49,12 +51,13 @@ def to_aa_tokens_prompt(tokens: Sequence[Token]) -> Prompt:
 
 class ClassifyInput(BaseModel):
     """Input for a classification task.
-    
+
     Attributes:
-        text: text to be classified. 
+        text: text to be classified.
                 XXX : Max length of text
-        labels: Possible labels the model will choose a label from 
+        labels: Possible labels the model will choose a label from
     """
+
     text: str
     labels: frozenset[str]
 
@@ -68,11 +71,12 @@ class ClassifyOutput(BaseModel):
             This will be a value between 0 and 1.
             The sum of all probabilities will be 1.
     """
+
     scores: Mapping[str, Probability]
 
 
 class SingleLabelClassify(Task[ClassifyInput, ClassifyOutput]):
-    """Task that classifies a given input text with one of the given classes. 
+    """Task that classifies a given input text with one of the given classes.
 
     The input contains a complete set of all possible labels. The output will return a score for
     each possible label. All scores will add up to 1 and are relative to each other. The highest
@@ -329,22 +333,24 @@ class TreeNode:
 
 class ClassifyEvaluation(BaseModel):
     """The evaluation of a single label classification run.
-    
+
     Attributes:
         correct: Was the highest scoring class from the output in the set of "correct classes"
         output: The actual output from the task run
     """
+
     correct: bool
     output: ClassifyOutput
 
 
 class AggregatedClassifyEvaluation(BaseModel):
     """The aggregated evaluation of a single label classify implementation against a dataset.
-    
+
     Attributes:
-        percentage_correct: Percentage of answers that were considered to be correct 
+        percentage_correct: Percentage of answers that were considered to be correct
         evaluation: The actual evaluations
     """
+
     percentage_correct: float
     evaluations: Sequence[ClassifyEvaluation]
 
