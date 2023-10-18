@@ -44,7 +44,7 @@ class ScoredTextHighlight(BaseModel):
     """A substring of the input prompt scored for relevance with regard to the output.
 
     Attributes:
-        text: The highlihted part of the prompt.
+        text: The highlighted part of the prompt.
         score: The z-score of the highlight. Depicts relevance of this highlight in relation to all other highlights. Can be positive (support) or negative (contradiction).
 
     """

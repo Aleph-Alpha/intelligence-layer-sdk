@@ -302,6 +302,13 @@ AggregatedEvaluation = TypeVar("AggregatedEvaluation", bound=PydanticSerializabl
 
 
 class Example(BaseModel, Generic[Input, ExpectedOutput]):
+    """Example case used for evaluations.
+
+    Attributes:
+        input: Input for the task. Has to be same type as the input for the task used.
+        expected_output: The expected output from a given example run.
+    """
+
     input: Input
     expected_output: ExpectedOutput
     ident: Optional[str] = Field(default_factory=lambda: str(uuid.uuid4()))
