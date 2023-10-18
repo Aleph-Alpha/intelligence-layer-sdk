@@ -118,12 +118,6 @@ Reply with only the class label.
         self._completion_task = Completion(client)
 
     def run(self, input: ClassifyInput, logger: DebugLogger) -> ClassifyOutput:
-        """This runs the classify task. 
-
-        Args:
-            input: Input that contains the text to be classified and the classes.
-            logger: The debuglogger that is used to document the process of the task.
-        """
         tokenized_labels = self._tokenize_labels(input.labels, logger)
         completion_responses_per_label = self._complete_per_label(
             self.MODEL, self.PROMPT_TEMPLATE, input.text, tokenized_labels, logger
