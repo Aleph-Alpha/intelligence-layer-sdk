@@ -1,6 +1,6 @@
 # Intelligence Layer☯️
 
-Intelligence Layer☯️ is a suite of development tools designed by [Aleph Alpha](https://aleph-alpha.com/) enabling you to build end-to-end solutions utilizing the power of large language models (LLMs). Our goal here is to empower you to apply LLMs to solve various practical problems by providing a consistent **framework for designing LLM-based workflows**. The tools should enable you to go quickly through all the phases of AI product development, from prototyping and playing with prompts, through setting up experiments and evaluating their results, to solution deployment.
+Intelligence Layer☯️ is a suite of development tools designed by [Aleph Alpha](https://aleph-alpha.com/) enabling you to build end-to-end solutions utilizing the power of large language models (LLMs). Our goal here is to empower you to apply LLMs to solve various practical problems by providing a consistent framework for designing LLM-based workflows. The tools should enable you to go quickly through all the phases of AI product development, from prototyping and playing with prompts, through setting up experiments and evaluating their results, to solution deployment.
 
 The key features of the intelligence layer are:
 
@@ -16,18 +16,16 @@ Out of the box you get access to the following tasks:
 
 
 
-| Task                | Description                                   | Notebook📓                                       |
-|---------------------|-----------------------------------------------|------------------------------------------------|
-| Summarization       | Use an LLM to summarize                       | [summarize.ipynb](./src/examples/summarize.ipynb)   |
-| Question Answering  | Various approaches for QA                     | [qa.ipynb](./src/examples/qa.ipynb)        |
-| Quickstart task         | We show you how to build a Task from scratch for your own custom use case | [quickstart_task.ipynb](./src/examples/quickstart_task.ipynb) |
-| Classification      | Use an LLM to conduct zero-shot text classification. | [classify.ipynb](./src/examples/classify.ipynb) |
+| Order | Task                | Description                                   | Notebook📓                                       |
+|-------|---------------------|-----------------------------------------------|--------------------------------------------------|
+| 1     | Summarization       | Use an LLM to summarize                       | [summarize.ipynb](./src/examples/summarize.ipynb)   |
+| 2     | Question Answering  | Various approaches for QA                     | [qa.ipynb](./src/examples/qa.ipynb)                |
+| 3     | Quickstart task     | We show you how to build a Task from scratch for your own custom use case | [quickstart_task.ipynb](./src/examples/quickstart_task.ipynb) |
+| 4     | Classification      | Use an LLM to conduct zero-shot text classification. | [classify.ipynb](./src/examples/classify.ipynb) |
+
 
 
 ## Quickstart
-
-
-**(Where does this come from? I guess one needs to clone right? And why would I cp afterwards? I only need to do this if I want to customize a task, right? But not necessarily for a quickstart?)**
 
 Set up the poetry environment
 
