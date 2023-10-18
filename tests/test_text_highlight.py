@@ -69,3 +69,26 @@ Answer:"""
 
     assert output.highlights
     assert any("bear" in highlight.text.lower() for highlight in output.highlights)
+
+
+def test_text_highlight_without_range(
+    text_highlight: TextHighlight, prompt_image: Image
+) -> None:
+    prompt_template_str = """Question: What is the Latin name of the brown bear?
+Text: The brown bear (Ursus arctos) is a large bear species found across Eurasia and North America.
+Here is an image, just for LOLs: {{image}}
+Answer:"""
+    template = PromptTemplate(prompt_template_str)
+    prompt_with_metadata = template.to_prompt_with_metadata(
+        image=template.placeholder(prompt_image)
+    )
+    completion = " The latin name of the brown bear is Ursus arctos."
+    model = "luminous-base"
+
+    input = TextHighlightInput(
+        prompt_with_metadata=prompt_with_metadata, target=completion, model=model
+    )
+    output = text_highlight.run(input, NoOpDebugLogger())
+
+    assert output.highlights
+    assert any("bear" in highlight.text.lower() for highlight in output.highlights)
