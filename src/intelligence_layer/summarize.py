@@ -51,11 +51,11 @@ class ShortBodySummarize(Task[SummarizeInput, SummarizeOutput]):
 
     Args:
         client: Aleph Alpha client instance for running model related API calls.
-        model: A valid Aleph Alpha model name.
+        model: A valid Aleph Alpha model name. We recommend using 'luminous-supreme-control' for this task, so it is the default.
 
     Attributes:
-        PROMPT_TEMPLATE: The prompt template used for answering the question. 'text' will be inserted here. Includes liquid logic interpreted by 'PromptTemplate':
-        MODEL: We recommend using 'luminous-supreme-control' for this task, so it has been pre-set.
+        MAXIMUM_RESPONSE_TOKENS: The maximum number of tokens the summary will contain.
+        INSTRUCTION: The verbal instruction sent to the model to make it generate the summary.
 
     Example:
         >>> client = Client(token="YOUR_AA_TOKEN")
@@ -70,13 +70,6 @@ class ShortBodySummarize(Task[SummarizeInput, SummarizeOutput]):
 
     """
 
-    PROMPT_TEMPLATE: str = """### Instruction:
-Summarize in just one or two sentences.
-
-### Input:
-{% promptrange text %}{{text}}{% endpromptrange %}
-
-### Response:"""
     MAXIMUM_RESPONSE_TOKENS = 128
     INSTRUCTION = "Summarize in just one or two sentences."
     _client: Client
@@ -98,15 +91,6 @@ Summarize in just one or two sentences.
             summary=instruction_output.response, highlights=highlights
         )
 
-    def _format_prompt(self, text: str, logger: DebugLogger) -> PromptWithMetadata:
-        logger.log(
-            "Prompt template/text", {"template": self.PROMPT_TEMPLATE, "text": text}
-        )
-        prompt_with_metadata = PromptTemplate(
-            self.PROMPT_TEMPLATE
-        ).to_prompt_with_metadata(text=text)
-        return prompt_with_metadata
-
     def _instruct(self, input: str, logger: DebugLogger) -> InstructionOutput:
         return self._instruction.run(
             InstructionInput(
@@ -117,18 +101,6 @@ Summarize in just one or two sentences.
             ),
             logger,
         )
-
-    def _complete(self, prompt: Prompt, logger: DebugLogger) -> RawCompletionOutput:
-        request = CompletionRequest(
-            prompt=prompt,
-            maximum_tokens=128,
-            log_probs=3,
-        )
-        response = self._completion.run(
-            RawCompletionInput(request=request, model=self._model),
-            logger,
-        )
-        return response
 
     def _get_highlights(
         self,
