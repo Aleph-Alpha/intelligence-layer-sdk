@@ -76,7 +76,8 @@ When in doubt, consider the user's perspective: Would they benefit from a consol
 ### Task documentation
 
 Document any `Task` like so:
-``` python
+
+```python
 class MyTask:
     """Start with a one-line description of the task, like this.
 
@@ -106,7 +107,7 @@ Do not document the `run`` function of a class. Avoid documenting any other (pri
 
 Document the inputs and outputs for a specific task like so:
 
-``` python
+```python
 class MyInput(BaseModel):
     """This is the input for this (suite of) task(s).
 
@@ -123,13 +124,17 @@ class MyInput(BaseModel):
 ### Module documentation
 
 We **do not document the module**, as we assume imports like:
-``` python
+
+```python
 from intelligence_layer.completion import Completion
 completion_task = Completion()
 ```
+
 rather than:
-``` python
+
+```python
 from intelligence_layerimport completion
-completion_task = completion.Completion()
+completion_task = completion.completion
 ```
+
 This ensures that the documentation is easily accessible by hovering over the imported task.

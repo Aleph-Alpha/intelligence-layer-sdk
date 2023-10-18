@@ -148,7 +148,7 @@ Final answer:"""
         output = self._complete(prompt_text, logger.child_logger("Merge Answers"))
 
         return MultipleChunkQaOutput(
-            answer=output.completion().strip(),
+            answer=output.completion.strip(),
             sources=[
                 Source(text=chunk, highlights=qa_output.highlights)
                 for qa_output, chunk in zip(qa_outputs, input.chunks)

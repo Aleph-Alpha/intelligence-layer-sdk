@@ -109,11 +109,11 @@ If there's no answer, say "{{no_answer_text}}".
         )
         highlights = self._get_highlights(
             prompt_with_metadata,
-            output.completion(),
+            output.completion,
             logger.child_logger("Explain Answer"),
         )
         return SingleChunkQaOutput(
-            answer=self._no_answer_to_none(output.completion().strip()),
+            answer=self._no_answer_to_none(output.completion.strip()),
             highlights=highlights,
         )
 

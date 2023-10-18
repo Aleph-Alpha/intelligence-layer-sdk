@@ -85,9 +85,9 @@ Summarize in just one or two sentences.
             prompt_with_metadata.prompt, logger.child_logger("Generate Summary")
         )
         highlights = self._get_highlights(
-            prompt_with_metadata, completion.completion(), logger
+            prompt_with_metadata, completion.completion, logger
         )
-        return SummarizeOutput(summary=completion.completion(), highlights=highlights)
+        return SummarizeOutput(summary=completion.completion, highlights=highlights)
 
     def _format_prompt(self, text: str, logger: DebugLogger) -> PromptWithMetadata:
         logger.log(
