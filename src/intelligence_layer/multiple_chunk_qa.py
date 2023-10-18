@@ -14,7 +14,11 @@ from aleph_alpha_client import (
 from intelligence_layer.prompt_template import (
     PromptTemplate,
 )
-from intelligence_layer.completion import Completion, CompletionInput, CompletionOutput
+from intelligence_layer.completion import (
+    RawCompletion,
+    RawCompletionInput,
+    RawCompletionOutput,
+)
 from pydantic import BaseModel
 
 
@@ -109,7 +113,7 @@ Final answer:"""
         model: str = "luminous-supreme-control",
     ):
         self.client = client
-        self.completion = Completion(client)
+        self.completion = RawCompletion(client)
         self.single_chunk_qa = SingleChunkQa(client, model)
         self.model = model
 
@@ -117,10 +121,10 @@ Final answer:"""
         template = PromptTemplate(self.PROMPT_TEMPLATE)
         return template.to_prompt(question=question, answers=answers)
 
-    def _complete(self, prompt: Prompt, logger: DebugLogger) -> CompletionOutput:
+    def _complete(self, prompt: Prompt, logger: DebugLogger) -> RawCompletionOutput:
         request = CompletionRequest(prompt)
         return self.completion.run(
-            CompletionInput(request=request, model=self.model), logger
+            RawCompletionInput(request=request, model=self.model), logger
         )
 
     def run(

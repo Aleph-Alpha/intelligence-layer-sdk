@@ -2,7 +2,7 @@ from typing import Sequence
 from aleph_alpha_client import Client, CompletionRequest, Prompt
 from pydantic import BaseModel
 
-from .completion import Completion, CompletionInput, CompletionOutput
+from .completion import RawCompletion, RawCompletionInput, RawCompletionOutput
 from .prompt_template import PromptTemplate, PromptWithMetadata
 from .text_highlight import TextHighlight, TextHighlightInput
 from .task import DebugLogger, Task
@@ -76,7 +76,7 @@ Summarize in just one or two sentences.
         super().__init__()
         self._client = client
         self._model = model
-        self._completion = Completion(client)
+        self._completion = RawCompletion(client)
         self._text_highlight = TextHighlight(client)
 
     def run(self, input: SummarizeInput, logger: DebugLogger) -> SummarizeOutput:
@@ -98,14 +98,14 @@ Summarize in just one or two sentences.
         ).to_prompt_with_metadata(text=text)
         return prompt_with_metadata
 
-    def _complete(self, prompt: Prompt, logger: DebugLogger) -> CompletionOutput:
+    def _complete(self, prompt: Prompt, logger: DebugLogger) -> RawCompletionOutput:
         request = CompletionRequest(
             prompt=prompt,
             maximum_tokens=128,
             log_probs=3,
         )
         response = self._completion.run(
-            CompletionInput(request=request, model=self._model),
+            RawCompletionInput(request=request, model=self._model),
             logger,
         )
         return response

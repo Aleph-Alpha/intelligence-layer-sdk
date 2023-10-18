@@ -6,7 +6,11 @@ from aleph_alpha_client import (
 )
 from pydantic import BaseModel
 
-from intelligence_layer.completion import Completion, CompletionInput, CompletionOutput
+from intelligence_layer.completion import (
+    RawCompletion,
+    RawCompletionInput,
+    RawCompletionOutput,
+)
 from intelligence_layer.text_highlight import (
     TextHighlight,
     TextHighlightInput,
@@ -95,7 +99,7 @@ If there's no answer, say "{{no_answer_text}}".
     ):
         self._client = client
         self._model = model
-        self._completion = Completion(client)
+        self._completion = RawCompletion(client)
         self._text_highlight = TextHighlight(client)
 
     def run(
@@ -123,10 +127,10 @@ If there's no answer, say "{{no_answer_text}}".
             text=text, question=question, no_answer_text=self.NO_ANSWER_STR
         )
 
-    def _complete(self, prompt: Prompt, logger: DebugLogger) -> CompletionOutput:
+    def _complete(self, prompt: Prompt, logger: DebugLogger) -> RawCompletionOutput:
         request = CompletionRequest(prompt)
         output = self._completion.run(
-            CompletionInput(request=request, model=self._model), logger
+            RawCompletionInput(request=request, model=self._model), logger
         )
         return output
 
