@@ -27,12 +27,7 @@ Out of the box you get access to the following tasks:
 ## Quickstart
 
 
-Copy the files from the `intelligence-layer` **(Where does this come from? I guess one needs to clone right? And why would I cp afterwards? I only need to do this if I want to customize a task, right? But not necessarily for a quickstart?)**
-
-
-```cmd
-cd my-intelligence-layer
-```
+**(Where does this come from? I guess one needs to clone right? And why would I cp afterwards? I only need to do this if I want to customize a task, right? But not necessarily for a quickstart?)**
 
 Set up the poetry environment
 
