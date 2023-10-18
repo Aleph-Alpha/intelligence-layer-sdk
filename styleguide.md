@@ -4,6 +4,32 @@
 
 Generally, adhere to this [guideline](https://www.sphinx-doc.org/en/master/usage/extensions/example_google.html).
 
+## What documentation goes where?
+
+Our documentation shall consist of two major streams: Jupyter notebooks & docstrings.
+As a general rule of thumb, here's what goes where:
+
+**Jupyter notebooks**:
+- High-level aspects:
+    - What problem does this task solve?
+    - Optional: How does it differ from other tasks?
+- Detailed run through
+    - What goes in the `Input`/`Output`?
+    - What is in the debug log?
+    - Optional: How can I evaluate this?
+
+**Docstrings**:
+- Implementation details:
+    - Why does this function take these parameters?
+    - What do these parameters mean?
+    - What is important when using this implementation?
+
+## Jupyter notebooks
+
+Notebooks shall be used in a tutorial-like manner to educate users about certain tasks, functionalities & more.
+
+## Docstrings
+
 ### Task documentation
 
 Document any `Task` like so:
