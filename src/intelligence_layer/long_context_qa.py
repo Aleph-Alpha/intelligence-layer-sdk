@@ -13,12 +13,13 @@ from intelligence_layer.retrievers.in_memory_retriever import InMemoryRetriever
 
 
 class LongContextQaInput(BaseModel):
-    """This is the input for QA method working on long contex texts 
+    """This is the input for QA method working on long context texts
 
     Attributes:
         text: Text of an arbitrary length on the basis of which the question is to be answered.
-        question: The question for the text.         
+        question: The question for the text.
     """
+
     text: str
     question: str
 
@@ -28,13 +29,15 @@ class SearchResult(BaseModel):
 
     Attributes:
         score: The similarity score between the document and the query.
-        chunk: A segment of the orginal long text that is relevant to the query.               
+        chunk: A segment of the original long text that is relevant to the query.
     """
+
     score: float
     chunk: str
 
+
 class LongContextQa(Task[LongContextQaInput, MultipleChunkQaOutput]):
-    """Answer question for lengthy documents 
+    """Answer question for lengthy documents
 
     LongContextQa is a task answering a question for a long document, where the length
     of text exceeds the context length of a model (e.g. 2048 tokens for the luminous models).
