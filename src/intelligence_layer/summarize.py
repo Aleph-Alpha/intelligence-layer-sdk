@@ -1,16 +1,13 @@
 from typing import Sequence
-from aleph_alpha_client import Client, CompletionRequest, Prompt
+from aleph_alpha_client import Client
 from pydantic import BaseModel
 
 from .completion import (
     Instruction,
     InstructionInput,
     InstructionOutput,
-    RawCompletion,
-    RawCompletionInput,
-    RawCompletionOutput,
 )
-from .prompt_template import PromptTemplate, PromptWithMetadata
+from .prompt_template import PromptWithMetadata
 from .text_highlight import TextHighlight, TextHighlightInput
 from .task import DebugLogger, Task
 
@@ -78,7 +75,6 @@ class ShortBodySummarize(Task[SummarizeInput, SummarizeOutput]):
         super().__init__()
         self._client = client
         self._model = model
-        self._completion = RawCompletion(client)
         self._instruction = Instruction(client)
         self._text_highlight = TextHighlight(client)
 
