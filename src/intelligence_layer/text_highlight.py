@@ -122,7 +122,7 @@ class TextHighlight(Task[TextHighlightInput, TextHighlightOutput]):
         )
         return TextHighlightOutput(highlights=highlights)
 
-    def _raise_on_invalid_focus_range(self, input):
+    def _raise_on_invalid_focus_range(self, input: TextHighlightInput) -> None:
         unknown_focus_ranges = input.focus_ranges - set(
             input.prompt_with_metadata.ranges.keys()
         )

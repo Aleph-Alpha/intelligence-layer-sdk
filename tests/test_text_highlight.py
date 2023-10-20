@@ -142,7 +142,7 @@ Answer:"""
     assert any("bear" in highlight.text.lower() for highlight in output.highlights)
 
 
-def test_text_highlight_without_focus_range_highlights_entire_prompt(
+def test_text_highlight_with_unknown_range_raises(
     text_highlight: TextHighlight,
 ) -> None:
     prompt_template_str = """Question: What is the Latin name of the brown bear?
