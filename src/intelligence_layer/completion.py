@@ -121,10 +121,10 @@ class Instruction(Task[InstructionInput, InstructionOutput]):
 
     INSTRUCTION_PROMPT_TEMPLATE = """### Instruction:
 {% promptrange instruction %}{{instruction}}{% endpromptrange %}
-
+{% if input %}
 ### Input:
 {% promptrange input %}{{input}}{% endpromptrange %}
-
+{% endif %}
 ### Response:"""
 
     def __init__(self, client: Client) -> None:
