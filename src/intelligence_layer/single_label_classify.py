@@ -25,14 +25,19 @@ from intelligence_layer.task import (
     DebugLogger,
 )
 
-
-class Token(BaseModel):
-    token: str
-    token_id: int
-
-
 Probability = NewType("Probability", float)
 LogProb = NewType("LogProb", float)
+
+
+class Token(BaseModel):
+    """A token class containing it's id and the raw token.
+
+    This is used instead of the Aleph Alpha client Token class since this one is serializable,
+    while the one from the client is not.
+    """
+
+    token: str
+    token_id: int
 
 
 class TokenWithProb(BaseModel):
@@ -40,36 +45,65 @@ class TokenWithProb(BaseModel):
     prob: Probability | LogProb
 
 
-def to_aa_tokens(tokens: Sequence[Token]) -> Prompt:
+def to_aa_tokens_prompt(tokens: Sequence[Token]) -> Prompt:
     return Prompt.from_tokens([token.token_id for token in tokens])
 
 
 class ClassifyInput(BaseModel):
-    """Input for a classification task."""
+    """Input for a classification task.
+
+    Attributes:
+        text: text to be classified.
+                XXX : Max length of text
+        labels: Possible labels the model will choose a label from
+    """
 
     text: str
-    """Text to be classified"""
     labels: frozenset[str]
-    """Possible labels into which the text should be classified."""
 
 
 class ClassifyOutput(BaseModel):
-    scores: Mapping[str, Probability]
-    """Mapping of the provided label (key) to corresponding score (value)
+    """Output for a single label classification task.
 
-    The score represents how sure the model is that this is the correct label.
-    Will be a value between 0 and 1"""
+    Attributes:
+        scores: Mapping of the provided label (key) to corresponding score (value).
+            The score represents how sure the model is that this is the correct label.
+            This will be a value between 0 and 1.
+            The sum of all probabilities will be 1.
+    """
+
+    scores: Mapping[str, Probability]
 
 
 class SingleLabelClassify(Task[ClassifyInput, ClassifyOutput]):
-    """Classify method for applying a single label to a given text.
+    """Task that classifies a given input text with one of the given classes.
 
-    The input provides a complete set of all possible labels. The output will return a score for
+    The input contains a complete set of all possible labels. The output will return a score for
     each possible label. All scores will add up to 1 and are relative to each other. The highest
-    score is given to the most likely task.
+    score is given to the most likely class.
 
     This methodology works best for classes that are easily understood, and don't require an
-    explanation or examples."""
+    explanation or examples.
+
+    Args:
+        client: Aleph Alpha client instance for running model related API calls.
+
+    Attributes:
+        PROMPT_TEMPLATE_STR: The prompt template used for answering the question.
+            'text' and 'labels' will be inserted here.
+
+    Example:
+        >>> client = Client(token="AA_TOKEN")
+        >>> task = SingleLabelClassify(client)
+        >>> input = SingleLabelClassifyInput(
+        >>>     text="This is a happy text.",
+        >>>     labels={"positive", "negative"}
+        >>> )
+        >>> logger = InMemoryLogger(name="Classify")
+        >>> output = task.run(input, logger)
+        >>> print(output.scores["positive"])
+        0.9
+    """
 
     PROMPT_TEMPLATE: str = """### Instruction:
 Identify a class that describes the text adequately.
@@ -80,17 +114,12 @@ Reply with only the class label.
 
 ### Response:{{label}}"""
     MODEL: str = "luminous-base-control"
-    client: Client
+    _client: Client
 
     def __init__(self, client: Client) -> None:
-        """Initializes the Task.
-
-        Args:
-        - client: the aleph alpha client
-        """
         super().__init__()
-        self.client = client
-        self.completion_task = Completion(client)
+        self._client = client
+        self._completion_task = Completion(client)
 
     def run(self, input: ClassifyInput, logger: DebugLogger) -> ClassifyOutput:
         tokenized_labels = self._tokenize_labels(input.labels, logger)
@@ -162,7 +191,7 @@ Reply with only the class label.
                 prompt_template,
                 logger.child_logger(f"Completion {label}"),
                 text=text,
-                label=prompt_template.embed_prompt(to_aa_tokens(tokens)),
+                label=prompt_template.embed_prompt(to_aa_tokens_prompt(tokens)),
             )
             for label, tokens in tokenized_labels.items()
         }
@@ -182,7 +211,7 @@ Reply with only the class label.
             tokens=True,
             echo=True,
         )
-        return self.completion_task.run(
+        return self._completion_task.run(
             CompletionInput(request=request, model=model), logger
         )
 
@@ -231,7 +260,7 @@ Reply with only the class label.
     def _tokenize_label(self, label: str) -> Sequence[Token]:
         """Turn a single label into list of token ids. Important so that we know how many tokens
         the label is and can retrieve the last N log probs for the label"""
-        response = self.client.tokenize(
+        response = self._client.tokenize(
             request=TokenizationRequest(
                 label + "<|endoftext|>", tokens=True, token_ids=True
             ),
@@ -303,11 +332,25 @@ class TreeNode:
 
 
 class ClassifyEvaluation(BaseModel):
+    """The evaluation of a single label classification run.
+
+    Attributes:
+        correct: Was the highest scoring class from the output in the set of "correct classes"
+        output: The actual output from the task run
+    """
+
     correct: bool
     output: ClassifyOutput
 
 
 class AggregatedClassifyEvaluation(BaseModel):
+    """The aggregated evaluation of a single label classify implementation against a dataset.
+
+    Attributes:
+        percentage_correct: Percentage of answers that were considered to be correct
+        evaluation: The actual evaluations
+    """
+
     percentage_correct: float
     evaluations: Sequence[ClassifyEvaluation]
 

@@ -31,6 +31,7 @@ run-notebooks:
   before_script:
     - pip install poetry
     - poetry install
+    - poetry config installer.max-workers 10
     - source `poetry env info --path`/bin/activate
   script:
     - ./scripts/notebook_runner.sh

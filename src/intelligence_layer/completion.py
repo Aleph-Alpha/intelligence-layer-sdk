@@ -11,6 +11,7 @@ class CompletionInput(BaseModel):
 class CompletionOutput(BaseModel):
     response: CompletionResponse
 
+    @property
     def completion(self) -> str:
         return self.response.completions[0].completion or ""
 

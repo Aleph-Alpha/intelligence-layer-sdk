@@ -20,13 +20,20 @@ from intelligence_layer.prompt_template import (
 )
 from intelligence_layer.task import (
     DebugLogger,
-    JsonSerializer,
     Task,
 )
 
 
 class TextHighlightInput(BaseModel):
-    """Input for a highlight task"""
+    """The input for a text highlighting task.
+
+    Attributes:
+        prompt_with_metadata: From client's PromptTemplate. Includes both the actual 'Prompt' as well as text range information.
+            Supports liquid-template-language-style {% promptrange range_name %}/{% endpromptrange %} for range.
+        target: The target that should be explained. Expected to follow the prompt.
+        model: A valid Aleph Alpha model name.
+
+    """
 
     prompt_with_metadata: PromptWithMetadata
     target: str
@@ -34,28 +41,57 @@ class TextHighlightInput(BaseModel):
 
 
 class ScoredTextHighlight(BaseModel):
+    """A substring of the input prompt scored for relevance with regard to the output.
+
+    Attributes:
+        text: The highlighted part of the prompt.
+        score: The z-score of the highlight. Depicts relevance of this highlight in relation to all other highlights. Can be positive (support) or negative (contradiction).
+
+    """
+
     text: str
     score: float
 
 
 class TextHighlightOutput(BaseModel):
-    """Output of for a highlight task"""
+    """The output of a text highlighting task.
+
+    Attributes:
+        highlights: A sequence of 'ScoredTextHighlight's.
+
+    """
 
     highlights: Sequence[ScoredTextHighlight]
-    """Provides key steps, decisions, and intermediate outputs of a task's process."""
 
 
 class TextHighlight(Task[TextHighlightInput, TextHighlightOutput]):
-    client: Client
+    """Generates text highlights given a prompt and completion.
+
+    For a given prompt and target (completion), extracts the parts of the prompt responsible for generation.
+
+    A range can be provided in the input 'PromptWithMetadata' via use of the liquid language (see the example). In this case, the highlights will only refer to text within this range.
+
+    Args:
+        client: Aleph Alpha client instance for running model related API calls.
+
+    Example:
+    >>> prompt_template_str = "{% promptrange r1 %}Question: What is 2 + 2?{% endpromptrange %}\nAnswer:"
+    >>> template = PromptTemplate(prompt_template_str)
+    >>> prompt_with_metadata = template.to_prompt_with_metadata()
+    >>> completion = " 4."
+    >>> model = "luminous-base"
+    >>> input = TextHighlightInput(
+    >>>     prompt_with_metadata=prompt_with_metadata, target=completion, model=model
+    >>> )
+    >>> output = text_highlight.run(input, InMemoryLogger(name="Highlight"))
+
+    """
+
+    _client: Client
 
     def __init__(self, client: Client) -> None:
-        """Initializes the Task.
-
-        Args:
-        - client: the aleph alpha client
-        """
         super().__init__()
-        self.client = client
+        self._client = client
 
     def run(
         self, input: TextHighlightInput, logger: DebugLogger
@@ -89,7 +125,7 @@ class TextHighlight(Task[TextHighlightInput, TextHighlightOutput]):
             target,
             prompt_granularity=PromptGranularity.Sentence,
         )
-        response = self.client.explain(request, model)
+        response = self._client.explain(request, model)
         logger.log(
             "Explanation Request/Response",
             {"request": request.to_json()},
@@ -127,6 +163,74 @@ class TextHighlight(Task[TextHighlightInput, TextHighlightOutput]):
             )
         ]
 
+    def _to_highlights(
+        self,
+        prompt_ranges: Sequence[PromptRange],
+        text_prompt_item_explanations_and_indices: Sequence[
+            tuple[TextPromptItemExplanation, int]
+        ],
+        logger: DebugLogger,
+    ) -> Sequence[ScoredTextHighlight]:
+        overlapping_and_flat = [
+            text_score
+            for text_prompt_item_explanation, explanation_idx in text_prompt_item_explanations_and_indices
+            for text_score in text_prompt_item_explanation.scores
+            if isinstance(text_score, TextScoreWithRaw)
+            and self._is_relevant_explanation(
+                explanation_idx, text_score, prompt_ranges
+            )
+        ]
+        logger.log(
+            "Explanation scores",
+            [
+                {
+                    "text": text_score.text,
+                    "score": text_score.score,
+                }
+                for text_score in overlapping_and_flat
+            ],
+        )
+        z_scores = self._z_scores([s.score for s in overlapping_and_flat], logger)
+        scored_highlights = [
+            ScoredTextHighlight(text=text_score.text, score=z_score)
+            for text_score, z_score in zip(overlapping_and_flat, z_scores)
+        ]
+        logger.log("Unfiltered highlights", scored_highlights)
+        return self._filter_highlights(scored_highlights)
+
+    def _is_relevant_explanation(
+        self,
+        explanation_idx: int,
+        text_score: TextScoreWithRaw,
+        prompt_ranges: Sequence[PromptRange],
+    ) -> bool:
+        return (
+            any(
+                self._prompt_range_overlaps_with_text_score(
+                    prompt_range, text_score, explanation_idx
+                )
+                for prompt_range in prompt_ranges
+            )
+            or not prompt_ranges
+        )
+
+    @classmethod
+    def _prompt_range_overlaps_with_text_score(
+        cls,
+        prompt_range: PromptRange,
+        text_score: TextScoreWithRaw,
+        explanation_item_idx: int,
+    ) -> bool:
+        return cls._is_within_prompt_range(
+            prompt_range,
+            explanation_item_idx,
+            text_score.start,
+        ) or cls._is_within_prompt_range(
+            prompt_range,
+            explanation_item_idx,
+            text_score.start + text_score.length - 1,
+        )
+
     @staticmethod
     def _is_within_prompt_range(
         prompt_range: PromptRange,
@@ -148,61 +252,6 @@ class TextHighlight(Task[TextHighlightInput, TextHighlightOutput]):
         ):
             return False
         return True
-
-    @classmethod
-    def _prompt_range_overlaps_with_text_score(
-        cls,
-        prompt_range: PromptRange,
-        text_score: TextScoreWithRaw,
-        explanation_item_idx: int,
-    ) -> bool:
-        return cls._is_within_prompt_range(
-            prompt_range,
-            explanation_item_idx,
-            text_score.start,
-        ) or cls._is_within_prompt_range(
-            prompt_range,
-            explanation_item_idx,
-            text_score.start + text_score.length - 1,
-        )
-
-    def _to_highlights(
-        self,
-        prompt_ranges: Sequence[PromptRange],
-        text_prompt_item_explanations_and_indices: Sequence[
-            tuple[TextPromptItemExplanation, int]
-        ],
-        logger: DebugLogger,
-    ) -> Sequence[ScoredTextHighlight]:
-        overlapping_and_flat = [
-            text_score
-            for text_prompt_item_explanation, explanation_idx in text_prompt_item_explanations_and_indices
-            for text_score in text_prompt_item_explanation.scores
-            if isinstance(text_score, TextScoreWithRaw)
-            and any(
-                self._prompt_range_overlaps_with_text_score(
-                    prompt_range, text_score, explanation_idx
-                )
-                for prompt_range in prompt_ranges
-            )
-        ]
-        logger.log(
-            "Explanation scores",
-            [
-                {
-                    "text": text_score.text,
-                    "score": text_score.score,
-                }
-                for text_score in overlapping_and_flat
-            ],
-        )
-        z_scores = self._z_scores([s.score for s in overlapping_and_flat], logger)
-        scored_highlights = [
-            ScoredTextHighlight(text=text_score.text, score=z_score)
-            for text_score, z_score in zip(overlapping_and_flat, z_scores)
-        ]
-        logger.log("Unfiltered highlights", scored_highlights)
-        return self._filter_highlights(scored_highlights)
 
     @staticmethod
     def _z_scores(data: Sequence[float], logger: DebugLogger) -> Sequence[float]:

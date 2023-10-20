@@ -1,6 +1,6 @@
-# Intelligence Layer ☯️
+# Aleph Alpha Intelligence Layer☯️
 
-Intelligence Layer ☯️ is a suite of development tools designed by [Aleph Alpha](https://aleph-alpha.com/) enabling you to build end-to-end solutions utilizing the power of large language models (LLMs). Our goal here is to empower you to apply LLMs to solve various practical problems by providing a consistent framework for prompt engineering. The tool should enable you to go quickly through all the phases of AI product development, from prototyping and playing with prompts, through setting up experiments and evaluating their results, to solution deployment.
+Aleph Alpha Intelligence Layer☯️ is a suite of development tools enabling you to build end-to-end solutions utilizing the power of large language models (LLMs). Our goal here is to empower you to apply LLMs to solve various practical problems by providing a consistent framework for designing LLM-based workflows. The tools should enable you to go quickly through all the phases of AI product development, from prototyping and playing with prompts, through setting up experiments and evaluating their results, to solution deployment.
 
 The key features of the intelligence layer are:
 
@@ -16,31 +16,27 @@ Out of the box you get access to the following tasks:
 
 
 
-| Task                | Description                                   | Notebook📓                                       |
-|---------------------|-----------------------------------------------|------------------------------------------------|
-| Summarization       | Use an LLM to summarize                       | [summarize.ipynb](./src/examples/summarize.ipynb)   |
-| Question Answering  | Various approaches for QA                     | [qa.ipynb](./src/examples/qa.ipynb)        |
-| Quickstart task         | We show you how to build a Task from scratch for your own custom use case | [quickstart_task.ipynb](./src/examples/quickstart_task.ipynb) |
-| Classification      | Use an LLM to conduct zero-shot text classification. | [classify.ipynb](./src/examples/classify.ipynb) |
+| Order | Task                | Description                                   | Notebook📓                                       |
+|-------|---------------------|-----------------------------------------------|--------------------------------------------------|
+| 1     | Summarization       | Use an LLM to summarize                       | [summarize.ipynb](./src/examples/summarize.ipynb)   |
+| 2     | Question Answering  | Various approaches for QA                     | [qa.ipynb](./src/examples/qa.ipynb)                |
+| 3     | Quickstart task     | We show you how to build a Task from scratch for your own custom use case | [quickstart_task.ipynb](./src/examples/quickstart_task.ipynb) |
+| 4     | Classification      | Use an LLM to conduct zero-shot text classification. | [classify.ipynb](./src/examples/classify.ipynb) |
+
 
 
 ## Quickstart
 
-
-Copy the files from the `intelligence-layer`
-
-```cmd
-cp -r intelligence-layer my-intelligence-layer
-```
-
-```cmd
-cd my-intelligence-layer
-```
+Generate an Aleph Alpha access token. You can read more about this [here](https://docs.aleph-alpha.com/docs/account/#create-a-new-token)
 
 Set up the poetry environment
 
 ```cmd
 poetry install
+```
+
+```cmd
+poetry shell
 ```
 
 Set up the Aleph Alpha token value
@@ -49,13 +45,11 @@ Set up the Aleph Alpha token value
 export AA_TOKEN = <YOUR TOKEN HERE>
 ```
 
-Run the `jupytyer notebook`, and go to the [examples](http://127.0.0.1:8888/tree/src/examples) dir.
+Run the `jupytyer lab`, and go to the [examples](http://localhost:8888/lab/workspaces/auto-C/tree/src/examples) dir.
 
 ```cmd
-poetry run jupyter notebook
+jupyter lab
 ```
-
-
 
 ## Development
 
@@ -66,12 +60,6 @@ pre-commit install
 
 Run the CI scripts to ensure the typing is correct, linting follows the pattern, tests and jupyter notebooks run.
 
-```cmd
-chmod +x scripts/precommit-and-mypy-and-pytest.sh
-```
-```cmd
-chmod +x scripts/notebook_runner.sh
-```
 ```cmd
 scripts/precommit-and-mypy-and-pytest.sh
 ```
