@@ -77,7 +77,6 @@ class SingleChunkQa(Task[SingleChunkQaInput, SingleChunkQaOutput]):
         >>> output = task.run(input, logger)
         >>> print(output.answer)
         Mike likes pizza.
-
     """
 
     PROMPT_TEMPLATE_STR = """### Instruction:

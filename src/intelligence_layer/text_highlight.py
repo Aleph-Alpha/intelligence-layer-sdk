@@ -49,7 +49,6 @@ class ScoredTextHighlight(BaseModel):
     Attributes:
         text: The highlighted part of the prompt.
         score: The z-score of the highlight. Depicts relevance of this highlight in relation to all other highlights. Can be positive (support) or negative (contradiction).
-
     """
 
     text: str
@@ -61,7 +60,6 @@ class TextHighlightOutput(BaseModel):
 
     Attributes:
         highlights: A sequence of 'ScoredTextHighlight's.
-
     """
 
     highlights: Sequence[ScoredTextHighlight]
@@ -87,7 +85,6 @@ class TextHighlight(Task[TextHighlightInput, TextHighlightOutput]):
     >>>     prompt_with_metadata=prompt_with_metadata, target=completion, model=model
     >>> )
     >>> output = text_highlight.run(input, InMemoryLogger(name="Highlight"))
-
     """
 
     _client: Client

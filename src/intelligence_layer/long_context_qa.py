@@ -42,6 +42,9 @@ class LongContextQa(Task[LongContextQaInput, MultipleChunkQaOutput]):
     LongContextQa is a task answering a question for a long document, where the length
     of text exceeds the context length of a model (e.g. 2048 tokens for the luminous models).
 
+    Attributes:
+        NO_ANSWER_TEXT: A constant representing no answer in the context.
+
     Args:
         client: An instance of the Aleph Alpha client.
         max_tokens_in_chunk: Maximum number of tokens in each chunk.
@@ -75,19 +78,6 @@ class LongContextQa(Task[LongContextQaInput, MultipleChunkQaOutput]):
     def run(
         self, input: LongContextQaInput, logger: DebugLogger
     ) -> MultipleChunkQaOutput:
-        """
-        The main question-answering method.
-        It first splits the text into n smaller chunks, then we use the
-        text embeddings to find k chunks that are most similar to a given question,
-        and we feed them into 'MultipleChunkQa', which handles question answering.
-
-        For splitting we use the semantic_text_splitter that consumes the tokenizer and
-        prevents the chunk from being too long (having too many tokens).
-
-        What it does under the hood is answer questions about each individual chunk, and
-        feeds the individual answers into a prompt combining multiple answers.
-        After that, this final answer is added to the output."""
-
         chunks = self._splitter.chunks(input.text, self._max_tokens_in_chunk)
         logger.log("chunks", chunks)
 

@@ -312,6 +312,7 @@ class Example(BaseModel, Generic[Input, ExpectedOutput]):
         input: Input for the task. Has to be same type as the input for the task used.
         expected_output: The expected output from a given example run.
             This will be used by the evaluator to compare the received output with.
+        ident: Identifier for the example, defaults to uuid.
     """
 
     input: Input
@@ -325,7 +326,6 @@ class Dataset(BaseModel, Generic[Input, ExpectedOutput]):
     Attributes:
         name: This a human readable identifier for a dataset.
         examples: The actual examples that a task will be evaluated on.
-
     """
 
     name: str
