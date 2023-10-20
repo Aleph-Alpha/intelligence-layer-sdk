@@ -7,7 +7,7 @@ from intelligence_layer.multiple_chunk_qa import (
     MultipleChunkQaInput,
     MultipleChunkQaOutput,
 )
-from intelligence_layer.task import DebugLogger, Task
+from intelligence_layer.task import Chunk, DebugLogger, Task
 from semantic_text_splitter import HuggingFaceTextSplitter
 from intelligence_layer.retrievers.in_memory_retriever import InMemoryRetriever
 
@@ -33,7 +33,7 @@ class SearchResult(BaseModel):
     """
 
     score: float
-    chunk: str
+    chunk: Chunk
 
 
 class LongContextQa(Task[LongContextQaInput, MultipleChunkQaOutput]):
@@ -98,7 +98,7 @@ class LongContextQa(Task[LongContextQaInput, MultipleChunkQaOutput]):
         )
 
         multi_chunk_qa_input = MultipleChunkQaInput(
-            chunks=[result.chunk for result in relevant_chunks_with_scores],
+            chunks=[Chunk(result.chunk) for result in relevant_chunks_with_scores],
             question=input.question,
         )
 

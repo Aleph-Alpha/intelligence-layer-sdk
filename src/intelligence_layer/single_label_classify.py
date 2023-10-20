@@ -24,6 +24,7 @@ from intelligence_layer.completion import (
     RawCompletionOutput,
 )
 from intelligence_layer.task import (
+    Chunk,
     Evaluator,
     Task,
     DebugLogger,
@@ -57,12 +58,11 @@ class ClassifyInput(BaseModel):
     """Input for a classification task.
 
     Attributes:
-        text: text to be classified.
-                XXX : Max length of text
+        chunk: text to be classified.
         labels: Possible labels the model will choose a label from
     """
 
-    text: str
+    chunk: Chunk
     labels: frozenset[str]
 
 
@@ -128,7 +128,7 @@ Reply with only the class label.
     def run(self, input: ClassifyInput, logger: DebugLogger) -> ClassifyOutput:
         tokenized_labels = self._tokenize_labels(input.labels, logger)
         completion_responses_per_label = self._complete_per_label(
-            self.MODEL, self.PROMPT_TEMPLATE, input.text, tokenized_labels, logger
+            self.MODEL, self.PROMPT_TEMPLATE, input.chunk, tokenized_labels, logger
         )
         log_probs_per_label = self._get_log_probs_of_labels(
             completion_responses_per_label, tokenized_labels, logger

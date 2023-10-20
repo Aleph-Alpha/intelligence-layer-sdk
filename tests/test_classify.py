@@ -9,6 +9,7 @@ from intelligence_layer.single_label_classify import (
     SingleLabelClassifyEvaluator,
 )
 from intelligence_layer.task import (
+    Chunk,
     Dataset,
     Example,
     NoOpDebugLogger,
@@ -24,7 +25,7 @@ def test_single_label_classify_returns_score_for_all_labels(
     single_label_classify: SingleLabelClassify,
 ) -> None:
     classify_input = ClassifyInput(
-        text="This is good",
+        chunk=Chunk("This is good"),
         labels=frozenset({"positive", "negative"}),
     )
 
@@ -39,7 +40,7 @@ def test_single_label_classify_accomodates_labels_starting_with_spaces(
     single_label_classify: SingleLabelClassify,
 ) -> None:
     classify_input = ClassifyInput(
-        text="This is good", labels=frozenset({" positive", "negative"})
+        chunk=Chunk("This is good"), labels=frozenset({" positive", "negative"})
     )
 
     classify_output = single_label_classify.run(classify_input, NoOpDebugLogger())
@@ -52,7 +53,7 @@ def test_single_label_classify_accomodates_labels_starting_with_different_spaces
     single_label_classify: SingleLabelClassify,
 ) -> None:
     classify_input = ClassifyInput(
-        text="This is good", labels=frozenset({" positive", "  positive"})
+        chunk=Chunk("This is good"), labels=frozenset({" positive", "  positive"})
     )
 
     classify_output = single_label_classify.run(classify_input, NoOpDebugLogger())
@@ -66,7 +67,7 @@ def test_single_label_classify_sentiment_classification(
     single_label_classify: SingleLabelClassify,
 ) -> None:
     classify_input = ClassifyInput(
-        text="This is good", labels=frozenset({"positive", "negative"})
+        chunk=Chunk("This is good"), labels=frozenset({"positive", "negative"})
     )
 
     classify_output = single_label_classify.run(classify_input, NoOpDebugLogger())
@@ -79,7 +80,8 @@ def test_single_label_classify_emotion_classification(
     single_label_classify: SingleLabelClassify,
 ) -> None:
     classify_input = ClassifyInput(
-        text="I love my job", labels=frozenset({"happy", "sad", "frustrated", "angry"})
+        chunk=Chunk("I love my job"),
+        labels=frozenset({"happy", "sad", "frustrated", "angry"}),
     )
 
     classify_output = single_label_classify.run(classify_input, NoOpDebugLogger())
@@ -92,7 +94,7 @@ def test_single_label_classify_handles_labels_starting_with_same_token(
     single_label_classify: SingleLabelClassify,
 ) -> None:
     classify_input = ClassifyInput(
-        text="This is good",
+        chunk=Chunk("This is good"),
         labels=frozenset({"positive", "positive positive"}),
     )
 
@@ -103,7 +105,7 @@ def test_single_label_classify_handles_labels_starting_with_same_token(
 
 def test_can_evaluate_classify(single_label_classify: SingleLabelClassify) -> None:
     classify_input = ClassifyInput(
-        text="This is good",
+        chunk=Chunk("This is good"),
         labels=frozenset({"positive", "negative"}),
     )
     evaluator = SingleLabelClassifyEvaluator(task=single_label_classify)
@@ -121,14 +123,14 @@ def test_can_aggregate_evaluations(
     positive_lst: Sequence[str] = ["positive"]
     correct_example = Example(
         input=ClassifyInput(
-            text="This is good",
+            chunk=Chunk("This is good"),
             labels=frozenset({"positive", "negative"}),
         ),
         expected_output=positive_lst,
     )
     incorrect_example = Example(
         input=ClassifyInput(
-            text="This is extremely bad",
+            chunk=Chunk("This is extremely bad"),
             labels=frozenset({"positive", "negative"}),
         ),
         expected_output=positive_lst,

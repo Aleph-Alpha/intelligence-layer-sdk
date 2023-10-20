@@ -9,18 +9,18 @@ from .completion import (
 )
 from .prompt_template import PromptWithMetadata
 from .text_highlight import TextHighlight, TextHighlightInput
-from .task import DebugLogger, Task
+from intelligence_layer.task import Chunk, DebugLogger, Task
 
 
 class SummarizeInput(BaseModel):
     """The input for a summarize task.
 
     Attributes:
-        text: The text to be summarized. Must fit within the token limit (after accounting for prompt & completion).
+        chunk: The text to be summarized. Must fit within the token limit (after accounting for prompt & completion).
 
     """
 
-    text: str
+    chunk: Chunk
 
 
 class SummarizeOutput(BaseModel):
@@ -79,7 +79,10 @@ class ShortBodySummarize(Task[SummarizeInput, SummarizeOutput]):
         self._text_highlight = TextHighlight(client)
 
     def run(self, input: SummarizeInput, logger: DebugLogger) -> SummarizeOutput:
-        instruction_output = self._instruct(input.text, logger)
+        prompt_with_metadata = self._format_prompt(text=input.chunk, logger=logger)
+        completion = self._complete(
+            prompt_with_metadata.prompt, logger.child_logger("Generate Summary")
+        )
         highlights = self._get_highlights(
             instruction_output.prompt_with_metadata, instruction_output.response, logger
         )

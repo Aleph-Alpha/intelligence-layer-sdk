@@ -20,6 +20,7 @@ from intelligence_layer.prompt_template import (
     PromptWithMetadata,
 )
 from intelligence_layer.task import (
+    Chunk,
     DebugLogger,
     Task,
 )
@@ -34,7 +35,7 @@ class SingleChunkQaInput(BaseModel):
         question: The question being asked.
     """
 
-    chunk: str
+    chunk: Chunk
     question: str
 
 
