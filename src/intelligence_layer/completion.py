@@ -66,6 +66,8 @@ class InstructionInput(BaseModel):
             Could be a directive to answer a question or to translate something.
         input: The text-input for the instruction, e.g. a text to be translated.
         model: The name of the model that should handle the instruction.
+        response_prefix: A string that is provided to the LLM as a prefix of the response.
+            This can steer the model completion.
         maximum_response_tokens: The maximum number of tokens to be generated in the answer.
             For generating answers the default probably works fine in case of translations this
             tpically depends on the text to be translated.
@@ -74,6 +76,7 @@ class InstructionInput(BaseModel):
     instruction: str
     input: Optional[str]
     model: str
+    response_prefix: str = ""
     maximum_response_tokens: int = 64
 
 
@@ -125,7 +128,7 @@ class Instruction(Task[InstructionInput, InstructionOutput]):
 ### Input:
 {% promptrange input %}{{input}}{% endpromptrange %}
 {% endif %}
-### Response:"""
+### Response:{{response_prefix}}"""
 
     def __init__(self, client: Client) -> None:
         super().__init__()
@@ -135,7 +138,11 @@ class Instruction(Task[InstructionInput, InstructionOutput]):
     def run(self, input: InstructionInput, logger: DebugLogger) -> InstructionOutput:
         prompt_with_metadata = PromptTemplate(
             self.INSTRUCTION_PROMPT_TEMPLATE
-        ).to_prompt_with_metadata(input=input.input, instruction=input.instruction)
+        ).to_prompt_with_metadata(
+            input=input.input,
+            instruction=input.instruction,
+            response_prefix=input.response_prefix,
+        )
         completion = self._complete(
             prompt_with_metadata.prompt,
             input.maximum_response_tokens,

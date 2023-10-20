@@ -7,7 +7,6 @@ from intelligence_layer.single_chunk_qa import (
 from intelligence_layer.task import DebugLogger, Task
 from aleph_alpha_client import (
     Client,
-    CompletionRequest,
     Prompt,
 )
 
@@ -15,9 +14,9 @@ from intelligence_layer.prompt_template import (
     PromptTemplate,
 )
 from intelligence_layer.completion import (
-    RawCompletion,
-    RawCompletionInput,
-    RawCompletionOutput,
+    Instruction,
+    InstructionInput,
+    InstructionOutput,
 )
 from pydantic import BaseModel
 
@@ -94,44 +93,24 @@ class MultipleChunkQa(Task[MultipleChunkQaInput, MultipleChunkQaOutput]):
         Mike likes pizza.
     """
 
-    PROMPT_TEMPLATE = """### Instruction:
-You will be given a number of Answers to a Question. Based on them, generate a single final answer.
-Condense multiple answers into a single answer. Rely only on the provided answers. Don't use the world's knowledge. The answer should combine the individual answers. If the answers contradict each other, e.g., one saying that the colour is green and the other saying that the colour is black, say that there are contradicting answers saying the colour is green or the colour is black.
-
-### Input:
-Question: {{question}}
-
-Answers:
-{{answers}}
-
-### Response:
-Final answer:"""
+    INSTRUCTION = """You will be given a number of Answers to a Question. Based on them, generate a single final answer.
+Condense multiple answers into a single answer. Rely only on the provided answers. Don't use the world's knowledge. The answer should combine the individual answers. If the answers contradict each other, e.g., one saying that the colour is green and the other saying that the colour is black, say that there are contradicting answers saying the colour is green or the colour is black."""
 
     def __init__(
         self,
         client: Client,
         model: str = "luminous-supreme-control",
     ):
-        self.client = client
-        self.completion = RawCompletion(client)
-        self.single_chunk_qa = SingleChunkQa(client, model)
-        self.model = model
-
-    def _format_prompt(self, question: str, answers: Sequence[str]) -> Prompt:
-        template = PromptTemplate(self.PROMPT_TEMPLATE)
-        return template.to_prompt(question=question, answers=answers)
-
-    def _complete(self, prompt: Prompt, logger: DebugLogger) -> RawCompletionOutput:
-        request = CompletionRequest(prompt)
-        return self.completion.run(
-            RawCompletionInput(request=request, model=self.model), logger
-        )
+        self._client = client
+        self._instruction = Instruction(client)
+        self._single_chunk_qa = SingleChunkQa(client, model)
+        self._model = model
 
     def run(
         self, input: MultipleChunkQaInput, logger: DebugLogger
     ) -> MultipleChunkQaOutput:
         qa_outputs: Sequence[SingleChunkQaOutput] = [
-            self.single_chunk_qa.run(
+            self._single_chunk_qa.run(
                 SingleChunkQaInput(question=input.question, chunk=chunk),
                 logger.child_logger(f"Single Chunk QA for Chunk {chunk_number}"),
             )
@@ -147,14 +126,30 @@ Final answer:"""
                 answer=None,
                 sources=[],
             )
+        joined_answers = "\n".join(answers)
+        output = self._instruct(
+            f"""Question: {input.question}
 
-        prompt_text = self._format_prompt(input.question, answers)
-        output = self._complete(prompt_text, logger.child_logger("Merge Answers"))
+Answers:
+{joined_answers}""",
+            logger.child_logger("Merge Answers"),
+        )
 
         return MultipleChunkQaOutput(
-            answer=output.completion.strip(),
+            answer=output.response,
             sources=[
                 Source(text=chunk, highlights=qa_output.highlights)
                 for qa_output, chunk in zip(qa_outputs, input.chunks)
             ],
+        )
+
+    def _instruct(self, input: str, logger: DebugLogger) -> InstructionOutput:
+        return self._instruction.run(
+            InstructionInput(
+                instruction=self.INSTRUCTION,
+                input=input,
+                model=self._model,
+                response_prefix="\nFinal answer:",
+            ),
+            logger,
         )
