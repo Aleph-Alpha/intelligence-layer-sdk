@@ -98,6 +98,7 @@ class TextHighlight(Task[TextHighlightInput, TextHighlightOutput]):
     def run(
         self, input: TextHighlightInput, logger: DebugLogger
     ) -> TextHighlightOutput:
+        self._raise_on_invalid_focus_range(input)
         explanation = self._explain(
             prompt=input.prompt_with_metadata.prompt,
             target=input.target,
@@ -107,7 +108,7 @@ class TextHighlight(Task[TextHighlightInput, TextHighlightOutput]):
         prompt_ranges = self._flatten_prompt_ranges(
             range
             for name, range in input.prompt_with_metadata.ranges.items()
-            if name in input.focus_ranges or not input.focus_ranges
+            if name in input.focus_ranges
         )
         text_prompt_item_explanations_and_indices = (
             self._extract_text_prompt_item_explanations_and_item_index(
@@ -120,6 +121,13 @@ class TextHighlight(Task[TextHighlightInput, TextHighlightOutput]):
             logger,
         )
         return TextHighlightOutput(highlights=highlights)
+
+    def _raise_on_invalid_focus_range(self, input):
+        unknown_focus_ranges = input.focus_ranges - set(
+            input.prompt_with_metadata.ranges.keys()
+        )
+        if unknown_focus_ranges:
+            raise ValueError(f"Unknown focus ranges: {', '.join(unknown_focus_ranges)}")
 
     def _explain(
         self, prompt: Prompt, target: str, model: str, logger: DebugLogger
@@ -241,20 +249,16 @@ class TextHighlight(Task[TextHighlightInput, TextHighlightOutput]):
         item_check: int,
         pos_check: int,
     ) -> bool:
-        assert isinstance(prompt_range.start, TextCursor)
-        assert isinstance(prompt_range.end, TextCursor)
         if item_check < prompt_range.start.item or item_check > prompt_range.end.item:
             return False
-        elif (
-            item_check == prompt_range.start.item
-            and pos_check < prompt_range.start.position
-        ):
-            return False
-        elif (
-            item_check == prompt_range.end.item
-            and pos_check > prompt_range.end.position
-        ):
-            return False
+        elif item_check == prompt_range.start.item:
+            assert isinstance(prompt_range.start, TextCursor)
+            if pos_check < prompt_range.start.position:
+                return False
+        elif item_check == prompt_range.end.item:
+            assert isinstance(prompt_range.end, TextCursor)
+            if pos_check > prompt_range.end.position:
+                return False
         return True
 
     @staticmethod
