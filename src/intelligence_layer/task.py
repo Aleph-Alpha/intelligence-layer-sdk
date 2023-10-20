@@ -84,13 +84,8 @@ class LogEntry(BaseModel):
     """
 
     message: str
-    """A description of the value you are logging, such as the step in the task this
-        is related to."""
     value: SerializeAsAny[PydanticSerializable]
-    """The relevant data you want to log. Can be anything that is serializable by
-        Pydantic, which gives the loggers flexibility in how they store and emit the logs."""
     timestamp: datetime = Field(default_factory=datetime.utcnow)
-    """The time that the log was emitted."""
 
     def _rich_render_(self) -> Panel:
         """Renders the debug log via classes in the `rich` package"""
@@ -215,10 +210,7 @@ class InMemoryDebugLogger(BaseModel):
     """
 
     name: str
-    """A descriptive name of what the logger contains log entries about."""
     logs: list[Union[LogEntry, "InMemoryDebugLogger"]] = []
-    """A sequential list of log entries and/or nested InMemoryDebugLoggers with their own log
-        entries."""
 
     def log(self, message: str, value: PydanticSerializable) -> None:
         """Record a log of relevant information as part of a step within a task.
