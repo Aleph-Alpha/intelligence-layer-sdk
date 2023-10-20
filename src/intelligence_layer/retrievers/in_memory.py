@@ -21,13 +21,13 @@ class InMemoryRetriever(BaseRetriever):
         threshold: float = 0.5,
         collection_name: str = "default_collection",
     ) -> None:
-        self.client = client
-        self.search_client = QdrantClient(":memory:")
-        self.collection_name = collection_name
+        self._client = client
+        self._search_client = QdrantClient(":memory:")
+        self._collection_name = collection_name
         self.threshold = threshold
 
-        self.search_client.recreate_collection(
-            collection_name=self.collection_name,
+        self._search_client.recreate_collection(
+            collection_name=self._collection_name,
             vectors_config=VectorParams(size=128, distance=Distance.COSINE),
         )
         self._add_chunks_to_memory(chunks)
@@ -44,8 +44,8 @@ class InMemoryRetriever(BaseRetriever):
         logger.log("Query", query)
         logger.log("k", k)
 
-        search_result = self.search_client.search(
-            collection_name=self.collection_name,
+        search_result = self._search_client.search(
+            collection_name=self._collection_name,
             query_vector=query_embedding,
             score_threshold=self.threshold,
             limit=k,
@@ -62,15 +62,15 @@ class InMemoryRetriever(BaseRetriever):
             normalize=True,
         )
 
-        return self.client.semantic_embed(
+        return self._client.semantic_embed(
             request=embedding_request, model="luminous-base"
         ).embedding
 
     def _add_chunks_to_memory(self, chunks: Sequence[str]) -> None:
         embeddings = [self._embed(c, SemanticRepresentation.Document) for c in chunks]
 
-        self.search_client.upsert(
-            collection_name=self.collection_name,
+        self._search_client.upsert(
+            collection_name=self._collection_name,
             wait=True,
             points=[
                 PointStruct(id=idx, vector=text_embedding, payload={"text": text})
