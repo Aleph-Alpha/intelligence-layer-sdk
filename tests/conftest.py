@@ -5,14 +5,21 @@ from aleph_alpha_client import Client, Image
 from dotenv import load_dotenv
 from pytest import fixture
 
+from intelligence_layer.task import NoOpDebugLogger
 
-@fixture
+
+@fixture(scope="session")
 def client() -> Client:
     """Provide fixture for api."""
     load_dotenv()
     token = getenv("AA_TOKEN")
     assert isinstance(token, str)
     return Client(token=token)
+
+
+@fixture
+def no_op_debug_logger() -> NoOpDebugLogger:
+    return NoOpDebugLogger()
 
 
 @fixture(scope="session")

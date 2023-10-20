@@ -1,3 +1,4 @@
+from typing import Optional
 from aleph_alpha_client import Client, CompletionRequest, CompletionResponse, Prompt
 from pydantic import BaseModel
 from intelligence_layer.prompt_template import PromptTemplate, PromptWithMetadata
@@ -71,7 +72,7 @@ class InstructionInput(BaseModel):
     """
 
     instruction: str
-    input: str
+    input: Optional[str]
     model: str
     maximum_response_tokens: int = 64
 
