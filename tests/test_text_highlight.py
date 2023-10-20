@@ -20,7 +20,10 @@ Answer:"""
     model = "luminous-base"
 
     input = TextHighlightInput(
-        prompt_with_metadata=prompt_with_metadata, target=completion, model=model
+        prompt_with_metadata=prompt_with_metadata,
+        target=completion,
+        model=model,
+        focus_ranges=frozenset({"r1"}),
     )
     output = text_highlight.run(input, NoOpDebugLogger())
 
@@ -62,7 +65,10 @@ Answer:"""
     model = "luminous-base"
 
     input = TextHighlightInput(
-        prompt_with_metadata=prompt_with_metadata, target=completion, model=model
+        prompt_with_metadata=prompt_with_metadata,
+        target=completion,
+        model=model,
+        focus_ranges=frozenset({"r1"}),
     )
     output = text_highlight.run(input, NoOpDebugLogger())
 

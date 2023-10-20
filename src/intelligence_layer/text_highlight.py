@@ -34,6 +34,7 @@ class TextHighlightInput(BaseModel):
         model: A valid Aleph Alpha model name.
         focus_ranges: The ranges contained in `prompt_with_metadata` the returned highlights stem from. That means that each returned
             highlight overlaps with at least one character with one of the ranges listed here.
+            If this set is empty highlights of the entire prompt are returned.
     """
 
     prompt_with_metadata: PromptWithMetadata
@@ -251,11 +252,11 @@ class TextHighlight(Task[TextHighlightInput, TextHighlightOutput]):
     ) -> bool:
         if item_check < prompt_range.start.item or item_check > prompt_range.end.item:
             return False
-        elif item_check == prompt_range.start.item:
+        if item_check == prompt_range.start.item:
             assert isinstance(prompt_range.start, TextCursor)
             if pos_check < prompt_range.start.position:
                 return False
-        elif item_check == prompt_range.end.item:
+        if item_check == prompt_range.end.item:
             assert isinstance(prompt_range.end, TextCursor)
             if pos_check > prompt_range.end.position:
                 return False
