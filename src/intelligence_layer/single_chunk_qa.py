@@ -1,22 +1,19 @@
 from typing import Optional, Sequence
 from aleph_alpha_client import (
     Client,
-    CompletionRequest,
-    Prompt,
 )
 from pydantic import BaseModel
 
 from intelligence_layer.completion import (
-    RawCompletion,
-    RawCompletionInput,
-    RawCompletionOutput,
+    Instruction,
+    InstructionInput,
+    InstructionOutput,
 )
 from intelligence_layer.text_highlight import (
     TextHighlight,
     TextHighlightInput,
 )
 from intelligence_layer.prompt_template import (
-    PromptTemplate,
     PromptWithMetadata,
 )
 from intelligence_layer.task import (
@@ -100,40 +97,35 @@ If there's no answer, say "{{no_answer_text}}".
     ):
         self._client = client
         self._model = model
-        self._completion = RawCompletion(client)
+        self._instruction = Instruction(client)
         self._text_highlight = TextHighlight(client)
 
     def run(
         self, input: SingleChunkQaInput, logger: DebugLogger
     ) -> SingleChunkQaOutput:
-        prompt_with_metadata = self._to_prompt_with_metadata(
-            input.chunk, input.question
-        )
-        output = self._complete(
-            prompt_with_metadata.prompt, logger.child_logger("Generate Answer")
+        output = self._instruct(
+            f"""{input.question}
+If there's no answer, say "{self.NO_ANSWER_STR}".""",
+            input.chunk,
+            logger.child_logger("Generate Answer"),
         )
         highlights = self._get_highlights(
-            prompt_with_metadata,
-            output.completion,
+            output.prompt_with_metadata,
+            output.response,
             logger.child_logger("Explain Answer"),
         )
         return SingleChunkQaOutput(
-            answer=self._no_answer_to_none(output.completion.strip()),
+            answer=self._no_answer_to_none(output.response.strip()),
             highlights=highlights,
         )
 
-    def _to_prompt_with_metadata(self, text: str, question: str) -> PromptWithMetadata:
-        template = PromptTemplate(self.PROMPT_TEMPLATE_STR)
-        return template.to_prompt_with_metadata(
-            text=text, question=question, no_answer_text=self.NO_ANSWER_STR
+    def _instruct(
+        self, instruction: str, input: str, logger: DebugLogger
+    ) -> InstructionOutput:
+        return self._instruction.run(
+            InstructionInput(instruction=instruction, input=input, model=self._model),
+            logger,
         )
-
-    def _complete(self, prompt: Prompt, logger: DebugLogger) -> RawCompletionOutput:
-        request = CompletionRequest(prompt)
-        output = self._completion.run(
-            RawCompletionInput(request=request, model=self._model), logger
-        )
-        return output
 
     def _get_highlights(
         self,
@@ -145,7 +137,7 @@ If there's no answer, say "{{no_answer_text}}".
             prompt_with_metadata=prompt_with_metadata,
             target=completion,
             model=self._model,
-            focus_ranges=frozenset({"text"}),
+            focus_ranges=frozenset({"input"}),
         )
         highlight_output = self._text_highlight.run(highlight_input, logger)
         return [h.text for h in highlight_output.highlights if h.score > 0]
