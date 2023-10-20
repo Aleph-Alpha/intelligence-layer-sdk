@@ -11,7 +11,10 @@ QUERY = "Do you like summer?"
 def retriever(client: Client) -> InMemoryRetriever:
     return InMemoryRetriever(client, CHUNKS)
 
+
 def test_in_memory_retriever(retriever: InMemoryRetriever) -> None:
-    documents = retriever.get_relevant_documents_with_scores(QUERY, NoOpDebugLogger(), k=2)
+    documents = retriever.get_relevant_documents_with_scores(
+        QUERY, NoOpDebugLogger(), k=2
+    )
     assert CHUNKS[1] == documents[0].chunk
     assert len(documents) <= 2
