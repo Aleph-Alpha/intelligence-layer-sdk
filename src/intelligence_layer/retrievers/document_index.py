@@ -1,36 +1,60 @@
 from typing import Sequence
 from intelligence_layer.retrievers.base import BaseRetriever, SearchResult
-from qdrant_client import QdrantClient
 from aleph_alpha_client import (
     Client,
     Prompt,
     SemanticRepresentation,
     SemanticEmbeddingRequest,
 )
-from qdrant_client.conversions.common_types import ScoredPoint
-from qdrant_client.http.models import Distance, VectorParams, PointStruct
 
 from intelligence_layer.task import DebugLogger
 
+import json
+import requests
+from typing import Union
 
-class InMemoryRetriever(BaseRetriever):
+
+BASE_DOCUMENT_INDEX_URL = "https://knowledge.aleph-alpha.com"
+HEADERS = {
+    'Content-Type': 'application/json',
+    'Accept': 'application/json',
+    'Authorization': f'Bearer {TOKEN}'
+}
+
+
+
+def search(namespace: str, collection: str, query: str, max_results: int):
+    url = f"{BASE_DOCUMENT_INDEX_URL}/collections/{namespace}/{collection}/search"
+    data = {
+        "query": [
+            {
+                "modality": "text",
+                "text": query
+            }
+        ],
+        "max_results": max_results
+    }
+    response = requests.post(url, data=json.dumps(data), headers=HEADERS)
+    if response.status_code == 200:
+        print(f"Successfully searched for documents with query in collection {collection} in namespace {namespace}.")
+        return response.json()
+    else:
+        print(f"Failed to search for documents with query. Status code: {response.status_code}.")
+
+
+
+
+
+
+class DocumentIndexRetriever(BaseRetriever):
     def __init__(
         self,
         client: Client,
-        chunks: Sequence[str],
         threshold: float = 0.5,
-        collection_name: str = "default_collection",
     ) -> None:
-        self.client = client
-        self.search_client = QdrantClient(":memory:")
-        self.collection_name = collection_name
+        self._token = client.token
         self.threshold = threshold
 
-        self.search_client.recreate_collection(
-            collection_name=self.collection_name,
-            vectors_config=VectorParams(size=128, distance=Distance.COSINE),
-        )
-        self._add_chunks_to_memory(chunks)
 
     def get_relevant_documents_with_scores(
         self, query: str, logger: DebugLogger, *, k: int
