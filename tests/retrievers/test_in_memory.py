@@ -1,5 +1,5 @@
 from pytest import fixture
-from intelligence_layer.retrievers.in_memory_retriever import InMemoryRetriever
+from intelligence_layer.retrievers.in_memory import InMemoryRetriever
 from aleph_alpha_client import Client
 from intelligence_layer.task import NoOpDebugLogger
 
@@ -12,7 +12,7 @@ def retriever(client: Client) -> InMemoryRetriever:
     return InMemoryRetriever(client, CHUNKS)
 
 
-def test_in_memory_retriever(retriever: InMemoryRetriever) -> None:
+def test_in_memory(retriever: InMemoryRetriever) -> None:
     documents = retriever.get_relevant_documents_with_scores(
         QUERY, NoOpDebugLogger(), k=2
     )

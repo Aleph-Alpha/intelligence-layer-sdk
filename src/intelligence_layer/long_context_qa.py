@@ -9,7 +9,7 @@ from intelligence_layer.multiple_chunk_qa import (
 )
 from intelligence_layer.task import Chunk, DebugLogger, Task
 from semantic_text_splitter import HuggingFaceTextSplitter
-from intelligence_layer.retrievers.in_memory_retriever import InMemoryRetriever
+from intelligence_layer.retrievers.in_memory import InMemoryRetriever
 
 
 class LongContextQaInput(BaseModel):
