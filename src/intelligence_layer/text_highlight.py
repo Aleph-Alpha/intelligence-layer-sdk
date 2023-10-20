@@ -39,7 +39,7 @@ class TextHighlightInput(BaseModel):
     prompt_with_metadata: PromptWithMetadata
     target: str
     model: str
-    focus_ranges: frozenset[str] = Field(default_factory=set)
+    focus_ranges: frozenset[str] = frozenset()
 
 
 class ScoredTextHighlight(BaseModel):

@@ -58,18 +58,66 @@ class RawCompletion(Task[RawCompletionInput, RawCompletionOutput]):
 
 
 class InstructionInput(BaseModel):
+    """Input for an `InstructionTask`.
+
+    Attributes:
+        instruction: A textual instruction for the model.
+            Could be a directive to answer a question or to translate something.
+        input: The text-input for the instruction, e.g. a text to be translated.
+        model: The name of the model that should handle the instruction.
+        maximum_response_tokens: The maximum number of tokens to be generated in the answer.
+            For generating answers the default probably works fine in case of translations this
+            tpically depends on the text to be translated.
+    """
+
     instruction: str
     input: str
-    maximum_response_tokens: int
     model: str
+    maximum_response_tokens: int = 64
 
 
 class InstructionOutput(BaseModel):
+    """Output of an `InstructionTask`.
+
+    Attributes:
+        response: the model's generated response to the instruction.
+        prompt_with_metadata: To handle the instruction a specific `PromptTemplate` is used
+            the template defines two `PromptRange`s:
+            - "instruction": covering the instruction text as provided in the `InstructionInput`.
+            - "input": covering the input text as provided in the `InstructionInput`.
+            These can for example be used for downstream `TextHighlight` tasks.
+    """
+
     response: str
     prompt_with_metadata: PromptWithMetadata
 
 
 class Instruction(Task[InstructionInput, InstructionOutput]):
+    """Makes the model react to a given instruction and input text with a corresponding response.
+
+    This can be used for different types of instructions a LLM can handle, like translations or
+    answering questions based on an input text.
+
+    Args:
+        client: Aleph Alpha client instance for running model related API calls.
+
+    Attributes:
+        INSTRUCTION_PROMPT_TEMPLATE: The prompt-template used to build the actual `Prompt` sent
+            to the inference API.
+
+    Example:
+        >>> client = Client(token="YOUR_AA_TOKEN")
+        >>> task = Instruction(client)
+        >>> input = InstructionInput(
+        >>>     instruction="Translates the following to test to German.",
+        >>>     input="An apple a day, keeps the doctor away."
+        >>> )
+        >>> logger = InMemoryLogger(name="Instruction")
+        >>> output = task.run(input, logger)
+        >>> print(output.response)
+        >>> "Eine Apfel am Tag hält den Arzt fern."
+    """
+
     INSTRUCTION_PROMPT_TEMPLATE = """### Instruction:
 {% promptrange instruction %}{{instruction}}{% endpromptrange %}
 
