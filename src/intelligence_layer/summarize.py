@@ -79,10 +79,7 @@ class ShortBodySummarize(Task[SummarizeInput, SummarizeOutput]):
         self._text_highlight = TextHighlight(client)
 
     def run(self, input: SummarizeInput, logger: DebugLogger) -> SummarizeOutput:
-        prompt_with_metadata = self._format_prompt(text=input.chunk, logger=logger)
-        completion = self._complete(
-            prompt_with_metadata.prompt, logger.child_logger("Generate Summary")
-        )
+        instruction_output = self._instruct(input.chunk, logger)
         highlights = self._get_highlights(
             instruction_output.prompt_with_metadata, instruction_output.response, logger
         )
