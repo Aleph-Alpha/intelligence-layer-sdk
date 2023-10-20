@@ -112,7 +112,7 @@ class ShortBodySummarize(Task[SummarizeInput, SummarizeOutput]):
             prompt_with_metadata=prompt_with_metadata,
             target=completion,
             model=self._model,
-            focus_ranges={"input"},
+            focus_ranges=frozenset({"input"}),
         )
         highlight_output = self._text_highlight.run(highlight_input, logger)
         return [h.text for h in highlight_output.highlights if h.score > 0]

@@ -31,6 +31,28 @@ Answer:"""
     )
 
 
+def test_text_highlight_with_range_without_highlight(
+    text_highlight: TextHighlight,
+) -> None:
+    answer = "Ursus Arctos"
+    prompt_template_str = """Question: What is the Latin name of the brown bear?
+{% promptrange no_content %}This is an unrelated sentence. And here is another one.{% endpromptrange %}
+{% promptrange content %}Latin name: {{answer}}.{% endpromptrange %}
+Answer:"""
+    prompt_with_metadata = PromptTemplate(prompt_template_str).to_prompt_with_metadata(
+        answer=answer
+    )
+
+    input = TextHighlightInput(
+        prompt_with_metadata=prompt_with_metadata,
+        target=f" {answer}",
+        model="luminous-base",
+        focus_ranges=frozenset(["no_content"]),
+    )
+    output = text_highlight.run(input, NoOpDebugLogger())
+    assert all(answer not in highlight.text for highlight in output.highlights)
+
+
 def test_text_highlight_with_only_one_sentence(text_highlight: TextHighlight) -> None:
     prompt_template_str = """What is the Latin name of the brown bear?{% promptrange r1 %} Explanation should not highlight anything.{% endpromptrange %}
 Answer:"""

@@ -39,7 +39,7 @@ class TextHighlightInput(BaseModel):
     prompt_with_metadata: PromptWithMetadata
     target: str
     model: str
-    focus_ranges: set[str] = Field(default_factory=set)
+    focus_ranges: frozenset[str] = Field(default_factory=set)
 
 
 class ScoredTextHighlight(BaseModel):
@@ -105,7 +105,9 @@ class TextHighlight(Task[TextHighlightInput, TextHighlightOutput]):
             logger=logger,
         )
         prompt_ranges = self._flatten_prompt_ranges(
-            input.prompt_with_metadata.ranges.values()
+            range
+            for name, range in input.prompt_with_metadata.ranges.items()
+            if name in input.focus_ranges or not input.focus_ranges
         )
         text_prompt_item_explanations_and_indices = (
             self._extract_text_prompt_item_explanations_and_item_index(
