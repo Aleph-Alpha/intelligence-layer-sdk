@@ -1,6 +1,6 @@
-# Intelligence Layer☯️
+# Aleph Alpha Intelligence Layer☯️
 
-Intelligence Layer☯️ is a suite of development tools designed by [Aleph Alpha](https://aleph-alpha.com/) enabling you to build end-to-end solutions utilizing the power of large language models (LLMs). Our goal here is to empower you to apply LLMs to solve various practical problems by providing a consistent framework for designing LLM-based workflows. The tools should enable you to go quickly through all the phases of AI product development, from prototyping and playing with prompts, through setting up experiments and evaluating their results, to solution deployment.
+Aleph Alpha Intelligence Layer☯️ is a suite of development tools enabling you to build end-to-end solutions utilizing the power of large language models (LLMs). Our goal here is to empower you to apply LLMs to solve various practical problems by providing a consistent framework for designing LLM-based workflows. The tools should enable you to go quickly through all the phases of AI product development, from prototyping and playing with prompts, through setting up experiments and evaluating their results, to solution deployment.
 
 The key features of the intelligence layer are:
 
@@ -27,10 +27,16 @@ Out of the box you get access to the following tasks:
 
 ## Quickstart
 
+Generate an Aleph Alpha access token. You can read more about this [here](https://docs.aleph-alpha.com/docs/account/#create-a-new-token)
+
 Set up the poetry environment
 
 ```cmd
 poetry install
+```
+
+```cmd
+poetry shell
 ```
 
 Set up the Aleph Alpha token value
@@ -44,8 +50,6 @@ Run the `jupytyer lab`, and go to the [examples](http://localhost:8888/lab/works
 ```cmd
 jupyter lab
 ```
-
-
 
 ## Development
 
