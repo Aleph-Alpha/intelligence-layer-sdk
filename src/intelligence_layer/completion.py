@@ -159,5 +159,5 @@ class Instruction(Task[InstructionInput, InstructionOutput]):
         request = CompletionRequest(prompt, maximum_tokens=maximum_tokens)
         return self._completion.run(
             RawCompletionInput(request=request, model=model),
-            logger.child_logger("Completion"),
+            logger,
         ).completion

@@ -3,7 +3,12 @@ from aleph_alpha_client import Prompt
 from aleph_alpha_client.aleph_alpha_client import Client
 from aleph_alpha_client.completion import CompletionRequest
 
-from intelligence_layer.task import DebugLogger, InMemoryDebugLogger, LogEntry
+from intelligence_layer.task import (
+    DebugLogger,
+    InMemoryDebugLogger,
+    LogEntry,
+    TaskLogger,
+)
 from intelligence_layer.completion import RawCompletion, RawCompletionInput
 
 
@@ -50,8 +55,14 @@ def test_task_automatically_logs_input_and_output(client: Client) -> None:
         request=CompletionRequest(prompt=Prompt.from_text("test")),
         model="luminous-base",
     )
-    RawCompletion(client=client).run(input=input, logger=logger)
+    output = RawCompletion(client=client).run(input=input, logger=logger)
 
-    assert len(logger.logs) == 2
-    assert isinstance(logger.logs[0], LogEntry) and logger.logs[0].message == "Input"
-    assert isinstance(logger.logs[1], LogEntry) and logger.logs[1].message == "Output"
+    assert len(logger.logs) == 1
+    task_logger = logger.logs[0]
+    assert isinstance(task_logger, TaskLogger)
+    assert task_logger.name == "RawCompletion"
+    assert task_logger.parent_uuid == logger.uuid
+    assert task_logger.input == input
+    assert task_logger.output == output
+    assert task_logger.start_timestamp and task_logger.end_timestamp
+    assert task_logger.start_timestamp < task_logger.end_timestamp
