@@ -1,8 +1,10 @@
 from abc import ABC, abstractmethod
+from contextlib import AbstractContextManager
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime
 import functools
 from itertools import islice
+from types import TracebackType
 from typing import (
     TYPE_CHECKING,
     Any,
@@ -119,7 +121,7 @@ class DebugLogger(Protocol):
         """
         ...
 
-    def task_logger(self, name: str) -> "TaskLogger":
+    def task_logger(self, name: str, input: PydanticSerializable) -> "TaskLogger":
         """Generate a sub-logger from the current logging instance.
 
         Each logger implementation can decide on how it wants to represent this, but they should
@@ -137,11 +139,8 @@ class DebugLogger(Protocol):
 
 
 @runtime_checkable
-class TaskLogger(DebugLogger, Protocol):
-    def start(self, input: PydanticSerializable) -> None:
-        ...
-
-    def end(self, output: PydanticSerializable) -> None:
+class TaskLogger(AbstractContextManager["TaskLogger"], DebugLogger, Protocol):
+    def record_output(self, output: PydanticSerializable) -> None:
         ...
 
 
@@ -184,7 +183,7 @@ class NoOpDebugLogger:
         """
         return self
 
-    def task_logger(self, name: str) -> "NoOpDebugLogger":
+    def task_logger(self, name: str, input: PydanticSerializable) -> "NoOpTaskLogger":
         """Generate a sub-logger from the current logging instance.
 
         Args:
@@ -193,12 +192,19 @@ class NoOpDebugLogger:
         Returns:
             Another `NoOpDebugLogger`
         """
-        return self
+        return NoOpTaskLogger()
 
-    def start(self, input: PydanticSerializable) -> None:
+    def __exit__(
+        self,
+        exc_type: Optional[type[BaseException]],
+        exc_value: Optional[BaseException],
+        traceback: Optional[TracebackType],
+    ) -> None:
         pass
 
-    def end(self, output: PydanticSerializable) -> None:
+
+class NoOpTaskLogger(NoOpDebugLogger, AbstractContextManager["NoOpTaskLogger"]):
+    def record_output(self, output: PydanticSerializable) -> None:
         pass
 
 
@@ -290,7 +296,9 @@ class InMemoryDebugLogger(BaseModel):
         self.logs.append(child)
         return child
 
-    def task_logger(self, name: str) -> "InMemoryTaskLogger":
+    def task_logger(
+        self, name: str, input: PydanticSerializable
+    ) -> "InMemoryTaskLogger":
         """Generate a sub-logger from the current logging instance.
 
         Args:
@@ -300,7 +308,7 @@ class InMemoryDebugLogger(BaseModel):
             A nested `InMemoryDebugLogger` that is stored in a nested position as part of the parent
             logger.
         """
-        child = InMemoryTaskLogger(name=name, parent_uuid=self.uuid)
+        child = InMemoryTaskLogger(name=name, parent_uuid=self.uuid, input=input)
         self.logs.append(child)
         return child
 
@@ -320,19 +328,28 @@ class InMemoryDebugLogger(BaseModel):
         print(self._rich_render_())
 
 
-class InMemoryTaskLogger(InMemoryDebugLogger):
-    input: Optional[PydanticSerializable] = None
+class InMemoryTaskLogger(
+    AbstractContextManager["InMemoryTaskLogger"], InMemoryDebugLogger
+):
+    input: PydanticSerializable
     output: Optional[PydanticSerializable] = None
     start_timestamp: Optional[datetime] = None
     end_timestamp: Optional[datetime] = None
 
-    def start(self, input: PydanticSerializable) -> None:
-        self.input = input
+    def __enter__(self) -> "InMemoryTaskLogger":
         self.start_timestamp = datetime.utcnow()
+        return self
 
-    def end(self, output: PydanticSerializable) -> None:
-        self.output = output
+    def __exit__(
+        self,
+        exc_type: Optional[type[BaseException]],
+        exc_value: Optional[BaseException],
+        traceback: Optional[TracebackType],
+    ) -> None:
         self.end_timestamp = datetime.utcnow()
+
+    def record_output(self, output: PydanticSerializable) -> None:
+        self.output = output
 
     def _rich_render_(self) -> Tree:
         """Renders the debug log via classes in the `rich` package"""
@@ -383,11 +400,10 @@ class Task(ABC, Generic[Input, Output]):
             def inner(
                 self: "Task[Input, Output]", input: Input, logger: DebugLogger
             ) -> Output:
-                task_logger = logger.task_logger(type(self).__name__)
-                task_logger.start(input)
-                output = func(self, input, logger)
-                task_logger.end(output)
-                return output
+                with logger.task_logger(type(self).__name__, input) as task_logger:
+                    output = func(self, input, logger)
+                    task_logger.record_output(output)
+                    return output
 
             return inner
 
