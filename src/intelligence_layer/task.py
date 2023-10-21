@@ -337,7 +337,8 @@ class InMemoryTaskLogger(
     end_timestamp: Optional[datetime] = None
 
     def __enter__(self) -> "InMemoryTaskLogger":
-        self.start_timestamp = datetime.utcnow()
+        if not self.start_timestamp:
+            self.start_timestamp = datetime.utcnow()
         return self
 
     def __exit__(
@@ -346,7 +347,8 @@ class InMemoryTaskLogger(
         exc_value: Optional[BaseException],
         traceback: Optional[TracebackType],
     ) -> None:
-        self.end_timestamp = datetime.utcnow()
+        if not self.end_timestamp:
+            self.end_timestamp = datetime.utcnow()
 
     def record_output(self, output: PydanticSerializable) -> None:
         self.output = output
