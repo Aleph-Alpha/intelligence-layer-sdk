@@ -215,7 +215,7 @@ Reply with only the class label.
         self,
         prompt_template: PromptTemplate,
         **kwargs: Any,
-    ) -> RawCompletionOutput:
+    ) -> CompletionRequest:
         return CompletionRequest(
             prompt=prompt_template.to_prompt(**kwargs),
             maximum_tokens=0,

@@ -328,7 +328,7 @@ class Task(ABC, Generic[Input, Output]):
 T = TypeVar("T")
 
 
-def batched(iterable: Iterable[T], n: int) -> Iterable[T]:
+def batched(iterable: Iterable[T], n: int) -> Iterable[Iterable[T]]:
     if n < 1:
         raise ValueError("n must be at least one")
     it = iter(iterable)
