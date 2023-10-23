@@ -1,15 +1,110 @@
-from typing import Sequence
+from typing import Any, Sequence, Union
 from intelligence_layer.retrievers.base import BaseRetriever, SearchResult
 from aleph_alpha_client import (
     Client,
 )
-
 from intelligence_layer.task import DebugLogger
-
 import json
 
 # types-requests introduces dependency conflict with qdrant.
 import requests  # type: ignore
+
+Metadata = Union[dict[str, str], list[dict[str, str]]]
+
+
+class DocumentIndex:
+    def __init__(
+        self,
+        client: Client,
+        base_document_index_url: str = "https://knowledge.aleph-alpha.com",
+    ) -> None:
+        self._base_document_index_url = base_document_index_url
+        self.headers = {
+            "Content-Type": "application/json",
+            "Accept": "application/json",
+            "Authorization": f"Bearer {client.token}",
+        }
+
+    def create_collection(self, namespace: str, collection: str) -> None:
+        url = f"{self._base_document_index_url}/collections/{namespace}/{collection}"
+        response = requests.put(url, headers=self.headers)
+
+        response.raise_for_status()
+
+    def delete_collection(self, namespace: str, collection: str) -> None:
+        url = f"{self._base_document_index_url}/collections/{namespace}/{collection}"
+        response = requests.delete(url, headers=self.headers)
+
+        response.raise_for_status()
+
+    def add_document(
+        self,
+        namespace: str,
+        collection: str,
+        name: str,
+        content: str,
+        metadata: Metadata,
+    ) -> None:
+        url = f"{self._base_document_index_url}/collections/{namespace}/{collection}/docs/{name}"
+        data = {
+            "schema_version": "V1",
+            "contents": [{"modality": "text", "text": content}],
+            "metadata": metadata,
+        }
+        response = requests.put(url, data=json.dumps(data), headers=self.headers)
+
+        response.raise_for_status()
+
+    def delete_document(self, namespace: str, collection: str, name: str) -> None:
+        url = f"{self._base_document_index_url}/collections/{namespace}/{collection}/docs/{name}"
+        response = requests.delete(url, headers=self.headers)
+
+        response.raise_for_status()
+
+    def get_document(
+        self, namespace: str, collection: str, name: str, get_chunks: bool = False
+    ) -> requests.Response:
+        if not get_chunks:
+            url = f"{self._base_document_index_url}/collections/{namespace}/{collection}/docs/{name}"
+        else:
+            url = f"{self._base_document_index_url}/collections/{namespace}/{collection}/docs/{name}/chunks"
+        response = requests.get(url, headers=self.headers)
+
+        response.raise_for_status()
+
+        return response
+
+    def list_documents(self, namespace: str, collection: str) -> requests.Response:
+        url = (
+            f"{self._base_document_index_url}/collections/{namespace}/{collection}/docs"
+        )
+        response = requests.get(url, headers=self.headers)
+
+        response.raise_for_status()
+
+        return response
+
+    def search(
+        self,
+        namespace: str,
+        collection: str,
+        query: str,
+        max_results: int,
+        min_score: float,
+    ) -> requests.Response:
+        url = f"{self._base_document_index_url}/collections/{namespace}/{collection}/search"
+        data = {
+            "query": [{"modality": "text", "text": query}],
+            "max_results": max_results,
+            "min_score": min_score,
+            "filter": [{"with": [{"modality": "text"}]}],
+        }
+
+        response = requests.post(url, data=json.dumps(data), headers=self.headers)
+
+        response.raise_for_status()
+
+        return response
 
 
 class DocumentIndexRetriever(BaseRetriever):
@@ -25,11 +120,7 @@ class DocumentIndexRetriever(BaseRetriever):
         self._namespace = namespace
         self._collection = collection
         self._base_document_index_url = base_document_index_url
-        self.headers = {
-            "Content-Type": "application/json",
-            "Accept": "application/json",
-            "Authorization": f"Bearer {client.token}",
-        }
+        self._document_index = DocumentIndex(client, base_document_index_url)
 
     def get_relevant_documents_with_scores(
         self, query: str, logger: DebugLogger, *, k: int
@@ -37,20 +128,15 @@ class DocumentIndexRetriever(BaseRetriever):
         logger.log("Query", query)
         logger.log("k", k)
 
-        url = f"{self._base_document_index_url}/collections/{self._namespace}/{self._collection}/search"
-        data = {
-            "query": [{"modality": "text", "text": query}],
-            "max_results": k,
-            "min_score": self._threshold,
-            "filter": [{"with": [{"modality": "text"}]}],
-        }
+        response = self._document_index.search(
+            self._namespace, self._collection, query, k, self._threshold
+        )
 
-        response = requests.post(url, data=json.dumps(data), headers=self.headers)
-        if response.status_code != 200:
-            raise Exception(
-                f"Failed to search for documents with query. Status code: {response.status_code}."
-            )
-        return [
+        relevant_chunks = [
             SearchResult(score=result["score"], chunk=result["section"][0]["text"])
             for result in response.json()
         ]
+
+        logger.log("Retrieved chunks", relevant_chunks)
+
+        return relevant_chunks
