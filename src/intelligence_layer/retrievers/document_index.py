@@ -13,6 +13,14 @@ Metadata = Union[dict[str, str], list[dict[str, str]]]
 
 
 class DocumentIndex:
+    """Upload and search through the documents stored on the Aleph Alpha Document Index.
+
+
+    With the document index we give users the ability to create collections and upload the documents to a cloud database.
+     
+    After that you can search trhough this documents  The documents can 
+    
+    """
     def __init__(
         self,
         client: Client,
