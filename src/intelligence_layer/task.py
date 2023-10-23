@@ -265,7 +265,8 @@ Output = TypeVar("Output", bound=PydanticSerializable)
 """Interface of the output returned by the task."""
 
 
-global_executor = ThreadPoolExecutor(max_workers=20)
+MAX_CONCURRENCY = 20
+global_executor = ThreadPoolExecutor(max_workers=MAX_CONCURRENCY)
 
 
 class Task(ABC, Generic[Input, Output]):
