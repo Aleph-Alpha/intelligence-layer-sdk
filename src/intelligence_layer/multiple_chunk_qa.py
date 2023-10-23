@@ -112,7 +112,7 @@ Condense multiple answers into a single answer. Rely only on the provided answer
             (
                 (
                     SingleChunkQaInput(question=input.question, chunk=chunk),
-                    logger.child_logger(f"Single Chunk QA for chunk {chunk_number}"),
+                    logger,
                 )
                 for chunk_number, chunk in enumerate(input.chunks)
             ),
@@ -145,7 +145,7 @@ Condense multiple answers into a single answer. Rely only on the provided answer
 
 Answers:
 {joined_answers}""",
-            logger.child_logger("Merge Answers"),
+            logger,
         ).response
 
     def _instruct(self, input: str, logger: DebugLogger) -> InstructionOutput:

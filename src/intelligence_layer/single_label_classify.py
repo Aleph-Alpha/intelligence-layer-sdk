@@ -193,7 +193,7 @@ Reply with only the class label.
                     ),
                     model=model,
                 ),
-                logger.child_logger(f"Completion {label}"),
+                logger,
             )
 
         logger.log(

@@ -4,10 +4,9 @@ from aleph_alpha_client.aleph_alpha_client import Client
 from aleph_alpha_client.completion import CompletionRequest
 
 from intelligence_layer.task import (
-    DebugLogger,
     InMemoryDebugLogger,
+    InMemoryTaskLogger,
     LogEntry,
-    TaskLogger,
 )
 from intelligence_layer.completion import RawCompletion, RawCompletionInput
 
@@ -33,7 +32,7 @@ def test_can_add_child_debug_logger() -> None:
     assert len(logger.logs) == 1
 
     log = logger.logs[0]
-    assert isinstance(log, DebugLogger)
+    assert isinstance(log, InMemoryDebugLogger)
     assert log.name == "child"
     assert len(log.logs) == 0
 
@@ -45,7 +44,7 @@ def test_can_add_parent_and_child_logs() -> None:
     child.log("Two", 2)
 
     assert isinstance(parent.logs[0], LogEntry)
-    assert isinstance(parent.logs[1], DebugLogger)
+    assert isinstance(parent.logs[1], InMemoryDebugLogger)
     assert isinstance(parent.logs[1].logs[0], LogEntry)
 
 
@@ -59,7 +58,7 @@ def test_task_automatically_logs_input_and_output(client: Client) -> None:
 
     assert len(logger.logs) == 1
     task_logger = logger.logs[0]
-    assert isinstance(task_logger, TaskLogger)
+    assert isinstance(task_logger, InMemoryTaskLogger)
     assert task_logger.name == "RawCompletion"
     assert task_logger.parent_uuid == logger.uuid
     assert task_logger.input == input

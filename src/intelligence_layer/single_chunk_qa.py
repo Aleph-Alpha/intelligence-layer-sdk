@@ -106,12 +106,12 @@ If there's no answer, say "{{no_answer_text}}".
             f"""{input.question}
 If there's no answer, say "{self.NO_ANSWER_STR}".""",
             input.chunk,
-            logger.child_logger("Generate Answer"),
+            logger,
         )
         highlights = self._get_highlights(
             output.prompt_with_metadata,
             output.response,
-            logger.child_logger("Explain Answer"),
+            logger,
         )
         return SingleChunkQaOutput(
             answer=self._no_answer_to_none(output.response.strip()),

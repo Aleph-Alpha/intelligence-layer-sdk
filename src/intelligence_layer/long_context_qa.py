@@ -92,8 +92,6 @@ class LongContextQa(Task[LongContextQaInput, MultipleChunkQaOutput]):
             question=input.question,
         )
 
-        qa_output = self._multi_chunk_qa.run(
-            multi_chunk_qa_input, logger.child_logger("Multi Chunk QA")
-        )
+        qa_output = self._multi_chunk_qa.run(multi_chunk_qa_input, logger)
 
         return qa_output

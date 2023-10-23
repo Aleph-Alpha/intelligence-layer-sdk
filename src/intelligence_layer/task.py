@@ -114,14 +114,15 @@ class DebugLogger(Protocol):
         """
         ...
 
-    def task_logger(self, name: str, input: PydanticSerializable) -> "TaskLogger":
-        """Generate a sub-logger from the current logging instance.
+    def task_logger(self, task_name: str, input: PydanticSerializable) -> "TaskLogger":
+        """Generate a task-specific span from the current logging instance.
 
         Each logger implementation can decide on how it wants to represent this, but they should
-        all allow for representing logs of a child task within the scope of the current task.
+        all allow for representing logs of a span within the context of a parent span.
 
         Args:
-            name: A descriptive name of what this child logger will contain logs about.
+            task_name: The name of the task that is being logged
+            input: The input for the task that is being logged.
 
         Returns:
             An instance of something that also meets the protocol of DebugLogger. Most likely, it
@@ -169,7 +170,9 @@ class NoOpDebugLogger:
         """
         return self
 
-    def task_logger(self, name: str, input: PydanticSerializable) -> "NoOpTaskLogger":
+    def task_logger(
+        self, task_name: str, input: PydanticSerializable
+    ) -> "NoOpTaskLogger":
         """Generate a sub-logger from the current logging instance.
 
         Args:
@@ -198,6 +201,18 @@ class JsonSerializer(RootModel[PydanticSerializable]):
     root: SerializeAsAny[PydanticSerializable]
 
 
+def _render_log_value(value: PydanticSerializable, title: str) -> Panel:
+    value = value if isinstance(value, BaseModel) else JsonSerializer(root=value)
+    return Panel(
+        Syntax(
+            value.model_dump_json(indent=2, exclude_defaults=True),
+            "json",
+            word_wrap=True,
+        ),
+        title=title,
+    )
+
+
 class LogEntry(BaseModel):
     """An individual log entry, currently used to represent individual logs by the
     `InMemoryDebugLogger`.
@@ -216,19 +231,7 @@ class LogEntry(BaseModel):
 
     def _rich_render_(self) -> Panel:
         """Renders the debug log via classes in the `rich` package"""
-        value = (
-            self.value
-            if isinstance(self.value, BaseModel)
-            else JsonSerializer(root=self.value)
-        )
-        return Panel(
-            Syntax(
-                value.model_dump_json(indent=2, exclude_defaults=True),
-                "json",
-                word_wrap=True,
-            ),
-            title=self.message,
-        )
+        return _render_log_value(self.value, self.message)
 
     def _ipython_display_(self) -> None:
         """Default rendering for Jupyter notebooks"""
@@ -283,7 +286,7 @@ class InMemoryDebugLogger(BaseModel):
         return child
 
     def task_logger(
-        self, name: str, input: PydanticSerializable
+        self, task_name: str, input: PydanticSerializable
     ) -> "InMemoryTaskLogger":
         """Generate a sub-logger from the current logging instance.
 
@@ -294,7 +297,7 @@ class InMemoryDebugLogger(BaseModel):
             A nested `InMemoryDebugLogger` that is stored in a nested position as part of the parent
             logger.
         """
-        child = InMemoryTaskLogger(name=name, parent_uuid=self.uuid, input=input)
+        child = InMemoryTaskLogger(name=task_name, parent_uuid=self.uuid, input=input)
         self.logs.append(child)
         return child
 
@@ -343,8 +346,12 @@ class InMemoryTaskLogger(
         """Renders the debug log via classes in the `rich` package"""
         tree = Tree(label=self.name)
 
+        tree.add(_render_log_value(self.input, "Input"))
+
         for log in self.logs:
             tree.add(log._rich_render_())
+
+        tree.add(_render_log_value(self.output, "Output"))
 
         return tree
 
@@ -386,7 +393,9 @@ class Task(ABC, Generic[Input, Output]):
         ) -> Callable[["Task[Input, Output]", Input, DebugLogger], Output]:
             @functools.wraps(func)
             def inner(
-                self: "Task[Input, Output]", input: Input, logger: DebugLogger
+                self: "Task[Input, Output]",
+                input: Input,
+                logger: DebugLogger,
             ) -> Output:
                 with logger.task_logger(type(self).__name__, input) as task_logger:
                     output = func(self, input, task_logger)
