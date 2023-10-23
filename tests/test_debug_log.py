@@ -8,6 +8,7 @@ from intelligence_layer.completion import RawCompletion, RawCompletionInput
 
 
 def test_debug_add_log_entries() -> None:
+    before_log_time = datetime.utcnow()
     logger = InMemoryDebugLogger(name="test")
     logger.log("Test", "message")
 
@@ -16,7 +17,7 @@ def test_debug_add_log_entries() -> None:
     assert isinstance(log, LogEntry)
     assert log.message == "Test"
     assert log.value == "message"
-    assert log.timestamp < datetime.utcnow()
+    assert before_log_time <= log.timestamp <= datetime.utcnow()
 
 
 def test_can_add_child_debug_logger() -> None:

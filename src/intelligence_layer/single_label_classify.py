@@ -189,34 +189,39 @@ Reply with only the class label.
             },
         )
         prompt_template = PromptTemplate(prompt_template_str)
-        completion_per_label = {
-            label: self._complete(
-                model,
-                prompt_template,
+
+        inputs = (
+            (
+                RawCompletionInput(
+                    request=self._completion_request(
+                        prompt_template=prompt_template,
+                        text=text,
+                        label=prompt_template.embed_prompt(to_aa_tokens_prompt(tokens)),
+                    ),
+                    model=model,
+                ),
                 logger.child_logger(f"Completion {label}"),
-                text=text,
-                label=prompt_template.embed_prompt(to_aa_tokens_prompt(tokens)),
             )
             for label, tokens in tokenized_labels.items()
+        )
+
+        outputs = self._completion_task.run_concurrently(inputs)
+        completion_per_label = {
+            label: output for label, output in zip(tokenized_labels.keys(), outputs)
         }
         return completion_per_label
 
-    def _complete(
+    def _completion_request(
         self,
-        model: str,
         prompt_template: PromptTemplate,
-        logger: DebugLogger,
         **kwargs: Any,
     ) -> RawCompletionOutput:
-        request = CompletionRequest(
+        return CompletionRequest(
             prompt=prompt_template.to_prompt(**kwargs),
             maximum_tokens=0,
             log_probs=0,
             tokens=True,
             echo=True,
-        )
-        return self._completion_task.run(
-            RawCompletionInput(request=request, model=model), logger
         )
 
     def _get_log_probs_of_labels(
