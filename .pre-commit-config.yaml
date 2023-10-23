@@ -31,4 +31,4 @@ repos:
     hooks:
     - id: codespell
       args: ['-L newyorker']
-      exclude: "poetry.lock"
+      exclude: '^(poetry\.lock|tests/retrievers/test_document_index\.py)$'
