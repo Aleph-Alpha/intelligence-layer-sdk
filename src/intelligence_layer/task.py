@@ -134,7 +134,27 @@ class DebugLogger(Protocol):
 
 @runtime_checkable
 class TaskLogger(AbstractContextManager["TaskLogger"], DebugLogger, Protocol):
+    """A protocol for instrumenting a `Task`'s input, output, and nested logs.
+
+    Most likely, generating this task logger will capture the `Task`'s input, as well as the task
+    name.
+
+    The implementation should also be a Context Manager, to capture the span of duration of
+    task execution.
+
+    Implementations of how logs are collected and stored may differ. Refer to the individual
+    documentation of each implementation to see how to use the resulting logger.
+    """
+
     def record_output(self, output: PydanticSerializable) -> None:
+        """Record a `Task`'s output. Since a Context Manager can't provide this in the `__exit__`
+        method, output should be captured once it is generated.
+
+        This should be handled automatically within the execution of the task.
+
+        Args:
+            output: The output of the task that is being logged.
+        """
         ...
 
 
@@ -173,19 +193,30 @@ class NoOpDebugLogger:
     def task_logger(
         self, task_name: str, input: PydanticSerializable
     ) -> "NoOpTaskLogger":
-        """Generate a sub-logger from the current logging instance.
+        """Generate a task-specific span from the current logging instance.
+
 
         Args:
-            name: A descriptive name of what this child logger will contain logs about.
+            task_name: The name of the task that is being logged
+            input: The input for the task that is being logged.
 
         Returns:
-            Another `NoOpDebugLogger`
+            A `NoOpTaskLogger`
         """
+
         return NoOpTaskLogger()
 
 
 class NoOpTaskLogger(NoOpDebugLogger, AbstractContextManager["NoOpTaskLogger"]):
     def record_output(self, output: PydanticSerializable) -> None:
+        """Record a `Task`'s output. Since a Context Manager can't provide this in the `__exit__`
+        method, output should be captured once it is generated.
+
+        This should be handled automatically within the execution of the task.
+
+        Args:
+            output: The output of the task that is being logged.
+        """
         pass
 
     def __exit__(
@@ -288,15 +319,18 @@ class InMemoryDebugLogger(BaseModel):
     def task_logger(
         self, task_name: str, input: PydanticSerializable
     ) -> "InMemoryTaskLogger":
-        """Generate a sub-logger from the current logging instance.
+        """Generate a task-specific span from the current logging instance.
+
 
         Args:
-            name: A descriptive name of what this child logger will contain logs about.
+            task_name: The name of the task that is being logged
+            input: The input for the task that is being logged.
 
         Returns:
-            A nested `InMemoryDebugLogger` that is stored in a nested position as part of the parent
-            logger.
+            A nested `InMemoryTaskLogger` that is stored in a nested position as part of the parent
+                logger
         """
+
         child = InMemoryTaskLogger(name=task_name, parent_uuid=self.uuid, input=input)
         self.logs.append(child)
         return child
@@ -340,6 +374,14 @@ class InMemoryTaskLogger(
             self.end_timestamp = datetime.utcnow()
 
     def record_output(self, output: PydanticSerializable) -> None:
+        """Record a `Task`'s output. Since a Context Manager can't provide this in the `__exit__`
+        method, output should be captured once it is generated.
+
+        This should be handled automatically within the execution of the task.
+
+        Args:
+            output: The output of the task that is being logged.
+        """
         self.output = output
 
     def _rich_render_(self) -> Tree:
