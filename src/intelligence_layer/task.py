@@ -2,6 +2,7 @@ from abc import ABC, abstractmethod
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime
 import functools
+from itertools import islice
 from typing import (
     TYPE_CHECKING,
     Any,
@@ -305,16 +306,34 @@ class Task(ABC, Generic[Input, Output]):
         ...
 
     def run_concurrently(
-        self, inputs: Iterable[tuple[Input, DebugLogger]]
+        self,
+        inputs: Iterable[tuple[Input, DebugLogger]],
+        concurrency_limit: int = MAX_CONCURRENCY,
     ) -> Sequence[Output]:
-        return list(
-            global_executor.map(
+        def run_batch(inputs: Iterable[tuple[Input, DebugLogger]]) -> Iterable[Output]:
+            return global_executor.map(
                 lambda input_and_logger: self.run(
                     input_and_logger[0], input_and_logger[1]
                 ),
                 inputs,
             )
-        )
+
+        return [
+            output
+            for batch in batched(inputs, concurrency_limit)
+            for output in run_batch(batch)
+        ]
+
+
+T = TypeVar("T")
+
+
+def batched(iterable: Iterable[T], n: int) -> Iterable[T]:
+    if n < 1:
+        raise ValueError("n must be at least one")
+    it = iter(iterable)
+    while batch := tuple(islice(it, n)):
+        yield batch
 
 
 ExpectedOutput = TypeVar("ExpectedOutput", bound=PydanticSerializable)
