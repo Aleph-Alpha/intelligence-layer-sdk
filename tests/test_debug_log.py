@@ -57,11 +57,11 @@ def test_task_automatically_logs_input_and_output(client: Client) -> None:
     output = RawCompletion(client=client).run(input=input, logger=logger)
 
     assert len(logger.logs) == 1
-    task_logger = logger.logs[0]
-    assert isinstance(task_logger, InMemoryTaskLogger)
-    assert task_logger.name == "RawCompletion"
-    assert task_logger.parent_uuid == logger.uuid
-    assert task_logger.input == input
-    assert task_logger.output == output
-    assert task_logger.start_timestamp and task_logger.end_timestamp
-    assert task_logger.start_timestamp < task_logger.end_timestamp
+    task_span = logger.logs[0]
+    assert isinstance(task_span, InMemoryTaskLogger)
+    assert task_span.name == "RawCompletion"
+    assert task_span.parent_uuid == logger.uuid
+    assert task_span.input == input
+    assert task_span.output == output
+    assert task_span.start_timestamp and task_span.end_timestamp
+    assert task_span.start_timestamp < task_span.end_timestamp

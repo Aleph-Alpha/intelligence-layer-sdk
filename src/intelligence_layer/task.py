@@ -114,7 +114,7 @@ class DebugLogger(Protocol):
         """
         ...
 
-    def task_logger(self, task_name: str, input: PydanticSerializable) -> "TaskLogger":
+    def task_span(self, task_name: str, input: PydanticSerializable) -> "TaskLogger":
         """Generate a task-specific span from the current logging instance.
 
         Each logger implementation can decide on how it wants to represent this, but they should
@@ -190,7 +190,7 @@ class NoOpDebugLogger:
         """
         return self
 
-    def task_logger(
+    def task_span(
         self, task_name: str, input: PydanticSerializable
     ) -> "NoOpTaskLogger":
         """Generate a task-specific span from the current logging instance.
@@ -316,7 +316,7 @@ class InMemoryDebugLogger(BaseModel):
         self.logs.append(child)
         return child
 
-    def task_logger(
+    def task_span(
         self, task_name: str, input: PydanticSerializable
     ) -> "InMemoryTaskLogger":
         """Generate a task-specific span from the current logging instance.
@@ -439,9 +439,9 @@ class Task(ABC, Generic[Input, Output]):
                 input: Input,
                 logger: DebugLogger,
             ) -> Output:
-                with logger.task_logger(type(self).__name__, input) as task_logger:
-                    output = func(self, input, task_logger)
-                    task_logger.record_output(output)
+                with logger.task_span(type(self).__name__, input) as task_span:
+                    output = func(self, input, task_span)
+                    task_span.record_output(output)
                     return output
 
             return inner
