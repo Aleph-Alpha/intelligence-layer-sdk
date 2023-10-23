@@ -389,7 +389,7 @@ class Task(ABC, Generic[Input, Output]):
                 self: "Task[Input, Output]", input: Input, logger: DebugLogger
             ) -> Output:
                 with logger.task_logger(type(self).__name__, input) as task_logger:
-                    output = func(self, input, logger)
+                    output = func(self, input, task_logger)
                     task_logger.record_output(output)
                     return output
 
