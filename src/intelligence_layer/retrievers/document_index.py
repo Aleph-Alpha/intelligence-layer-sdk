@@ -17,8 +17,21 @@ class DocumentIndex:
 
     With the document index we give users the ability to create collections and upload the documents to a cloud database.
 
-    After that you can search through this documents  The documents can
+    After that you can search through this documents based on the semantic similarity with a query.
 
+    Args:
+        client: An instance of the Aleph Alpha client.
+        base_document_index_url: the url address of the document index
+
+
+    Example:
+        >>> query = "Do you like summer?"
+        >>> document_index = DocumentIndex(client)
+        >>> documents = document_index.search(namespace="my_namespace",
+                                              collection="my_collection",
+                                              query: "What is the capital of Germany",
+                                              max_results=4,
+                                              min_score: 0.5)
     """
 
     def __init__(
@@ -116,6 +129,25 @@ class DocumentIndex:
 
 
 class DocumentIndexRetriever(BaseRetriever):
+    """Search through the documents stored in the Document Index
+    
+    We initialize this Retriever with a collection & namespace names, and we can find the documents in the collection 
+    most semanticly simillar to our query. 
+
+    Args:
+        client: An instance of the Aleph Alpha client.
+        namespace: Your user namespace where all the collections are stored. 
+        collection: The specyfic collection where you want to search through the documents.
+        base_document_index_url: the url address of the document index
+        threshold: A mimumum value of the cosine similarity between the query vector and the document vector
+
+
+    Example:
+        >>> query = "Do you like summer?"
+        >>> retriever = DocumentIndexRetriever(client)
+        >>> documents = retriever.get_relevant_documents_with_scores(query, NoOpDebugLogger(), k=2)
+
+    """
     def __init__(
         self,
         client: Client,

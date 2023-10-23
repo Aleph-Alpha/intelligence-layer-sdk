@@ -28,7 +28,7 @@ class InMemoryRetriever(BaseRetriever):
     Example:
         >>> chunks = ["I do not like rain", "Summer is warm", "We are so back"]
         >>> query = "Do you like summer?"
-        >>> InMemoryRetriever(client, chunks)
+        >>> retriever = InMemoryRetriever(client, chunks)
         >>> documents = retriever.get_relevant_documents_with_scores(query, NoOpDebugLogger(), k=2)
     """
 
