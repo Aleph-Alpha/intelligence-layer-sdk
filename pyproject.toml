@@ -23,6 +23,7 @@ rich = "^13.6.0"
 nbconvert = "^7.9.2"
 datasets = "^2.14.5"
 jupyter = "^1.0.0"
+requests = "^2.31.0"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "*"

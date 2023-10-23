@@ -17,7 +17,9 @@ def client() -> TestClient:
 
 
 def test_classify(client: TestClient) -> None:
-    response = client.post("/classify", json={"text": "Hello", "labels": ["yes", "no"]})
+    response = client.post(
+        "/classify", json={"chunk": "Hello", "labels": ["yes", "no"]}
+    )
     assert response.status_code == HTTPStatus.OK
     assert response.headers.get("content-type", "") == "application/json"
     data = response.json()

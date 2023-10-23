@@ -4,7 +4,7 @@ from aleph_alpha_client.aleph_alpha_client import Client
 from aleph_alpha_client.completion import CompletionRequest
 
 from intelligence_layer.task import DebugLogger, InMemoryDebugLogger, LogEntry
-from intelligence_layer.completion import Completion, CompletionInput
+from intelligence_layer.completion import RawCompletion, RawCompletionInput
 
 
 def test_debug_add_log_entries() -> None:
@@ -45,11 +45,11 @@ def test_can_add_parent_and_child_logs() -> None:
 
 def test_task_automatically_logs_input_and_output(client: Client) -> None:
     logger = InMemoryDebugLogger(name="completion")
-    input = CompletionInput(
+    input = RawCompletionInput(
         request=CompletionRequest(prompt=Prompt.from_text("test")),
         model="luminous-base",
     )
-    Completion(client=client).run(input=input, logger=logger)
+    RawCompletion(client=client).run(input=input, logger=logger)
 
     assert len(logger.logs) == 2
     assert isinstance(logger.logs[0], LogEntry) and logger.logs[0].message == "Input"

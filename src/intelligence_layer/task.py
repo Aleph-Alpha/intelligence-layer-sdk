@@ -7,6 +7,7 @@ from typing import (
     Any,
     Generic,
     Mapping,
+    NewType,
     Optional,
     Sequence,
     TypeVar,
@@ -54,6 +55,17 @@ else:
         | BaseModel,
     )
 
+Chunk = NewType("Chunk", str)
+"""Segment of a larger text.
+
+This type infers that the string is smaller than the context size of the model where it is used.
+
+LLMs can't process documents larger than their context size.
+To handle this, documents have to be split up into smaller segments that fit within their context size.
+These smaller segments are referred to as chunks.
+
+"""
+
 
 class JsonSerializer(RootModel[PydanticSerializable]):
     root: SerializeAsAny[PydanticSerializable]
@@ -72,13 +84,8 @@ class LogEntry(BaseModel):
     """
 
     message: str
-    """A description of the value you are logging, such as the step in the task this
-        is related to."""
     value: SerializeAsAny[PydanticSerializable]
-    """The relevant data you want to log. Can be anything that is serializable by
-        Pydantic, which gives the loggers flexibility in how they store and emit the logs."""
     timestamp: datetime = Field(default_factory=datetime.utcnow)
-    """The time that the log was emitted."""
 
     def _rich_render_(self) -> Panel:
         """Renders the debug log via classes in the `rich` package"""
@@ -203,10 +210,7 @@ class InMemoryDebugLogger(BaseModel):
     """
 
     name: str
-    """A descriptive name of what the logger contains log entries about."""
     logs: list[Union[LogEntry, "InMemoryDebugLogger"]] = []
-    """A sequential list of log entries and/or nested InMemoryDebugLoggers with their own log
-        entries."""
 
     def log(self, message: str, value: PydanticSerializable) -> None:
         """Record a log of relevant information as part of a step within a task.
@@ -308,6 +312,7 @@ class Example(BaseModel, Generic[Input, ExpectedOutput]):
         input: Input for the task. Has to be same type as the input for the task used.
         expected_output: The expected output from a given example run.
             This will be used by the evaluator to compare the received output with.
+        ident: Identifier for the example, defaults to uuid.
     """
 
     input: Input
@@ -321,7 +326,6 @@ class Dataset(BaseModel, Generic[Input, ExpectedOutput]):
     Attributes:
         name: This a human readable identifier for a dataset.
         examples: The actual examples that a task will be evaluated on.
-
     """
 
     name: str

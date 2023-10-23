@@ -11,7 +11,7 @@ from aleph_alpha_client import (
     Prompt,
 )
 from aleph_alpha_client.explanation import TextScoreWithRaw
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from intelligence_layer.prompt_template import (
     PromptRange,
@@ -32,12 +32,15 @@ class TextHighlightInput(BaseModel):
             Supports liquid-template-language-style {% promptrange range_name %}/{% endpromptrange %} for range.
         target: The target that should be explained. Expected to follow the prompt.
         model: A valid Aleph Alpha model name.
-
+        focus_ranges: The ranges contained in `prompt_with_metadata` the returned highlights stem from. That means that each returned
+            highlight overlaps with at least one character with one of the ranges listed here.
+            If this set is empty highlights of the entire prompt are returned.
     """
 
     prompt_with_metadata: PromptWithMetadata
     target: str
     model: str
+    focus_ranges: frozenset[str] = frozenset()
 
 
 class ScoredTextHighlight(BaseModel):
@@ -46,7 +49,6 @@ class ScoredTextHighlight(BaseModel):
     Attributes:
         text: The highlighted part of the prompt.
         score: The z-score of the highlight. Depicts relevance of this highlight in relation to all other highlights. Can be positive (support) or negative (contradiction).
-
     """
 
     text: str
@@ -58,7 +60,6 @@ class TextHighlightOutput(BaseModel):
 
     Attributes:
         highlights: A sequence of 'ScoredTextHighlight's.
-
     """
 
     highlights: Sequence[ScoredTextHighlight]
@@ -84,7 +85,6 @@ class TextHighlight(Task[TextHighlightInput, TextHighlightOutput]):
     >>>     prompt_with_metadata=prompt_with_metadata, target=completion, model=model
     >>> )
     >>> output = text_highlight.run(input, InMemoryLogger(name="Highlight"))
-
     """
 
     _client: Client
@@ -96,6 +96,7 @@ class TextHighlight(Task[TextHighlightInput, TextHighlightOutput]):
     def run(
         self, input: TextHighlightInput, logger: DebugLogger
     ) -> TextHighlightOutput:
+        self._raise_on_invalid_focus_range(input)
         explanation = self._explain(
             prompt=input.prompt_with_metadata.prompt,
             target=input.target,
@@ -103,7 +104,9 @@ class TextHighlight(Task[TextHighlightInput, TextHighlightOutput]):
             logger=logger,
         )
         prompt_ranges = self._flatten_prompt_ranges(
-            input.prompt_with_metadata.ranges.values()
+            range
+            for name, range in input.prompt_with_metadata.ranges.items()
+            if name in input.focus_ranges
         )
         text_prompt_item_explanations_and_indices = (
             self._extract_text_prompt_item_explanations_and_item_index(
@@ -116,6 +119,13 @@ class TextHighlight(Task[TextHighlightInput, TextHighlightOutput]):
             logger,
         )
         return TextHighlightOutput(highlights=highlights)
+
+    def _raise_on_invalid_focus_range(self, input: TextHighlightInput) -> None:
+        unknown_focus_ranges = input.focus_ranges - set(
+            input.prompt_with_metadata.ranges.keys()
+        )
+        if unknown_focus_ranges:
+            raise ValueError(f"Unknown focus ranges: {', '.join(unknown_focus_ranges)}")
 
     def _explain(
         self, prompt: Prompt, target: str, model: str, logger: DebugLogger
@@ -237,20 +247,16 @@ class TextHighlight(Task[TextHighlightInput, TextHighlightOutput]):
         item_check: int,
         pos_check: int,
     ) -> bool:
-        assert isinstance(prompt_range.start, TextCursor)
-        assert isinstance(prompt_range.end, TextCursor)
         if item_check < prompt_range.start.item or item_check > prompt_range.end.item:
             return False
-        elif (
-            item_check == prompt_range.start.item
-            and pos_check < prompt_range.start.position
-        ):
-            return False
-        elif (
-            item_check == prompt_range.end.item
-            and pos_check > prompt_range.end.position
-        ):
-            return False
+        if item_check == prompt_range.start.item:
+            assert isinstance(prompt_range.start, TextCursor)
+            if pos_check < prompt_range.start.position:
+                return False
+        if item_check == prompt_range.end.item:
+            assert isinstance(prompt_range.end, TextCursor)
+            if pos_check > prompt_range.end.position:
+                return False
         return True
 
     @staticmethod

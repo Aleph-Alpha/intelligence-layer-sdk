@@ -18,8 +18,13 @@ from aleph_alpha_client import (
 )
 from pydantic import BaseModel
 
-from intelligence_layer.completion import Completion, CompletionInput, CompletionOutput
+from intelligence_layer.completion import (
+    RawCompletion,
+    RawCompletionInput,
+    RawCompletionOutput,
+)
 from intelligence_layer.task import (
+    Chunk,
     Evaluator,
     Task,
     DebugLogger,
@@ -53,12 +58,11 @@ class ClassifyInput(BaseModel):
     """Input for a classification task.
 
     Attributes:
-        text: text to be classified.
-                XXX : Max length of text
+        chunk: text to be classified.
         labels: Possible labels the model will choose a label from
     """
 
-    text: str
+    chunk: Chunk
     labels: frozenset[str]
 
 
@@ -119,12 +123,12 @@ Reply with only the class label.
     def __init__(self, client: Client) -> None:
         super().__init__()
         self._client = client
-        self._completion_task = Completion(client)
+        self._completion_task = RawCompletion(client)
 
     def run(self, input: ClassifyInput, logger: DebugLogger) -> ClassifyOutput:
         tokenized_labels = self._tokenize_labels(input.labels, logger)
         completion_responses_per_label = self._complete_per_label(
-            self.MODEL, self.PROMPT_TEMPLATE, input.text, tokenized_labels, logger
+            self.MODEL, self.PROMPT_TEMPLATE, input.chunk, tokenized_labels, logger
         )
         log_probs_per_label = self._get_log_probs_of_labels(
             completion_responses_per_label, tokenized_labels, logger
@@ -175,7 +179,7 @@ Reply with only the class label.
         text: str,
         tokenized_labels: Mapping[str, Sequence[Token]],
         logger: DebugLogger,
-    ) -> Mapping[str, CompletionOutput]:
+    ) -> Mapping[str, RawCompletionOutput]:
         logger.log(
             "Completion",
             {
@@ -203,7 +207,7 @@ Reply with only the class label.
         prompt_template: PromptTemplate,
         logger: DebugLogger,
         **kwargs: Any,
-    ) -> CompletionOutput:
+    ) -> RawCompletionOutput:
         request = CompletionRequest(
             prompt=prompt_template.to_prompt(**kwargs),
             maximum_tokens=0,
@@ -212,12 +216,12 @@ Reply with only the class label.
             echo=True,
         )
         return self._completion_task.run(
-            CompletionInput(request=request, model=model), logger
+            RawCompletionInput(request=request, model=model), logger
         )
 
     def _get_log_probs_of_labels(
         self,
-        completion_responses: Mapping[str, CompletionOutput],
+        completion_responses: Mapping[str, RawCompletionOutput],
         tokenized_labels: Mapping[str, Sequence[Token]],
         logger: DebugLogger,
     ) -> Mapping[str, Sequence[TokenWithProb]]:
