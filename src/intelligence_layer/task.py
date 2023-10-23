@@ -82,14 +82,7 @@ class DebugLogger(Protocol):
 
     Implementations of how logs are collected and stored may differ. Refer to the individual
     documentation of each implementation to see how to use the resulting logger.
-
-    Attributes:
-        name: The name of the `DebugLogger` instance.
     """
-
-    name: str
-    uuid: UUID
-    parent_uuid: Optional[UUID]
 
     def log(self, message: str, value: PydanticSerializable) -> None:
         """Record a log of relevant information as part of a step within a task.
@@ -149,14 +142,7 @@ class NoOpDebugLogger:
     don't have a need to collect or inspect the actual logs.
 
     All calls to `log` won't actually do anything.
-
-    Attributes:
-        name: Will always be the default string of "NoOp"
     """
-
-    name: str = "NoOp"
-    uuid: UUID = uuid4()
-    parent_uuid: Optional[UUID] = None
 
     def log(self, message: str, value: PydanticSerializable) -> None:
         """Record a log of relevant information as part of a step within a task.
@@ -194,17 +180,17 @@ class NoOpDebugLogger:
         """
         return NoOpTaskLogger()
 
+
+class NoOpTaskLogger(NoOpDebugLogger, AbstractContextManager["NoOpTaskLogger"]):
+    def record_output(self, output: PydanticSerializable) -> None:
+        pass
+
     def __exit__(
         self,
         exc_type: Optional[type[BaseException]],
         exc_value: Optional[BaseException],
         traceback: Optional[TracebackType],
     ) -> None:
-        pass
-
-
-class NoOpTaskLogger(NoOpDebugLogger, AbstractContextManager["NoOpTaskLogger"]):
-    def record_output(self, output: PydanticSerializable) -> None:
         pass
 
 
