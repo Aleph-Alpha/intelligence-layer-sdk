@@ -180,6 +180,22 @@ Reply with only the class label.
         tokenized_labels: Mapping[str, Sequence[Token]],
         logger: DebugLogger,
     ) -> Mapping[str, RawCompletionOutput]:
+        def input_with_logger(
+            label: str, tokens: Sequence[Token]
+        ) -> tuple[RawCompletionInput, DebugLogger]:
+            prompt_template = PromptTemplate(prompt_template_str)
+            return (
+                RawCompletionInput(
+                    request=self._completion_request(
+                        prompt_template,
+                        text=text,
+                        label=prompt_template.embed_prompt(to_aa_tokens_prompt(tokens)),
+                    ),
+                    model=model,
+                ),
+                logger.child_logger(f"Completion {label}"),
+            )
+
         logger.log(
             "Completion",
             {
@@ -188,28 +204,15 @@ Reply with only the class label.
                 "text": text,
             },
         )
-        prompt_template = PromptTemplate(prompt_template_str)
-
         inputs = (
-            (
-                RawCompletionInput(
-                    request=self._completion_request(
-                        prompt_template=prompt_template,
-                        text=text,
-                        label=prompt_template.embed_prompt(to_aa_tokens_prompt(tokens)),
-                    ),
-                    model=model,
-                ),
-                logger.child_logger(f"Completion {label}"),
-            )
+            input_with_logger(label, tokens)
             for label, tokens in tokenized_labels.items()
         )
 
         outputs = self._completion_task.run_concurrently(inputs)
-        completion_per_label = {
+        return {
             label: output for label, output in zip(tokenized_labels.keys(), outputs)
         }
-        return completion_per_label
 
     def _completion_request(
         self,
