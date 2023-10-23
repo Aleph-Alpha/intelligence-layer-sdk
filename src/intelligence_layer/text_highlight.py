@@ -11,7 +11,7 @@ from aleph_alpha_client import (
     Prompt,
 )
 from aleph_alpha_client.explanation import TextScoreWithRaw
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 
 from intelligence_layer.prompt_template import (
     PromptRange,
@@ -76,6 +76,8 @@ class TextHighlight(Task[TextHighlightInput, TextHighlightOutput]):
         client: Aleph Alpha client instance for running model related API calls.
 
     Example:
+    >>> client = Client(token="YOUR_AA_TOKEN")
+    >>> text_highlight = TextHighlight(client=client)
     >>> prompt_template_str = "{% promptrange r1 %}Question: What is 2 + 2?{% endpromptrange %}\nAnswer:"
     >>> template = PromptTemplate(prompt_template_str)
     >>> prompt_with_metadata = template.to_prompt_with_metadata()
