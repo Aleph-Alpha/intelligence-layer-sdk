@@ -130,13 +130,13 @@ class DocumentIndex:
 
 class DocumentIndexRetriever(BaseRetriever):
     """Search through the documents stored in the Document Index
-    
-    We initialize this Retriever with a collection & namespace names, and we can find the documents in the collection 
-    most semanticly simillar to our query. 
+
+    We initialize this Retriever with a collection & namespace names, and we can find the documents in the collection
+    most semanticly similar to our query.
 
     Args:
         client: An instance of the Aleph Alpha client.
-        namespace: Your user namespace where all the collections are stored. 
+        namespace: Your user namespace where all the collections are stored.
         collection: The specyfic collection where you want to search through the documents.
         base_document_index_url: the url address of the document index
         threshold: A mimumum value of the cosine similarity between the query vector and the document vector
@@ -148,6 +148,7 @@ class DocumentIndexRetriever(BaseRetriever):
         >>> documents = retriever.get_relevant_documents_with_scores(query, NoOpDebugLogger(), k=2)
 
     """
+
     def __init__(
         self,
         client: Client,
