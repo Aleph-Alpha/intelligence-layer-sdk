@@ -24,14 +24,14 @@ class ConcurrencyCounter(Task[None, None]):
 
 def test_run_concurrently() -> None:
     task = ConcurrencyCounter()
-    logger = NoOpDebugLogger()
-    task.run_concurrently([(None, logger)] * MAX_CONCURRENCY * 2)
+    task.run_concurrently([None] * MAX_CONCURRENCY * 2, NoOpDebugLogger())
     assert task.max_concurrency_counter == MAX_CONCURRENCY
 
 
 def test_run_concurrently_limited() -> None:
     task = ConcurrencyCounter()
-    logger = NoOpDebugLogger()
     limit_concurrency = MAX_CONCURRENCY // 2
-    task.run_concurrently([(None, logger)] * MAX_CONCURRENCY * 2, limit_concurrency)
+    task.run_concurrently(
+        [None] * MAX_CONCURRENCY * 2, NoOpDebugLogger(), limit_concurrency
+    )
     assert task.max_concurrency_counter == limit_concurrency

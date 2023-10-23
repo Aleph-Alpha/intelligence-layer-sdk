@@ -110,12 +110,10 @@ Condense multiple answers into a single answer. Rely only on the provided answer
     ) -> MultipleChunkQaOutput:
         qa_outputs = self._single_chunk_qa.run_concurrently(
             (
-                (
-                    SingleChunkQaInput(question=input.question, chunk=chunk),
-                    logger,
-                )
-                for chunk_number, chunk in enumerate(input.chunks)
+                SingleChunkQaInput(question=input.question, chunk=chunk)
+                for chunk in input.chunks
             ),
+            logger,
         )
 
         final_answer = self._merge_answers(input.question, qa_outputs, logger)

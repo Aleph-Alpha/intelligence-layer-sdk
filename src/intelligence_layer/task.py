@@ -455,17 +455,19 @@ class Task(ABC, Generic[Input, Output]):
 
     def run_concurrently(
         self,
-        inputs: Iterable[tuple[Input, DebugLogger]],
+        inputs: Iterable[Input],
+        debug_logger: DebugLogger,
         concurrency_limit: int = MAX_CONCURRENCY,
     ) -> Sequence[Output]:
-        def run_batch(inputs: Iterable[tuple[Input, DebugLogger]]) -> Iterable[Output]:
+        def run_batch(inputs: Iterable[Input]) -> Iterable[Output]:
             return global_executor.map(
-                lambda input_and_logger: self.run(
-                    input_and_logger[0], input_and_logger[1]
-                ),
+                lambda input: self.run(input, child_logger),
                 inputs,
             )
 
+        child_logger = debug_logger.child_logger(
+            f"Concurrent {type(self).__name__} tasks"
+        )
         return [
             output
             for batch in batched(inputs, concurrency_limit)
