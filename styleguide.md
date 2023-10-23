@@ -27,7 +27,7 @@ Here's how we differentiate and allocate content between them:
 
 ### Docstrings
 
-**Purpose**: Docstrings give a quickstart overview. They provide the necessary information for user to be able to use this class/function in a correct manner. Not more, not less.
+**Purpose**: Docstrings give a quickstart overview. They provide the necessary information for a user to be able to use this class/function in a correct manner. Not more, not less.
 
 - **Summary**:
     - **One-Liner**: What does this class/function do?
