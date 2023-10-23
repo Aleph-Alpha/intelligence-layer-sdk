@@ -61,12 +61,11 @@ def test_multiple_chunk_qa_with_mulitple_chunks(qa: MultipleChunkQa) -> None:
     ]
 
     input = MultipleChunkQaInput(chunks=chunks, question=question)
-    output = qa.run(input, NoOpDebugLogger())
+    logger = InMemoryDebugLogger(name="x")
+    output = qa.run(input, logger)
 
     assert output.answer
     assert "Henri" in output.answer
-    assert any(
-        any("Henri" in highlight for highlight in source.highlights)
-        for source in output.sources
-    )
-    assert len(output.sources) == 2
+    assert len(output.sources) == 1
+    assert output.sources[0].chunk == chunks[0]
+    assert any("Henri" in highlight for highlight in output.sources[0].highlights)

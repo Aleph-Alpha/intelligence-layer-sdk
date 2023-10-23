@@ -1,4 +1,4 @@
-from typing import Optional, Sequence
+from typing import Iterable, Optional, Sequence
 from intelligence_layer.single_chunk_qa import (
     SingleChunkQaInput,
     SingleChunkQaOutput,
@@ -108,39 +108,45 @@ Condense multiple answers into a single answer. Rely only on the provided answer
     def run(
         self, input: MultipleChunkQaInput, logger: DebugLogger
     ) -> MultipleChunkQaOutput:
-        qa_outputs: Sequence[SingleChunkQaOutput] = [
-            self._single_chunk_qa.run(
-                SingleChunkQaInput(question=input.question, chunk=chunk),
-                logger.child_logger(f"Single Chunk QA for Chunk {chunk_number}"),
-            )
-            for chunk_number, chunk in enumerate(input.chunks)
-        ]
+        qa_outputs = self._single_chunk_qa.run_concurrently(
+            (
+                (
+                    SingleChunkQaInput(question=input.question, chunk=chunk),
+                    logger.child_logger(f"Single Chunk QA for chunk {chunk_number}"),
+                )
+                for chunk_number, chunk in enumerate(input.chunks)
+            ),
+        )
 
-        answers: list[str] = [
-            output.answer for output in qa_outputs if output.answer is not None
-        ]
+        final_answer = self._merge_answers(input.question, qa_outputs, logger)
 
-        if len(answers) == 0:
-            return MultipleChunkQaOutput(
-                answer=None,
-                sources=[],
-            )
-        joined_answers = "\n".join(answers)
-        output = self._instruct(
-            f"""Question: {input.question}
+        return MultipleChunkQaOutput(
+            answer=final_answer,
+            sources=[
+                Source(chunk=chunk, highlights=qa_output.highlights)
+                for qa_output, chunk in zip(qa_outputs, input.chunks)
+                if qa_output.answer
+            ],
+        )
+
+    def _merge_answers(
+        self,
+        question: str,
+        qa_outputs: Iterable[SingleChunkQaOutput],
+        logger: DebugLogger,
+    ) -> Optional[str]:
+        joined_answers = "\n".join(
+            output.answer for output in qa_outputs if output.answer
+        )
+        if not joined_answers:
+            return None
+        return self._instruct(
+            f"""Question: {question}
 
 Answers:
 {joined_answers}""",
             logger.child_logger("Merge Answers"),
-        )
-
-        return MultipleChunkQaOutput(
-            answer=output.response,
-            sources=[
-                Source(chunk=chunk, highlights=qa_output.highlights)
-                for qa_output, chunk in zip(qa_outputs, input.chunks)
-            ],
-        )
+        ).response
 
     def _instruct(self, input: str, logger: DebugLogger) -> InstructionOutput:
         return self._instruction.run(

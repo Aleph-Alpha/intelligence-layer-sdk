@@ -6,6 +6,7 @@ from typing import (
     TYPE_CHECKING,
     Any,
     Generic,
+    Iterable,
     Mapping,
     NewType,
     Optional,
@@ -264,6 +265,9 @@ Output = TypeVar("Output", bound=PydanticSerializable)
 """Interface of the output returned by the task."""
 
 
+global_executor = ThreadPoolExecutor(max_workers=20)
+
+
 class Task(ABC, Generic[Input, Output]):
     """Base task interface. This may consist of several sub-tasks to accomplish the given task.
 
@@ -298,6 +302,18 @@ class Task(ABC, Generic[Input, Output]):
     def run(self, input: Input, logger: DebugLogger) -> Output:
         """Executes the process for this use-case."""
         ...
+
+    def run_concurrently(
+        self, inputs: Iterable[tuple[Input, DebugLogger]]
+    ) -> Sequence[Output]:
+        return list(
+            global_executor.map(
+                lambda input_and_logger: self.run(
+                    input_and_logger[0], input_and_logger[1]
+                ),
+                inputs,
+            )
+        )
 
 
 ExpectedOutput = TypeVar("ExpectedOutput", bound=PydanticSerializable)
