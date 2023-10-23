@@ -18,7 +18,7 @@ class InMemoryRetriever(BaseRetriever):
 
     We use the [Qdrant](https://github.com/qdrant/qdrant) in memory instance to store the chunks and their asymmetric (SemanticRepresentation.Document) embeddings.
 
-    Than, if you want to look for the top k documents simillar to your query we embed it and return to you the most k similar chunks alongside the Cosine Similarity between the query embedding and the document embedding.
+    Than, if you want to look for the top k documents similar to your query we embed it and return to you the most k similar chunks alongside the Cosine Similarity between the query embedding and the document embedding.
 
     Args:
         client: An instance of the Aleph Alpha client.
