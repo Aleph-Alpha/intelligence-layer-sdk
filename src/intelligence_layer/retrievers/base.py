@@ -1,6 +1,5 @@
 from abc import ABC, abstractmethod
-import functools
-from typing import Callable, Sequence, Any
+from typing import Sequence
 from pydantic import BaseModel
 from intelligence_layer.task import DebugLogger
 
