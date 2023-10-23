@@ -14,17 +14,27 @@ from intelligence_layer.task import DebugLogger
 
 
 class InMemoryRetriever(BaseRetriever):
+    """Retrieve top k documents using in memory semantic search
+
+    We use the [Qdrant](https://github.com/qdrant/qdrant) in memory instance to store the chunks and their asymmetric (SemanticRepresentation.Document) embeddings.
+
+    Than, if you want to look for the top k documents simillar to your query we embed it and return to you the most k similar chunks alongside the Cosine Similarity between the query embedding and the document embedding. 
+
+    Args:
+        client: An instance of the Aleph Alpha client.
+        chunks: A sequence of texts you want to embed and put in memory as your documents
+        threshold: A mimumum value of the cosine similarity between the query vector and the document vector
+    """
     def __init__(
         self,
         client: Client,
         chunks: Sequence[str],
         threshold: float = 0.5,
-        collection_name: str = "default_collection",
     ) -> None:
         self._client = client
         self._search_client = QdrantClient(":memory:")
-        self._collection_name = collection_name
-        self.threshold = threshold
+        self._collection_name = "in_memory_collection"
+        self._threshold = threshold
 
         self._search_client.recreate_collection(
             collection_name=self._collection_name,
@@ -47,7 +57,7 @@ class InMemoryRetriever(BaseRetriever):
         search_result = self._search_client.search(
             collection_name=self._collection_name,
             query_vector=query_embedding,
-            score_threshold=self.threshold,
+            score_threshold=self._threshold,
             limit=k,
         )
         logger.log("output", search_result)
