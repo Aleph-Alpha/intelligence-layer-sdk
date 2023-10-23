@@ -94,8 +94,8 @@ class MyTask:
 
     Example:
         >>> var = "Describe here how to use this task end to end"
-        >>> print("End on one newlines.")
-        End on one newlines.
+        >>> print("End on one newline.")
+        End on one newline.
     """
 ```
 
