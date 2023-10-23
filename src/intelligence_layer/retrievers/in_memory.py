@@ -24,6 +24,12 @@ class InMemoryRetriever(BaseRetriever):
         client: An instance of the Aleph Alpha client.
         chunks: A sequence of texts you want to embed and put in memory as your documents
         threshold: A mimumum value of the cosine similarity between the query vector and the document vector
+
+    Example:
+        >>> chunks = ["I do not like rain", "Summer is warm", "We are so back"]    
+        >>> query = "Do you like summer?"
+        >>> InMemoryRetriever(client, chunks)
+        >>> documents = retriever.get_relevant_documents_with_scores(query, NoOpDebugLogger(), k=2)
     """
     def __init__(
         self,
