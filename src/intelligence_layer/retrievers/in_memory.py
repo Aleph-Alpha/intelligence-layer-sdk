@@ -18,7 +18,7 @@ class InMemoryRetriever(BaseRetriever):
 
     We use the [Qdrant](https://github.com/qdrant/qdrant) in memory instance to store the chunks and their asymmetric (SemanticRepresentation.Document) embeddings.
 
-    Than, if you want to look for the top k documents simillar to your query we embed it and return to you the most k similar chunks alongside the Cosine Similarity between the query embedding and the document embedding. 
+    Than, if you want to look for the top k documents simillar to your query we embed it and return to you the most k similar chunks alongside the Cosine Similarity between the query embedding and the document embedding.
 
     Args:
         client: An instance of the Aleph Alpha client.
@@ -26,11 +26,12 @@ class InMemoryRetriever(BaseRetriever):
         threshold: A mimumum value of the cosine similarity between the query vector and the document vector
 
     Example:
-        >>> chunks = ["I do not like rain", "Summer is warm", "We are so back"]    
+        >>> chunks = ["I do not like rain", "Summer is warm", "We are so back"]
         >>> query = "Do you like summer?"
         >>> InMemoryRetriever(client, chunks)
         >>> documents = retriever.get_relevant_documents_with_scores(query, NoOpDebugLogger(), k=2)
     """
+
     def __init__(
         self,
         client: Client,
