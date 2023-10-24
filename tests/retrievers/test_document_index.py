@@ -22,6 +22,7 @@ def retriever(document_index: DocumentIndex) -> DocumentIndexRetriever:
     )
 
 
+@pytest.mark.internal
 def test_document_index(retriever: DocumentIndexRetriever) -> None:
     documents = retriever.get_relevant_documents_with_scores(
         QUERY
