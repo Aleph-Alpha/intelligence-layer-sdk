@@ -19,8 +19,8 @@ from typing import (
     Union,
     runtime_checkable,
     Callable,
-    Self,
 )
+from typing_extensions import Self
 from uuid import uuid4
 from pydantic import (
     BaseModel,
