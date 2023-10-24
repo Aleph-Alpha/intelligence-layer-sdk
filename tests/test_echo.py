@@ -1,8 +1,7 @@
 from typing import Sequence
-from aleph_alpha_client import Client, Prompt, TokenizationRequest
+from aleph_alpha_client import Client
 from pytest import fixture
-import tokenizers
-
+import tokenizers  # type: ignore
 from intelligence_layer.echo import EchoInput, EchoTask, Token, TokenWithProb
 from intelligence_layer.task import NoOpDebugLogger
 
@@ -15,16 +14,13 @@ def echo_task(client: Client) -> EchoTask:
 def tokenize_completion(
     expected_output: str, model: str, client: Client
 ) -> Sequence[Token]:
-    """Turns th expected output into list of token ids. Important so that we know how many tokens
-    the label is and can retrieve the last N log probs for the label"""
-    response = client.tokenize(
-        request=TokenizationRequest(expected_output, tokens=True, token_ids=True),
-        model=model,
-    )
-    assert response.token_ids and response.tokens
+    tokenizer = client.tokenizer(model)
+    assert tokenizer.pre_tokenizer
+    tokenizer.pre_tokenizer.add_prefix_space = False
+    tokens: tokenizers.Encoding = tokenizer.encode(expected_output)
     return [
         Token(token=token, token_id=token_id)
-        for token, token_id in zip(response.tokens, response.token_ids)
+        for token, token_id in zip(tokens.tokens, tokens.ids)
     ]
 
 
@@ -65,5 +61,3 @@ def test_compare_tokens(echo_task: EchoTask) -> None:
     assert all([isinstance(t, TokenWithProb) for t in result.tokens_with_log_probs])
     for token, result_token in zip(tokens, result.tokens_with_log_probs):
         assert token == result_token.token
-
-    # tokenizer = client.tokenizer(input.model)
