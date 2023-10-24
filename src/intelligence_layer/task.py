@@ -20,7 +20,7 @@ from typing import (
     runtime_checkable,
     Callable,
 )
-from uuid import uuid4, UUID
+from uuid import uuid4
 from pydantic import (
     BaseModel,
     RootModel,
@@ -284,8 +284,6 @@ class InMemoryDebugLogger(BaseModel):
     """
 
     name: str
-    uuid: UUID = Field(default_factory=uuid4)
-    parent_uuid: Optional[UUID] = None
     logs: list[Union[LogEntry, "InMemoryDebugLogger", "InMemoryTaskLogger"]] = []
 
     def log(self, message: str, value: PydanticSerializable) -> None:
@@ -312,7 +310,7 @@ class InMemoryDebugLogger(BaseModel):
             A nested `InMemoryDebugLogger` that is stored in a nested position as part of the parent
             logger.
         """
-        child = InMemoryDebugLogger(name=name, parent_uuid=self.uuid)
+        child = InMemoryDebugLogger(name=name)
         self.logs.append(child)
         return child
 
@@ -331,7 +329,7 @@ class InMemoryDebugLogger(BaseModel):
                 logger
         """
 
-        child = InMemoryTaskLogger(name=task_name, parent_uuid=self.uuid, input=input)
+        child = InMemoryTaskLogger(name=task_name, input=input)
         self.logs.append(child)
         return child
 

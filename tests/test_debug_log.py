@@ -60,7 +60,6 @@ def test_task_automatically_logs_input_and_output(client: Client) -> None:
     task_span = logger.logs[0]
     assert isinstance(task_span, InMemoryTaskLogger)
     assert task_span.name == "RawCompletion"
-    assert task_span.parent_uuid == logger.uuid
     assert task_span.input == input
     assert task_span.output == output
     assert task_span.start_timestamp and task_span.end_timestamp
