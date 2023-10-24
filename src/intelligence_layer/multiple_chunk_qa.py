@@ -138,7 +138,7 @@ Condense multiple answers into a single answer. Rely only on the provided answer
             return None
         elif len(answers) == 1:
             return answers[0]
-        
+
         joined_answers = "\n".join(answers)
         return self._instruct(
             f"""Question: {question}
