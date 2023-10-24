@@ -10,15 +10,14 @@ from aleph_alpha_client import (
 from qdrant_client.conversions.common_types import ScoredPoint
 from qdrant_client.http.models import Distance, VectorParams, PointStruct
 
-from intelligence_layer.task import DebugLogger
+from intelligence_layer.task import Chunk, DebugLogger
 
 
 class InMemoryRetriever(BaseRetriever):
     """Retrieve top k documents using in memory semantic search
 
-    We use the [Qdrant](https://github.com/qdrant/qdrant) in memory instance to store the chunks and their asymmetric (SemanticRepresentation.Document) embeddings.
-
-    Then, if you want to look for the top k documents similar to your query we embed it and return to you the most k similar chunks alongside the Cosine Similarity between the query embedding and the document embedding.
+    This retriever uses a [Qdrant](https://github.com/qdrant/qdrant) in memory vector store instance to store the chunks and their asymmetric (SemanticRepresentation.Document) embeddings.
+    When running "get_relevant_documents_with_scores", the query is embedded asymmetrically (SemanticRepresentation.Query) and scored against the embeddings in the vector store to retrieve the k-most similar matches by cosine similarity.
 
     Args:
         client: An instance of the Aleph Alpha client.
@@ -35,7 +34,7 @@ class InMemoryRetriever(BaseRetriever):
     def __init__(
         self,
         client: Client,
-        chunks: Sequence[str],
+        chunks: Sequence[Chunk],
         threshold: float = 0.5,
     ) -> None:
         self._client = client
@@ -83,7 +82,7 @@ class InMemoryRetriever(BaseRetriever):
             request=embedding_request, model="luminous-base"
         ).embedding
 
-    def _add_chunks_to_memory(self, chunks: Sequence[str]) -> None:
+    def _add_chunks_to_memory(self, chunks: Sequence[Chunk]) -> None:
         embeddings = [self._embed(c, SemanticRepresentation.Document) for c in chunks]
 
         self._search_client.upsert(

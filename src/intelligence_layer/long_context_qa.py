@@ -1,3 +1,4 @@
+from typing import Sequence
 from aleph_alpha_client import (
     Client,
 )
@@ -78,7 +79,7 @@ class LongContextQa(Task[LongContextQaInput, MultipleChunkQaOutput]):
     def run(
         self, input: LongContextQaInput, logger: DebugLogger
     ) -> MultipleChunkQaOutput:
-        chunks = self._splitter.chunks(input.text, self._max_tokens_in_chunk)
+        chunks = self._chunk(input.text)
         logger.log("chunks", chunks)
 
         retriever = InMemoryRetriever(self._client, chunks=chunks, threshold=0.5)
@@ -96,3 +97,8 @@ class LongContextQa(Task[LongContextQaInput, MultipleChunkQaOutput]):
         qa_output = self._multi_chunk_qa.run(multi_chunk_qa_input, logger)
 
         return qa_output
+
+    def _chunk(self, text: str) -> Sequence[Chunk]:
+        return [
+            Chunk(t) for t in self._splitter.chunks(text, self._max_tokens_in_chunk)
+        ]

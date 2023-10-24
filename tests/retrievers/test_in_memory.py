@@ -1,9 +1,9 @@
 from pytest import fixture
 from intelligence_layer.retrievers.in_memory import InMemoryRetriever
 from aleph_alpha_client import Client
-from intelligence_layer.task import NoOpDebugLogger
+from intelligence_layer.task import Chunk, NoOpDebugLogger
 
-CHUNKS = ["I do not like rain", "Summer is warm", "We are so back"]
+CHUNKS = [Chunk(t) for t in ["I do not like rain", "Summer is warm", "We are so back"]]
 QUERY = "Do you like summer?"
 
 
