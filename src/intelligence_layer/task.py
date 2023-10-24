@@ -114,7 +114,7 @@ class DebugLogger(Protocol):
         """
         ...
 
-    def task_span(self, task_name: str, input: PydanticSerializable) -> "TaskLogger":
+    def task_span(self, task_name: str, input: PydanticSerializable) -> "TaskSpan":
         """Generate a task-specific span from the current logging instance.
 
         Each logger implementation can decide on how it wants to represent this, but they should
@@ -133,7 +133,7 @@ class DebugLogger(Protocol):
 
 
 @runtime_checkable
-class TaskLogger(AbstractContextManager["TaskLogger"], DebugLogger, Protocol):
+class TaskSpan(AbstractContextManager["TaskSpan"], DebugLogger, Protocol):
     """A protocol for instrumenting a `Task`'s input, output, and nested logs.
 
     Most likely, generating this task logger will capture the `Task`'s input, as well as the task
@@ -190,9 +190,7 @@ class NoOpDebugLogger:
         """
         return self
 
-    def task_span(
-        self, task_name: str, input: PydanticSerializable
-    ) -> "NoOpTaskLogger":
+    def task_span(self, task_name: str, input: PydanticSerializable) -> "NoOpTaskSpan":
         """Generate a task-specific span from the current logging instance.
 
 
@@ -201,13 +199,13 @@ class NoOpDebugLogger:
             input: The input for the task that is being logged.
 
         Returns:
-            A `NoOpTaskLogger`
+            A `NoOpTaskSpan`
         """
 
-        return NoOpTaskLogger()
+        return NoOpTaskSpan()
 
 
-class NoOpTaskLogger(NoOpDebugLogger, AbstractContextManager["NoOpTaskLogger"]):
+class NoOpTaskSpan(NoOpDebugLogger, AbstractContextManager["NoOpTaskSpan"]):
     def record_output(self, output: PydanticSerializable) -> None:
         """Record a `Task`'s output. Since a Context Manager can't provide this in the `__exit__`
         method, output should be captured once it is generated.
@@ -284,7 +282,7 @@ class InMemoryDebugLogger(BaseModel):
     """
 
     name: str
-    logs: list[Union[LogEntry, "InMemoryDebugLogger", "InMemoryTaskLogger"]] = []
+    logs: list[Union[LogEntry, "InMemoryDebugLogger", "InMemoryTaskSpan"]] = []
 
     def log(self, message: str, value: PydanticSerializable) -> None:
         """Record a log of relevant information as part of a step within a task.
@@ -316,7 +314,7 @@ class InMemoryDebugLogger(BaseModel):
 
     def task_span(
         self, task_name: str, input: PydanticSerializable
-    ) -> "InMemoryTaskLogger":
+    ) -> "InMemoryTaskSpan":
         """Generate a task-specific span from the current logging instance.
 
 
@@ -325,11 +323,11 @@ class InMemoryDebugLogger(BaseModel):
             input: The input for the task that is being logged.
 
         Returns:
-            A nested `InMemoryTaskLogger` that is stored in a nested position as part of the parent
+            A nested `InMemoryTaskSpan` that is stored in a nested position as part of the parent
                 logger
         """
 
-        child = InMemoryTaskLogger(name=task_name, input=input)
+        child = InMemoryTaskSpan(name=task_name, input=input)
         self.logs.append(child)
         return child
 
@@ -349,15 +347,13 @@ class InMemoryDebugLogger(BaseModel):
         print(self._rich_render_())
 
 
-class InMemoryTaskLogger(
-    AbstractContextManager["InMemoryTaskLogger"], InMemoryDebugLogger
-):
+class InMemoryTaskSpan(AbstractContextManager["InMemoryTaskSpan"], InMemoryDebugLogger):
     input: PydanticSerializable
     output: Optional[PydanticSerializable] = None
     start_timestamp: Optional[datetime] = None
     end_timestamp: Optional[datetime] = None
 
-    def __enter__(self) -> "InMemoryTaskLogger":
+    def __enter__(self) -> "InMemoryTaskSpan":
         if not self.start_timestamp:
             self.start_timestamp = datetime.utcnow()
         return self

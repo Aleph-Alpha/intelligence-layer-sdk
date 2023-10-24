@@ -5,7 +5,7 @@ from aleph_alpha_client.completion import CompletionRequest
 
 from intelligence_layer.task import (
     InMemoryDebugLogger,
-    InMemoryTaskLogger,
+    InMemoryTaskSpan,
     LogEntry,
 )
 from intelligence_layer.completion import RawCompletion, RawCompletionInput
@@ -58,7 +58,7 @@ def test_task_automatically_logs_input_and_output(client: Client) -> None:
 
     assert len(logger.logs) == 1
     task_span = logger.logs[0]
-    assert isinstance(task_span, InMemoryTaskLogger)
+    assert isinstance(task_span, InMemoryTaskSpan)
     assert task_span.name == "RawCompletion"
     assert task_span.input == input
     assert task_span.output == output
