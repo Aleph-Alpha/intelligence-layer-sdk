@@ -8,6 +8,7 @@ from intelligence_layer.multiple_chunk_qa import (
     MultipleChunkQaInput,
     MultipleChunkQaOutput,
 )
+from intelligence_layer.search import Search, SearchInput
 from intelligence_layer.task import Chunk, DebugLogger, Task
 from semantic_text_splitter import HuggingFaceTextSplitter
 from intelligence_layer.retrievers.in_memory import InMemoryRetriever
@@ -84,11 +85,9 @@ class LongContextQa(Task[LongContextQaInput, MultipleChunkQaOutput]):
         retriever = InMemoryRetriever(
             self._client, texts=chunks, k=self._k, threshold=0.5
         )
-        relevant_chunks_with_scores = retriever.get_relevant_documents_with_scores(
-            input.question
-        )
+        search_output = Search(retriever).run(SearchInput(query=input.question), logger)
         multi_chunk_qa_input = MultipleChunkQaInput(
-            chunks=[Chunk(result.text) for result in relevant_chunks_with_scores],
+            chunks=[Chunk(result.text) for result in search_output.results],
             question=input.question,
         )
         qa_output = self._multi_chunk_qa.run(multi_chunk_qa_input, logger)
