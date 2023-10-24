@@ -19,6 +19,7 @@ from typing import (
     Union,
     runtime_checkable,
     Callable,
+    Self,
 )
 from uuid import uuid4
 from pydantic import (
@@ -98,19 +99,17 @@ class DebugLogger(Protocol):
         """
         ...
 
-    def child_logger(self, name: str) -> "DebugLogger":
-        """Generate a sub-logger from the current logging instance.
+    def span(self, name: str) -> "Span":
+        """Generate a span from the current logging instance.
 
         Each logger implementation can decide on how it wants to represent this, but they should
         all allow for representing logs of a child task within the scope of the current task.
 
         Args:
-            name: A descriptive name of what this child logger will contain logs about.
+            name: A descriptive name of what this span will contain logs about.
 
         Returns:
-            An instance of something that also meets the protocol of DebugLogger. Most likely, it
-            will create an instance of the same type, but this is dependent on the actual
-            implementation.
+            An instance of something that meets the protocol of Span.
         """
         ...
 
@@ -130,6 +129,21 @@ class DebugLogger(Protocol):
             implementation.
         """
         ...
+
+
+@runtime_checkable
+class Span(AbstractContextManager["Span"], DebugLogger, Protocol):
+    """A protocol for instrumenting logs nested within a span of time. Groups logs by some logical
+    step.
+
+    The implementation should also be a Context Manager, to capture the span of duration of
+    execution.
+
+    Implementations of how logs are collected and stored may differ. Refer to the individual
+    documentation of each implementation to see how to use the resulting logger.
+    """
+
+    ...
 
 
 @runtime_checkable
@@ -179,7 +193,7 @@ class NoOpDebugLogger:
         """
         pass
 
-    def child_logger(self, name: str) -> "NoOpDebugLogger":
+    def span(self, name: str) -> "NoOpTaskSpan":
         """Generate a sub-logger from the current logging instance.
 
         Args:
@@ -188,7 +202,7 @@ class NoOpDebugLogger:
         Returns:
             Another `NoOpDebugLogger`
         """
-        return self
+        return NoOpTaskSpan()
 
     def task_span(self, task_name: str, input: PydanticSerializable) -> "NoOpTaskSpan":
         """Generate a task-specific span from the current logging instance.
@@ -298,7 +312,7 @@ class InMemoryDebugLogger(BaseModel):
         """
         self.logs.append(LogEntry(message=message, value=value))
 
-    def child_logger(self, name: str) -> "InMemoryDebugLogger":
+    def span(self, name: str) -> "InMemorySpan":
         """Generate a sub-logger from the current logging instance.
 
         Args:
@@ -308,7 +322,7 @@ class InMemoryDebugLogger(BaseModel):
             A nested `InMemoryDebugLogger` that is stored in a nested position as part of the parent
             logger.
         """
-        child = InMemoryDebugLogger(name=name)
+        child = InMemorySpan(name=name)
         self.logs.append(child)
         return child
 
@@ -347,15 +361,11 @@ class InMemoryDebugLogger(BaseModel):
         print(self._rich_render_())
 
 
-class InMemoryTaskSpan(AbstractContextManager["InMemoryTaskSpan"], InMemoryDebugLogger):
-    input: PydanticSerializable
-    output: Optional[PydanticSerializable] = None
-    start_timestamp: Optional[datetime] = None
+class InMemorySpan(AbstractContextManager["InMemorySpan"], InMemoryDebugLogger):
+    start_timestamp: Optional[datetime] = Field(default_factory=datetime.utcnow)
     end_timestamp: Optional[datetime] = None
 
-    def __enter__(self) -> "InMemoryTaskSpan":
-        if not self.start_timestamp:
-            self.start_timestamp = datetime.utcnow()
+    def __enter__(self) -> Self:
         return self
 
     def __exit__(
@@ -364,8 +374,21 @@ class InMemoryTaskSpan(AbstractContextManager["InMemoryTaskSpan"], InMemoryDebug
         exc_value: Optional[BaseException],
         traceback: Optional[TracebackType],
     ) -> None:
-        if not self.end_timestamp:
-            self.end_timestamp = datetime.utcnow()
+        self.end_timestamp = datetime.utcnow()
+
+    def _rich_render_(self) -> Tree:
+        """Renders the debug log via classes in the `rich` package"""
+        tree = Tree(label=self.name)
+
+        for log in self.logs:
+            tree.add(log._rich_render_())
+
+        return tree
+
+
+class InMemoryTaskSpan(InMemorySpan):
+    input: PydanticSerializable
+    output: Optional[PydanticSerializable] = None
 
     def record_output(self, output: PydanticSerializable) -> None:
         """Record a `Task`'s output. Since a Context Manager can't provide this in the `__exit__`
@@ -390,12 +413,6 @@ class InMemoryTaskSpan(AbstractContextManager["InMemoryTaskSpan"], InMemoryDebug
         tree.add(_render_log_value(self.output, "Output"))
 
         return tree
-
-    def _ipython_display_(self) -> None:
-        """Default rendering for Jupyter notebooks"""
-        from rich import print
-
-        print(self._rich_render_())
 
 
 Input = TypeVar("Input", bound=PydanticSerializable)
@@ -469,20 +486,19 @@ class Task(ABC, Generic[Input, Output]):
                 corresponds to the order of the `Input`s.
         """
 
-        def run_batch(inputs: Iterable[Input]) -> Iterable[Output]:
-            return global_executor.map(
-                lambda input: self.run(input, child_logger),
-                inputs,
-            )
+        with debug_logger.span(f"Concurrent {type(self).__name__} tasks") as span:
 
-        child_logger = debug_logger.child_logger(
-            f"Concurrent {type(self).__name__} tasks"
-        )
-        return [
-            output
-            for batch in batched(inputs, concurrency_limit)
-            for output in run_batch(batch)
-        ]
+            def run_batch(inputs: Iterable[Input]) -> Iterable[Output]:
+                return global_executor.map(
+                    lambda input: self.run(input, span),
+                    inputs,
+                )
+
+            return [
+                output
+                for batch in batched(inputs, concurrency_limit)
+                for output in run_batch(batch)
+            ]
 
 
 T = TypeVar("T")
@@ -559,11 +575,11 @@ class Evaluator(ABC, Generic[Input, ExpectedOutput, Evaluation, AggregatedEvalua
                 tqdm(
                     executor.map(
                         lambda idx_example: self.evaluate(
-                            idx_example[1].input,
-                            logger.child_logger(str(idx_example[0])),
-                            idx_example[1].expected_output,
+                            idx_example.input,
+                            logger,
+                            idx_example.expected_output,
                         ),
-                        enumerate(dataset.examples),
+                        dataset.examples,
                     ),
                     total=len(dataset.examples),
                     desc="Evaluating",

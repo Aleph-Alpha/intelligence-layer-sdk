@@ -26,8 +26,7 @@ def test_debug_add_log_entries() -> None:
 
 def test_can_add_child_debug_logger() -> None:
     logger = InMemoryDebugLogger(name="parent")
-
-    child_logger = logger.child_logger("child")
+    logger.span("child")
 
     assert len(logger.logs) == 1
 
@@ -40,8 +39,8 @@ def test_can_add_child_debug_logger() -> None:
 def test_can_add_parent_and_child_logs() -> None:
     parent = InMemoryDebugLogger(name="parent")
     parent.log("One", 1)
-    child = parent.child_logger("child")
-    child.log("Two", 2)
+    with parent.span("child") as child:
+        child.log("Two", 2)
 
     assert isinstance(parent.logs[0], LogEntry)
     assert isinstance(parent.logs[1], InMemoryDebugLogger)

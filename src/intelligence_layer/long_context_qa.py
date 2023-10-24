@@ -83,9 +83,10 @@ class LongContextQa(Task[LongContextQaInput, MultipleChunkQaOutput]):
 
         retriever = InMemoryRetriever(self._client, chunks=chunks, threshold=0.5)
 
-        relevant_chunks_with_scores = retriever.get_relevant_documents_with_scores(
-            input.question, k=self._k, logger=logger.child_logger("Retriever")
-        )
+        with logger.span("Retriever") as span:
+            relevant_chunks_with_scores = retriever.get_relevant_documents_with_scores(
+                input.question, k=self._k, logger=span
+            )
 
         multi_chunk_qa_input = MultipleChunkQaInput(
             chunks=[Chunk(result.chunk) for result in relevant_chunks_with_scores],
