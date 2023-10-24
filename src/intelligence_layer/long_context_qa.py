@@ -26,26 +26,11 @@ class LongContextQaInput(BaseModel):
     question: str
 
 
-class SearchResult(BaseModel):
-    """For document retrieval we return a chunk alongside its similarity score
-
-    Attributes:
-        score: The similarity score between the document and the query.
-        chunk: A segment of the original long text that is relevant to the query.
-    """
-
-    score: float
-    chunk: Chunk
-
-
 class LongContextQa(Task[LongContextQaInput, MultipleChunkQaOutput]):
     """Answer question for lengthy documents
 
     LongContextQa is a task answering a question for a long document, where the length
     of text exceeds the context length of a model (e.g. 2048 tokens for the luminous models).
-
-    Attributes:
-        NO_ANSWER_TEXT: A constant representing no answer in the context.
 
     Args:
         client: An instance of the Aleph Alpha client.

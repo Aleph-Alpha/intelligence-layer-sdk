@@ -13,18 +13,6 @@ TEXTS = [
 ]
 
 
-@fixture
-def document_index(token: str) -> DocumentIndex:
-    return DocumentIndex(token)
-
-
-@fixture
-def document_index_retriever(document_index: DocumentIndex) -> DocumentIndexRetriever:
-    return DocumentIndexRetriever(
-        document_index, namespace="aleph-alpha", collection="wikipedia-de", k=2
-    )
-
-
 @pytest.mark.internal
 def test_document_index(document_index_retriever: DocumentIndexRetriever) -> None:
     documents = document_index_retriever.get_relevant_documents_with_scores(QUERY)

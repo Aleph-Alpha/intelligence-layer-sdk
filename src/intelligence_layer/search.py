@@ -16,6 +16,6 @@ class Search(Task[SearchInput, SearchOutput]):
     def __init__(self, retriever: BaseRetriever):
         self._retriever = retriever
 
-    def run(self, input: SearchInput, debug: DebugLogger) -> SearchOutput:
+    def run(self, input: SearchInput, logger: DebugLogger) -> SearchOutput:
         results = self._retriever.get_relevant_documents_with_scores(input.query)
         return SearchOutput(results=results)

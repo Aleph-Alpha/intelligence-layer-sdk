@@ -4,6 +4,10 @@ from typing import Sequence, cast
 from aleph_alpha_client import Client, Image
 from dotenv import load_dotenv
 from pytest import fixture
+from intelligence_layer.retrievers.document_index import (
+    DocumentIndex,
+    DocumentIndexRetriever,
+)
 from intelligence_layer.retrievers.in_memory import InMemoryRetriever
 
 from intelligence_layer.task import NoOpDebugLogger
@@ -39,3 +43,15 @@ def in_memory_retriever(
     client: Client, in_memory_retriever_texts: Sequence[str]
 ) -> InMemoryRetriever:
     return InMemoryRetriever(client, in_memory_retriever_texts, k=2)
+
+
+@fixture
+def document_index(token: str) -> DocumentIndex:
+    return DocumentIndex(token)
+
+
+@fixture
+def document_index_retriever(document_index: DocumentIndex) -> DocumentIndexRetriever:
+    return DocumentIndexRetriever(
+        document_index, namespace="aleph-alpha", collection="wikipedia-de", k=2
+    )
