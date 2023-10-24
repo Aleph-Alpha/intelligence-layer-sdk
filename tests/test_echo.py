@@ -18,9 +18,7 @@ def tokenize_completion(
     """Turns th expected output into list of token ids. Important so that we know how many tokens
     the label is and can retrieve the last N log probs for the label"""
     response = client.tokenize(
-        request=TokenizationRequest(
-            expected_output + "<|endoftext|>", tokens=True, token_ids=True
-        ),
+        request=TokenizationRequest(expected_output, tokens=True, token_ids=True),
         model=model,
     )
     assert response.token_ids and response.tokens
@@ -31,16 +29,41 @@ def tokenize_completion(
 
 
 def test_can_run_echo_task(echo_task: EchoTask) -> None:
-    excpected_completion = "good."
+    expected_completion = "good."
     input = EchoInput(
         prompt="The weather is",
-        expected_completion=excpected_completion,
+        expected_completion=expected_completion,
         model="luminous-base",
     )
-    tokens = tokenize_completion(excpected_completion, input.model, echo_task._client)
+    tokens = tokenize_completion(expected_completion, input.model, echo_task._client)
 
     result = echo_task.run(input, logger=NoOpDebugLogger())
+
+    assert len(tokens) == len(result.tokens_with_log_probs)
+    assert all([isinstance(t, TokenWithProb) for t in result.tokens_with_log_probs])
+    for token, result_token in zip(tokens, result.tokens_with_log_probs):
+        assert token == result_token.token
+
+
+def test_compare_tokens(echo_task: EchoTask) -> None:
+    token1 = "ĠGastronomie"
+    token2 = "Baby"
+
+    prompt = token1[0 : len(token1) // 2]
+    expected_completion = token1[-len(token1) // 2 :] + token2
+    input = EchoInput(
+        prompt=prompt,
+        expected_completion=expected_completion,
+        model="luminous-base",
+    )
+
+    tokens = tokenize_completion(expected_completion, input.model, echo_task._client)
+    result = echo_task.run(input, logger=NoOpDebugLogger())
+
+    assert len(tokens) == len(result.tokens_with_log_probs)
 
     assert all([isinstance(t, TokenWithProb) for t in result.tokens_with_log_probs])
     for token, result_token in zip(tokens, result.tokens_with_log_probs):
         assert token == result_token.token
+
+    # tokenizer = client.tokenizer(input.model)

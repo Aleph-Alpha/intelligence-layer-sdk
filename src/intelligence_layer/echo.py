@@ -65,18 +65,16 @@ class EchoTask(Task[EchoInput, EchoOutput]):
         tokens = self._tokenize_expected_completion(
             input.expected_completion, input.model
         )
-        log_prob_dicts = output.response.completions[0].log_probs[-len(tokens) :][0]
-
+        log_prob_dicts = output.response.completions[0].log_probs[-len(tokens) :]
         tokens_with_prob = []
-        for token, log_prob in zip(tokens, log_prob_dicts.values()):
+        for token, log_prob in zip(tokens, log_prob_dicts):
             assert log_prob is not None
             tokens_with_prob.append(
                 TokenWithProb(
                     token=token,
-                    prob=LogProb(log_prob),
+                    prob=LogProb(list(log_prob.values())[0]),
                 )
             )
-
         return EchoOutput(tokens_with_log_probs=tokens_with_prob)
 
     def _completion_request(
@@ -97,9 +95,7 @@ class EchoTask(Task[EchoInput, EchoOutput]):
         """Turns th expected output into list of token ids. Important so that we know how many tokens
         the label is and can retrieve the last N log probs for the label"""
         response = self._client.tokenize(
-            request=TokenizationRequest(
-                expected_output + "<|endoftext|>", tokens=True, token_ids=True
-            ),
+            request=TokenizationRequest(expected_output, tokens=True, token_ids=True),
             model=model,
         )
         assert response.token_ids and response.tokens
