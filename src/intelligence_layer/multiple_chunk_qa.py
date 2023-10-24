@@ -133,11 +133,13 @@ Condense multiple answers into a single answer. Rely only on the provided answer
         qa_outputs: Iterable[SingleChunkQaOutput],
         logger: DebugLogger,
     ) -> Optional[str]:
-        joined_answers = "\n".join(
-            output.answer for output in qa_outputs if output.answer
-        )
-        if not joined_answers:
+        answers = [output.answer for output in qa_outputs if output.answer]
+        if len(answers) == 0:
             return None
+        elif len(answers) == 1:
+            return answers[0]
+        
+        joined_answers = "\n".join(answers)
         return self._instruct(
             f"""Question: {question}
 
