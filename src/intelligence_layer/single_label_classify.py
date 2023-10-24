@@ -30,8 +30,9 @@ from intelligence_layer.task import (
     DebugLogger,
 )
 
-Probability = NewType("Probability", float)
+
 LogProb = NewType("LogProb", float)
+Probability = NewType("Probability", float)
 
 
 class Token(BaseModel):
