@@ -14,6 +14,7 @@ from aleph_alpha_client.explanation import TextScoreWithRaw
 from pydantic import BaseModel
 
 from intelligence_layer.prompt_template import (
+    Cursor,
     PromptRange,
     PromptWithMetadata,
     TextCursor,
@@ -202,6 +203,8 @@ class TextHighlight(Task[TextHighlightInput, TextHighlightOutput]):
                 for text_score in overlapping_and_flat
             ],
         )
+        if not overlapping_and_flat:
+            return []
         z_scores = self._z_scores([s.score for s in overlapping_and_flat], logger)
         scored_highlights = [
             ScoredTextHighlight(text=text_score.text, score=z_score)
@@ -233,14 +236,35 @@ class TextHighlight(Task[TextHighlightInput, TextHighlightOutput]):
         text_score: TextScoreWithRaw,
         explanation_item_idx: int,
     ) -> bool:
-        return cls._is_within_prompt_range(
-            prompt_range,
-            explanation_item_idx,
-            text_score.start,
-        ) or cls._is_within_prompt_range(
-            prompt_range,
-            explanation_item_idx,
-            text_score.start + text_score.length - 1,
+        return (
+            cls._is_within_prompt_range(
+                prompt_range,
+                explanation_item_idx,
+                text_score.start,
+            )
+            or cls._is_within_prompt_range(
+                prompt_range,
+                explanation_item_idx,
+                text_score.start + text_score.length - 1,
+            )
+            or cls._is_within_text_score(
+                text_score, explanation_item_idx, prompt_range.start
+            )
+        )
+
+    @staticmethod
+    def _is_within_text_score(
+        text_score: TextScoreWithRaw,
+        text_score_item: int,
+        prompt_range_cursor: Cursor,
+    ) -> bool:
+        if text_score_item != prompt_range_cursor.item:
+            return False
+        assert isinstance(prompt_range_cursor, TextCursor)
+        return (
+            text_score.start
+            <= prompt_range_cursor.position
+            <= text_score.start + text_score.length - 1
         )
 
     @staticmethod
@@ -252,11 +276,12 @@ class TextHighlight(Task[TextHighlightInput, TextHighlightOutput]):
         if item_check < prompt_range.start.item or item_check > prompt_range.end.item:
             return False
         if item_check == prompt_range.start.item:
+            # must be a text cursor, because has same index as TextScoreWithRaw
             assert isinstance(prompt_range.start, TextCursor)
             if pos_check < prompt_range.start.position:
                 return False
         if item_check == prompt_range.end.item:
-            assert isinstance(prompt_range.end, TextCursor)
+            assert isinstance(prompt_range.end, TextCursor)  # see above
             if pos_check > prompt_range.end.position:
                 return False
         return True
