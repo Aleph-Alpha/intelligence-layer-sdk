@@ -1,9 +1,5 @@
-from typing import Any, Sequence, Union
+from typing import Sequence, Union
 from intelligence_layer.retrievers.base import BaseRetriever, SearchResult
-from aleph_alpha_client import (
-    Client,
-)
-from intelligence_layer.task import DebugLogger
 import json
 
 # types-requests introduces dependency conflict with qdrant.

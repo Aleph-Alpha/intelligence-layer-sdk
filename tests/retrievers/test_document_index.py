@@ -1,6 +1,9 @@
 from pytest import fixture
 import pytest
-from intelligence_layer.retrievers.document_index import DocumentIndex, DocumentIndexRetriever
+from intelligence_layer.retrievers.document_index import (
+    DocumentIndex,
+    DocumentIndexRetriever,
+)
 
 
 QUERY = "Who likes pizza?"
@@ -11,7 +14,7 @@ TEXTS = [
 
 
 @fixture
-def document_index(token: str) -> DocumentIndexRetriever:
+def document_index(token: str) -> DocumentIndex:
     return DocumentIndex(token)
 
 
@@ -24,8 +27,6 @@ def document_index_retriever(document_index: DocumentIndex) -> DocumentIndexRetr
 
 @pytest.mark.internal
 def test_document_index(document_index_retriever: DocumentIndexRetriever) -> None:
-    documents = document_index_retriever.get_relevant_documents_with_scores(
-        QUERY
-    )
+    documents = document_index_retriever.get_relevant_documents_with_scores(QUERY)
     assert documents[0].text[0:30] in TEXTS[0]
     assert documents[1].text[0:30] in TEXTS[1]

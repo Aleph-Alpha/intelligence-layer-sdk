@@ -17,8 +17,10 @@ def search(in_memory_retriever: InMemoryRetriever) -> Search:
 
 
 def test_search(
-    search: Search, no_op_debug_logger: NoOpDebugLogger, in_memory_retriever_texts: Sequence[str]
+    search: Search,
+    no_op_debug_logger: NoOpDebugLogger,
+    in_memory_retriever_texts: Sequence[str],
 ) -> None:
     search_input = SearchInput(query="Are we so back?")
-    result = search.run(search_input, no_op_debug_logger)    
+    result = search.run(search_input, no_op_debug_logger)
     assert [r.text for r in result.results] == [in_memory_retriever_texts[2]]

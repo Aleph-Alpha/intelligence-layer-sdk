@@ -11,7 +11,6 @@ from qdrant_client.conversions.common_types import ScoredPoint
 from qdrant_client.http.models import Distance, VectorParams, PointStruct
 
 
-
 class InMemoryRetriever(BaseRetriever):
     """Retrieve top k documents using in memory semantic search
 
@@ -49,12 +48,11 @@ class InMemoryRetriever(BaseRetriever):
         )
         self._add_texts_to_memory(texts)
 
-    def get_relevant_documents_with_scores(
-        self, query: str
-    ) -> Sequence[SearchResult]:
+    def get_relevant_documents_with_scores(self, query: str) -> Sequence[SearchResult]:
         def _point_to_search_result(point: ScoredPoint) -> SearchResult:
             assert point.payload
             return SearchResult(score=point.score, text=point.payload["text"])
+
         query_embedding = self._embed(query, SemanticRepresentation.Query)
         search_result = self._search_client.search(
             collection_name=self._collection_name,

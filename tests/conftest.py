@@ -35,5 +35,7 @@ def prompt_image() -> Image:
 
 
 @fixture
-def in_memory_retriever(client: Client, in_memory_retriever_texts: Sequence[str]) -> InMemoryRetriever:
+def in_memory_retriever(
+    client: Client, in_memory_retriever_texts: Sequence[str]
+) -> InMemoryRetriever:
     return InMemoryRetriever(client, in_memory_retriever_texts, k=2)
