@@ -16,15 +16,15 @@ def document_index(token: str) -> DocumentIndexRetriever:
 
 
 @fixture
-def retriever(document_index: DocumentIndex) -> DocumentIndexRetriever:
+def document_index_retriever(document_index: DocumentIndex) -> DocumentIndexRetriever:
     return DocumentIndexRetriever(
         document_index, namespace="aleph-alpha", collection="wikipedia-de", k=2
     )
 
 
 @pytest.mark.internal
-def test_document_index(retriever: DocumentIndexRetriever) -> None:
-    documents = retriever.get_relevant_documents_with_scores(
+def test_document_index(document_index_retriever: DocumentIndexRetriever) -> None:
+    documents = document_index_retriever.get_relevant_documents_with_scores(
         QUERY
     )
     assert documents[0].text[0:30] in TEXTS[0]
