@@ -90,7 +90,7 @@ class LongContextQa(Task[LongContextQaInput, MultipleChunkQaOutput]):
             )
 
         multi_chunk_qa_input = MultipleChunkQaInput(
-            chunks=[Chunk(result.chunk) for result in relevant_chunks_with_scores],
+            chunks=[Chunk(result.text) for result in relevant_chunks_with_scores],
             question=input.question,
         )
 

@@ -23,5 +23,5 @@ def test_document_index(retriever: DocumentIndexRetriever) -> None:
     documents = retriever.get_relevant_documents_with_scores(
         QUERY, NoOpDebugLogger(), k=2
     )
-    assert documents[0].chunk[0:30] in RESULT_CHUNKS[0]
-    assert documents[1].chunk[0:30] in RESULT_CHUNKS[1]
+    assert documents[0].text[0:30] in RESULT_CHUNKS[0]
+    assert documents[1].text[0:30] in RESULT_CHUNKS[1]

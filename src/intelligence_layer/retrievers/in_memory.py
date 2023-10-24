@@ -53,7 +53,7 @@ class InMemoryRetriever(BaseRetriever):
     ) -> Sequence[SearchResult]:
         def _point_to_search_result(point: ScoredPoint) -> SearchResult:
             assert point.payload
-            return SearchResult(score=point.score, chunk=point.payload["text"])
+            return SearchResult(score=point.score, text=point.payload["text"])
 
         query_embedding = self._embed(query, SemanticRepresentation.Query)
 

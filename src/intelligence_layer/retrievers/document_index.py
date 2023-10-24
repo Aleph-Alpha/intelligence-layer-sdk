@@ -174,7 +174,7 @@ class DocumentIndexRetriever(BaseRetriever):
         )
 
         relevant_chunks = [
-            SearchResult(score=result["score"], chunk=result["section"][0]["text"])
+            SearchResult(score=result["score"], text=result["section"][0]["text"])
             for result in response.json()
         ]
 

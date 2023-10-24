@@ -17,7 +17,6 @@ class SummarizeInput(BaseModel):
 
     Attributes:
         chunk: The text to be summarized. Must fit within the token limit (after accounting for prompt & completion).
-
     """
 
     chunk: Chunk
@@ -57,7 +56,7 @@ class ShortBodySummarize(Task[SummarizeInput, SummarizeOutput]):
         >>> client = Client(token="YOUR_AA_TOKEN")
         >>> task = ShortBodySummarize(client)
         >>> input = SummarizeInput(
-        >>>     text="This is a story about pizza. Tina hates pizza. However, Mike likes it. Pete strongly believes that pizza is the best thing to exist."
+        >>>     chunk="This is a story about pizza. Tina hates pizza. However, Mike likes it. Pete strongly believes that pizza is the best thing to exist."
         >>> )
         >>> logger = InMemoryLogger(name="Summary")
         >>> output = task.run(input, logger)

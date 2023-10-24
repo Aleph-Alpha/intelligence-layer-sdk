@@ -6,7 +6,7 @@ from intelligence_layer.task import DebugLogger
 
 class SearchResult(BaseModel):
     score: float
-    chunk: str
+    text: str
 
 
 class BaseRetriever(ABC):

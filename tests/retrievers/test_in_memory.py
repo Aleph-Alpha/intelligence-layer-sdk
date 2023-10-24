@@ -16,5 +16,5 @@ def test_in_memory(retriever: InMemoryRetriever) -> None:
     documents = retriever.get_relevant_documents_with_scores(
         QUERY, NoOpDebugLogger(), k=2
     )
-    assert CHUNKS[1] == documents[0].chunk
+    assert CHUNKS[1] == documents[0].text
     assert len(documents) <= 2
