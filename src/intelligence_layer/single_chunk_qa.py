@@ -108,13 +108,18 @@ If there's no answer, say "{self.NO_ANSWER_STR}".""",
             input.chunk,
             logger,
         )
-        highlights = self._get_highlights(
-            output.prompt_with_metadata,
-            output.response,
-            logger,
+        answer = self._no_answer_to_none(output.response.strip())
+        highlights = (
+            self._get_highlights(
+                output.prompt_with_metadata,
+                output.response,
+                logger,
+            )
+            if answer
+            else []
         )
         return SingleChunkQaOutput(
-            answer=self._no_answer_to_none(output.response.strip()),
+            answer=answer,
             highlights=highlights,
         )
 
