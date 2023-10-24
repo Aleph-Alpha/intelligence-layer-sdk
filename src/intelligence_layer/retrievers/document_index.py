@@ -36,26 +36,24 @@ class DocumentIndex:
 
     def __init__(
         self,
-        client: Client,
+        token: str,
         base_document_index_url: str = "https://knowledge.aleph-alpha.com",
     ) -> None:
         self._base_document_index_url = base_document_index_url
         self.headers = {
             "Content-Type": "application/json",
             "Accept": "application/json",
-            "Authorization": f"Bearer {client.token}",
+            "Authorization": f"Bearer {token}",
         }
 
     def create_collection(self, namespace: str, collection: str) -> None:
         url = f"{self._base_document_index_url}/collections/{namespace}/{collection}"
         response = requests.put(url, headers=self.headers)
-
         response.raise_for_status()
 
     def delete_collection(self, namespace: str, collection: str) -> None:
         url = f"{self._base_document_index_url}/collections/{namespace}/{collection}"
         response = requests.delete(url, headers=self.headers)
-
         response.raise_for_status()
 
     def add_document(
@@ -73,13 +71,11 @@ class DocumentIndex:
             "metadata": metadata,
         }
         response = requests.put(url, data=json.dumps(data), headers=self.headers)
-
         response.raise_for_status()
 
     def delete_document(self, namespace: str, collection: str, name: str) -> None:
         url = f"{self._base_document_index_url}/collections/{namespace}/{collection}/docs/{name}"
         response = requests.delete(url, headers=self.headers)
-
         response.raise_for_status()
 
     def get_document(
@@ -90,9 +86,7 @@ class DocumentIndex:
         else:
             url = f"{self._base_document_index_url}/collections/{namespace}/{collection}/docs/{name}/chunks"
         response = requests.get(url, headers=self.headers)
-
         response.raise_for_status()
-
         return response
 
     def list_documents(self, namespace: str, collection: str) -> requests.Response:
@@ -100,9 +94,7 @@ class DocumentIndex:
             f"{self._base_document_index_url}/collections/{namespace}/{collection}/docs"
         )
         response = requests.get(url, headers=self.headers)
-
         response.raise_for_status()
-
         return response
 
     def search(
@@ -120,11 +112,8 @@ class DocumentIndex:
             "min_score": min_score,
             "filter": [{"with": [{"modality": "text"}]}],
         }
-
         response = requests.post(url, data=json.dumps(data), headers=self.headers)
-
         response.raise_for_status()
-
         return response
 
 
@@ -141,43 +130,32 @@ class DocumentIndexRetriever(BaseRetriever):
         base_document_index_url: the url address of the document index
         threshold: A mimumum value of the cosine similarity between the query vector and the document vector
 
-
     Example:
         >>> query = "Do you like summer?"
         >>> retriever = DocumentIndexRetriever(client)
         >>> documents = retriever.get_relevant_documents_with_scores(query, NoOpDebugLogger(), k=2)
-
     """
 
     def __init__(
         self,
-        client: Client,
+        document_index: DocumentIndex,
         namespace: str,
         collection: str,
-        base_document_index_url: str = "https://knowledge.aleph-alpha.com",
+        k: int,
         threshold: float = 0.5,
     ) -> None:
-        self._threshold = threshold
+        self._document_index = document_index
         self._namespace = namespace
         self._collection = collection
-        self._base_document_index_url = base_document_index_url
-        self._document_index = DocumentIndex(client, base_document_index_url)
+        self._k = k
+        self._threshold = threshold
 
-    def get_relevant_documents_with_scores(
-        self, query: str, logger: DebugLogger, *, k: int
-    ) -> Sequence[SearchResult]:
-        logger.log("Query", query)
-        logger.log("k", k)
-
+    def get_relevant_documents_with_scores(self, query: str) -> Sequence[SearchResult]:
         response = self._document_index.search(
-            self._namespace, self._collection, query, k, self._threshold
+            self._namespace, self._collection, query, self._k, self._threshold
         )
-
         relevant_chunks = [
             SearchResult(score=result["score"], text=result["section"][0]["text"])
             for result in response.json()
         ]
-
-        logger.log("Retrieved chunks", relevant_chunks)
-
         return relevant_chunks

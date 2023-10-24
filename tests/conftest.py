@@ -9,11 +9,16 @@ from intelligence_layer.task import NoOpDebugLogger
 
 
 @fixture(scope="session")
-def client() -> Client:
-    """Provide fixture for api."""
+def token() -> str:
     load_dotenv()
     token = getenv("AA_TOKEN")
     assert isinstance(token, str)
+    return token
+
+
+@fixture(scope="session")
+def client(token: str) -> Client:
+    """Provide fixture for api."""
     return Client(token=token)
 
 
