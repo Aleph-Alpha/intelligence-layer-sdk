@@ -1,4 +1,5 @@
 from pytest import fixture
+import pytest
 from intelligence_layer.retrievers.document_index import DocumentIndexRetriever
 from aleph_alpha_client import Client
 from intelligence_layer.task import NoOpDebugLogger
@@ -17,6 +18,7 @@ def retriever(client: Client) -> DocumentIndexRetriever:
     )
 
 
+@pytest.mark.internal
 def test_document_index(retriever: DocumentIndexRetriever) -> None:
     documents = retriever.get_relevant_documents_with_scores(
         QUERY, NoOpDebugLogger(), k=2

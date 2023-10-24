@@ -42,4 +42,5 @@ files = "src,tests"
 strict = "True"
 
 [tool.pytest.ini_options]
-addopts = "--capture=tee-sys"
+markers = ["internal: marks tests as internal (deselect with '-k \"not internal\"')"]
+addopts = "--capture=tee-sys -k 'not internal'"
