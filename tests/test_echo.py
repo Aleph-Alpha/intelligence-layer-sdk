@@ -41,7 +41,11 @@ def test_can_run_echo_task(echo_task: EchoTask) -> None:
         assert token == result_token.token
 
 
-def test_compare_tokens(echo_task: EchoTask) -> None:
+def test_overlapping_tokens_generate_correct_tokens(echo_task: EchoTask) -> None:
+    """This test checks if the echo task correctly tokenizes the expected completion separately
+    The two tokens when tokenized together will result in a combination of the end of the first token
+    and the start of the second token. This is not the expected behaviour.
+    """
     token1 = "ĠGastronomie"
     token2 = "Baby"
 

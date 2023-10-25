@@ -27,10 +27,6 @@ class Token(BaseModel):
     token_id: int
 
 
-def to_aa_tokens_prompt(tokens: Sequence[Token]) -> Prompt:
-    return Prompt.from_tokens([token.token_id for token in tokens])
-
-
 class TokenWithProb(BaseModel):
     token: Token
     prob: Probability | LogProb
@@ -79,12 +75,14 @@ class EchoTask(Task[EchoInput, EchoOutput]):
         self._client = client
 
     def run(self, input: EchoInput, logger: DebugLogger) -> EchoOutput:
-        prompt_tokens = self._tokenize(input.prompt, input.model)
+        # We tokenize the prompt and expected completion separately so we don't 
+        # have an overlap in the tokens.
+        # If we don't do this, the end of the prompt and expected completion can be merged into unexpected tokens.
         expected_completion_tokens = self._tokenize(
             input.expected_completion, input.model
         )
-        prompt = to_aa_tokens_prompt(
-            list(chain(prompt_tokens, expected_completion_tokens))
+        prompt = self._to_aa_tokens_prompt(
+            list(chain(self._tokenize(input.prompt, input.model), expected_completion_tokens))
         )
         completion_input = RawCompletionInput(
             request=self._completion_request(prompt=prompt),
@@ -96,8 +94,8 @@ class EchoTask(Task[EchoInput, EchoOutput]):
             -len(expected_completion_tokens) :
         ]
         tokens_with_prob = []
-        for token, log_prob in zip(expected_completion_tokens, log_prob_dicts):
-            assert log_prob is not None
+        for token, log_prob in zip(expected_completion_tokens, log_prob_dicts, strict=True):
+            assert token.token in log_prob
             tokens_with_prob.append(
                 TokenWithProb(
                     token=token,
@@ -105,6 +103,9 @@ class EchoTask(Task[EchoInput, EchoOutput]):
                 )
             )
         return EchoOutput(tokens_with_log_probs=tokens_with_prob)
+    
+    def _to_aa_tokens_prompt(self, tokens: Sequence[Token]) -> Prompt:
+        return Prompt.from_tokens([token.token_id for token in tokens])
 
     def _completion_request(
         self,
