@@ -1,6 +1,73 @@
 # Intelligence Layer Style Guideline
 
-## Introduction: Documentation
+## Building a new task
+
+To make sure that we approach building new tasks in a unified way, consider this example task:
+
+``` python
+# Standard import pattern: 
+# - Alphabetically sorted
+# - Avoid wildcrad imports
+# - Three blocks, separated by newlines
+# 1) Built-in libraries
+import math
+from typing import Sequence
+
+# 2) Third-party libraries
+from aleph_alpha_client import Client
+from pydantic import BaseModel
+
+# 3) Local application libraries
+from intelligence_layer.nested_task import NestedTask
+from intelligence_layer.task import DebugLogger, Task
+
+# Two newlines in between separate classes. See the problem?
+class ExampleTaskInput(BaseModel):
+    """Some documentation should go here. For information on this, see below."""
+    # Each task can receive its required input in one of three ways:
+    # 1) In the input of the task:
+    # - The only parameters here should be the really "dynamic" ones, i.e. the ones that change from run to run.
+    # -> As a rule of thumb: For QA, a query will change each run, a model will not.
+    some_query: str
+    some_number: int
+
+
+class ExampleTaskOutput(BaseModel):
+    some_result: str
+
+
+class ExampleTask(Task[ExampleTaskInput, ExampleTaskOutput]):
+    # 2) As constants:
+    # - Makes it clear that these exact parameters are required for the `Task` or at least are central to it.
+    # - Sends a clear signal that these parameters should not be touched.
+    CONSTANT_PROMPT = "This prompt defines to this task and its sole reason for existing."
+    CONSTANT_MODEL = "unique_feature_llm" # only works with this model and no other
+
+    # 3) In the `__init__`:
+    # - Used for non-dynamic parameters, that stay the same for each task but may differ for task instances.
+    # - Used for parameters that are initialized some time before and handed down/reused, such as the AA client.
+    def __init__(
+        init_model: str,
+        init_client: Client
+    ):
+        # In general: most attributes should be private, unless there is a specific reason for them being public.
+        self._init_model = init_model # Used if multiple models can be used.
+        self._init_client = init_client # Client should only be instantiated once, therefore the proper place is here.
+        self._nested_task = NestedTask(init_client) # Try instantiating all tasks in the `__init__`, rather than in `run` or elsewhere.
+
+    # For now, we assume that run will be the only explicitely public method for each `Task`.
+    # `run` should be the first method after dunder methods.
+    def run(self, input: ExampleTaskInput, logger: DebugLogger) -> ExampleOutput:
+        return self._some_calculation(input.some_number)
+
+    # Example for a private method.
+    # All such methods follow after `run`.
+    def _some_calculation(some_number: int):
+        return math.exp(some_number)
+```
+
+
+## Documentation
 
 Generally, adhere to this [guideline](https://www.sphinx-doc.org/en/master/usage/extensions/example_google.html).
 
