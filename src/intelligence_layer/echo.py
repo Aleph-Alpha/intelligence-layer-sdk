@@ -67,6 +67,19 @@ class EchoTask(Task[EchoInput, EchoOutput]):
 
     Args:
         client: Aleph Alpha client instance for running model related API calls.
+
+    Example:
+        >>> client = Client(token="AA_TOKEN")
+        >>> task = EchoTask(client)
+        >>> input = EchoTaskInput(
+                prompt="This is a ",
+                expected_completion="happy text",
+                model="luminous-base",
+            )
+        >>> logger = InMemoryLogger(name="EchoTask")
+        >>> output = task.run(input, logger)
+        >>> print(output.tokens_with_log_probs[0]).prob
+        0.6
     """
     def __init__(self, client: Client) -> None:
         super().__init__()

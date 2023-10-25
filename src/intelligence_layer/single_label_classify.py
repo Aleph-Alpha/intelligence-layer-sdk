@@ -23,32 +23,15 @@ from intelligence_layer.completion import (
     RawCompletionInput,
     RawCompletionOutput,
 )
+from intelligence_layer.echo import EchoInput, EchoTask, TokenWithProb
 from intelligence_layer.task import (
     Chunk,
     Evaluator,
+    Probability,
     Task,
     DebugLogger,
+    Token,
 )
-
-
-LogProb = NewType("LogProb", float)
-Probability = NewType("Probability", float)
-
-
-class Token(BaseModel):
-    """A token class containing it's id and the raw token.
-
-    This is used instead of the Aleph Alpha client Token class since this one is serializable,
-    while the one from the client is not.
-    """
-
-    token: str
-    token_id: int
-
-
-class TokenWithProb(BaseModel):
-    token: Token
-    prob: Probability | LogProb
 
 
 def to_aa_tokens_prompt(tokens: Sequence[Token]) -> Prompt:
@@ -102,9 +85,9 @@ class SingleLabelClassify(Task[ClassifyInput, ClassifyOutput]):
         >>> client = Client(token="AA_TOKEN")
         >>> task = SingleLabelClassify(client)
         >>> input = SingleLabelClassifyInput(
-        >>>     text="This is a happy text.",
-        >>>     labels={"positive", "negative"}
-        >>> )
+                text="This is a happy text.",
+                labels={"positive", "negative"}
+            )
         >>> logger = InMemoryLogger(name="Classify")
         >>> output = task.run(input, logger)
         >>> print(output.scores["positive"])
@@ -126,21 +109,26 @@ Reply with only the class label.
         super().__init__()
         self._client = client
         self._completion_task = RawCompletion(client)
+        self._echo_task = EchoTask(client)
 
     def run(self, input: ClassifyInput, logger: DebugLogger) -> ClassifyOutput:
-        tokenized_labels = self._tokenize_labels(input.labels, logger)
-        completion_responses_per_label = self._complete_per_label(
-            self.MODEL, self.PROMPT_TEMPLATE, input.chunk, tokenized_labels, logger
-        )
-        log_probs_per_label = self._get_log_probs_of_labels(
-            completion_responses_per_label, tokenized_labels, logger
+        log_probs_per_label = self._log_probs_per_label(
+            text_to_classify=input.chunk, labels=input.labels, model=self.MODEL, logger=logger
         )
         normalized_probs_per_label = self._normalize(log_probs_per_label, logger)
         scores = self._compute_scores(normalized_probs_per_label)
         return ClassifyOutput(
             scores=scores,
         )
-
+    
+    def _log_probs_per_label(self, text_to_classify: str, labels: Sequence[str], model: str, logger: DebugLogger) -> Mapping[str, Sequence[TokenWithProb]]:
+        prompt = PromptTemplate(template_str=self.PROMPT_TEMPLATE).to_prompt(text=text_to_classify).items[0].text
+        assert isinstance(prompt, str)
+        return {
+            label: self._echo_task.run(EchoInput(prompt=prompt, expected_completion=label, model=model), logger).tokens_with_log_probs 
+            for label in labels
+        }
+        
     def _compute_scores(
         self,
         normalized_probs_per_score: Mapping[str, Sequence[TokenWithProb]],

@@ -70,6 +70,19 @@ To handle this, documents have to be split up into smaller segments that fit wit
 These smaller segments are referred to as chunks.
 """
 
+LogProb = NewType("LogProb", float)
+Probability = NewType("Probability", float)
+
+
+class Token(BaseModel):
+    """A token class containing it's id and the raw token.
+
+    This is used instead of the Aleph Alpha client Token class since this one is serializable,
+    while the one from the client is not.
+    """
+
+    token: str
+    token_id: int
 
 @runtime_checkable
 class DebugLogger(Protocol):
