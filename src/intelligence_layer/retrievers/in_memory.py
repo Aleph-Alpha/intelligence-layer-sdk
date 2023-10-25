@@ -16,7 +16,7 @@ from intelligence_layer.retrievers.base import BaseRetriever, SearchResult
 class InMemoryRetriever(BaseRetriever):
     """Search through documents stored in memory using semantic search.
 
-    This retriever uses a [Qdrant](https://github.com/qdrant/qdrant)-in-Memory vector memory instance to store documents and their asymmetric embeddings.
+    This retriever uses a [Qdrant](https://github.com/qdrant/qdrant)-in-Memory vector store instance to store documents and their asymmetric embeddings.
     When run, the given query is embedded and scored against the document embeddings to retrieve the k-most similar matches by cosine similarity.
 
     Args:

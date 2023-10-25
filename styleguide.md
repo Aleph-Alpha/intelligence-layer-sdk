@@ -71,7 +71,6 @@ class ExampleTask(Task[ExampleTaskInput, ExampleTaskOutput]):
         return math.exp(some_number)
 ```
 
-
 ## Documentation
 
 Generally, adhere to this [guideline](https://www.sphinx-doc.org/en/master/usage/extensions/example_google.html).
