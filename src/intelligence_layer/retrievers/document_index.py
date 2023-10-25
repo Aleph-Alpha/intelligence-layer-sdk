@@ -1,33 +1,30 @@
-from typing import Sequence, Union
-from intelligence_layer.retrievers.base import BaseRetriever, SearchResult
 import json
+from typing import Any, Sequence
 
-# types-requests introduces dependency conflict with qdrant.
 import requests  # type: ignore
 
-Metadata = Union[dict[str, str], list[dict[str, str]]]
+from intelligence_layer.retrievers.base import BaseRetriever, SearchResult
 
 
 class DocumentIndex:
-    """Upload and search through the documents stored on the Aleph Alpha Document Index.
+    """Client for the Document Index allowing handling documents and search.
 
-    With the document index we give users the ability to create collections and upload the documents to a cloud database.
-
-    After that you can search through this documents based on the semantic similarity with a query.
+    Document Index is a tool for managing collections of documents, enabling operations such as creation, deletion, listing, and searching.
+    Documents can be stored either in the cloud or in a local deployment.
 
     Args:
-        client: An instance of the Aleph Alpha client.
-        base_document_index_url: the url address of the document index
-
+        token: A valid token for the document index API.
+        base_document_index_url: The url of the document index' API.
 
     Example:
-        >>> query = "Do you like summer?"
-        >>> document_index = DocumentIndex(client)
-        >>> documents = document_index.search(namespace="my_namespace",
-                                              collection="my_collection",
-                                              query: "What is the capital of Germany",
-                                              max_results=4,
-                                              min_score: 0.5)
+        >>> document_index = DocumentIndex(os.getenv("AA_TOKEN"))
+        >>> documents = document_index.search(
+        >>>     namespace="my_namespace",
+        >>>     collection="germany_facts_collection",
+        >>>     query: "What is the capital of Germany",
+        >>>     max_results=4,
+        >>>     min_score: 0.5
+        >>> )
     """
 
     def __init__(
@@ -58,13 +55,11 @@ class DocumentIndex:
         collection: str,
         name: str,
         content: str,
-        metadata: Metadata,
     ) -> None:
         url = f"{self._base_document_index_url}/collections/{namespace}/{collection}/docs/{name}"
         data = {
             "schema_version": "V1",
             "contents": [{"modality": "text", "text": content}],
-            "metadata": metadata,
         }
         response = requests.put(url, data=json.dumps(data), headers=self.headers)
         response.raise_for_status()
@@ -76,22 +71,22 @@ class DocumentIndex:
 
     def get_document(
         self, namespace: str, collection: str, name: str, get_chunks: bool = False
-    ) -> requests.Response:
+    ) -> Any:
         if not get_chunks:
             url = f"{self._base_document_index_url}/collections/{namespace}/{collection}/docs/{name}"
         else:
             url = f"{self._base_document_index_url}/collections/{namespace}/{collection}/docs/{name}/chunks"
         response = requests.get(url, headers=self.headers)
         response.raise_for_status()
-        return response
+        return response.json()
 
-    def list_documents(self, namespace: str, collection: str) -> requests.Response:
+    def list_documents(self, namespace: str, collection: str) -> Any:
         url = (
             f"{self._base_document_index_url}/collections/{namespace}/{collection}/docs"
         )
         response = requests.get(url, headers=self.headers)
         response.raise_for_status()
-        return response
+        return response.json()
 
     def search(
         self,
@@ -100,7 +95,7 @@ class DocumentIndex:
         query: str,
         max_results: int,
         min_score: float,
-    ) -> requests.Response:
+    ) -> Any:
         url = f"{self._base_document_index_url}/collections/{namespace}/{collection}/search"
         data = {
             "query": [{"modality": "text", "text": query}],
@@ -110,26 +105,27 @@ class DocumentIndex:
         }
         response = requests.post(url, data=json.dumps(data), headers=self.headers)
         response.raise_for_status()
-        return response
+        return response.json()
 
 
 class DocumentIndexRetriever(BaseRetriever):
-    """Search through the documents stored in the Document Index
+    """Search through documents within collections in the `DocumentIndex`.
 
     We initialize this Retriever with a collection & namespace names, and we can find the documents in the collection
     most semanticly similar to our query.
 
     Args:
-        client: An instance of the Aleph Alpha client.
-        namespace: Your user namespace where all the collections are stored.
-        collection: The specyfic collection where you want to search through the documents.
-        base_document_index_url: the url address of the document index
-        threshold: A mimumum value of the cosine similarity between the query vector and the document vector
+        document_index: Client offering functionality for search.
+        namespace: The namespace within the `DocumentIndex` where all collections are stored.
+        collection: The collection within the namespace that holds the desired documents.
+        k: The (top) number of documents to be returned by search.
+        threshold: The mimumum value of cosine similarity between the query vector and the document vector.
 
     Example:
-        >>> query = "Do you like summer?"
-        >>> retriever = DocumentIndexRetriever(client)
-        >>> documents = retriever.get_relevant_documents_with_scores(query, NoOpDebugLogger(), k=2)
+        >>> document_index = DocumentIndex(os.getenv("AA_TOKEN"))
+        >>> retriever = DocumentIndexRetriever(document_index, "my_namespace", "airplane_facts_collection", 3)
+        >>> query = "Who invented the airplane?"
+        >>> documents = retriever.get_relevant_documents_with_scores(query)
     """
 
     def __init__(
@@ -152,6 +148,6 @@ class DocumentIndexRetriever(BaseRetriever):
         )
         relevant_chunks = [
             SearchResult(score=result["score"], text=result["section"][0]["text"])
-            for result in response.json()
+            for result in response
         ]
         return relevant_chunks

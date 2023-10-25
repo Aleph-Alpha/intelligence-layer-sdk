@@ -1,6 +1,6 @@
 # Intelligence Layer Style Guideline
 
-## Documentation
+## Introduction: Documentation
 
 Generally, adhere to this [guideline](https://www.sphinx-doc.org/en/master/usage/extensions/example_google.html).
 
@@ -118,6 +118,17 @@ class MyInput(BaseModel):
 # Any output should be documented in a similar manner
 ```
 
+### Defaults
+
+Certain parameters in each task are recurring. Where possible, we shall try to use certain standard documentation.
+
+``` python
+"""
+client: Aleph Alpha client instance for running model related API calls.
+model: A valid Aleph Alpha model name.
+"""
+```
+
 ### Module documentation
 
 We **do not document the module**, as we assume imports like:
@@ -134,7 +145,7 @@ This ensures that the documentation is easily accessible by hovering over the im
 
 ## When to use a debug log
 
-Each task's input and output is automatically logged.
+Each task's input and output are automatically logged.
 For most task, we assume that this suffices.
 
 Exceptions would be complicated, task-specific implementations.

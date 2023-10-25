@@ -70,14 +70,13 @@ class TextHighlight(Task[TextHighlightInput, TextHighlightOutput]):
     """Generates text highlights given a prompt and completion.
 
     For a given prompt and target (completion), extracts the parts of the prompt responsible for generation.
-
     A range can be provided in the input 'PromptWithMetadata' via use of the liquid language (see the example). In this case, the highlights will only refer to text within this range.
 
     Args:
         client: Aleph Alpha client instance for running model related API calls.
 
     Example:
-    >>> client = Client(token="YOUR_AA_TOKEN")
+    >>> client = Client(os.getenv("AA_TOKEN"))
     >>> text_highlight = TextHighlight(client=client)
     >>> prompt_template_str = "{% promptrange r1 %}Question: What is 2 + 2?{% endpromptrange %}\nAnswer:"
     >>> template = PromptTemplate(prompt_template_str)

@@ -96,6 +96,7 @@ class SingleLabelClassify(Task[ClassifyInput, ClassifyOutput]):
     Attributes:
         PROMPT_TEMPLATE_STR: The prompt template used for answering the question.
             'text' and 'labels' will be inserted here.
+        MODEL: A valid Aleph Alpha model name.
 
     Example:
         >>> client = Client(token="AA_TOKEN")

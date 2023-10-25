@@ -1,13 +1,14 @@
 from abc import ABC, abstractmethod
 from typing import Sequence
+
 from pydantic import BaseModel
 
 
 class SearchResult(BaseModel):
-    """returns a text alongside its similarity score with a query.
+    """Contains a text alongside its search score.
 
     Attributes:
-        score: The similarity score between the document and the query.
+        score: The similarity score between the text and the query that was searched with.
             Will be between 0 and 1, where 0 means no similarity and 1 perfect similarity.
         text: The text found by search.
     """
@@ -17,6 +18,13 @@ class SearchResult(BaseModel):
 
 
 class BaseRetriever(ABC):
+    """General interface for any retriever.
+
+    Retrievers are used to find texts given a user query.
+    Each Retriever implementation owns its own logic for retrieval.
+    For comparison purposes, we assume scores in the `SearchResult`s to be between 0 and 1.
+    """
+
     @abstractmethod
     def get_relevant_documents_with_scores(self, query: str) -> Sequence[SearchResult]:
         pass
