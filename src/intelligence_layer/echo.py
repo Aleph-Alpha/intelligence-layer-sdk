@@ -68,7 +68,6 @@ class EchoTask(Task[EchoInput, EchoOutput]):
     Args:
         client: Aleph Alpha client instance for running model related API calls.
     """
-
     def __init__(self, client: Client) -> None:
         super().__init__()
         self._completion = RawCompletion(client=client)
