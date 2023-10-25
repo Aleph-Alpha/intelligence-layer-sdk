@@ -5,7 +5,7 @@
 To make sure that we approach building new tasks in a unified way, consider this example task:
 
 ``` python
-# Standard import pattern: 
+# Standard import pattern:
 # - Sort imports alphabetically.
 # - Avoid wildcrad imports.
 # - Normally consists of three blocks, separated by one newline each.
@@ -60,7 +60,7 @@ class ExampleTask(Task[ExampleTaskInput, ExampleTaskOutput]):
         self._init_client = init_client # Client should only be instantiated once, therefore the proper place is here.
         self._nested_task = NestedTask(init_client) # Try instantiating all tasks in the `__init__`, rather than in `run` or elsewhere.
 
-    # For now, we assume that run will be the only explicitely public method for each `Task`.
+    # For now, we assume that run will be the only explicitly public method for each `Task`.
     # `run` should be the first method after dunder methods.
     def run(self, input: ExampleTaskInput, logger: DebugLogger) -> ExampleOutput:
         return self._some_calculation(input.some_number)
