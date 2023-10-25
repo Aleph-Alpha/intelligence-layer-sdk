@@ -6,9 +6,9 @@ To make sure that we approach building new tasks in a unified way, consider this
 
 ``` python
 # Standard import pattern: 
-# - Alphabetically sorted
-# - Avoid wildcrad imports
-# - Three blocks, separated by newlines
+# - Sort imports alphabetically.
+# - Avoid wildcrad imports.
+# - Normally consists of three blocks, separated by one newline each.
 # 1) Built-in libraries
 import math
 from typing import Sequence
@@ -16,12 +16,15 @@ from typing import Sequence
 # 2) Third-party libraries
 from aleph_alpha_client import Client
 from pydantic import BaseModel
+import requests # type: ignore
+# Use 'type: ignore' for libraries that cause mypy issues (if there's no other fix).
 
 # 3) Local application libraries
 from intelligence_layer.nested_task import NestedTask
 from intelligence_layer.task import DebugLogger, Task
 
-# Two newlines in between separate classes. See the problem?
+
+# Two newlines in between separate classes or between classes and imports.
 class ExampleTaskInput(BaseModel):
     """Some documentation should go here. For information on this, see below."""
     # Each task can receive its required input in one of three ways:
@@ -33,10 +36,12 @@ class ExampleTaskInput(BaseModel):
 
 
 class ExampleTaskOutput(BaseModel):
+    """Some documentation should go here as well."""
     some_result: str
 
 
 class ExampleTask(Task[ExampleTaskInput, ExampleTaskOutput]):
+    """Even more fun documentation."""
     # 2) As constants:
     # - Makes it clear that these exact parameters are required for the `Task` or at least are central to it.
     # - Sends a clear signal that these parameters should not be touched.
