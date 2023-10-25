@@ -4,13 +4,13 @@ from aleph_alpha_client import Client
 from pydantic import BaseModel
 from semantic_text_splitter import HuggingFaceTextSplitter
 
-from intelligence_layer.multiple_chunk_qa import (
+from intelligence_layer.use_cases.qa.multiple_chunk_qa import (
     MultipleChunkQa,
     MultipleChunkQaInput,
     MultipleChunkQaOutput,
 )
 from intelligence_layer.retrievers.in_memory import InMemoryRetriever
-from intelligence_layer.search import Search, SearchInput
+from intelligence_layer.use_cases.search.search import Search, SearchInput
 from intelligence_layer.task import Chunk, DebugLogger, Task
 
 

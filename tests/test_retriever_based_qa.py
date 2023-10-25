@@ -1,7 +1,7 @@
 from typing import Sequence
 from aleph_alpha_client import Client
 from pytest import fixture
-from intelligence_layer.retriever_based_qa import (
+from intelligence_layer.use_cases.qa.retriever_based_qa import (
     RetrieverBasedQa,
     RetrieverBasedQaInput,
 )

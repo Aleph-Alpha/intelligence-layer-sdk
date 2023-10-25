@@ -3,7 +3,7 @@ from textwrap import dedent
 from typing import List
 from pytest import raises
 from aleph_alpha_client.prompt import Prompt, Image, PromptItem, Text, Tokens
-from intelligence_layer.prompt_template import (
+from intelligence_layer.core.prompt_template import (
     PromptItemCursor,
     PromptRange,
     TextCursor,

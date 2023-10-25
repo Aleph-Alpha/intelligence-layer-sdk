@@ -2,7 +2,7 @@ from typing import Sequence
 from aleph_alpha_client import Client, Prompt
 from pytest import fixture
 import tokenizers  # type: ignore
-from intelligence_layer.echo import EchoInput, EchoTask, TokenWithProb
+from intelligence_layer.core.echo import EchoInput, EchoTask, TokenWithProb
 from intelligence_layer.task import NoOpDebugLogger, Token
 
 

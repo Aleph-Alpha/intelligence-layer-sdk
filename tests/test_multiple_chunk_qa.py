@@ -1,5 +1,8 @@
 from typing import Sequence
-from intelligence_layer.multiple_chunk_qa import MultipleChunkQa, MultipleChunkQaInput
+from intelligence_layer.use_cases.qa.multiple_chunk_qa import (
+    MultipleChunkQa,
+    MultipleChunkQaInput,
+)
 from aleph_alpha_client import Client
 from pytest import fixture
 

@@ -1,6 +1,9 @@
 from aleph_alpha_client import Client
 from pytest import fixture
-from intelligence_layer.long_context_qa import LongContextQa, LongContextQaInput
+from intelligence_layer.use_cases.qa.long_context_qa import (
+    LongContextQa,
+    LongContextQaInput,
+)
 
 from intelligence_layer.task import NoOpDebugLogger
 

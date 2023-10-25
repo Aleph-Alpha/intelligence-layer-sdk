@@ -2,7 +2,7 @@ from typing import Sequence
 from pytest import fixture
 
 from intelligence_layer.retrievers.in_memory import InMemoryRetriever
-from intelligence_layer.search import Search, SearchInput
+from intelligence_layer.use_cases.search.search import Search, SearchInput
 from intelligence_layer.task import NoOpDebugLogger
 
 

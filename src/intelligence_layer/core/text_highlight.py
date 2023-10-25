@@ -13,7 +13,7 @@ from aleph_alpha_client import (
 from aleph_alpha_client.explanation import TextScoreWithRaw
 from pydantic import BaseModel
 
-from intelligence_layer.prompt_template import (
+from intelligence_layer.core.prompt_template import (
     Cursor,
     PromptRange,
     PromptWithMetadata,

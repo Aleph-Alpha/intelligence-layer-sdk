@@ -1,6 +1,6 @@
 from aleph_alpha_client import Client
 from pytest import fixture
-from intelligence_layer.summarize import (
+from intelligence_layer.use_cases.summarize.summarize import (
     SummarizeInput,
     ShortBodySummarize,
 )

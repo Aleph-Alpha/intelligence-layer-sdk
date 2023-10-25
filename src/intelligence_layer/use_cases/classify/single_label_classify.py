@@ -17,7 +17,7 @@ from pydantic import BaseModel
 from intelligence_layer.core.completion import (
     RawCompletion,
 )
-from intelligence_layer.echo import EchoInput, EchoTask, TokenWithProb
+from intelligence_layer.core.echo import EchoInput, EchoTask, TokenWithProb
 from intelligence_layer.task import (
     Chunk,
     Evaluator,

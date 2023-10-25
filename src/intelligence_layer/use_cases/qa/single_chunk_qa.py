@@ -8,10 +8,10 @@ from intelligence_layer.core.completion import (
     InstructionInput,
     InstructionOutput,
 )
-from intelligence_layer.prompt_template import (
+from intelligence_layer.core.prompt_template import (
     PromptWithMetadata,
 )
-from intelligence_layer.text_highlight import (
+from intelligence_layer.core.text_highlight import (
     TextHighlight,
     TextHighlightInput,
 )

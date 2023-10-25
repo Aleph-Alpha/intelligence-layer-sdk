@@ -3,13 +3,13 @@ from aleph_alpha_client import (
 )
 from pydantic import BaseModel
 
-from intelligence_layer.multiple_chunk_qa import (
+from intelligence_layer.use_cases.qa.multiple_chunk_qa import (
     MultipleChunkQa,
     MultipleChunkQaInput,
     MultipleChunkQaOutput,
 )
 from intelligence_layer.retrievers.base import BaseRetriever
-from intelligence_layer.search import Search, SearchInput
+from intelligence_layer.use_cases.search.search import Search, SearchInput
 from intelligence_layer.task import Chunk, DebugLogger, Task
 
 

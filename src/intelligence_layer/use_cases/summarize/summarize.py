@@ -8,9 +8,9 @@ from intelligence_layer.core.completion import (
     InstructionInput,
     InstructionOutput,
 )
-from intelligence_layer.prompt_template import PromptWithMetadata
+from intelligence_layer.core.prompt_template import PromptWithMetadata
 from intelligence_layer.task import Chunk, DebugLogger, Task
-from intelligence_layer.text_highlight import TextHighlight, TextHighlightInput
+from intelligence_layer.core.text_highlight import TextHighlight, TextHighlightInput
 
 
 class SummarizeInput(BaseModel):

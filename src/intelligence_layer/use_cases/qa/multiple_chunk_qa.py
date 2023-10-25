@@ -8,7 +8,7 @@ from intelligence_layer.core.completion import (
     InstructionInput,
     InstructionOutput,
 )
-from intelligence_layer.single_chunk_qa import (
+from intelligence_layer.use_cases.qa.single_chunk_qa import (
     SingleChunkQaInput,
     SingleChunkQaOutput,
     SingleChunkQa,
