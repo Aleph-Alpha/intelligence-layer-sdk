@@ -1,14 +1,10 @@
-from itertools import chain
-from typing import NewType, Sequence
-
-from aleph_alpha_client import Client, CompletionRequest, Prompt, TokenizationRequest, Tokens
+from typing import Sequence
+from aleph_alpha_client import Client, CompletionRequest, Prompt, Tokens
 from pydantic import BaseModel
 import tokenizers  # type: ignore
-
 from intelligence_layer.completion import RawCompletion, RawCompletionInput
 from intelligence_layer.prompt_template import PromptTemplate
 from intelligence_layer.task import DebugLogger, LogProb, Probability, Task, Token
-from itertools import chain
 
 
 class TokenWithProb(BaseModel):
