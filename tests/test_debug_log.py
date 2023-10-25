@@ -8,7 +8,7 @@ from intelligence_layer.task import (
     InMemoryTaskSpan,
     LogEntry,
 )
-from intelligence_layer.completion import RawCompletion, RawCompletionInput
+from intelligence_layer.core.completion import RawCompletion, RawCompletionInput
 
 
 def test_debug_add_log_entries() -> None:

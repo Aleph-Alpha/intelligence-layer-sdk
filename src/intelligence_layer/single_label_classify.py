@@ -14,7 +14,7 @@ from aleph_alpha_client import (
 )
 from pydantic import BaseModel
 
-from intelligence_layer.completion import (
+from intelligence_layer.core.completion import (
     RawCompletion,
 )
 from intelligence_layer.echo import EchoInput, EchoTask, TokenWithProb

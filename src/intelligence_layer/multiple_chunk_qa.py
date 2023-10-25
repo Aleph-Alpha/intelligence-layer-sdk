@@ -3,7 +3,7 @@ from typing import Iterable, Optional, Sequence
 from aleph_alpha_client import Client
 from pydantic import BaseModel
 
-from intelligence_layer.completion import (
+from intelligence_layer.core.completion import (
     Instruction,
     InstructionInput,
     InstructionOutput,

@@ -2,7 +2,7 @@ from typing import Sequence
 from aleph_alpha_client import Client, CompletionRequest, Prompt, Tokens
 from pydantic import BaseModel
 import tokenizers  # type: ignore
-from intelligence_layer.completion import RawCompletion, RawCompletionInput
+from intelligence_layer.core.completion import RawCompletion, RawCompletionInput
 from intelligence_layer.prompt_template import PromptTemplate
 from intelligence_layer.task import DebugLogger, LogProb, Probability, Task, Token
 
