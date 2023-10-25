@@ -18,6 +18,12 @@ class DocumentIndex:
 
     Example:
         >>> document_index = DocumentIndex(os.getenv("AA_TOKEN"))
+        >>> document_index.create_collection(namespace="my_namespace", collection="germany_facts_collection")
+        >>> document_index.add_document(
+                namespace="my_namespace",
+                collection="germany_facts_collection",
+                name="Fun facts about Germany",
+                content="Germany is a country located in ...")
         >>> documents = document_index.search(
         >>>     namespace="my_namespace",
         >>>     collection="germany_facts_collection",
