@@ -1,20 +1,26 @@
+from itertools import chain
 from typing import NewType, Sequence
+
 from aleph_alpha_client import Client, CompletionRequest, Prompt, TokenizationRequest
 from pydantic import BaseModel
 import tokenizers  # type: ignore
+
 from intelligence_layer.completion import RawCompletion, RawCompletionInput
 from intelligence_layer.task import DebugLogger, Task
-from itertools import chain
+
 
 LogProb = NewType("LogProb", float)
 Probability = NewType("Probability", float)
 
 
 class Token(BaseModel):
-    """A token class containing it's id and the raw token.
+    """A token class containing the raw token and its id.
 
-    This is used instead of the Aleph Alpha client Token class since this one is serializable,
-    while the one from the client is not.
+    Refers to a unit of text that a model reads, which can be as short as a single character or as long as a word.
+
+    Attributes:
+        token: The actual text represented by the token.
+        token_id: ID assigned to the token by the specific tokenizer.
     """
 
     token: str
@@ -31,25 +37,40 @@ class TokenWithProb(BaseModel):
 
 
 class EchoInput(BaseModel):
+    """The input for an `EchoTask`.
+
+    Attributes:
+        prompt: The input text that serves as the starting point for the LLM.
+        expected_completion: The desired completion based on the prompt.
+            The likelihood of the tokens in this will be examined.
+        model: A valid Aleph Alpha model name.
+    """
+
     prompt: str
     expected_completion: str
     model: str
 
 
 class EchoOutput(BaseModel):
+    """The output of an `EchoTask`.
+
+    Attributes:
+        tokens_with_log_probs: Every token of the `expected_completion` of the
+            `EchoInput` accompanied by its probability of having been generated
+            in a completion scenario.
+    """
+
     tokens_with_log_probs: Sequence[TokenWithProb]
 
 
 class EchoTask(Task[EchoInput, EchoOutput]):
     """Task that returns probabilities of the completion based on the given model and prompt.
 
-    This task asks the model how likely the given completion is. It does not generate any tokens.
+    Analyzes the likelihood of generating tokens in the expected completion based on
+    a given prompt and model. Does not generate any tokens.
 
     Args:
         client: Aleph Alpha client instance for running model related API calls.
-
-    Example:
-
     """
 
     def __init__(self, client: Client) -> None:
@@ -98,7 +119,7 @@ class EchoTask(Task[EchoInput, EchoOutput]):
         )
 
     def _tokenize(self, expected_output: str, model: str) -> Sequence[Token]:
-        """Turns th expected output into list of token ids. Important so that we know how many tokens
+        """Turns the expected output into list of token ids. Important so that we know how many tokens
         the label is and can retrieve the last N log probs for the label"""
         response = self._client.tokenize(
             request=TokenizationRequest(expected_output, tokens=True, token_ids=True),

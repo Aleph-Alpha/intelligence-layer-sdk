@@ -1,24 +1,24 @@
 from typing import Sequence
-from aleph_alpha_client import (
-    Client,
-)
+
+from aleph_alpha_client import Client
 from pydantic import BaseModel
+from semantic_text_splitter import HuggingFaceTextSplitter
+
 from intelligence_layer.multiple_chunk_qa import (
     MultipleChunkQa,
     MultipleChunkQaInput,
     MultipleChunkQaOutput,
 )
+from intelligence_layer.retrievers.in_memory import InMemoryRetriever
 from intelligence_layer.search import Search, SearchInput
 from intelligence_layer.task import Chunk, DebugLogger, Task
-from semantic_text_splitter import HuggingFaceTextSplitter
-from intelligence_layer.retrievers.in_memory import InMemoryRetriever
 
 
 class LongContextQaInput(BaseModel):
-    """This is the input for QA method working on long context texts
+    """The input for a `LongContextQa` task.
 
     Attributes:
-        text: Text of an arbitrary length on the basis of which the question is to be answered.
+        text: Text of arbitrary length on the basis of which the question is to be answered.
         question: The question for the text.
     """
 
@@ -27,24 +27,28 @@ class LongContextQaInput(BaseModel):
 
 
 class LongContextQa(Task[LongContextQaInput, MultipleChunkQaOutput]):
-    """Answer question for lengthy documents
+    """Answer a question on the basis of a (lengthy) document.
 
-    LongContextQa is a task answering a question for a long document, where the length
+    Best for answering a question on the basis of a long document, where the length
     of text exceeds the context length of a model (e.g. 2048 tokens for the luminous models).
 
+    Note:
+        - Creates instance of `InMemoryRetriever` on the fly.
+        - `model` provided should be a control-type model.
+
     Args:
-        client: An instance of the Aleph Alpha client.
-        max_tokens_in_chunk: Maximum number of tokens in each chunk.
+        client: Aleph Alpha client instance for running model related API calls.
+        max_tokens_in_chunk: The input text will be split into chunks to fit the context window.
+            Used to tweak the length of the chunks.
         k: The number of top relevant chunks to retrieve.
-        model: Identifier of the model to be used.
+        model: A valid Aleph Alpha model name.
 
     Example:
-        >>> client = Client(token=os.getenv("AA_TOKEN"))
+        >>> client = Client(os.getenv("AA_TOKEN"))
         >>> task = LongContextQa(client)
-        >>> input_data = LongContextQaInput(text="Lengthy text goes here...", question="What is the main point?")
-        >>> logger = InMemoryDebugLogger(name="qa")
-        >>> output = task.run(input_data, logger)
-        >>> print(output.answer)
+        >>> input = LongContextQaInput(text="Lengthy text goes here...", question="Where does the text go?")
+        >>> logger = InMemoryDebugLogger(name="Long Context QA")
+        >>> output = task.run(input, logger)
     """
 
     def __init__(

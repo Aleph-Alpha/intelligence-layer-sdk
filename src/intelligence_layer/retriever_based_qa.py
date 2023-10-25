@@ -1,8 +1,8 @@
-from typing import Sequence
 from aleph_alpha_client import (
     Client,
 )
 from pydantic import BaseModel
+
 from intelligence_layer.multiple_chunk_qa import (
     MultipleChunkQa,
     MultipleChunkQaInput,
@@ -11,38 +11,44 @@ from intelligence_layer.multiple_chunk_qa import (
 from intelligence_layer.retrievers.base import BaseRetriever
 from intelligence_layer.search import Search, SearchInput
 from intelligence_layer.task import Chunk, DebugLogger, Task
-from semantic_text_splitter import HuggingFaceTextSplitter
-from intelligence_layer.retrievers.in_memory import InMemoryRetriever
 
 
 class RetrieverBasedQaInput(BaseModel):
-    """This is the input for a retriever based QA task.
+    """The input for a `RetrieverBasedQa` task.
 
     Attributes:
-        question: The question to be answered against the retriever.
+        question: The question to be answered based on the documents accessed
+            by the retriever.
     """
 
     question: str
 
 
 class RetrieverBasedQa(Task[RetrieverBasedQaInput, MultipleChunkQaOutput]):
-    """Answer a question against documents in a retriever.
+    """Answer a question based on documents found by a retriever.
 
-    `RetrieverBasedQa` is a task that answers a question based on a set of documents.
-    These documents are served in form of a `BaseRetriever`.
+    RetrieverBasedQa` is a task that answers a question based on a set of documents.
+    Relies on some retriever of type `BaseRetriever` that has the ability to access texts.
+
+    Note:
+        `model` provided should be a control-type model.
 
     Args:
-        client: An instance of the Aleph Alpha client
-        retriever: Used to access the documents
-        model: Identifier of the model to be used
+        client: Aleph Alpha client instance for running model related API calls.
+        retriever: Used to access and return a set of texts.
+        model: A valid Aleph Alpha model name.
 
     Example:
-        >>> client = Client(token=os.getenv("AA_TOKEN"))
-        >>> task = RetrieverBasedQa(client)
-        >>> input_data = RetrieverBasedQaInput(question="What is the main point?")
-        >>> logger = InMemoryDebugLogger(name="qa")
+        >>> token = os.getenv("AA_TOKEN")
+        >>> client = Client(token)
+        >>> document_index = DocumentIndex(token)
+        >>> retriever = DocumentIndexRetriever(document_index, "my_namespace", "ancient_facts_collection", 3)
+        >>> task = RetrieverBasedQa(client, retriever)
+        >>> input_data = RetrieverBasedQaInput(question="When was Rome founded?")
+        >>> logger = InMemoryDebugLogger(name="Retriever Based QA")
         >>> output = task.run(input_data, logger)
         >>> print(output.answer)
+        Rome was founded in 753 BC.
     """
 
     def __init__(

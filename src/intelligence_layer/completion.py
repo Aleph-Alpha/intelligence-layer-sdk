@@ -1,6 +1,8 @@
 from typing import Optional
+
 from aleph_alpha_client import Client, CompletionRequest, CompletionResponse, Prompt
 from pydantic import BaseModel
+
 from intelligence_layer.prompt_template import PromptTemplate, PromptWithMetadata
 from intelligence_layer.task import DebugLogger, Task
 
@@ -9,9 +11,9 @@ class RawCompletionInput(BaseModel):
     """The input for a `RawCompletion` task.
 
     Attributes:
-        request: aleph-alpha-client's `CompletionRequest`. This gives fine grained control
+        request: Aleph Alpha `Client`'s `CompletionRequest`. This gives fine grained control
             over all completion parameters that are supported by Aleph Alpha's inference API.
-        model: the name of the model that actually performs the completion.
+        model: A valid Aleph Alpha model name.
     """
 
     request: CompletionRequest
@@ -19,10 +21,10 @@ class RawCompletionInput(BaseModel):
 
 
 class RawCompletionOutput(BaseModel):
-    """The output for a `RawCompletion` task.
+    """The output of a `RawCompletion` task.
 
     Attributes:
-        response: aleph-alpha-client's `CompletionResponse` containing all details
+        response: Aleph Alpha `Client`'s `CompletionResponse` containing all details
             provided by Aleph Alpha's inference API.
     """
 
@@ -59,18 +61,19 @@ class RawCompletion(Task[RawCompletionInput, RawCompletionOutput]):
 
 
 class InstructionInput(BaseModel):
-    """Input for an `InstructionTask`.
+    """The input for an `InstructionTask`.
 
     Attributes:
         instruction: A textual instruction for the model.
             Could be a directive to answer a question or to translate something.
-        input: The text-input for the instruction, e.g. a text to be translated.
+        input: The text input for the instruction, e.g. a text to be translated.
         model: The name of the model that should handle the instruction.
+            Certain models are optimized for handling such instruction tasks.
+            Typically their name contains 'control', e.g. 'luminous-extended-control'.
         response_prefix: A string that is provided to the LLM as a prefix of the response.
             This can steer the model completion.
         maximum_response_tokens: The maximum number of tokens to be generated in the answer.
-            For generating answers the default probably works fine in case of translations this
-            tpically depends on the text to be translated.
+            The default corresponds to roughly one short paragraph.
     """
 
     instruction: str
@@ -81,12 +84,12 @@ class InstructionInput(BaseModel):
 
 
 class InstructionOutput(BaseModel):
-    """Output of an `InstructionTask`.
+    """The output of an `InstructionTask`.
 
     Attributes:
-        response: the model's generated response to the instruction.
-        prompt_with_metadata: To handle the instruction a specific `PromptTemplate` is used
-            the template defines two `PromptRange`s:
+        response: The generated response to the instruction.
+        prompt_with_metadata: To handle the instruction, a `PromptTemplate` is used.
+            The template defines two `PromptRange`s:
             - "instruction": covering the instruction text as provided in the `InstructionInput`.
             - "input": covering the input text as provided in the `InstructionInput`.
             These can for example be used for downstream `TextHighlight` tasks.
@@ -97,10 +100,10 @@ class InstructionOutput(BaseModel):
 
 
 class Instruction(Task[InstructionInput, InstructionOutput]):
-    """Makes the model react to a given instruction and input text with a corresponding response.
+    """Runs zero-shot instruction completions on a model.
 
-    This can be used for different types of instructions a LLM can handle, like translations or
-    answering questions based on an input text.
+    Can be used for various types of instructions a LLM could handle, like QA, summarization,
+    translation and more.
 
     Args:
         client: Aleph Alpha client instance for running model related API calls.
@@ -110,16 +113,16 @@ class Instruction(Task[InstructionInput, InstructionOutput]):
             to the inference API.
 
     Example:
-        >>> client = Client(token="YOUR_AA_TOKEN")
+        >>> client = Client(os.getenv("AA_TOKEN"))
         >>> task = Instruction(client)
         >>> input = InstructionInput(
-        >>>     instruction="Translates the following to test to German.",
-        >>>     input="An apple a day, keeps the doctor away."
+        >>>     instruction="Translate the following to text to German.",
+        >>>     input="An apple a day keeps the doctor away."
         >>> )
         >>> logger = InMemoryLogger(name="Instruction")
         >>> output = task.run(input, logger)
         >>> print(output.response)
-        >>> "Eine Apfel am Tag hält den Arzt fern."
+        Ein Apfel am Tag hält den Arzt fern.
     """
 
     INSTRUCTION_PROMPT_TEMPLATE = """### Instruction:

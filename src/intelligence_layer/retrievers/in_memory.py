@@ -1,32 +1,36 @@
 from typing import Sequence
-from intelligence_layer.retrievers.base import BaseRetriever, SearchResult
-from qdrant_client import QdrantClient
+
 from aleph_alpha_client import (
     Client,
     Prompt,
     SemanticRepresentation,
     SemanticEmbeddingRequest,
 )
+from qdrant_client import QdrantClient
 from qdrant_client.conversions.common_types import ScoredPoint
 from qdrant_client.http.models import Distance, VectorParams, PointStruct
 
+from intelligence_layer.retrievers.base import BaseRetriever, SearchResult
+
 
 class InMemoryRetriever(BaseRetriever):
-    """Retrieve top k documents using in memory semantic search
+    """Search through documents stored in memory using semantic search.
 
-    This retriever uses a [Qdrant](https://github.com/qdrant/qdrant) in memory vector store instance to store texts and their asymmetric (SemanticRepresentation.Document) embeddings.
-    When running "get_relevant_documents_with_scores", the query is embedded asymmetrically (SemanticRepresentation.Query) and scored against the embeddings in the vector store to retrieve the k-most similar matches by cosine similarity.
+    This retriever uses a [Qdrant](https://github.com/qdrant/qdrant)-in-Memory vector memory instance to store documents and their asymmetric embeddings.
+    When run, the given query is embedded and scored against the document embeddings to retrieve the k-most similar matches by cosine similarity.
 
     Args:
-        client: An instance of the Aleph Alpha client.
-        texts: A sequence of texts you want to embed and put in memory as your documents
-        threshold: A mimumum value of the cosine similarity between the query vector and the document vector
+        client: Aleph Alpha client instance for running model related API calls.
+        texts: The sequence of texts to be made searchable.
+        k: The (top) number of documents to be returned by search.
+        threshold: The mimumum value of cosine similarity between the query vector and the document vector.
 
     Example:
-        >>> texts = ["I do not like rain", "Summer is warm", "We are so back"]
-        >>> query = "Do you like summer?"
+        >>> client = Client(os.getenv("AA_TOKEN"))
+        >>> texts = ["I do not like rain.", "Summer is warm.", "We are so back."]
         >>> retriever = InMemoryRetriever(client, texts)
-        >>> documents = retriever.get_relevant_documents_with_scores(query, NoOpDebugLogger(), k=2)
+        >>> query = "Do you like summer?"
+        >>> documents = retriever.get_relevant_documents_with_scores(query)
     """
 
     def __init__(

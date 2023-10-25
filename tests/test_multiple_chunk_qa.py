@@ -27,9 +27,9 @@ def test_multiple_chunk_qa_with_answer(qa: MultipleChunkQa) -> None:
     assert "Henri" in output.answer
     assert any(
         any("Henri" in highlight for highlight in source.highlights)
-        for source in output.sources
+        for source in output.subanswers
     )
-    assert len(output.sources) == 1
+    assert len(output.subanswers) == 1
 
 
 def test_multiple_chunk_qa_without_answer(qa: MultipleChunkQa) -> None:
@@ -66,6 +66,6 @@ def test_multiple_chunk_qa_with_mulitple_chunks(qa: MultipleChunkQa) -> None:
 
     assert output.answer
     assert "Henri" in output.answer
-    assert len(output.sources) == 1
-    assert output.sources[0].chunk == chunks[0]
-    assert any("Henri" in highlight for highlight in output.sources[0].highlights)
+    assert len(output.subanswers) == 1
+    assert output.subanswers[0].chunk == chunks[0]
+    assert any("Henri" in highlight for highlight in output.subanswers[0].highlights)

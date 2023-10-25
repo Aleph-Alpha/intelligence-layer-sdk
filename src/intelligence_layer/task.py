@@ -386,8 +386,8 @@ class InMemorySpan(AbstractContextManager["InMemorySpan"], InMemoryDebugLogger):
 
 
 class InMemoryTaskSpan(InMemorySpan):
-    input: PydanticSerializable
-    output: Optional[PydanticSerializable] = None
+    input: SerializeAsAny[PydanticSerializable]
+    output: Optional[SerializeAsAny[PydanticSerializable]] = None
 
     def record_output(self, output: PydanticSerializable) -> None:
         """Record a `Task`'s output. Since a Context Manager can't provide this in the `__exit__`
