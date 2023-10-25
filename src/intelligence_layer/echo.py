@@ -1,30 +1,14 @@
 from itertools import chain
 from typing import NewType, Sequence
 
-from aleph_alpha_client import Client, CompletionRequest, Prompt, TokenizationRequest
+from aleph_alpha_client import Client, CompletionRequest, Prompt, TokenizationRequest, Tokens
 from pydantic import BaseModel
 import tokenizers  # type: ignore
 
 from intelligence_layer.completion import RawCompletion, RawCompletionInput
-from intelligence_layer.task import DebugLogger, Task
-
-
-LogProb = NewType("LogProb", float)
-Probability = NewType("Probability", float)
-
-
-class Token(BaseModel):
-    """A token class containing the raw token and its id.
-
-    Refers to a unit of text that a model reads, which can be as short as a single character or as long as a word.
-
-    Attributes:
-        token: The actual text represented by the token.
-        token_id: ID assigned to the token by the specific tokenizer.
-    """
-
-    token: str
-    token_id: int
+from intelligence_layer.prompt_template import PromptTemplate
+from intelligence_layer.task import DebugLogger, LogProb, Probability, Task, Token
+from itertools import chain
 
 
 class TokenWithProb(BaseModel):
@@ -42,7 +26,7 @@ class EchoInput(BaseModel):
         model: A valid Aleph Alpha model name.
     """
 
-    prompt: str
+    prompt: Prompt
     expected_completion: str
     model: str
 
@@ -81,20 +65,30 @@ class EchoTask(Task[EchoInput, EchoOutput]):
         >>> print(output.tokens_with_log_probs[0]).prob
         0.6
     """
+
+    PROMPT_TEMPLATE: PromptTemplate = PromptTemplate(
+        "{{prompt}}{{expected_completion}}"
+    )
+
     def __init__(self, client: Client) -> None:
         super().__init__()
         self._completion = RawCompletion(client=client)
         self._client = client
 
     def run(self, input: EchoInput, logger: DebugLogger) -> EchoOutput:
-        # We tokenize the prompt and expected completion separately so we don't 
+        # We tokenize the prompt separately so we don't
         # have an overlap in the tokens.
         # If we don't do this, the end of the prompt and expected completion can be merged into unexpected tokens.
         expected_completion_tokens = self._tokenize(
             input.expected_completion, input.model
         )
-        prompt = self._to_aa_tokens_prompt(
-            list(chain(self._tokenize(input.prompt, input.model), expected_completion_tokens))
+        prompt = self.PROMPT_TEMPLATE.to_prompt(
+            prompt=self.PROMPT_TEMPLATE.embed_prompt(input.prompt),
+            expected_completion=self.PROMPT_TEMPLATE.placeholder(
+                Tokens.from_token_ids(
+                    [token.token_id for token in expected_completion_tokens]
+                )
+            ),
         )
         completion_input = RawCompletionInput(
             request=self._completion_request(prompt=prompt),
@@ -106,7 +100,9 @@ class EchoTask(Task[EchoInput, EchoOutput]):
             -len(expected_completion_tokens) :
         ]
         tokens_with_prob = []
-        for token, log_prob in zip(expected_completion_tokens, log_prob_dicts, strict=True):
+        for token, log_prob in zip(
+            expected_completion_tokens, log_prob_dicts, strict=True
+        ):
             assert token.token in log_prob
             tokens_with_prob.append(
                 TokenWithProb(
@@ -115,9 +111,6 @@ class EchoTask(Task[EchoInput, EchoOutput]):
                 )
             )
         return EchoOutput(tokens_with_log_probs=tokens_with_prob)
-    
-    def _to_aa_tokens_prompt(self, tokens: Sequence[Token]) -> Prompt:
-        return Prompt.from_tokens([token.token_id for token in tokens])
 
     def _completion_request(
         self,
@@ -131,19 +124,17 @@ class EchoTask(Task[EchoInput, EchoOutput]):
             echo=True,
         )
 
-    def _tokenize(self, expected_output: str, model: str) -> Sequence[Token]:
+    def _tokenize(self, text: str, model: str) -> Sequence[Token]:
         """Turns the expected output into list of token ids. Important so that we know how many tokens
         the label is and can retrieve the last N log probs for the label"""
-        response = self._client.tokenize(
-            request=TokenizationRequest(expected_output, tokens=True, token_ids=True),
-            model=model,
-        )
         tokenizer = self._client.tokenizer(model)
         assert tokenizer.pre_tokenizer
         tokenizer.pre_tokenizer.add_prefix_space = False
-        tokens: tokenizers.Encoding = tokenizer.encode(expected_output)
-        assert response.token_ids and response.tokens
+        encoding: tokenizers.Encoding = tokenizer.encode(text)
         return [
-            Token(token=token, token_id=token_id)
-            for token, token_id in zip(tokens.tokens, tokens.ids)
+            Token(
+                token=tokenizer.decode([token_id], skip_special_tokens=False),
+                token_id=token_id,
+            )
+            for token_id in encoding.ids
         ]

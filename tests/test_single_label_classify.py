@@ -1,3 +1,4 @@
+from pprint import pprint
 from typing import Sequence
 from aleph_alpha_client import Client
 from pytest import fixture
@@ -12,6 +13,7 @@ from intelligence_layer.task import (
     Chunk,
     Dataset,
     Example,
+    InMemoryDebugLogger,
     NoOpDebugLogger,
 )
 
@@ -43,7 +45,8 @@ def test_single_label_classify_accomodates_labels_starting_with_spaces(
         chunk=Chunk("This is good"), labels=frozenset({" positive", "negative"})
     )
 
-    classify_output = single_label_classify.run(classify_input, NoOpDebugLogger())
+    logger = InMemoryDebugLogger(name="log")
+    classify_output = single_label_classify.run(classify_input, logger)
 
     # Output contains everything we expect
     assert classify_input.labels == set(r for r in classify_output.scores)

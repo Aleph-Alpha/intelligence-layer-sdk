@@ -84,6 +84,7 @@ class Token(BaseModel):
     token: str
     token_id: int
 
+
 @runtime_checkable
 class DebugLogger(Protocol):
     """A protocol for instrumenting `Task`s with structured logging.

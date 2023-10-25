@@ -1,8 +1,8 @@
 import math
+import re
 from typing import (
     Any,
     Iterable,
-    NewType,
     Mapping,
     Optional,
     Sequence,
@@ -27,6 +27,7 @@ from intelligence_layer.echo import EchoInput, EchoTask, TokenWithProb
 from intelligence_layer.task import (
     Chunk,
     Evaluator,
+    LogProb,
     Probability,
     Task,
     DebugLogger,
@@ -101,7 +102,7 @@ Reply with only the class label.
 ### Input:
 {{text}}
 
-### Response:{{label}}"""
+### Response:"""
     MODEL: str = "luminous-base-control"
     _client: Client
 
@@ -113,22 +114,43 @@ Reply with only the class label.
 
     def run(self, input: ClassifyInput, logger: DebugLogger) -> ClassifyOutput:
         log_probs_per_label = self._log_probs_per_label(
-            text_to_classify=input.chunk, labels=input.labels, model=self.MODEL, logger=logger
+            text_to_classify=input.chunk,
+            labels=input.labels,
+            model=self.MODEL,
+            logger=logger,
         )
         normalized_probs_per_label = self._normalize(log_probs_per_label, logger)
         scores = self._compute_scores(normalized_probs_per_label)
         return ClassifyOutput(
             scores=scores,
         )
-    
-    def _log_probs_per_label(self, text_to_classify: str, labels: Sequence[str], model: str, logger: DebugLogger) -> Mapping[str, Sequence[TokenWithProb]]:
-        prompt = PromptTemplate(template_str=self.PROMPT_TEMPLATE).to_prompt(text=text_to_classify).items[0].text
-        assert isinstance(prompt, str)
+
+    def _log_probs_per_label(
+        self,
+        text_to_classify: str,
+        labels: frozenset[str],
+        model: str,
+        logger: DebugLogger,
+    ) -> Mapping[str, Sequence[TokenWithProb]]:
+        prompt = PromptTemplate(template_str=self.PROMPT_TEMPLATE).to_prompt(
+            text=text_to_classify
+        )
         return {
-            label: self._echo_task.run(EchoInput(prompt=prompt, expected_completion=label, model=model), logger).tokens_with_log_probs 
+            label: self._echo_task.run(
+                EchoInput(
+                    prompt=prompt,
+                    expected_completion=self._prefix_with_whitespace(label),
+                    model=model,
+                ),
+                logger,
+            ).tokens_with_log_probs
             for label in labels
         }
-        
+
+    def _prefix_with_whitespace(self, label: str) -> str:
+        label = label if re.match(r"^\s+", label) else f" {label}"
+        return label + "<|endoftext|>"
+
     def _compute_scores(
         self,
         normalized_probs_per_score: Mapping[str, Sequence[TokenWithProb]],
@@ -161,110 +183,6 @@ Reply with only the class label.
         }
         logger.log("Normalized Probs", normalized_probs)
         return normalized_probs
-
-    def _complete_per_label(
-        self,
-        model: str,
-        prompt_template_str: str,
-        text: str,
-        tokenized_labels: Mapping[str, Sequence[Token]],
-        logger: DebugLogger,
-    ) -> Mapping[str, RawCompletionOutput]:
-        def completion_input(tokens: Sequence[Token]) -> RawCompletionInput:
-            prompt_template = PromptTemplate(prompt_template_str)
-            return RawCompletionInput(
-                request=self._completion_request(
-                    prompt_template,
-                    text=text,
-                    label=prompt_template.embed_prompt(to_aa_tokens_prompt(tokens)),
-                ),
-                model=model,
-            )
-
-        logger.log(
-            "Completion",
-            {
-                "model": model,
-                "template": prompt_template_str,
-                "text": text,
-            },
-        )
-        inputs = (completion_input(tokens) for tokens in tokenized_labels.values())
-
-        outputs = self._completion_task.run_concurrently(inputs, logger)
-        return {
-            label: output for label, output in zip(tokenized_labels.keys(), outputs)
-        }
-
-    def _completion_request(
-        self,
-        prompt_template: PromptTemplate,
-        **kwargs: Any,
-    ) -> CompletionRequest:
-        return CompletionRequest(
-            prompt=prompt_template.to_prompt(**kwargs),
-            maximum_tokens=0,
-            log_probs=0,
-            tokens=True,
-            echo=True,
-        )
-
-    def _get_log_probs_of_labels(
-        self,
-        completion_responses: Mapping[str, RawCompletionOutput],
-        tokenized_labels: Mapping[str, Sequence[Token]],
-        logger: DebugLogger,
-    ) -> Mapping[str, Sequence[TokenWithProb]]:
-        logs_probs_per_label = {
-            label: self._get_log_probs_of_label(
-                completion_responses[label].response, tokens
-            )
-            for label, tokens in tokenized_labels.items()
-        }
-        logger.log("Raw log probs per label", logs_probs_per_label)
-        return logs_probs_per_label
-
-    def _get_log_probs_of_label(
-        self, completion_response: CompletionResponse, tokens: Sequence[Token]
-    ) -> Sequence[TokenWithProb]:
-        assert completion_response.completions[0].log_probs
-        assert completion_response.completions[0].completion_tokens
-
-        log_prob_dicts = completion_response.completions[0].log_probs[-len(tokens) :]
-        completion_tokens = completion_response.completions[0].completion_tokens[
-            -len(tokens) :
-        ]
-        return [
-            TokenWithProb(
-                token=token,
-                prob=LogProb(log_prob_dict.get(completion_token, 0.0) or 0.0),
-            )
-            for token, log_prob_dict, completion_token in zip(
-                tokens, log_prob_dicts, completion_tokens
-            )
-        ]
-
-    def _tokenize_labels(
-        self, labels: frozenset[str], logger: DebugLogger
-    ) -> Mapping[str, Sequence[Token]]:
-        tokens_per_label = {label: self._tokenize_label(label) for label in labels}
-        logger.log("Tokenized Labels", tokens_per_label)
-        return tokens_per_label
-
-    def _tokenize_label(self, label: str) -> Sequence[Token]:
-        """Turn a single label into list of token ids. Important so that we know how many tokens
-        the label is and can retrieve the last N log probs for the label"""
-        response = self._client.tokenize(
-            request=TokenizationRequest(
-                label + "<|endoftext|>", tokens=True, token_ids=True
-            ),
-            model=self.MODEL,
-        )
-        assert response.token_ids and response.tokens
-        return [
-            Token(token=token, token_id=token_id)
-            for token, token_id in zip(response.tokens, response.token_ids)
-        ]
 
 
 class TreeNode:
