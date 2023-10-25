@@ -1,7 +1,6 @@
 import math
 import re
 from typing import (
-    Any,
     Iterable,
     Mapping,
     Optional,
@@ -10,24 +9,18 @@ from typing import (
 
 from aleph_alpha_client import (
     Client,
-    CompletionResponse,
     PromptTemplate,
     Prompt,
-    TokenizationRequest,
-    CompletionRequest,
 )
 from pydantic import BaseModel
 
 from intelligence_layer.completion import (
     RawCompletion,
-    RawCompletionInput,
-    RawCompletionOutput,
 )
 from intelligence_layer.echo import EchoInput, EchoTask, TokenWithProb
 from intelligence_layer.task import (
     Chunk,
     Evaluator,
-    LogProb,
     Probability,
     Task,
     DebugLogger,
@@ -119,6 +112,7 @@ Reply with only the class label.
             model=self.MODEL,
             logger=logger,
         )
+        logger.log("Log probs per label", log_probs_per_label)
         normalized_probs_per_label = self._normalize(log_probs_per_label, logger)
         scores = self._compute_scores(normalized_probs_per_label)
         return ClassifyOutput(
