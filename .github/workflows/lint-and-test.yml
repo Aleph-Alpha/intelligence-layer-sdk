@@ -22,7 +22,7 @@ jobs:
 
     - name: Run precommit, mypy, and pytest
       run: |
-        poetry run echo ${pre-commit --version}
+        poetry run pre-commit --version
         poetry run ./scripts/precommit-and-mypy-and-pytest.sh
 
     - name: Configure Poetry for notebooks and run
