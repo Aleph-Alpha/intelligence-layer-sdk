@@ -268,7 +268,7 @@ class InMemoryDebugLogger(BaseModel):
     """
 
     name: str
-    logs: list[Union[LogEntry, "InMemoryDebugLogger", "InMemoryTaskSpan"]] = []
+    logs: list[Union[LogEntry, "InMemorySpan", "InMemoryTaskSpan"]] = []
 
     def log(self, message: str, value: PydanticSerializable) -> None:
         """Record a log of relevant information as part of a step within a task.
