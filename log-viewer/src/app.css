@@ -1,3 +1,60 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@layer base {
+	@font-face {
+		font-family: 'Raleway';
+		src: url('/fonts/Raleway/Raleway-VF.woff2') format('woff2');
+		font-weight: 100 900;
+		font-display: swap;
+		font-style: normal;
+	}
+
+	@font-face {
+		font-family: 'Raleway';
+		src: url('/fonts/Raleway/Raleway-Italic-VF.woff2') format('woff2');
+		font-weight: 100 900;
+		font-display: swap;
+		font-style: italic;
+	}
+
+	@font-face {
+		font-family: 'iA Writer Mono V';
+		src: url('/fonts/iAMono/iAWriterMonoV.woff2') format('woff2');
+		font-weight: 100 900;
+		font-display: swap;
+		font-style: normal;
+	}
+
+	@font-face {
+		font-family: 'iA Writer Mono V';
+		src: url('/fonts/iAMono/iAWriterMonoV-Italic.woff2') format('woff2');
+		font-weight: 100 900;
+		font-display: swap;
+		font-style: italic;
+	}
+
+	html {
+		font-feature-settings: 'liga', 'clig', 'lnum', 'kern', 'salt', 'ss01', 'ss03', 'ss05', 'ss07',
+			'ss08', 'ss09', 'ss10', 'ss11';
+		font-weight: 500;
+	}
+
+	.text-xl,
+	.text-2xl,
+	.text-3xl,
+	.text-4xl,
+	.text-5xl,
+	.text-6xl,
+	.text-7xl,
+	.text-8xl,
+	.text-9xl {
+		font-feature-settings: 'liga', 'clig', 'lnum', 'kern';
+	}
+
+	.font-mono {
+		font-feature-settings: 'liga', 'clig', 'lnum', 'kern';
+		font-weight: 400;
+	}
+}
