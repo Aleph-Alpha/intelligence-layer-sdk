@@ -55,7 +55,7 @@ class ExampleTask(Task[ExampleTaskInput, ExampleTaskOutput]):
     def __init__(
         init_model: str,
         init_client: Client
-    ):
+    ) -> None:
         # In general: most attributes should be private, unless there is a specific reason for them being public.
         self._init_model = init_model # Used if multiple models can be used.
         self._init_client = init_client # Client should only be instantiated once, therefore the proper place is here.
@@ -68,7 +68,7 @@ class ExampleTask(Task[ExampleTaskInput, ExampleTaskOutput]):
 
     # Example for a private method.
     # All such methods follow after `run`.
-    def _some_calculation(some_number: int):
+    def _some_calculation(some_number: int) -> float:
         return math.exp(some_number)
 ```
 
