@@ -1,52 +1,51 @@
-# Aleph Alpha Intelligence Layer☯️
+# Aleph Alpha Intelligence Layer ☯️
 
-Aleph Alpha Intelligence Layer☯️ is a suite of development tools enabling you to build end-to-end solutions utilizing the power of large language models (LLMs). Our goal here is to empower you to apply LLMs to solve various practical problems by providing a consistent framework for designing LLM-based workflows. The tools should enable you to go quickly through all the phases of AI product development, from prototyping and playing with prompts, through setting up experiments and evaluating their results, to solution deployment.
+The Aleph Alpha Intelligence Layer ☯️ offers a comprehensive suite of development tools for crafting solutions that harness the capabilities of large language models (LLMs).
+With a unified framework for LLM-based workflows, it facilitates seamless AI product development, from prototyping and prompt experimentation to result evaluation and deployment.
 
-The key features of the intelligence layer are:
+The key features of the Intelligence Layer are:
 
-- **Best practices** - we give you access to *state-of-the-art* methods for addressing some of the most popular LLM use cases. You get access to off-the-shelf methods, enabling you to quickly build the first prototypes based on your primary data. We build on top of the best industry practices, optimizing the last bit of performance from LLMs.
+- **Best practices** We provide you with state-of-the-art methods tailored for prevalent LLM use cases.
+Utilize our off-the-shelf techniques to swiftly prototype based on your primary data.
+Our approach integrates the best industry practices, allowing for optimal performance.
 
-- **Composability**: The Intelligence Layer enables you to easily go from the prototyping phase to a scallable deployed solution. We seamlessly integrate with various evaluation methods, handle concurrency, and compose smaller [Tasks](./src/intelligence_layer/task.py) into more complicated workflows.
+- **Composability**: The Intelligence Layer streamlines your journey from prototyping to scalable deployment.
+It offers seamless integration with diverse evaluation methods, manages concurrency, and orchestrates smaller tasks into complex workflows.
 
-- **Auditability** The foundation assumption behind the Intelligence Layer is to give you access to the internal states of a [Task](./src/intelligence_layer/task.py) at every step of a workflow execution. This enables you to easier debug a [Task](./src/intelligence_layer/task.py) and gives you more control post deployment when you want to investigate how the model replies were produced.
+- **Auditability** At the core of the Intelligence Layer is the belief that all AI processes must be auditable and traceable.
+To ensure this, we provide full coprehensibility, by seemlessly logging each step of every workflow.
+This enhances your debugging capabilities and offers greater control post-deployment when examining model responses.
 
-## Tasks
+## Getting Started
 
-Out of the box you get access to the following tasks:
+Not sure where to start? Familiarize yourself with the Intelligence Layer using the below notebooks.
 
+| Order | Task                | Description                                   | Notebook 📓                                                   |
+|-------|---------------------|-----------------------------------------------|---------------------------------------------------------------|
+| 1     | Summarization       | Summarize a document                          | [summarize.ipynb](./src/examples/summarize.ipynb)             |
+| 2     | Question Answering  | Various approaches for QA                     | [qa.ipynb](./src/examples/qa.ipynb)                           |
+| 3     | Quickstart task     | Build a custom task for your use case         | [quickstart_task.ipynb](./src/examples/quickstart_task.ipynb) |
+| 4     | Classification      | Conduct zero-shot text classification         | [classify.ipynb](./src/examples/classify.ipynb)               |
+| 5     | Document Index      | Connect your proprietary knowledge base       | [document_index.ipynb](./src/examples/document_index.ipynb)   |
 
+## Quickstart Guide
 
-| Order | Task                | Description                                   | Notebook📓                                       |
-|-------|---------------------|-----------------------------------------------|--------------------------------------------------|
-| 1     | Summarization       | Use an LLM to summarize                       | [summarize.ipynb](./src/examples/summarize.ipynb)   |
-| 2     | Question Answering  | Various approaches for QA                     | [qa.ipynb](./src/examples/qa.ipynb)                |
-| 3     | Quickstart task     | We show you how to build a Task from scratch for your own custom use case | [quickstart_task.ipynb](./src/examples/quickstart_task.ipynb) |
-| 4     | Classification      | Use an LLM to conduct zero-shot text classification. | [classify.ipynb](./src/examples/classify.ipynb)|
-| 5     | Document Index      | Search through and answer questions about your proprietary knowledge base stored in the Document Index. | [document_index.ipynb](./src/examples/document_index.ipynb)|
+First, you need an Aleph Alpha access token. [Learn more](https://docs.aleph-alpha.com/docs/account/#create-a-new-token).
 
-
-
-## Quickstart
-
-Generate an Aleph Alpha access token. You can read more about this [here](https://docs.aleph-alpha.com/docs/account/#create-a-new-token)
-
-Set up the poetry environment
+Set up a poetry environment.
 
 ```cmd
 poetry install
-```
-
-```cmd
 poetry shell
 ```
 
-Set up the Aleph Alpha token value
+Set the Aleph Alpha token.
 
 ```cmd
 export AA_TOKEN = <YOUR TOKEN HERE>
 ```
 
-Run the `jupytyer lab`, and go to the [examples](http://localhost:8888/lab/workspaces/auto-C/tree/src/examples) dir.
+Run `jupytyer lab`, and go to the [examples](http://localhost:8888/lab/workspaces/auto-C/tree/src/examples) dir.
 
 ```cmd
 jupyter lab
@@ -54,16 +53,15 @@ jupyter lab
 
 ## Development
 
-Install [pre-commit](https://pre-commit.com/)
+Install [pre-commit](https://pre-commit.com/).
+
 ```cmd
 pre-commit install
 ```
 
-Run the CI scripts to ensure the typing is correct, linting follows the pattern, tests and jupyter notebooks run.
+Run the following CI scripts.
 
 ```cmd
 scripts/precommit-and-mypy-and-pytest.sh
-```
-```cmd
 scripts/notebook_runner.sh
 ```
