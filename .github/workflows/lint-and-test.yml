@@ -6,6 +6,8 @@ on: push
 jobs:
   lint-and-test:
     runs-on: ubuntu-latest
+    container:
+      python '3.10'
 
     steps:
     # Checkout the code
@@ -14,7 +16,7 @@ jobs:
 
     - uses: actions/setup-python@v4
       with:
-        python-version: '3.10' 
+        python-version: '3.10'
         # cache: 'poetry'
 
     - name: Install and configure Poetry
@@ -25,8 +27,7 @@ jobs:
 
     - name: Run precommit, mypy, and pytest
       run: |
-        poetry run pre-commit install
-        poetry run ./scripts/precommit-and-mypy-and-pytest.sh 
+        poetry run ./scripts/precommit-and-mypy-and-pytest.sh
 
     - name: Configure Poetry for notebooks and run
       run: |
