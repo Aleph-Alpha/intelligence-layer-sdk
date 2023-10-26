@@ -5,63 +5,48 @@ With a unified framework for LLM-based workflows, it facilitates seamless AI pro
 
 The key features of the Intelligence Layer are:
 
-- **Best practices** We provide you with state-of-the-art methods tailored for prevalent LLM use cases.
-Utilize our off-the-shelf techniques to swiftly prototype based on your primary data.
-Our approach integrates the best industry practices, allowing for optimal performance.
-
+- **Best practices** We provide you with **_state-of-the-art_** methods tailored for prevalent LLM use cases.
+  Utilize our off-the-shelf techniques to swiftly prototype based on your primary data.
+  Our approach integrates the best industry practices, allowing for optimal performance.
 - **Composability**: The Intelligence Layer streamlines your journey from prototyping to scalable deployment.
-It offers seamless integration with diverse evaluation methods, manages concurrency, and orchestrates smaller tasks into complex workflows.
-
+  It offers seamless integration with diverse evaluation methods, manages concurrency, and orchestrates smaller tasks into complex workflows.
 - **Auditability** At the core of the Intelligence Layer is the belief that all AI processes must be auditable and traceable.
-To ensure this, we provide full coprehensibility, by seamlessly logging each step of every workflow.
-This enhances your debugging capabilities and offers greater control post-deployment when examining model responses.
+  To ensure this, we provide full coprehensibility, by seamlessly logging each step of every workflow.
+  This enhances your debugging capabilities and offers greater control post-deployment when examining model responses.
 
 ## Getting Started
 
 Not sure where to start? Familiarize yourself with the Intelligence Layer using the below notebooks.
 
-| Order | Task                | Description                                   | Notebook 📓                                                   |
-|-------|---------------------|-----------------------------------------------|---------------------------------------------------------------|
-| 1     | Summarization       | Summarize a document                          | [summarize.ipynb](./src/examples/summarize.ipynb)             |
-| 2     | Question Answering  | Various approaches for QA                     | [qa.ipynb](./src/examples/qa.ipynb)                           |
-| 3     | Quickstart task     | Build a custom task for your use case         | [quickstart_task.ipynb](./src/examples/quickstart_task.ipynb) |
-| 4     | Classification      | Conduct zero-shot text classification         | [classify.ipynb](./src/examples/classify.ipynb)               |
-| 5     | Document Index      | Connect your proprietary knowledge base       | [document_index.ipynb](./src/examples/document_index.ipynb)   |
+| Order | Task               | Description                             | Notebook 📓                                                   |
+| ----- | ------------------ | --------------------------------------- | ------------------------------------------------------------- |
+| 1     | Summarization      | Summarize a document                    | [summarize.ipynb](./src/examples/summarize.ipynb)             |
+| 2     | Question Answering | Various approaches for QA               | [qa.ipynb](./src/examples/qa.ipynb)                           |
+| 3     | Quickstart task    | Build a custom task for your use case   | [quickstart_task.ipynb](./src/examples/quickstart_task.ipynb) |
+| 4     | Classification     | Conduct zero-shot text classification   | [classify.ipynb](./src/examples/classify.ipynb)               |
+| 5     | Document Index     | Connect your proprietary knowledge base | [document_index.ipynb](./src/examples/document_index.ipynb)   |
 
 ## Quickstart Guide
 
 First, you need an Aleph Alpha access token. [Learn more](https://docs.aleph-alpha.com/docs/account/#create-a-new-token).
 
-Set up a poetry environment.
+Install the intelligence layer package.
 
 ```cmd
+# pip
+pip install .
+# poetry
 poetry install
-poetry shell
 ```
 
-Set the Aleph Alpha token.
+Set the Aleph Alpha token value
 
 ```cmd
-export AA_TOKEN = <YOUR TOKEN HERE>
+export AA_TOKEN=<YOUR TOKEN HERE>
 ```
 
 Run `jupytyer lab`, and go to the [examples](http://localhost:8888/lab/workspaces/auto-C/tree/src/examples) dir.
 
 ```cmd
-jupyter lab
-```
-
-## Development
-
-Install [pre-commit](https://pre-commit.com/).
-
-```cmd
-pre-commit install
-```
-
-Run the following CI scripts.
-
-```cmd
-scripts/precommit-and-mypy-and-pytest.sh
-scripts/notebook_runner.sh
+cd src/examples && jupyter lab
 ```
