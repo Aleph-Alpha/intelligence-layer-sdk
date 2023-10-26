@@ -17,8 +17,8 @@ jobs:
         python-version: '3.10' 
         cache: 'poetry'
 
-    # - name: Install and configure Poetry
-    #   uses: snok/install-poetry@v1
+    - name: Install and configure Poetry
+      uses: snok/install-poetry@v1
 
     - name: Install project
       run: poetry install --no-interaction
