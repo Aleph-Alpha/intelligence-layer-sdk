@@ -98,7 +98,7 @@ def test_to_prompt_with_unused_image(prompt_image: Image) -> None:
 
 
 def test_to_prompt_with_multiple_different_images(prompt_image: Image) -> None:
-    image_source_path = Path(__file__).parent / "image_example.jpg"
+    image_source_path = Path(__file__).parent.parent / "image_example.jpg"
     second_image = Image.from_file(image_source_path)
 
     template = PromptTemplate("""{{image_1}}{{image_2}}""")
