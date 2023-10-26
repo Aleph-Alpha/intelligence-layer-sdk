@@ -24,6 +24,8 @@ jobs:
       run: poetry install --no-interaction
 
     - name: Run precommit, mypy, and pytest
+      env: 
+        AA_TOKEN: ${{ secrets.AA_TOKEN }}
       run: |
         poetry run ./scripts/precommit-and-mypy-and-pytest.sh
 
