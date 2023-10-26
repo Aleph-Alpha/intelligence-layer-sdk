@@ -48,5 +48,5 @@ export AA_TOKEN=<YOUR TOKEN HERE>
 Run `jupytyer lab`, and go to the [examples](http://localhost:8888/lab/workspaces/auto-C/tree/src/examples) dir.
 
 ```cmd
-(cd src/examples) && jupyter lab
+cd src/examples && jupyter lab
 ```
