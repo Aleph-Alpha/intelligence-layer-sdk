@@ -46,7 +46,7 @@ class ExampleTask(Task[ExampleTaskInput, ExampleTaskOutput]):
     # 2) As constants:
     # - Makes it clear that these exact parameters are required for the `Task` or at least are central to it.
     # - Sends a clear signal that these parameters should not be touched.
-    CONSTANT_PROMPT = "This prompt defines to this task and its sole reason for existing."
+    CONSTANT_PROMPT = "This prompt defines this task and its sole reason for existing."
     CONSTANT_MODEL = "unique_feature_llm" # only works with this model and no other
 
     # 3) In the `__init__`:
