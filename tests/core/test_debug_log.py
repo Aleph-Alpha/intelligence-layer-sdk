@@ -58,7 +58,7 @@ def test_task_automatically_logs_input_and_output(client: Client) -> None:
     assert len(logger.logs) == 1
     task_span = logger.logs[0]
     assert isinstance(task_span, InMemoryTaskSpan)
-    assert task_span.name == "RawCompletion"
+    assert task_span.name == "Complete"
     assert task_span.input == input
     assert task_span.output == output
     assert task_span.start_timestamp and task_span.end_timestamp
