@@ -58,6 +58,7 @@ class RetrieverBasedQa(Task[RetrieverBasedQaInput, MultipleChunkQaOutput]):
         retriever: BaseRetriever,
         model: str = "luminous-supreme-control",
     ):
+        super().__init__()
         self._client = client
         self._model = model
         self._search = Search(retriever)

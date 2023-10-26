@@ -61,6 +61,7 @@ class LongContextQa(Task[LongContextQaInput, MultipleChunkQaOutput]):
         k: int = 4,
         model: str = "luminous-supreme-control",
     ):
+        super().__init__()
         self._client = client
         self._model = model
         self._max_tokens_in_chunk = max_tokens_in_chunk

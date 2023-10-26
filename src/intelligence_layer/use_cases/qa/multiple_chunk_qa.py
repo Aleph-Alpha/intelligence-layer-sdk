@@ -97,6 +97,7 @@ Condense multiple answers into a single answer. Rely only on the provided answer
         client: Client,
         model: str = "luminous-supreme-control",
     ):
+        super().__init__()
         self._client = client
         self._instruction = Instruction(client)
         self._single_chunk_qa = SingleChunkQa(client, model)

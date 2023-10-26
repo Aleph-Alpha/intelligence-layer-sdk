@@ -54,6 +54,7 @@ class Search(Task[SearchInput, SearchOutput]):
     """
 
     def __init__(self, retriever: BaseRetriever):
+        super().__init__()
         self._retriever = retriever
 
     def run(self, input: SearchInput, logger: DebugLogger) -> SearchOutput:

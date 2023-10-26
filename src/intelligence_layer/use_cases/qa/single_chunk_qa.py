@@ -93,6 +93,7 @@ If there's no answer, say "{{no_answer_text}}".
         client: Client,
         model: str = "luminous-supreme-control",
     ):
+        super().__init__()
         self._client = client
         self._model = model
         self._instruction = Instruction(client)

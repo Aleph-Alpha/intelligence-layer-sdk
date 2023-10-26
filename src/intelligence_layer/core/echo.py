@@ -1,11 +1,13 @@
 from typing import Sequence
+
 from aleph_alpha_client import Client, CompletionRequest, Prompt, Tokens
 from pydantic import BaseModel
 import tokenizers  # type: ignore
+
 from intelligence_layer.core.completion import RawCompletion, RawCompletionInput
+from intelligence_layer.core.logger import DebugLogger
 from intelligence_layer.core.prompt_template import PromptTemplate
 from intelligence_layer.core.task import LogProb, Probability, Task, Token
-from intelligence_layer.core.logger import DebugLogger
 
 
 class TokenWithProb(BaseModel):
@@ -41,7 +43,7 @@ class EchoOutput(BaseModel):
 
 
 class EchoTask(Task[EchoInput, EchoOutput]):
-    """Task that returns probabilities of the completion based on the given model and prompt.
+    """Task that returns probabilities of a completion given a prompt.
 
     Analyzes the likelihood of generating tokens in the expected completion based on
     a given prompt and model. Does not generate any tokens.
@@ -69,12 +71,11 @@ class EchoTask(Task[EchoInput, EchoOutput]):
 
     def __init__(self, client: Client) -> None:
         super().__init__()
-        self._completion = RawCompletion(client=client)
         self._client = client
+        self._completion = RawCompletion(client=client)
 
     def run(self, input: EchoInput, logger: DebugLogger) -> EchoOutput:
-        # We tokenize the prompt separately so we don't
-        # have an overlap in the tokens.
+        # We tokenize the prompt separately so we don't have an overlap in the tokens.
         # If we don't do this, the end of the prompt and expected completion can be merged into unexpected tokens.
         expected_completion_tokens = self._tokenize(
             input.expected_completion, input.model
@@ -122,8 +123,8 @@ class EchoTask(Task[EchoInput, EchoOutput]):
         )
 
     def _tokenize(self, text: str, model: str) -> Sequence[Token]:
-        """Turns the expected output into list of token ids. Important so that we know how many tokens
-        the label is and can retrieve the last N log probs for the label"""
+        # Turns the expected output into list of token ids. Important so that we know how many tokens
+        # the label is and can retrieve the last N log probs for the label
         tokenizer = self._client.tokenizer(model)
         assert tokenizer.pre_tokenizer
         tokenizer.pre_tokenizer.add_prefix_space = False
