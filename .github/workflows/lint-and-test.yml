@@ -22,8 +22,7 @@ jobs:
 
     - name: Run precommit, mypy, and pytest
       run: |
-        mkdir .git
-        poetry run pre-commit install .pre-commit-config.yaml 
+        poetry run pre-commit install
         poetry run ./scripts/precommit-and-mypy-and-pytest.sh 
 
     - name: Configure Poetry for notebooks and run
