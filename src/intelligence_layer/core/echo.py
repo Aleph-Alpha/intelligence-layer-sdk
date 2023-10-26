@@ -4,7 +4,7 @@ from aleph_alpha_client import Client, CompletionRequest, Prompt, Tokens
 from pydantic import BaseModel
 import tokenizers  # type: ignore
 
-from intelligence_layer.core.completion import RawCompletion, RawCompletionInput
+from intelligence_layer.core.complete import Complete, CompleteInput
 from intelligence_layer.core.logger import DebugLogger
 from intelligence_layer.core.prompt_template import PromptTemplate
 from intelligence_layer.core.task import LogProb, Probability, Task, Token
@@ -72,7 +72,7 @@ class EchoTask(Task[EchoInput, EchoOutput]):
     def __init__(self, client: Client) -> None:
         super().__init__()
         self._client = client
-        self._completion = RawCompletion(client=client)
+        self._completion = Complete(client=client)
 
     def run(self, input: EchoInput, logger: DebugLogger) -> EchoOutput:
         # We tokenize the prompt separately so we don't have an overlap in the tokens.
@@ -88,7 +88,7 @@ class EchoTask(Task[EchoInput, EchoOutput]):
                 )
             ),
         )
-        completion_input = RawCompletionInput(
+        completion_input = CompleteInput(
             request=self._completion_request(prompt=prompt),
             model=input.model,
         )

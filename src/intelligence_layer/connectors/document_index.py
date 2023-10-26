@@ -1,12 +1,7 @@
 import json
-from typing import Any, Sequence
+from typing import Any
 
 import requests
-
-from intelligence_layer.connectors.retrievers.base_retriever import (
-    BaseRetriever,
-    SearchResult,
-)
 
 
 class DocumentIndex:
@@ -23,10 +18,11 @@ class DocumentIndex:
         >>> document_index = DocumentIndex(os.getenv("AA_TOKEN"))
         >>> document_index.create_collection(namespace="my_namespace", collection="germany_facts_collection")
         >>> document_index.add_document(
-                namespace="my_namespace",
-                collection="germany_facts_collection",
-                name="Fun facts about Germany",
-                content="Germany is a country located in ...")
+        >>>     namespace="my_namespace",
+        >>>     collection="germany_facts_collection",
+        >>>     name="Fun facts about Germany",
+        >>>     content="Germany is a country located in ..."
+        >>> )
         >>> documents = document_index.search(
         >>>     namespace="my_namespace",
         >>>     collection="germany_facts_collection",

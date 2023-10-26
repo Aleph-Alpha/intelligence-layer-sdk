@@ -8,8 +8,8 @@ from intelligence_layer.core.task import Task
 from intelligence_layer.core.logger import DebugLogger
 
 
-class RawCompletionInput(BaseModel):
-    """The input for a `RawCompletion` task.
+class CompleteInput(BaseModel):
+    """The input for a `Complete` task.
 
     Attributes:
         request: Aleph Alpha `Client`'s `CompletionRequest`. This gives fine grained control
@@ -21,8 +21,8 @@ class RawCompletionInput(BaseModel):
     model: str
 
 
-class RawCompletionOutput(BaseModel):
-    """The output of a `RawCompletion` task.
+class CompleteOutput(BaseModel):
+    """The output of a `Complete` task.
 
     Attributes:
         response: Aleph Alpha `Client`'s `CompletionResponse` containing all details
@@ -36,8 +36,8 @@ class RawCompletionOutput(BaseModel):
         return self.response.completions[0].completion or ""
 
 
-class RawCompletion(Task[RawCompletionInput, RawCompletionOutput]):
-    """Performs a completion-request with access to all possible request parameters.
+class Complete(Task[CompleteInput, CompleteOutput]):
+    """Performs a completion request with access to all possible request parameters.
 
     Only use this task if non of the higher level tasks defined below works for
     you, as your completion request does not fit to the use-cases the higher level ones represent or
@@ -49,20 +49,18 @@ class RawCompletion(Task[RawCompletionInput, RawCompletionOutput]):
 
     def __init__(self, client: Client) -> None:
         super().__init__()
-        self.client = client
+        self._client = client
 
-    def run(
-        self, input: RawCompletionInput, logger: DebugLogger
-    ) -> RawCompletionOutput:
-        response = self.client.complete(
+    def run(self, input: CompleteInput, logger: DebugLogger) -> CompleteOutput:
+        response = self._client.complete(
             input.request,
             model=input.model,
         )
-        return RawCompletionOutput(response=response)
+        return CompleteOutput(response=response)
 
 
-class InstructionInput(BaseModel):
-    """The input for an `InstructionTask`.
+class InstructInput(BaseModel):
+    """The input for an `Instruct`.
 
     Attributes:
         instruction: A textual instruction for the model.
@@ -84,8 +82,8 @@ class InstructionInput(BaseModel):
     maximum_response_tokens: int = 64
 
 
-class InstructionOutput(BaseModel):
-    """The output of an `InstructionTask`.
+class InstructOutput(BaseModel):
+    """The output of an `Instruct`.
 
     Attributes:
         response: The generated response to the instruction.
@@ -100,7 +98,7 @@ class InstructionOutput(BaseModel):
     prompt_with_metadata: PromptWithMetadata
 
 
-class Instruction(Task[InstructionInput, InstructionOutput]):
+class Instruct(Task[InstructInput, InstructOutput]):
     """Runs zero-shot instruction completions on a model.
 
     Can be used for various types of instructions a LLM could handle, like QA, summarization,
@@ -137,9 +135,9 @@ class Instruction(Task[InstructionInput, InstructionOutput]):
     def __init__(self, client: Client) -> None:
         super().__init__()
         self._client = client
-        self._completion = RawCompletion(client)
+        self._completion = Complete(client)
 
-    def run(self, input: InstructionInput, logger: DebugLogger) -> InstructionOutput:
+    def run(self, input: InstructInput, logger: DebugLogger) -> InstructOutput:
         prompt_with_metadata = PromptTemplate(
             self.INSTRUCTION_PROMPT_TEMPLATE
         ).to_prompt_with_metadata(
@@ -153,7 +151,7 @@ class Instruction(Task[InstructionInput, InstructionOutput]):
             input.model,
             logger,
         )
-        return InstructionOutput(
+        return InstructOutput(
             response=completion, prompt_with_metadata=prompt_with_metadata
         )
 
@@ -162,6 +160,6 @@ class Instruction(Task[InstructionInput, InstructionOutput]):
     ) -> str:
         request = CompletionRequest(prompt, maximum_tokens=maximum_tokens)
         return self._completion.run(
-            RawCompletionInput(request=request, model=model),
+            CompleteInput(request=request, model=model),
             logger,
         ).completion

@@ -1,5 +1,8 @@
 # Intelligence Layer Style Guideline
 
+Welcome to the project's style guide, a foundational document that ensures consistency, clarity, and quality in our collaborative efforts.
+As we work together, adhering to the guidelines outlined here will streamline our process, making our code more readable and maintainable for all team members.
+
 ## Building a new task
 
 To make sure that we approach building new tasks in a unified way, consider this example task:
@@ -56,6 +59,7 @@ class ExampleTask(Task[ExampleTaskInput, ExampleTaskOutput]):
         init_model: str,
         init_client: Client
     ) -> None:
+        super().__init__()
         # In general: most attributes should be private, unless there is a specific reason for them being public.
         self._init_model = init_model # Used if multiple models can be used.
         self._init_client = init_client # Client should only be instantiated once, therefore the proper place is here.
@@ -204,15 +208,19 @@ model: A valid Aleph Alpha model name.
 ### Module documentation
 
 We **do not document the module**, as we assume imports like:
+
 ``` python
-from intelligence_layer.completion import Completion
-completion_task = Completion()
+from intelligence_layer.complete import Complete
+completion_task = Complete()
 ```
+
 rather than:
+
 ``` python
-from intelligence_layerimport completion
-completion_task = completion.Completion()
+from intelligence_layer import complete
+completion_task = complete.Complete()
 ```
+
 This ensures that the documentation is easily accessible by hovering over the imported task.
 
 ## When to use a debug log

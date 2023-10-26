@@ -14,8 +14,8 @@ from aleph_alpha_client import (
 )
 from pydantic import BaseModel
 
-from intelligence_layer.core.completion import (
-    RawCompletion,
+from intelligence_layer.core.complete import (
+    Complete,
 )
 from intelligence_layer.core.echo import EchoInput, EchoTask, TokenWithProb
 from intelligence_layer.core.evaluator import Evaluator
@@ -97,7 +97,7 @@ Reply with only the class label.
     def __init__(self, client: Client) -> None:
         super().__init__()
         self._client = client
-        self._completion_task = RawCompletion(client)
+        self._completion_task = Complete(client)
         self._echo_task = EchoTask(client)
 
     def run(self, input: ClassifyInput, logger: DebugLogger) -> ClassifyOutput:

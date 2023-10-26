@@ -3,10 +3,10 @@ from typing import Iterable, Optional, Sequence
 from aleph_alpha_client import Client
 from pydantic import BaseModel
 
-from intelligence_layer.core.completion import (
-    Instruction,
-    InstructionInput,
-    InstructionOutput,
+from intelligence_layer.core.complete import (
+    Instruct,
+    InstructInput,
+    InstructOutput,
 )
 from intelligence_layer.use_cases.qa.single_chunk_qa import (
     SingleChunkQaInput,
@@ -99,7 +99,7 @@ Condense multiple answers into a single answer. Rely only on the provided answer
     ):
         super().__init__()
         self._client = client
-        self._instruction = Instruction(client)
+        self._instruction = Instruct(client)
         self._single_chunk_qa = SingleChunkQa(client, model)
         self._model = model
 
@@ -149,9 +149,9 @@ Answers:
             logger,
         ).response
 
-    def _instruct(self, input: str, logger: DebugLogger) -> InstructionOutput:
+    def _instruct(self, input: str, logger: DebugLogger) -> InstructOutput:
         return self._instruction.run(
-            InstructionInput(
+            InstructInput(
                 instruction=self.MERGE_ANSWERS_INSTRUCTION,
                 input=input,
                 model=self._model,

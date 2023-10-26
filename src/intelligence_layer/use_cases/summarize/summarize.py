@@ -3,10 +3,10 @@ from typing import Sequence
 from aleph_alpha_client import Client
 from pydantic import BaseModel
 
-from intelligence_layer.core.completion import (
-    Instruction,
-    InstructionInput,
-    InstructionOutput,
+from intelligence_layer.core.complete import (
+    Instruct,
+    InstructInput,
+    InstructOutput,
 )
 from intelligence_layer.core.prompt_template import PromptWithMetadata
 from intelligence_layer.core.task import Chunk, Task
@@ -74,7 +74,7 @@ class ShortBodySummarize(Task[SummarizeInput, SummarizeOutput]):
         super().__init__()
         self._client = client
         self._model = model
-        self._instruction = Instruction(client)
+        self._instruction = Instruct(client)
         self._text_highlight = TextHighlight(client)
 
     def run(self, input: SummarizeInput, logger: DebugLogger) -> SummarizeOutput:
@@ -86,9 +86,9 @@ class ShortBodySummarize(Task[SummarizeInput, SummarizeOutput]):
             summary=instruction_output.response, highlights=highlights
         )
 
-    def _instruct(self, input: str, logger: DebugLogger) -> InstructionOutput:
+    def _instruct(self, input: str, logger: DebugLogger) -> InstructOutput:
         return self._instruction.run(
-            InstructionInput(
+            InstructInput(
                 instruction=self.INSTRUCTION,
                 input=input,
                 maximum_response_tokens=self.MAXIMUM_RESPONSE_TOKENS,
