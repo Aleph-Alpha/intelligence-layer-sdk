@@ -124,19 +124,21 @@ Reply with only the class label.
         prompt = PromptTemplate(template_str=self.PROMPT_TEMPLATE).to_prompt(
             text=text_to_classify
         )
-        return {
-            label: self._echo_task.run(
-                EchoInput(
-                    prompt=prompt,
-                    expected_completion=self._prefix_with_whitespace(label),
-                    model=model,
-                ),
-                logger,
-            ).tokens_with_log_probs
+        inputs = (
+            EchoInput(
+                prompt=prompt,
+                expected_completion=self._prepare_label_for_echo_task(label),
+                model=model,
+            )
             for label in labels
+        )
+        outputs = self._echo_task.run_concurrently(inputs, logger)
+        return {
+            label: output.tokens_with_log_probs
+            for label, output in zip(labels, outputs)
         }
 
-    def _prefix_with_whitespace(self, label: str) -> str:
+    def _prepare_label_for_echo_task(self, label: str) -> str:
         label = label if re.match(r"^\s+", label) else f" {label}"
         return label + "<|endoftext|>"
 
