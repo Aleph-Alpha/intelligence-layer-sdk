@@ -1,14 +1,15 @@
 from datetime import datetime
+
 from aleph_alpha_client import Prompt
 from aleph_alpha_client.aleph_alpha_client import Client
 from aleph_alpha_client.completion import CompletionRequest
 
+from intelligence_layer.core.complete import Complete, CompleteInput
 from intelligence_layer.core.logger import (
     InMemoryDebugLogger,
     InMemoryTaskSpan,
     LogEntry,
 )
-from intelligence_layer.core.complete import Complete, CompleteInput
 
 
 def test_debug_add_log_entries() -> None:

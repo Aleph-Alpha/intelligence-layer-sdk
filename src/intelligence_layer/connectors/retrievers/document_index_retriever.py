@@ -1,9 +1,6 @@
-import json
-from typing import Any, Sequence
+from typing import Sequence
 
-import requests
 from intelligence_layer.connectors.document_index import DocumentIndex
-
 from intelligence_layer.connectors.retrievers.base_retriever import (
     BaseRetriever,
     SearchResult,

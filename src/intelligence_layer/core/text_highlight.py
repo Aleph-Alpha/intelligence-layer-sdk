@@ -1,4 +1,3 @@
-import statistics
 from typing import Iterable, Sequence
 
 from aleph_alpha_client import (

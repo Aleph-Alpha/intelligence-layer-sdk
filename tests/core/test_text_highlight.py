@@ -1,9 +1,9 @@
 from aleph_alpha_client import Client, Image
 from pytest import fixture, raises
-from intelligence_layer.core.text_highlight import TextHighlight, TextHighlightInput
-from intelligence_layer.core.prompt_template import PromptTemplate
 
 from intelligence_layer.core.logger import NoOpDebugLogger
+from intelligence_layer.core.prompt_template import PromptTemplate
+from intelligence_layer.core.text_highlight import TextHighlight, TextHighlightInput
 
 
 @fixture

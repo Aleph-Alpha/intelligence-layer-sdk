@@ -1,15 +1,17 @@
 from pathlib import Path
 from textwrap import dedent
 from typing import List
-from pytest import raises
+
 from aleph_alpha_client.prompt import Prompt, Image, PromptItem, Text, Tokens
+from liquid.exceptions import LiquidTypeError, LiquidSyntaxError
+from pytest import raises
+
 from intelligence_layer.core.prompt_template import (
     PromptItemCursor,
     PromptRange,
-    TextCursor,
     PromptTemplate,
+    TextCursor,
 )
-from liquid.exceptions import LiquidTypeError, LiquidSyntaxError
 
 
 def test_to_prompt_with_text_array() -> None:

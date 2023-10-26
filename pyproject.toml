@@ -9,6 +9,7 @@ description = ""
 authors = ["Aleph Alpha Engineering <engineering@aleph-alpha.com>"]
 readme = "README.md"
 license = "Aleph Alpha Licensed"
+packages = [{include = "intelligence_layer", from="src"}]
 
 [tool.poetry.dependencies]
 python = ">=3.10,<3.13"
@@ -24,11 +25,12 @@ nbconvert = "^7.9.2"
 datasets = "^2.14.5"
 jupyter = "^1.0.0"
 requests = "^2.31.0"
+pytest-xdist = "^3.3.1"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "*"
-black = "*"
 mypy = "*"
+black = "*"
 pre-commit = "*"
 httpx = "*"
 types-Pygments="*"

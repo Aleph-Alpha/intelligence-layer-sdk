@@ -1,9 +1,11 @@
 from os import getenv
 from pathlib import Path
 from typing import Sequence, cast
+
 from aleph_alpha_client import Client, Image
 from dotenv import load_dotenv
 from pytest import fixture
+
 from intelligence_layer.connectors.retrievers.document_index_retriever import (
     DocumentIndexRetriever,
 )
