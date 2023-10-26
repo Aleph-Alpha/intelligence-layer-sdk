@@ -24,13 +24,13 @@ jobs:
       run: poetry install --no-interaction
 
     - name: Run precommit, mypy, and pytest
-      env: 
+      env:
         AA_TOKEN: ${{ secrets.AA_TOKEN }}
       run: |
         poetry run ./scripts/precommit-and-mypy-and-pytest.sh
 
     - name: Configure Poetry for notebooks and run
-      env: 
+      env:
         AA_TOKEN: ${{ secrets.AA_TOKEN }}
       run: |
         poetry config installer.max-workers 10
