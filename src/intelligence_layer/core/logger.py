@@ -3,6 +3,7 @@ from datetime import datetime
 from json import dumps
 from pathlib import Path
 from types import TracebackType
+from uuid import UUID, uuid4
 
 from pydantic import BaseModel, Field, RootModel, SerializeAsAny
 from rich.panel import Panel
@@ -13,6 +14,7 @@ from typing_extensions import TypeAliasType, Self
 
 from typing import (
     TYPE_CHECKING,
+    Any,
     Mapping,
     Optional,
     Protocol,
@@ -31,6 +33,7 @@ if TYPE_CHECKING:
         | None
         | bool
         | BaseModel
+        | UUID
     )
 else:
     PydanticSerializable = TypeAliasType(
@@ -42,7 +45,8 @@ else:
         | Mapping[str, "PydanticSerializable"]
         | None
         | bool
-        | BaseModel,
+        | BaseModel
+        | UUID,
     )
 
 
@@ -389,35 +393,94 @@ class InMemoryTaskSpan(InMemorySpan):
         return tree
 
 
-class LogBasedDebugLogger(DebugLogger):
+class StartTask(BaseModel):
+    uuid: UUID
+    parent: UUID
+    name: str
+    start: datetime
+    input: SerializeAsAny[Any]
+
+
+class EndTask(BaseModel):
+    uuid: UUID
+    end: datetime
+    output: SerializeAsAny[Any]
+
+
+class StartSpan(BaseModel):
+    uuid: UUID
+    parent: UUID
+    name: str
+    start: datetime
+
+
+class EndSpan(BaseModel):
+    uuid: UUID
+    end: datetime
+
+
+class LogLine(BaseModel):
+    entry_type: str
+    entry: SerializeAsAny[Any]
+
+
+class PlainEntry(BaseModel):
+    message: str
+    value: SerializeAsAny[Any]
+    timestamp: datetime
+    parent: UUID
+
+
+class FileDebugLogger(DebugLogger):
     def __init__(self, log_file_path: Path) -> None:
         self.log_file_path = log_file_path
+        self.uuid = uuid4()
 
     def log(self, message: str, value: PydanticSerializable) -> None:
+        self.log_entry(
+            PlainEntry(
+                message=message,
+                value=value,
+                timestamp=datetime.utcnow(),
+                parent=self.uuid,
+            )
+        )
+
+    def log_entry(self, entry: BaseModel) -> None:
         with self.log_file_path.open("a") as f:
             f.write(
-                dumps(
-                    {
-                        "message": message,
-                        "value": JsonSerializer(root=value).model_dump(),
-                    }
-                )
+                LogLine(entry_type=type(entry).__name__, entry=entry).model_dump_json()
                 + "\n"
             )
 
     def span(self, name: str) -> "LogBasedSpan":
-        return LogBasedSpan(self.log_file_path, name)
+        span = LogBasedSpan(self.log_file_path, name)
+        self.log_entry(
+            StartSpan(
+                uuid=span.uuid, parent=self.uuid, name=name, start=datetime.utcnow()
+            )
+        )
+        return span
 
     def task_span(
         self, task_name: str, input: PydanticSerializable
     ) -> "LogBasedTaskSpan":
-        return LogBasedTaskSpan(self.log_file_path, task_name, input)
+        task = LogBasedTaskSpan(self.log_file_path, task_name, input)
+        self.log_entry(
+            StartTask(
+                uuid=task.uuid,
+                parent=self.uuid,
+                name=task_name,
+                start=datetime.utcnow(),
+                input=input,
+            )
+        )
+        return task
 
 
-class LogBasedSpan(Span, LogBasedDebugLogger):
+class LogBasedSpan(Span, FileDebugLogger):
     def __init__(self, log_file_path: Path, name: str) -> None:
         super().__init__(log_file_path)
-        self.log("Open Span", name)
 
     def __exit__(
         self,
@@ -425,15 +488,26 @@ class LogBasedSpan(Span, LogBasedDebugLogger):
         exc_value: Optional[BaseException],
         traceback: Optional[TracebackType],
     ) -> None:
-        pass
+        self.log_entry(EndSpan(uuid=self.uuid, end=datetime.utcnow()))
 
 
-class LogBasedTaskSpan(LogBasedSpan, TaskSpan, LogBasedDebugLogger):
+class LogBasedTaskSpan(LogBasedSpan, TaskSpan, FileDebugLogger):
+    output: Optional[PydanticSerializable] = None
+
     def __init__(
         self, log_file_path: Path, task_name: str, input: PydanticSerializable
     ) -> None:
         super().__init__(log_file_path, task_name)
-        self.log(f"Start task {task_name}", input)
 
     def record_output(self, output: PydanticSerializable) -> None:
-        self.log("End Task", output)
+        self.output = output
+
+    def __exit__(
+        self,
+        exc_type: Optional[type[BaseException]],
+        exc_value: Optional[BaseException],
+        traceback: Optional[TracebackType],
+    ) -> None:
+        self.log_entry(
+            EndTask(uuid=self.uuid, end=datetime.utcnow(), output=self.output)
+        )
