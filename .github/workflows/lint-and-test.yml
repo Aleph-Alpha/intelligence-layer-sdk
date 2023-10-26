@@ -22,7 +22,8 @@ jobs:
 
     - name: Run precommit, mypy, and pytest
       run: |
-        poetry run ./scripts/precommit-and-mypy-and-pytest.sh & cat /github/home/.cache/pre-commit/pre-commit.log
+        poetry run pre-commit install --install-hooks
+        poetry run ./scripts/precommit-and-mypy-and-pytest.sh 
 
     - name: Configure Poetry for notebooks and run
       run: |
