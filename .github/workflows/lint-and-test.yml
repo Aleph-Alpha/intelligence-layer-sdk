@@ -3,6 +3,10 @@ name: CI Pipeline
 # Trigger the workflow on push
 on: push
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   lint-and-test:
     runs-on: ubuntu-latest
