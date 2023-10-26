@@ -8,9 +8,10 @@ from intelligence_layer.use_cases.qa.multiple_chunk_qa import (
     MultipleChunkQaInput,
     MultipleChunkQaOutput,
 )
-from intelligence_layer.retrievers.base import BaseRetriever
+from intelligence_layer.connectors.retrievers.base_retriever import BaseRetriever
 from intelligence_layer.use_cases.search.search import Search, SearchInput
-from intelligence_layer.task import Chunk, DebugLogger, Task
+from intelligence_layer.core.task import Chunk, Task
+from intelligence_layer.core.logger import DebugLogger
 
 
 class RetrieverBasedQaInput(BaseModel):

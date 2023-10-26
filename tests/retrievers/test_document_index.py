@@ -1,7 +1,6 @@
 from pytest import fixture
 import pytest
-from intelligence_layer.retrievers.document_index import (
-    DocumentIndex,
+from intelligence_layer.connectors.retrievers.document_index_retriever import (
     DocumentIndexRetriever,
 )
 

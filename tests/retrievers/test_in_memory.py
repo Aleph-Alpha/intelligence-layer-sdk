@@ -1,6 +1,8 @@
 from typing import Sequence
 from pytest import fixture
-from intelligence_layer.retrievers.in_memory import InMemoryRetriever
+from intelligence_layer.connectors.retrievers.in_memory_retriever import (
+    InMemoryRetriever,
+)
 
 
 QUERY = "Do you like summer?"

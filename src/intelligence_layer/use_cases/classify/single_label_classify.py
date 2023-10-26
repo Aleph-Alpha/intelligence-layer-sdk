@@ -18,14 +18,9 @@ from intelligence_layer.core.completion import (
     RawCompletion,
 )
 from intelligence_layer.core.echo import EchoInput, EchoTask, TokenWithProb
-from intelligence_layer.task import (
-    Chunk,
-    Evaluator,
-    Probability,
-    Task,
-    DebugLogger,
-    Token,
-)
+from intelligence_layer.core.task import Chunk, Probability, Task, Token
+from intelligence_layer.core.logger import DebugLogger
+from intelligence_layer.core.evaluator import Evaluator
 
 
 def to_aa_tokens_prompt(tokens: Sequence[Token]) -> Prompt:

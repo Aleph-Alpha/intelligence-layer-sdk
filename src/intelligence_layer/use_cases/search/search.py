@@ -2,8 +2,12 @@ from typing import Sequence
 
 from pydantic import BaseModel
 
-from intelligence_layer.retrievers.base import BaseRetriever, SearchResult
-from intelligence_layer.task import DebugLogger, Task
+from intelligence_layer.connectors.retrievers.base_retriever import (
+    BaseRetriever,
+    SearchResult,
+)
+from intelligence_layer.core.task import Task
+from intelligence_layer.core.logger import DebugLogger
 
 
 class SearchInput(BaseModel):

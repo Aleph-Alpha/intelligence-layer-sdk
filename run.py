@@ -5,13 +5,13 @@ from aleph_alpha_client import Client
 from dotenv import load_dotenv
 from fastapi import Depends, FastAPI, Form
 
-from intelligence_layer.single_label_classify import (
+from intelligence_layer.use_cases.classify.single_label_classify import (
     ClassifyInput,
     ClassifyOutput,
     SingleLabelClassify,
 )
 
-from intelligence_layer.task import NoOpDebugLogger
+from intelligence_layer.core.logger import NoOpDebugLogger
 
 app = FastAPI()
 

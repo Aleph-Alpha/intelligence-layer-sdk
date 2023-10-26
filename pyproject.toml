@@ -36,6 +36,8 @@ types-colorama="*"
 types-docutils="*"
 types-setuptools="*"
 types-decorator = "*"
+types-requests = "*"
+types-tqdm = "*"
 
 [tool.mypy]
 files = "src,tests"

@@ -13,7 +13,8 @@ from intelligence_layer.use_cases.qa.single_chunk_qa import (
     SingleChunkQaOutput,
     SingleChunkQa,
 )
-from intelligence_layer.task import Chunk, DebugLogger, Task
+from intelligence_layer.core.task import Chunk, Task
+from intelligence_layer.core.logger import DebugLogger
 
 
 class MultipleChunkQaInput(BaseModel):

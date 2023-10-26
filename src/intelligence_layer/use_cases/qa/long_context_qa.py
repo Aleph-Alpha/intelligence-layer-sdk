@@ -9,9 +9,12 @@ from intelligence_layer.use_cases.qa.multiple_chunk_qa import (
     MultipleChunkQaInput,
     MultipleChunkQaOutput,
 )
-from intelligence_layer.retrievers.in_memory import InMemoryRetriever
+from intelligence_layer.connectors.retrievers.in_memory_retriever import (
+    InMemoryRetriever,
+)
 from intelligence_layer.use_cases.search.search import Search, SearchInput
-from intelligence_layer.task import Chunk, DebugLogger, Task
+from intelligence_layer.core.task import Chunk, Task
+from intelligence_layer.core.logger import DebugLogger
 
 
 class LongContextQaInput(BaseModel):

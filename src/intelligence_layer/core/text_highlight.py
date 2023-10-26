@@ -19,10 +19,8 @@ from intelligence_layer.core.prompt_template import (
     PromptWithMetadata,
     TextCursor,
 )
-from intelligence_layer.task import (
-    DebugLogger,
-    Task,
-)
+from intelligence_layer.core.task import Task
+from intelligence_layer.core.logger import DebugLogger
 
 
 class TextHighlightInput(BaseModel):

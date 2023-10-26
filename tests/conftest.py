@@ -4,13 +4,15 @@ from typing import Sequence, cast
 from aleph_alpha_client import Client, Image
 from dotenv import load_dotenv
 from pytest import fixture
-from intelligence_layer.retrievers.document_index import (
-    DocumentIndex,
+from intelligence_layer.connectors.retrievers.document_index_retriever import (
     DocumentIndexRetriever,
 )
-from intelligence_layer.retrievers.in_memory import InMemoryRetriever
+from intelligence_layer.connectors.document_index import DocumentIndex
+from intelligence_layer.connectors.retrievers.in_memory_retriever import (
+    InMemoryRetriever,
+)
 
-from intelligence_layer.task import NoOpDebugLogger
+from intelligence_layer.core.logger import NoOpDebugLogger
 
 
 @fixture(scope="session")

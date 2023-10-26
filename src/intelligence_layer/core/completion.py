@@ -4,7 +4,8 @@ from aleph_alpha_client import Client, CompletionRequest, CompletionResponse, Pr
 from pydantic import BaseModel
 
 from intelligence_layer.core.prompt_template import PromptTemplate, PromptWithMetadata
-from intelligence_layer.task import DebugLogger, Task
+from intelligence_layer.core.task import Task
+from intelligence_layer.core.logger import DebugLogger
 
 
 class RawCompletionInput(BaseModel):

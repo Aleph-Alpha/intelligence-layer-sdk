@@ -10,7 +10,10 @@ from qdrant_client import QdrantClient
 from qdrant_client.conversions.common_types import ScoredPoint
 from qdrant_client.http.models import Distance, VectorParams, PointStruct
 
-from intelligence_layer.retrievers.base import BaseRetriever, SearchResult
+from intelligence_layer.connectors.retrievers.base_retriever import (
+    BaseRetriever,
+    SearchResult,
+)
 
 
 class InMemoryRetriever(BaseRetriever):

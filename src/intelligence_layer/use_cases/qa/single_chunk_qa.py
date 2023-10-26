@@ -15,11 +15,8 @@ from intelligence_layer.core.text_highlight import (
     TextHighlight,
     TextHighlightInput,
 )
-from intelligence_layer.task import (
-    Chunk,
-    DebugLogger,
-    Task,
-)
+from intelligence_layer.core.task import Chunk, Task
+from intelligence_layer.core.logger import DebugLogger
 
 
 class SingleChunkQaInput(BaseModel):

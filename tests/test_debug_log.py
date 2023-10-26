@@ -3,7 +3,7 @@ from aleph_alpha_client import Prompt
 from aleph_alpha_client.aleph_alpha_client import Client
 from aleph_alpha_client.completion import CompletionRequest
 
-from intelligence_layer.task import (
+from intelligence_layer.core.logger import (
     InMemoryDebugLogger,
     InMemoryTaskSpan,
     LogEntry,

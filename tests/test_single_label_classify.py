@@ -3,19 +3,15 @@ from typing import Sequence
 from aleph_alpha_client import Client
 from pytest import fixture
 
-from intelligence_layer.single_label_classify import (
+from intelligence_layer.use_cases.classify.single_label_classify import (
     SingleLabelClassify,
     ClassifyInput,
     ClassifyOutput,
     SingleLabelClassifyEvaluator,
 )
-from intelligence_layer.task import (
-    Chunk,
-    Dataset,
-    Example,
-    InMemoryDebugLogger,
-    NoOpDebugLogger,
-)
+from intelligence_layer.core.task import Chunk
+from intelligence_layer.core.logger import InMemoryDebugLogger, NoOpDebugLogger
+from intelligence_layer.core.evaluator import Dataset, Example
 
 
 @fixture

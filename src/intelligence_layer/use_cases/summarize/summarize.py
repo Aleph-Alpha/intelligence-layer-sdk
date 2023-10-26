@@ -9,7 +9,8 @@ from intelligence_layer.core.completion import (
     InstructionOutput,
 )
 from intelligence_layer.core.prompt_template import PromptWithMetadata
-from intelligence_layer.task import Chunk, DebugLogger, Task
+from intelligence_layer.core.task import Chunk, Task
+from intelligence_layer.core.logger import DebugLogger
 from intelligence_layer.core.text_highlight import TextHighlight, TextHighlightInput
 
 

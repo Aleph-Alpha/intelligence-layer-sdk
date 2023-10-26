@@ -1,6 +1,7 @@
 from threading import Lock
 from time import sleep
-from intelligence_layer.task import MAX_CONCURRENCY, DebugLogger, NoOpDebugLogger, Task
+from intelligence_layer.core.task import MAX_CONCURRENCY, Task
+from intelligence_layer.core.logger import DebugLogger, NoOpDebugLogger
 
 
 class ConcurrencyCounter(Task[None, None]):

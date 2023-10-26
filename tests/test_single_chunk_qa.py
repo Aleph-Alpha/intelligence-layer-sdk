@@ -5,7 +5,8 @@ from intelligence_layer.use_cases.qa.single_chunk_qa import (
     SingleChunkQaInput,
 )
 
-from intelligence_layer.task import Chunk, NoOpDebugLogger
+from intelligence_layer.core.task import Chunk
+from intelligence_layer.core.logger import NoOpDebugLogger
 
 
 @fixture

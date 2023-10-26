@@ -6,7 +6,8 @@ from intelligence_layer.use_cases.qa.multiple_chunk_qa import (
 from aleph_alpha_client import Client
 from pytest import fixture
 
-from intelligence_layer.task import Chunk, InMemoryDebugLogger, NoOpDebugLogger
+from intelligence_layer.core.task import Chunk
+from intelligence_layer.core.logger import InMemoryDebugLogger, NoOpDebugLogger
 
 
 @fixture
