@@ -1,6 +1,4 @@
-from typing import Optional
-
-from aleph_alpha_client import Client, ExplanationRequest, ExplanationResponse, Prompt
+from aleph_alpha_client import Client, ExplanationRequest, ExplanationResponse
 from pydantic import BaseModel
 
 from intelligence_layer.core.task import Task

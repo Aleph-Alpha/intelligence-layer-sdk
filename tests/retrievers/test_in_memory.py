@@ -1,5 +1,7 @@
 from typing import Sequence
+
 from pytest import fixture
+
 from intelligence_layer.connectors.retrievers.in_memory_retriever import (
     InMemoryRetriever,
 )

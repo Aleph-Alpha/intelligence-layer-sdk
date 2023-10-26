@@ -1,5 +1,6 @@
 from aleph_alpha_client import Client, Text
 from pytest import fixture
+
 from intelligence_layer.core.complete import Instruct, InstructInput
 from intelligence_layer.core.logger import NoOpDebugLogger
 

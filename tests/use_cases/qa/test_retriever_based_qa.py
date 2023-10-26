@@ -1,10 +1,8 @@
 from typing import Sequence
+
 from aleph_alpha_client import Client
 from pytest import fixture
-from intelligence_layer.use_cases.qa.retriever_based_qa import (
-    RetrieverBasedQa,
-    RetrieverBasedQaInput,
-)
+
 from intelligence_layer.connectors.retrievers.document_index_retriever import (
     DocumentIndexRetriever,
 )
@@ -12,6 +10,10 @@ from intelligence_layer.connectors.retrievers.in_memory_retriever import (
     InMemoryRetriever,
 )
 from intelligence_layer.core.logger import NoOpDebugLogger
+from intelligence_layer.use_cases.qa.retriever_based_qa import (
+    RetrieverBasedQa,
+    RetrieverBasedQaInput,
+)
 
 
 @fixture

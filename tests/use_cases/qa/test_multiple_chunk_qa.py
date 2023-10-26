@@ -1,13 +1,14 @@
 from typing import Sequence
+
+from aleph_alpha_client import Client
+from pytest import fixture
+
+from intelligence_layer.core.logger import InMemoryDebugLogger, NoOpDebugLogger
+from intelligence_layer.core.task import Chunk
 from intelligence_layer.use_cases.qa.multiple_chunk_qa import (
     MultipleChunkQa,
     MultipleChunkQaInput,
 )
-from aleph_alpha_client import Client
-from pytest import fixture
-
-from intelligence_layer.core.task import Chunk
-from intelligence_layer.core.logger import InMemoryDebugLogger, NoOpDebugLogger
 
 
 @fixture

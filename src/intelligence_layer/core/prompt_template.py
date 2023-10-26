@@ -17,7 +17,8 @@ from typing import (
     Union,
 )
 from uuid import UUID, uuid4
-from liquid import BoundTemplate, Context, Environment, Template
+
+from liquid import BoundTemplate, Context, Environment
 from liquid.tag import Tag
 from liquid.parse import get_parser, expect
 from liquid.token import TOKEN_TAG, TOKEN_EOF, TOKEN_EXPRESSION
