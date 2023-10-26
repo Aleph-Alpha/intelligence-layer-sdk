@@ -26,27 +26,43 @@ Not sure where to start? Familiarize yourself with the Intelligence Layer using 
 | 4     | Classification     | Conduct zero-shot text classification   | [classify.ipynb](./src/examples/classify.ipynb)               |
 | 5     | Document Index     | Connect your proprietary knowledge base | [document_index.ipynb](./src/examples/document_index.ipynb)   |
 
-## Quickstart Guide
+## Getting started with the Jupyter Notebooks
 
-First, you need an Aleph Alpha access token. [Learn more](https://docs.aleph-alpha.com/docs/account/#create-a-new-token).
-
-Install the intelligence layer package.
-
-```cmd
-# pip
-pip install .
-# poetry
-poetry install
-```
-
-Set the Aleph Alpha token value
+You will need an [Aleph Alpha](https://docs.aleph-alpha.com/docs/account/#create-a-new-token) access token to run the examples.
+First, set your Access token:
 
 ```cmd
 export AA_TOKEN=<YOUR TOKEN HERE>
 ```
 
-Run `jupytyer lab`, and go to the [examples](http://localhost:8888/lab/workspaces/auto-C/tree/src/examples) dir.
+Then, install all the dependencies:
+
+```cmd
+pip install .
+# or
+poetry install
+```
+
+Run `jupytyer lab`, and go to the [examples](http://localhost:8888/lab/workspaces/auto-C/tree/src/examples) directory.
 
 ```cmd
 cd src/examples && jupyter lab
 ```
+
+## How to use this in your project
+
+To install this as a dependency in your project, you will need to get a [Github Access Token](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens)
+
+First, set your access token:
+
+```cmd
+export GITHUB_TOKEN=<YOUR_GITHUB_TOKEN>
+```
+
+Now you can install the package:
+
+```cmd
+pip install git+https://$GITHUB_TOKEN@github.com/aleph-alpha-intelligence-layer/intelligence-layer.git
+```
+
+<!-- Example of usage -->
