@@ -7,14 +7,13 @@ from rich.panel import Panel
 from rich.syntax import Syntax
 from rich.tree import Tree
 
-from typing_extensions import TypeAliasType
+from typing_extensions import TypeAliasType, Self
 
 from typing import (
     TYPE_CHECKING,
     Mapping,
     Optional,
     Protocol,
-    Self,
     Sequence,
     Union,
     runtime_checkable,
