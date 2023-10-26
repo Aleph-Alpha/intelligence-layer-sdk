@@ -21,7 +21,8 @@ Out of the box you get access to the following tasks:
 | 1     | Summarization       | Use an LLM to summarize                       | [summarize.ipynb](./src/examples/summarize.ipynb)   |
 | 2     | Question Answering  | Various approaches for QA                     | [qa.ipynb](./src/examples/qa.ipynb)                |
 | 3     | Quickstart task     | We show you how to build a Task from scratch for your own custom use case | [quickstart_task.ipynb](./src/examples/quickstart_task.ipynb) |
-| 4     | Classification      | Use an LLM to conduct zero-shot text classification. | [classify.ipynb](./src/examples/classify.ipynb) |
+| 4     | Classification      | Use an LLM to conduct zero-shot text classification. | [classify.ipynb](./src/examples/classify.ipynb)|
+| 5     | Document Index      | Search through and answer questions about your proprietary knowledge base stored in the Document Index. | [document_index.ipynb](./src/examples/document_index.ipynb)|
 
 
 
