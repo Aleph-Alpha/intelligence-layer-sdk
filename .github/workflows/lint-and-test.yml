@@ -14,11 +14,8 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v4
 
-    - name: Set up Python environment with Poetry
-      run: |
-        pip install poetry
-        poetry install
-        source $(poetry env info --path)/bin/activate
+    - name: Install and configure Poetry
+      uses: snok/install-poetry@v1
 
     - name: Run precommit, mypy, and pytest
       run: ./scripts/precommit-and-mypy-and-pytest.sh
