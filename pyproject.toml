@@ -9,7 +9,7 @@ description = ""
 authors = ["Aleph Alpha Engineering <engineering@aleph-alpha.com>"]
 readme = "README.md"
 license = "Aleph Alpha Licensed"
-path = "src/intelligence_layer"
+packages = [{include = "intelligence_layer", from="src"}]
 
 [tool.poetry.dependencies]
 python = ">=3.10,<3.13"
