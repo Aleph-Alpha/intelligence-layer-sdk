@@ -16,6 +16,8 @@ jobs:
 
     - name: Install and configure Poetry
       uses: snok/install-poetry@v1
+      with:
+        installation-arguments: --with dev
 
     - name: Run precommit, mypy, and pytest
       run: ./scripts/precommit-and-mypy-and-pytest.sh
