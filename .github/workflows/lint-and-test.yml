@@ -30,6 +30,8 @@ jobs:
         poetry run ./scripts/precommit-and-mypy-and-pytest.sh
 
     - name: Configure Poetry for notebooks and run
+      env: 
+        AA_TOKEN: ${{ secrets.AA_TOKEN }}
       run: |
         poetry config installer.max-workers 10
         source $(poetry env info --path)/bin/activate
