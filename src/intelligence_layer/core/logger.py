@@ -1,5 +1,7 @@
 from contextlib import AbstractContextManager
 from datetime import datetime
+from json import dumps
+from pathlib import Path
 from types import TracebackType
 
 from pydantic import BaseModel, Field, RootModel, SerializeAsAny
@@ -385,3 +387,53 @@ class InMemoryTaskSpan(InMemorySpan):
         tree.add(_render_log_value(self.output, "Output"))
 
         return tree
+
+
+class LogBasedDebugLogger(DebugLogger):
+    def __init__(self, log_file_path: Path) -> None:
+        self.log_file_path = log_file_path
+
+    def log(self, message: str, value: PydanticSerializable) -> None:
+        with self.log_file_path.open("a") as f:
+            f.write(
+                dumps(
+                    {
+                        "message": message,
+                        "value": JsonSerializer(root=value).model_dump(),
+                    }
+                )
+                + "\n"
+            )
+
+    def span(self, name: str) -> "LogBasedSpan":
+        return LogBasedSpan(self.log_file_path, name)
+
+    def task_span(
+        self, task_name: str, input: PydanticSerializable
+    ) -> "LogBasedTaskSpan":
+        return LogBasedTaskSpan(self.log_file_path, task_name, input)
+
+
+class LogBasedSpan(Span, LogBasedDebugLogger):
+    def __init__(self, log_file_path: Path, name: str) -> None:
+        super().__init__(log_file_path)
+        self.log("Open Span", name)
+
+    def __exit__(
+        self,
+        exc_type: Optional[type[BaseException]],
+        exc_value: Optional[BaseException],
+        traceback: Optional[TracebackType],
+    ) -> None:
+        pass
+
+
+class LogBasedTaskSpan(LogBasedSpan, TaskSpan, LogBasedDebugLogger):
+    def __init__(
+        self, log_file_path: Path, task_name: str, input: PydanticSerializable
+    ) -> None:
+        super().__init__(log_file_path, task_name)
+        self.log(f"Start task {task_name}", input)
+
+    def record_output(self, output: PydanticSerializable) -> None:
+        self.log("End Task", output)
