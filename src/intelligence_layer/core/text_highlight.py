@@ -13,6 +13,7 @@ from aleph_alpha_client import (
 from aleph_alpha_client.explanation import TextScoreWithRaw
 from pydantic import BaseModel
 
+from intelligence_layer.core.explain import Explain, ExplainInput
 from intelligence_layer.core.prompt_template import (
     Cursor,
     PromptRange,
@@ -68,7 +69,8 @@ class TextHighlight(Task[TextHighlightInput, TextHighlightOutput]):
     """Generates text highlights given a prompt and completion.
 
     For a given prompt and target (completion), extracts the parts of the prompt responsible for generation.
-    A range can be provided in the input 'PromptWithMetadata' via use of the liquid language (see the example). In this case, the highlights will only refer to text within this range.
+    A range can be provided in the input 'PromptWithMetadata' via use of the liquid language (see the example).
+    In this case, the highlights will only refer to text within this range.
 
     Args:
         client: Aleph Alpha client instance for running model related API calls.
@@ -89,9 +91,15 @@ class TextHighlight(Task[TextHighlightInput, TextHighlightOutput]):
 
     _client: Client
 
-    def __init__(self, client: Client) -> None:
+    def __init__(
+        self,
+        client: Client,
+        granularity: PromptGranularity = PromptGranularity.Sentence,
+    ) -> None:
         super().__init__()
         self._client = client
+        self._explain_task = Explain(client)
+        self._granularity = granularity
 
     def run(
         self, input: TextHighlightInput, logger: DebugLogger
@@ -133,14 +141,12 @@ class TextHighlight(Task[TextHighlightInput, TextHighlightOutput]):
         request = ExplanationRequest(
             prompt,
             target,
-            prompt_granularity=PromptGranularity.Sentence,
+            prompt_granularity=self._granularity,
         )
-        response = self._client.explain(request, model)
-        logger.log(
-            "Explanation Request/Response",
-            {"request": request.to_json()},
+        output = self._explain_task.run(
+            ExplainInput(request=request, model=model), logger
         )
-        return response
+        return output.response
 
     def _flatten_prompt_ranges(
         self, prompt_ranges: Iterable[Sequence[PromptRange]]
@@ -191,7 +197,7 @@ class TextHighlight(Task[TextHighlightInput, TextHighlightOutput]):
             )
         ]
         logger.log(
-            "Explanation scores",
+            "Raw explanation scores",
             [
                 {
                     "text": text_score.text,
@@ -202,12 +208,11 @@ class TextHighlight(Task[TextHighlightInput, TextHighlightOutput]):
         )
         if not overlapping_and_flat:
             return []
-        z_scores = self._z_scores([s.score for s in overlapping_and_flat], logger)
+        z_scores = self._z_scores([s.score for s in overlapping_and_flat])
         scored_highlights = [
             ScoredTextHighlight(text=text_score.text, score=z_score)
             for text_score, z_score in zip(overlapping_and_flat, z_scores)
         ]
-        logger.log("Unfiltered highlights", scored_highlights)
         return self._filter_highlights(scored_highlights)
 
     def _is_relevant_explanation(
@@ -284,17 +289,18 @@ class TextHighlight(Task[TextHighlightInput, TextHighlightOutput]):
         return True
 
     @staticmethod
-    def _z_scores(data: Sequence[float], logger: DebugLogger) -> Sequence[float]:
-        mean = statistics.mean(data)
+    def _z_scores(data: Sequence[float]) -> Sequence[float]:
+        mean = 0  # assuming a mean of 0 (population mean), therefore also assuming n instead of n-1 (population df)
         stdev = (
-            statistics.stdev(data) if len(data) > 1 else 0
-        )  # standard deviation not defined for n < 2
-        logger.log("Highlight statistics", {"mean": mean, "std_dev": stdev})
+            (sum((x - mean) ** 2 for x in data) / len(data)) ** 0.5
+            if len(data) > 1
+            else 0
+        )
         return [((x - mean) / stdev if stdev > 0 else 0) for x in data]
 
     def _filter_highlights(
         self,
         scored_highlights: Sequence[ScoredTextHighlight],
-        z_score_limit: float = 0.5,
+        z_score_limit: float = 1.0,
     ) -> Sequence[ScoredTextHighlight]:
         return [h for h in scored_highlights if abs(h.score) >= z_score_limit]

@@ -1,21 +1,21 @@
 from aleph_alpha_client import Client, Text
 from pytest import fixture
-from intelligence_layer.core.completion import Instruction, InstructionInput
+from intelligence_layer.core.complete import Instruct, InstructInput
 from intelligence_layer.core.logger import NoOpDebugLogger
 
 
 @fixture
-def instruction(client: Client) -> Instruction:
-    return Instruction(client)
+def instruct(client: Client) -> Instruct:
+    return Instruct(client)
 
 
-def test_instruction_without_input(
-    instruction: Instruction, no_op_debug_logger: NoOpDebugLogger
+def test_instruct_without_input(
+    instruct: Instruct, no_op_debug_logger: NoOpDebugLogger
 ) -> None:
-    input = InstructionInput(
+    input = InstructInput(
         instruction="What is the capital of Germany?", input=None, model="luminous-base"
     )
-    output = instruction.run(input, no_op_debug_logger)
+    output = instruct.run(input, no_op_debug_logger)
 
     assert "Berlin" in output.response
     prompt_text_item = output.prompt_with_metadata.prompt.items[0]
