@@ -22,7 +22,7 @@ jobs:
 
     - name: Run precommit, mypy, and pytest
       run: |
-        cat .pre-commit-config.yaml
+        mkdir .git
         poetry run pre-commit install .pre-commit-config.yaml 
         poetry run ./scripts/precommit-and-mypy-and-pytest.sh 
 
