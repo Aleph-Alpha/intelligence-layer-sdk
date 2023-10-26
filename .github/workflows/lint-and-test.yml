@@ -6,8 +6,6 @@ on: push
 jobs:
   lint-and-test:
     runs-on: ubuntu-latest
-    container:
-      python '3.10'
 
     steps:
     # Checkout the code
