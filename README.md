@@ -18,13 +18,14 @@ The key features of the Intelligence Layer are:
 
 Not sure where to start? Familiarize yourself with the Intelligence Layer using the below notebooks.
 
-| Order | Task               | Description                             | Notebook 📓                                                   |
-| ----- | ------------------ | --------------------------------------- | ------------------------------------------------------------- |
-| 1     | Summarization      | Summarize a document                    | [summarize.ipynb](./src/examples/summarize.ipynb)             |
-| 2     | Question Answering | Various approaches for QA               | [qa.ipynb](./src/examples/qa.ipynb)                           |
-| 3     | Quickstart task    | Build a custom task for your use case   | [quickstart_task.ipynb](./src/examples/quickstart_task.ipynb) |
-| 4     | Classification     | Conduct zero-shot text classification   | [classify.ipynb](./src/examples/classify.ipynb)               |
-| 5     | Document Index     | Connect your proprietary knowledge base | [document_index.ipynb](./src/examples/document_index.ipynb)   |
+| Order | Task                           | Description                             | Notebook 📓                                                                     |
+| ----- | ------------------------------ | --------------------------------------- | ------------------------------------------------------------------------------- |
+| 1     | Summarization                  | Summarize a document                    | [summarize.ipynb](./src/examples/summarize.ipynb)                               |
+| 2     | Question Answering             | Various approaches for QA               | [qa.ipynb](./src/examples/qa.ipynb)                                             |
+| 3     | Quickstart task                | Build a custom task for your use case   | [quickstart_task.ipynb](./src/examples/quickstart_task.ipynb)                   |
+| 4     | Single label Classification    | Conduct zero-shot text classification   | [single_label_classify.ipynb](./src/examples/single_label_classify.ipynb)       |
+| 5     | Embedding based Classification | Classify texts on the basis of examples | [embedding_based_classify.ipynb](./src/examples/embedding_based_classify.ipynb) |
+| 6     | Document Index                 | Connect your proprietary knowledge base | [document_index.ipynb](./src/examples/document_index.ipynb)                     |
 
 ## Getting started with the Jupyter Notebooks
 
