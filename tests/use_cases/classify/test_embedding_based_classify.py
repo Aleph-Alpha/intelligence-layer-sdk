@@ -1,5 +1,5 @@
 from aleph_alpha_client import Client
-from pytest import fixture
+from pytest import fixture, raises
 
 from intelligence_layer.core.logger import NoOpDebugLogger
 from intelligence_layer.core.task import Chunk
@@ -48,3 +48,15 @@ def test_embedding_based_classify_returns_score_for_all_labels(
     # Output contains everything we expect
     assert isinstance(classify_output, ClassifyOutput)
     assert classify_input.labels == set(r for r in classify_output.scores)
+
+
+def test_embedding_based_classify_raises_for_unknown_label(
+    embedding_based_classify: EmbeddingBasedClassify,
+) -> None:
+    unknown_label = "neutral"
+    classify_input = ClassifyInput(
+        chunk=Chunk("This is good"),
+        labels=frozenset({"positive", "negative", unknown_label}),
+    )
+    with raises(ValueError) as e:
+        embedding_based_classify.run(classify_input, NoOpDebugLogger())
