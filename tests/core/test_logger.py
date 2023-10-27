@@ -51,7 +51,7 @@ def test_file_debug_logger(file_debug_log: FileDebugLogger) -> None:
 
     output = TestTask().run(input, file_debug_log)
 
-    log_tree = parse_log(file_debug_log.log_file_path)
+    log_tree = parse_log(file_debug_log._log_file_path)
     expected = InMemoryDebugLogger(name="")
     task = InMemoryTaskSpan(
         name="TestTask",
@@ -138,14 +138,14 @@ class TreeBuilder(BaseModel):
         task_span.record_output(end_task.output)
 
     def start_span(self, log_line: LogLine) -> None:
-        start_task = StartSpan.model_validate(log_line.entry)
+        start_span = StartSpan.model_validate(log_line.entry)
         child = InMemorySpan(
-            name=start_task.name,
+            name=start_span.name,
             start_timestamp=None,  # start_task.start
         )
-        self.loggers[start_task.uuid] = child
-        self.spans[start_task.uuid] = child
-        self.loggers.get(start_task.parent, self.root).logs.append(child)
+        self.loggers[start_span.uuid] = child
+        self.spans[start_span.uuid] = child
+        self.loggers.get(start_span.parent, self.root).logs.append(child)
 
     def end_span(self, log_line: LogLine) -> None:
         end_span = EndSpan.model_validate(log_line.entry)
