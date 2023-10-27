@@ -480,9 +480,12 @@ class FileDebugLogger(DebugLogger):
         return task
 
 
-class LogBasedSpan(Span, FileDebugLogger):
+class LogBasedSpan(FileDebugLogger, AbstractContextManager["LogBasedSpan"]):
     def __init__(self, log_file_path: Path, name: str) -> None:
         super().__init__(log_file_path)
+
+    def __enter__(self) -> Self:
+        return self
 
     def __exit__(
         self,
@@ -493,7 +496,7 @@ class LogBasedSpan(Span, FileDebugLogger):
         self.log_entry(EndSpan(uuid=self.uuid, end=datetime.utcnow()))
 
 
-class LogBasedTaskSpan(LogBasedSpan, TaskSpan):
+class LogBasedTaskSpan(LogBasedSpan, AbstractContextManager["LogBasedTaskSpan"]):
     output: Optional[PydanticSerializable] = None
 
     def __init__(
