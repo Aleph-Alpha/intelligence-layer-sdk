@@ -1,3 +1,5 @@
+import { compareAsc } from 'date-fns';
+
 export type JSONValue =
 	| string
 	| number
@@ -37,4 +39,26 @@ export function isLogEntry(entry: Entry): entry is LogEntry {
 
 export function isSpan(entry: Entry): entry is SpanEntry {
 	return 'logs' in entry;
+}
+
+export interface TimeRange {
+	from: Date;
+	to: Date;
+}
+
+/**
+ * Calculate the first and last timestamp of a logger
+ */
+export function logRange(log: DebugLog): TimeRange | null {
+	const logTimes = log.logs.reduce<Date[]>((acc, i) => {
+		if ('timestamp' in i) acc.push(new Date(i.timestamp));
+		if ('start_timestamp' in i) acc.push(new Date(i.start_timestamp));
+		if ('end_timestamp' in i) acc.push(new Date(i.end_timestamp));
+		return acc;
+	}, []);
+	logTimes.sort(compareAsc);
+
+	const from = logTimes.at(0);
+	const to = logTimes.at(-1);
+	return from && to ? { from, to } : null;
 }

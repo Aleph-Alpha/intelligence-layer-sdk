@@ -1,16 +1,18 @@
 <script context="module" lang="ts">
 	import type { MetaProps } from '@storybook/addon-svelte-csf';
-	import { randomLogger } from '../../log.test_utils';
-	import LogDurations from './LogDurations.svelte';
+	import { randomDateRange, randomSpan } from '../../log.test_utils';
+	import SpanRow from './SpanRow.svelte';
 
-	const logger = randomLogger();
+	const range = randomDateRange();
+	const span = randomSpan(range);
 
 	export const meta: MetaProps = {
-		title: 'Timeline/Molecules/LogDurations',
-		component: LogDurations,
+		title: 'Timeline/Molecules/SpanRow',
+		component: SpanRow,
 		tags: ['autodocs'],
 		args: {
-			logs: logger.logs
+			span,
+			range
 		}
 	};
 </script>
@@ -20,7 +22,7 @@
 </script>
 
 <Template let:args>
-	<LogDurations {...args} />
+	<SpanRow {...args} />
 </Template>
 
 <Story name="Base" />

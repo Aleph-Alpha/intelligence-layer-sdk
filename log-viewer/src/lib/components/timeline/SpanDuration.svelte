@@ -1,24 +1,20 @@
 <script lang="ts">
 	import { differenceInMilliseconds } from 'date-fns';
-	import { type SpanEntry, isSpan } from '../../log';
+	import { type SpanEntry, type TimeRange, isSpan } from '../../log';
 
 	/**
 	 * A Span or TaskSpan to show the duration of
 	 */
 	export let span: SpanEntry;
 	/**
-	 * The start of the entire run of the logger
+	 * The duration of the entire run of the logger
 	 */
-	export let runStart: Date;
-	/**
-	 * The end of the entire run of the logger
-	 */
-	export let runEnd: Date;
+	export let range: TimeRange;
 
 	$: spanStart = new Date(span.start_timestamp);
-	$: spanOffset = differenceInMilliseconds(spanStart, runStart);
+	$: spanOffset = differenceInMilliseconds(spanStart, range.from);
 	$: spanLength = differenceInMilliseconds(new Date(span.end_timestamp), spanStart);
-	$: runLength = differenceInMilliseconds(runEnd, runStart);
+	$: runLength = differenceInMilliseconds(range.to, range.from);
 
 	// Filter out LogEntry's, only show the Span/TaskSpan in the tree
 	$: childSpans = span.logs.filter(isSpan);
@@ -49,9 +45,9 @@
 
     This is a recursive component that builds itself up by creating the same component for sub-spans.
 -->
-<div class="h-8 w-full border-t py-0.5 last:border-b hover:bg-gray-50">
+<div class="w-full pb-1">
 	<button
-		class="bg-accent-400 py-1 text-right text-xs font-extrabold text-gray-950 shadow outline-none ring-1 ring-gray-950/20 hover:bg-accent-500"
+		class="bg-accent-400 py-0.5 text-right text-xs font-extrabold text-gray-950 shadow outline-none ring-1 ring-gray-950/20 hover:bg-accent-500"
 		style="margin-left: {Math.round((spanOffset / runLength) * 100)}%; width:{Math.round(
 			(spanLength / runLength) * 100
 		)}%;"
@@ -59,6 +55,3 @@
 		<span class="px-1">{renderDuration(spanLength)}</span>
 	</button>
 </div>
-{#each childSpans as span}
-	<svelte:self {span} {runStart} {runEnd} />
-{/each}

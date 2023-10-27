@@ -1,11 +1,6 @@
 import { faker } from '@faker-js/faker';
 import { compareAsc } from 'date-fns';
-import type { Entry, LogEntry, Span, TaskSpan, JSONValue, DebugLog } from './log';
-
-export interface TimeRange {
-	from: Date;
-	to: Date;
-}
+import type { Entry, LogEntry, Span, TaskSpan, JSONValue, DebugLog, TimeRange } from './log';
 
 /**
  * Produces a random time range, with optional time bounds
