@@ -19,4 +19,3 @@ help:
 %: Makefile
 	sphinx-apidoc -o . ../src
 	@$(SPHINXBUILD) -M $@ "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) $(O)
-	
