@@ -9,7 +9,7 @@ from intelligence_layer.core.task import Chunk
 from intelligence_layer.use_cases.classify.classify import (
     ClassifyInput,
     ClassifyOutput,
-    ClassifyEvaluator
+    ClassifyEvaluator,
 )
 from intelligence_layer.use_cases.classify.single_label_classify import (
     SingleLabelClassify,
