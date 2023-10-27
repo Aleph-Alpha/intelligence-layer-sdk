@@ -24,8 +24,13 @@
 	<ul class:border-t={level === 0}>
 		{#each spans as log}
 			<li>
-				<button class="group w-full border-b text-left" style="padding-left: {level}em">
-					<span class="block border-l border-gray-300 px-2 py-1 text-sm group-hover:bg-gray-50">
+				<button
+					class="group h-8 w-full border-b bg-gray-50 text-left"
+					style="padding-left: {level}em"
+				>
+					<span
+						class="block border-l border-gray-300 bg-white px-2 py-1 text-sm group-hover:bg-gray-100"
+					>
 						{log.name}
 					</span>
 				</button>
@@ -33,4 +38,6 @@
 			</li>
 		{/each}
 	</ul>
+{:else if level === 0}
+	<p class="text-sm">No spans available</p>
 {/if}

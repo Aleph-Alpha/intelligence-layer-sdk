@@ -1,8 +1,8 @@
 import { faker } from '@faker-js/faker';
 import { compareAsc } from 'date-fns';
-import type { Entry, LogEntry, Span, TaskSpan, JSONValue } from './log';
+import type { Entry, LogEntry, Span, TaskSpan, JSONValue, DebugLog } from './log';
 
-interface TimeRange {
+export interface TimeRange {
 	from: Date;
 	to: Date;
 }
@@ -10,7 +10,7 @@ interface TimeRange {
 /**
  * Produces a random time range, with optional time bounds
  */
-function randomDateRange(between?: TimeRange): TimeRange {
+export function randomDateRange(between?: TimeRange): TimeRange {
 	if (between) {
 		const dates = faker.date.betweens({ ...between, count: 2 });
 		dates.sort(compareAsc);
@@ -22,16 +22,16 @@ function randomDateRange(between?: TimeRange): TimeRange {
 	return { from: faker.date.recent({ refDate: end }), to: end };
 }
 
-function randomValue(): JSONValue {
+export function randomValue(): JSONValue {
 	return faker.helpers.arrayElement([
-		faker.word.sample,
-		faker.number.int,
-		faker.datatype.boolean,
+		() => faker.word.sample(),
+		() => faker.number.int(),
+		() => faker.datatype.boolean(),
 		() => null,
 		() => faker.helpers.multiple(randomValue, { count: { max: 2, min: 0 } }),
 		() =>
 			faker.helpers
-				.multiple(faker.word.sample, { count: { max: 2, min: 0 } })
+				.multiple(() => faker.word.sample(), { count: { max: 2, min: 0 } })
 				.reduce((acc, key) => ({ ...acc, [key]: randomValue() }), {})
 	])();
 }
@@ -77,4 +77,12 @@ export function randomEntry(between?: TimeRange): Entry {
 		() => randomSpan(between),
 		() => randomTaskSpan(between)
 	])();
+}
+
+export function randomLogger(): DebugLog {
+	const range = randomDateRange();
+	return {
+		name: faker.word.sample(),
+		logs: faker.helpers.multiple(() => randomEntry(range), { count: { max: 2, min: 1 } })
+	};
 }
