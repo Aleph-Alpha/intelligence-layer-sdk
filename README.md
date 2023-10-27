@@ -11,7 +11,7 @@ The key features of the Intelligence Layer are:
 - **Composability**: The Intelligence Layer streamlines your journey from prototyping to scalable deployment.
   It offers seamless integration with diverse evaluation methods, manages concurrency, and orchestrates smaller tasks into complex workflows.
 - **Auditability** At the core of the Intelligence Layer is the belief that all AI processes must be auditable and traceable.
-  To ensure this, we provide full coprehensibility, by seamlessly logging each step of every workflow.
+  To ensure this, we provide full comprehensibility, by seamlessly logging each step of every workflow.
   This enhances your debugging capabilities and offers greater control post-deployment when examining model responses.
 
 ## Getting Started
