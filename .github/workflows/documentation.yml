@@ -32,7 +32,7 @@ jobs:
       - name: Sphinx build
         run: |
           cd docs
-          make html
+          poetry run make html
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
         if: ${{ github.event_name == 'push' }}
