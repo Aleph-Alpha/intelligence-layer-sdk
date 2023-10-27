@@ -47,4 +47,5 @@ strict = "True"
 
 [tool.pytest.ini_options]
 markers = ["internal: marks tests as internal (deselect with '-k \"not internal\"')"]
-addopts = "--capture=tee-sys -k 'not internal'"
+addopts = "--capture=tee-sys"
+filterwarnings = [ 'ignore:.*\`general_plain_validator_function\` is deprecated.*' ]
