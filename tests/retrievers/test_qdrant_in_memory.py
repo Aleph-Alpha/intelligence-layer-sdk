@@ -3,8 +3,8 @@ from typing import Sequence
 from pytest import fixture
 from intelligence_layer.connectors.retrievers.base_retriever import Document
 
-from intelligence_layer.connectors.retrievers.in_memory_retriever import (
-    InMemoryRetriever,
+from intelligence_layer.connectors.retrievers.qdrant_in_memory_retriever import (
+    QdrantInMemoryRetriever,
 )
 
 
@@ -18,7 +18,7 @@ def in_memory_retriever_documents() -> Sequence[Document]:
 
 
 def test_asymmetric_in_memory(
-    asymmetric_in_memory_retriever: InMemoryRetriever,
+    asymmetric_in_memory_retriever: QdrantInMemoryRetriever,
     in_memory_retriever_documents: Sequence[Document],
 ) -> None:
     query = "Do you like summer?"
@@ -28,7 +28,7 @@ def test_asymmetric_in_memory(
 
 
 def test_symmetric_in_memory(
-    symmetric_in_memory_retriever: InMemoryRetriever,
+    symmetric_in_memory_retriever: QdrantInMemoryRetriever,
     in_memory_retriever_documents: Sequence[Document],
 ) -> None:
     query = "I hate drizzle"

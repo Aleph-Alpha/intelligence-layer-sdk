@@ -7,20 +7,19 @@ from pydantic import BaseModel
 from qdrant_client.http.models import models
 
 from intelligence_layer.connectors.retrievers.base_retriever import Document
-from intelligence_layer.connectors.retrievers.in_memory_retriever import (
-    InMemoryRetriever,
+from intelligence_layer.connectors.retrievers.qdrant_in_memory_retriever import (
+    QdrantInMemoryRetriever,
     RetrieverType,
 )
 from intelligence_layer.core.logger import DebugLogger
-from intelligence_layer.core.task import Chunk, Probability
+from intelligence_layer.core.task import Chunk, Probability, Task
 from intelligence_layer.use_cases.classify.classify import (
-    Classify,
     ClassifyInput,
     ClassifyOutput,
 )
-from intelligence_layer.use_cases.search.filter_search import (
-    FilterSearch,
-    FilterSearchInput,
+from intelligence_layer.use_cases.search.qdrant_search import (
+    QdrantSearch,
+    QdrantSearchInput,
 )
 from intelligence_layer.use_cases.search.search import SearchOutput
 
@@ -38,19 +37,7 @@ class LabelWithExamples(BaseModel):
     examples: Sequence[str]
 
 
-class EmbeddingBasedClassifyScoring(Enum):
-    """Specify the type of scoring to use.
-
-    Attributes:
-        MAX: Takes the mean of the top match, i.e., the max.
-        MEAN_TOP_5: Takes the mean of the top 5 matches.
-    """
-
-    MAX = 1
-    MEAN_TOP_5 = 5
-
-
-class EmbeddingBasedClassify(Classify):
+class EmbeddingBasedClassify(Task[ClassifyInput, ClassifyOutput]):
     """Task that classifies a given input text based on examples.
 
     The input contains a complete set of all possible labels. The output will return a score
@@ -102,35 +89,28 @@ class EmbeddingBasedClassify(Classify):
         self,
         labels_with_examples: Sequence[LabelWithExamples],
         client: Client,
-        scoring: EmbeddingBasedClassifyScoring = EmbeddingBasedClassifyScoring.MEAN_TOP_5,
+        top_k_per_label: int = 5,
     ) -> None:
         super().__init__()
         self._labels_with_examples = labels_with_examples
         documents = self._labels_with_examples_to_documents(labels_with_examples)
-        self._scoring = scoring
-        retriever = InMemoryRetriever(
+        self._scoring = top_k_per_label
+        retriever = QdrantInMemoryRetriever(
             client,
             documents=documents,
-            k=scoring.value,
+            k=top_k_per_label,
             retriever_type=RetrieverType.SYMMETRIC,
         )
-        self._filter_search = FilterSearch(retriever)
+        self._filter_search = QdrantSearch(retriever)
 
     def run(self, input: ClassifyInput, logger: DebugLogger) -> ClassifyOutput:
-        available_labels = set(
-            class_with_examples.name
-            for class_with_examples in self._labels_with_examples
-        )
-        unknown_labels = input.labels - available_labels
-        if unknown_labels:
-            raise ValueError(f"Got unexpected labels: {', '.join(unknown_labels)}.")
-        labels = list(input.labels)  # converting to list to preserve order
+        self._validate_input_labels(input)
         results_per_label = [
-            self._label_search(input.chunk, label, logger) for label in labels
+            self._label_search(input.chunk, label, logger) for label in input.labels
         ]
         scores = self._calculate_scores(results_per_label)
         return ClassifyOutput(
-            scores={l: Probability(s) for l, s in zip(labels, scores)}
+            scores={l: Probability(s) for l, s in zip(input.labels, scores)}
         )
 
     def _labels_with_examples_to_documents(
@@ -144,10 +124,19 @@ class EmbeddingBasedClassify(Classify):
             for e in class_with_examples.examples
         ]
 
+    def _validate_input_labels(self, input: ClassifyInput) -> None:
+        available_labels = set(
+            class_with_examples.name
+            for class_with_examples in self._labels_with_examples
+        )
+        unknown_labels = input.labels - available_labels
+        if unknown_labels:
+            raise ValueError(f"Got unexpected labels: {', '.join(unknown_labels)}.")
+
     def _label_search(
         self, chunk: Chunk, label: str, logger: DebugLogger
     ) -> SearchOutput:
-        search_input = FilterSearchInput(
+        search_input = QdrantSearchInput(
             query=chunk,
             filter=models.Filter(
                 must=[

@@ -10,8 +10,8 @@ from intelligence_layer.use_cases.qa.multiple_chunk_qa import (
     MultipleChunkQaInput,
     MultipleChunkQaOutput,
 )
-from intelligence_layer.connectors.retrievers.in_memory_retriever import (
-    InMemoryRetriever,
+from intelligence_layer.connectors.retrievers.qdrant_in_memory_retriever import (
+    QdrantInMemoryRetriever,
 )
 from intelligence_layer.use_cases.search.search import Search, SearchInput
 from intelligence_layer.core.task import Chunk, Task
@@ -76,7 +76,7 @@ class LongContextQa(Task[LongContextQaInput, MultipleChunkQaOutput]):
     ) -> MultipleChunkQaOutput:
         chunks = self._chunk(input.text)
         logger.log("chunks", chunks)
-        retriever = InMemoryRetriever(
+        retriever = QdrantInMemoryRetriever(
             self._client,
             documents=[Document(text=c) for c in chunks],
             k=self._k,

@@ -1,15 +1,15 @@
 from pydantic import BaseModel
 from qdrant_client.http.models.models import Filter
 
-from intelligence_layer.connectors.retrievers.in_memory_retriever import (
-    InMemoryRetriever,
+from intelligence_layer.connectors.retrievers.qdrant_in_memory_retriever import (
+    QdrantInMemoryRetriever,
 )
 from intelligence_layer.core.task import Task
 from intelligence_layer.core.logger import DebugLogger
 from intelligence_layer.use_cases.search.search import SearchOutput
 
 
-class FilterSearchInput(BaseModel):
+class QdrantSearchInput(BaseModel):
     """The input for a `FilterSearch` task.
 
     Attributes:
@@ -21,7 +21,7 @@ class FilterSearchInput(BaseModel):
     filter: Filter
 
 
-class FilterSearch(Task[FilterSearchInput, SearchOutput]):
+class QdrantSearch(Task[QdrantSearchInput, SearchOutput]):
     """Performs search to find documents using QDrant filtering methods.
 
     Given a query, this task will utilize a retriever to fetch relevant text search results.
@@ -55,11 +55,11 @@ class FilterSearch(Task[FilterSearchInput, SearchOutput]):
         >>> output = task.run(input, logger)
     """
 
-    def __init__(self, in_memory_retriever: InMemoryRetriever):
+    def __init__(self, in_memory_retriever: QdrantInMemoryRetriever):
         super().__init__()
         self._in_memory_retriever = in_memory_retriever
 
-    def run(self, input: FilterSearchInput, logger: DebugLogger) -> SearchOutput:
+    def run(self, input: QdrantSearchInput, logger: DebugLogger) -> SearchOutput:
         results = self._in_memory_retriever.get_filtered_documents_with_scores(
             input.query, input.filter
         )

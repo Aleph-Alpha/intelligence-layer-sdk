@@ -7,8 +7,8 @@ from intelligence_layer.connectors.retrievers.base_retriever import Document
 from intelligence_layer.connectors.retrievers.document_index_retriever import (
     DocumentIndexRetriever,
 )
-from intelligence_layer.connectors.retrievers.in_memory_retriever import (
-    InMemoryRetriever,
+from intelligence_layer.connectors.retrievers.qdrant_in_memory_retriever import (
+    QdrantInMemoryRetriever,
 )
 from intelligence_layer.core.logger import NoOpDebugLogger
 from intelligence_layer.use_cases.qa.retriever_based_qa import (
@@ -37,7 +37,7 @@ def in_memory_retriever_documents() -> Sequence[Document]:
 
 @fixture
 def retriever_based_qa_with_in_memory_retriever(
-    client: Client, asymmetric_in_memory_retriever: InMemoryRetriever
+    client: Client, asymmetric_in_memory_retriever: QdrantInMemoryRetriever
 ) -> RetrieverBasedQa:
     return RetrieverBasedQa(
         client, asymmetric_in_memory_retriever, model="luminous-base-control"

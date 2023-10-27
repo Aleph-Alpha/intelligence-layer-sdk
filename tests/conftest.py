@@ -11,8 +11,8 @@ from intelligence_layer.connectors.retrievers.document_index_retriever import (
     DocumentIndexRetriever,
 )
 from intelligence_layer.connectors.document_index import DocumentIndex
-from intelligence_layer.connectors.retrievers.in_memory_retriever import (
-    InMemoryRetriever,
+from intelligence_layer.connectors.retrievers.qdrant_in_memory_retriever import (
+    QdrantInMemoryRetriever,
     RetrieverType,
 )
 
@@ -45,24 +45,24 @@ def prompt_image() -> Image:
 
 
 @fixture
-def asymmetric_in_memory_retriever(
-    client: Client, in_memory_retriever_documents: Sequence[Document]
-) -> InMemoryRetriever:
-    return InMemoryRetriever(
+def asymmetric_qdrant_in_memory_retriever(
+    client: Client, qdrant_in_memory_retriever_documents: Sequence[Document]
+) -> QdrantInMemoryRetriever:
+    return QdrantInMemoryRetriever(
         client,
-        in_memory_retriever_documents,
+        qdrant_in_memory_retriever_documents,
         k=2,
         retriever_type=RetrieverType.ASYMMETRIC,
     )
 
 
 @fixture
-def symmetric_in_memory_retriever(
-    client: Client, in_memory_retriever_documents: Sequence[Document]
-) -> InMemoryRetriever:
-    return InMemoryRetriever(
+def symmetric_qdrant_in_memory_retriever(
+    client: Client, qdrant_in_memory_retriever_documents: Sequence[Document]
+) -> QdrantInMemoryRetriever:
+    return QdrantInMemoryRetriever(
         client,
-        in_memory_retriever_documents,
+        qdrant_in_memory_retriever_documents,
         k=2,
         retriever_type=RetrieverType.SYMMETRIC,
     )

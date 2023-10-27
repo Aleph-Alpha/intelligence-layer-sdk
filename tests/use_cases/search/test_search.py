@@ -2,8 +2,8 @@ from pytest import fixture
 from typing import Sequence
 from intelligence_layer.connectors.retrievers.base_retriever import Document
 
-from intelligence_layer.connectors.retrievers.in_memory_retriever import (
-    InMemoryRetriever,
+from intelligence_layer.connectors.retrievers.qdrant_in_memory_retriever import (
+    QdrantInMemoryRetriever,
 )
 from intelligence_layer.core.logger import NoOpDebugLogger
 from intelligence_layer.use_cases.search.search import Search, SearchInput
@@ -19,7 +19,7 @@ def in_memory_retriever_documents() -> Sequence[Document]:
 
 
 @fixture
-def search(asymmetric_in_memory_retriever: InMemoryRetriever) -> Search:
+def search(asymmetric_in_memory_retriever: QdrantInMemoryRetriever) -> Search:
     return Search(asymmetric_in_memory_retriever)
 
 
