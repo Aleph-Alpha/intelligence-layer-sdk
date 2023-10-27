@@ -1,4 +1,4 @@
 #!/usr/bin/env -S bash -eu -o pipefail
 mypy
 pre-commit run --all-files
-pytest tests/core/test_logger.py
+pytest -n 10
