@@ -126,14 +126,14 @@ class InMemoryRetriever(BaseRetriever):
         )
 
     def get_filtered_documents_with_scores(
-        self, query: str, limit: int, filter: models.Filter
+        self, query: str, filter: models.Filter
     ) -> Sequence[SearchResult]:
         """Specific method for `InMemoryRetriever` to support filtering search results."""
         query_embedding = self._embed(query, self._query_representation)
         search_result = self._search_client.search(
             collection_name=self._collection_name,
             query_vector=query_embedding,
-            limit=limit,
+            limit=self._k,
             query_filter=filter,
         )
         return [self._point_to_search_result(point) for point in search_result]

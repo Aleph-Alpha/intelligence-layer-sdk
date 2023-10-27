@@ -12,7 +12,7 @@ from intelligence_layer.connectors.retrievers.in_memory_retriever import (
     RetrieverType,
 )
 from intelligence_layer.core.logger import DebugLogger
-from intelligence_layer.core.task import Chunk, Probability, Task
+from intelligence_layer.core.task import Chunk, Probability
 from intelligence_layer.use_cases.classify.classify import (
     Classify,
     ClassifyInput,
@@ -111,7 +111,7 @@ class EmbeddingBasedClassify(Classify):
         retriever = InMemoryRetriever(
             client,
             documents=documents,
-            k=len(documents),
+            k=scoring.value,
             retriever_type=RetrieverType.SYMMETRIC,
         )
         self._filter_search = FilterSearch(retriever)
@@ -149,7 +149,6 @@ class EmbeddingBasedClassify(Classify):
     ) -> SearchOutput:
         search_input = FilterSearchInput(
             query=chunk,
-            limit=self._scoring.value,
             filter=models.Filter(
                 must=[
                     models.FieldCondition(

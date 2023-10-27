@@ -63,6 +63,39 @@ def test_embedding_based_classify_raises_for_unknown_label(
         embedding_based_classify.run(classify_input, NoOpDebugLogger())
 
 
+def test_embedding_based_classify_works_for_empty_labels_in_request(
+    embedding_based_classify: EmbeddingBasedClassify,
+) -> None:
+    classify_input = ClassifyInput(
+        chunk=Chunk("This is good"),
+        labels=frozenset(),
+    )
+    result = embedding_based_classify.run(classify_input, NoOpDebugLogger())
+    assert result.scores == {}
+
+
+def test_embedding_based_classify_works_without_examples(
+    client: Client,
+) -> None:
+    labels_with_examples = [
+        LabelWithExamples(
+            name="positive",
+            examples=[],
+        ),
+        LabelWithExamples(
+            name="negative",
+            examples=[],
+        ),
+    ]
+    embedding_based_classify = EmbeddingBasedClassify(labels_with_examples, client)
+    classify_input = ClassifyInput(
+        chunk=Chunk("This is good"),
+        labels=frozenset(),
+    )
+    result = embedding_based_classify.run(classify_input, NoOpDebugLogger())
+    assert result.scores == {}
+
+
 def test_can_evaluate_embedding_based_classify(
     embedding_based_classify: EmbeddingBasedClassify,
 ) -> None:

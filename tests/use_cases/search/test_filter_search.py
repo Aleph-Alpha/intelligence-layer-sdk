@@ -22,8 +22,8 @@ def in_memory_retriever_documents() -> Sequence[Document]:
             metadata={"type": "doc"},
         ),
         Document(
-            text="Cats are small animals. Well, I do not fit at all but I am of the correct type.",
-            metadata={"type": "doc"},
+            text="Cats are small animals. Well, I do not fit at all and I am of the correct type.",
+            metadata={"type": "no doc"},
         ),
         Document(
             text="Germany reunited in 1990. This document fits perfectly but it is of the wrong type.",
@@ -44,7 +44,6 @@ def test_filter_search(
 ) -> None:
     search_input = FilterSearchInput(
         query="When did Germany reunite?",
-        limit=1,
         filter=models.Filter(
             must=[
                 models.FieldCondition(

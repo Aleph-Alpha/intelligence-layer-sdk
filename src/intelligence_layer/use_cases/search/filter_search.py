@@ -14,12 +14,10 @@ class FilterSearchInput(BaseModel):
 
     Attributes:
         query: The text to be searched with.
-        limit: The maximum number of items to be retrieved.
         filter: Conditions to filter by as offered by Qdrant.
     """
 
     query: str
-    limit: int
     filter: Filter
 
 
@@ -44,7 +42,6 @@ class FilterSearch(Task[FilterSearchInput, SearchOutput]):
         >>> task = FilterSearch(retriever)
         >>> input = FilterSearchInput(
         >>>     query="When did East and West Germany reunite?"
-        >>>     limit=1,
         >>>     filter=models.Filter(
         >>>         must=[
         >>>             models.FieldCondition(
@@ -64,6 +61,6 @@ class FilterSearch(Task[FilterSearchInput, SearchOutput]):
 
     def run(self, input: FilterSearchInput, logger: DebugLogger) -> SearchOutput:
         results = self._in_memory_retriever.get_filtered_documents_with_scores(
-            input.query, input.limit, input.filter
+            input.query, input.filter
         )
         return SearchOutput(results=results)
