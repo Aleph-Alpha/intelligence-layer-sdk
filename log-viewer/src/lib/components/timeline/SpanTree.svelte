@@ -1,5 +1,6 @@
 <script lang="ts">
-	import { type Entry, isSpan } from '../../log';
+	import { type Entry, type TimeRange, isSpan } from '../../log';
+	import SpanRow from './SpanRow.svelte';
 
 	/**
 	 * The list of log entries to render in the tree.
@@ -9,6 +10,10 @@
 	 * How deeply nested is this sub-tree?
 	 */
 	export let level: number = 0;
+	/**
+	 * The duration of the entire run of the logger
+	 */
+	export let range: TimeRange;
 
 	// Filter out LogEntry's, only show the Span/TaskSpan in the tree
 	$: spans = logs.filter(isSpan);
@@ -22,19 +27,10 @@
 -->
 {#if spans.length}
 	<ul class:border-t={level === 0}>
-		{#each spans as log}
+		{#each spans as span}
 			<li>
-				<button
-					class="group h-8 w-full border-b bg-gray-50 text-left"
-					style="padding-left: {level}em"
-				>
-					<span
-						class="block border-l border-gray-300 bg-white px-2 py-1 text-sm group-hover:bg-gray-100"
-					>
-						{log.name}
-					</span>
-				</button>
-				<svelte:self logs={log.logs} level={level + 1} />
+				<SpanRow {span} {level} {range} />
+				<svelte:self logs={span.logs} level={level + 1} {range} />
 			</li>
 		{/each}
 	</ul>

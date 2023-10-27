@@ -12,8 +12,7 @@
 		tags: ['autodocs'],
 		args: {
 			span,
-			runStart: range.from,
-			runEnd: range.to
+			range
 		}
 	};
 </script>
