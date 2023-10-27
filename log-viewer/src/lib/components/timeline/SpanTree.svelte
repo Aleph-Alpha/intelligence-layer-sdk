@@ -24,11 +24,11 @@
 	<ul class:border-t={level === 0}>
 		{#each spans as log}
 			<li>
-				<button class="group w-full border-b text-left" style="padding-left: {level}em"
-					><span class="block border-l border-gray-300 px-2 py-1 text-sm group-hover:bg-gray-50"
-						>{log.name}</span
-					></button
-				>
+				<button class="group w-full border-b text-left" style="padding-left: {level}em">
+					<span class="block border-l border-gray-300 px-2 py-1 text-sm group-hover:bg-gray-50">
+						{log.name}
+					</span>
+				</button>
 				<svelte:self logs={log.logs} level={level + 1} />
 			</li>
 		{/each}
