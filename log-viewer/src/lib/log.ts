@@ -62,3 +62,22 @@ export function logRange(log: DebugLog): TimeRange | null {
 	const to = logTimes.at(-1);
 	return from && to ? { from, to } : null;
 }
+
+export function renderDuration(spanLength: number): string {
+	let unit = 'ms';
+	let length = spanLength;
+	if (length > 1000) {
+		length /= 1000;
+		unit = 's';
+		if (length > 60) {
+			length /= 60;
+			unit = 'min';
+			if (length > 60) {
+				length /= 60;
+				unit = 'h';
+			}
+		}
+	}
+
+	return `${length.toLocaleString('en-US')}${unit}`;
+}
