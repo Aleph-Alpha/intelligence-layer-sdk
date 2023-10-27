@@ -49,7 +49,7 @@ class SingleLabelClassify(Task[ClassifyInput, ClassifyOutput]):
     Example:
         >>> client = Client(token="AA_TOKEN")
         >>> task = SingleLabelClassify(client)
-        >>> input = SingleLabelClassifyInput(
+        >>> input = ClassifyInput(
                 text="This is a happy text.",
                 labels={"positive", "negative"}
             )

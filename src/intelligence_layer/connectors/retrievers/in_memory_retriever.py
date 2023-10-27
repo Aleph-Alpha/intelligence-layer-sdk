@@ -20,6 +20,13 @@ from intelligence_layer.connectors.retrievers.base_retriever import (
 
 
 class RetrieverType(Enum):
+    """Specify the type of retriever to instantiate.
+
+    Attributes:
+        ASYMMETRIC: Query is embedded as `Query` and each document as `Document`.
+        SYMMETRIC: Both query and documents will be embedded as `Symmetric`.
+    """
+
     ASYMMETRIC = (SemanticRepresentation.Query, SemanticRepresentation.Document)
     SYMMETRIC = (SemanticRepresentation.Symmetric, SemanticRepresentation.Symmetric)
 
@@ -41,8 +48,8 @@ class InMemoryRetriever(BaseRetriever):
 
     Example:
         >>> client = Client(os.getenv("AA_TOKEN"))
-        >>> texts = ["I do not like rain.", "Summer is warm.", "We are so back."]
-        >>> retriever = InMemoryRetriever(client, texts)
+        >>> documents = [Document(text=t) for t in ["I do not like rain.", "Summer is warm.", "We are so back."]]
+        >>> retriever = InMemoryRetriever(client, documents)
         >>> query = "Do you like summer?"
         >>> documents = retriever.get_relevant_documents_with_scores(query)
     """
@@ -121,6 +128,7 @@ class InMemoryRetriever(BaseRetriever):
     def get_filtered_documents_with_scores(
         self, query: str, limit: int, filter: models.Filter
     ) -> Sequence[SearchResult]:
+        """Specific method for `InMemoryRetriever` to support filtering search results."""
         query_embedding = self._embed(query, self._query_representation)
         search_result = self._search_client.search(
             collection_name=self._collection_name,

@@ -15,25 +15,25 @@ from intelligence_layer.use_cases.classify.embedding_based_classify import (
 
 @fixture
 def embedding_based_classify(client: Client) -> EmbeddingBasedClassify:
-    classes_with_examples = [
+    labels_with_examples = [
         LabelWithExamples(
             name="positive",
             examples=[
                 "I really like this.",
                 "Wow, your hair looks great!",
-                "We're so in love."
-            ]
+                "We're so in love.",
+            ],
         ),
         LabelWithExamples(
             name="negative",
             examples=[
                 "I really dislike this.",
                 "Ugh, Your hair looks horrible!",
-                "We're not in love anymore."
-            ]
-        )
+                "We're not in love anymore.",
+            ],
+        ),
     ]
-    return EmbeddingBasedClassify(classes_with_examples, client)
+    return EmbeddingBasedClassify(labels_with_examples, client)
 
 
 def test_embedding_based_classify_returns_score_for_all_labels(
@@ -43,7 +43,6 @@ def test_embedding_based_classify_returns_score_for_all_labels(
         chunk=Chunk("This is good"),
         labels=frozenset({"positive", "negative"}),
     )
-
     classify_output = embedding_based_classify.run(classify_input, NoOpDebugLogger())
 
     # Output contains everything we expect
