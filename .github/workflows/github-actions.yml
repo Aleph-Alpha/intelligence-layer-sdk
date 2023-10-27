@@ -1,6 +1,10 @@
 name: CI Pipeline
 
-on: push
+on:
+  push:
+    paths-ignore:
+      - "log-viewer/**"
+      - ".github/workflows/frontend.yml"
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -11,70 +15,70 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-    - uses: actions/setup-python@v4
-      with:
-        python-version: '3.10'
+      - uses: actions/setup-python@v4
+        with:
+          python-version: "3.10"
 
-    - name: Install and configure Poetry
-      uses: snok/install-poetry@v1
-      with:
-        virtualenvs-create: true
-        virtualenvs-in-project: true
-        installer-parallel: true
+      - name: Install and configure Poetry
+        uses: snok/install-poetry@v1
+        with:
+          virtualenvs-create: true
+          virtualenvs-in-project: true
+          installer-parallel: true
 
-    - name: Load cached venv
-      id: cached-poetry-dependencies
-      uses: actions/cache@v3
-      with:
-        path: .venv
-        key: venv-${{ runner.os }}-${{ steps.setup-python.outputs.python-version }}-${{ hashFiles('**/poetry.lock') }}
+      - name: Load cached venv
+        id: cached-poetry-dependencies
+        uses: actions/cache@v3
+        with:
+          path: .venv
+          key: venv-${{ runner.os }}-${{ steps.setup-python.outputs.python-version }}-${{ hashFiles('**/poetry.lock') }}
 
-    - name: Install dependencies
-      if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
-      run: poetry install --no-interaction
+      - name: Install dependencies
+        if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
+        run: poetry install --no-interaction
 
-    - name: Run precommit, mypy, and pytest
-      env:
-        AA_TOKEN: ${{ secrets.AA_TOKEN }}
-      run: |
-        poetry run ./scripts/precommit-and-mypy-and-pytest.sh
+      - name: Run precommit, mypy, and pytest
+        env:
+          AA_TOKEN: ${{ secrets.AA_TOKEN }}
+        run: |
+          poetry run ./scripts/precommit-and-mypy-and-pytest.sh
 
   run-notebooks:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-    - uses: actions/setup-python@v4
-      with:
-        python-version: '3.10'
+      - uses: actions/setup-python@v4
+        with:
+          python-version: "3.10"
 
-    - name: Install and configure Poetry
-      uses: snok/install-poetry@v1
-      with:
-        virtualenvs-create: true
-        virtualenvs-in-project: true
-        installer-parallel: true
+      - name: Install and configure Poetry
+        uses: snok/install-poetry@v1
+        with:
+          virtualenvs-create: true
+          virtualenvs-in-project: true
+          installer-parallel: true
 
-    - name: Load cached venv
-      id: cached-poetry-dependencies
-      uses: actions/cache@v3
-      with:
-        path: .venv
-        key: venv-${{ runner.os }}-${{ steps.setup-python.outputs.python-version }}-${{ hashFiles('**/poetry.lock') }}
+      - name: Load cached venv
+        id: cached-poetry-dependencies
+        uses: actions/cache@v3
+        with:
+          path: .venv
+          key: venv-${{ runner.os }}-${{ steps.setup-python.outputs.python-version }}-${{ hashFiles('**/poetry.lock') }}
 
-    - name: Install dependencies
-      if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
-      run: poetry install --no-interaction
+      - name: Install dependencies
+        if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
+        run: poetry install --no-interaction
 
-    - name: Configure Poetry for notebooks and run
-      env:
-        AA_TOKEN: ${{ secrets.AA_TOKEN }}
-      run: |
-        poetry config installer.max-workers 10
-        source $(poetry env info --path)/bin/activate
-        ./scripts/notebook_runner.sh
+      - name: Configure Poetry for notebooks and run
+        env:
+          AA_TOKEN: ${{ secrets.AA_TOKEN }}
+        run: |
+          poetry config installer.max-workers 10
+          source $(poetry env info --path)/bin/activate
+          ./scripts/notebook_runner.sh

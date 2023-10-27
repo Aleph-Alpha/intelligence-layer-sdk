@@ -1,6 +1,18 @@
 name: documentation
 
-on: [push, pull_request, workflow_dispatch]
+on:
+  push:
+    paths-ignore:
+      - "log-viewer/**"
+      - ".github/workflows/frontend.yml"
+  pull_request:
+    paths-ignore:
+      - "log-viewer/**"
+      - ".github/workflows/frontend.yml"
+  workflow_dispatch:
+    paths-ignore:
+      - "log-viewer/**"
+      - ".github/workflows/frontend.yml"
 
 permissions:
   contents: write
