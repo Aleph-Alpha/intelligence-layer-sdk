@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { type Entry, type TimeRange, isSpan } from '../../log';
+	import { type Entry, type TimeRange, isSpan } from '$lib/log';
 	import SpanRow from './SpanRow.svelte';
 
 	/**

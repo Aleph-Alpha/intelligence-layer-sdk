@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { differenceInMilliseconds } from 'date-fns';
-	import { type SpanEntry, type TimeRange, renderDuration } from '../../log';
+	import { activeSpan } from '$lib/active';
+	import { type SpanEntry, type TimeRange, renderDuration } from '$lib/log';
 
 	/**
 	 * A Span or TaskSpan to show the duration of
@@ -25,6 +26,7 @@
 -->
 <button
 	class="bg-accent-400 py-0.5 text-right text-xs font-extrabold text-gray-950 shadow outline-none ring-1 ring-gray-950/20 hover:bg-accent-500"
+	on:click={() => activeSpan.set(span)}
 	style="margin-left: {Math.round((spanOffset / runLength) * 100)}%; width:{Math.round(
 		(spanLength / runLength) * 100
 	)}%;"
