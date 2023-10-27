@@ -10,7 +10,7 @@ from aleph_alpha_client import (
 )
 from qdrant_client import QdrantClient
 from qdrant_client.conversions.common_types import ScoredPoint
-from qdrant_client.http.models import Distance, VectorParams, PointStruct
+from qdrant_client.http.models import Distance, VectorParams, PointStruct, models
 
 from intelligence_layer.connectors.retrievers.base_retriever import (
     BaseRetriever,
@@ -72,10 +72,6 @@ class InMemoryRetriever(BaseRetriever):
         self._add_texts_to_memory(documents)
 
     def get_relevant_documents_with_scores(self, query: str) -> Sequence[SearchResult]:
-        def _point_to_search_result(point: ScoredPoint) -> SearchResult:
-            assert point.payload
-            return SearchResult(score=point.score, document=Document(**point.payload))
-
         query_embedding = self._embed(query, self._query_representation)
         search_result = self._search_client.search(
             collection_name=self._collection_name,
@@ -83,7 +79,7 @@ class InMemoryRetriever(BaseRetriever):
             score_threshold=self._threshold,
             limit=self._k,
         )
-        return [_point_to_search_result(point) for point in search_result]
+        return [self._point_to_search_result(point) for point in search_result]
 
     def _embed(self, text: str, representation: SemanticRepresentation) -> list[float]:
         embedding_request = SemanticEmbeddingRequest(
@@ -95,6 +91,11 @@ class InMemoryRetriever(BaseRetriever):
         return self._client.semantic_embed(
             request=embedding_request, model="luminous-base"
         ).embedding
+
+    @staticmethod
+    def _point_to_search_result(point: ScoredPoint) -> SearchResult:
+        assert point.payload
+        return SearchResult(score=point.score, document=Document(**point.payload))
 
     def _add_texts_to_memory(self, documents: Sequence[Document]) -> None:
         with ThreadPoolExecutor(max_workers=self.MAX_WORKERS) as executor:
@@ -116,3 +117,15 @@ class InMemoryRetriever(BaseRetriever):
                 )
             ],
         )
+
+    def get_filtered_documents_with_scores(
+        self, query: str, limit: int, filter: models.Filter
+    ) -> Sequence[SearchResult]:
+        query_embedding = self._embed(query, self._query_representation)
+        search_result = self._search_client.search(
+            collection_name=self._collection_name,
+            query_vector=query_embedding,
+            limit=limit,
+            query_filter=filter,
+        )
+        return [self._point_to_search_result(point) for point in search_result]

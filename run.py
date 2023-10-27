@@ -5,9 +5,11 @@ from aleph_alpha_client import Client
 from dotenv import load_dotenv
 from fastapi import Depends, FastAPI, Form
 
-from intelligence_layer.use_cases.classify.single_label_classify import (
+from intelligence_layer.use_cases.classify.classify import (
     ClassifyInput,
     ClassifyOutput,
+)
+from intelligence_layer.use_cases.classify.single_label_classify import (
     SingleLabelClassify,
 )
 
