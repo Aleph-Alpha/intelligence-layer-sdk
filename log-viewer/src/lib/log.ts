@@ -13,8 +13,8 @@ export interface LogEntry {
 	timestamp: string;
 }
 
-export type Entry = LogEntry | Span | TraceSpan;
-export type SpanEntry = Span | TraceSpan;
+export type Entry = LogEntry | Span | TaskSpan;
+export type SpanEntry = Span | TaskSpan;
 
 export interface DebugLog {
 	name: string;
@@ -26,7 +26,7 @@ export interface Span extends DebugLog {
 	end_timestamp: string;
 }
 
-export interface TraceSpan extends Span {
+export interface TaskSpan extends Span {
 	input: JSONValue;
 	output: JSONValue;
 }
