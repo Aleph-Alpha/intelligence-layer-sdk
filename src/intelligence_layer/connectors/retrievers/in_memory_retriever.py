@@ -14,6 +14,7 @@ from qdrant_client.http.models import Distance, VectorParams, PointStruct
 
 from intelligence_layer.connectors.retrievers.base_retriever import (
     BaseRetriever,
+    Document,
     SearchResult,
 )
 
@@ -51,7 +52,7 @@ class InMemoryRetriever(BaseRetriever):
     def __init__(
         self,
         client: Client,
-        texts: Sequence[str],
+        documents: Sequence[Document],
         k: int,
         threshold: float = 0.5,
         retriever_type: RetrieverType = RetrieverType.ASYMMETRIC,
@@ -68,12 +69,12 @@ class InMemoryRetriever(BaseRetriever):
             collection_name=self._collection_name,
             vectors_config=VectorParams(size=128, distance=Distance.COSINE),
         )
-        self._add_texts_to_memory(texts)
+        self._add_texts_to_memory(documents)
 
     def get_relevant_documents_with_scores(self, query: str) -> Sequence[SearchResult]:
         def _point_to_search_result(point: ScoredPoint) -> SearchResult:
             assert point.payload
-            return SearchResult(score=point.score, text=point.payload["text"])
+            return SearchResult(score=point.score, document=Document(**point.payload))
 
         query_embedding = self._embed(query, self._query_representation)
         search_result = self._search_client.search(
@@ -95,18 +96,23 @@ class InMemoryRetriever(BaseRetriever):
             request=embedding_request, model="luminous-base"
         ).embedding
 
-    def _add_texts_to_memory(self, texts: Sequence[str]) -> None:
+    def _add_texts_to_memory(self, documents: Sequence[Document]) -> None:
         with ThreadPoolExecutor(max_workers=self.MAX_WORKERS) as executor:
             embeddings = list(
                 executor.map(
-                    lambda c: self._embed(c, self._document_representation), texts
+                    lambda c: self._embed(c.text, self._document_representation),
+                    documents,
                 )
             )
         self._search_client.upsert(
             collection_name=self._collection_name,
             wait=True,
             points=[
-                PointStruct(id=idx, vector=text_embedding, payload={"text": text})
-                for idx, (text_embedding, text) in enumerate(zip(embeddings, texts))
+                PointStruct(
+                    id=idx, vector=text_embedding, payload=document.model_dump()
+                )
+                for idx, (text_embedding, document) in enumerate(
+                    zip(embeddings, documents)
+                )
             ],
         )

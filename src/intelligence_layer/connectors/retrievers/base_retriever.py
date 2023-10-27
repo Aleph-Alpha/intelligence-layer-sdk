@@ -1,7 +1,12 @@
 from abc import ABC, abstractmethod
-from typing import Sequence
+from typing import Any, Sequence
 
 from pydantic import BaseModel
+
+
+class Document(BaseModel):
+    text: str
+    metadata: Any = None
 
 
 class SearchResult(BaseModel):
@@ -14,7 +19,7 @@ class SearchResult(BaseModel):
     """
 
     score: float
-    text: str
+    document: Document
 
 
 class BaseRetriever(ABC):

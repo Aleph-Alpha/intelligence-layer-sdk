@@ -69,7 +69,7 @@ class RetrieverBasedQa(Task[RetrieverBasedQaInput, MultipleChunkQaOutput]):
     ) -> MultipleChunkQaOutput:
         search_output = self._search.run(SearchInput(query=input.question), logger)
         multi_chunk_qa_input = MultipleChunkQaInput(
-            chunks=[Chunk(result.text) for result in search_output.results],
+            chunks=[Chunk(result.document.text) for result in search_output.results],
             question=input.question,
         )
         return self._multi_chunk_qa.run(multi_chunk_qa_input, logger)

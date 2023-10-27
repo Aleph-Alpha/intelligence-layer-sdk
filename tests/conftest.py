@@ -5,6 +5,7 @@ from typing import Sequence, cast
 from aleph_alpha_client import Client, Image
 from dotenv import load_dotenv
 from pytest import fixture
+from intelligence_layer.connectors.retrievers.base_retriever import Document
 
 from intelligence_layer.connectors.retrievers.document_index_retriever import (
     DocumentIndexRetriever,
@@ -45,19 +46,25 @@ def prompt_image() -> Image:
 
 @fixture
 def asymmetric_in_memory_retriever(
-    client: Client, in_memory_retriever_texts: Sequence[str]
+    client: Client, in_memory_retriever_documents: Sequence[Document]
 ) -> InMemoryRetriever:
     return InMemoryRetriever(
-        client, in_memory_retriever_texts, k=2, retriever_type=RetrieverType.ASYMMETRIC
+        client,
+        in_memory_retriever_documents,
+        k=2,
+        retriever_type=RetrieverType.ASYMMETRIC,
     )
 
 
 @fixture
 def symmetric_in_memory_retriever(
-    client: Client, in_memory_retriever_texts: Sequence[str]
+    client: Client, in_memory_retriever_documents: Sequence[Document]
 ) -> InMemoryRetriever:
     return InMemoryRetriever(
-        client, in_memory_retriever_texts, k=2, retriever_type=RetrieverType.SYMMETRIC
+        client,
+        in_memory_retriever_documents,
+        k=2,
+        retriever_type=RetrieverType.SYMMETRIC,
     )
 
 
