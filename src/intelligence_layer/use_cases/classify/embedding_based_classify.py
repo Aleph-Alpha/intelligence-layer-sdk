@@ -13,7 +13,11 @@ from intelligence_layer.connectors.retrievers.in_memory_retriever import (
 )
 from intelligence_layer.core.logger import DebugLogger
 from intelligence_layer.core.task import Chunk, Probability, Task
-from intelligence_layer.use_cases.classify.classify import ClassifyInput, ClassifyOutput
+from intelligence_layer.use_cases.classify.classify import (
+    Classify,
+    ClassifyInput,
+    ClassifyOutput,
+)
 from intelligence_layer.use_cases.search.filter_search import (
     FilterSearch,
     FilterSearchInput,
@@ -46,7 +50,7 @@ class EmbeddingBasedClassifyScoring(Enum):
     MEAN_TOP_5 = 5
 
 
-class EmbeddingBasedClassify(Task[ClassifyInput, ClassifyOutput]):
+class EmbeddingBasedClassify(Classify):
     """Task that classifies a given input text based on examples.
 
     The input contains a complete set of all possible labels. The output will return a score
@@ -119,7 +123,7 @@ class EmbeddingBasedClassify(Task[ClassifyInput, ClassifyOutput]):
         )
         unknown_labels = input.labels - available_labels
         if unknown_labels:
-            raise ValueError(f"Got unexpected labels: {unknown_labels}")
+            raise ValueError(f"Got unexpected labels: {', '.join(unknown_labels)}.")
         labels = list(input.labels)  # converting to list to preserve order
         results_per_label = [
             self._label_search(input.chunk, label, logger) for label in labels

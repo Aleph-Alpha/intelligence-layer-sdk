@@ -9,10 +9,10 @@ from intelligence_layer.core.task import Chunk
 from intelligence_layer.use_cases.classify.classify import (
     ClassifyInput,
     ClassifyOutput,
+    ClassifyEvaluator,
 )
 from intelligence_layer.use_cases.classify.single_label_classify import (
     SingleLabelClassify,
-    SingleLabelClassifyEvaluator,
 )
 
 
@@ -109,7 +109,7 @@ def test_can_evaluate_classify(single_label_classify: SingleLabelClassify) -> No
         chunk=Chunk("This is good"),
         labels=frozenset({"positive", "negative"}),
     )
-    evaluator = SingleLabelClassifyEvaluator(task=single_label_classify)
+    evaluator = ClassifyEvaluator(task=single_label_classify)
 
     evaluation = evaluator.evaluate(
         input=classify_input, logger=NoOpDebugLogger(), expected_output=["positive"]
@@ -137,9 +137,7 @@ def test_can_aggregate_evaluations(
         expected_output=positive_lst,
     )
 
-    single_label_classify_evaluator = SingleLabelClassifyEvaluator(
-        task=single_label_classify
-    )
+    single_label_classify_evaluator = ClassifyEvaluator(task=single_label_classify)
 
     dataset = Dataset(
         name="classify_test", examples=[correct_example, incorrect_example]
@@ -155,9 +153,7 @@ def test_can_aggregate_evaluations(
 def test_aggregating_evaluations_works_with_empty_list(
     single_label_classify: SingleLabelClassify,
 ) -> None:
-    single_label_classify_evaluator = SingleLabelClassifyEvaluator(
-        task=single_label_classify
-    )
+    single_label_classify_evaluator = ClassifyEvaluator(task=single_label_classify)
 
     aggregated_evaluations = single_label_classify_evaluator.evaluate_dataset(
         Dataset(name="empty_dataset", examples=[]), logger=NoOpDebugLogger()

@@ -4,6 +4,7 @@ from pytest import fixture, raises
 from intelligence_layer.core.logger import NoOpDebugLogger
 from intelligence_layer.core.task import Chunk
 from intelligence_layer.use_cases.classify.classify import (
+    ClassifyEvaluator,
     ClassifyInput,
     ClassifyOutput,
 )
@@ -60,3 +61,19 @@ def test_embedding_based_classify_raises_for_unknown_label(
     )
     with raises(ValueError) as e:
         embedding_based_classify.run(classify_input, NoOpDebugLogger())
+
+
+def test_can_evaluate_embedding_based_classify(
+    embedding_based_classify: EmbeddingBasedClassify,
+) -> None:
+    classify_input = ClassifyInput(
+        chunk=Chunk("This is good"),
+        labels=frozenset({"positive", "negative"}),
+    )
+    evaluator = ClassifyEvaluator(task=embedding_based_classify)
+
+    evaluation = evaluator.evaluate(
+        input=classify_input, logger=NoOpDebugLogger(), expected_output=["positive"]
+    )
+
+    assert evaluation.correct == True
