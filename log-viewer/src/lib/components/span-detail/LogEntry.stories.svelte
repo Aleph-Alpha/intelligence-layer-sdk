@@ -1,14 +1,14 @@
 <script context="module" lang="ts">
 	import type { MetaProps } from '@storybook/addon-svelte-csf';
-	import { randomLogger } from '../log.test_utils';
-	import LogViewer from './LogViewer.svelte';
+	import { randomLogEntry } from '../../log.test_utils';
+	import LogEntry from './LogEntry.svelte';
 
 	export const meta: MetaProps = {
-		title: 'Pages/LogViewer',
-		component: LogViewer,
+		title: 'SpanDetail/Molecules/LogEntry',
+		component: LogEntry,
 		tags: ['autodocs'],
 		args: {
-			log: randomLogger()
+			log: randomLogEntry()
 		}
 	};
 </script>
@@ -18,7 +18,7 @@
 </script>
 
 <Template let:args>
-	<LogViewer {...args} />
+	<LogEntry {...args} />
 </Template>
 
 <Story name="Base" />

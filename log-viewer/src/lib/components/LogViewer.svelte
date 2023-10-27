@@ -2,6 +2,7 @@
 	import { activeSpan } from '$lib/active';
 	import Timeline from '$lib/components/timeline/Timeline.svelte';
 	import type { DebugLog } from '$lib/log';
+	import SpanDetail from './span-detail/SpanDetail.svelte';
 
 	/**
 	 * The Debug Log you want to render
@@ -16,5 +17,5 @@
 <Timeline {log} />
 
 {#if $activeSpan}
-	{$activeSpan.name}
+	<SpanDetail span={$activeSpan} />
 {/if}
