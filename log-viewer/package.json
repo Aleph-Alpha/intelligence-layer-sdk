@@ -39,7 +39,7 @@
 		"@typescript-eslint/parser": "^6.0.0",
 		"autoprefixer": "^10.4.16",
 		"class-variance-authority": "^0.7.0",
-		"dayjs": "^1.11.10",
+		"date-fns": "^2.30.0",
 		"eslint": "^8.28.0",
 		"eslint-config-prettier": "^9.0.0",
 		"eslint-plugin-storybook": "^0.6.15",
