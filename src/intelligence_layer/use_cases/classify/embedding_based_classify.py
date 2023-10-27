@@ -119,7 +119,7 @@ class EmbeddingBasedClassify(Task[ClassifyInput, ClassifyOutput]):
         )
         unknown_labels = input.labels - available_labels
         if unknown_labels:
-            raise ValueError(f"Got unexpected labels: {unknown_labels}")
+            raise ValueError(f"Got unexpected labels: {', '.join(unknown_labels)}.")
         labels = list(input.labels)  # converting to list to preserve order
         results_per_label = [
             self._label_search(input.chunk, label, logger) for label in labels
