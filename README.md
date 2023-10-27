@@ -30,7 +30,7 @@ Not sure where to start? Familiarize yourself with the Intelligence Layer using 
 ## Getting started with the Jupyter Notebooks
 
 You will need an [Aleph Alpha](https://docs.aleph-alpha.com/docs/account/#create-a-new-token) access token to run the examples.
-First, set your Access token:
+First, set your access token:
 
 ```bash
 export AA_TOKEN=<YOUR TOKEN HERE>
@@ -50,7 +50,7 @@ cd src/examples && poetry run jupyter lab
 
 ## How to use this in your project
 
-To install this as a dependency in your project, you will need to get a [Github Access Token](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens).
+To install this as a dependency in your project, you will need to get a [Github access token](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens).
 
 Set your access token:
 
@@ -60,13 +60,13 @@ GITHUB_TOKEN=<YOUR_GITHUB_TOKEN>
 We recommend setting up a dedicated virtual environment. You can do so by using [conda](https://conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html#creating-an-environment-with-commands) or [venv](https://docs.python.org/3/library/venv.html).
 
 
-Now you can install the package:
+Let's install the package:
 
 ```bash
 pip install git+https://$GITHUB_TOKEN@github.com/aleph-alpha-intelligence-layer/intelligence-layer.git
 ```
 
-Now the intelligence layer should be available and ready to use as a Python package.
+Now, the intelligence layer should be available and ready to use as a Python package.
 
 ```py
 from intelligence_layer.core.task import Task
