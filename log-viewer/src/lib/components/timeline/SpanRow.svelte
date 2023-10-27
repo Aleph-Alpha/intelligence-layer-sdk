@@ -9,7 +9,7 @@
 	/**
 	 * How deeply nested is this sub-tree?
 	 */
-	export let level: number = 0;
+	export let level = 0;
 	/**
 	 * The duration of the entire run of the logger
 	 */
