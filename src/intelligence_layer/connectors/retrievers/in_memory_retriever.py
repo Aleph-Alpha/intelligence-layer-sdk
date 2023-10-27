@@ -1,3 +1,5 @@
+from concurrent.futures import ThreadPoolExecutor
+from enum import Enum
 from typing import Sequence
 
 from aleph_alpha_client import (
@@ -16,6 +18,11 @@ from intelligence_layer.connectors.retrievers.base_retriever import (
 )
 
 
+class RetrieverType(Enum):
+    ASYMMETRIC = (SemanticRepresentation.Query, SemanticRepresentation.Document)
+    SYMMETRIC = (SemanticRepresentation.Symmetric, SemanticRepresentation.Symmetric)
+
+
 class InMemoryRetriever(BaseRetriever):
     """Search through documents stored in memory using semantic search.
 
@@ -27,6 +34,9 @@ class InMemoryRetriever(BaseRetriever):
         texts: The sequence of texts to be made searchable.
         k: The (top) number of documents to be returned by search.
         threshold: The mimumum value of cosine similarity between the query vector and the document vector.
+        retriever_type: The type of retriever to be instantiated.
+            Should be `ASYMMETRIC` for most query-document retrieveal use cases, `SYMMETRIC` is optimized
+            for similar document retrieval.
 
     Example:
         >>> client = Client(os.getenv("AA_TOKEN"))
@@ -36,18 +46,23 @@ class InMemoryRetriever(BaseRetriever):
         >>> documents = retriever.get_relevant_documents_with_scores(query)
     """
 
+    MAX_WORKERS = 10
+
     def __init__(
         self,
         client: Client,
         texts: Sequence[str],
         k: int,
         threshold: float = 0.5,
+        retriever_type: RetrieverType = RetrieverType.ASYMMETRIC,
     ) -> None:
         self._client = client
         self._search_client = QdrantClient(":memory:")
         self._collection_name = "in_memory_collection"
         self._k = k
         self._threshold = threshold
+        self._query_representation = retriever_type.value[0]
+        self._document_representation = retriever_type.value[1]
 
         self._search_client.recreate_collection(
             collection_name=self._collection_name,
@@ -60,7 +75,7 @@ class InMemoryRetriever(BaseRetriever):
             assert point.payload
             return SearchResult(score=point.score, text=point.payload["text"])
 
-        query_embedding = self._embed(query, SemanticRepresentation.Query)
+        query_embedding = self._embed(query, self._query_representation)
         search_result = self._search_client.search(
             collection_name=self._collection_name,
             query_vector=query_embedding,
@@ -81,7 +96,12 @@ class InMemoryRetriever(BaseRetriever):
         ).embedding
 
     def _add_texts_to_memory(self, texts: Sequence[str]) -> None:
-        embeddings = [self._embed(c, SemanticRepresentation.Document) for c in texts]
+        with ThreadPoolExecutor(max_workers=self.MAX_WORKERS) as executor:
+            embeddings = list(
+                executor.map(
+                    lambda c: self._embed(c, self._document_representation), texts
+                )
+            )
         self._search_client.upsert(
             collection_name=self._collection_name,
             wait=True,

@@ -14,8 +14,8 @@ def in_memory_retriever_texts() -> Sequence[str]:
 
 
 @fixture
-def search(in_memory_retriever: InMemoryRetriever) -> Search:
-    return Search(in_memory_retriever)
+def search(asymmetric_in_memory_retriever: InMemoryRetriever) -> Search:
+    return Search(asymmetric_in_memory_retriever)
 
 
 def test_search(

@@ -33,9 +33,11 @@ def in_memory_retriever_texts() -> Sequence[str]:
 
 @fixture
 def retriever_based_qa_with_in_memory_retriever(
-    client: Client, in_memory_retriever: InMemoryRetriever
+    client: Client, asymmetric_in_memory_retriever: InMemoryRetriever
 ) -> RetrieverBasedQa:
-    return RetrieverBasedQa(client, in_memory_retriever, model="luminous-base-control")
+    return RetrieverBasedQa(
+        client, asymmetric_in_memory_retriever, model="luminous-base-control"
+    )
 
 
 @fixture
