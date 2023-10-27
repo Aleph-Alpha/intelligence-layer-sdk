@@ -33,6 +33,7 @@ jobs:
         with:
           node-version: 20
           cache: "pnpm"
+          cache-dependency-path: "./log-viewer/pnpm-lock.yaml"
       - run: pnpm install
       - run: pnpm check
       - run: pnpm lint
@@ -48,6 +49,7 @@ jobs:
         with:
           node-version: 20
           cache: "pnpm"
+          cache-dependency-path: "./log-viewer/pnpm-lock.yaml"
       - run: pnpm install
       - run: pnpm exec playgright install --with-deps
       - run: pnpm test
