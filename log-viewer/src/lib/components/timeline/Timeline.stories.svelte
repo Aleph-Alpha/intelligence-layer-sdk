@@ -1,11 +1,15 @@
 <script context="module" lang="ts">
 	import type { MetaProps } from '@storybook/addon-svelte-csf';
+	import { randomLogger } from '../../log.test_utils';
 	import Timeline from './Timeline.svelte';
 
 	export const meta: MetaProps = {
 		title: 'Timeline/Organisms/Timeline',
 		component: Timeline,
-		tags: ['autodocs']
+		tags: ['autodocs'],
+		args: {
+			log: randomLogger()
+		}
 	};
 </script>
 

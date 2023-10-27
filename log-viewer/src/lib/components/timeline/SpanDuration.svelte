@@ -49,9 +49,9 @@
 
     This is a recursive component that builds itself up by creating the same component for sub-spans.
 -->
-<div class="w-full py-0.5 hover:bg-gray-50">
+<div class="h-8 w-full border-t py-0.5 last:border-b hover:bg-gray-50">
 	<button
-		class="h-8 bg-accent-400 py-1 text-right text-xs font-extrabold text-gray-950 shadow outline-none ring-1 ring-gray-950/20 hover:bg-accent-500"
+		class="bg-accent-400 py-1 text-right text-xs font-extrabold text-gray-950 shadow outline-none ring-1 ring-gray-950/20 hover:bg-accent-500"
 		style="margin-left: {Math.round((spanOffset / runLength) * 100)}%; width:{Math.round(
 			(spanLength / runLength) * 100
 		)}%;"
