@@ -6,10 +6,12 @@ from pytest import fixture
 from intelligence_layer.core.evaluator import Dataset, Example
 from intelligence_layer.core.logger import InMemoryDebugLogger, NoOpDebugLogger
 from intelligence_layer.core.task import Chunk
-from intelligence_layer.use_cases.classify.single_label_classify import (
-    SingleLabelClassify,
+from intelligence_layer.use_cases.classify.classify import (
     ClassifyInput,
     ClassifyOutput,
+)
+from intelligence_layer.use_cases.classify.single_label_classify import (
+    SingleLabelClassify,
     SingleLabelClassifyEvaluator,
 )
 

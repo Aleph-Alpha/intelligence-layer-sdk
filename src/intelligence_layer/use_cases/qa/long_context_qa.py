@@ -3,6 +3,7 @@ from typing import Sequence
 from aleph_alpha_client import Client
 from pydantic import BaseModel
 from semantic_text_splitter import HuggingFaceTextSplitter
+from intelligence_layer.connectors.retrievers.base_retriever import Document
 
 from intelligence_layer.use_cases.qa.multiple_chunk_qa import (
     MultipleChunkQa,
@@ -76,11 +77,14 @@ class LongContextQa(Task[LongContextQaInput, MultipleChunkQaOutput]):
         chunks = self._chunk(input.text)
         logger.log("chunks", chunks)
         retriever = InMemoryRetriever(
-            self._client, texts=chunks, k=self._k, threshold=0.5
+            self._client,
+            documents=[Document(text=c) for c in chunks],
+            k=self._k,
+            threshold=0.5,
         )
         search_output = Search(retriever).run(SearchInput(query=input.question), logger)
         multi_chunk_qa_input = MultipleChunkQaInput(
-            chunks=[Chunk(result.text) for result in search_output.results],
+            chunks=[Chunk(result.document.text) for result in search_output.results],
             question=input.question,
         )
         qa_output = self._multi_chunk_qa.run(multi_chunk_qa_input, logger)

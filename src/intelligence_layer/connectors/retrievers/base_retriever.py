@@ -1,7 +1,19 @@
 from abc import ABC, abstractmethod
-from typing import Sequence
+from typing import Any, Sequence
 
 from pydantic import BaseModel
+
+
+class Document(BaseModel):
+    """Document abstraction, specifically for retrieval use cases.
+
+    Attributes:
+        text: The document's text.
+        metadata: Any json-serializable object.
+    """
+
+    text: str
+    metadata: Any = None
 
 
 class SearchResult(BaseModel):
@@ -10,11 +22,11 @@ class SearchResult(BaseModel):
     Attributes:
         score: The similarity score between the text and the query that was searched with.
             Will be between 0 and 1, where 0 means no similarity and 1 perfect similarity.
-        text: The text found by search.
+        document: The document found by search.
     """
 
     score: float
-    text: str
+    document: Document
 
 
 class BaseRetriever(ABC):

@@ -3,6 +3,7 @@ from typing import Sequence
 from intelligence_layer.connectors.document_index import DocumentIndex
 from intelligence_layer.connectors.retrievers.base_retriever import (
     BaseRetriever,
+    Document,
     SearchResult,
 )
 
@@ -46,7 +47,10 @@ class DocumentIndexRetriever(BaseRetriever):
             self._namespace, self._collection, query, self._k, self._threshold
         )
         relevant_chunks = [
-            SearchResult(score=result["score"], text=result["section"][0]["text"])
+            SearchResult(
+                score=result["score"],
+                document=Document(text=result["section"][0]["text"], metadata=None),
+            )
             for result in response
         ]
         return relevant_chunks
