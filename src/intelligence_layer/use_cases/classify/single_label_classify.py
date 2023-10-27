@@ -12,23 +12,25 @@ from aleph_alpha_client import (
     PromptTemplate,
     Prompt,
 )
-from pydantic import BaseModel
 
 from intelligence_layer.core.complete import (
     Complete,
 )
 from intelligence_layer.core.echo import EchoInput, EchoTask, TokenWithProb
-from intelligence_layer.core.evaluator import Evaluator
 from intelligence_layer.core.logger import DebugLogger
-from intelligence_layer.core.task import Probability, Task, Token
-from intelligence_layer.use_cases.classify.classify import ClassifyInput, ClassifyOutput
+from intelligence_layer.core.task import Probability, Token
+from intelligence_layer.use_cases.classify.classify import (
+    Classify,
+    ClassifyInput,
+    ClassifyOutput,
+)
 
 
 def to_aa_tokens_prompt(tokens: Sequence[Token]) -> Prompt:
     return Prompt.from_tokens([token.token_id for token in tokens])
 
 
-class SingleLabelClassify(Task[ClassifyInput, ClassifyOutput]):
+class SingleLabelClassify(Classify):
     """Task that classifies a given input text with one of the given classes.
 
     The input contains a complete set of all possible labels. The output will return a score for
@@ -208,68 +210,3 @@ class TreeNode:
             node = child
             assert node.token and node.normalized_prob
             yield TokenWithProb(token=node.token, prob=node.normalized_prob)
-
-
-class ClassifyEvaluation(BaseModel):
-    """The evaluation of a single label classification run.
-
-    Attributes:
-        correct: Was the highest scoring class from the output in the set of "correct classes"
-        output: The actual output from the task run
-    """
-
-    correct: bool
-    output: ClassifyOutput
-
-
-class AggregatedClassifyEvaluation(BaseModel):
-    """The aggregated evaluation of a single label classify implementation against a dataset.
-
-    Attributes:
-        percentage_correct: Percentage of answers that were considered to be correct
-        evaluation: The actual evaluations
-    """
-
-    percentage_correct: float
-    evaluations: Sequence[ClassifyEvaluation]
-
-
-class SingleLabelClassifyEvaluator(
-    Evaluator[
-        ClassifyInput,
-        Sequence[str],
-        ClassifyEvaluation,
-        AggregatedClassifyEvaluation,
-    ]
-):
-    def __init__(self, task: SingleLabelClassify):
-        self.task = task
-
-    def evaluate(
-        self,
-        input: ClassifyInput,
-        logger: DebugLogger,
-        expected_output: Sequence[str],
-    ) -> ClassifyEvaluation:
-        output = self.task.run(input, logger)
-        sorted_classes = sorted(
-            output.scores.items(), key=lambda item: item[1], reverse=True
-        )
-        if sorted_classes[0][0] in expected_output:
-            correct = True
-        else:
-            correct = False
-        return ClassifyEvaluation(correct=correct, output=output)
-
-    def aggregate(
-        self, evaluations: Sequence[ClassifyEvaluation]
-    ) -> AggregatedClassifyEvaluation:
-        if len(evaluations) != 0:
-            correct_answers = len(
-                [eval.correct for eval in evaluations if eval.correct == True]
-            ) / len(evaluations)
-        else:
-            correct_answers = 0
-        return AggregatedClassifyEvaluation(
-            percentage_correct=correct_answers, evaluations=evaluations
-        )
