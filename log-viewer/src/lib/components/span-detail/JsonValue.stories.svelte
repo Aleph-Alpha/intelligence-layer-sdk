@@ -1,14 +1,14 @@
 <script context="module" lang="ts">
 	import type { MetaProps } from '@storybook/addon-svelte-csf';
-	import { randomLogger } from '../log.test_utils';
-	import LogViewer from './LogViewer.svelte';
+	import { randomValue } from '../../log.test_utils';
+	import JsonValue from './JsonValue.svelte';
 
 	export const meta: MetaProps = {
-		title: 'Pages/LogViewer',
-		component: LogViewer,
+		title: 'SpanDetail/Atoms/JsonValue',
+		component: JsonValue,
 		tags: ['autodocs'],
 		args: {
-			log: randomLogger()
+			value: randomValue()
 		}
 	};
 </script>
@@ -18,7 +18,7 @@
 </script>
 
 <Template let:args>
-	<LogViewer {...args} />
+	<JsonValue {...args} />
 </Template>
 
 <Story name="Base" />

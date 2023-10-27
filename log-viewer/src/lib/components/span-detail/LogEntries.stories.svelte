@@ -1,14 +1,15 @@
 <script context="module" lang="ts">
+	import { faker } from '@faker-js/faker';
 	import type { MetaProps } from '@storybook/addon-svelte-csf';
-	import { randomLogger } from '../log.test_utils';
-	import LogViewer from './LogViewer.svelte';
+	import { randomLogEntry } from '../../log.test_utils';
+	import LogEntries from './LogEntries.svelte';
 
 	export const meta: MetaProps = {
-		title: 'Pages/LogViewer',
-		component: LogViewer,
+		title: 'SpanDetail/Organisms/LogEntries',
+		component: LogEntries,
 		tags: ['autodocs'],
 		args: {
-			log: randomLogger()
+			logs: faker.helpers.multiple(() => randomLogEntry())
 		}
 	};
 </script>
@@ -18,7 +19,7 @@
 </script>
 
 <Template let:args>
-	<LogViewer {...args} />
+	<LogEntries {...args} />
 </Template>
 
 <Story name="Base" />
