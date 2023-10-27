@@ -34,6 +34,4 @@
 			</li>
 		{/each}
 	</ul>
-{:else if level === 0}
-	<p class="text-sm">No spans available</p>
 {/if}

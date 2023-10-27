@@ -23,17 +23,17 @@
     This is a recursive component that builds itself up by creating sub-trees.
 -->
 
-<div class="group grid grid-cols-3 grid-rows-1 items-stretch border-b bg-gray-50">
-	<div class="col-span-1 grid items-stretch">
+<div class="group grid grid-cols-3 grid-rows-1 items-stretch border-b border-r">
+	<div class="col-span-1 grid items-stretch bg-gray-50">
 		<button class="group grid w-full items-stretch text-left" style="padding-left: {level}em">
 			<span
-				class="grid items-center border-l border-r border-gray-300 bg-white px-2 text-sm group-hover:bg-gray-100"
+				class="grid items-center border-l border-r bg-white px-2 text-sm group-hover:bg-gray-100"
 			>
 				<span>{span.name}</span>
 			</span>
 		</button>
 	</div>
-	<div class="col-span-2 bg-white px-2 group-hover:bg-gray-100">
+	<div class="col-span-2 bg-white px-1.5 pb-1.5 pt-0.5 group-hover:bg-gray-100">
 		<SpanDuration {span} {range} />
 	</div>
 </div>
