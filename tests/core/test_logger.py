@@ -97,7 +97,6 @@ def parse_log(log_path: Path) -> InMemoryDebugLogger:
     with log_path.open("r") as f:
         for line in f:
             json_line = loads(line)
-            pprint(json_line)
             log_line = LogLine.model_validate(json_line)
             if log_line.entry_type == StartTask.__name__:
                 tree_builder.start_task(log_line)
