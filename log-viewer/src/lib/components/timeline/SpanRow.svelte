@@ -1,5 +1,6 @@
 <script lang="ts">
-	import type { SpanEntry, TimeRange } from '../../log';
+	import { activeSpan } from '$lib/active';
+	import type { SpanEntry, TimeRange } from '$lib/log';
 	import SpanDuration from './SpanDuration.svelte';
 
 	/**
@@ -25,7 +26,11 @@
 
 <div class="group grid grid-cols-3 grid-rows-1 items-stretch border-b border-r">
 	<div class="col-span-1 grid items-stretch bg-gray-50">
-		<button class="group grid w-full items-stretch text-left" style="padding-left: {level}em">
+		<button
+			class="group grid w-full items-stretch text-left"
+			style="padding-left: {level}em"
+			on:click={() => activeSpan.set(span)}
+		>
 			<span
 				class="grid items-center border-l border-r bg-white px-2 text-sm group-hover:bg-gray-100"
 			>

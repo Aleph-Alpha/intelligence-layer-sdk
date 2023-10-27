@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { differenceInMilliseconds } from 'date-fns';
-	import { type DebugLog, logRange, renderDuration } from '../../log';
+	import { type DebugLog, logRange, renderDuration } from '$lib/log';
 	import SpanTree from './SpanTree.svelte';
 
 	/**
