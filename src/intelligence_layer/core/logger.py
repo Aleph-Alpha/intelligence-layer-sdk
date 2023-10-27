@@ -466,6 +466,8 @@ class FileDebugLogger(DebugLogger):
         self, task_name: str, input: PydanticSerializable
     ) -> "LogBasedTaskSpan":
         task = LogBasedTaskSpan(self.log_file_path, task_name, input)
+        print("Attributes of a LogBasedTaskSpan:")
+        print(dir(task))
         self.log_entry(
             StartTask(
                 uuid=task.uuid,
@@ -491,7 +493,7 @@ class LogBasedSpan(Span, FileDebugLogger):
         self.log_entry(EndSpan(uuid=self.uuid, end=datetime.utcnow()))
 
 
-class LogBasedTaskSpan(LogBasedSpan, TaskSpan, FileDebugLogger):
+class LogBasedTaskSpan(LogBasedSpan, TaskSpan):
     output: Optional[PydanticSerializable] = None
 
     def __init__(
