@@ -5,7 +5,7 @@ With a unified framework for LLM-based workflows, it facilitates seamless AI pro
 
 The key features of the Intelligence Layer are:
 
-- **Best practices** We provide you with **_state-of-the-art_** methods tailored for prevalent LLM use cases.
+- **Best practices** We provide you with **state-of-the-art** methods tailored for prevalent LLM use cases.
   Utilize our off-the-shelf techniques to swiftly prototype based on your primary data.
   Our approach integrates the best industry practices, allowing for optimal performance.
 - **Composability**: The Intelligence Layer streamlines your journey from prototyping to scalable deployment.
@@ -31,38 +31,42 @@ Not sure where to start? Familiarize yourself with the Intelligence Layer using 
 You will need an [Aleph Alpha](https://docs.aleph-alpha.com/docs/account/#create-a-new-token) access token to run the examples.
 First, set your Access token:
 
-```cmd
+```bash
 export AA_TOKEN=<YOUR TOKEN HERE>
 ```
 
 Then, install all the dependencies:
 
-```cmd
-pip install .
-# or
+```bash
 poetry install
 ```
 
 Run `jupytyer lab`, and go to the [examples](http://localhost:8888/lab/workspaces/auto-C/tree/src/examples) directory.
 
-```cmd
-cd src/examples && jupyter lab
+```bash
+cd src/examples && poetry run jupyter lab
 ```
 
 ## How to use this in your project
 
-To install this as a dependency in your project, you will need to get a [Github Access Token](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens)
+To install this as a dependency in your project, you will need to get a [Github Access Token](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens).
 
-First, set your access token:
+Set your access token:
 
-```cmd
-export GITHUB_TOKEN=<YOUR_GITHUB_TOKEN>
+```bash
+GITHUB_TOKEN=<YOUR_GITHUB_TOKEN>
 ```
+We recommend setting up a dedicated virtual environment. You can do so by using [conda](https://conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html#creating-an-environment-with-commands) or [venv](https://docs.python.org/3/library/venv.html).
+
 
 Now you can install the package:
 
-```cmd
+```bash
 pip install git+https://$GITHUB_TOKEN@github.com/aleph-alpha-intelligence-layer/intelligence-layer.git
 ```
 
-<!-- Example of usage -->
+Now the intelligence layer should be available and ready to use as a Python package.
+
+```py
+from intelligence_layer.core.task import Task
+```

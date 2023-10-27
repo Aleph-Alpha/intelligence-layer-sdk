@@ -1,6 +1,9 @@
 from contextlib import AbstractContextManager
 from datetime import datetime
+from json import dumps
+from pathlib import Path
 from types import TracebackType
+from uuid import UUID, uuid4
 
 from pydantic import BaseModel, Field, RootModel, SerializeAsAny
 from rich.panel import Panel
@@ -11,6 +14,7 @@ from typing_extensions import TypeAliasType, Self
 
 from typing import (
     TYPE_CHECKING,
+    Any,
     Mapping,
     Optional,
     Protocol,
@@ -29,6 +33,7 @@ if TYPE_CHECKING:
         | None
         | bool
         | BaseModel
+        | UUID
     )
 else:
     PydanticSerializable = TypeAliasType(
@@ -40,7 +45,8 @@ else:
         | Mapping[str, "PydanticSerializable"]
         | None
         | bool
-        | BaseModel,
+        | BaseModel
+        | UUID,
     )
 
 
@@ -385,3 +391,200 @@ class InMemoryTaskSpan(InMemorySpan):
         tree.add(_render_log_value(self.output, "Output"))
 
         return tree
+
+
+class StartTask(BaseModel):
+    """Represents the payload/entry of a log-line indicating that a `TaskSpan` was opened through `DebugLogger.task_span`.
+
+    Attributes:
+        uuid: A unique id for the opened `TaskSpan`.
+        parent: The unique id of the parent element of opened `TaskSpan`.
+            This could refer to either a surrounding `TaskSpan`, `Span` or the top-level `DebugLogger`.
+        name: The name of the task.
+        start: The timestamp when this `Task` was started (i.e. `run` was called).
+        input: The `Input` (i.e. parameter for `run`) the `Task` was started with.
+    """
+
+    uuid: UUID
+    parent: UUID
+    name: str
+    start: datetime
+    input: SerializeAsAny[Any]
+
+
+class EndTask(BaseModel):
+    """Represents the payload/entry of a log-line that indicates that a `TaskSpan` ended (i.e. the context-manager exited).
+
+    Attributes:
+        uuid: The uuid of the corresponding `StartTask`.
+        end: the timestamp when this `Task` completed (i.e. `run` returned).
+        output: the `Output` (i.e. return value of `run`) the `Task` returned.
+    """
+
+    uuid: UUID
+    end: datetime
+    output: SerializeAsAny[Any]
+
+
+class StartSpan(BaseModel):
+    """Represents the payload/entry of a log-line indicating that a `Span` was opened through `DebugLogger.span`.
+
+    Attributes:
+        uuid: A unique id for the opened `Span`.
+        parent: The unique id of the parent element of opened `TaskSpan`.
+            This could refer to either a surrounding `TaskSpan`, `Span` or the top-level `DebugLogger`.
+        name: The name of the task.
+        start: The timestamp when this `Span` was started.
+    """
+
+    uuid: UUID
+    parent: UUID
+    name: str
+    start: datetime
+
+
+class EndSpan(BaseModel):
+    """Represents the payload/entry of a log-line that indicates that a `Span` ended.
+
+    Attributes:
+        uuid: The uuid of the corresponding `StartSpan`.
+        end: the timestamp when this `Span` completed.
+    """
+
+    uuid: UUID
+    end: datetime
+
+
+class PlainEntry(BaseModel):
+    """Represents a plain log-entry created through `DebugLogger.log`.
+
+    Attributes:
+        message: the message-parameter of `DebugLogger.log`
+        value: the value-parameter of `DebugLogger.log`
+        timestamp: the timestamp when `DebugLogger.log` was called.
+        parent: The unique id of the parent element of the log.
+            This could refer to either a surrounding `TaskSpan`, `Span` or the top-level `DebugLogger`.
+    """
+
+    message: str
+    value: SerializeAsAny[Any]
+    timestamp: datetime
+    parent: UUID
+
+
+class LogLine(BaseModel):
+    """Represents a a complete log-line.
+
+    Attributes:
+        entry_type: The type of the entry. This is the class-name of one of the classes
+            representing a log-entry (e.g. "StartTask").
+        entry: The actual entry.
+
+    """
+
+    entry_type: str
+    entry: SerializeAsAny[Any]
+
+
+class FileDebugLogger(DebugLogger):
+    """A `DebugLogger` that logs to a file.
+
+    Each log-entry is represented by a JSON object. The information logged allows
+    to reconstruct the hierarchical nature of the logs, i.e. all entries have a
+    _pointer_ to its parent element in form of a parent attribute containing
+    the uuid of the parent.
+
+    Args:
+        log_file_path: Denotes the file to log to.
+
+    Attributes:
+        uuid: a uuid for the logger. If multiple `FileDebugLogger`s log to the same file
+            the child-elements for a logger can be identified by referring to this id as parent.
+    """
+
+    def __init__(self, log_file_path: Path) -> None:
+        self._log_file_path = log_file_path
+        self.uuid = uuid4()
+
+    def log(self, message: str, value: PydanticSerializable) -> None:
+        self._log_entry(
+            PlainEntry(
+                message=message,
+                value=value,
+                timestamp=datetime.utcnow(),
+                parent=self.uuid,
+            )
+        )
+
+    def _log_entry(self, entry: BaseModel) -> None:
+        with self._log_file_path.open("a") as f:
+            f.write(
+                LogLine(entry_type=type(entry).__name__, entry=entry).model_dump_json()
+                + "\n"
+            )
+
+    def span(self, name: str) -> "FileSpan":
+        span = FileSpan(self._log_file_path, name)
+        self._log_entry(
+            StartSpan(
+                uuid=span.uuid, parent=self.uuid, name=name, start=datetime.utcnow()
+            )
+        )
+        return span
+
+    def task_span(self, task_name: str, input: PydanticSerializable) -> "FileTaskSpan":
+        task = FileTaskSpan(self._log_file_path, task_name, input)
+        print("Attributes of a LogBasedTaskSpan:")
+        print(dir(task))
+        self._log_entry(
+            StartTask(
+                uuid=task.uuid,
+                parent=self.uuid,
+                name=task_name,
+                start=datetime.utcnow(),
+                input=input,
+            )
+        )
+        return task
+
+
+class FileSpan(FileDebugLogger, AbstractContextManager["FileSpan"]):
+    """A `Span` created by `FileDebugLogger.span`."""
+
+    def __init__(self, log_file_path: Path, name: str) -> None:
+        super().__init__(log_file_path)
+
+    def __enter__(self) -> Self:
+        return self
+
+    def __exit__(
+        self,
+        exc_type: Optional[type[BaseException]],
+        exc_value: Optional[BaseException],
+        traceback: Optional[TracebackType],
+    ) -> None:
+        self._log_entry(EndSpan(uuid=self.uuid, end=datetime.utcnow()))
+
+
+class FileTaskSpan(FileSpan, AbstractContextManager["FileTaskSpan"]):
+    """A `TaskSpan` created by `FileDebugLogger.task_span`."""
+
+    output: Optional[PydanticSerializable] = None
+
+    def __init__(
+        self, log_file_path: Path, task_name: str, input: PydanticSerializable
+    ) -> None:
+        super().__init__(log_file_path, task_name)
+
+    def record_output(self, output: PydanticSerializable) -> None:
+        self.output = output
+
+    def __exit__(
+        self,
+        exc_type: Optional[type[BaseException]],
+        exc_value: Optional[BaseException],
+        traceback: Optional[TracebackType],
+    ) -> None:
+        self._log_entry(
+            EndTask(uuid=self.uuid, end=datetime.utcnow(), output=self.output)
+        )
