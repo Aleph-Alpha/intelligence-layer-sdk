@@ -62,7 +62,7 @@
 	</div>
 
 	{#if span}
-		<div use:melt={$content('tab-1')} class="grow bg-white p-5">
+		<div use:melt={$content('tab-1')} class="grow overflow-y-auto bg-white p-5">
 			<div class="grid grow grid-flow-row gap-2">
 				<div>
 					<p>
@@ -81,7 +81,7 @@
 			</div>
 		</div>
 
-		<div use:melt={$content('tab-2')} class="grow bg-white p-5">
+		<div use:melt={$content('tab-2')} class="grow overflow-y-auto bg-white p-5">
 			{#if 'input' in span}
 				<JsonValue value={span.input} />
 			{:else}
@@ -89,7 +89,7 @@
 			{/if}
 		</div>
 
-		<div use:melt={$content('tab-3')} class="grow bg-white p-5">
+		<div use:melt={$content('tab-3')} class="grow overflow-y-auto bg-white p-5">
 			{#if 'output' in span}
 				<JsonValue value={span.output} />
 			{:else}

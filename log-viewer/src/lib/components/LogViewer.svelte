@@ -15,10 +15,10 @@
     Renders a DebugLog as a timeline, as well as allowing for specifying a specific span and viewing further details.
 -->
 <div class="h-screen">
-	<div class="h-1/2">
+	<div class="h-1/2 overflow-y-auto">
 		<Timeline {log} />
 	</div>
-	<div class="h-1/2">
+	<div class="h-1/2 overflow-y-auto">
 		<SpanDetail span={$activeSpan} />
 	</div>
 </div>
