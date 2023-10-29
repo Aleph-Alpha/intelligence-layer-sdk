@@ -2,14 +2,13 @@
 	import type { MetaProps } from '@storybook/addon-svelte-csf';
 	import { randomLogger } from '../log.test_utils';
 	import LogViewer from './LogViewer.svelte';
-	import log from '../qa_example.json';
 
 	export const meta: MetaProps = {
 		title: 'Pages/LogViewer',
 		component: LogViewer,
 		tags: ['autodocs'],
 		args: {
-			log //: randomLogger()
+			log: randomLogger()
 		}
 	};
 </script>
