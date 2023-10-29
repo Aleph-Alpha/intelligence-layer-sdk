@@ -1,4 +1,7 @@
 <script lang="ts">
+	import { json } from '@codemirror/lang-json';
+	import CodeMirror from 'svelte-codemirror-editor';
+	import { EditorView } from 'codemirror';
 	import type { JSONValue } from '$lib/log';
 
 	/**
@@ -11,8 +14,10 @@
     @component
     Renders any JSON Value for easier readability.
 -->
-<pre class="whitespace-pre-wrap whitespace-break-spaces border px-2 py-1.5 text-sm">{JSON.stringify(
-		value,
-		undefined,
-		2
-	)}</pre>
+<CodeMirror
+	value={JSON.stringify(value, undefined, 2)}
+	extensions={[EditorView.lineWrapping]}
+	lang={json()}
+	editable={false}
+	readonly={true}
+/>
