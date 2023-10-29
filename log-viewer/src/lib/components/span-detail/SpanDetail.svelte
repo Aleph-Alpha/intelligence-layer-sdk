@@ -21,9 +21,13 @@
 	<JsonValue value={span.output} />
 {/if}
 
-<LogEntries logs={span.logs} />
-
 <div>
-	<p>Start: {span.start_timestamp}</p>
-	<p>End: {span.end_timestamp}</p>
+	<p>
+		<span class="inline-block w-12">Start:</span><span>{span.start_timestamp}</span>
+	</p>
+	<p>
+		<span class="inline-block w-12">End:</span><span>{span.end_timestamp}</span>
+	</p>
 </div>
+
+<LogEntries logs={span.logs} />
