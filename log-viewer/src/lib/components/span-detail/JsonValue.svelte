@@ -11,7 +11,7 @@
     @component
     Renders any JSON Value for easier readability.
 -->
-<pre class="whitespace-pre-wrap whitespace-break-spaces border px-2 py-1.5">{JSON.stringify(
+<pre class="whitespace-pre-wrap whitespace-break-spaces border px-2 py-1.5 text-sm">{JSON.stringify(
 		value,
 		undefined,
 		2
