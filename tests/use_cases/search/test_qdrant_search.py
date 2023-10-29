@@ -4,13 +4,13 @@ from typing import Sequence
 from qdrant_client.http.models import models
 
 from intelligence_layer.connectors.retrievers.base_retriever import Document
-from intelligence_layer.connectors.retrievers.in_memory_retriever import (
-    InMemoryRetriever,
+from intelligence_layer.connectors.retrievers.qdrant_in_memory_retriever import (
+    QdrantInMemoryRetriever,
 )
 from intelligence_layer.core.logger import NoOpDebugLogger
-from intelligence_layer.use_cases.search.filter_search import (
-    FilterSearch,
-    FilterSearchInput,
+from intelligence_layer.use_cases.search.qdrant_search import (
+    QdrantSearch,
+    QdrantSearchInput,
 )
 
 
@@ -33,16 +33,16 @@ def in_memory_retriever_documents() -> Sequence[Document]:
 
 
 @fixture
-def filter_search(asymmetric_in_memory_retriever: InMemoryRetriever) -> FilterSearch:
-    return FilterSearch(asymmetric_in_memory_retriever)
+def filter_search(asymmetric_in_memory_retriever: QdrantInMemoryRetriever) -> QdrantSearch:
+    return QdrantSearch(asymmetric_in_memory_retriever)
 
 
 def test_filter_search(
-    filter_search: FilterSearch,
+    filter_search: QdrantSearch,
     no_op_debug_logger: NoOpDebugLogger,
     in_memory_retriever_documents: Sequence[Document],
 ) -> None:
-    search_input = FilterSearchInput(
+    search_input = QdrantSearchInput(
         query="When did Germany reunite?",
         filter=models.Filter(
             must=[

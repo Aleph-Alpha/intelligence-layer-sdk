@@ -18,9 +18,8 @@ from intelligence_layer.core.complete import (
 )
 from intelligence_layer.core.echo import EchoInput, EchoTask, TokenWithProb
 from intelligence_layer.core.logger import DebugLogger
-from intelligence_layer.core.task import Probability, Token
+from intelligence_layer.core.task import Probability, Task, Token
 from intelligence_layer.use_cases.classify.classify import (
-    Classify,
     ClassifyInput,
     ClassifyOutput,
 )
@@ -30,7 +29,7 @@ def to_aa_tokens_prompt(tokens: Sequence[Token]) -> Prompt:
     return Prompt.from_tokens([token.token_id for token in tokens])
 
 
-class SingleLabelClassify(Classify):
+class SingleLabelClassify(Task[ClassifyInput, ClassifyOutput]):
     """Task that classifies a given input text with one of the given classes.
 
     The input contains a complete set of all possible labels. The output will return a score for

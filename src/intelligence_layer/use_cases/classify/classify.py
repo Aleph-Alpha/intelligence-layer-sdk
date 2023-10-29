@@ -34,12 +34,6 @@ class ClassifyOutput(BaseModel):
     scores: Mapping[str, Probability]
 
 
-class Classify(Task[ClassifyInput, ClassifyOutput]):
-    """Placeholder class for any classifier implementation."""
-
-    pass
-
-
 class ClassifyEvaluation(BaseModel):
     """The evaluation of a single label classification run.
 
@@ -72,7 +66,7 @@ class ClassifyEvaluator(
         AggregatedClassifyEvaluation,
     ]
 ):
-    def __init__(self, task: Classify):
+    def __init__(self, task: Task[ClassifyInput, ClassifyOutput]):
         self.task = task
 
     def evaluate(

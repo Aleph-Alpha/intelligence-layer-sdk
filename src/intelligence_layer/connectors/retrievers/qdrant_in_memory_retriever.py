@@ -31,7 +31,7 @@ class RetrieverType(Enum):
     SYMMETRIC = (SemanticRepresentation.Symmetric, SemanticRepresentation.Symmetric)
 
 
-class InMemoryRetriever(BaseRetriever):
+class QdrantInMemoryRetriever(BaseRetriever):
     """Search through documents stored in memory using semantic search.
 
     This retriever uses a [Qdrant](https://github.com/qdrant/qdrant)-in-Memory vector store instance to store documents and their asymmetric embeddings.
@@ -49,7 +49,7 @@ class InMemoryRetriever(BaseRetriever):
     Example:
         >>> client = Client(os.getenv("AA_TOKEN"))
         >>> documents = [Document(text=t) for t in ["I do not like rain.", "Summer is warm.", "We are so back."]]
-        >>> retriever = InMemoryRetriever(client, documents)
+        >>> retriever = QdrantInMemoryRetriever(client, documents)
         >>> query = "Do you like summer?"
         >>> documents = retriever.get_relevant_documents_with_scores(query)
     """
@@ -69,8 +69,7 @@ class InMemoryRetriever(BaseRetriever):
         self._collection_name = "in_memory_collection"
         self._k = k
         self._threshold = threshold
-        self._query_representation = retriever_type.value[0]
-        self._document_representation = retriever_type.value[1]
+        self._query_representation, self._document_representation = retriever_type.value
 
         self._search_client.recreate_collection(
             collection_name=self._collection_name,
