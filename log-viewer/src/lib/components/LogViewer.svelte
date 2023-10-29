@@ -14,8 +14,11 @@
     @component
     Renders a DebugLog as a timeline, as well as allowing for specifying a specific span and viewing further details.
 -->
-<Timeline {log} />
-
-{#if $activeSpan}
-	<SpanDetail span={$activeSpan} />
-{/if}
+<div class="h-screen">
+	<div class="h-1/2">
+		<Timeline {log} />
+	</div>
+	<div class="h-1/2">
+		<SpanDetail span={$activeSpan} />
+	</div>
+</div>
