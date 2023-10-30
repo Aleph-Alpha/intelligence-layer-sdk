@@ -26,7 +26,7 @@
     This is a recursive component that builds itself up by creating sub-trees.
 -->
 {#if spans.length}
-	<ul class:border-t={level === 0}>
+	<ul class:border-b={level === 0}>
 		{#each spans as span}
 			<li>
 				<SpanRow {span} {level} {range} />

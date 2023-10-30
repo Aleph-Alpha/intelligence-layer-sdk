@@ -1,6 +1,5 @@
 <script lang="ts">
-	import { differenceInMilliseconds } from 'date-fns';
-	import { type DebugLog, logRange, renderDuration } from '$lib/log';
+	import { type DebugLog, logRange } from '$lib/log';
 	import SpanTree from './SpanTree.svelte';
 
 	/**
@@ -16,17 +15,16 @@
     Timeline and Tree view of the given DebugLog
 -->
 
-{#if range}
-	<div class="grid grid-cols-3 grid-rows-1 bg-gray-950 text-sm font-extrabold text-white">
-		<div class="col-span-1 border-r border-white px-2 py-1">
-			{log.name}
-		</div>
-		<div class="col-span-2 flex items-center justify-between px-2 py-1 text-xs">
-			<span>0</span><span>{renderDuration(differenceInMilliseconds(range.to, range.from))}</span>
-		</div>
+<div class="grid content-start border">
+	<div class="bg-gray-950 px-2 py-1 text-sm font-extrabold text-white">
+		{log.name}
 	</div>
 
-	<SpanTree logs={log.logs} {range} />
-{:else}
-	<p class="text-sm">No logs available</p>
-{/if}
+	<div class="overflow-y-auto">
+		{#if range}
+			<SpanTree logs={log.logs} {range} />
+		{:else}
+			<p class="text-sm">No logs available</p>
+		{/if}
+	</div>
+</div>
