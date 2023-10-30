@@ -18,6 +18,8 @@
 		id="debug-log"
 		bind:value
 		on:change={(e) => {
+			// TODO: do zod validation
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-argument
 			activeLog.set(JSON.parse(e.currentTarget.value));
 		}}
 	/>
