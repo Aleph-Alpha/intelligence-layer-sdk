@@ -53,8 +53,7 @@ class EmbeddingBasedClassify(Task[ClassifyInput, ClassifyOutput]):
         scoring: Configure how to calculate the final score.
 
     Attributes:
-        METADATA_LABEL_NAME: The metadata field for label name for the `InMemoryRetriever`
-            instance.
+        METADATA_LABEL_NAME: The metadata field name for 'label' in the retriever.
 
     Example:
         >>> labels_with_examples = [
@@ -101,7 +100,7 @@ class EmbeddingBasedClassify(Task[ClassifyInput, ClassifyOutput]):
             k=top_k_per_label,
             retriever_type=RetrieverType.SYMMETRIC,
         )
-        self._filter_search = QdrantSearch(retriever)
+        self._qdrant_search = QdrantSearch(retriever)
 
     def run(self, input: ClassifyInput, logger: DebugLogger) -> ClassifyOutput:
         self._validate_input_labels(input)
@@ -147,7 +146,7 @@ class EmbeddingBasedClassify(Task[ClassifyInput, ClassifyOutput]):
                 ]
             ),
         )
-        return self._filter_search.run(search_input, logger)
+        return self._qdrant_search.run(search_input, logger)
 
     def _calculate_scores(
         self, results_per_label: Sequence[SearchOutput]

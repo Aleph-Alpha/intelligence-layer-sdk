@@ -50,7 +50,7 @@ cd src/examples && poetry run jupyter lab
 
 ## How to use this in your project
 
-To install this as a dependency in your project, you will need to get a [Github access token](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens).
+To install this as a dependency in your project, you need a [Github access token](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens).
 
 Set your access token:
 
@@ -66,7 +66,7 @@ Let's install the package:
 pip install git+https://$GITHUB_TOKEN@github.com/aleph-alpha-intelligence-layer/intelligence-layer.git
 ```
 
-Now, the intelligence layer should be available and ready to use as a Python package.
+Now the Intelligence Layer should be available as a Python package and ready to use.
 
 ```py
 from intelligence_layer.core.task import Task

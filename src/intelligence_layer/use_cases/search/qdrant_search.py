@@ -10,7 +10,7 @@ from intelligence_layer.use_cases.search.search import SearchOutput
 
 
 class QdrantSearchInput(BaseModel):
-    """The input for a `FilterSearch` task.
+    """The input for a `QdrantSearch` task.
 
     Attributes:
         query: The text to be searched with.
@@ -39,8 +39,8 @@ class QdrantSearch(Task[QdrantSearchInput, SearchOutput]):
         >>>     )
         >>> ]
         >>> retriever = InMemoryRetriever(client, documents)
-        >>> task = FilterSearch(retriever)
-        >>> input = FilterSearchInput(
+        >>> task = QdrantSearch(retriever)
+        >>> input = QdrantSearchInput(
         >>>     query="When did East and West Germany reunite?"
         >>>     filter=models.Filter(
         >>>         must=[
@@ -51,7 +51,7 @@ class QdrantSearch(Task[QdrantSearchInput, SearchOutput]):
         >>>         ]
         >>>     )
         >>> )
-        >>> logger = InMemoryLogger(name="Filter Search")
+        >>> logger = InMemoryLogger(name="Qdrant Search")
         >>> output = task.run(input, logger)
     """
 
