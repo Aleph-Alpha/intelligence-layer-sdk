@@ -1,4 +1,6 @@
-import type { SpanEntry } from '$lib/log';
+import type { DebugLog, SpanEntry } from '$lib/log';
 import { writable } from 'svelte/store';
 
-export const activeSpan = writable<SpanEntry | null>();
+export const activeSpan = writable<SpanEntry | null>(null);
+
+export const activeLog = writable<DebugLog | null>(null);

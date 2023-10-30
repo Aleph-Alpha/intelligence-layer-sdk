@@ -74,10 +74,17 @@ export function randomEntry(between?: TimeRange): Entry {
 	])();
 }
 
+/**
+ * Return a random  Span, or TaskSpan
+ */
+export function randomSpanEntry(between?: TimeRange): Entry {
+	return faker.helpers.arrayElement([() => randomSpan(between), () => randomTaskSpan(between)])();
+}
+
 export function randomLogger(): DebugLog {
 	const range = randomDateRange();
 	return {
 		name: faker.word.sample(),
-		logs: faker.helpers.multiple(() => randomEntry(range), { count: { max: 2, min: 1 } })
+		logs: faker.helpers.multiple(() => randomSpanEntry(range), { count: { max: 2, min: 1 } })
 	};
 }
