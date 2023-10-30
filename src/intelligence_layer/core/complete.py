@@ -88,7 +88,7 @@ class InstructOutput(BaseModel):
     Attributes:
         response: The generated response to the instruction.
         prompt_with_metadata: To handle the instruction, a `PromptTemplate` is used.
-            The template defines two `PromptRange`s:
+            The template defines two `PromptRange`\ s:
             - "instruction": covering the instruction text as provided in the `InstructionInput`.
             - "input": covering the input text as provided in the `InstructionInput`.
             These can for example be used for downstream `TextHighlight` tasks.

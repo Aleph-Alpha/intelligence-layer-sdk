@@ -52,7 +52,7 @@ else:
 
 @runtime_checkable
 class DebugLogger(Protocol):
-    """A protocol for instrumenting `Task`s with structured logging.
+    """A protocol for instrumenting `Task`\ s with structured logging.
 
     A logger needs to provide a way to collect an individual log, which should be serializable, and
     a way to generate nested loggers, so that sub-tasks can emit logs that are grouped together.
@@ -393,6 +393,11 @@ class InMemoryTaskSpan(InMemorySpan):
         return tree
 
 
+# Required for sphinx, see also: https://docs.pydantic.dev/2.4/errors/usage_errors/#class-not-fully-defined
+InMemorySpan.model_rebuild()
+InMemoryDebugLogger.model_rebuild()
+
+
 class StartTask(BaseModel):
     """Represents the payload/entry of a log-line indicating that a `TaskSpan` was opened through `DebugLogger.task_span`.
 
@@ -498,7 +503,7 @@ class FileDebugLogger(DebugLogger):
         log_file_path: Denotes the file to log to.
 
     Attributes:
-        uuid: a uuid for the logger. If multiple `FileDebugLogger`s log to the same file
+        uuid: a uuid for the logger. If multiple `FileDebugLogger`\ s log to the same file
             the child-elements for a logger can be identified by referring to this id as parent.
     """
 
