@@ -19,3 +19,4 @@ help:
 %: Makefile
 	sphinx-apidoc -o . ../src
 	@$(SPHINXBUILD) -M $@ "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) $(O)
+	rm --force `ls *.rst | grep --fixed-strings --invert-match index.rst`
