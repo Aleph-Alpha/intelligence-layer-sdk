@@ -33,7 +33,9 @@ def in_memory_retriever_documents() -> Sequence[Document]:
 
 
 @fixture
-def filter_search(asymmetric_in_memory_retriever: QdrantInMemoryRetriever) -> QdrantSearch:
+def filter_search(
+    asymmetric_in_memory_retriever: QdrantInMemoryRetriever,
+) -> QdrantSearch:
     return QdrantSearch(asymmetric_in_memory_retriever)
 
 
