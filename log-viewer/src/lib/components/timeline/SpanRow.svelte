@@ -24,15 +24,16 @@
     This is a recursive component that builds itself up by creating sub-trees.
 -->
 
-<div class="group grid grid-cols-3 grid-rows-1 items-stretch border-b border-r">
-	<div class="col-span-1 grid items-stretch bg-gray-50">
+<div class="group grid grid-cols-3 grid-rows-1 items-stretch border-t">
+	<div class="col-span-1 grid items-stretch bg-gray-100">
 		<button
 			class="group grid w-full items-stretch text-left"
 			style="padding-left: {level}em"
 			on:click={() => activeSpan.set(span)}
 		>
 			<span
-				class="grid items-center border-l border-r bg-white px-2 text-sm group-hover:bg-gray-100"
+				class:border-l={level > 0}
+				class="grid items-center border-r bg-white px-2 text-sm group-hover:bg-gray-100"
 			>
 				<span>{span.name}</span>
 			</span>

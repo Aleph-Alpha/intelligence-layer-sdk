@@ -14,11 +14,7 @@
     @component
     Renders a DebugLog as a timeline, as well as allowing for specifying a specific span and viewing further details.
 -->
-<div class="h-screen">
-	<div class="h-1/2 overflow-y-auto">
-		<Timeline {log} />
-	</div>
-	<div class="h-1/2 overflow-y-auto">
-		<SpanDetail span={$activeSpan} />
-	</div>
+<div class="grid h-screen grid-rows-2 place-content-stretch gap-2 border p-2">
+	<Timeline {log} />
+	<SpanDetail span={$activeSpan} />
 </div>
