@@ -16,7 +16,7 @@ The key features of the Intelligence Layer are:
 
 ## Use-case index
 
-To give you a starting point for using the Intelligence Layer, we provide some pre-configured `Task`s that are ready to use out-of-the-boy, as well as an accompanying "Getting started" guide in the form of Jupyter Notebooks.
+To give you a starting point for using the Intelligence Layer, we provide some pre-configured `Task`s that are ready to use out-of-the-box, as well as an accompanying "Getting started" guide in the form of Jupyter Notebooks.
 
 | Type      | Task                                                                                              | Description                                                               |
 | --------- | ------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------- |
@@ -37,7 +37,7 @@ Instead, we encourage you to think of our pre-configured use cases as a foundati
 By leveraging these tasks, you gain insights into the framework's capabilities and best practices.
 
 We encourage you to copy and paste these use cases directly into your own project.
-From here, you can customize everything, include the prompt, model and even more intricate logic.
+From here, you can customize everything, include the prompt, model, and even more intricate logic.
 This not only saves you time but also ensures you're building on a tried and tested foundation.
 Think of them as stepping stones, guiding you towards crafting tailored solutions that best fit your unique requirements.
 
