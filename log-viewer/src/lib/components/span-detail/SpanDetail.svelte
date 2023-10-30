@@ -36,7 +36,7 @@
 -->
 <div
 	use:melt={$root}
-	class="flex h-full flex-col overflow-hidden border data-[orientation=vertical]:flex-row"
+	class="flex flex-col overflow-hidden border data-[orientation=vertical]:flex-row"
 >
 	<div
 		use:melt={$list}

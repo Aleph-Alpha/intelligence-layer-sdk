@@ -9,7 +9,7 @@
     @component
     Allows for the user to choose a new DebugLog to preview
 -->
-<div class="grid h-screen place-content-center">
+<div class="grid grow place-content-center">
 	<label for="debug-log" class="mb-2 font-extrabold text-gray-950"
 		>Upload a debug log to render
 	</label>

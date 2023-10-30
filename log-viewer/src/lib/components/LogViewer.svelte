@@ -14,7 +14,7 @@
     @component
     Renders a DebugLog as a timeline, as well as allowing for specifying a specific span and viewing further details.
 -->
-<div class="grid h-screen grid-rows-2 place-content-stretch gap-2 border p-2">
+<div class="grid max-h-[calc(100vh-48px)] shrink grow grid-rows-2 gap-2">
 	<Timeline {log} />
 	<SpanDetail span={$activeSpan} />
 </div>
