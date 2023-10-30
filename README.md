@@ -37,9 +37,9 @@ Instead, we encourage you to think of our pre-configured use cases as a foundati
 By leveraging these tasks, you gain insights into the framework's capabilities and best practices.
 
 We encourage you to copy and paste these use cases directly into your own project.
-From here, you can customize everything, include the prompt, model, and even more intricate logic.
+From here, you can customize everything, including the prompt, model, and more intricate functional logic.
 This not only saves you time but also ensures you're building on a tried and tested foundation.
-Think of them as stepping stones, guiding you towards crafting tailored solutions that best fit your unique requirements.
+Therefore, think of these use-cases as stepping stones, guiding you towards crafting tailored solutions that best fit your unique requirements.
 
 ## Getting started
 
