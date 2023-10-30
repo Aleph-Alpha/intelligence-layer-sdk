@@ -45,24 +45,24 @@ def prompt_image() -> Image:
 
 
 @fixture
-def asymmetric_qdrant_in_memory_retriever(
-    client: Client, qdrant_in_memory_retriever_documents: Sequence[Document]
+def asymmetric_in_memory_retriever(
+    client: Client, in_memory_retriever_documents: Sequence[Document]
 ) -> QdrantInMemoryRetriever:
     return QdrantInMemoryRetriever(
         client,
-        qdrant_in_memory_retriever_documents,
+        in_memory_retriever_documents,
         k=2,
         retriever_type=RetrieverType.ASYMMETRIC,
     )
 
 
 @fixture
-def symmetric_qdrant_in_memory_retriever(
-    client: Client, qdrant_in_memory_retriever_documents: Sequence[Document]
+def symmetric_in_memory_retriever(
+    client: Client, in_memory_retriever_documents: Sequence[Document]
 ) -> QdrantInMemoryRetriever:
     return QdrantInMemoryRetriever(
         client,
-        qdrant_in_memory_retriever_documents,
+        in_memory_retriever_documents,
         k=2,
         retriever_type=RetrieverType.SYMMETRIC,
     )
