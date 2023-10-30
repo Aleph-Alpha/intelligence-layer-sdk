@@ -14,11 +14,38 @@ The key features of the Intelligence Layer are:
   To ensure this, we provide full comprehensibility, by seamlessly logging each step of every workflow.
   This enhances your debugging capabilities and offers greater control post-deployment when examining model responses.
 
-## Getting Started
+## Use-case index
+
+To give you a starting point for using the Intelligence Layer, we provide some pre-configured `Task`s that are ready to use out-of-the-boy, as well as an accompanying "Getting started" guide in the form of Jupyter Notebooks.
+
+| Type      | Task                                                                                              | Description                                                               |
+| --------- | ------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------- |
+| Classify  | [EmbeddingBasedClassify](./src/intelligence_layer/use_cases/classify/embedding_based_classify.py) | Classify a text using the cosine similarity of its embeddings to examples |
+| Classify  | [SingleLabelClassify](./src/intelligence_layer/use_cases/classify/single_label_classify.py)       | Classify a text given labels using zero-shot prompting                    |
+| QA        | [LongContextQa](./src/intelligence_layer/use_cases/qa/long_context_qa.py)                         | Answer a question based on one document of any length                     |
+| QA        | [MultipleChunkQa](./src/intelligence_layer/use_cases/qa/multiple_chunk_qa.py)                     | Answer a question based a list of text chunks                             |
+| QA        | [RetrieverBasedQa](./src/intelligence_layer/use_cases/qa/retriever_based_qa.py)                   | Answer a question based on a document base                                |
+| QA        | [SingleChunkQa](./src/intelligence_layer/use_cases/qa/single_chunk_qa.py)                         | Answer a question based on a single text chunk                            |
+| Search    | [QdrantSearch](./src/intelligence_layer/use_cases/search/qdrant_search.py)                        | Search through texts given a query and some filters                       |
+| Search    | [Search](./src/intelligence_layer/use_cases/search/search.py)                                     | Search through texts given a query                                        |
+| Summarize | [ShortBodySummarize](./src/intelligence_layer/use_cases/summarize/summarize.py)                   | Summarize a single text chunk into a short body text                      |
+
+### How to make your own
+
+Note that we do not expect the above use cases to solve all of your issues.
+Instead, we encourage you to think of our pre-configured use cases as a foundation to fast-track your development process.
+By leveraging these tasks, you gain insights into the framework's capabilities and best practices.
+
+We encourage you to copy and paste these use cases directly into your own project.
+From here, you can customize everything, include the prompt, model and even more intricate logic.
+This not only saves you time but also ensures you're building on a tried and tested foundation.
+Think of them as stepping stones, guiding you towards crafting tailored solutions that best fit your unique requirements.
+
+## Getting started
 
 Not sure where to start? Familiarize yourself with the Intelligence Layer using the below notebooks.
 
-| Order | Task               | Description                               | Notebook 📓                                                   |
+| Order | Topic              | Description                               | Notebook 📓                                                   |
 | ----- | ------------------ | ----------------------------------------- | ------------------------------------------------------------- |
 | 1     | Summarization      | Summarize a document                      | [summarize.ipynb](./src/examples/summarize.ipynb)             |
 | 2     | Question Answering | Various approaches for QA                 | [qa.ipynb](./src/examples/qa.ipynb)                           |
