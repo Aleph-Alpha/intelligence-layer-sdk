@@ -81,7 +81,7 @@ class PromptWithMetadata:
 
     Args:
       prompt: The actual `Prompt`.
-      ranges: A mapping of range name to a `Sequence` of corresponding `PromptRange`s.
+      ranges: A mapping of range name to a `Sequence` of corresponding `PromptRange`\ s.
     """
 
     prompt: Prompt
