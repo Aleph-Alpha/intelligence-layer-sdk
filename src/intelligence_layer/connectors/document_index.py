@@ -93,15 +93,16 @@ class DocumentIndex:
         response.raise_for_status()
         return response.json()
 
-    def search(
+    def index_search(
         self,
         namespace: str,
         collection: str,
+        index: str,
         query: str,
         max_results: int,
         min_score: float,
     ) -> Any:
-        url = f"{self._base_document_index_url}/collections/{namespace}/{collection}/search"
+        url = f"{self._base_document_index_url}/collections/{namespace}/{collection}/indexes/{index}/search"
         data = {
             "query": [{"modality": "text", "text": query}],
             "max_results": max_results,
@@ -111,3 +112,15 @@ class DocumentIndex:
         response = requests.post(url, data=json.dumps(data), headers=self.headers)
         response.raise_for_status()
         return response.json()
+    
+    def asymmetric_search(
+        self,
+        namespace: str,
+        collection: str,
+        query: str,
+        max_results: int,
+        min_score: float,
+    ) -> Any:
+        return self.index_search(namespace, collection, "asymmetric", query, max_results, min_score)
+    
+
