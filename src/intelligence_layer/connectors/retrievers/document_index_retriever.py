@@ -43,7 +43,7 @@ class DocumentIndexRetriever(BaseRetriever):
         self._threshold = threshold
 
     def get_relevant_documents_with_scores(self, query: str) -> Sequence[SearchResult]:
-        response = self._document_index.search(
+        response = self._document_index.asymmetric_search(
             self._namespace, self._collection, query, self._k, self._threshold
         )
         relevant_chunks = [
