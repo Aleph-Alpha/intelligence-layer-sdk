@@ -1,6 +1,6 @@
 # Aleph Alpha Intelligence Layer ☯️
 
-The  Aleph Alpha Intelligence Layer ☯️ offers a comprehensive suite of development tools for crafting solutions that harness the capabilities of large language models (LLMs).
+The Aleph Alpha Intelligence Layer ☯️ offers a comprehensive suite of development tools for crafting solutions that harness the capabilities of large language models (LLMs).
 With a unified framework for LLM-based workflows, it facilitates seamless AI product development, from prototyping and prompt experimentation to result evaluation and deployment.
 
 The key features of the Intelligence Layer are:
@@ -135,6 +135,10 @@ We encourage you to copy and paste these use cases directly into your own projec
 From here, you can customize everything, including the prompt, model, and more intricate functional logic.
 This not only saves you time but also ensures you're building on a tried and tested foundation.
 Therefore, think of these use-cases as stepping stones, guiding you towards crafting tailored solutions that best fit your unique requirements.
+
+## References
+
+- Full documentation: https://glowing-tribble-223446r.pages.github.io/
 
 ## License
 
