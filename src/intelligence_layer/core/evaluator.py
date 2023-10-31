@@ -61,13 +61,35 @@ class Evaluator(ABC, Generic[Input, ExpectedOutput, Evaluation, AggregatedEvalua
         logger: DebugLogger,
         expected_output: ExpectedOutput,
     ) -> Evaluation:
-        """Executes the evaluation for this use-case."""
+        """Executes the evaluation for this use-case.
+        
+        Arguments:
+            input: Interface to be passed to the task that shall be evaluated.
+            logger: Debug logger used for tracing of tasks.
+            expected_output: Output that is expected from the task run with the supplied input.
+        Returns:
+            Evaluation: interface of the metrics that come from the evaluated task.
+
+        The implementation of this method is responsible for running a task (usually supplied by the __init__ method)
+        and making any comparisons relevant to the evaluation. 
+        Based on the results, it should create an `Evaluation` class with all the metrics and return it.
+        """
         pass
 
     def evaluate_dataset(
         self, dataset: Dataset[Input, ExpectedOutput], logger: DebugLogger
     ) -> AggregatedEvaluation:
-        """Evaluates an entire datasets in a threaded manner and aggregates the results into an `AggregatedEvaluation`."""
+        """Evaluates an entire datasets in a threaded manner and aggregates the results into an `AggregatedEvaluation`.
+        
+        Arguments:
+            dataset: Dataset that will be used to evaluate a task.
+            logger: Logger used for tracing.
+        Returns:
+            AggregatedEvaluation: The aggregated results of an evaluation run with a dataset.
+
+        This will call the `run` method for each example in the dataset.
+        Finally, it will call the `aggregate` method and return the aggregated results.
+        """
         with ThreadPoolExecutor(max_workers=10) as executor:
             evaluations = list(
                 tqdm(
@@ -87,5 +109,14 @@ class Evaluator(ABC, Generic[Input, ExpectedOutput, Evaluation, AggregatedEvalua
 
     @abstractmethod
     def aggregate(self, evaluations: Sequence[Evaluation]) -> AggregatedEvaluation:
-        """`Evaluator`-specific method for aggregating individual `Evaluations` into report-like `Aggregated Evaluation`."""
+        """`Evaluator`-specific method for aggregating individual `Evaluations` into report-like `Aggregated Evaluation`.
+        
+        Arguments:
+            evalautions: The results from running `evaluate_dataset` with a task. 
+        Returns:
+            AggregatedEvaluation: The aggregated results of an evaluation run with a dataset.
+
+        This method is responsible for taking the results of an evaluation run and aggregating all the results.
+        It should create an `AggregatedEvaluation` class and return it at the end. 
+        """
         pass
