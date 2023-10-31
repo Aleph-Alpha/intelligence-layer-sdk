@@ -112,7 +112,7 @@ class DocumentIndex:
         response = requests.post(url, data=json.dumps(data), headers=self.headers)
         response.raise_for_status()
         return response.json()
-    
+
     def asymmetric_search(
         self,
         namespace: str,
@@ -121,6 +121,6 @@ class DocumentIndex:
         max_results: int,
         min_score: float,
     ) -> Any:
-        return self.index_search(namespace, collection, "asymmetric", query, max_results, min_score)
-    
-
+        return self.index_search(
+            namespace, collection, "asymmetric", query, max_results, min_score
+        )
