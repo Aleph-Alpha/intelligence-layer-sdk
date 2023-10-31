@@ -47,4 +47,4 @@ in accordance with the laws of Germany. The courts of Heidelberg, Germany shall 
 out of or in connection with this contract (including non-contractual disputes or claims). The United Nations Convention on Contracts for the
 International Sale of Goods shall not apply to the extent permitted. If any provision of this contract is found by a court of competent jurisdiction
 to be invalid or unenforceable, such provisions shall be deemed null and void and the remaining provisions of this contract shall remain in full force
-and effect. The parties agree that this contract may be agreed to online or executed by electronic signatur
+and effect. The parties agree that this contract may be agreed to online or executed by electronic signature.
