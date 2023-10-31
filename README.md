@@ -21,7 +21,8 @@ The key features of the Intelligence Layer are:
 3. [How to use this in your project](#how-to-make-your-own-use-case)
 4. [Use-case index](#use-case-index)
 5. [How to make your own use-case](#how-to-make-your-own-use-case)
-6. [License](#license)
+6. [References](#references)
+7. [License](#license)
 
 ### How to make your own
 
