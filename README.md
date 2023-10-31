@@ -14,21 +14,14 @@ The key features of the Intelligence Layer are:
   To ensure this, we provide full comprehensibility, by seamlessly logging each step of every workflow.
   This enhances your debugging capabilities and offers greater control post-deployment when examining model responses.
 
-## Use-case index
+### Table of contents
 
-To give you a starting point for using the Intelligence Layer, we provide some pre-configured `Task`s that are ready to use out-of-the-box, as well as an accompanying "Getting started" guide in the form of Jupyter Notebooks.
-
-| Type      | Task                                                                                              | Description                                                               |
-| --------- | ------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------- |
-| Classify  | [EmbeddingBasedClassify](./src/intelligence_layer/use_cases/classify/embedding_based_classify.py) | Classify a text using the cosine similarity of its embeddings to examples |
-| Classify  | [SingleLabelClassify](./src/intelligence_layer/use_cases/classify/single_label_classify.py)       | Classify a text given labels using zero-shot prompting                    |
-| QA        | [LongContextQa](./src/intelligence_layer/use_cases/qa/long_context_qa.py)                         | Answer a question based on one document of any length                     |
-| QA        | [MultipleChunkQa](./src/intelligence_layer/use_cases/qa/multiple_chunk_qa.py)                     | Answer a question based a list of text chunks                             |
-| QA        | [RetrieverBasedQa](./src/intelligence_layer/use_cases/qa/retriever_based_qa.py)                   | Answer a question based on a document base                                |
-| QA        | [SingleChunkQa](./src/intelligence_layer/use_cases/qa/single_chunk_qa.py)                         | Answer a question based on a single text chunk                            |
-| Search    | [QdrantSearch](./src/intelligence_layer/use_cases/search/qdrant_search.py)                        | Search through texts given a query and some filters                       |
-| Search    | [Search](./src/intelligence_layer/use_cases/search/search.py)                                     | Search through texts given a query                                        |
-| Summarize | [ShortBodySummarize](./src/intelligence_layer/use_cases/summarize/summarize.py)                   | Summarize a single text chunk into a short body text                      |
+1. [Getting Started](#getting-started)
+2. [Getting started with the Jupyter Notebooks](#getting-started-with-the-jupyter-notebooks)
+3. [How to use this in your project](#how-to-make-your-own-use-case)
+4. [Use-case index](#use-case-index)
+5. [How to make your own use-case](#how-to-make-your-own-use-case)
+6. [License](#license)
 
 ### How to make your own
 
@@ -98,3 +91,33 @@ Now the Intelligence Layer should be available as a Python package and ready to 
 ```py
 from intelligence_layer.core.task import Task
 ```
+
+## Use-case index
+
+To give you a starting point for using the Intelligence Layer, we provide some pre-configured `Task`s that are ready to use out-of-the-box, as well as an accompanying "Getting started" guide in the form of Jupyter Notebooks.
+
+| Type      | Task                                                                                                                                                            | Description                                                                                                                                                                                                        |
+| --------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Classify  | [EmbeddingBasedClassify](https://glowing-tribble-223446r.pages.github.io/intelligence_layer.use_cases.html#intelligence_layer.use_cases.EmbeddingBasedClassify) | Classify a short text by computing its similarity with example texts for each class.                                                                                                                               |
+| Classify  | [SingleLabelClassify](https://glowing-tribble-223446r.pages.github.io/intelligence_layer.use_cases.html#intelligence_layer.use_cases.SingleLabelClassify)       | Classify a short text by assessing each class' probability using zero-shot prompting.                                                                                                                              |
+| QA        | [LongContextQa](https://glowing-tribble-223446r.pages.github.io/intelligence_layer.use_cases.html#intelligence_layer.use_cases.LongContextQa)                   | Answer a question based on one document of any length.                                                                                                                                                             |
+| QA        | [MultipleChunkQa](https://glowing-tribble-223446r.pages.github.io/intelligence_layer.use_cases.html#intelligence_layer.use_cases.MultipleChunkQa)               | Answer a question based on a list of short texts.                                                                                                                                                                  |
+| QA        | [RetrieverBasedQa](https://glowing-tribble-223446r.pages.github.io/intelligence_layer.use_cases.html#intelligence_layer.use_cases.RetrieverBasedQa)             | Answer a question based on a document base using a [BaseRetriever](https://glowing-tribble-223446r.pages.github.io/intelligence_layer.connectors.html#intelligence_layer.connectors.BaseRetriever) implementation. |
+| QA        | [SingleChunkQa](https://glowing-tribble-223446r.pages.github.io/intelligence_layer.use_cases.html#intelligence_layer.use_cases.SingleChunkQa)                   | Answer a question based on a short text.                                                                                                                                                                           |
+| Search    | [Search](https://glowing-tribble-223446r.pages.github.io/intelligence_layer.use_cases.html#intelligence_layer.use_cases.Search)                                 | Search for texts in a document base using a [BaseRetriever](https://glowing-tribble-223446r.pages.github.io/intelligence_layer.connectors.html#intelligence_layer.connectors.BaseRetriever) implementation.        |
+| Summarize | [ShortBodySummarize](https://glowing-tribble-223446r.pages.github.io/intelligence_layer.use_cases.html#intelligence_layer.use_cases.ShortBodySummarize)         | Condense a short text into a brief summary.                                                                                                                                                                        |
+
+## How to make your own use-case
+
+Note that we do not expect the above use cases to solve all of your issues.
+Instead, we encourage you to think of our pre-configured use cases as a foundation to fast-track your development process.
+By leveraging these tasks, you gain insights into the framework's capabilities and best practices.
+
+We encourage you to copy and paste these use cases directly into your own project.
+From here, you can customize everything, including the prompt, model, and more intricate functional logic.
+This not only saves you time but also ensures you're building on a tried and tested foundation.
+Therefore, think of these use-cases as stepping stones, guiding you towards crafting tailored solutions that best fit your unique requirements.
+
+## License
+
+This project can only be used after signing the agreement with Aleph Alpha®. Please refer to the [LICENSE](LICENSE.md) file for more details.
