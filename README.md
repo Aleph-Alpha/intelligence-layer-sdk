@@ -120,5 +120,5 @@ Therefore, think of these use-cases as stepping stones, guiding you towards craf
 
 ## License
 
-This project can only be used after signing the agreement with Aleph Alpha®. Please refer to the [LICENSE](.LICENSE.md) file for more details.
+This project can only be used after signing the agreement with Aleph Alpha®. Please refer to the [LICENSE](LICENSE.md) file for more details.
 
