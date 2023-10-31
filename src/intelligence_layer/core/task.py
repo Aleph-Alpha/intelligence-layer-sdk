@@ -94,11 +94,11 @@ class Task(ABC, Generic[Input, Output]):
         """Executes the implementation of run for this use case.
 
         Args:
-            input: Generic input defined by the task implementation 
+            input: Generic input defined by the task implementation
         Returns:
-            output: Generic output defined by the task implementation 
+            output: Generic output defined by the task implementation
 
-        This takes an input and runs the implementation to generate an output. 
+        This takes an input and runs the implementation to generate an output.
         It takes a `DebugLogger` for tracing of the process.
         The Input and Output are logged by default.
         """
