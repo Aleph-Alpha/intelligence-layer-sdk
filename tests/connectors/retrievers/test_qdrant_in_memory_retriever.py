@@ -17,7 +17,7 @@ def in_memory_retriever_documents() -> Sequence[Document]:
     ]
 
 
-def test_asymmetric_in_memory(
+def test_asymmetric_in_memory_retriever(
     asymmetric_in_memory_retriever: QdrantInMemoryRetriever,
     in_memory_retriever_documents: Sequence[Document],
 ) -> None:
@@ -27,7 +27,7 @@ def test_asymmetric_in_memory(
     assert len(documents) <= 2
 
 
-def test_symmetric_in_memory(
+def test_symmetric_in_memory_retriever(
     symmetric_in_memory_retriever: QdrantInMemoryRetriever,
     in_memory_retriever_documents: Sequence[Document],
 ) -> None:
