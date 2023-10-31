@@ -62,7 +62,7 @@ class Evaluator(ABC, Generic[Input, ExpectedOutput, Evaluation, AggregatedEvalua
         expected_output: ExpectedOutput,
     ) -> Evaluation:
         """Executes the evaluation for this use-case.
-        
+
         Arguments:
             input: Interface to be passed to the task that shall be evaluated.
             logger: Debug logger used for tracing of tasks.
@@ -71,7 +71,7 @@ class Evaluator(ABC, Generic[Input, ExpectedOutput, Evaluation, AggregatedEvalua
             Evaluation: interface of the metrics that come from the evaluated task.
 
         The implementation of this method is responsible for running a task (usually supplied by the __init__ method)
-        and making any comparisons relevant to the evaluation. 
+        and making any comparisons relevant to the evaluation.
         Based on the results, it should create an `Evaluation` class with all the metrics and return it.
         """
         pass
@@ -80,7 +80,7 @@ class Evaluator(ABC, Generic[Input, ExpectedOutput, Evaluation, AggregatedEvalua
         self, dataset: Dataset[Input, ExpectedOutput], logger: DebugLogger
     ) -> AggregatedEvaluation:
         """Evaluates an entire datasets in a threaded manner and aggregates the results into an `AggregatedEvaluation`.
-        
+
         Arguments:
             dataset: Dataset that will be used to evaluate a task.
             logger: Logger used for tracing.
@@ -110,13 +110,13 @@ class Evaluator(ABC, Generic[Input, ExpectedOutput, Evaluation, AggregatedEvalua
     @abstractmethod
     def aggregate(self, evaluations: Sequence[Evaluation]) -> AggregatedEvaluation:
         """`Evaluator`-specific method for aggregating individual `Evaluations` into report-like `Aggregated Evaluation`.
-        
+
         Arguments:
-            evalautions: The results from running `evaluate_dataset` with a task. 
+            evalautions: The results from running `evaluate_dataset` with a task.
         Returns:
             AggregatedEvaluation: The aggregated results of an evaluation run with a dataset.
 
         This method is responsible for taking the results of an evaluation run and aggregating all the results.
-        It should create an `AggregatedEvaluation` class and return it at the end. 
+        It should create an `AggregatedEvaluation` class and return it at the end.
         """
         pass
