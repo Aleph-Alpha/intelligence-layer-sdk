@@ -14,13 +14,13 @@ The key features of the Intelligence Layer are:
   To ensure this, we provide full comprehensibility, by seamlessly logging each step of every workflow.
   This enhances your debugging capabilities and offers greater control post-deployment when examining model responses.
 
-### Contents
+### Table of contents
 
-1. Getting Started
-2. Getting started with the Jupyter Notebooks
-3. How to use this in your project
-4. Use-case index
-5. How to make your own use-case
+1. [Getting Started](#getting-started)
+2. [Getting started with the Jupyter Notebooks](#getting-started-with-the-jupyter-notebooks)
+3. [How to use this in your project](#how-to-make-your-own-use-case)
+4. [Use-case index](#use-case-index)
+5. [How to make your own use-case](#how-to-make-your-own-use-case)
 
 ## Getting started
 
