@@ -13,7 +13,9 @@ TEXTS = [
 
 
 @pytest.mark.internal
-def test_document_index(document_index_retriever: DocumentIndexRetriever) -> None:
+def test_document_index_retriever(
+    document_index_retriever: DocumentIndexRetriever,
+) -> None:
     documents = document_index_retriever.get_relevant_documents_with_scores(QUERY)
     assert documents[0].document.text[0:30] in TEXTS[0]
     assert documents[1].document.text[0:30] in TEXTS[1]

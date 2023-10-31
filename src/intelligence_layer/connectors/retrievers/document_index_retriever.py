@@ -1,6 +1,10 @@
 from typing import Sequence
 
-from intelligence_layer.connectors.document_index.document_index import DocumentIndex
+from intelligence_layer.connectors.document_index.document_index import (
+    CollectionPath,
+    DocumentIndex,
+    SearchQuery,
+)
 from intelligence_layer.connectors.retrievers.base_retriever import (
     BaseRetriever,
     Document,
@@ -37,19 +41,23 @@ class DocumentIndexRetriever(BaseRetriever):
         threshold: float = 0.5,
     ) -> None:
         self._document_index = document_index
-        self._namespace = namespace
-        self._collection = collection
+        self._collection_path = CollectionPath(
+            namespace=namespace, collection=collection
+        )
         self._k = k
         self._threshold = threshold
 
     def get_relevant_documents_with_scores(self, query: str) -> Sequence[SearchResult]:
+        search_query = SearchQuery(
+            query=query, max_results=self._k, min_score=self._threshold
+        )
         response = self._document_index.asymmetric_search(
-            self._namespace, self._collection, query, self._k, self._threshold
+            self._collection_path, search_query
         )
         relevant_chunks = [
             SearchResult(
-                score=result["score"],
-                document=Document(text=result["section"][0]["text"], metadata=None),
+                score=result.score,
+                document=Document(text=result.section),
             )
             for result in response
         ]
