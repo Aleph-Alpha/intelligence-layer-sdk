@@ -21,6 +21,7 @@ The key features of the Intelligence Layer are:
 3. [How to use this in your project](#how-to-make-your-own-use-case)
 4. [Use-case index](#use-case-index)
 5. [How to make your own use-case](#how-to-make-your-own-use-case)
+6. [License](#license)
 
 ### How to make your own
 
@@ -119,5 +120,5 @@ Therefore, think of these use-cases as stepping stones, guiding you towards craf
 
 ## License
 
-This project can only be used after signing the agreement with Aleph Alpha®. See the LICENSE file for more details.
+This project can only be used after signing the agreement with Aleph Alpha®. Please refer to the [LICENSE](.LICENSE.md) file for more details.
 
