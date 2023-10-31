@@ -116,3 +116,8 @@ We encourage you to copy and paste these use cases directly into your own projec
 From here, you can customize everything, including the prompt, model, and more intricate functional logic.
 This not only saves you time but also ensures you're building on a tried and tested foundation.
 Therefore, think of these use-cases as stepping stones, guiding you towards crafting tailored solutions that best fit your unique requirements.
+
+## License
+
+This project can only be used after signing the agreement with Aleph Alpha®. See the LICENSE file for more details.
+
