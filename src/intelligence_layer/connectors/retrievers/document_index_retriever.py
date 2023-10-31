@@ -1,6 +1,6 @@
 from typing import Sequence
 
-from intelligence_layer.connectors.document_index import DocumentIndex
+from intelligence_layer.connectors.document_index.document_index import DocumentIndex
 from intelligence_layer.connectors.retrievers.base_retriever import (
     BaseRetriever,
     Document,
