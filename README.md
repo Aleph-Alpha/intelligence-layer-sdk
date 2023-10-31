@@ -75,12 +75,30 @@ To install this as a dependency in your project, you need a [Github access token
 Set your access token:
 
 ```bash
-GITHUB_TOKEN=<YOUR_GITHUB_TOKEN>
+export GITHUB_TOKEN=<YOUR_GITHUB_TOKEN>
 ```
-We recommend setting up a dedicated virtual environment. You can do so by using [conda](https://conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html#creating-an-environment-with-commands) or [venv](https://docs.python.org/3/library/venv.html).
+We recommend setting up a dedicated virtual environment. You can do so by using [conda](https://conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html#creating-an-environment-with-commands) or [venv](https://docs.python.org/3/library/venv.html) or [poetry](https://python-poetry.org/).
 
+You can add it to the poetry dependencies by adding the following in the pyproject.toml
+```toml
+[tool.poetry.dependencies]
+python = ">=3.10,<3.13"
+intelligence-layer = { git = "https://github.com/aleph-alpha-intelligence-layer/intelligence-layer.git", branch = "main", extras = ["${GITHUB_TOKEN}"] }
+```
 
-Let's install the package:
+Remember to run
+```bash
+poetry lock
+```
+to update dependencies.
+
+Alternatively you can also add it to a `requirements.txt`
+
+```txt
+git+https://${GITHUB_TOKEN}@github.com/aleph-alpha-intelligence-layer/intelligence-layer.git
+```
+
+Finally you can also install the package manually using pip
 
 ```bash
 pip install git+https://$GITHUB_TOKEN@github.com/aleph-alpha-intelligence-layer/intelligence-layer.git
