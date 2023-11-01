@@ -137,6 +137,24 @@ From here, you can customize everything, including the prompt, model, and more i
 This not only saves you time but also ensures you're building on a tried and tested foundation.
 Therefore, think of these use-cases as stepping stones, guiding you towards crafting tailored solutions that best fit your unique requirements.
 
+## Running the Debug Log Viewer
+
+Make sure you have your `GITHUB_TOKEN` env variable set the same as above for installing the Python package, and that it has the `read:packages` permission.
+
+Then login to the container registry with docker:
+
+```bash
+echo $GITHUB_TOKEN | docker login ghcr.io -u YOUR_GITHUB_USERNAME --password-stdin
+```
+
+Then you can run the container locally:
+
+```bash
+docker run -p 3000:3000 ghcr.io/aleph-alpha/intelligence-layer-log-viewer:main
+```
+
+Then if you visit `http://localhost:3000` you can upload a debug log to interact with the data.
+
 ## References
 
 - Full documentation: https://aleph-alpha-intelligence-layer.readthedocs-hosted.com/en/latest/
