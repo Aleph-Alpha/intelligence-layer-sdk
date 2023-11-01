@@ -25,17 +25,6 @@ The key features of the Intelligence Layer are:
 7. [References](#references)
 8. [License](#license)
 
-### How to make your own
-
-Note that we do not expect the above use cases to solve all of your issues.
-Instead, we encourage you to think of our pre-configured use cases as a foundation to fast-track your development process.
-By leveraging these tasks, you gain insights into the framework's capabilities and best practices.
-
-We encourage you to copy and paste these use cases directly into your own project.
-From here, you can customize everything, including the prompt, model, and more intricate functional logic.
-This not only saves you time but also ensures you're building on a tried and tested foundation.
-Therefore, think of these use-cases as stepping stones, guiding you towards crafting tailored solutions that best fit your unique requirements.
-
 ## Getting started
 
 Not sure where to start? Familiarize yourself with the Intelligence Layer using the below notebooks.
@@ -126,8 +115,7 @@ To give you a starting point for using the Intelligence Layer, we provide some p
 | QA        | [SingleChunkQa](https://aleph-alpha-intelligence-layer.readthedocs-hosted.com/en/latest/intelligence_layer.use_cases.html#intelligence_layer.use_cases.SingleChunkQa)                   | Answer a question based on a short text.                                                                                                                                                                           |
 | Search    | [Search](https://aleph-alpha-intelligence-layer.readthedocs-hosted.com/en/latest/intelligence_layer.use_cases.html#intelligence_layer.use_cases.Search)                                 | Search for texts in a document base using a [BaseRetriever](https://aleph-alpha-intelligence-layer.readthedocs-hosted.com/en/latest/intelligence_layer.connectors.html#intelligence_layer.connectors.BaseRetriever) implementation.        |
 | Summarize | [ShortBodySummarize](https://aleph-alpha-intelligence-layer.readthedocs-hosted.com/en/latest/intelligence_layer.use_cases.html#intelligence_layer.use_cases.ShortBodySummarize)         | Condense a short text into a brief summary.                                                                                                                                                                        |
-
-## How to make your own use-case
+## How to make your own
 
 Note that we do not expect the above use cases to solve all of your issues.
 Instead, we encourage you to think of our pre-configured use cases as a foundation to fast-track your development process.
