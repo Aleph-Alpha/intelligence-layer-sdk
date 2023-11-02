@@ -10,7 +10,9 @@ from intelligence_layer.connectors.retrievers.base_retriever import Document
 from intelligence_layer.connectors.retrievers.document_index_retriever import (
     DocumentIndexRetriever,
 )
-from intelligence_layer.connectors.document_index.document_index import DocumentIndex
+from intelligence_layer.connectors.document_index.document_index import (
+    DocumentIndexClient,
+)
 from intelligence_layer.connectors.retrievers.qdrant_in_memory_retriever import (
     QdrantInMemoryRetriever,
     RetrieverType,
@@ -69,12 +71,14 @@ def symmetric_in_memory_retriever(
 
 
 @fixture
-def document_index(token: str) -> DocumentIndex:
-    return DocumentIndex(token)
+def document_index(token: str) -> DocumentIndexClient:
+    return DocumentIndexClient(token)
 
 
 @fixture
-def document_index_retriever(document_index: DocumentIndex) -> DocumentIndexRetriever:
+def document_index_retriever(
+    document_index: DocumentIndexClient,
+) -> DocumentIndexRetriever:
     return DocumentIndexRetriever(
         document_index, namespace="aleph-alpha", collection="wikipedia-de", k=2
     )
