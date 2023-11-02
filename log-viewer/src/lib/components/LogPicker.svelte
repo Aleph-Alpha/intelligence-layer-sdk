@@ -16,7 +16,7 @@
 		>Upload a debug log to render
 	</label>
 	<textarea
-		class="focus:border-accent appearance-none border-0 bg-white font-mono font-medium text-gray-950 shadow outline-none ring-1 ring-gray-950/20 placeholder:text-gray-400 focus:ring-gray-950"
+		class="appearance-none border-0 bg-white font-mono font-medium text-gray-950 shadow outline-none ring-1 ring-gray-950/20 placeholder:text-gray-400 focus:border-accent focus:ring-gray-950"
 		id="debug-log"
 		bind:value
 		on:change={(e) => {
