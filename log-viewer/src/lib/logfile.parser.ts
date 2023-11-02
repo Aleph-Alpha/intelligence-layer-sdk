@@ -1,14 +1,14 @@
 import { z } from 'zod';
 import type { DebugLog, Span, TaskSpan } from './log';
 
-const logEntry = z.object({
+const plainEntry = z.object({
 	parent: z.string(),
 	message: z.string(),
 	value: z.any(),
 	timestamp: z.string()
 });
 
-type LogEntry = z.infer<typeof logEntry>;
+type PlainEntry = z.infer<typeof plainEntry>;
 
 const spanStart = z.object({
 	uuid: z.string(),
@@ -46,8 +46,8 @@ type TaskEnd = z.infer<typeof taskEnd>;
 
 const logLine = z.discriminatedUnion('entry_type', [
 	z.object({
-		entry_type: z.literal('LogEntry'),
-		entry: logEntry
+		entry_type: z.literal('PlainEntry'),
+		entry: plainEntry
 	}),
 	z.object({
 		entry_type: z.literal('StartSpan'),
@@ -82,8 +82,8 @@ export function parseLogLines(lines: LogLine[]): DebugLog {
 	const builder = new LogBuilder();
 	for (const line of lines) {
 		switch (line.entry_type) {
-			case 'LogEntry':
-				builder.addLogEntry(line.entry);
+			case 'PlainEntry':
+				builder.addPlainEntry(line.entry);
 				break;
 			case 'StartSpan':
 				builder.startSpan(line.entry);
@@ -108,7 +108,7 @@ class LogBuilder {
 	private spans: Map<string, Span> = new Map<string, Span>();
 	private tasks: Map<string, TaskSpan> = new Map<string, TaskSpan>();
 
-	addLogEntry(entry: LogEntry) {
+	addPlainEntry(entry: PlainEntry) {
 		const parent = this.parentLogger(entry.parent);
 		// entry.value is any, but value is "Json"
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment

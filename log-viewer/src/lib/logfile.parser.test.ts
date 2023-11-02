@@ -30,7 +30,7 @@ function toFile(expected: DebugLog) {
 
 function toFlatLogEntry(parent: string, entry: LogEntry): LogLine {
 	return {
-		entry_type: 'LogEntry',
+		entry_type: 'PlainEntry',
 		entry: { parent, message: entry.message, timestamp: entry.timestamp, value: entry.value }
 	};
 }
