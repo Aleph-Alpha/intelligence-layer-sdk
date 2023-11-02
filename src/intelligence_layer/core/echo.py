@@ -1,8 +1,9 @@
+from functools import lru_cache
 from typing import Sequence
 
 from aleph_alpha_client import Client, CompletionRequest, Prompt, Tokens
 from pydantic import BaseModel
-import tokenizers  # type: ignore
+from tokenizers import Encoding, Tokenizer  # type: ignore
 
 from intelligence_layer.core.complete import Complete, CompleteInput
 from intelligence_layer.core.logger import DebugLogger
@@ -125,10 +126,10 @@ class EchoTask(Task[EchoInput, EchoOutput]):
     def _tokenize(self, text: str, model: str) -> Sequence[Token]:
         # Turns the expected output into list of token ids. Important so that we know how many tokens
         # the label is and can retrieve the last N log probs for the label
-        tokenizer = self._client.tokenizer(model)
+        tokenizer = self.tokenizer(model)
         assert tokenizer.pre_tokenizer
         tokenizer.pre_tokenizer.add_prefix_space = False
-        encoding: tokenizers.Encoding = tokenizer.encode(text)
+        encoding: Encoding = tokenizer.encode(text)
         return [
             Token(
                 token=tokenizer.decode([token_id], skip_special_tokens=False),
@@ -136,3 +137,7 @@ class EchoTask(Task[EchoInput, EchoOutput]):
             )
             for token_id in encoding.ids
         ]
+
+    @lru_cache
+    def tokenizer(self, model: str) -> Tokenizer:
+        return self._client.tokenizer(model)
