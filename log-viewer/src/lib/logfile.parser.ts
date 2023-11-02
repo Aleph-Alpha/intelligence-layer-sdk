@@ -69,6 +69,15 @@ const logLine = z.discriminatedUnion('entry_type', [
 
 export type LogLine = z.infer<typeof logLine>;
 
+export async function parseLogFile(file: File): Promise<DebugLog> {
+	return parseLogLines(
+		(await file.text())
+			.split(/\r?\n/)
+			.filter(Boolean)
+			.map((line) => logLine.parse(JSON.parse(line)))
+	);
+}
+
 export function parseLogLines(lines: LogLine[]): DebugLog {
 	const builder = new LogBuilder();
 	for (const line of lines) {
@@ -90,11 +99,11 @@ export function parseLogLines(lines: LogLine[]): DebugLog {
 				break;
 		}
 	}
-	return builder.root;
+	return builder.root();
 }
 
 class LogBuilder {
-	root: DebugLog = { name: '', logs: [] };
+	private roots: string[] = [];
 	private loggers: Map<string, DebugLog> = new Map<string, DebugLog>();
 	private spans: Map<string, Span> = new Map<string, Span>();
 	private tasks: Map<string, TaskSpan> = new Map<string, TaskSpan>();
@@ -152,8 +161,13 @@ class LogBuilder {
 		if (parent) {
 			return parent;
 		}
-		this.root = { name: uuid, logs: [] };
-		this.loggers.set(uuid, this.root);
-		return this.root;
+		const parentLogger = { name: uuid, logs: [] };
+		this.roots.push(parentLogger.name);
+		this.loggers.set(uuid, parentLogger);
+		return parentLogger;
+	}
+
+	root(): DebugLog {
+		return this.loggers.get(this.roots[0])!;
 	}
 }
