@@ -158,10 +158,7 @@ class NoOpDebugLogger:
     """
 
     def log(self, message: str, value: PydanticSerializable) -> None:
-        """Record a log of relevant information as part of a step within a task.
-
-        By default, the `Input` and `Output` of each `Task` are logged automatically, but you can
-        log anything else that seems relevant to understanding the output of a given task.
+        """The `NoOpDebugLogger` does not do anything.
 
         Args:
             message: A description of the value you are logging, such as the step in the task this
@@ -199,10 +196,7 @@ class NoOpDebugLogger:
 
 class NoOpTaskSpan(NoOpDebugLogger, AbstractContextManager["NoOpTaskSpan"]):
     def record_output(self, output: PydanticSerializable) -> None:
-        """Record a `Task`'s output. Since a Context Manager can't provide this in the `__exit__`
-        method, output should be captured once it is generated.
-
-        This should be handled automatically within the execution of the task.
+        """The `NoOpTaskSpan` does not do anything.
 
         Args:
             output: The output of the task that is being logged.
