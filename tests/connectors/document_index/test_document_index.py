@@ -3,7 +3,7 @@ import pytest
 from intelligence_layer.connectors.document_index.document_index import (
     CollectionPath,
     DocumentContents,
-    DocumentIndex,
+    DocumentIndexClient,
     DocumentPath,
     SearchQuery,
 )
@@ -16,7 +16,7 @@ def collection_path() -> CollectionPath:
 
 @fixture
 def document_path(
-    document_index: DocumentIndex, collection_path: CollectionPath
+    document_index: DocumentIndexClient, collection_path: CollectionPath
 ) -> DocumentPath:
     document_index.create_collection(collection_path)
     return DocumentPath(
@@ -46,7 +46,7 @@ Pemberton's life story is a testament to the spirit of innovation and resilience
 
 @pytest.mark.internal
 def test_document_index_creates_collection(
-    document_index: DocumentIndex, collection_path: CollectionPath
+    document_index: DocumentIndexClient, collection_path: CollectionPath
 ) -> None:
     document_index.create_collection(collection_path)
     collections = document_index.list_collections(collection_path.namespace)
@@ -56,7 +56,7 @@ def test_document_index_creates_collection(
 
 @pytest.mark.internal
 def test_document_index_adds_document(
-    document_index: DocumentIndex,
+    document_index: DocumentIndexClient,
     document_path: DocumentPath,
     document_contents: DocumentContents,
 ) -> None:
@@ -68,7 +68,7 @@ def test_document_index_adds_document(
 
 @pytest.mark.internal
 def test_document_index_searches_asymmetrically(
-    document_index: DocumentIndex, collection_path: CollectionPath
+    document_index: DocumentIndexClient, collection_path: CollectionPath
 ) -> None:
     document_path = DocumentPath(
         collection_path=collection_path,
@@ -84,7 +84,7 @@ def test_document_index_searches_asymmetrically(
 
 @pytest.mark.internal
 def test_document_index_gets_document(
-    document_index: DocumentIndex, document_path: DocumentPath
+    document_index: DocumentIndexClient, document_path: DocumentPath
 ) -> None:
     document = document_index.document(document_path)
 
@@ -93,7 +93,7 @@ def test_document_index_gets_document(
 
 @pytest.mark.internal
 def test_document_index_deletes_document(
-    document_index: DocumentIndex, collection_path: CollectionPath
+    document_index: DocumentIndexClient, collection_path: CollectionPath
 ) -> None:
     document_path = DocumentPath(
         collection_path=collection_path, document_name="Document to be deleted"

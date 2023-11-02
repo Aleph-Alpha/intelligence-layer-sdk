@@ -2,7 +2,7 @@ from typing import Sequence
 
 from intelligence_layer.connectors.document_index.document_index import (
     CollectionPath,
-    DocumentIndex,
+    DocumentIndexClient,
     SearchQuery,
 )
 from intelligence_layer.connectors.retrievers.base_retriever import (
@@ -13,14 +13,14 @@ from intelligence_layer.connectors.retrievers.base_retriever import (
 
 
 class DocumentIndexRetriever(BaseRetriever):
-    """Search through documents within collections in the `DocumentIndex`.
+    """Search through documents within collections in the `DocumentIndexClient`.
 
     We initialize this Retriever with a collection & namespace names, and we can find the documents in the collection
     most semanticly similar to our query.
 
     Args:
         document_index: Client offering functionality for search.
-        namespace: The namespace within the `DocumentIndex` where all collections are stored.
+        namespace: The namespace within the `DocumentIndexClient` where all collections are stored.
         collection: The collection within the namespace that holds the desired documents.
         k: The (top) number of documents to be returned by search.
         threshold: The mimumum value of cosine similarity between the query vector and the document vector.
@@ -34,7 +34,7 @@ class DocumentIndexRetriever(BaseRetriever):
 
     def __init__(
         self,
-        document_index: DocumentIndex,
+        document_index: DocumentIndexClient,
         namespace: str,
         collection: str,
         k: int,
