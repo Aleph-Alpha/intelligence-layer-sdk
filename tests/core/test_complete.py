@@ -3,6 +3,7 @@ from pytest import fixture
 
 from intelligence_layer.core.complete import (
     FewShot,
+    FewShotConfig,
     FewShotExample,
     FewShotInput,
     Instruct,
@@ -39,15 +40,19 @@ def test_instruct_without_input(
 
 def test_few_shot(few_shot: FewShot, no_op_debug_logger: NoOpDebugLogger) -> None:
     input = FewShotInput(
-        instruction="Answer each question.",
         input="What is the capital of Germany?",
-        examples=[
-            FewShotExample(input="How high is Mount Everest?", response="8848 metres."),
-            FewShotExample(input="When was Caesar killed?", response="44 AD."),
-        ],
-        input_prefix="Question",
-        response_prefix="Answer",
-        model="luminous-base",
+        few_shot_config=FewShotConfig(
+            instruction="Answer each question.",
+            examples=[
+                FewShotExample(
+                    input="How high is Mount Everest?", response="8848 metres."
+                ),
+                FewShotExample(input="When was Caesar killed?", response="44 AD."),
+            ],
+            input_prefix="Question",
+            response_prefix="Answer",
+            model="luminous-base",
+        ),
     )
     output = few_shot.run(input, no_op_debug_logger)
 

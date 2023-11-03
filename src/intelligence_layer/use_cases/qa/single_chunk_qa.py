@@ -6,7 +6,7 @@ from pydantic import BaseModel
 from intelligence_layer.core.complete import (
     Instruct,
     InstructInput,
-    InstructOutput,
+    PromptOutput,
 )
 from intelligence_layer.core.prompt_template import (
     PromptWithMetadata,
@@ -125,7 +125,7 @@ If there's no answer, say "{self.NO_ANSWER_STR}".""",
 
     def _instruct(
         self, instruction: str, input: str, logger: DebugLogger
-    ) -> InstructOutput:
+    ) -> PromptOutput:
         return self._instruction.run(
             InstructInput(instruction=instruction, input=input, model=self._model),
             logger,
