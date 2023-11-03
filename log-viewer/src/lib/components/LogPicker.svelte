@@ -31,7 +31,7 @@
 		bind:files
 		on:change={async (file) => {
 			const firstFile = file.currentTarget?.files?.item(0);
-			activeLog.set(firstFile ? await parseLogFile(firstFile) : { name: '', logs: [] });
+			firstFile && activeLog.set(await parseLogFile(firstFile));
 		}}
 	/>
 </div>
