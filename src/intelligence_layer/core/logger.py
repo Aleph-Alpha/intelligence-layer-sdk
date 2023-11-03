@@ -310,7 +310,7 @@ class InMemoryDebugLogger(BaseModel):
 
         Returns:
             A nested `InMemoryTaskSpan` that is stored in a nested position as part of the parent
-                logger
+            logger
         """
 
         child = InMemoryTaskSpan(name=task_name, input=input)

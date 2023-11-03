@@ -15,6 +15,3 @@ Module contents
 ---------------
 
 .. automodule:: intelligence_layer
-   :members:
-   :show-inheritance:
-   :inherited-members:

@@ -6,6 +6,3 @@ Module contents
 ---------------
 
 .. automodule:: intelligence_layer.use_cases
-   :members:
-   :show-inheritance:
-   :inherited-members:

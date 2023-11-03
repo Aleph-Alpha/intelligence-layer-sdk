@@ -45,13 +45,13 @@ class Dataset(BaseModel, Generic[Input, ExpectedOutput]):
 class Evaluator(ABC, Generic[Input, ExpectedOutput, Evaluation, AggregatedEvaluation]):
     """Base evaluator interface. This should run certain evaluation steps for some job.
 
+    We suggest supplying a `Task` in the `__init__` method and running it in the `evaluate` method.
+
     Generics:
         Input: Interface to be passed to the task that shall be evaluated.
         ExpectedOutput: Output that is expected from the task run with the supplied input.
         Evaluation: Interface of the metrics that come from the evaluated task.
         AggregatedEvaluation: The aggregated results of an evaluation run with a dataset.
-
-    We suggest supplying a `Task` in the `__init__` method and running it in the `evaluate` method.
     """
 
     @abstractmethod
@@ -63,16 +63,16 @@ class Evaluator(ABC, Generic[Input, ExpectedOutput, Evaluation, AggregatedEvalua
     ) -> Evaluation:
         """Executes the evaluation for this use-case.
 
-        Arguments:
+        The implementation of this method is responsible for running a task (usually supplied by the __init__ method)
+        and making any comparisons relevant to the evaluation.
+        Based on the results, it should create an `Evaluation` class with all the metrics and return it.
+
+        Args:
             input: Interface to be passed to the task that shall be evaluated.
             logger: Debug logger used for tracing of tasks.
             expected_output: Output that is expected from the task run with the supplied input.
         Returns:
             Evaluation: interface of the metrics that come from the evaluated task.
-
-        The implementation of this method is responsible for running a task (usually supplied by the __init__ method)
-        and making any comparisons relevant to the evaluation.
-        Based on the results, it should create an `Evaluation` class with all the metrics and return it.
         """
         pass
 
@@ -81,14 +81,14 @@ class Evaluator(ABC, Generic[Input, ExpectedOutput, Evaluation, AggregatedEvalua
     ) -> AggregatedEvaluation:
         """Evaluates an entire datasets in a threaded manner and aggregates the results into an `AggregatedEvaluation`.
 
-        Arguments:
+        This will call the `run` method for each example in the dataset.
+        Finally, it will call the `aggregate` method and return the aggregated results.
+
+        Args:
             dataset: Dataset that will be used to evaluate a task.
             logger: Logger used for tracing.
         Returns:
             AggregatedEvaluation: The aggregated results of an evaluation run with a dataset.
-
-        This will call the `run` method for each example in the dataset.
-        Finally, it will call the `aggregate` method and return the aggregated results.
         """
         with ThreadPoolExecutor(max_workers=10) as executor:
             evaluations = list(
@@ -111,12 +111,12 @@ class Evaluator(ABC, Generic[Input, ExpectedOutput, Evaluation, AggregatedEvalua
     def aggregate(self, evaluations: Sequence[Evaluation]) -> AggregatedEvaluation:
         """`Evaluator`-specific method for aggregating individual `Evaluations` into report-like `Aggregated Evaluation`.
 
-        Arguments:
+        This method is responsible for taking the results of an evaluation run and aggregating all the results.
+        It should create an `AggregatedEvaluation` class and return it at the end.
+
+        Args:
             evalautions: The results from running `evaluate_dataset` with a task.
         Returns:
             AggregatedEvaluation: The aggregated results of an evaluation run with a dataset.
-
-        This method is responsible for taking the results of an evaluation run and aggregating all the results.
-        It should create an `AggregatedEvaluation` class and return it at the end.
         """
         pass

@@ -14,8 +14,13 @@ from .logger import (
     Span,
     TaskSpan,
     InMemoryDebugLogger,
+    InMemorySpan,
+    InMemoryTaskSpan,
     FileDebugLogger,
+    FileSpan,
+    FileTaskSpan,
     NoOpDebugLogger,
+    NoOpTaskSpan,
 )
 from .prompt_template import (
     PromptTemplate,

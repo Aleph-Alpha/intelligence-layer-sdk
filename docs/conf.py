@@ -16,7 +16,10 @@ author = "Aleph Alpha"
 extensions = ["sphinx.ext.autodoc", "sphinx.ext.napoleon", "sphinx.ext.viewcode"]
 
 autodoc_default_options = {
-    "private-members": None,
+    "members": True,
+    "show-inheritance": True,
+    "inherited-members": "BaseModel,RuntimeError",
+    # BaseModel attributes where the documentation does not add a lot of value
     "exclude-members": "model_config,model_fields",
 }
 
