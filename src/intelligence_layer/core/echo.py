@@ -61,7 +61,7 @@ class EchoTask(Task[EchoInput, EchoOutput]):
             )
         >>> logger = InMemoryLogger(name="EchoTask")
         >>> output = task.run(input, logger)
-        >>> print(output.tokens_with_log_probs[0]).prob
+        >>> print(output.tokens_with_log_probs[0].prob)
         0.6
     """
 
