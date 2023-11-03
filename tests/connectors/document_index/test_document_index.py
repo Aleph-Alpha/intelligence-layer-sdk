@@ -53,7 +53,7 @@ def test_document_index_creates_collection(
     document_index.create_collection(collection_path)
     collections = document_index.list_collections(collection_path.namespace)
 
-    assert collection_path.collection in collections
+    assert collection_path in collections
 
 
 @pytest.mark.internal

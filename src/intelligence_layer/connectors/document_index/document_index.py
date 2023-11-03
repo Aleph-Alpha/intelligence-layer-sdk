@@ -147,7 +147,7 @@ class DocumentSearchResult(BaseModel):
         )
 
 
-class DocumentIndexError(Exception):
+class DocumentIndexError(RuntimeError):
     """Raised in case of any `DocumentIndexClient`-related errors.
 
     Attributes:
@@ -155,25 +155,37 @@ class DocumentIndexError(Exception):
         status_code: The http error code.
     """
 
-    def __init__(self, message: str, status_code: int) -> None:
+    def __init__(self, message: str, status_code: HTTPStatus) -> None:
         super().__init__(message)
         self.message = message
         self.status_code = status_code
 
 
 class ExternalServiceUnavailable(DocumentIndexError):
+    """Raised in case external service is unavailable when the request is executed."""
+
     pass
 
 
 class ResourceNotFound(DocumentIndexError):
+    """Raised when a resource like a namespace or a document cannot be found.
+
+    Note that this can also mean that the user executing the request does not have
+    permission to access the resource.
+    """
+
     pass
 
 
 class InvalidInput(DocumentIndexError):
+    """Raised when the user-input could not be processed as it violates pre-conditions."""
+
     pass
 
 
 class ConstraintViolation(DocumentIndexError):
+    """Raised when the request cannot be processed as it would lead to an inconsistent state."""
+
     pass
 
 
@@ -186,6 +198,8 @@ _status_code_to_exception = {
 
 
 class InternalError(DocumentIndexError):
+    """Raised in case of unexpected errors."""
+
     pass
 
 
@@ -269,7 +283,7 @@ class DocumentIndexClient:
         response = requests.delete(url, headers=self.headers)
         self._raise_for_status(response)
 
-    def list_collections(self, namespace: str) -> Sequence[str]:
+    def list_collections(self, namespace: str) -> Sequence[CollectionPath]:
         """Lists all collections within a namespace.
 
         Args:
@@ -277,14 +291,16 @@ class DocumentIndexClient:
                 Typically corresponds to an organization.
 
         Returns:
-            List of all collections' names.
+            List of all `CollectionPath`\ s in the given namespace.
         """
 
         url = f"{self._base_document_index_url}/collections/{namespace}"
         response = requests.get(url, headers=self.headers)
         self._raise_for_status(response)
-        collections: Sequence[str] = response.json()
-        return collections
+        return [
+            CollectionPath(namespace=namespace, collection=collection)
+            for collection in response.json()
+        ]
 
     def add_document(
         self,

@@ -1,4 +1,16 @@
-from .document_index.document_index import DocumentIndexClient
+from .document_index.document_index import (
+    DocumentIndexClient,
+    DocumentContents,
+    DocumentInfo,
+    DocumentPath,
+    DocumentSearchResult,
+    ResourceNotFound,
+    ConstraintViolation,
+    InternalError,
+    InvalidInput,
+    ExternalServiceUnavailable,
+    DocumentIndexError,
+)
 from .retrievers.base_retriever import BaseRetriever, Document, SearchResult
 from .retrievers.document_index_retriever import DocumentIndexRetriever
 from .retrievers.qdrant_in_memory_retriever import (
