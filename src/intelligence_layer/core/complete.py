@@ -83,15 +83,15 @@ class InstructInput(BaseModel):
     maximum_response_tokens: int = 64
 
 
-class InstructOutput(BaseModel):
-    """The output of an `Instruct`.
+class PromptOutput(BaseModel):
+    """The output of an `Instruct` or `FewShot` task.
 
     Attributes:
         response: The generated response to the instruction.
         prompt_with_metadata: To handle the instruction, a `PromptTemplate` is used.
             The template defines two `PromptRange`\ s:
-            - "instruction": covering the instruction text as provided in the `InstructionInput`.
-            - "input": covering the input text as provided in the `InstructionInput`.
+            - "instruction": covering the instruction text.
+            - "input": covering the input text.
             These can for example be used for downstream `TextHighlight` tasks.
     """
 
@@ -99,7 +99,7 @@ class InstructOutput(BaseModel):
     prompt_with_metadata: PromptWithMetadata
 
 
-class Instruct(Task[InstructInput, InstructOutput]):
+class Instruct(Task[InstructInput, PromptOutput]):
     """Runs zero-shot instruction completions on a model.
 
     Can be used for various types of instructions a LLM could handle, like QA, summarization,
@@ -138,7 +138,7 @@ class Instruct(Task[InstructInput, InstructOutput]):
         self._client = client
         self._completion = Complete(client)
 
-    def run(self, input: InstructInput, logger: DebugLogger) -> InstructOutput:
+    def run(self, input: InstructInput, logger: DebugLogger) -> PromptOutput:
         prompt_with_metadata = PromptTemplate(
             self.INSTRUCTION_PROMPT_TEMPLATE
         ).to_prompt_with_metadata(
@@ -152,7 +152,7 @@ class Instruct(Task[InstructInput, InstructOutput]):
             input.model,
             logger,
         )
-        return InstructOutput(
+        return PromptOutput(
             response=completion, prompt_with_metadata=prompt_with_metadata
         )
 
@@ -171,13 +171,12 @@ class FewShotExample(BaseModel):
     response: str
 
 
-class FewShotInput(BaseModel):
-    """The input for an `Instruct`.
+class FewShotConfig(BaseModel):
+    """Config for a few-shot prompt without dynamic input.
 
     Attributes:
         instruction: A textual instruction for the model.
             Could be a directive to answer a question or to translate something.
-        input: The text input for the prompt, e.g. a text to be translated.
         examples: A number of few shot examples to prime the model.
         input_prefix: The prefix for each `FewShotExample.input` as well as the final input.
         response_prefix: The prefix for each `FewShotExample.response` as well as the completion.
@@ -189,7 +188,6 @@ class FewShotInput(BaseModel):
     """
 
     instruction: str
-    input: str
     examples: Sequence[FewShotExample]
     input_prefix: str
     response_prefix: str
@@ -197,23 +195,18 @@ class FewShotInput(BaseModel):
     maximum_response_tokens: int = 64
 
 
-class FewShotOutput(BaseModel):
-    """The output of an `Instruct`.
+class FewShotInput(BaseModel):
+    """The input for a `FewShot` task.
 
-    Attributes:
-        response: The generated response to the instruction.
-        prompt_with_metadata: To handle the instruction, a `PromptTemplate` is used.
-            The template defines two `PromptRange`\ s:
-            - "instruction": covering the instruction text as provided in the `InstructionInput`.
-            - "input": covering the input text as provided in the `InstructionInput`.
-            These can for example be used for downstream `TextHighlight` tasks.
+    input: The text input for the prompt, e.g. a text to be translated.
+    few_shot_config: The configuration to be used for generating a response.
     """
 
-    response: str
-    prompt_with_metadata: PromptWithMetadata
+    input: str
+    few_shot_config: FewShotConfig
 
 
-class FewShot(Task[FewShotInput, FewShotOutput]):
+class FewShot(Task[FewShotInput, PromptOutput]):
     """Runs few-shot completions on a model.
 
     Vanilla models work best with a show-don't-tell approach. Few-shot prompts illustrate
@@ -230,33 +223,29 @@ class FewShot(Task[FewShotInput, FewShotOutput]):
         >>> client = Client(os.getenv("AA_TOKEN"))
         >>> task = FewShot(client)
         >>> input = FewShotInput(
-        >>>     instruction="Answer each question.",
         >>>     input="What is the capital of Germany?",
-        >>>     examples=[
-        >>>         FewShotExample(
-        >>>             input="How high is Mount Everest?",
-        >>>             response="8848 metres."
-        >>>         ),
-        >>>         FewShotExample(
-        >>>             input="When was Caesar killed?",
-        >>>             response="44 AD."
-        >>>         )
-        >>>     ],
-        >>>     input_prefix="Question",
-        >>>     response_prefix="Answer",
-        >>>     model="luminous-base"
+        >>>     few_shot_config=FewShotConfig(
+        >>>         instruction="Answer each question.",
+        >>>         examples=[
+        >>>             FewShotExample(input="How high is Mount Everest?", response="8848 metres."),
+        >>>             FewShotExample(input="When was Caesar killed?", response="44 AD."),
+        >>>         ],
+        >>>         input_prefix="Question",
+        >>>         response_prefix="Answer",
+        >>>         model="luminous-base"
+        >>>     )
         >>> )
-        >>> logger = InMemoryLogger(name="Instruction")
+        >>> logger = InMemoryLogger(name="FewShot")
         >>> output = task.run(input, logger)
         >>> print(output.response)
         Berlin.
     """
 
-    FEW_SHOT_PROMPT_TEMPLATE = """{% promptrange instruction %}{{instruction}}{% endpromptrange %}
+    FEW_SHOT_PROMPT_TEMPLATE = """{% promptrange instruction %}{{instruction}}
 {% for example in few_shot_examples %}###
 {{input_prefix}}: {{ example.input }}
 {{response_prefix}}: {{ example.response }}
-{% endfor %}###
+{% endfor %}{% endpromptrange %}###
 {{input_prefix}}: {% promptrange input %}{{input}}{% endpromptrange %}
 {{response_prefix}}:"""
 
@@ -265,25 +254,25 @@ class FewShot(Task[FewShotInput, FewShotOutput]):
         self._client = client
         self._completion = Complete(client)
 
-    def run(self, input: FewShotInput, logger: DebugLogger) -> FewShotOutput:
+    def run(self, input: FewShotInput, logger: DebugLogger) -> PromptOutput:
         prompt_with_metadata = PromptTemplate(
             self.FEW_SHOT_PROMPT_TEMPLATE
         ).to_prompt_with_metadata(
-            instruction=input.instruction,
+            instruction=input.few_shot_config.instruction,
             input=input.input,
             few_shot_examples=[
-                e.model_dump() for e in input.examples
+                e.model_dump() for e in input.few_shot_config.examples
             ],  # liquid can't handle classes, thus serializing
-            input_prefix=input.input_prefix,
-            response_prefix=input.response_prefix,
+            input_prefix=input.few_shot_config.input_prefix,
+            response_prefix=input.few_shot_config.response_prefix,
         )
         completion = self._complete(
             prompt_with_metadata.prompt,
-            input.maximum_response_tokens,
-            input.model,
+            input.few_shot_config.maximum_response_tokens,
+            input.few_shot_config.model,
             logger,
         )
-        return FewShotOutput(
+        return PromptOutput(
             response=completion, prompt_with_metadata=prompt_with_metadata
         )
 

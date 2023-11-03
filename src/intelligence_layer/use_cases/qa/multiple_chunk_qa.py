@@ -6,7 +6,7 @@ from pydantic import BaseModel
 from intelligence_layer.core.complete import (
     Instruct,
     InstructInput,
-    InstructOutput,
+    PromptOutput,
 )
 from intelligence_layer.use_cases.qa.single_chunk_qa import (
     SingleChunkQaInput,
@@ -149,7 +149,7 @@ Answers:
             logger,
         ).response
 
-    def _instruct(self, input: str, logger: DebugLogger) -> InstructOutput:
+    def _instruct(self, input: str, logger: DebugLogger) -> PromptOutput:
         return self._instruction.run(
             InstructInput(
                 instruction=self.MERGE_ANSWERS_INSTRUCTION,

@@ -4,7 +4,7 @@ from .complete import (
     CompleteOutput,
     Instruct,
     InstructInput,
-    InstructOutput,
+    PromptOutput,
 )
 from .echo import EchoInput, EchoOutput, EchoTask
 from .evaluator import Evaluation, Example, Dataset
