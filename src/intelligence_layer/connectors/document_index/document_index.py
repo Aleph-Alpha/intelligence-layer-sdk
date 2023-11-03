@@ -1,6 +1,7 @@
 from datetime import datetime
-import json
-from typing import Any, Mapping, Sequence
+from http import HTTPStatus
+from json import dumps
+from typing import Any, Mapping, Sequence, Union
 
 from pydantic import BaseModel, Field
 import requests
@@ -156,7 +157,36 @@ class DocumentIndexError(Exception):
 
     def __init__(self, message: str, status_code: int) -> None:
         super().__init__(message)
+        self.message = message
         self.status_code = status_code
+
+
+class ExternalServiceUnavailable(DocumentIndexError):
+    pass
+
+
+class ResourceNotFound(DocumentIndexError):
+    pass
+
+
+class InvalidInput(DocumentIndexError):
+    pass
+
+
+class ConstraintViolation(DocumentIndexError):
+    pass
+
+
+_status_code_to_exception = {
+    HTTPStatus.SERVICE_UNAVAILABLE: ExternalServiceUnavailable,
+    HTTPStatus.NOT_FOUND: ResourceNotFound,
+    HTTPStatus.UNPROCESSABLE_ENTITY: InvalidInput,
+    HTTPStatus.CONFLICT: ConstraintViolation,
+}
+
+
+class InternalError(DocumentIndexError):
+    pass
 
 
 class DocumentIndexClient:
@@ -209,7 +239,10 @@ class DocumentIndexClient:
         try:
             response.raise_for_status()
         except:
-            raise DocumentIndexError(response.text, response.status_code)
+            exception_factory = _status_code_to_exception.get(
+                HTTPStatus(response.status_code), InternalError
+            )
+            raise exception_factory(response.text, HTTPStatus(response.status_code))
 
     def create_collection(self, collection_path: CollectionPath) -> None:
         """Creates a collection at the path.
@@ -274,7 +307,7 @@ class DocumentIndexClient:
             "schema_version": "V1",
             "contents": contents._to_modalities_json(),
         }
-        response = requests.put(url, data=json.dumps(data), headers=self.headers)
+        response = requests.put(url, data=dumps(data), headers=self.headers)
         self._raise_for_status(response)
 
     def delete_document(self, document_path: DocumentPath) -> None:
@@ -346,7 +379,7 @@ class DocumentIndexClient:
             "min_score": search_query.min_score,
             "filter": [{"with": [{"modality": "text"}]}],
         }
-        response = requests.post(url, data=json.dumps(data), headers=self.headers)
+        response = requests.post(url, data=dumps(data), headers=self.headers)
         self._raise_for_status(response)
         return [DocumentSearchResult._from_search_response(r) for r in response.json()]
 

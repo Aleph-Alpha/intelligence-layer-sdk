@@ -1,10 +1,12 @@
-from pytest import fixture
+from http import HTTPStatus
+from pytest import fixture, raises
 import pytest
 from intelligence_layer.connectors.document_index.document_index import (
     CollectionPath,
     DocumentContents,
     DocumentIndexClient,
     DocumentPath,
+    ResourceNotFound,
     SearchQuery,
 )
 
@@ -105,3 +107,18 @@ def test_document_index_deletes_document(
     document_paths = document_index.list_documents(document_path.collection_path)
 
     assert not any(d.document_path == document_path for d in document_paths)
+
+
+def test_document_index_raises_on_getting_non_existing_document(
+    document_index: DocumentIndexClient,
+) -> None:
+    non_existing_document = DocumentPath(
+        collection_path=CollectionPath(namespace="does", collection="not"),
+        document_name="exist",
+    )
+    with raises(ResourceNotFound) as exception_info:
+        document_index.document(non_existing_document)
+    assert exception_info.value.status_code == HTTPStatus.NOT_FOUND
+    assert (
+        non_existing_document.collection_path.namespace in exception_info.value.message
+    )
