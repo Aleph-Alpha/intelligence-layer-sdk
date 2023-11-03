@@ -1,4 +1,5 @@
-from typing import Optional
+from dataclasses import dataclass
+from typing import Optional, Sequence
 
 from aleph_alpha_client import Client, CompletionRequest, CompletionResponse, Prompt
 from pydantic import BaseModel
@@ -159,6 +160,139 @@ class Instruct(Task[InstructInput, InstructOutput]):
         self, prompt: Prompt, maximum_tokens: int, model: str, logger: DebugLogger
     ) -> str:
         request = CompletionRequest(prompt, maximum_tokens=maximum_tokens)
+        return self._completion.run(
+            CompleteInput(request=request, model=model),
+            logger,
+        ).completion
+
+
+class FewShotExample(BaseModel):
+    input: str
+    response: str
+
+
+class FewShotInput(BaseModel):
+    """The input for an `Instruct`.
+
+    Attributes:
+        instruction: A textual instruction for the model.
+            Could be a directive to answer a question or to translate something.
+        input: The text input for the prompt, e.g. a text to be translated.
+        examples: A number of few shot examples to prime the model.
+        input_prefix: The prefix for each `FewShotExample.input` as well as the final input.
+        response_prefix: The prefix for each `FewShotExample.response` as well as the completion.
+        model: The name of the model that should handle the prompt.
+            Vanilla models work best with few-shot promptung.
+            These include 'luminous-base', 'extended' & 'supreme'.
+        maximum_response_tokens: The maximum number of tokens to be generated in the answer.
+            The default corresponds to roughly one short paragraph.
+    """
+
+    instruction: str
+    input: str
+    examples: Sequence[FewShotExample]
+    input_prefix: str
+    response_prefix: str
+    model: str
+    maximum_response_tokens: int = 64
+
+
+class FewShotOutput(BaseModel):
+    """The output of an `Instruct`.
+
+    Attributes:
+        response: The generated response to the instruction.
+        prompt_with_metadata: To handle the instruction, a `PromptTemplate` is used.
+            The template defines two `PromptRange`\ s:
+            - "instruction": covering the instruction text as provided in the `InstructionInput`.
+            - "input": covering the input text as provided in the `InstructionInput`.
+            These can for example be used for downstream `TextHighlight` tasks.
+    """
+
+    response: str
+    prompt_with_metadata: PromptWithMetadata
+
+
+class FewShot(Task[FewShotInput, FewShotOutput]):
+    """Runs few-shot completions on a model.
+
+    Vanilla models work best with a show-don't-tell approach. Few-shot prompts illustrate
+    the output that is expected from the model.
+
+    Args:
+        client: Aleph Alpha client instance for running model related API calls.
+
+    Attributes:
+        FEW_SHOT_PROMPT_TEMPLATE: The prompt-template used to build the actual `Prompt` sent
+            to the inference API.
+
+    Example:
+        >>> client = Client(os.getenv("AA_TOKEN"))
+        >>> task = FewShot(client)
+        >>> input = FewShotInput(
+        >>>     instruction="Answer each question.",
+        >>>     input="What is the capital of Germany?",
+        >>>     examples=[
+        >>>         FewShotExample(
+        >>>             input="How high is Mount Everest?",
+        >>>             response="8848 metres."
+        >>>         ),
+        >>>         FewShotExample(
+        >>>             input="When was Caesar killed?",
+        >>>             response="44 AD."
+        >>>         )
+        >>>     ],
+        >>>     input_prefix="Question",
+        >>>     response_prefix="Answer",
+        >>>     model="luminous-base"
+        >>> )
+        >>> logger = InMemoryLogger(name="Instruction")
+        >>> output = task.run(input, logger)
+        >>> print(output.response)
+        Berlin.
+    """
+
+    FEW_SHOT_PROMPT_TEMPLATE = """{% promptrange instruction %}{{instruction}}{% endpromptrange %}
+{% for example in few_shot_examples %}###
+{{input_prefix}}: {{ example.input }}
+{{response_prefix}}: {{ example.response }}
+{% endfor %}###
+{{input_prefix}}: {% promptrange input %}{{input}}{% endpromptrange %}
+{{response_prefix}}:"""
+
+    def __init__(self, client: Client) -> None:
+        super().__init__()
+        self._client = client
+        self._completion = Complete(client)
+
+    def run(self, input: FewShotInput, logger: DebugLogger) -> FewShotOutput:
+        prompt_with_metadata = PromptTemplate(
+            self.FEW_SHOT_PROMPT_TEMPLATE
+        ).to_prompt_with_metadata(
+            instruction=input.instruction,
+            input=input.input,
+            few_shot_examples=[
+                e.model_dump() for e in input.examples
+            ],  # liquid can't handle classes, thus serializing
+            input_prefix=input.input_prefix,
+            response_prefix=input.response_prefix,
+        )
+        completion = self._complete(
+            prompt_with_metadata.prompt,
+            input.maximum_response_tokens,
+            input.model,
+            logger,
+        )
+        return FewShotOutput(
+            response=completion, prompt_with_metadata=prompt_with_metadata
+        )
+
+    def _complete(
+        self, prompt: Prompt, maximum_tokens: int, model: str, logger: DebugLogger
+    ) -> str:
+        request = CompletionRequest(
+            prompt, maximum_tokens=maximum_tokens, stop_sequences=["###"]
+        )
         return self._completion.run(
             CompleteInput(request=request, model=model),
             logger,
