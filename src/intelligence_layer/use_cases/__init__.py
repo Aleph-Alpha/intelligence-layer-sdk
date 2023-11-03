@@ -10,6 +10,8 @@ from .qa.multiple_chunk_qa import (
 from .qa.long_context_qa import LongContextQa, LongContextQaInput
 from .qa.retriever_based_qa import RetrieverBasedQa, RetrieverBasedQaInput
 from .search.search import Search
-from .summarize.short_body_summarize import ShortBodySummarize
+from .summarize.medium_compression.medium_compression_summarize import (
+    MediumCompressionSummarize,
+)
 
 __all__ = [symbol for symbol in dir() if symbol and symbol[0].isupper()]
