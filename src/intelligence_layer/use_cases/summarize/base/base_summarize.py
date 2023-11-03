@@ -76,7 +76,9 @@ class BaseSummarize(Task[SummarizeInput, SummarizeOutput]):
         highlights = self._get_highlights(
             prompt_output.prompt_with_metadata, prompt_output.response, logger
         )
-        return SummarizeOutput(summary=prompt_output.response, highlights=highlights)
+        return SummarizeOutput(
+            summary=prompt_output.response.strip(), highlights=highlights
+        )
 
     @abstractmethod
     def get_prompt_and_complete(
