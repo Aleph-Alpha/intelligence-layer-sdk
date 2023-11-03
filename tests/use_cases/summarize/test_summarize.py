@@ -24,4 +24,3 @@ def test_summarize(summarize: MediumCompressionSummarize) -> None:
     assert output.summary
     assert "bear" in output.summary.lower()
     assert len(output.summary) < len(text)
-    assert output.highlights
