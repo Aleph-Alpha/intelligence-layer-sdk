@@ -18,9 +18,9 @@ The key features of the Intelligence Layer are:
 
 1. [Getting Started](#getting-started)
 2. [Getting started with the Jupyter Notebooks](#getting-started-with-the-jupyter-notebooks)
-3. [How to use this in your project](#how-to-make-your-own-use-case)
+3. [How to use this in your project](#how-to-use-this-in-your-project)
 4. [Use-case index](#use-case-index)
-5. [How to make your own use-case](#how-to-make-your-own-use-case)
+5. [How to make your own use case](#how-to-make-your-own-use-case)
 6. [Running the Debug Log Viewer](#running-the-debug-log-viewer)
 7. [References](#references)
 8. [License](#license)
@@ -61,13 +61,18 @@ cd src/examples && poetry run jupyter lab
 
 ## How to use this in your project
 
-To install this as a dependency in your project, you need a [Github access token](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens).
+To install this as a dependency in your project, you need a [Github access token](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens#creating-a-personal-access-token-classic).
+This token needs the following permissions
+- `repo`
+- `read:packages`
 
 Set your access token:
 
 ```bash
 export GITHUB_TOKEN=<YOUR_GITHUB_TOKEN>
 ```
+[](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens#creating-a-personal-access-token-classic)
+
 We recommend setting up a dedicated virtual environment. You can do so by using [conda](https://conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html#creating-an-environment-with-commands) or [venv](https://docs.python.org/3/library/venv.html) or [poetry](https://python-poetry.org/).
 
 You can add it to the poetry dependencies by adding the following in the pyproject.toml
@@ -116,7 +121,7 @@ To give you a starting point for using the Intelligence Layer, we provide some p
 | Search    | [Search](https://aleph-alpha-intelligence-layer.readthedocs-hosted.com/en/latest/intelligence_layer.use_cases.html#intelligence_layer.use_cases.Search)                                 | Search for texts in a document base using a [BaseRetriever](https://aleph-alpha-intelligence-layer.readthedocs-hosted.com/en/latest/intelligence_layer.connectors.html#intelligence_layer.connectors.BaseRetriever) implementation.        |
 | Summarize | [ShortBodySummarize](https://aleph-alpha-intelligence-layer.readthedocs-hosted.com/en/latest/intelligence_layer.use_cases.html#intelligence_layer.use_cases.ShortBodySummarize)         | Condense a short text into a brief summary.                                                                                                                                                                                                |
 
-## How to make your own
+## How to make your own use case
 
 Note that we do not expect the above use cases to solve all of your issues.
 Instead, we encourage you to think of our pre-configured use cases as a foundation to fast-track your development process.
