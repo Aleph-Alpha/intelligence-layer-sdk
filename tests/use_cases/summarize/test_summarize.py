@@ -3,8 +3,8 @@ from pytest import fixture
 
 from intelligence_layer.core.logger import NoOpDebugLogger
 from intelligence_layer.core.task import Chunk
-from intelligence_layer.use_cases.summarize.summarize import (
-    SummarizeInput,
+from intelligence_layer.use_cases.summarize.summarize import SummarizeInput
+from intelligence_layer.use_cases.summarize.short_body_summarize import (
     ShortBodySummarize,
 )
 
