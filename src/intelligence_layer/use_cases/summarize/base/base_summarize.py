@@ -19,6 +19,7 @@ class SummarizeInput(BaseModel):
     """
 
     chunk: Chunk
+    use_highlights: bool
 
 
 class SummarizeOutput(BaseModel):
@@ -73,8 +74,12 @@ class BaseSummarize(Task[SummarizeInput, SummarizeOutput]):
 
     def run(self, input: SummarizeInput, logger: DebugLogger) -> SummarizeOutput:
         prompt_output = self.get_prompt_and_complete(input, logger)
-        highlights = self._get_highlights(
-            prompt_output.prompt_with_metadata, prompt_output.response, logger
+        highlights = (
+            self._get_highlights(
+                prompt_output.prompt_with_metadata, prompt_output.response, logger
+            )
+            if input.use_highlights
+            else []
         )
         return SummarizeOutput(
             summary=prompt_output.response.strip(), highlights=highlights
