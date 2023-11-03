@@ -2,7 +2,7 @@ from intelligence_layer.core.detect_language import DetectLanguage, DetectLangua
 from intelligence_layer.core.logger import NoOpDebugLogger
 
 
-def test_detect_language_returns_correct_language():
+def test_detect_language_returns_correct_language() -> None:
     text = "Hello, my name is Niklas. I am working with Pit on this language detection piece."
     task = DetectLanguage(threshold=0.5)
     input = DetectLanguageInput(

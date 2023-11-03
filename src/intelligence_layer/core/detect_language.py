@@ -1,6 +1,6 @@
 from typing import Mapping, Optional, Sequence
 
-from langdetect import detect_langs, language
+from langdetect import detect_langs  # type: ignore
 from pydantic import BaseModel
 
 from intelligence_layer.core.logger import DebugLogger
@@ -33,6 +33,11 @@ class DetectLanguageOutput(BaseModel):
     probabilities: Mapping[str, float]
 
 
+class AnnotatedLanguage(BaseModel):
+    lang: str
+    prob: float
+
+
 class DetectLanguage(Task[DetectLanguageInput, DetectLanguageOutput]):
     """Task that detects the language of a text.
 
@@ -63,15 +68,20 @@ class DetectLanguage(Task[DetectLanguageInput, DetectLanguageOutput]):
         self, input: DetectLanguageInput, logger: DebugLogger
     ) -> DetectLanguageOutput:
         languages = detect_langs(input.text)
-        best_fit = self._get_best_fit(languages, input.possible_languages)
-        probabilities = self._get_probabilities(languages, input.possible_languages)
+        annotated_languages = [
+            AnnotatedLanguage(lang=l.lang, prob=l.prob) for l in languages
+        ]
+        best_fit = self._get_best_fit(annotated_languages, input.possible_languages)
+        probabilities = self._get_probabilities(
+            annotated_languages, input.possible_languages
+        )
         return DetectLanguageOutput(best_fit=best_fit, probabilities=probabilities)
 
     def _get_best_fit(
         self,
-        languages_result: list[language.Language],
+        languages_result: Sequence[AnnotatedLanguage],
         possible_languages: Sequence[str],
-    ) -> str:
+    ) -> Optional[str]:
         return (
             languages_result[0].lang
             if (
@@ -83,7 +93,7 @@ class DetectLanguage(Task[DetectLanguageInput, DetectLanguageOutput]):
 
     def _get_probabilities(
         self,
-        languages_result: list[language.Language],
+        languages_result: Sequence[AnnotatedLanguage],
         possible_languages: Sequence[str],
     ) -> Mapping[str, float]:
         def get_prob(target_lang: str) -> float:
