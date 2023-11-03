@@ -8,17 +8,54 @@ from intelligence_layer.core.task import Task
 
 
 class DetectLanguageInput(BaseModel):
+    """The input for a `DetectLanguage` task.
+
+    Attributes:
+        text: The text to identify the language for.
+        possible_languages: All languages that should be considered during detection.
+            Languages should be provided with their ISO 639-1 codes.
+    """
+
     text: str
     possible_languages: Sequence[str]
 
 
 class DetectLanguageOutput(BaseModel):
+    """The output of a `DetectLanguage` task.
+
+    Attributes:
+        best_fit: The prediction for the best matching language.
+            Will be `None` if no language has a probability above the threshold.
+        probabilities: Each possible language with the corresponding probability.
+    """
+
     best_fit: Optional[str]
     probabilities: Mapping[str, float]
 
 
 class DetectLanguage(Task[DetectLanguageInput, DetectLanguageOutput]):
-    def __init__(self, threshold: float):
+    """Task that detects the language of a text.
+
+    Analyzes the likelihood of that a given text is written in one of the
+    `possible_languages`.
+
+    Args:
+        threshold: Minimum probability value for a language to be considered
+            the `best_fit`.
+
+    Example:
+        >>> task = DetectLanguage()
+        >>> input = DetectLanguageInput(
+                text="This is an English text.",
+                allowed_langs=["en", "fr],
+            )
+        >>> logger = InMemoryLogger(name="DetectLanguage")
+        >>> output = task.run(input, logger)
+        >>> print(output.best_fit)
+        en
+    """
+
+    def __init__(self, threshold: float = 0.5):
         super().__init__()
         self._threshold = threshold
 
