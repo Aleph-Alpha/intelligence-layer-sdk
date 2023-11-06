@@ -12,17 +12,23 @@ from aleph_alpha_client import (
     PromptTemplate,
     Prompt,
 )
+from pydantic import BaseModel
 
 from intelligence_layer.core.complete import (
     Complete,
 )
-from intelligence_layer.core.echo import EchoInput, EchoTask, TokenWithProb
+from intelligence_layer.core.echo import EchoInput, EchoTask, TokenWithLogProb 
 from intelligence_layer.core.logger import DebugLogger
-from intelligence_layer.core.task import Probability, Task, Token
+from intelligence_layer.core.task import Task, Token
 from intelligence_layer.use_cases.classify.classify import (
     ClassifyInput,
     ClassifyOutput,
+    Probability,
 )
+
+class TokenWithProb(BaseModel):
+    token: Token
+    prob: Probability 
 
 
 def to_aa_tokens_prompt(tokens: Sequence[Token]) -> Prompt:
@@ -97,7 +103,7 @@ Reply with only the class label.
         labels: frozenset[str],
         model: str,
         logger: DebugLogger,
-    ) -> Mapping[str, Sequence[TokenWithProb]]:
+    ) -> Mapping[str, Sequence[TokenWithLogProb]]:
         prompt = PromptTemplate(template_str=self.PROMPT_TEMPLATE).to_prompt(
             text=text_to_classify
         )
@@ -132,7 +138,7 @@ Reply with only the class label.
 
     def _normalize(
         self,
-        log_probs_per_label: Mapping[str, Sequence[TokenWithProb]],
+        log_probs_per_label: Mapping[str, Sequence[TokenWithLogProb]],
         logger: DebugLogger,
     ) -> Mapping[str, Sequence[TokenWithProb]]:
         node = TreeNode()
@@ -179,7 +185,7 @@ class TreeNode:
 
         child.insert_without_calculation(path[1:])
 
-    def insert_path(self, path: Sequence[TokenWithProb]) -> None:
+    def insert_path(self, path: Sequence[TokenWithLogProb]) -> None:
         if not path:
             return
         token_with_prob = path[0]
