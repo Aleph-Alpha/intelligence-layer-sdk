@@ -1,7 +1,26 @@
-from intelligence_layer.core.complete import FewShotConfig, FewShotExample
+from aleph_alpha_client import Client
+
+from intelligence_layer.core.complete import (
+    FewShot,
+    FewShotConfig,
+    FewShotExample,
+    FewShotInput,
+    PromptOutput,
+)
+from intelligence_layer.core.detect_language import (
+    DetectLanguage,
+    DetectLanguageInput,
+    Language,
+)
+from intelligence_layer.core.logger import DebugLogger
+from intelligence_layer.core.task import Task
+from intelligence_layer.use_cases.summarize.summarize import (
+    SummarizeInput,
+    SummarizeOutput,
+)
 
 
-prompt_configs = {
+prompt_config = {
     "en": FewShotConfig(
         instruction="Summarize each text in one to three sentences.",
         examples=[
@@ -24,3 +43,64 @@ prompt_configs = {
         maximum_response_tokens=128,
     )
 }
+
+
+class MediumCompressionSummarize(Task[SummarizeInput, SummarizeOutput]):
+    """Summarises a section into a text of medium length.
+
+    Generate a short body natural language summary.
+
+    Args:
+        client: Aleph Alpha client instance for running model related API calls.
+
+    Attributes:
+        PROMPT_CONFIGS: A list of few-shot configurations.
+        DEFAULT_LANG: Fallback language if allowed language can't be detected.
+
+    Example:
+        >>> client = Client(os.getenv("AA_TOKEN"))
+        >>> task = MediumCompressionSummarize(client)
+        >>> input = SummarizeInput(
+        >>>     chunk="This is a story about pizza. Tina hates pizza. However, Mike likes it. Pete strongly believes that pizza is the best thing to exist."
+        >>> )
+        >>> logger = InMemoryLogger(name="MediumCompressionSummarize")
+        >>> output = task.run(input, logger)
+        >>> print(output.summary)
+        Tina does not like pizza, but Mike and Pete do.
+    """
+
+    PROMPT_CONFIG = prompt_config
+    DEFAULT_LANG = Language("en")
+    _client: Client
+
+    def __init__(self, client: Client) -> None:
+        self._detect_language = DetectLanguage()
+        self._few_shot = FewShot(client)
+
+    def run(self, input: SummarizeInput, logger: DebugLogger) -> SummarizeOutput:
+        prompt_output = self._get_prompt_and_complete(input, logger)
+        return SummarizeOutput(summary=prompt_output.response.strip())
+
+    def _get_prompt_and_complete(
+        self, input: SummarizeInput, logger: DebugLogger
+    ) -> PromptOutput:
+        language = self._get_language(input.chunk, logger)
+        prompt_config = self.PROMPT_CONFIG.get(language)
+        if not prompt_config:
+            raise ValueError(
+                "Could not find `prompt_config` for the detected language."
+            )
+        return self._few_shot.run(
+            FewShotInput(input=input.chunk, few_shot_config=prompt_config),
+            logger,
+        )
+
+    def _get_language(self, text: str, logger: DebugLogger) -> str:
+        detect_language_input = DetectLanguageInput(
+            text=text,
+            possible_languages=[Language(l) for l in self.PROMPT_CONFIG.keys()],
+        )
+        detect_language_output = self._detect_language.run(
+            detect_language_input, logger
+        )
+        return detect_language_output.best_fit or self.DEFAULT_LANG

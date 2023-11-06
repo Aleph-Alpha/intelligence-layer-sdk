@@ -10,7 +10,7 @@ from .qa.multiple_chunk_qa import (
 from .qa.long_context_qa import LongContextQa, LongContextQaInput
 from .qa.retriever_based_qa import RetrieverBasedQa, RetrieverBasedQaInput
 from .search.search import Search
-from .summarize.medium_compression.medium_compression_summarize import (
+from .summarize.medium_compression_summarize import (
     MediumCompressionSummarize,
 )
 
