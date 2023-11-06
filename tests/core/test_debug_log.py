@@ -64,3 +64,22 @@ def test_task_automatically_logs_input_and_output(client: Client) -> None:
     assert task_span.output == output
     assert task_span.start_timestamp and task_span.end_timestamp
     assert task_span.start_timestamp < task_span.end_timestamp
+
+
+def test_logger_can_set_custom_start_time_for_log_entry() -> None:
+    logger = InMemoryDebugLogger(name="completion")
+    timestamp = datetime.utcnow()
+
+    logger.log("log", "message", timestamp)
+
+    assert isinstance(logger.logs[0], LogEntry)
+    assert logger.logs[0].timestamp == timestamp
+
+
+def test_logger_can_set_custom_start_time_for_span() -> None:
+    logger = InMemoryDebugLogger(name="completion")
+    start = datetime.utcnow()
+
+    span = logger.span("span", start)
+
+    assert span.start_timestamp == start

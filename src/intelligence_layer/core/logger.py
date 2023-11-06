@@ -62,7 +62,12 @@ class DebugLogger(ABC):
     """
 
     @abstractmethod
-    def log(self, message: str, value: PydanticSerializable) -> None:
+    def log(
+        self,
+        message: str,
+        value: PydanticSerializable,
+        timestamp: Optional[datetime] = None,
+    ) -> None:
         """Record a log of relevant information as part of a step within a task.
 
         By default, the `Input` and `Output` of each `Task` are logged automatically, but you can
@@ -73,11 +78,12 @@ class DebugLogger(ABC):
                 is related to.
             value: The relevant data you want to log. Can be anything that is serializable by
                 Pydantic, which gives the loggers flexibility in how they store and emit the logs.
+            timestamp: optional override of the timestamp. Otherwise should default to now
         """
         ...
 
     @abstractmethod
-    def span(self, name: str) -> "Span":
+    def span(self, name: str, timestamp: Optional[datetime] = None) -> "Span":
         """Generate a span from the current logging instance.
 
         Each logger implementation can decide on how it wants to represent this, but they should
@@ -85,6 +91,7 @@ class DebugLogger(ABC):
 
         Args:
             name: A descriptive name of what this span will contain logs about.
+            timestamp: optional override of the starting timestamp. Otherwise should default to now
 
         Returns:
             An instance of something that meets the protocol of Span.
@@ -124,8 +131,6 @@ class Span(DebugLogger, AbstractContextManager["Span"]):
     def __enter__(self) -> Self:
         return self
 
-    ...
-
 
 class TaskSpan(Span, AbstractContextManager["TaskSpan"]):
     """A protocol for instrumenting a `Task`'s input, output, and nested logs.
@@ -163,7 +168,12 @@ class NoOpDebugLogger(DebugLogger):
     All calls to `log` won't actually do anything.
     """
 
-    def log(self, message: str, value: PydanticSerializable) -> None:
+    def log(
+        self,
+        message: str,
+        value: PydanticSerializable,
+        timestamp: Optional[datetime] = None,
+    ) -> None:
         """The `NoOpDebugLogger` does not do anything.
 
         Args:
@@ -171,14 +181,16 @@ class NoOpDebugLogger(DebugLogger):
                 is related to.
             value: The relevant data you want to log. Can be anything that is serializable by
                 Pydantic, which gives the loggers flexibility in how they store and emit the logs.
+            timestamp: Optional timestamp override for the log entry.
         """
         pass
 
-    def span(self, name: str) -> "NoOpTaskSpan":
+    def span(self, name: str, timestamp: Optional[datetime] = None) -> "NoOpTaskSpan":
         """Generate a sub-logger from the current logging instance.
 
         Args:
             name: A descriptive name of what this child logger will contain logs about.
+            timestamp: Optional timestamp override for the log entry.
 
         Returns:
             Another `NoOpDebugLogger`
@@ -276,7 +288,12 @@ class InMemoryDebugLogger(BaseModel, DebugLogger):
     name: str
     logs: list[Union[LogEntry, "InMemorySpan", "InMemoryTaskSpan"]] = []
 
-    def log(self, message: str, value: PydanticSerializable) -> None:
+    def log(
+        self,
+        message: str,
+        value: PydanticSerializable,
+        timestamp: Optional[datetime] = None,
+    ) -> None:
         """Record a log of relevant information as part of a step within a task.
 
         By default, the `Input` and `Output` of each `Task` are logged automatically, but you can
@@ -287,20 +304,26 @@ class InMemoryDebugLogger(BaseModel, DebugLogger):
                 is related to.
             value: The relevant data you want to log. Can be anything that is serializable by
                 Pydantic, which gives the loggers flexibility in how they store and emit the logs.
+            timestamp: Optional timestamp override for the log entry. Otherwise will be set to now
         """
-        self.logs.append(LogEntry(message=message, value=value))
+        self.logs.append(
+            LogEntry(
+                message=message, value=value, timestamp=timestamp or datetime.utcnow()
+            )
+        )
 
-    def span(self, name: str) -> "InMemorySpan":
+    def span(self, name: str, timestamp: Optional[datetime] = None) -> "InMemorySpan":
         """Generate a sub-logger from the current logging instance.
 
         Args:
             name: A descriptive name of what this child logger will contain logs about.
+            timestamp: Optional starting timestamp of the span. Otherwise defaults to now
 
         Returns:
             A nested `InMemoryDebugLogger` that is stored in a nested position as part of the parent
             logger.
         """
-        child = InMemorySpan(name=name)
+        child = InMemorySpan(name=name, start_timestamp=timestamp or datetime.utcnow())
         self.logs.append(child)
         return child
 
@@ -340,7 +363,7 @@ class InMemoryDebugLogger(BaseModel, DebugLogger):
 
 
 class InMemorySpan(InMemoryDebugLogger, Span):
-    start_timestamp: Optional[datetime] = Field(default_factory=datetime.utcnow)
+    start_timestamp: datetime = Field(default_factory=datetime.utcnow)
     end_timestamp: Optional[datetime] = None
 
     def __exit__(
@@ -508,12 +531,17 @@ class FileDebugLogger(DebugLogger):
         self._log_file_path = log_file_path
         self.uuid = uuid4()
 
-    def log(self, message: str, value: PydanticSerializable) -> None:
+    def log(
+        self,
+        message: str,
+        value: PydanticSerializable,
+        timestamp: Optional[datetime] = None,
+    ) -> None:
         self._log_entry(
             PlainEntry(
                 message=message,
                 value=value,
-                timestamp=datetime.utcnow(),
+                timestamp=timestamp or datetime.utcnow(),
                 parent=self.uuid,
             )
         )
@@ -525,11 +553,14 @@ class FileDebugLogger(DebugLogger):
                 + "\n"
             )
 
-    def span(self, name: str) -> "FileSpan":
+    def span(self, name: str, timestamp: Optional[datetime] = None) -> "FileSpan":
         span = FileSpan(self._log_file_path, name)
         self._log_entry(
             StartSpan(
-                uuid=span.uuid, parent=self.uuid, name=name, start=datetime.utcnow()
+                uuid=span.uuid,
+                parent=self.uuid,
+                name=name,
+                start=timestamp or datetime.utcnow(),
             )
         )
         return span
