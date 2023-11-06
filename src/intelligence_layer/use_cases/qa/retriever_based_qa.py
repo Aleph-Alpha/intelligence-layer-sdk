@@ -30,6 +30,7 @@ class RetrieverBasedQaInput(BaseModel):
 
     question: str
 
+
 class RetrieverBasedQa(Task[RetrieverBasedQaInput, MultipleChunkQaOutput]):
     """Answer a question based on documents found by a retriever.
 
