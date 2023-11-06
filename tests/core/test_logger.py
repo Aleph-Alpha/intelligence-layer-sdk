@@ -55,18 +55,16 @@ def test_file_debug_logger(file_debug_log: FileDebugLogger) -> None:
     expected = InMemoryDebugLogger(name="")
     task = InMemoryTaskSpan(
         name="TestTask",
-        start_timestamp=None,
         end_timestamp=None,
         input=input,
         output=output,
     )
-    span = InMemorySpan(name="span", start_timestamp=None, end_timestamp=None)
+    span = InMemorySpan(name="span", end_timestamp=None)
     span.logs.append(
         LogEntry(message="message", value="a value", timestamp=FIX_TIMESTAMP)
     )
     sub_task = InMemoryTaskSpan(
         name="TestSubTask",
-        start_timestamp=None,
         end_timestamp=None,
         input=None,
         output=None,
@@ -78,7 +76,6 @@ def test_file_debug_logger(file_debug_log: FileDebugLogger) -> None:
     task.logs.append(span)
     sub_task = InMemoryTaskSpan(
         name="TestSubTask",
-        start_timestamp=None,
         end_timestamp=None,
         input=None,
         output=None,
@@ -124,7 +121,6 @@ class TreeBuilder(BaseModel):
         start_task = StartTask.model_validate(log_line.entry)
         child = InMemoryTaskSpan(
             name=start_task.name,
-            start_timestamp=None,  # start_task.start
             input=start_task.input,
         )
         self.loggers[start_task.uuid] = child
@@ -141,7 +137,6 @@ class TreeBuilder(BaseModel):
         start_span = StartSpan.model_validate(log_line.entry)
         child = InMemorySpan(
             name=start_span.name,
-            start_timestamp=None,  # start_task.start
         )
         self.loggers[start_span.uuid] = child
         self.spans[start_span.uuid] = child
