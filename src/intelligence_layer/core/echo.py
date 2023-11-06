@@ -1,5 +1,5 @@
 from functools import lru_cache
-from typing import Sequence
+from typing import NewType, Sequence
 
 from aleph_alpha_client import Client, CompletionRequest, Prompt, Tokens
 from pydantic import BaseModel
@@ -8,12 +8,15 @@ from tokenizers import Encoding, Tokenizer  # type: ignore
 from intelligence_layer.core.complete import Complete, CompleteInput
 from intelligence_layer.core.logger import DebugLogger
 from intelligence_layer.core.prompt_template import PromptTemplate
-from intelligence_layer.core.task import LogProb, Probability, Task, Token
+from intelligence_layer.core.task import Task, Token
 
 
-class TokenWithProb(BaseModel):
+LogProb = NewType("LogProb", float)
+
+
+class TokenWithLogProb(BaseModel):
     token: Token
-    prob: Probability | LogProb
+    prob: LogProb
 
 
 class EchoInput(BaseModel):
@@ -40,7 +43,7 @@ class EchoOutput(BaseModel):
             in a completion scenario.
     """
 
-    tokens_with_log_probs: Sequence[TokenWithProb]
+    tokens_with_log_probs: Sequence[TokenWithLogProb]
 
 
 class EchoTask(Task[EchoInput, EchoOutput]):
@@ -104,7 +107,7 @@ class EchoTask(Task[EchoInput, EchoOutput]):
         ):
             assert token.token in log_prob
             tokens_with_prob.append(
-                TokenWithProb(
+                TokenWithLogProb(
                     token=token,
                     prob=LogProb(log_prob.get(token.token, 0.0) or 0.0),
                 )

@@ -29,9 +29,6 @@ To handle this, documents have to be split up into smaller segments that fit wit
 These smaller segments are referred to as chunks.
 """
 
-LogProb = NewType("LogProb", float)
-Probability = NewType("Probability", float)
-
 
 class Token(BaseModel):
     """A token class containing it's id and the raw token.
