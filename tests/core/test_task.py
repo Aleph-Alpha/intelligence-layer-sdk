@@ -2,7 +2,7 @@ from threading import Lock
 from time import sleep
 
 from intelligence_layer.core.logger import DebugLogger, NoOpDebugLogger
-from intelligence_layer.core.task import MAX_CONCURRENCY, Task
+from intelligence_layer.core.task import MAX_CONCURRENCY, Task, global_executor
 
 
 class ConcurrencyCounter(Task[None, None]):
@@ -26,7 +26,7 @@ class ConcurrencyCounter(Task[None, None]):
 
 def test_run_concurrently() -> None:
     task = ConcurrencyCounter()
-    task.run_concurrently([None] * MAX_CONCURRENCY * 3, NoOpDebugLogger())
+    task.run_concurrently([None] * MAX_CONCURRENCY * 10, NoOpDebugLogger())
     assert task.max_concurrency_counter == MAX_CONCURRENCY
 
 
