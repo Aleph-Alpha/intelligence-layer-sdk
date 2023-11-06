@@ -5,10 +5,10 @@ from typing import (
 )
 
 from pydantic import BaseModel
-from intelligence_layer.core.echo import LogProb
 from intelligence_layer.core.evaluator import Evaluator
 from intelligence_layer.core.logger import DebugLogger
-from intelligence_layer.core.task import Chunk, Task, Token
+from intelligence_layer.core.chunk import Chunk
+from intelligence_layer.core.task import Task
 
 
 Probability = NewType("Probability", float)

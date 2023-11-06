@@ -17,7 +17,8 @@ from intelligence_layer.core.text_highlight import (
     TextHighlight,
     TextHighlightInput,
 )
-from intelligence_layer.core.task import Chunk, Task
+from intelligence_layer.core.chunk import Chunk
+from intelligence_layer.core.task import Task
 from intelligence_layer.core.logger import DebugLogger
 
 

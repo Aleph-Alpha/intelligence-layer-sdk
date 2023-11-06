@@ -7,6 +7,9 @@ from intelligence_layer.core.complete import (
 from intelligence_layer.core.detect_language import (
     Language,
 )
+from intelligence_layer.use_cases.summarize.long_context_few_shot_summarize import (
+    LongContextFewShotSummarize,
+)
 from intelligence_layer.use_cases.summarize.single_chunk_few_shot_summarize import (
     SingleChunkFewShotSummarize,
 )
@@ -31,8 +34,6 @@ FEW_SHOT_CONFIGS = {
         ],
         input_prefix="Text",
         response_prefix="Summary",
-        model="luminous-extended",
-        maximum_response_tokens=96,
     ),
     Language("de"): FewShotConfig(
         instruction="Fasse jeden Text in ein bis drei Sätzen zusammen.",
@@ -52,8 +53,6 @@ FEW_SHOT_CONFIGS = {
         ],
         input_prefix="Text",
         response_prefix="Zusammenfassung",
-        model="luminous-extended",
-        maximum_response_tokens=96,
     ),
     Language("es"): FewShotConfig(
         instruction="Resuma cada texto en una o tres frases.",
@@ -73,8 +72,6 @@ FEW_SHOT_CONFIGS = {
         ],
         input_prefix="Texto",
         response_prefix="Resumen",
-        model="luminous-extended",
-        maximum_response_tokens=96,
     ),
     Language("fr"): FewShotConfig(
         instruction="Résume chaque texte en une à trois phrases.",
@@ -94,8 +91,6 @@ FEW_SHOT_CONFIGS = {
         ],
         input_prefix="Texte",
         response_prefix="Résumé",
-        model="luminous-extended",
-        maximum_response_tokens=96,
     ),
     Language("it"): FewShotConfig(
         instruction="Riassumete ogni testo in una o tre frasi.",
@@ -115,14 +110,12 @@ FEW_SHOT_CONFIGS = {
         ],
         input_prefix="Testo",
         response_prefix="Sintesi",
-        model="luminous-extended",
-        maximum_response_tokens=96,
     ),
 }
 
 
-class SingleChunkHighCompressionSummarize(SingleChunkFewShotSummarize):
-    """Summarises a text section into a short text.
+class LongContextHighCompressionSummarize(LongContextFewShotSummarize):
+    """Condenses a text into a short summary.
 
     Leverages few-shot prompting to generate a summary.
 
@@ -131,12 +124,11 @@ class SingleChunkHighCompressionSummarize(SingleChunkFewShotSummarize):
 
     Example:
         >>> client = Client(os.getenv("AA_TOKEN"))
-        >>> task = HighCompressionSummarize(client)
+        >>> task = LongContextHighCompressionSummarize(client)
         >>> input = SummarizeInput(
-                chunk="This is a story about pizza. Tina hates pizza. However, Mike likes it. Pete strongly believes that pizza is the best thing to exist."
-                language=Language("en")
+                text="This is a story about pizza. Tina hates pizza. However, Mike likes it. Pete strongly believes that pizza is the best thing to exist."
             )
-        >>> logger = InMemoryLogger(name="HighCompressionSummarize")
+        >>> logger = InMemoryLogger(name="LongContextHighCompressionSummarize")
         >>> output = task.run(input, logger)
         >>> print(output.summary)
         Tina doesn't like pizza, but Mike and Pete do.
@@ -145,4 +137,12 @@ class SingleChunkHighCompressionSummarize(SingleChunkFewShotSummarize):
     _client: Client
 
     def __init__(self, client: Client) -> None:
-        super().__init__(client, FEW_SHOT_CONFIGS)
+        super().__init__(
+            client=client,
+            few_shot_configs=FEW_SHOT_CONFIGS,
+            model="luminous-extended",
+            max_generated_tokens=96,
+            max_tokens_per_chunk=400,
+            allowed_languages=[Language(l) for l in ["en", "de", "es", "fr", "it"]],
+            fallback_language=Language("en"),
+        )

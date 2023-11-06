@@ -51,8 +51,8 @@ def test_few_shot(few_shot: FewShot, no_op_debug_logger: NoOpDebugLogger) -> Non
             ],
             input_prefix="Question",
             response_prefix="Answer",
-            model="luminous-base",
         ),
+        model="luminous-base",
     )
     output = few_shot.run(input, no_op_debug_logger)
 

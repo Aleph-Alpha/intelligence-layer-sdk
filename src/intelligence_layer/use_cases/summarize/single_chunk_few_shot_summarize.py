@@ -32,10 +32,16 @@ class SingleChunkFewShotSummarize(Task[SingleChunkSummarizeInput, SummarizeOutpu
     _client: Client
 
     def __init__(
-        self, client: Client, few_shot_configs: Mapping[Language, FewShotConfig]
+        self,
+        client: Client,
+        few_shot_configs: Mapping[Language, FewShotConfig],
+        model: str,
+        maximum_tokens: int,
     ) -> None:
         self._few_shot_configs = few_shot_configs
         self._few_shot = FewShot(client)
+        self._model = model
+        self._maximum_tokens = maximum_tokens
 
     def run(
         self, input: SingleChunkSummarizeInput, logger: DebugLogger
@@ -50,6 +56,11 @@ class SingleChunkFewShotSummarize(Task[SingleChunkSummarizeInput, SummarizeOutpu
         if not prompt_config:
             raise ValueError(f"Could not find `prompt_config` for {input.language}.")
         return self._few_shot.run(
-            FewShotInput(input=input.chunk, few_shot_config=prompt_config),
+            FewShotInput(
+                few_shot_config=prompt_config,
+                input=input.chunk,
+                model=self._model,
+                maximum_response_tokens=self._maximum_tokens,
+            ),
             logger,
         )

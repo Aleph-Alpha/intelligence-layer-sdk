@@ -1,11 +1,21 @@
 from pydantic import BaseModel
 
 from intelligence_layer.core.detect_language import Language
-from intelligence_layer.core.task import Chunk
+from intelligence_layer.core.chunk import Chunk
+
+
+class LongContextSummarizeInput(BaseModel):
+    """The input for a summarize-task for texts of any length.
+
+    Attributes:
+        text: A text of any length.
+    """
+
+    text: str
 
 
 class SingleChunkSummarizeInput(BaseModel):
-    """The input for a `Summarize` task.
+    """The input for a summarize-task that only deals with a single chunk.
 
     Attributes:
         chunk: The text chunk to be summarized.

@@ -19,7 +19,8 @@ from intelligence_layer.connectors.retrievers.qdrant_in_memory_retriever import 
     QdrantInMemoryRetriever,
 )
 from intelligence_layer.use_cases.search.search import Search, SearchInput
-from intelligence_layer.core.task import Chunk, Task
+from intelligence_layer.core.chunk import Chunk, ChunkInput, ChunkTask
+from intelligence_layer.core.task import Task
 from intelligence_layer.core.logger import DebugLogger
 
 
@@ -64,16 +65,14 @@ class LongContextQa(Task[LongContextQaInput, MultipleChunkQaOutput]):
     def __init__(
         self,
         client: Client,
-        max_tokens_in_chunk: int = 512,
+        max_tokens_per_chunk: int = 512,
         k: int = 4,
         model: str = "luminous-supreme-control",
     ):
         super().__init__()
         self._client = client
         self._model = model
-        self._max_tokens_in_chunk = max_tokens_in_chunk
-        self._tokenizer = self._client.tokenizer(model)
-        self._splitter = HuggingFaceTextSplitter(self._tokenizer, trim_chunks=True)
+        self._chunk_task = ChunkTask(client, model, max_tokens_per_chunk)
         self._multi_chunk_qa = MultipleChunkQa(self._client, self._model)
         self._k = k
         self._language_detector = DetectLanguage(threshold=0.5)
@@ -82,11 +81,10 @@ class LongContextQa(Task[LongContextQaInput, MultipleChunkQaOutput]):
     def run(
         self, input: LongContextQaInput, logger: DebugLogger
     ) -> MultipleChunkQaOutput:
-        chunks = self._chunk(input.text)
-        logger.log("chunks", chunks)
+        chunk_output = self._chunk_task.run(ChunkInput(text=input.text), logger)
         retriever = QdrantInMemoryRetriever(
             self._client,
-            documents=[Document(text=c) for c in chunks],
+            documents=[Document(text=c) for c in chunk_output.chunks],
             k=self._k,
             threshold=0.5,
         )
@@ -107,8 +105,3 @@ class LongContextQa(Task[LongContextQaInput, MultipleChunkQaOutput]):
         )
         qa_output = self._multi_chunk_qa.run(multi_chunk_qa_input, logger)
         return qa_output
-
-    def _chunk(self, text: str) -> Sequence[Chunk]:
-        return [
-            Chunk(t) for t in self._splitter.chunks(text, self._max_tokens_in_chunk)
-        ]

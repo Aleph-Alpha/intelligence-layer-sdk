@@ -15,7 +15,8 @@ from intelligence_layer.use_cases.qa.multiple_chunk_qa import (
 )
 from intelligence_layer.connectors.retrievers.base_retriever import BaseRetriever
 from intelligence_layer.use_cases.search.search import Search, SearchInput
-from intelligence_layer.core.task import Chunk, Task
+from intelligence_layer.core.chunk import Chunk
+from intelligence_layer.core.task import Task
 from intelligence_layer.core.logger import DebugLogger
 
 

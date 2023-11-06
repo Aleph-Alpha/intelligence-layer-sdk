@@ -14,7 +14,8 @@ from intelligence_layer.use_cases.qa.single_chunk_qa import (
     SingleChunkQaOutput,
     SingleChunkQa,
 )
-from intelligence_layer.core.task import Chunk, Task
+from intelligence_layer.core.chunk import Chunk
+from intelligence_layer.core.task import Task
 from intelligence_layer.core.logger import DebugLogger
 
 

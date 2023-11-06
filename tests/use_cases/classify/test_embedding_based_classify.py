@@ -9,7 +9,7 @@ from intelligence_layer.connectors.retrievers.qdrant_in_memory_retriever import 
     QdrantInMemoryRetriever,
 )
 from intelligence_layer.core.logger import NoOpDebugLogger
-from intelligence_layer.core.task import Chunk
+from intelligence_layer.core.chunk import Chunk
 from intelligence_layer.use_cases.classify.classify import (
     ClassifyEvaluator,
     ClassifyInput,
