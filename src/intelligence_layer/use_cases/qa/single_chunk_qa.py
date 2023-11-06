@@ -1,6 +1,8 @@
 from typing import Optional, Sequence
 
 from aleph_alpha_client import Client
+from liquid import Template
+from intelligence_layer.core.detect_language import Language, LanguageNotSupportedError
 from pydantic import BaseModel
 
 from intelligence_layer.core.complete import (
@@ -30,6 +32,7 @@ class SingleChunkQaInput(BaseModel):
 
     chunk: Chunk
     question: str
+    language: Language = Language("en")
 
 
 class SingleChunkQaOutput(BaseModel):
@@ -43,6 +46,15 @@ class SingleChunkQaOutput(BaseModel):
 
     answer: Optional[str]
     highlights: Sequence[str]
+
+
+QA_INSTRUCTIONS = {
+    "en": """{{question}} If there's no answer, say {{no_answer_text}}. Only answer the question based on the text.""",
+    "de": """{{question}} Wenn es keine Antwort gibt, gib {{no_answer_text}} aus. Beantworte die Frage nur anhand des Textes.""",
+    "fr": """{{question}} S'il n'y a pas de réponse, dites {{no_answer_text}}. Ne répondez à la question qu'en vous basant sur le texte. """,
+    "es": """{{question}}Si no hay respuesta, di {{no_answer_text}}. Responde sólo a la pregunta basándote en el texto.""",
+    "it": """{{question}}Se non c'è risposta, dire {{no_answer_text}}. Rispondere alla domanda solo in base al testo.""",
+}
 
 
 class SingleChunkQa(Task[SingleChunkQaInput, SingleChunkQaOutput]):
@@ -78,14 +90,6 @@ class SingleChunkQa(Task[SingleChunkQaInput, SingleChunkQaOutput]):
         Mike likes pizza.
     """
 
-    PROMPT_TEMPLATE_STR = """### Instruction:
-{{question}}
-If there's no answer, say "{{no_answer_text}}".
-
-### Input:
-{% promptrange text %}{{text}}{% endpromptrange %}
-
-### Response:"""
     NO_ANSWER_STR = "NO_ANSWER_IN_TEXT"
 
     def __init__(
@@ -98,13 +102,28 @@ If there's no answer, say "{{no_answer_text}}".
         self._model = model
         self._instruction = Instruct(client)
         self._text_highlight = TextHighlight(client)
+        self._supported_languages = [
+            Language("en"),
+            Language("de"),
+            Language("es"),
+            Language("fr"),
+            Language("it"),
+        ]
 
     def run(
         self, input: SingleChunkQaInput, logger: DebugLogger
     ) -> SingleChunkQaOutput:
+        try:
+            prompt = QA_INSTRUCTIONS[input.language]
+        except KeyError:
+            raise LanguageNotSupportedError(
+                f"{input.language} not in supported languages ({self._supported_languages})"
+            )
+
         output = self._instruct(
-            f"""{input.question}
-If there's no answer, say "{self.NO_ANSWER_STR}".""",
+            Template(prompt).render(
+                question=input.question, no_answer_text=self.NO_ANSWER_STR
+            ),
             input.chunk,
             logger,
         )

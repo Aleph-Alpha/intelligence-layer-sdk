@@ -8,6 +8,7 @@ from intelligence_layer.core.complete import (
     InstructInput,
     PromptOutput,
 )
+from intelligence_layer.core.detect_language import Language
 from intelligence_layer.use_cases.qa.single_chunk_qa import (
     SingleChunkQaInput,
     SingleChunkQaOutput,
@@ -28,6 +29,7 @@ class MultipleChunkQaInput(BaseModel):
 
     chunks: Sequence[Chunk]
     question: str
+    language: Language = Language("en")
 
 
 class Subanswer(BaseModel):
@@ -108,7 +110,9 @@ Condense multiple answers into a single answer. Rely only on the provided answer
     ) -> MultipleChunkQaOutput:
         qa_outputs = self._single_chunk_qa.run_concurrently(
             (
-                SingleChunkQaInput(question=input.question, chunk=chunk)
+                SingleChunkQaInput(
+                    question=input.question, chunk=chunk, language=input.language
+                )
                 for chunk in input.chunks
             ),
             logger,
