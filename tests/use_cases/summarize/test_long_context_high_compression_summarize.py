@@ -1,19 +1,12 @@
 from aleph_alpha_client import Client
 from pytest import fixture
-from intelligence_layer.core.complete import FewShotConfig, FewShotExample
 
-from intelligence_layer.core.detect_language import Language
-from intelligence_layer.core.logger import InMemoryDebugLogger, NoOpDebugLogger
-from intelligence_layer.core.chunk import Chunk
+from intelligence_layer.core.logger import NoOpDebugLogger
 from intelligence_layer.use_cases.summarize.long_context_high_compression_summarize import (
     LongContextHighCompressionSummarize,
 )
-from intelligence_layer.use_cases.summarize.single_chunk_few_shot_summarize import (
-    SingleChunkFewShotSummarize,
-)
 from intelligence_layer.use_cases.summarize.summarize import (
     LongContextSummarizeInput,
-    SingleChunkSummarizeInput,
 )
 
 
@@ -58,8 +51,7 @@ def test_long_context_high_compression_summarize_en(
     long_text: str,
 ) -> None:
     input = LongContextSummarizeInput(text=long_text)
-    debug_log = InMemoryDebugLogger(name="jeff")
-    output = long_context_high_compression_summarize.run(input, debug_log)
+    output = long_context_high_compression_summarize.run(input, NoOpDebugLogger())
 
     assert output.summary
     assert "bear" in output.summary.lower()

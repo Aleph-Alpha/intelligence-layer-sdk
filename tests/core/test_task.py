@@ -26,7 +26,7 @@ class ConcurrencyCounter(Task[None, None]):
 
 def test_run_concurrently() -> None:
     task = ConcurrencyCounter()
-    task.run_concurrently([None] * MAX_CONCURRENCY * 2, NoOpDebugLogger())
+    task.run_concurrently([None] * MAX_CONCURRENCY * 3, NoOpDebugLogger())
     assert task.max_concurrency_counter == MAX_CONCURRENCY
 
 
@@ -34,6 +34,6 @@ def test_run_concurrently_limited() -> None:
     task = ConcurrencyCounter()
     limit_concurrency = MAX_CONCURRENCY // 2
     task.run_concurrently(
-        [None] * MAX_CONCURRENCY * 2, NoOpDebugLogger(), limit_concurrency
+        [None] * MAX_CONCURRENCY * 3, NoOpDebugLogger(), limit_concurrency
     )
     assert task.max_concurrency_counter == limit_concurrency
