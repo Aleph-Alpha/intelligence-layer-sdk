@@ -2,7 +2,11 @@ from aleph_alpha_client import (
     Client,
 )
 from pydantic import BaseModel
-from intelligence_layer.core.detect_language import Language
+from intelligence_layer.core.detect_language import (
+    DetectLanguage,
+    DetectLanguageInput,
+    Language,
+)
 
 from intelligence_layer.use_cases.qa.multiple_chunk_qa import (
     MultipleChunkQa,
@@ -65,14 +69,24 @@ class RetrieverBasedQa(Task[RetrieverBasedQaInput, MultipleChunkQaOutput]):
         self._model = model
         self._search = Search(retriever)
         self._multi_chunk_qa = MultipleChunkQa(self._client, self._model)
+        self._language_detector = DetectLanguage(threshold=0.5)
+        self._fallback_language = Language("en")
 
     def run(
         self, input: RetrieverBasedQaInput, logger: DebugLogger
     ) -> MultipleChunkQaOutput:
         search_output = self._search.run(SearchInput(query=input.question), logger)
+
+        question_language = (
+            self._language_detector.run(
+                DetectLanguageInput(text=input.question), logger
+            ).best_fit
+            or self._fallback_language
+        )
+
         multi_chunk_qa_input = MultipleChunkQaInput(
             chunks=[Chunk(result.document.text) for result in search_output.results],
             question=input.question,
-            language=input.language,
+            language=question_language,
         )
         return self._multi_chunk_qa.run(multi_chunk_qa_input, logger)
