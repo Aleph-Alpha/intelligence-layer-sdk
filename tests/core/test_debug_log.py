@@ -6,6 +6,7 @@ from aleph_alpha_client.completion import CompletionRequest
 
 from intelligence_layer.core.complete import Complete, CompleteInput
 from intelligence_layer.core.logger import (
+    CompositeLogger,
     InMemoryDebugLogger,
     InMemoryTaskSpan,
     LogEntry,
@@ -104,3 +105,15 @@ def test_span_only_updates_end_timestamp_once() -> None:
     span.end()
 
     assert span.end_timestamp == end
+
+
+def test_composite_logger(client: Client) -> None:
+    logger1 = InMemoryDebugLogger(name="logger")
+    logger2 = InMemoryDebugLogger(name="logger")
+    input = CompleteInput(
+        request=CompletionRequest(prompt=Prompt.from_text("test")),
+        model="luminous-base",
+    )
+    Complete(client=client).run(input=input, logger=CompositeLogger([logger1, logger2]))
+
+    assert logger1 == logger2
