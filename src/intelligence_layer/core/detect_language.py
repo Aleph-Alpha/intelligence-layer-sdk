@@ -1,10 +1,14 @@
-from typing import Mapping, Optional, Sequence
+from typing import Mapping, NewType, Optional, Sequence
 
 from langdetect import detect_langs  # type: ignore
 from pydantic import BaseModel
 
 from intelligence_layer.core.logger import DebugLogger
 from intelligence_layer.core.task import Task
+
+
+Language = NewType("Language", str)
+"""A language identified by its `ISO 639-1 code <https://en.wikipedia.org/wiki/List_of_ISO_639-1_codes>`_."""
 
 
 class DetectLanguageInput(BaseModel):
@@ -17,7 +21,7 @@ class DetectLanguageInput(BaseModel):
     """
 
     text: str
-    possible_languages: Sequence[str]
+    possible_languages: Sequence[Language]
 
 
 class DetectLanguageOutput(BaseModel):
@@ -26,15 +30,13 @@ class DetectLanguageOutput(BaseModel):
     Attributes:
         best_fit: The prediction for the best matching language.
             Will be `None` if no language has a probability above the threshold.
-        probabilities: Each possible language with the corresponding probability.
     """
 
-    best_fit: Optional[str]
-    probabilities: Mapping[str, float]
+    best_fit: Optional[Language]
 
 
 class AnnotatedLanguage(BaseModel):
-    lang: str
+    lang: Language
     prob: float
 
 
@@ -67,21 +69,25 @@ class DetectLanguage(Task[DetectLanguageInput, DetectLanguageOutput]):
     def run(
         self, input: DetectLanguageInput, logger: DebugLogger
     ) -> DetectLanguageOutput:
+        annotated_languages = self._detect_languages(input, logger)
+        best_fit = self._get_best_fit(annotated_languages, input.possible_languages)
+        return DetectLanguageOutput(best_fit=best_fit)
+
+    def _detect_languages(
+        self, input: DetectLanguageInput, logger: DebugLogger
+    ) -> Sequence[AnnotatedLanguage]:
         languages = detect_langs(input.text)
         annotated_languages = [
-            AnnotatedLanguage(lang=l.lang, prob=l.prob) for l in languages
+            AnnotatedLanguage(lang=Language(l.lang), prob=l.prob) for l in languages
         ]
-        best_fit = self._get_best_fit(annotated_languages, input.possible_languages)
-        probabilities = self._get_probabilities(
-            annotated_languages, input.possible_languages
-        )
-        return DetectLanguageOutput(best_fit=best_fit, probabilities=probabilities)
+        logger.log("Raw language probabilities", annotated_languages)
+        return annotated_languages
 
     def _get_best_fit(
         self,
         languages_result: Sequence[AnnotatedLanguage],
-        possible_languages: Sequence[str],
-    ) -> Optional[str]:
+        possible_languages: Sequence[Language],
+    ) -> Optional[Language]:
         return (
             languages_result[0].lang
             if (
@@ -90,16 +96,3 @@ class DetectLanguage(Task[DetectLanguageInput, DetectLanguageOutput]):
             )
             else None
         )
-
-    def _get_probabilities(
-        self,
-        languages_result: Sequence[AnnotatedLanguage],
-        possible_languages: Sequence[str],
-    ) -> Mapping[str, float]:
-        def get_prob(target_lang: str) -> float:
-            for l in languages_result:
-                if l.lang == target_lang:
-                    return l.prob
-            return 0.0
-
-        return {l: get_prob(l) for l in possible_languages}

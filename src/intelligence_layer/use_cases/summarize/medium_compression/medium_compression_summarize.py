@@ -7,7 +7,11 @@ from intelligence_layer.core.complete import (
     FewShotInput,
     PromptOutput,
 )
-from intelligence_layer.core.detect_language import DetectLanguage, DetectLanguageInput
+from intelligence_layer.core.detect_language import (
+    DetectLanguage,
+    DetectLanguageInput,
+    Language,
+)
 from intelligence_layer.core.logger import DebugLogger
 from intelligence_layer.use_cases.summarize.base.base_summarize import (
     BaseSummarize,
@@ -47,7 +51,7 @@ class MediumCompressionSummarize(BaseSummarize):
     """
 
     PROMPT_CONFIGS = prompt_configs
-    DEFAULT_LANG = "en"
+    DEFAULT_LANG = Language("en")
     _client: Client
 
     def __init__(self, client: Client, model: str = "luminous-supreme-control") -> None:
@@ -71,7 +75,8 @@ class MediumCompressionSummarize(BaseSummarize):
 
     def _get_language(self, text: str, logger: DebugLogger) -> str:
         detect_language_input = DetectLanguageInput(
-            text=text, possible_languages=list(self.PROMPT_CONFIGS.keys())
+            text=text,
+            possible_languages=[Language(l) for l in self.PROMPT_CONFIGS.keys()],
         )
         detect_language_output = self._detect_language.run(
             detect_language_input, logger
