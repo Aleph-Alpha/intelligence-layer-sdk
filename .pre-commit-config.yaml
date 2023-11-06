@@ -31,4 +31,4 @@ repos:
     hooks:
       - id: codespell
         args: ["-L", "newyorker,te,responde,ist,als,oder,technik,sie"]
-        exclude: '^(poetry\.lock|log-viewer/.*|tests/connectors/retrievers/test_document_index_retriever\.py|src/intelligence_layer/use_cases/summarize/medium_compression_summarize.py)$'
+        exclude: '^(poetry\.lock|log-viewer/.*|tests/connectors/retrievers/test_document_index_retriever\.py|src/intelligence_layer/use_cases/summarize/[a-z]*_compression_summarize.py)$'
