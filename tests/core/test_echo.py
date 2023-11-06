@@ -4,7 +4,7 @@ from aleph_alpha_client import Client, Prompt
 from pytest import fixture
 import tokenizers  # type: ignore
 
-from intelligence_layer.core.echo import EchoInput, EchoTask, TokenWithProb
+from intelligence_layer.core.echo import EchoInput, EchoTask, TokenWithLogProb
 from intelligence_layer.core.logger import NoOpDebugLogger
 from intelligence_layer.core.task import Token
 
@@ -42,7 +42,7 @@ def test_can_run_echo_task(echo_task: EchoTask) -> None:
     result = echo_task.run(input, logger=NoOpDebugLogger())
 
     assert len(tokens) == len(result.tokens_with_log_probs)
-    assert all([isinstance(t, TokenWithProb) for t in result.tokens_with_log_probs])
+    assert all([isinstance(t, TokenWithLogProb) for t in result.tokens_with_log_probs])
     for token, result_token in zip(tokens, result.tokens_with_log_probs):
         assert token == result_token.token
 
@@ -61,7 +61,7 @@ def test_echo_works_with_whitespaces_in_expected_completion(
     result = echo_task.run(input, logger=NoOpDebugLogger())
 
     assert len(tokens) == len(result.tokens_with_log_probs)
-    assert all([isinstance(t, TokenWithProb) for t in result.tokens_with_log_probs])
+    assert all([isinstance(t, TokenWithLogProb) for t in result.tokens_with_log_probs])
     for token, result_token in zip(tokens, result.tokens_with_log_probs):
         assert token == result_token.token
 
@@ -87,6 +87,6 @@ def test_overlapping_tokens_generate_correct_tokens(echo_task: EchoTask) -> None
 
     assert len(tokens) == len(result.tokens_with_log_probs)
 
-    assert all([isinstance(t, TokenWithProb) for t in result.tokens_with_log_probs])
+    assert all([isinstance(t, TokenWithLogProb) for t in result.tokens_with_log_probs])
     for token, result_token in zip(tokens, result.tokens_with_log_probs):
         assert token == result_token.token
