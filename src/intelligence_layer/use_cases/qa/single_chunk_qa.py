@@ -32,7 +32,7 @@ class SingleChunkQaInput(BaseModel):
 
     chunk: Chunk
     question: str
-    language: Language = "en"
+    language: Language = Language("en")
 
 
 class SingleChunkQaOutput(BaseModel):
@@ -113,7 +113,6 @@ class SingleChunkQa(Task[SingleChunkQaInput, SingleChunkQaOutput]):
     def run(
         self, input: SingleChunkQaInput, logger: DebugLogger
     ) -> SingleChunkQaOutput:
-        
         try:
             prompt = QA_INSTRUCTIONS[input.language]
         except KeyError:
@@ -122,7 +121,9 @@ class SingleChunkQa(Task[SingleChunkQaInput, SingleChunkQaOutput]):
             )
 
         output = self._instruct(
-            Template(prompt).render(question=input.question, no_answer_text=self.NO_ANSWER_STR),
+            Template(prompt).render(
+                question=input.question, no_answer_text=self.NO_ANSWER_STR
+            ),
             input.chunk,
             logger,
         )
