@@ -7,6 +7,10 @@ from intelligence_layer.core.logger import DebugLogger
 from intelligence_layer.core.task import Task
 
 
+class LanguageNotSupportedError(RuntimeError):
+    """Raised in case language in the input is not compatible with the languages supported in the task"""
+
+
 class DetectLanguageInput(BaseModel):
     """The input for a `DetectLanguage` task.
 
