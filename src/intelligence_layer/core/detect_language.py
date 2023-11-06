@@ -25,7 +25,13 @@ class DetectLanguageInput(BaseModel):
     """
 
     text: str
-    possible_languages: Sequence[Language]
+    possible_languages: Sequence[Language] = [
+        Language("en"),
+        Language("de"),
+        Language("es"),
+        Language("fr"),
+        Language("it"),
+    ]
 
 
 class DetectLanguageOutput(BaseModel):
