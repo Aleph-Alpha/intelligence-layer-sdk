@@ -1,5 +1,6 @@
 from pydantic import BaseModel
 
+from intelligence_layer.core.detect_language import Language
 from intelligence_layer.core.task import Chunk
 
 
@@ -8,9 +9,11 @@ class SummarizeInput(BaseModel):
 
     Attributes:
         chunk: The text chunk to be summarized.
+        language: The desired language of the summary.
     """
 
     chunk: Chunk
+    language: Language
 
 
 class SummarizeOutput(BaseModel):
