@@ -17,7 +17,7 @@ from pydantic import BaseModel
 from intelligence_layer.core.complete import (
     Complete,
 )
-from intelligence_layer.core.echo import EchoInput, EchoTask, TokenWithLogProb 
+from intelligence_layer.core.echo import EchoInput, EchoTask, TokenWithLogProb
 from intelligence_layer.core.logger import DebugLogger
 from intelligence_layer.core.task import Task, Token
 from intelligence_layer.use_cases.classify.classify import (
@@ -26,9 +26,10 @@ from intelligence_layer.use_cases.classify.classify import (
     Probability,
 )
 
+
 class TokenWithProb(BaseModel):
     token: Token
-    prob: Probability 
+    prob: Probability
 
 
 def to_aa_tokens_prompt(tokens: Sequence[Token]) -> Prompt:
