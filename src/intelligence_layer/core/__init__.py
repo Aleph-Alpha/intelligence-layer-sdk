@@ -6,6 +6,12 @@ from .complete import (
     InstructInput,
     PromptOutput,
 )
+from .detect_language import (
+    Language,
+    DetectLanguage,
+    DetectLanguageInput,
+    DetectLanguageOutput,
+)
 from .echo import EchoInput, EchoOutput, EchoTask
 from .evaluator import Evaluation, Example, Dataset
 from .explain import ExplainInput, ExplainOutput, Explain
