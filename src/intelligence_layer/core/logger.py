@@ -131,6 +131,23 @@ class Span(DebugLogger, AbstractContextManager["Span"]):
     def __enter__(self) -> Self:
         return self
 
+    @abstractmethod
+    def end(self, timestamp: Optional[datetime] = None) -> None:
+        """Marks the span as done.
+
+        Args:
+            timestamp: Optional override of the timestamp, otherwise should be set to now.
+        """
+        ...
+
+    def __exit__(
+        self,
+        exc_type: Optional[type[BaseException]],
+        exc_value: Optional[BaseException],
+        traceback: Optional[TracebackType],
+    ) -> None:
+        self.end()
+
 
 class TaskSpan(Span, AbstractContextManager["TaskSpan"]):
     """A protocol for instrumenting a `Task`'s input, output, and nested logs.
@@ -221,12 +238,12 @@ class NoOpTaskSpan(NoOpDebugLogger, TaskSpan):
         """
         pass
 
-    def __exit__(
-        self,
-        exc_type: Optional[type[BaseException]],
-        exc_value: Optional[BaseException],
-        traceback: Optional[TracebackType],
-    ) -> None:
+    def end(self, timestamp: Optional[datetime] = None) -> None:
+        """Marks the span as done.
+
+        Args:
+            timestamp: Optional override of the timestamp, otherwise should be set to now.
+        """
         pass
 
 
@@ -366,13 +383,14 @@ class InMemorySpan(InMemoryDebugLogger, Span):
     start_timestamp: datetime = Field(default_factory=datetime.utcnow)
     end_timestamp: Optional[datetime] = None
 
-    def __exit__(
-        self,
-        exc_type: Optional[type[BaseException]],
-        exc_value: Optional[BaseException],
-        traceback: Optional[TracebackType],
-    ) -> None:
-        self.end_timestamp = datetime.utcnow()
+    def end(self, timestamp: Optional[datetime] = None) -> None:
+        """Marks the span as done.
+
+        Args:
+            timestamp: Optional override of the timestamp, otherwise should be set to now.
+        """
+        if not self.end_timestamp:
+            self.end_timestamp = timestamp or datetime.utcnow()
 
     def _rich_render_(self) -> Tree:
         """Renders the debug log via classes in the `rich` package"""
@@ -582,16 +600,20 @@ class FileDebugLogger(DebugLogger):
 class FileSpan(Span, FileDebugLogger):
     """A `Span` created by `FileDebugLogger.span`."""
 
+    end_timestamp: Optional[datetime] = None
+
     def __init__(self, log_file_path: Path, name: str) -> None:
         super().__init__(log_file_path)
 
-    def __exit__(
-        self,
-        exc_type: Optional[type[BaseException]],
-        exc_value: Optional[BaseException],
-        traceback: Optional[TracebackType],
-    ) -> None:
-        self._log_entry(EndSpan(uuid=self.uuid, end=datetime.utcnow()))
+    def end(self, timestamp: Optional[datetime] = None) -> None:
+        """Marks the span as done.
+
+        Args:
+            timestamp: Optional override of the timestamp, otherwise should be set to now.
+        """
+        if not self.end_timestamp:
+            self.end_timestamp = timestamp or datetime.utcnow()
+            self._log_entry(EndSpan(uuid=self.uuid, end=self.end_timestamp))
 
 
 class FileTaskSpan(TaskSpan, FileSpan):
@@ -607,12 +629,14 @@ class FileTaskSpan(TaskSpan, FileSpan):
     def record_output(self, output: PydanticSerializable) -> None:
         self.output = output
 
-    def __exit__(
-        self,
-        exc_type: Optional[type[BaseException]],
-        exc_value: Optional[BaseException],
-        traceback: Optional[TracebackType],
-    ) -> None:
-        self._log_entry(
-            EndTask(uuid=self.uuid, end=datetime.utcnow(), output=self.output)
-        )
+    def end(self, timestamp: Optional[datetime] = None) -> None:
+        """Marks the span as done.
+
+        Args:
+            timestamp: Optional override of the timestamp, otherwise should be set to now.
+        """
+        if not self.end_timestamp:
+            self.end_timestamp = timestamp or datetime.utcnow()
+            self._log_entry(
+                EndTask(uuid=self.uuid, end=self.end_timestamp, output=self.output)
+            )
