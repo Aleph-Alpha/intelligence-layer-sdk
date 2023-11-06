@@ -7,7 +7,9 @@ from intelligence_layer.core.complete import (
 from intelligence_layer.core.detect_language import (
     Language,
 )
-from intelligence_layer.use_cases.summarize.few_shot_summarize import FewShotSummarize
+from intelligence_layer.use_cases.summarize.single_chunk_few_shot_summarize import (
+    SingleChunkFewShotSummarize,
+)
 
 
 FEW_SHOT_CONFIGS = {
@@ -119,7 +121,7 @@ FEW_SHOT_CONFIGS = {
 }
 
 
-class HighCompressionSummarize(FewShotSummarize):
+class SingleChunkHighCompressionSummarize(SingleChunkFewShotSummarize):
     """Summarises a text section into a short text.
 
     Leverages few-shot prompting to generate a summary.

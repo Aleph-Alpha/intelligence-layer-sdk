@@ -4,7 +4,7 @@ from intelligence_layer.core.detect_language import Language
 from intelligence_layer.core.task import Chunk
 
 
-class SummarizeInput(BaseModel):
+class SingleChunkSummarizeInput(BaseModel):
     """The input for a `Summarize` task.
 
     Attributes:

@@ -13,12 +13,12 @@ from intelligence_layer.core.detect_language import (
 from intelligence_layer.core.logger import DebugLogger
 from intelligence_layer.core.task import Task
 from intelligence_layer.use_cases.summarize.summarize import (
-    SummarizeInput,
+    SingleChunkSummarizeInput,
     SummarizeOutput,
 )
 
 
-class FewShotSummarize(Task[SummarizeInput, SummarizeOutput]):
+class SingleChunkFewShotSummarize(Task[SingleChunkSummarizeInput, SummarizeOutput]):
     """Summarises a section into a text of medium length.
 
     Generate a summary given a few-shot setup.
@@ -37,12 +37,14 @@ class FewShotSummarize(Task[SummarizeInput, SummarizeOutput]):
         self._few_shot_configs = few_shot_configs
         self._few_shot = FewShot(client)
 
-    def run(self, input: SummarizeInput, logger: DebugLogger) -> SummarizeOutput:
+    def run(
+        self, input: SingleChunkSummarizeInput, logger: DebugLogger
+    ) -> SummarizeOutput:
         prompt_output = self._get_prompt_and_complete(input, logger)
         return SummarizeOutput(summary=prompt_output.response.strip())
 
     def _get_prompt_and_complete(
-        self, input: SummarizeInput, logger: DebugLogger
+        self, input: SingleChunkSummarizeInput, logger: DebugLogger
     ) -> PromptOutput:
         prompt_config = self._few_shot_configs.get(input.language)
         if not prompt_config:
