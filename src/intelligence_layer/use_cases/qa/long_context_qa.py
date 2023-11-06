@@ -33,6 +33,7 @@ class LongContextQaInput(BaseModel):
 
     text: str
     question: str
+    language: Language = Language("en")
 
 
 class LongContextQa(Task[LongContextQaInput, MultipleChunkQaOutput]):
