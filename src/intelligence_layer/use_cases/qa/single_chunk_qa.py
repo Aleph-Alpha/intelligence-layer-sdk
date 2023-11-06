@@ -1,6 +1,7 @@
 from typing import Optional, Sequence
 
 from aleph_alpha_client import Client
+from intelligence_layer.core.detect_language import LanguageNotSupportedError
 from pydantic import BaseModel
 
 from intelligence_layer.core.complete import (
@@ -30,6 +31,7 @@ class SingleChunkQaInput(BaseModel):
 
     chunk: Chunk
     question: str
+    language: Language
 
 
 class SingleChunkQaOutput(BaseModel):
@@ -98,10 +100,16 @@ If there's no answer, say "{{no_answer_text}}".
         self._model = model
         self._instruction = Instruct(client)
         self._text_highlight = TextHighlight(client)
+        self._supported_languages = ["en", "de", "es", "fr", "it"]
 
     def run(
         self, input: SingleChunkQaInput, logger: DebugLogger
     ) -> SingleChunkQaOutput:
+
+        if not input.language in self._supported_languages:
+            raise LanguageNotSupportedError(f"{input.language} not in supported languages ({self._supported_languages})")
+
+
         output = self._instruct(
             f"""{input.question}
 If there's no answer, say "{self.NO_ANSWER_STR}".""",
