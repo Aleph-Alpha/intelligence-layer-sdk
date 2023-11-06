@@ -9,7 +9,8 @@ from intelligence_layer.core.task import Task
 
 class LanguageNotSupportedError(RuntimeError):
     """Raised in case language in the input is not compatible with the languages supported in the task"""
-    
+
+
 Language = NewType("Language", str)
 """A language identified by its `ISO 639-1 code <https://en.wikipedia.org/wiki/List_of_ISO_639-1_codes>`_."""
 
