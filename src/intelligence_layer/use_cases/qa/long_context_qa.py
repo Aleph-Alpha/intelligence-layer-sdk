@@ -4,6 +4,7 @@ from aleph_alpha_client import Client
 from pydantic import BaseModel
 from semantic_text_splitter import HuggingFaceTextSplitter
 from intelligence_layer.connectors.retrievers.base_retriever import Document
+from intelligence_layer.core.detect_language import Language
 
 from intelligence_layer.use_cases.qa.multiple_chunk_qa import (
     MultipleChunkQa,
@@ -28,6 +29,7 @@ class LongContextQaInput(BaseModel):
 
     text: str
     question: str
+    language: Language = Language("en")
 
 
 class LongContextQa(Task[LongContextQaInput, MultipleChunkQaOutput]):
@@ -86,6 +88,7 @@ class LongContextQa(Task[LongContextQaInput, MultipleChunkQaOutput]):
         multi_chunk_qa_input = MultipleChunkQaInput(
             chunks=[Chunk(result.document.text) for result in search_output.results],
             question=input.question,
+            language=input.language,
         )
         qa_output = self._multi_chunk_qa.run(multi_chunk_qa_input, logger)
         return qa_output
