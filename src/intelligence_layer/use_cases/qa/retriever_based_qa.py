@@ -28,9 +28,6 @@ class RetrieverBasedQaInput(BaseModel):
     """
 
     question: str
-    language: Language = Language("en")
-    language: Language = Language("en")
-
 
 class RetrieverBasedQa(Task[RetrieverBasedQaInput, MultipleChunkQaOutput]):
     """Answer a question based on documents found by a retriever.
