@@ -494,7 +494,7 @@ class FileDebugLogger(DebugLogger):
     the uuid of the parent.
 
     Args:
-        log_file_path: Denotes the file to log to. 
+        log_file_path: Denotes the file to log to.
 
     Attributes:
         uuid: a uuid for the logger. If multiple `FileDebugLogger`\ s log to the same file
