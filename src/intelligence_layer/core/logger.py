@@ -99,7 +99,12 @@ class DebugLogger(ABC):
         ...
 
     @abstractmethod
-    def task_span(self, task_name: str, input: PydanticSerializable) -> "TaskSpan":
+    def task_span(
+        self,
+        task_name: str,
+        input: PydanticSerializable,
+        timestamp: Optional[datetime] = None,
+    ) -> "TaskSpan":
         """Generate a task-specific span from the current logging instance.
 
         Each logger implementation can decide on how it wants to represent this, but they should
@@ -108,6 +113,7 @@ class DebugLogger(ABC):
         Args:
             task_name: The name of the task that is being logged
             input: The input for the task that is being logged.
+            timestamp: optional override of the starting timestamp. Otherwise should default to now
 
         Returns:
             An instance of something that also meets the protocol of DebugLogger. Most likely, it
@@ -178,6 +184,92 @@ class TaskSpan(Span, AbstractContextManager["TaskSpan"]):
         ...
 
 
+class CompositeLogger(TaskSpan):
+    """A `DebugLogger` that allows for recording to multiple loggers simultaneously.
+
+    Each log-entry and span will be forwarded to all subloggers.
+
+    Args:
+        loggers: Loggers that will be forwarded all log and span calls.
+    """
+
+    def __init__(self, loggers: Sequence[DebugLogger]) -> None:
+        self.loggers = loggers
+
+    def log(
+        self,
+        message: str,
+        value: PydanticSerializable,
+        timestamp: Optional[datetime] = None,
+    ) -> None:
+        timestamp = timestamp or datetime.utcnow()
+        for logger in self.loggers:
+            logger.log(message, value, timestamp)
+
+    def span(
+        self, name: str, timestamp: Optional[datetime] = None
+    ) -> "CompositeLogger":
+        """Generate a sub-logger from the current logging instance.
+
+        Args:
+            name: A descriptive name of what this child logger will contain logs about.
+            timestamp: Optional timestamp override for the start timestamp of the span.
+
+        Returns:
+            Another `CompositeLogger`
+        """
+        timestamp = timestamp or datetime.utcnow()
+        return CompositeLogger(
+            [logger.span(name, timestamp) for logger in self.loggers]
+        )
+
+    def task_span(
+        self,
+        task_name: str,
+        input: PydanticSerializable,
+        timestamp: Optional[datetime] = None,
+    ) -> "CompositeLogger":
+        """Generate a task-specific span from the current logging instance.
+
+        Args:
+            task_name: The name of the task that is being logged
+            input: The input for the task that is being logged.
+            timestamp: Optional timestamp override for the start timestamp of the span.
+
+        Returns:
+            A `CompositeLogger`
+        """
+
+        timestamp = timestamp or datetime.utcnow()
+        return CompositeLogger(
+            [logger.task_span(task_name, input, timestamp) for logger in self.loggers]
+        )
+
+    def end(self, timestamp: Optional[datetime] = None) -> None:
+        """Marks the span as done.
+
+        Args:
+            timestamp: Optional override of the timestamp, otherwise should be set to now.
+        """
+        timestamp = timestamp or datetime.utcnow()
+        for logger in self.loggers:
+            if isinstance(logger, Span):
+                logger.end(timestamp)
+
+    def record_output(self, output: PydanticSerializable) -> None:
+        """Record a `Task`'s output. Since a Context Manager can't provide this in the `__exit__`
+        method, output should be captured once it is generated.
+
+        This should be handled automatically within the execution of the task.
+
+        Args:
+            output: The output of the task that is being logged.
+        """
+        for logger in self.loggers:
+            if isinstance(logger, TaskSpan):
+                logger.record_output(output)
+
+
 class NoOpDebugLogger(DebugLogger):
     """A no-op logger. Useful for cases, like testing, where a logger is needed for a task, but you
     don't have a need to collect or inspect the actual logs.
@@ -214,7 +306,12 @@ class NoOpDebugLogger(DebugLogger):
         """
         return NoOpTaskSpan()
 
-    def task_span(self, task_name: str, input: PydanticSerializable) -> "NoOpTaskSpan":
+    def task_span(
+        self,
+        task_name: str,
+        input: PydanticSerializable,
+        timestamp: Optional[datetime] = None,
+    ) -> "NoOpTaskSpan":
         """Generate a task-specific span from the current logging instance.
 
 
@@ -345,7 +442,10 @@ class InMemoryDebugLogger(BaseModel, DebugLogger):
         return child
 
     def task_span(
-        self, task_name: str, input: PydanticSerializable
+        self,
+        task_name: str,
+        input: PydanticSerializable,
+        timestamp: Optional[datetime] = None,
     ) -> "InMemoryTaskSpan":
         """Generate a task-specific span from the current logging instance.
 
@@ -353,13 +453,16 @@ class InMemoryDebugLogger(BaseModel, DebugLogger):
         Args:
             task_name: The name of the task that is being logged
             input: The input for the task that is being logged.
+            timestamp: optional override of the starting timestamp. Otherwise should default to now
 
         Returns:
             A nested `InMemoryTaskSpan` that is stored in a nested position as part of the parent
             logger
         """
 
-        child = InMemoryTaskSpan(name=task_name, input=input)
+        child = InMemoryTaskSpan(
+            name=task_name, input=input, start_timestamp=timestamp or datetime.utcnow()
+        )
         self.logs.append(child)
         return child
 
@@ -583,14 +686,19 @@ class FileDebugLogger(DebugLogger):
         )
         return span
 
-    def task_span(self, task_name: str, input: PydanticSerializable) -> "FileTaskSpan":
+    def task_span(
+        self,
+        task_name: str,
+        input: PydanticSerializable,
+        timestamp: Optional[datetime] = None,
+    ) -> "FileTaskSpan":
         task = FileTaskSpan(self._log_file_path, task_name, input)
         self._log_entry(
             StartTask(
                 uuid=task.uuid,
                 parent=self.uuid,
                 name=task_name,
-                start=datetime.utcnow(),
+                start=timestamp or datetime.utcnow(),
                 input=input,
             )
         )

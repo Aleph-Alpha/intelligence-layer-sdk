@@ -8,6 +8,7 @@ from uuid import UUID
 from pydantic import BaseModel, Field, SerializeAsAny
 from pytest import fixture
 from intelligence_layer.core.logger import (
+    CompositeLogger,
     DebugLogger,
     EndSpan,
     EndTask,
@@ -48,44 +49,11 @@ def file_debug_log(tmp_path: Path) -> FileDebugLogger:
 
 def test_file_debug_logger(file_debug_log: FileDebugLogger) -> None:
     input = "input"
+    expected = InMemoryDebugLogger(name="")
 
-    output = TestTask().run(input, file_debug_log)
+    output = TestTask().run(input, CompositeLogger([expected, file_debug_log]))
 
     log_tree = parse_log(file_debug_log._log_file_path)
-    expected = InMemoryDebugLogger(name="")
-    task = InMemoryTaskSpan(
-        name="TestTask",
-        end_timestamp=None,
-        input=input,
-        output=output,
-    )
-    span = InMemorySpan(name="span", end_timestamp=None)
-    span.logs.append(
-        LogEntry(message="message", value="a value", timestamp=FIX_TIMESTAMP)
-    )
-    sub_task = InMemoryTaskSpan(
-        name="TestSubTask",
-        end_timestamp=None,
-        input=None,
-        output=None,
-    )
-    sub_task.logs.append(
-        LogEntry(message="subtask", value="value", timestamp=FIX_TIMESTAMP)
-    )
-    span.logs.append(sub_task)
-    task.logs.append(span)
-    sub_task = InMemoryTaskSpan(
-        name="TestSubTask",
-        end_timestamp=None,
-        input=None,
-        output=None,
-    )
-    sub_task.logs.append(
-        LogEntry(message="subtask", value="value", timestamp=FIX_TIMESTAMP)
-    )
-    task.logs.append(sub_task)
-
-    expected.logs.append(task)
     assert log_tree == expected
 
 
