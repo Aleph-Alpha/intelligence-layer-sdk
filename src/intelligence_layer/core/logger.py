@@ -128,7 +128,7 @@ class DebugLogger(ABC):
 
 
 class Span(DebugLogger, AbstractContextManager["Span"]):
-    """Captures a logical step within the overal workflow
+    """Captures a logical step within the overall workflow
 
     Logs and other spans can be nested underneath.
 
