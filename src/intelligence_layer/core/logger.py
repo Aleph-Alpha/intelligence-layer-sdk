@@ -83,8 +83,10 @@ class DebugLogger(ABC):
 
     @abstractmethod
     def span(self, name: str, timestamp: Optional[datetime] = None) -> "Span":
-        """Generate a span from the current span or logging instance. Allows for grouping multiple
-        logs and duration together as a single, logical step in the process.
+        """Generate a span from the current span or logging instance.
+
+        Allows for grouping multiple logs and duration together as a single, logical step in the
+        process.
 
         Each logger implementation can decide on how it wants to represent this, but they should
         all capture the hierarchical nature of nested spans, as well as the idea of the duration of
@@ -106,9 +108,10 @@ class DebugLogger(ABC):
         input: PydanticSerializable,
         timestamp: Optional[datetime] = None,
     ) -> "TaskSpan":
-        """Generate a task-specific span from the current span or logging instance. Allows for
-        grouping multiple logs together, as well as the task's specific input, output, and
-        duration.
+        """Generate a task-specific span from the current span or logging instance.
+
+        Allows for grouping multiple logs together, as well as the task's specific input, output,
+        and duration.
 
         Each logger implementation can decide on how it wants to represent this, but they should
         all allow for representing logs of a span within the context of a parent span.
@@ -125,8 +128,9 @@ class DebugLogger(ABC):
 
 
 class Span(DebugLogger, AbstractContextManager["Span"]):
-    """Instruments logs and spans within a span of time, to capture a logical step within the
-    overall workflow.
+    """Captures a logical step within the overal workflow
+
+    Logs and other spans can be nested underneath.
 
     Can also be used as a Context Manager to easily capture the start and end time, and keep the
     span only in scope while it is active.
@@ -165,7 +169,7 @@ class TaskSpan(Span):
 
     @abstractmethod
     def record_output(self, output: PydanticSerializable) -> None:
-        """Record `Task` output. Since a Context Manager can't provide this in the `__exit__`
+        """Record :class:`Task` output. Since a Context Manager can't provide this in the `__exit__`
         method, output should be captured once it is generated.
 
         This should be handled automatically within the execution of the task, and it is
@@ -178,7 +182,7 @@ class TaskSpan(Span):
 
 
 class CompositeLogger(TaskSpan):
-    """A `DebugLogger` that allows for recording to multiple loggers simultaneously.
+    """A :class:`DebugLogger` that allows for recording to multiple loggers simultaneously.
 
     Each log-entry and span will be forwarded to all subloggers.
 
@@ -238,7 +242,9 @@ class CompositeLogger(TaskSpan):
 
 
 class NoOpDebugLogger(TaskSpan):
-    """A no-op logger. Useful for cases, like testing, where a logger is needed for a task, but you
+    """A no-op logger.
+
+    Useful for cases, like testing, where a logger is needed for a task, but you
     don't have a need to collect or inspect the actual logs.
 
     All calls to `log` won't actually do anything.
