@@ -4,7 +4,7 @@ from langdetect import detect_langs  # type: ignore
 from pydantic import BaseModel
 
 from intelligence_layer.core.task import Task
-from intelligence_layer.core.tracer import Span
+from intelligence_layer.core.tracer import TaskSpan
 
 
 class LanguageNotSupportedError(ValueError):
@@ -70,20 +70,22 @@ class DetectLanguage(Task[DetectLanguageInput, DetectLanguageOutput]):
         super().__init__()
         self._threshold = threshold
 
-    def do_run(self, input: DetectLanguageInput, span: Span) -> DetectLanguageOutput:
-        annotated_languages = self._detect_languages(input, span)
+    def do_run(
+        self, input: DetectLanguageInput, task_span: TaskSpan
+    ) -> DetectLanguageOutput:
+        annotated_languages = self._detect_languages(input, task_span)
         best_fit = self._get_best_fit(annotated_languages, input.possible_languages)
         return DetectLanguageOutput(best_fit=best_fit)
 
     def _detect_languages(
-        self, input: DetectLanguageInput, span: Span
+        self, input: DetectLanguageInput, task_span: TaskSpan
     ) -> Sequence[AnnotatedLanguage]:
         languages = detect_langs(input.text)
         annotated_languages = [
             AnnotatedLanguage(lang=Language(lang.lang), prob=lang.prob)
             for lang in languages
         ]
-        span.log("Raw language probabilities", annotated_languages)
+        task_span.log("Raw language probabilities", annotated_languages)
         return annotated_languages
 
     def _get_best_fit(

@@ -4,7 +4,7 @@ from time import sleep
 from typing import Callable
 
 from intelligence_layer.core.task import MAX_CONCURRENCY, Task
-from intelligence_layer.core.tracer import InMemoryTracer, NoOpTracer, Span, TaskSpan
+from intelligence_layer.core.tracer import InMemoryTracer, NoOpTracer, TaskSpan
 
 
 class ConcurrencyCounter(Task[None, None]):
@@ -14,7 +14,7 @@ class ConcurrencyCounter(Task[None, None]):
     def __init__(self) -> None:
         self.lock = Lock()
 
-    def do_run(self, input: None, span: Span) -> None:
+    def do_run(self, input: None, task_span: TaskSpan) -> None:
         with self.lock:
             self.concurrency_counter += 1
             self.max_concurrency_counter = max(
@@ -27,23 +27,23 @@ class ConcurrencyCounter(Task[None, None]):
 
 
 def dummy_decorator(
-    f: Callable[["BaseTask", None, Span], None]
-) -> Callable[["BaseTask", None, Span], None]:
+    f: Callable[["BaseTask", None, TaskSpan], None]
+) -> Callable[["BaseTask", None, TaskSpan], None]:
     @wraps(f)
     def wrap(
         self: "BaseTask",
         input: None,
-        span: Span,
+        task_span: TaskSpan,
     ) -> None:
-        return f(self, input, span)
+        return f(self, input, task_span)
 
     return wrap
 
 
 class BaseTask(Task[None, None]):
     @dummy_decorator
-    def do_run(self, input: None, span: Span) -> None:
-        span.log("Plain", "Entry")
+    def do_run(self, input: None, task_span: TaskSpan) -> None:
+        task_span.log("Plain", "Entry")
 
 
 class SubTask(BaseTask):

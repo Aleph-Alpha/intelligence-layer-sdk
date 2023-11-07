@@ -7,7 +7,7 @@ from intelligence_layer.connectors.retrievers.base_retriever import (
     SearchResult,
 )
 from intelligence_layer.core.task import Task
-from intelligence_layer.core.tracer import Span
+from intelligence_layer.core.tracer import TaskSpan
 
 
 class SearchInput(BaseModel):
@@ -58,6 +58,6 @@ class Search(Task[SearchInput, SearchOutput]):
         super().__init__()
         self._retriever = retriever
 
-    def do_run(self, input: SearchInput, span: Span) -> SearchOutput:
+    def do_run(self, input: SearchInput, task_span: TaskSpan) -> SearchOutput:
         results = self._retriever.get_relevant_documents_with_scores(input.query)
         return SearchOutput(results=results)
