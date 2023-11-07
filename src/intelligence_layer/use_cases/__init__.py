@@ -27,7 +27,8 @@ from .summarize.single_chunk_few_shot_summarize import SingleChunkFewShotSummari
 from .summarize.summarize import (
     LongContextSummarizeInput,
     SingleChunkSummarizeInput,
-    SummarizeOutput,
+    SingleChunkSummarizeOutput,
+    LongContextSummarizeOutput
 )
 
 __all__ = [symbol for symbol in dir() if symbol and symbol[0].isupper()]
