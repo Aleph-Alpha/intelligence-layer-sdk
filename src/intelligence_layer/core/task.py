@@ -6,7 +6,7 @@ from typing import Any, Callable, Generic, Iterable, Sequence, TypeVar
 
 from pydantic import BaseModel
 
-from intelligence_layer.core.logger import DebugLogger, PydanticSerializable
+from intelligence_layer.core.tracer import PydanticSerializable, Tracer
 
 
 class Token(BaseModel):
@@ -50,13 +50,13 @@ class Task(ABC, Generic[Input, Output]):
         super().__init_subclass__(**kwargs)
 
         def log_run_input_output(
-            func: Callable[["Task[Input, Output]", Input, DebugLogger], Output]
-        ) -> Callable[["Task[Input, Output]", Input, DebugLogger], Output]:
+            func: Callable[["Task[Input, Output]", Input, Tracer], Output]
+        ) -> Callable[["Task[Input, Output]", Input, Tracer], Output]:
             @functools.wraps(func)
             def inner(
                 self: "Task[Input, Output]",
                 input: Input,
-                logger: DebugLogger,
+                logger: Tracer,
             ) -> Output:
                 with logger.task_span(type(self).__name__, input) as task_span:
                     output = func(self, input, task_span)
@@ -70,16 +70,16 @@ class Task(ABC, Generic[Input, Output]):
             cls.run = log_run_input_output(cls.run)  # type: ignore
 
     @abstractmethod
-    def run(self, input: Input, logger: DebugLogger) -> Output:
+    def run(self, input: Input, logger: Tracer) -> Output:
         """Executes the implementation of run for this use case.
 
         This takes an input and runs the implementation to generate an output.
-        It takes a `DebugLogger` for tracing of the process.
+        It takes a `Tracer` for tracing of the process.
         The Input and Output are logged by default.
 
         Args:
             input: Generic input defined by the task implementation
-            logger: The `DebugLogger` used for tracing.
+            logger: The `Tracer` used for tracing.
         Returns:
             Generic output defined by the task implementation.
         """
@@ -88,7 +88,7 @@ class Task(ABC, Generic[Input, Output]):
     def run_concurrently(
         self,
         inputs: Iterable[Input],
-        debug_logger: DebugLogger,
+        debug_logger: Tracer,
         concurrency_limit: int = MAX_CONCURRENCY,
     ) -> Sequence[Output]:
         """Executes multiple processes of this task concurrently.

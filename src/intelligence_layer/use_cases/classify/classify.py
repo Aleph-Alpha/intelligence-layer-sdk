@@ -4,8 +4,8 @@ from pydantic import BaseModel
 
 from intelligence_layer.core.chunk import Chunk
 from intelligence_layer.core.evaluator import Evaluator
-from intelligence_layer.core.logger import DebugLogger
 from intelligence_layer.core.task import Task
+from intelligence_layer.core.tracer import Tracer
 
 Probability = NewType("Probability", float)
 
@@ -73,7 +73,7 @@ class ClassifyEvaluator(
     def evaluate(
         self,
         input: ClassifyInput,
-        logger: DebugLogger,
+        logger: Tracer,
         expected_output: Sequence[str],
     ) -> ClassifyEvaluation:
         output = self.task.run(input, logger)

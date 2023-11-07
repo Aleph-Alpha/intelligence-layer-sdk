@@ -13,8 +13,8 @@ from intelligence_layer.core.detect_language import (
     DetectLanguageInput,
     Language,
 )
-from intelligence_layer.core.logger import DebugLogger
 from intelligence_layer.core.task import Task
+from intelligence_layer.core.tracer import Tracer
 from intelligence_layer.use_cases.qa.luminous_prompts import (
     LANGUAGES_QA_INSTRUCTIONS as LUMINOUS_LANGUAGES_QA_INSTRUCTIONS,
 )
@@ -62,7 +62,7 @@ class LongContextQa(Task[LongContextQaInput, MultipleChunkQaOutput]):
         >>> client = Client(os.getenv("AA_TOKEN"))
         >>> task = LongContextQa(client)
         >>> input = LongContextQaInput(text="Lengthy text goes here...", question="Where does the text go?")
-        >>> logger = InMemoryDebugLogger(name="Long Context QA")
+        >>> logger = InMemoryTracer(name="Long Context QA")
         >>> output = task.run(input, logger)
     """
 
@@ -88,9 +88,7 @@ class LongContextQa(Task[LongContextQaInput, MultipleChunkQaOutput]):
         self._fallback_language = fallback_language
         assert fallback_language in allowed_languages
 
-    def run(
-        self, input: LongContextQaInput, logger: DebugLogger
-    ) -> MultipleChunkQaOutput:
+    def run(self, input: LongContextQaInput, logger: Tracer) -> MultipleChunkQaOutput:
         chunk_output = self._chunk_task.run(ChunkInput(text=input.text), logger)
         retriever = QdrantInMemoryRetriever(
             self._client,

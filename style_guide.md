@@ -25,7 +25,7 @@ import requests # type: ignore
 # 3) Local application libraries
 from intelligence_layer.use_cases.nested_task import NestedTask
 from intelligence_layer.core.task import Task
-from intelligence_layer.core.logger import DebugLogger
+from intelligence_layer.core.tracer import Tracer
 
 
 # Two newlines in between separate classes or between classes and imports.
@@ -67,7 +67,7 @@ class ExampleTask(Task[ExampleTaskInput, ExampleTaskOutput]):
 
     # For now, we assume that run will be the only explicitly public method for each `Task`.
     # `run` should be the first method after dunder methods.
-    def run(self, input: ExampleTaskInput, logger: DebugLogger) -> ExampleOutput:
+    def run(self, input: ExampleTaskInput, logger: Tracer) -> ExampleOutput:
         return self._some_calculation(input.some_number)
 
     # Example for a private method.

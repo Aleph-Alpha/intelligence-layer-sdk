@@ -13,7 +13,6 @@ from aleph_alpha_client.explanation import TextScoreWithRaw
 from pydantic import BaseModel
 
 from intelligence_layer.core.explain import Explain, ExplainInput
-from intelligence_layer.core.logger import DebugLogger
 from intelligence_layer.core.prompt_template import (
     Cursor,
     PromptRange,
@@ -21,6 +20,7 @@ from intelligence_layer.core.prompt_template import (
     TextCursor,
 )
 from intelligence_layer.core.task import Task
+from intelligence_layer.core.tracer import Tracer
 
 
 class TextHighlightInput(BaseModel):
@@ -102,9 +102,7 @@ class TextHighlight(Task[TextHighlightInput, TextHighlightOutput]):
         self._explain_task = Explain(client)
         self._granularity = granularity
 
-    def run(
-        self, input: TextHighlightInput, logger: DebugLogger
-    ) -> TextHighlightOutput:
+    def run(self, input: TextHighlightInput, logger: Tracer) -> TextHighlightOutput:
         self._raise_on_invalid_focus_range(input)
         explanation = self._explain(
             prompt=input.prompt_with_metadata.prompt,
@@ -137,7 +135,7 @@ class TextHighlight(Task[TextHighlightInput, TextHighlightOutput]):
             raise ValueError(f"Unknown focus ranges: {', '.join(unknown_focus_ranges)}")
 
     def _explain(
-        self, prompt: Prompt, target: str, model: str, logger: DebugLogger
+        self, prompt: Prompt, target: str, model: str, logger: Tracer
     ) -> ExplanationResponse:
         request = ExplanationRequest(
             prompt,
@@ -186,7 +184,7 @@ class TextHighlight(Task[TextHighlightInput, TextHighlightOutput]):
         text_prompt_item_explanations_and_indices: Sequence[
             tuple[TextPromptItemExplanation, int]
         ],
-        logger: DebugLogger,
+        logger: Tracer,
     ) -> Sequence[ScoredTextHighlight]:
         overlapping_and_flat = [
             text_score

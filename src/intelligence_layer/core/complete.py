@@ -3,9 +3,9 @@ from typing import Optional, Sequence
 from aleph_alpha_client import Client, CompletionRequest, CompletionResponse, Prompt
 from pydantic import BaseModel
 
-from intelligence_layer.core.logger import DebugLogger
 from intelligence_layer.core.prompt_template import PromptTemplate, PromptWithMetadata
 from intelligence_layer.core.task import Task
+from intelligence_layer.core.tracer import Tracer
 
 
 class CompleteInput(BaseModel):
@@ -51,7 +51,7 @@ class Complete(Task[CompleteInput, CompleteOutput]):
         super().__init__()
         self._client = client
 
-    def run(self, input: CompleteInput, logger: DebugLogger) -> CompleteOutput:
+    def run(self, input: CompleteInput, logger: Tracer) -> CompleteOutput:
         response = self._client.complete(
             input.request,
             model=input.model,
@@ -137,7 +137,7 @@ class Instruct(Task[InstructInput, PromptOutput]):
         self._client = client
         self._completion = Complete(client)
 
-    def run(self, input: InstructInput, logger: DebugLogger) -> PromptOutput:
+    def run(self, input: InstructInput, logger: Tracer) -> PromptOutput:
         prompt_with_metadata = PromptTemplate(
             self.INSTRUCTION_PROMPT_TEMPLATE
         ).to_prompt_with_metadata(
@@ -156,7 +156,7 @@ class Instruct(Task[InstructInput, PromptOutput]):
         )
 
     def _complete(
-        self, prompt: Prompt, maximum_tokens: int, model: str, logger: DebugLogger
+        self, prompt: Prompt, maximum_tokens: int, model: str, logger: Tracer
     ) -> str:
         request = CompletionRequest(prompt, maximum_tokens=maximum_tokens)
         return self._completion.run(
@@ -254,7 +254,7 @@ class FewShot(Task[FewShotInput, PromptOutput]):
         self._client = client
         self._completion = Complete(client)
 
-    def run(self, input: FewShotInput, logger: DebugLogger) -> PromptOutput:
+    def run(self, input: FewShotInput, logger: Tracer) -> PromptOutput:
         prompt_with_metadata = PromptTemplate(
             self.FEW_SHOT_PROMPT_TEMPLATE
         ).to_prompt_with_metadata(
@@ -277,7 +277,7 @@ class FewShot(Task[FewShotInput, PromptOutput]):
         )
 
     def _complete(
-        self, prompt: Prompt, maximum_tokens: int, model: str, logger: DebugLogger
+        self, prompt: Prompt, maximum_tokens: int, model: str, logger: Tracer
     ) -> str:
         request = CompletionRequest(
             prompt, maximum_tokens=maximum_tokens, stop_sequences=["###"]

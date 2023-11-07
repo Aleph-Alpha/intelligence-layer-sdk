@@ -17,7 +17,7 @@ from intelligence_layer.connectors.retrievers.qdrant_in_memory_retriever import 
     QdrantInMemoryRetriever,
     RetrieverType,
 )
-from intelligence_layer.core.logger import NoOpDebugLogger
+from intelligence_layer.core.tracer import NoOpTracer
 
 
 @fixture(scope="session")
@@ -35,8 +35,8 @@ def client(token: str) -> Client:
 
 
 @fixture
-def no_op_debug_logger() -> NoOpDebugLogger:
-    return NoOpDebugLogger()
+def no_op_debug_logger() -> NoOpTracer:
+    return NoOpTracer()
 
 
 @fixture(scope="session")

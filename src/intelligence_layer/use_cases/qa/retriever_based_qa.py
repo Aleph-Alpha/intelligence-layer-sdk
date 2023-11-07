@@ -10,8 +10,8 @@ from intelligence_layer.core.detect_language import (
     DetectLanguageInput,
     Language,
 )
-from intelligence_layer.core.logger import DebugLogger
 from intelligence_layer.core.task import Task
+from intelligence_layer.core.tracer import Tracer
 from intelligence_layer.use_cases.qa.luminous_prompts import (
     LANGUAGES_QA_INSTRUCTIONS as LUMINOUS_LANGUAGES_QA_INSTRUCTIONS,
 )
@@ -57,7 +57,7 @@ class RetrieverBasedQa(Task[RetrieverBasedQaInput, MultipleChunkQaOutput]):
         >>> retriever = DocumentIndexRetriever(document_index, "my_namespace", "ancient_facts_collection", 3)
         >>> task = RetrieverBasedQa(client, retriever)
         >>> input_data = RetrieverBasedQaInput(question="When was Rome founded?")
-        >>> logger = InMemoryDebugLogger(name="Retriever Based QA")
+        >>> logger = InMemoryTracer(name="Retriever Based QA")
         >>> output = task.run(input_data, logger)
         >>> print(output.answer)
         Rome was founded in 753 BC.
@@ -84,7 +84,7 @@ class RetrieverBasedQa(Task[RetrieverBasedQaInput, MultipleChunkQaOutput]):
         assert fallback_language in allowed_languages
 
     def run(
-        self, input: RetrieverBasedQaInput, logger: DebugLogger
+        self, input: RetrieverBasedQaInput, logger: Tracer
     ) -> MultipleChunkQaOutput:
         search_output = self._search.run(SearchInput(query=input.question), logger)
 

@@ -9,7 +9,7 @@ from intelligence_layer.connectors.retrievers.qdrant_in_memory_retriever import 
     QdrantInMemoryRetriever,
 )
 from intelligence_layer.core.chunk import Chunk
-from intelligence_layer.core.logger import NoOpDebugLogger
+from intelligence_layer.core.tracer import NoOpTracer
 from intelligence_layer.use_cases.classify.classify import (
     ClassifyEvaluator,
     ClassifyInput,
@@ -73,7 +73,7 @@ def embedding_based_classify(client: Client) -> EmbeddingBasedClassify:
 
 def test_qdrant_search(
     qdrant_search: QdrantSearch,
-    no_op_debug_logger: NoOpDebugLogger,
+    no_op_debug_logger: NoOpTracer,
     in_memory_retriever_documents: Sequence[Document],
 ) -> None:
     search_input = QdrantSearchInput(
@@ -98,7 +98,7 @@ def test_embedding_based_classify_returns_score_for_all_labels(
         chunk=Chunk("This is good"),
         labels=frozenset({"positive", "negative"}),
     )
-    classify_output = embedding_based_classify.run(classify_input, NoOpDebugLogger())
+    classify_output = embedding_based_classify.run(classify_input, NoOpTracer())
 
     # Output contains everything we expect
     assert isinstance(classify_output, ClassifyOutput)
@@ -114,7 +114,7 @@ def test_embedding_based_classify_raises_for_unknown_label(
         labels=frozenset({"positive", "negative", unknown_label}),
     )
     with raises(ValueError) as _:
-        embedding_based_classify.run(classify_input, NoOpDebugLogger())
+        embedding_based_classify.run(classify_input, NoOpTracer())
 
 
 def test_embedding_based_classify_works_for_empty_labels_in_request(
@@ -124,7 +124,7 @@ def test_embedding_based_classify_works_for_empty_labels_in_request(
         chunk=Chunk("This is good"),
         labels=frozenset(),
     )
-    result = embedding_based_classify.run(classify_input, NoOpDebugLogger())
+    result = embedding_based_classify.run(classify_input, NoOpTracer())
     assert result.scores == {}
 
 
@@ -146,7 +146,7 @@ def test_embedding_based_classify_works_without_examples(
         chunk=Chunk("This is good"),
         labels=frozenset(),
     )
-    result = embedding_based_classify.run(classify_input, NoOpDebugLogger())
+    result = embedding_based_classify.run(classify_input, NoOpTracer())
     assert result.scores == {}
 
 
@@ -160,7 +160,7 @@ def test_can_evaluate_embedding_based_classify(
     evaluator = ClassifyEvaluator(task=embedding_based_classify)
 
     evaluation = evaluator.evaluate(
-        input=classify_input, logger=NoOpDebugLogger(), expected_output=["positive"]
+        input=classify_input, logger=NoOpTracer(), expected_output=["positive"]
     )
 
     assert evaluation.correct is True

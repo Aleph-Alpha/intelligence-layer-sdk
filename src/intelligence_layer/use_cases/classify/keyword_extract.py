@@ -11,8 +11,8 @@ from intelligence_layer.core.complete import (
     FewShotInput,
 )
 from intelligence_layer.core.detect_language import Language, LanguageNotSupportedError
-from intelligence_layer.core.logger import DebugLogger
 from intelligence_layer.core.task import Task
+from intelligence_layer.core.tracer import Tracer
 
 FEW_SHOT_CONFIGS = {
     Language("de"): FewShotConfig(
@@ -151,7 +151,7 @@ class KeywordExtract(Task[KeywordExtractInput, frozenset[str]]):
         self._model = model
         self._maximum_tokens = maximum_tokens
 
-    def run(self, input: KeywordExtractInput, logger: DebugLogger) -> frozenset[str]:
+    def run(self, input: KeywordExtractInput, logger: Tracer) -> frozenset[str]:
         config = self._few_shot_configs.get(input.language)
         if config is None:
             raise LanguageNotSupportedError(

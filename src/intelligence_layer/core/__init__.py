@@ -16,18 +16,6 @@ from .detect_language import (
 from .echo import EchoInput, EchoOutput, EchoTask
 from .evaluator import Dataset, Evaluation, Example
 from .explain import Explain, ExplainInput, ExplainOutput
-from .logger import (
-    DebugLogger,
-    FileDebugLogger,
-    FileSpan,
-    FileTaskSpan,
-    InMemoryDebugLogger,
-    InMemorySpan,
-    InMemoryTaskSpan,
-    NoOpDebugLogger,
-    Span,
-    TaskSpan,
-)
 from .prompt_template import (
     Cursor,
     PromptItemCursor,
@@ -42,6 +30,18 @@ from .text_highlight import (
     TextHighlight,
     TextHighlightInput,
     TextHighlightOutput,
+)
+from .tracer import (
+    FileSpan,
+    FileTaskSpan,
+    FileTracer,
+    InMemorySpan,
+    InMemoryTaskSpan,
+    InMemoryTracer,
+    NoOpTracer,
+    Span,
+    TaskSpan,
+    Tracer,
 )
 
 __all__ = [symbol for symbol in dir() if symbol and symbol[0].isupper()]

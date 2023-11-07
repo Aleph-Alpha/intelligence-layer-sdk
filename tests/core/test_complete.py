@@ -9,7 +9,7 @@ from intelligence_layer.core.complete import (
     Instruct,
     InstructInput,
 )
-from intelligence_layer.core.logger import NoOpDebugLogger
+from intelligence_layer.core.tracer import NoOpTracer
 
 
 @fixture
@@ -23,7 +23,7 @@ def few_shot(client: Client) -> FewShot:
 
 
 def test_instruct_without_input(
-    instruct: Instruct, no_op_debug_logger: NoOpDebugLogger
+    instruct: Instruct, no_op_debug_logger: NoOpTracer
 ) -> None:
     input = InstructInput(
         instruction="What is the capital of Germany?",
@@ -38,7 +38,7 @@ def test_instruct_without_input(
     assert "Input" not in prompt_text_item.text
 
 
-def test_few_shot(few_shot: FewShot, no_op_debug_logger: NoOpDebugLogger) -> None:
+def test_few_shot(few_shot: FewShot, no_op_debug_logger: NoOpTracer) -> None:
     input = FewShotInput(
         input="What is the capital of Germany?",
         few_shot_config=FewShotConfig(

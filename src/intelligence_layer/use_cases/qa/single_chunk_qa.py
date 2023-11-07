@@ -7,10 +7,10 @@ from pydantic import BaseModel
 from intelligence_layer.core.chunk import Chunk
 from intelligence_layer.core.complete import Instruct, InstructInput, PromptOutput
 from intelligence_layer.core.detect_language import Language, LanguageNotSupportedError
-from intelligence_layer.core.logger import DebugLogger
 from intelligence_layer.core.prompt_template import PromptWithMetadata
 from intelligence_layer.core.task import Task
 from intelligence_layer.core.text_highlight import TextHighlight, TextHighlightInput
+from intelligence_layer.core.tracer import Tracer
 from intelligence_layer.use_cases.qa.luminous_prompts import (
     LANGUAGES_QA_INSTRUCTIONS as LUMINOUS_LANGUAGES_QA_INSTRUCTIONS,
 )
@@ -92,9 +92,7 @@ class SingleChunkQa(Task[SingleChunkQaInput, SingleChunkQaOutput]):
         self._instruction = Instruct(client)
         self._text_highlight = TextHighlight(client)
 
-    def run(
-        self, input: SingleChunkQaInput, logger: DebugLogger
-    ) -> SingleChunkQaOutput:
+    def run(self, input: SingleChunkQaInput, logger: Tracer) -> SingleChunkQaOutput:
         try:
             prompt = LUMINOUS_LANGUAGES_QA_INSTRUCTIONS[input.language]
         except KeyError:
@@ -125,9 +123,7 @@ class SingleChunkQa(Task[SingleChunkQaInput, SingleChunkQaOutput]):
             highlights=highlights,
         )
 
-    def _instruct(
-        self, instruction: str, input: str, logger: DebugLogger
-    ) -> PromptOutput:
+    def _instruct(self, instruction: str, input: str, logger: Tracer) -> PromptOutput:
         return self._instruction.run(
             InstructInput(instruction=instruction, input=input, model=self._model),
             logger,
@@ -137,7 +133,7 @@ class SingleChunkQa(Task[SingleChunkQaInput, SingleChunkQaOutput]):
         self,
         prompt_with_metadata: PromptWithMetadata,
         completion: str,
-        logger: DebugLogger,
+        logger: Tracer,
     ) -> Sequence[str]:
         highlight_input = TextHighlightInput(
             prompt_with_metadata=prompt_with_metadata,

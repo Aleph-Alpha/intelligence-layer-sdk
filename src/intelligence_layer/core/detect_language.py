@@ -3,8 +3,8 @@ from typing import NewType, Optional, Sequence
 from langdetect import detect_langs  # type: ignore
 from pydantic import BaseModel
 
-from intelligence_layer.core.logger import DebugLogger
 from intelligence_layer.core.task import Task
+from intelligence_layer.core.tracer import Tracer
 
 
 class LanguageNotSupportedError(ValueError):
@@ -70,15 +70,13 @@ class DetectLanguage(Task[DetectLanguageInput, DetectLanguageOutput]):
         super().__init__()
         self._threshold = threshold
 
-    def run(
-        self, input: DetectLanguageInput, logger: DebugLogger
-    ) -> DetectLanguageOutput:
+    def run(self, input: DetectLanguageInput, logger: Tracer) -> DetectLanguageOutput:
         annotated_languages = self._detect_languages(input, logger)
         best_fit = self._get_best_fit(annotated_languages, input.possible_languages)
         return DetectLanguageOutput(best_fit=best_fit)
 
     def _detect_languages(
-        self, input: DetectLanguageInput, logger: DebugLogger
+        self, input: DetectLanguageInput, logger: Tracer
     ) -> Sequence[AnnotatedLanguage]:
         languages = detect_langs(input.text)
         annotated_languages = [

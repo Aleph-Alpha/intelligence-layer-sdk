@@ -1,9 +1,9 @@
 from aleph_alpha_client import Client, Image
 from pytest import fixture, raises
 
-from intelligence_layer.core.logger import NoOpDebugLogger
 from intelligence_layer.core.prompt_template import PromptTemplate
 from intelligence_layer.core.text_highlight import TextHighlight, TextHighlightInput
+from intelligence_layer.core.tracer import NoOpTracer
 
 
 @fixture
@@ -28,7 +28,7 @@ Answer:"""
         model=model,
         focus_ranges=frozenset({"r1"}),
     )
-    output = text_highlight.run(input, NoOpDebugLogger())
+    output = text_highlight.run(input, NoOpTracer())
 
     assert output.highlights
     top_highlight = next(h for h in output.highlights if "conditions" in h.text)
@@ -58,7 +58,7 @@ Answer:"""
         model="luminous-base",
         focus_ranges=frozenset(["no_content"]),
     )
-    output = text_highlight.run(input, NoOpDebugLogger())
+    output = text_highlight.run(input, NoOpTracer())
     assert not any(h.score > 0 for h in output.highlights)
 
 
@@ -76,7 +76,7 @@ Answer:"""
         model=model,
         focus_ranges=frozenset({"r1"}),
     )
-    output = text_highlight.run(input, NoOpDebugLogger())
+    output = text_highlight.run(input, NoOpTracer())
 
     assert not output.highlights
 
@@ -99,7 +99,7 @@ Answer:"""
     input = TextHighlightInput(
         prompt_with_metadata=prompt_with_metadata, target=completion, model=model
     )
-    output = text_highlight.run(input, NoOpDebugLogger())
+    output = text_highlight.run(input, NoOpTracer())
 
     assert output.highlights
     assert any("bear" in highlight.text.lower() for highlight in output.highlights)
@@ -122,7 +122,7 @@ Answer:"""
     input = TextHighlightInput(
         prompt_with_metadata=prompt_with_metadata, target=completion, model=model
     )
-    output = text_highlight.run(input, NoOpDebugLogger())
+    output = text_highlight.run(input, NoOpTracer())
 
     assert output.highlights
     assert any("bear" in highlight.text.lower() for highlight in output.highlights)
@@ -151,7 +151,7 @@ Answer:"""
         model=model,
         focus_ranges=focus_ranges,
     )
-    output = text_highlight.run(input, NoOpDebugLogger())
+    output = text_highlight.run(input, NoOpTracer())
 
     assert output.highlights
     assert any(
@@ -181,6 +181,6 @@ Answer:"""
         focus_ranges=frozenset([unknown_range_name]),
     )
     with raises(ValueError) as e:
-        text_highlight.run(input, NoOpDebugLogger())
+        text_highlight.run(input, NoOpTracer())
 
     assert unknown_range_name in str(e.value)

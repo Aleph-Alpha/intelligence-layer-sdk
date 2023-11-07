@@ -1,7 +1,7 @@
 from aleph_alpha_client import Client
 from pytest import fixture
 
-from intelligence_layer.core.logger import NoOpDebugLogger
+from intelligence_layer.core.tracer import NoOpTracer
 from intelligence_layer.use_cases.summarize.long_context_high_compression_summarize import (
     LongContextHighCompressionSummarize,
 )
@@ -49,7 +49,7 @@ def test_long_context_high_compression_summarize_en(
     long_text: str,
 ) -> None:
     input = LongContextSummarizeInput(text=long_text)
-    output = long_context_high_compression_summarize.run(input, NoOpDebugLogger())
+    output = long_context_high_compression_summarize.run(input, NoOpTracer())
 
     assert output.partial_summaries
     assert any(

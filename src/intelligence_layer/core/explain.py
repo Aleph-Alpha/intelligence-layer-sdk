@@ -1,8 +1,8 @@
 from aleph_alpha_client import Client, ExplanationRequest, ExplanationResponse
 from pydantic import BaseModel
 
-from intelligence_layer.core.logger import DebugLogger
 from intelligence_layer.core.task import Task
+from intelligence_layer.core.tracer import Tracer
 
 
 class ExplainInput(BaseModel):
@@ -43,6 +43,6 @@ class Explain(Task[ExplainInput, ExplainOutput]):
         super().__init__()
         self._client = client
 
-    def run(self, input: ExplainInput, logger: DebugLogger) -> ExplainOutput:
+    def run(self, input: ExplainInput, logger: Tracer) -> ExplainOutput:
         response = self._client.explain(input.request, input.model)
         return ExplainOutput(response=response)

@@ -11,8 +11,8 @@ from intelligence_layer.connectors.retrievers.qdrant_in_memory_retriever import 
     RetrieverType,
 )
 from intelligence_layer.core.chunk import Chunk
-from intelligence_layer.core.logger import DebugLogger
 from intelligence_layer.core.task import Task
+from intelligence_layer.core.tracer import Tracer
 from intelligence_layer.use_cases.classify.classify import (
     ClassifyInput,
     ClassifyOutput,
@@ -71,7 +71,7 @@ class QdrantSearch(Task[QdrantSearchInput, SearchOutput]):
         super().__init__()
         self._in_memory_retriever = in_memory_retriever
 
-    def run(self, input: QdrantSearchInput, logger: DebugLogger) -> SearchOutput:
+    def run(self, input: QdrantSearchInput, logger: Tracer) -> SearchOutput:
         results = self._in_memory_retriever.get_filtered_documents_with_scores(
             input.query, input.filter
         )
@@ -156,7 +156,7 @@ class EmbeddingBasedClassify(Task[ClassifyInput, ClassifyOutput]):
         )
         self._qdrant_search = QdrantSearch(retriever)
 
-    def run(self, input: ClassifyInput, logger: DebugLogger) -> ClassifyOutput:
+    def run(self, input: ClassifyInput, logger: Tracer) -> ClassifyOutput:
         self._validate_input_labels(input)
         results_per_label = [
             self._label_search(input.chunk, label, logger) for label in input.labels
@@ -186,9 +186,7 @@ class EmbeddingBasedClassify(Task[ClassifyInput, ClassifyOutput]):
         if unknown_labels:
             raise ValueError(f"Got unexpected labels: {', '.join(unknown_labels)}.")
 
-    def _label_search(
-        self, chunk: Chunk, label: str, logger: DebugLogger
-    ) -> SearchOutput:
+    def _label_search(self, chunk: Chunk, label: str, logger: Tracer) -> SearchOutput:
         search_input = QdrantSearchInput(
             query=chunk,
             filter=models.Filter(

@@ -5,33 +5,33 @@ from uuid import UUID
 from pydantic import BaseModel, Field
 from pytest import fixture
 
-from intelligence_layer.core.logger import (
+from intelligence_layer.core.task import Task
+from intelligence_layer.core.tracer import (
     CompositeLogger,
-    DebugLogger,
     EndSpan,
     EndTask,
-    FileDebugLogger,
-    InMemoryDebugLogger,
+    FileTracer,
     InMemorySpan,
     InMemoryTaskSpan,
+    InMemoryTracer,
     LogEntry,
     LogLine,
     PlainEntry,
     StartSpan,
     StartTask,
+    Tracer,
 )
-from intelligence_layer.core.task import Task
 
 
 class TestSubTask(Task[None, None]):
-    def run(self, input: None, logger: DebugLogger) -> None:
+    def run(self, input: None, logger: Tracer) -> None:
         logger.log("subtask", "value")
 
 
 class TestTask(Task[str, str]):
     sub_task = TestSubTask()
 
-    def run(self, input: str, logger: DebugLogger) -> str:
+    def run(self, input: str, logger: Tracer) -> str:
         with logger.span("span") as span_logger:
             span_logger.log("message", "a value")
             self.sub_task.run(None, span_logger)
@@ -41,13 +41,13 @@ class TestTask(Task[str, str]):
 
 
 @fixture
-def file_debug_log(tmp_path: Path) -> FileDebugLogger:
-    return FileDebugLogger(tmp_path / "log.log")
+def file_debug_log(tmp_path: Path) -> FileTracer:
+    return FileTracer(tmp_path / "log.log")
 
 
-def test_file_debug_logger(file_debug_log: FileDebugLogger) -> None:
+def test_file_debug_logger(file_debug_log: FileTracer) -> None:
     input = "input"
-    expected = InMemoryDebugLogger(name="")
+    expected = InMemoryTracer(name="")
 
     TestTask().run(input, CompositeLogger([expected, file_debug_log]))
 
@@ -55,7 +55,7 @@ def test_file_debug_logger(file_debug_log: FileDebugLogger) -> None:
     assert log_tree == expected
 
 
-def parse_log(log_path: Path) -> InMemoryDebugLogger:
+def parse_log(log_path: Path) -> InMemoryTracer:
     tree_builder = TreeBuilder()
     with log_path.open("r") as f:
         for line in f:
@@ -78,8 +78,8 @@ def parse_log(log_path: Path) -> InMemoryDebugLogger:
 
 
 class TreeBuilder(BaseModel):
-    root: InMemoryDebugLogger = InMemoryDebugLogger(name="")
-    loggers: dict[UUID, InMemoryDebugLogger] = Field(default_factory=dict)
+    root: InMemoryTracer = InMemoryTracer(name="")
+    loggers: dict[UUID, InMemoryTracer] = Field(default_factory=dict)
     tasks: dict[UUID, InMemoryTaskSpan] = Field(default_factory=dict)
     spans: dict[UUID, InMemorySpan] = Field(default_factory=dict)
 

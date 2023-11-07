@@ -12,7 +12,7 @@ from intelligence_layer.connectors.retrievers.qdrant_in_memory_retriever import 
     QdrantInMemoryRetriever,
 )
 from intelligence_layer.core.detect_language import Language
-from intelligence_layer.core.logger import NoOpDebugLogger
+from intelligence_layer.core.tracer import NoOpTracer
 from intelligence_layer.use_cases.qa.retriever_based_qa import (
     RetrieverBasedQa,
     RetrieverBasedQaInput,
@@ -57,7 +57,7 @@ def retriever_based_qa_with_document_index(
 
 def test_retriever_based_qa_using_in_memory_retriever(
     retriever_based_qa_with_in_memory_retriever: RetrieverBasedQa,
-    no_op_debug_logger: NoOpDebugLogger,
+    no_op_debug_logger: NoOpTracer,
 ) -> None:
     question = "When was Robert Moses born?"
     input = RetrieverBasedQaInput(question=question)
@@ -68,7 +68,7 @@ def test_retriever_based_qa_using_in_memory_retriever(
 
 def test_retriever_based_qa_with_document_index(
     retriever_based_qa_with_document_index: RetrieverBasedQa,
-    no_op_debug_logger: NoOpDebugLogger,
+    no_op_debug_logger: NoOpTracer,
 ) -> None:
     question = "When was Robert Moses born?"
     input = RetrieverBasedQaInput(question=question)
