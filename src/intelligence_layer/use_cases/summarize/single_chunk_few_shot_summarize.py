@@ -27,6 +27,8 @@ class SingleChunkFewShotSummarize(Task[SingleChunkSummarizeInput, SummarizeOutpu
         client: Aleph Alpha client instance for running model related API calls.
         few_shot_configs: A mapping of valid `Language` to `FewShotConfig` for each
             supported language.
+        model: A valid Aleph Alpha model name.
+        maximum_tokens: The maximum number of tokens to be generated.
     """
 
     _client: Client

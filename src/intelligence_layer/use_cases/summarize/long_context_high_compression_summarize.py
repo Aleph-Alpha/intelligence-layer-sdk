@@ -10,9 +10,6 @@ from intelligence_layer.core.detect_language import (
 from intelligence_layer.use_cases.summarize.long_context_few_shot_summarize import (
     LongContextFewShotSummarize,
 )
-from intelligence_layer.use_cases.summarize.single_chunk_few_shot_summarize import (
-    SingleChunkFewShotSummarize,
-)
 
 
 FEW_SHOT_CONFIGS = {
@@ -136,7 +133,9 @@ class LongContextHighCompressionSummarize(LongContextFewShotSummarize):
 
     _client: Client
 
-    def __init__(self, client: Client) -> None:
+    def __init__(
+        self, client: Client, fallback_language: Language = Language("en")
+    ) -> None:
         super().__init__(
             client=client,
             few_shot_configs=FEW_SHOT_CONFIGS,
@@ -144,5 +143,5 @@ class LongContextHighCompressionSummarize(LongContextFewShotSummarize):
             max_generated_tokens=96,
             max_tokens_per_chunk=400,
             allowed_languages=[Language(l) for l in ["en", "de", "es", "fr", "it"]],
-            fallback_language=Language("en"),
+            fallback_language=fallback_language,
         )
