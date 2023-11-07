@@ -30,5 +30,5 @@ def test_keyword_extract_raises_for_unsupported_language(
     input = KeywordExtractInput(
         chunk=Chunk("text about computers"), language=Language("pt")
     )
-    with pytest.raises(LanguageNotSupportedError) as exception_info:
+    with pytest.raises(LanguageNotSupportedError):
         keyword_extract.run(input, NoOpDebugLogger())

@@ -9,7 +9,6 @@ from intelligence_layer.core.complete import (
     PromptOutput,
 )
 from intelligence_layer.core.detect_language import Language
-from intelligence_layer.use_cases.qa.luminous_prompts import LANGUAGES_QA_INSTRUCTIONS
 from intelligence_layer.use_cases.qa.single_chunk_qa import (
     SingleChunkQaInput,
     SingleChunkQaOutput,

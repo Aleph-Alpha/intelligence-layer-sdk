@@ -1,7 +1,7 @@
 from aleph_alpha_client import Client
 from pytest import fixture
 import pytest
-from intelligence_layer.core.detect_language import Language, LanguageNotSupportedError
+from intelligence_layer.core.detect_language import Language
 
 from intelligence_layer.core.logger import NoOpDebugLogger
 from intelligence_layer.use_cases.qa.long_context_qa import (
@@ -84,7 +84,7 @@ def test_multiple_qa_on_single_task_instance(qa: LongContextQa) -> None:
 
 
 def test_fallback_language_throws_an_assertion_error(client: Client) -> None:
-    with pytest.raises(AssertionError) as e:
+    with pytest.raises(AssertionError):
         LongContextQa(
             client,
             allowed_languages=[Language("en"), Language("de")],
