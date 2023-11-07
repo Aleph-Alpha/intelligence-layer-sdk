@@ -133,8 +133,6 @@ class LongContextLowCompressionSummarize(LongContextFewShotSummarize):
         Tina doesn't like pizza, but Mike and Pete do.
     """
 
-    _client: Client
-
     def __init__(
         self, client: Client, fallback_language: Language = Language("en")
     ) -> None:

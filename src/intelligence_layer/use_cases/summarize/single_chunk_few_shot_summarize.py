@@ -31,8 +31,6 @@ class SingleChunkFewShotSummarize(Task[SingleChunkSummarizeInput, SummarizeOutpu
         maximum_tokens: The maximum number of tokens to be generated.
     """
 
-    _client: Client
-
     def __init__(
         self,
         client: Client,

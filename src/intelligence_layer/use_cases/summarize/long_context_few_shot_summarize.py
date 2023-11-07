@@ -42,8 +42,6 @@ class LongContextFewShotSummarize(Task[LongContextSummarizeInput, SummarizeOutpu
         fallback_language: The default language of the output.
     """
 
-    _client: Client
-
     def __init__(
         self,
         client: Client,
