@@ -1,5 +1,7 @@
+from functools import lru_cache, wraps
 from threading import Lock
 from time import sleep
+from typing import Callable
 
 from intelligence_layer.core.logger import (
     DebugLogger,
@@ -29,7 +31,22 @@ class ConcurrencyCounter(Task[None, None]):
             self.concurrency_counter -= 1
 
 
+def dummy_decorator(
+    f: Callable[["BaseTask", None, DebugLogger], None]
+) -> Callable[["BaseTask", None, DebugLogger], None]:
+    @wraps(f)
+    def wrap(
+        self: BaseTask,
+        input: None,
+        logger: DebugLogger,
+    ) -> None:
+        return f(self, input, logger)
+
+    return wrap
+
+
 class BaseTask(Task[None, None]):
+    @dummy_decorator
     def run(self, input: None, logger: DebugLogger) -> None:
         logger.log("Plain", "Entry")
 

@@ -52,6 +52,8 @@ class Task(ABC, Generic[Input, Output]):
         Output: Interface of the output returned by the task.
     """
 
+    _logging_decorator_added_to_run = False
+
     def __init_subclass__(cls, **kwargs: Any) -> None:
         """Decorates run method to auto log input and output for the task"""
         super().__init_subclass__(**kwargs)
@@ -72,7 +74,9 @@ class Task(ABC, Generic[Input, Output]):
 
             return inner
 
-        cls.run = log_run_input_output(cls.run)  # type: ignore
+        if not cls._logging_decorator_added_to_run:
+            cls._logging_decorator_added_to_run = True
+            cls.run = log_run_input_output(cls.run)  # type: ignore
 
     @abstractmethod
     def run(self, input: Input, logger: DebugLogger) -> Output:
