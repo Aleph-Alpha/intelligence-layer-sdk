@@ -1,8 +1,8 @@
 from typing import Sequence
 
+import tokenizers  # type: ignore
 from aleph_alpha_client import Client, Prompt
 from pytest import fixture
-import tokenizers  # type: ignore
 
 from intelligence_layer.core.echo import EchoInput, EchoTask, TokenWithLogProb
 from intelligence_layer.core.logger import NoOpDebugLogger

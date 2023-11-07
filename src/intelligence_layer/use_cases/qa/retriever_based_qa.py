@@ -1,13 +1,17 @@
 from typing import Sequence
-from aleph_alpha_client import (
-    Client,
-)
+
+from aleph_alpha_client import Client
 from pydantic import BaseModel
+
+from intelligence_layer.connectors.retrievers.base_retriever import BaseRetriever
+from intelligence_layer.core.chunk import Chunk
 from intelligence_layer.core.detect_language import (
     DetectLanguage,
     DetectLanguageInput,
     Language,
 )
+from intelligence_layer.core.logger import DebugLogger
+from intelligence_layer.core.task import Task
 from intelligence_layer.use_cases.qa.luminous_prompts import (
     LANGUAGES_QA_INSTRUCTIONS as LUMINOUS_LANGUAGES_QA_INSTRUCTIONS,
 )
@@ -16,11 +20,7 @@ from intelligence_layer.use_cases.qa.multiple_chunk_qa import (
     MultipleChunkQaInput,
     MultipleChunkQaOutput,
 )
-from intelligence_layer.connectors.retrievers.base_retriever import BaseRetriever
 from intelligence_layer.use_cases.search.search import Search, SearchInput
-from intelligence_layer.core.chunk import Chunk
-from intelligence_layer.core.task import Task
-from intelligence_layer.core.logger import DebugLogger
 
 
 class RetrieverBasedQaInput(BaseModel):

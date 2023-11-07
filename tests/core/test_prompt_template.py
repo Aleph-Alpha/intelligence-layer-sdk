@@ -2,8 +2,8 @@ from pathlib import Path
 from textwrap import dedent
 from typing import List
 
-from aleph_alpha_client.prompt import Prompt, Image, PromptItem, Text, Tokens
-from liquid.exceptions import LiquidTypeError, LiquidSyntaxError
+from aleph_alpha_client.prompt import Image, Prompt, PromptItem, Text, Tokens
+from liquid.exceptions import LiquidSyntaxError, LiquidTypeError
 from pytest import raises
 
 from intelligence_layer.core.prompt_template import (

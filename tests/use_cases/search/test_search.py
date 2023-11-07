@@ -1,7 +1,8 @@
-from pytest import fixture
 from typing import Sequence
-from intelligence_layer.connectors.retrievers.base_retriever import Document
 
+from pytest import fixture
+
+from intelligence_layer.connectors.retrievers.base_retriever import Document
 from intelligence_layer.connectors.retrievers.qdrant_in_memory_retriever import (
     QdrantInMemoryRetriever,
 )

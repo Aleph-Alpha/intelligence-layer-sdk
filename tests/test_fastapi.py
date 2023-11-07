@@ -1,5 +1,6 @@
 """Test prediction via api."""
 from http import HTTPStatus
+
 from dotenv import load_dotenv
 from fastapi.testclient import TestClient
 from pytest import fixture

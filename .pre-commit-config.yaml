@@ -1,8 +1,4 @@
 repos:
-  - repo: https://github.com/peterdemin/pip-compile-multi
-    rev: v2.4.5
-    hooks:
-      - id: pip-compile-multi-verify
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v3.4.0
     hooks:
@@ -17,6 +13,12 @@ repos:
         exclude: log-viewer/
       - id: trailing-whitespace
         exclude: log-viewer/
+  - repo: https://github.com/pycqa/isort
+    rev: 5.12.0
+    hooks:
+      - id: isort
+        name: isort (python)
+        args: ["--profile", "black", "--filter-files"]
   - repo: https://github.com/psf/black
     rev: 23.7.0
     hooks:

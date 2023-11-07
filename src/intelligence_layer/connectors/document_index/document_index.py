@@ -3,8 +3,8 @@ from http import HTTPStatus
 from json import dumps
 from typing import Any, Mapping, Sequence
 
-from pydantic import BaseModel, Field
 import requests
+from pydantic import BaseModel, Field
 from requests import HTTPError
 
 

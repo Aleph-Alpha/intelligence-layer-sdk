@@ -2,25 +2,15 @@ from typing import Optional, Sequence
 
 from aleph_alpha_client import Client
 from liquid import Template
-from intelligence_layer.core.detect_language import Language, LanguageNotSupportedError
 from pydantic import BaseModel
 
-from intelligence_layer.core.complete import (
-    Instruct,
-    InstructInput,
-    PromptOutput,
-)
-from intelligence_layer.core.prompt_template import (
-    PromptWithMetadata,
-)
-from intelligence_layer.core.text_highlight import (
-    TextHighlight,
-    TextHighlightInput,
-)
 from intelligence_layer.core.chunk import Chunk
-from intelligence_layer.core.task import Task
+from intelligence_layer.core.complete import Instruct, InstructInput, PromptOutput
+from intelligence_layer.core.detect_language import Language, LanguageNotSupportedError
 from intelligence_layer.core.logger import DebugLogger
-
+from intelligence_layer.core.prompt_template import PromptWithMetadata
+from intelligence_layer.core.task import Task
+from intelligence_layer.core.text_highlight import TextHighlight, TextHighlightInput
 from intelligence_layer.use_cases.qa.luminous_prompts import (
     LANGUAGES_QA_INSTRUCTIONS as LUMINOUS_LANGUAGES_QA_INSTRUCTIONS,
 )

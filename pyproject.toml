@@ -60,3 +60,5 @@ ignore = "E501,E203"
 
 [tool.pylama.linter.mccabe]
 max-complexity = "11"
+
+profile = "black"

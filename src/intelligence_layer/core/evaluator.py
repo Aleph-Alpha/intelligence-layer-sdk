@@ -6,9 +6,8 @@ from uuid import uuid4
 from pydantic import BaseModel, Field
 from tqdm import tqdm
 
+from intelligence_layer.core.logger import DebugLogger, PydanticSerializable
 from intelligence_layer.core.task import Input
-from intelligence_layer.core.logger import PydanticSerializable, DebugLogger
-
 
 ExpectedOutput = TypeVar("ExpectedOutput", bound=PydanticSerializable)
 Evaluation = TypeVar("Evaluation", bound=PydanticSerializable)

@@ -3,20 +3,16 @@ from typing import Iterable, Optional, Sequence
 from aleph_alpha_client import Client
 from pydantic import BaseModel
 
-from intelligence_layer.core.complete import (
-    Instruct,
-    InstructInput,
-    PromptOutput,
-)
+from intelligence_layer.core.chunk import Chunk
+from intelligence_layer.core.complete import Instruct, InstructInput, PromptOutput
 from intelligence_layer.core.detect_language import Language
+from intelligence_layer.core.logger import DebugLogger
+from intelligence_layer.core.task import Task
 from intelligence_layer.use_cases.qa.single_chunk_qa import (
+    SingleChunkQa,
     SingleChunkQaInput,
     SingleChunkQaOutput,
-    SingleChunkQa,
 )
-from intelligence_layer.core.chunk import Chunk
-from intelligence_layer.core.task import Task
-from intelligence_layer.core.logger import DebugLogger
 
 
 class MultipleChunkQaInput(BaseModel):

@@ -1,7 +1,7 @@
 from pydantic import BaseModel
 
-from intelligence_layer.core.detect_language import Language
 from intelligence_layer.core.chunk import Chunk
+from intelligence_layer.core.detect_language import Language
 
 
 class LongContextSummarizeInput(BaseModel):
