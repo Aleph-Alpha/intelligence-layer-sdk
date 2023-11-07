@@ -43,6 +43,9 @@ jobs:
       - name: Run pre-commit 
         run: |
           poetry run pre-commit run --all-files 
+      - name: Run mypy 
+        run: |
+          poetry run mypy 
       - name: Run pylama 
         run: |
           poetry run pylama
