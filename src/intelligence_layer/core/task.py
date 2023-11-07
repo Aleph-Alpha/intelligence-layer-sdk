@@ -1,12 +1,11 @@
-import functools
 from abc import ABC, abstractmethod
 from concurrent.futures import ThreadPoolExecutor
 from itertools import islice
-from typing import Any, Callable, Generic, Iterable, Sequence, TypeVar, final
+from typing import Generic, Iterable, Sequence, TypeVar, final
 
 from pydantic import BaseModel
 
-from intelligence_layer.core.tracer import PydanticSerializable, Span, Tracer
+from intelligence_layer.core.tracer import PydanticSerializable, TaskSpan, Tracer
 
 
 class Token(BaseModel):
@@ -44,7 +43,7 @@ class Task(ABC, Generic[Input, Output]):
     """
 
     @abstractmethod
-    def do_run(self, input: Input, span: Span) -> Output:
+    def do_run(self, input: Input, task_span: TaskSpan) -> Output:
         """The implementation for this use case.
 
         This takes an input and runs the implementation to generate an output.

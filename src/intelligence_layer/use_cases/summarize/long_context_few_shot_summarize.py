@@ -10,7 +10,7 @@ from intelligence_layer.core.detect_language import (
     Language,
 )
 from intelligence_layer.core.task import Task
-from intelligence_layer.core.tracer import Span
+from intelligence_layer.core.tracer import TaskSpan
 from intelligence_layer.use_cases.summarize.single_chunk_few_shot_summarize import (
     SingleChunkFewShotSummarize,
 )
@@ -63,24 +63,24 @@ class LongContextFewShotSummarize(
         self._detect_language = DetectLanguage()
 
     def do_run(
-        self, input: LongContextSummarizeInput, span: Span
+        self, input: LongContextSummarizeInput, task_span: TaskSpan
     ) -> LongContextSummarizeOutput:
         lang = (
             self._detect_language.run(
                 DetectLanguageInput(
                     text=input.text, possible_languages=self._allowed_langauges
                 ),
-                span,
+                task_span,
             ).best_fit
             or self._fallback_language
         )
-        chunk_output = self._chunk.run(ChunkInput(text=input.text), span)
+        chunk_output = self._chunk.run(ChunkInput(text=input.text), task_span)
         summary_outputs = self._single_chunk_summarize.run_concurrently(
             [
                 SingleChunkSummarizeInput(chunk=c, language=lang)
                 for c in chunk_output.chunks
             ],
-            span,
+            task_span,
         )
         return LongContextSummarizeOutput(
             partial_summaries=[

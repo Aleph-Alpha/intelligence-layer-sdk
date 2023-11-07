@@ -17,25 +17,25 @@ from intelligence_layer.core.tracer import (
     LogEntry,
     LogLine,
     PlainEntry,
-    Span,
     StartSpan,
     StartTask,
+    TaskSpan,
 )
 
 
 class TestSubTask(Task[None, None]):
-    def do_run(self, input: None, span: Span) -> None:
-        span.log("subtask", "value")
+    def do_run(self, input: None, task_span: TaskSpan) -> None:
+        task_span.log("subtask", "value")
 
 
 class TestTask(Task[str, str]):
     sub_task = TestSubTask()
 
-    def do_run(self, input: str, span: Span) -> str:
-        with span.span("span") as sub_span:
+    def do_run(self, input: str, task_span: TaskSpan) -> str:
+        with task_span.span("span") as sub_span:
             sub_span.log("message", "a value")
             self.sub_task.run(None, sub_span)
-        self.sub_task.run(None, span)
+        self.sub_task.run(None, task_span)
 
         return "output"
 

@@ -1,4 +1,3 @@
-from re import S
 from typing import Iterable, Optional, Sequence
 
 from aleph_alpha_client import Client
@@ -8,7 +7,7 @@ from intelligence_layer.core.chunk import Chunk
 from intelligence_layer.core.complete import Instruct, InstructInput, PromptOutput
 from intelligence_layer.core.detect_language import Language
 from intelligence_layer.core.task import Task
-from intelligence_layer.core.tracer import Span
+from intelligence_layer.core.tracer import TaskSpan
 from intelligence_layer.use_cases.qa.single_chunk_qa import (
     SingleChunkQa,
     SingleChunkQaInput,
@@ -105,7 +104,9 @@ Condense multiple answers into a single answer. Rely only on the provided answer
         self._single_chunk_qa = SingleChunkQa(client, model)
         self._model = model
 
-    def do_run(self, input: MultipleChunkQaInput, span: Span) -> MultipleChunkQaOutput:
+    def do_run(
+        self, input: MultipleChunkQaInput, task_span: TaskSpan
+    ) -> MultipleChunkQaOutput:
         qa_outputs = self._single_chunk_qa.run_concurrently(
             (
                 SingleChunkQaInput(
@@ -113,9 +114,9 @@ Condense multiple answers into a single answer. Rely only on the provided answer
                 )
                 for chunk in input.chunks
             ),
-            span,
+            task_span,
         )
-        final_answer = self._merge_answers(input.question, qa_outputs, span)
+        final_answer = self._merge_answers(input.question, qa_outputs, task_span)
 
         return MultipleChunkQaOutput(
             answer=final_answer,
@@ -134,7 +135,7 @@ Condense multiple answers into a single answer. Rely only on the provided answer
         self,
         question: str,
         qa_outputs: Iterable[SingleChunkQaOutput],
-        span: Span,
+        task_span: TaskSpan,
     ) -> Optional[str]:
         answers = [output.answer for output in qa_outputs if output.answer]
         if len(answers) == 0:
@@ -148,10 +149,10 @@ Condense multiple answers into a single answer. Rely only on the provided answer
 
 Answers:
 {joined_answers}""",
-            span,
+            task_span,
         ).response
 
-    def _instruct(self, input: str, span: Span) -> PromptOutput:
+    def _instruct(self, input: str, task_span: TaskSpan) -> PromptOutput:
         return self._instruction.run(
             InstructInput(
                 instruction=self.MERGE_ANSWERS_INSTRUCTION,
@@ -159,5 +160,5 @@ Answers:
                 model=self._model,
                 response_prefix="\nFinal answer:",
             ),
-            span,
+            task_span,
         )
