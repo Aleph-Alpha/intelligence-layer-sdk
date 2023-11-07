@@ -1,8 +1,5 @@
-from typing import Sequence
-
 from aleph_alpha_client import Client
 from pydantic import BaseModel
-from semantic_text_splitter import HuggingFaceTextSplitter
 from intelligence_layer.connectors.retrievers.base_retriever import Document
 from intelligence_layer.core.detect_language import (
     DetectLanguage,

@@ -1,10 +1,11 @@
 from datetime import datetime
 from http import HTTPStatus
 from json import dumps
-from typing import Any, Mapping, Sequence, Union
+from typing import Any, Mapping, Sequence
 
 from pydantic import BaseModel, Field
 import requests
+from requests import HTTPError
 
 
 class DocumentContents(BaseModel):
@@ -252,7 +253,7 @@ class DocumentIndexClient:
     def _raise_for_status(self, response: requests.Response) -> None:
         try:
             response.raise_for_status()
-        except:
+        except HTTPError:
             exception_factory = _status_code_to_exception.get(
                 HTTPStatus(response.status_code), InternalError
             )

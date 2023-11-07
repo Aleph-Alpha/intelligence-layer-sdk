@@ -3,7 +3,7 @@ import os
 
 from aleph_alpha_client import Client
 from dotenv import load_dotenv
-from fastapi import Depends, FastAPI, Form
+from fastapi import Depends, FastAPI
 
 from intelligence_layer.use_cases.classify.classify import (
     ClassifyInput,

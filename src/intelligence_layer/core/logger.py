@@ -1,7 +1,6 @@
 from abc import ABC, abstractmethod
 from contextlib import AbstractContextManager
 from datetime import datetime
-from json import dumps
 from pathlib import Path
 from types import TracebackType
 from uuid import UUID, uuid4

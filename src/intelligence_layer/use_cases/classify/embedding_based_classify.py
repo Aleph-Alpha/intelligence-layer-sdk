@@ -1,4 +1,3 @@
-from enum import Enum
 import statistics
 from typing import Sequence
 from aleph_alpha_client import Client
@@ -164,7 +163,7 @@ class EmbeddingBasedClassify(Task[ClassifyInput, ClassifyOutput]):
         ]
         scores = self._calculate_scores(results_per_label)
         return ClassifyOutput(
-            scores={l: Probability(s) for l, s in zip(input.labels, scores)}
+            scores={lang: Probability(s) for lang, s in zip(input.labels, scores)}
         )
 
     def _labels_with_examples_to_documents(

@@ -57,6 +57,3 @@ def test_few_shot(few_shot: FewShot, no_op_debug_logger: NoOpDebugLogger) -> Non
     output = few_shot.run(input, no_op_debug_logger)
 
     assert "Berlin" in output.response
-    prompt_text_item = output.prompt_with_metadata.prompt.items[0]
-
-    print("")

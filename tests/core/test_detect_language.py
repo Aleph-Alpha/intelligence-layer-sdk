@@ -11,7 +11,7 @@ def test_detect_language_returns_correct_language() -> None:
     task = DetectLanguage()
     input = DetectLanguageInput(
         text=text,
-        possible_languages=[Language(l) for l in ["en", "de", "fr", "it", "es"]],
+        possible_languages=[Language(lang) for lang in ["en", "de", "fr", "it", "es"]],
     )
     debug_log = NoOpDebugLogger()
     output = task.run(input, debug_log)
