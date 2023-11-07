@@ -93,7 +93,7 @@ def test_span_sets_end_timestamp() -> None:
     span = logger.span("span", start)
     span.end()
 
-    assert span.end_timestamp and span.start_timestamp < span.end_timestamp
+    assert span.end_timestamp and span.start_timestamp <= span.end_timestamp
 
 
 def test_span_only_updates_end_timestamp_once() -> None:

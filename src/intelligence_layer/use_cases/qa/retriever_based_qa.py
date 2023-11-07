@@ -81,6 +81,7 @@ class RetrieverBasedQa(Task[RetrieverBasedQaInput, MultipleChunkQaOutput]):
         self._language_detector = DetectLanguage(threshold=0.5)
         self.allowed_languages = allowed_languages
         self._fallback_language = fallback_language
+        assert fallback_language in allowed_languages
 
     def run(
         self, input: RetrieverBasedQaInput, logger: DebugLogger
