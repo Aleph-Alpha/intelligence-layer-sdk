@@ -88,7 +88,8 @@ class DetectLanguage(Task[DetectLanguageInput, DetectLanguageOutput]):
     ) -> Sequence[AnnotatedLanguage]:
         languages = detect_langs(input.text)
         annotated_languages = [
-            AnnotatedLanguage(lang=Language(l.lang), prob=l.prob) for l in languages
+            AnnotatedLanguage(lang=Language(lang.lang), prob=lang.prob)
+            for lang in languages
         ]
         logger.log("Raw language probabilities", annotated_languages)
         return annotated_languages

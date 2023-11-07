@@ -1,5 +1,4 @@
 from typing import Mapping, Sequence
-
 from aleph_alpha_client import Client
 from intelligence_layer.core.chunk import ChunkInput, ChunkTask
 

@@ -34,7 +34,7 @@ class RetrieverBasedQaInput(BaseModel):
 class RetrieverBasedQa(Task[RetrieverBasedQaInput, MultipleChunkQaOutput]):
     """Answer a question based on documents found by a retriever.
 
-    RetrieverBasedQa` is a task that answers a question based on a set of documents.
+    `RetrieverBasedQa` is a task that answers a question based on a set of documents.
     Relies on some retriever of type `BaseRetriever` that has the ability to access texts.
 
     Note:

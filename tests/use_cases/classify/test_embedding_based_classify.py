@@ -81,7 +81,7 @@ def test_qdrant_search(
         filter=models.Filter(
             must=[
                 models.FieldCondition(
-                    key=f"metadata.type",
+                    key="metadata.type",
                     match=models.MatchValue(value="doc"),
                 ),
             ]
@@ -113,7 +113,7 @@ def test_embedding_based_classify_raises_for_unknown_label(
         chunk=Chunk("This is good"),
         labels=frozenset({"positive", "negative", unknown_label}),
     )
-    with raises(ValueError) as e:
+    with raises(ValueError) as _:
         embedding_based_classify.run(classify_input, NoOpDebugLogger())
 
 
@@ -163,4 +163,4 @@ def test_can_evaluate_embedding_based_classify(
         input=classify_input, logger=NoOpDebugLogger(), expected_output=["positive"]
     )
 
-    assert evaluation.correct == True
+    assert evaluation.correct is True

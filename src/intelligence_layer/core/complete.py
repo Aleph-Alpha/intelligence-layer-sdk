@@ -1,4 +1,3 @@
-from dataclasses import dataclass
 from typing import Optional, Sequence
 
 from aleph_alpha_client import Client, CompletionRequest, CompletionResponse, Prompt

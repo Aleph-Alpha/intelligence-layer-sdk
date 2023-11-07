@@ -1,4 +1,4 @@
-from functools import lru_cache, wraps
+from functools import wraps
 from threading import Lock
 from time import sleep
 from typing import Callable
@@ -9,7 +9,7 @@ from intelligence_layer.core.logger import (
     NoOpDebugLogger,
     TaskSpan,
 )
-from intelligence_layer.core.task import MAX_CONCURRENCY, Task, global_executor
+from intelligence_layer.core.task import MAX_CONCURRENCY, Task
 
 
 class ConcurrencyCounter(Task[None, None]):

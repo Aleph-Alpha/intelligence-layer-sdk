@@ -115,7 +115,7 @@ def test_can_evaluate_classify(single_label_classify: SingleLabelClassify) -> No
         input=classify_input, logger=NoOpDebugLogger(), expected_output=["positive"]
     )
 
-    assert evaluation.correct == True
+    assert evaluation.correct is True
 
 
 def test_can_aggregate_evaluations(

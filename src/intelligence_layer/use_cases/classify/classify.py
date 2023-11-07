@@ -95,7 +95,7 @@ class ClassifyEvaluator(
     ) -> AggregatedClassifyEvaluation:
         if len(evaluations) != 0:
             correct_answers = len(
-                [eval.correct for eval in evaluations if eval.correct == True]
+                [eval.correct for eval in evaluations if eval.correct is True]
             ) / len(evaluations)
         else:
             correct_answers = 0

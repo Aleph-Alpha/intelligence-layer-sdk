@@ -42,7 +42,8 @@ class Search(Task[SearchInput, SearchOutput]):
 
     Example:
         >>> document_index = DocumentIndex(token)
-        >>> retriever = DocumentIndexRetriever(document_index, "my_namespace", "country_facts_collection", 3)
+        >>> retriever = DocumentIndexRetriever(document_index, "my_namespace", \
+            "country_facts_collection", 3)
         >>> task = Search(retriever)
         >>> input = SearchInput(
                 query="When did East and West Germany reunite?"
