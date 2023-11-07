@@ -118,6 +118,8 @@ class LongContextMediumCompressionSummarize(LongContextFewShotSummarize):
 
     Args:
         client: Aleph Alpha client instance for running model related API calls.
+        fallback_language: The default language of the output.
+
 
     Example:
         >>> client = Client(os.getenv("AA_TOKEN"))

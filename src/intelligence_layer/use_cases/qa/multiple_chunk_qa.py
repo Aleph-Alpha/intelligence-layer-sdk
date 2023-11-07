@@ -26,6 +26,7 @@ class MultipleChunkQaInput(BaseModel):
         chunks: The list of chunks that will be used to answer the question.
             Can be arbitrarily long list of chunks.
         question: The question that will be answered based on the chunks.
+        language: The desired language of the answer. ISO 619 str with language e.g. en, fr, etc.
     """
 
     chunks: Sequence[Chunk]
@@ -84,7 +85,8 @@ class MultipleChunkQa(Task[MultipleChunkQaInput, MultipleChunkQaOutput]):
         >>> task = MultipleChunkQa(client)
         >>> input = MultipleChunkQaInput(
                 chunks=["Tina does not like pizza.", "Mike is a big fan of pizza."],
-                question="Who likes pizza?"
+                question="Who likes pizza?",
+                language=Language("en")
             )
         >>> logger = InMemoryLogger(name="Multiple Chunk QA")
         >>> output = task.run(input, logger)

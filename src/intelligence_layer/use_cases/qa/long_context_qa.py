@@ -1,3 +1,4 @@
+from typing import Sequence
 from aleph_alpha_client import Client
 from pydantic import BaseModel
 from intelligence_layer.connectors.retrievers.base_retriever import Document
@@ -5,6 +6,9 @@ from intelligence_layer.core.detect_language import (
     DetectLanguage,
     DetectLanguageInput,
     Language,
+)
+from intelligence_layer.use_cases.qa.luminous_prompts import (
+    LANGUAGES_QA_INSTRUCTIONS as LUMINOUS_LANGUAGES_QA_INSTRUCTIONS,
 )
 
 from intelligence_layer.use_cases.qa.multiple_chunk_qa import (
@@ -49,6 +53,9 @@ class LongContextQa(Task[LongContextQaInput, MultipleChunkQaOutput]):
             Used to tweak the length of the chunks.
         k: The number of top relevant chunks to retrieve.
         model: A valid Aleph Alpha model name.
+        allowed_languages: List of languages to which the language detection is limited (ISO619).
+        fallback_language: The default language of the output.
+
 
     Example:
         >>> client = Client(os.getenv("AA_TOKEN"))
@@ -64,6 +71,10 @@ class LongContextQa(Task[LongContextQaInput, MultipleChunkQaOutput]):
         max_tokens_per_chunk: int = 512,
         k: int = 4,
         model: str = "luminous-supreme-control",
+        allowed_languages: Sequence[Language] = list(
+            LUMINOUS_LANGUAGES_QA_INSTRUCTIONS.keys()
+        ),
+        fallback_language: Language = Language("en"),
     ):
         super().__init__()
         self._client = client
@@ -72,7 +83,9 @@ class LongContextQa(Task[LongContextQaInput, MultipleChunkQaOutput]):
         self._multi_chunk_qa = MultipleChunkQa(self._client, self._model)
         self._k = k
         self._language_detector = DetectLanguage(threshold=0.5)
-        self._fallback_language = Language("en")
+        self.allowed_languages = allowed_languages
+        self._fallback_language = fallback_language
+        assert fallback_language in allowed_languages
 
     def run(
         self, input: LongContextQaInput, logger: DebugLogger
@@ -89,7 +102,10 @@ class LongContextQa(Task[LongContextQaInput, MultipleChunkQaOutput]):
 
         question_language = (
             self._language_detector.run(
-                DetectLanguageInput(text=input.question), logger
+                DetectLanguageInput(
+                    text=input.question, possible_languages=self.allowed_languages
+                ),
+                logger,
             ).best_fit
             or self._fallback_language
         )
