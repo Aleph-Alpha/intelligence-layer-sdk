@@ -60,8 +60,8 @@ class DetectLanguage(Task[DetectLanguageInput, DetectLanguageOutput]):
                 text="This is an English text.",
                 allowed_langs=[Language(l) for l in ("en", "fr)],
             )
-        >>> logger = InMemoryLogger(name="DetectLanguage")
-        >>> output = task.run(input, logger)
+        >>> tracer = InMemoryTogger(")
+        >>> output = task.run(input, tracer)
         >>> print(output.best_fit)
         en
     """
@@ -70,20 +70,20 @@ class DetectLanguage(Task[DetectLanguageInput, DetectLanguageOutput]):
         super().__init__()
         self._threshold = threshold
 
-    def run(self, input: DetectLanguageInput, logger: Tracer) -> DetectLanguageOutput:
-        annotated_languages = self._detect_languages(input, logger)
+    def run(self, input: DetectLanguageInput, tracer: Tracer) -> DetectLanguageOutput:
+        annotated_languages = self._detect_languages(input, tracer)
         best_fit = self._get_best_fit(annotated_languages, input.possible_languages)
         return DetectLanguageOutput(best_fit=best_fit)
 
     def _detect_languages(
-        self, input: DetectLanguageInput, logger: Tracer
+        self, input: DetectLanguageInput, tracer: Tracer
     ) -> Sequence[AnnotatedLanguage]:
         languages = detect_langs(input.text)
         annotated_languages = [
             AnnotatedLanguage(lang=Language(lang.lang), prob=lang.prob)
             for lang in languages
         ]
-        logger.log("Raw language probabilities", annotated_languages)
+        tracer.log("Raw language probabilities", annotated_languages)
         return annotated_languages
 
     def _get_best_fit(

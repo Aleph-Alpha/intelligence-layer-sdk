@@ -56,9 +56,9 @@ class Task(ABC, Generic[Input, Output]):
             def inner(
                 self: "Task[Input, Output]",
                 input: Input,
-                logger: Tracer,
+                tracer: Tracer,
             ) -> Output:
-                with logger.task_span(type(self).__name__, input) as task_span:
+                with tracer.task_span(type(self).__name__, input) as task_span:
                     output = func(self, input, task_span)
                     task_span.record_output(output)
                     return output
@@ -70,7 +70,7 @@ class Task(ABC, Generic[Input, Output]):
             cls.run = log_run_input_output(cls.run)  # type: ignore
 
     @abstractmethod
-    def run(self, input: Input, logger: Tracer) -> Output:
+    def run(self, input: Input, tracer: Tracer) -> Output:
         """Executes the implementation of run for this use case.
 
         This takes an input and runs the implementation to generate an output.
@@ -79,7 +79,7 @@ class Task(ABC, Generic[Input, Output]):
 
         Args:
             input: Generic input defined by the task implementation
-            logger: The `Tracer` used for tracing.
+            tracer: The `Tracer` used for tracing.
         Returns:
             Generic output defined by the task implementation.
         """
@@ -88,7 +88,7 @@ class Task(ABC, Generic[Input, Output]):
     def run_concurrently(
         self,
         inputs: Iterable[Input],
-        debug_logger: Tracer,
+        tracer: Tracer,
         concurrency_limit: int = MAX_CONCURRENCY,
     ) -> Sequence[Output]:
         """Executes multiple processes of this task concurrently.
@@ -98,7 +98,7 @@ class Task(ABC, Generic[Input, Output]):
 
         Args:
             inputs: The inputs that are potentially processed concurrently.
-            debug_logger: The logger passed on the `run` method when executing a task.
+            tracer: The tracer passed on the `run` method when executing a task.
             concurrency_limit: An optional additional limit for the number of concurrently executed task for
                 this method call. This can be used to prevent queue-full or similar error of downstream APIs
                 when the global concurrency limit is too high for a certain task.
@@ -107,7 +107,7 @@ class Task(ABC, Generic[Input, Output]):
             The order of Outputs corresponds to the order of the Inputs.
         """
 
-        with debug_logger.span(f"Concurrent {type(self).__name__} tasks") as span:
+        with tracer.span(f"Concurrent {type(self).__name__} tasks") as span:
 
             def run_batch(inputs: Iterable[Input]) -> Iterable[Output]:
                 return global_executor.map(

@@ -43,8 +43,8 @@ def test_single_label_classify_accomodates_labels_starting_with_spaces(
         chunk=Chunk("This is good"), labels=frozenset({" positive", "negative"})
     )
 
-    logger = InMemoryTracer()
-    classify_output = single_label_classify.run(classify_input, logger)
+    tracer = InMemoryTracer()
+    classify_output = single_label_classify.run(classify_input, tracer)
 
     # Output contains everything we expect
     assert classify_input.labels == set(r for r in classify_output.scores)
@@ -112,7 +112,7 @@ def test_can_evaluate_classify(single_label_classify: SingleLabelClassify) -> No
     evaluator = ClassifyEvaluator(task=single_label_classify)
 
     evaluation = evaluator.evaluate(
-        input=classify_input, logger=NoOpTracer(), expected_output=["positive"]
+        input=classify_input, tracer=NoOpTracer(), expected_output=["positive"]
     )
 
     assert evaluation.correct is True
@@ -144,7 +144,7 @@ def test_can_aggregate_evaluations(
     )
 
     aggregated_evaluations = single_label_classify_evaluator.evaluate_dataset(
-        dataset, logger=NoOpTracer()
+        dataset, tracer=NoOpTracer()
     )
 
     assert aggregated_evaluations.percentage_correct == 0.5
@@ -156,7 +156,7 @@ def test_aggregating_evaluations_works_with_empty_list(
     single_label_classify_evaluator = ClassifyEvaluator(task=single_label_classify)
 
     aggregated_evaluations = single_label_classify_evaluator.evaluate_dataset(
-        Dataset(name="empty_dataset", examples=[]), logger=NoOpTracer()
+        Dataset(name="empty_dataset", examples=[]), tracer=NoOpTracer()
     )
 
     assert aggregated_evaluations.percentage_correct == 0

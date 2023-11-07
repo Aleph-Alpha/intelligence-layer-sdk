@@ -73,10 +73,10 @@ class ClassifyEvaluator(
     def evaluate(
         self,
         input: ClassifyInput,
-        logger: Tracer,
+        tracer: Tracer,
         expected_output: Sequence[str],
     ) -> ClassifyEvaluation:
-        output = self.task.run(input, logger)
+        output = self.task.run(input, tracer)
         sorted_classes = sorted(
             output.scores.items(), key=lambda item: item[1], reverse=True
         )

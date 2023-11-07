@@ -47,11 +47,11 @@ class Tracer(ABC):
     """Provides a consistent way to instrument a :class:`Task` with logging for each step of the
     workflow.
 
-    A logger needs to provide a way to collect an individual log, which should be serializable, and
+    A tracer needs to provide a way to collect an individual log, which should be serializable, and
     a way to generate nested spans, so that sub-tasks can emit logs that are grouped together.
 
     Implementations of how logs are collected and stored may differ. Refer to the individual
-    documentation of each implementation to see how to use the resulting logger.
+    documentation of each implementation to see how to use the resulting tracer.
     """
 
     @abstractmethod
@@ -70,7 +70,7 @@ class Tracer(ABC):
             message: A description of the value you are logging, such as the step in the task this
                 is related to.
             value: The relevant data you want to log. Can be anything that is serializable by
-                Pydantic, which gives the loggers flexibility in how they store and emit the logs.
+                Pydantic, which gives the tracers flexibility in how they store and emit the logs.
             timestamp: optional override of the timestamp. Otherwise should default to now
         """
         ...
@@ -82,7 +82,7 @@ class Tracer(ABC):
         Allows for grouping multiple logs and duration together as a single, logical step in the
         process.
 
-        Each logger implementation can decide on how it wants to represent this, but they should
+        Each tracer implementation can decide on how it wants to represent this, but they should
         all capture the hierarchical nature of nested spans, as well as the idea of the duration of
         the span.
 
@@ -107,7 +107,7 @@ class Tracer(ABC):
         Allows for grouping multiple logs together, as well as the task's specific input, output,
         and duration.
 
-        Each logger implementation can decide on how it wants to represent this, but they should
+        Each tracer implementation can decide on how it wants to represent this, but they should
         all allow for representing logs of a span within the context of a parent span.
 
         Args:
@@ -175,24 +175,24 @@ class TaskSpan(Span):
         ...
 
 
-class CompositeLogger(TaskSpan):
-    """A :class:`Tracer` that allows for recording to multiple loggers simultaneously.
+class CompositeTracer(TaskSpan):
+    """A :class:`Tracer` that allows for recording to multiple tracers simultaneously.
 
-    Each log-entry and span will be forwarded to all subloggers.
+    Each log-entry and span will be forwarded to all subtracers.
 
     Args:
-        loggers: Loggers that will be forwarded all subsequent log and span calls.
+        tracers: tracers that will be forwarded all subsequent log and span calls.
 
     Example:
-        >>> sub_logger1 = InMemoryTracer()
-        >>> sub_logger2 = FileTracer("./log.log")
-        >>> logger = CompositeLogger([logger1, logger2])
+        >>> sub_tracer1 = InMemoryTracer()
+        >>> sub_tracer2 = FileTracer("./log.log")
+        >>> tracer = CompositeTracer([tracer1, tracer2])
         >>>
-        >>> SomeTask.run(input, logger)
+        >>> SomeTask.run(input, tracer)
     """
 
-    def __init__(self, loggers: Sequence[Tracer | Span | TaskSpan]) -> None:
-        self.loggers = loggers
+    def __init__(self, tracers: Sequence[Tracer | Span | TaskSpan]) -> None:
+        self.tracers = tracers
 
     def log(
         self,
@@ -201,15 +201,15 @@ class CompositeLogger(TaskSpan):
         timestamp: Optional[datetime] = None,
     ) -> None:
         timestamp = timestamp or datetime.utcnow()
-        for logger in self.loggers:
-            logger.log(message, value, timestamp)
+        for tracer in self.tracers:
+            tracer.log(message, value, timestamp)
 
     def span(
         self, name: str, timestamp: Optional[datetime] = None
-    ) -> "CompositeLogger":
+    ) -> "CompositeTracer":
         timestamp = timestamp or datetime.utcnow()
-        return CompositeLogger(
-            [logger.span(name, timestamp) for logger in self.loggers]
+        return CompositeTracer(
+            [tracer.span(name, timestamp) for tracer in self.tracers]
         )
 
     def task_span(
@@ -217,28 +217,28 @@ class CompositeLogger(TaskSpan):
         task_name: str,
         input: PydanticSerializable,
         timestamp: Optional[datetime] = None,
-    ) -> "CompositeLogger":
+    ) -> "CompositeTracer":
         timestamp = timestamp or datetime.utcnow()
-        return CompositeLogger(
-            [logger.task_span(task_name, input, timestamp) for logger in self.loggers]
+        return CompositeTracer(
+            [tracer.task_span(task_name, input, timestamp) for tracer in self.tracers]
         )
 
     def end(self, timestamp: Optional[datetime] = None) -> None:
         timestamp = timestamp or datetime.utcnow()
-        for logger in self.loggers:
-            if isinstance(logger, Span):
-                logger.end(timestamp)
+        for tracer in self.tracers:
+            if isinstance(tracer, Span):
+                tracer.end(timestamp)
 
     def record_output(self, output: PydanticSerializable) -> None:
-        for logger in self.loggers:
-            if isinstance(logger, TaskSpan):
-                logger.record_output(output)
+        for tracer in self.tracers:
+            if isinstance(tracer, TaskSpan):
+                tracer.record_output(output)
 
 
 class NoOpTracer(TaskSpan):
-    """A no-op logger.
+    """A no-op tracer.
 
-    Useful for cases, like testing, where a logger is needed for a task, but you
+    Useful for cases, like testing, where a tracer is needed for a task, but you
     don't have a need to collect or inspect the actual logs.
 
     All calls to `log` won't actually do anything.
@@ -294,7 +294,7 @@ class LogEntry(BaseModel):
         message: A description of the value you are logging, such as the step in the task this
             is related to.
         value: The relevant data you want to log. Can be anything that is serializable by
-            Pydantic, which gives the loggers flexibility in how they store and emit the logs.
+            Pydantic, which gives the tracers flexibility in how they store and emit the logs.
         timestamp: The time that the log was emitted.
     """
 
@@ -303,7 +303,7 @@ class LogEntry(BaseModel):
     timestamp: datetime = Field(default_factory=datetime.utcnow)
 
     def _rich_render_(self) -> Panel:
-        """Renders the debug log via classes in the `rich` package"""
+        """Renders the trace via classes in the `rich` package"""
         return _render_log_value(self.value, self.message)
 
     def _ipython_display_(self) -> None:
@@ -320,7 +320,7 @@ class InMemoryTracer(BaseModel, Tracer):
     representation to a file, or return via an API, or something similar.
 
     Attributes:
-        name: A descriptive name of what the logger contains log entries about.
+        name: A descriptive name of what the tracer contains log entries about.
         logs: A sequential list of log entries and/or nested InMemoryTracers with their own
             log entries.
     """
@@ -357,7 +357,7 @@ class InMemoryTracer(BaseModel, Tracer):
         return child
 
     def _rich_render_(self) -> Tree:
-        """Renders the debug log via classes in the `rich` package"""
+        """Renders the trace via classes in the `rich` package"""
         tree = Tree(label="Trace")
 
         for log in self.logs:
@@ -382,7 +382,7 @@ class InMemorySpan(InMemoryTracer, Span):
             self.end_timestamp = timestamp or datetime.utcnow()
 
     def _rich_render_(self) -> Tree:
-        """Renders the debug log via classes in the `rich` package"""
+        """Renders the trace via classes in the `rich` package"""
         tree = Tree(label=self.name)
 
         for log in self.logs:
@@ -399,7 +399,7 @@ class InMemoryTaskSpan(InMemorySpan, TaskSpan):
         self.output = output
 
     def _rich_render_(self) -> Tree:
-        """Renders the debug log via classes in the `rich` package"""
+        """Renders the trace via classes in the `rich` package"""
         tree = Tree(label=self.name)
 
         tree.add(_render_log_value(self.input, "Input"))
@@ -522,8 +522,8 @@ class FileTracer(Tracer):
         log_file_path: Denotes the file to log to.
 
     Attributes:
-        uuid: a uuid for the logger. If multiple :class:`FileTracer` instances log to the same file
-            the child-elements for a logger can be identified by referring to this id as parent.
+        uuid: a uuid for the tracer. If multiple :class:`FileTracer` instances log to the same file
+            the child-elements for a tracer can be identified by referring to this id as parent.
     """
 
     def __init__(self, log_file_path: Path) -> None:

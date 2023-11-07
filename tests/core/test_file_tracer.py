@@ -7,7 +7,7 @@ from pytest import fixture
 
 from intelligence_layer.core.task import Task
 from intelligence_layer.core.tracer import (
-    CompositeLogger,
+    CompositeTracer,
     EndSpan,
     EndTask,
     FileTracer,
@@ -24,34 +24,34 @@ from intelligence_layer.core.tracer import (
 
 
 class TestSubTask(Task[None, None]):
-    def run(self, input: None, logger: Tracer) -> None:
-        logger.log("subtask", "value")
+    def run(self, input: None, tracer: Tracer) -> None:
+        tracer.log("subtask", "value")
 
 
 class TestTask(Task[str, str]):
     sub_task = TestSubTask()
 
-    def run(self, input: str, logger: Tracer) -> str:
-        with logger.span("span") as span_logger:
-            span_logger.log("message", "a value")
-            self.sub_task.run(None, span_logger)
-        self.sub_task.run(None, logger)
+    def run(self, input: str, tracer: Tracer) -> str:
+        with tracer.span("span") as span:
+            span.log("message", "a value")
+            self.sub_task.run(None, span)
+        self.sub_task.run(None, tracer)
 
         return "output"
 
 
 @fixture
-def file_debug_log(tmp_path: Path) -> FileTracer:
+def file_tracer(tmp_path: Path) -> FileTracer:
     return FileTracer(tmp_path / "log.log")
 
 
-def test_file_debug_logger(file_debug_log: FileTracer) -> None:
+def test_file_tracer(file_tracer: FileTracer) -> None:
     input = "input"
     expected = InMemoryTracer()
 
-    TestTask().run(input, CompositeLogger([expected, file_debug_log]))
+    TestTask().run(input, CompositeTracer([expected, file_tracer]))
 
-    log_tree = parse_log(file_debug_log._log_file_path)
+    log_tree = parse_log(file_tracer._log_file_path)
     assert log_tree == expected
 
 
@@ -79,7 +79,7 @@ def parse_log(log_path: Path) -> InMemoryTracer:
 
 class TreeBuilder(BaseModel):
     root: InMemoryTracer = InMemoryTracer()
-    loggers: dict[UUID, InMemoryTracer] = Field(default_factory=dict)
+    tracers: dict[UUID, InMemoryTracer] = Field(default_factory=dict)
     tasks: dict[UUID, InMemoryTaskSpan] = Field(default_factory=dict)
     spans: dict[UUID, InMemorySpan] = Field(default_factory=dict)
 
@@ -90,9 +90,9 @@ class TreeBuilder(BaseModel):
             input=start_task.input,
             start_timestamp=start_task.start,
         )
-        self.loggers[start_task.uuid] = child
+        self.tracers[start_task.uuid] = child
         self.tasks[start_task.uuid] = child
-        self.loggers.get(start_task.parent, self.root).logs.append(child)
+        self.tracers.get(start_task.parent, self.root).logs.append(child)
 
     def end_task(self, log_line: LogLine) -> None:
         end_task = EndTask.model_validate(log_line.entry)
@@ -103,9 +103,9 @@ class TreeBuilder(BaseModel):
     def start_span(self, log_line: LogLine) -> None:
         start_span = StartSpan.model_validate(log_line.entry)
         child = InMemorySpan(name=start_span.name, start_timestamp=start_span.start)
-        self.loggers[start_span.uuid] = child
+        self.tracers[start_span.uuid] = child
         self.spans[start_span.uuid] = child
-        self.loggers.get(start_span.parent, self.root).logs.append(child)
+        self.tracers.get(start_span.parent, self.root).logs.append(child)
 
     def end_span(self, log_line: LogLine) -> None:
         end_span = EndSpan.model_validate(log_line.entry)
@@ -119,4 +119,4 @@ class TreeBuilder(BaseModel):
             value=plain_entry.value,
             timestamp=plain_entry.timestamp,
         )
-        self.loggers[plain_entry.parent].logs.append(entry)
+        self.tracers[plain_entry.parent].logs.append(entry)

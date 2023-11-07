@@ -50,8 +50,8 @@ class SingleLabelClassify(Task[ClassifyInput, ClassifyOutput]):
                 text="This is a happy text.",
                 labels={"positive", "negative"}
             )
-        >>> logger = InMemoryLogger(name="Classify")
-        >>> output = task.run(input, logger)
+        >>> tracer = InMemoryTracer()
+        >>> output = task.run(input, tracer)
         >>> print(output.scores["positive"])
         0.9
     """
@@ -73,15 +73,15 @@ Reply with only the class label.
         self._completion_task = Complete(client)
         self._echo_task = EchoTask(client)
 
-    def run(self, input: ClassifyInput, logger: Tracer) -> ClassifyOutput:
+    def run(self, input: ClassifyInput, tracer: Tracer) -> ClassifyOutput:
         log_probs_per_label = self._log_probs_per_label(
             text_to_classify=input.chunk,
             labels=input.labels,
             model=self.MODEL,
-            logger=logger,
+            tracer=tracer,
         )
-        logger.log("Log probs per label", log_probs_per_label)
-        normalized_probs_per_label = self._normalize(log_probs_per_label, logger)
+        tracer.log("Log probs per label", log_probs_per_label)
+        normalized_probs_per_label = self._normalize(log_probs_per_label, tracer)
         scores = self._compute_scores(normalized_probs_per_label)
         return ClassifyOutput(
             scores=scores,
@@ -92,7 +92,7 @@ Reply with only the class label.
         text_to_classify: str,
         labels: frozenset[str],
         model: str,
-        logger: Tracer,
+        tracer: Tracer,
     ) -> Mapping[str, Sequence[TokenWithLogProb]]:
         prompt = PromptTemplate(template_str=self.PROMPT_TEMPLATE).to_prompt(
             text=text_to_classify
@@ -105,7 +105,7 @@ Reply with only the class label.
             )
             for label in labels
         )
-        outputs = self._echo_task.run_concurrently(inputs, logger)
+        outputs = self._echo_task.run_concurrently(inputs, tracer)
         return {
             label: output.tokens_with_log_probs
             for label, output in zip(labels, outputs)
@@ -129,7 +129,7 @@ Reply with only the class label.
     def _normalize(
         self,
         log_probs_per_label: Mapping[str, Sequence[TokenWithLogProb]],
-        logger: Tracer,
+        tracer: Tracer,
     ) -> Mapping[str, Sequence[TokenWithProb]]:
         node = TreeNode()
         for log_probs in log_probs_per_label.values():
@@ -145,7 +145,7 @@ Reply with only the class label.
             )
             for label in log_probs_per_label
         }
-        logger.log("Normalized Probs", normalized_probs)
+        tracer.log("Normalized Probs", normalized_probs)
         return normalized_probs
 
 

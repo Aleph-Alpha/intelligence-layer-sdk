@@ -73,8 +73,8 @@ class SingleChunkQa(Task[SingleChunkQaInput, SingleChunkQaOutput]):
                 question="Who likes pizza?",
                 language=Language("en")
             )
-        >>> logger = InMemoryLogger(name="Single Chunk QA")
-        >>> output = task.run(input, logger)
+        >>> tracer = InMemoryTracer()
+        >>> output = task.run(input, tracer)
         >>> print(output.answer)
         Mike likes pizza.
     """
@@ -92,7 +92,7 @@ class SingleChunkQa(Task[SingleChunkQaInput, SingleChunkQaOutput]):
         self._instruction = Instruct(client)
         self._text_highlight = TextHighlight(client)
 
-    def run(self, input: SingleChunkQaInput, logger: Tracer) -> SingleChunkQaOutput:
+    def run(self, input: SingleChunkQaInput, tracer: Tracer) -> SingleChunkQaOutput:
         try:
             prompt = LUMINOUS_LANGUAGES_QA_INSTRUCTIONS[input.language]
         except KeyError:
@@ -106,14 +106,14 @@ class SingleChunkQa(Task[SingleChunkQaInput, SingleChunkQaOutput]):
                 question=input.question, no_answer_text=self.NO_ANSWER_STR
             ),
             input.chunk,
-            logger,
+            tracer,
         )
         answer = self._no_answer_to_none(output.response.strip())
         highlights = (
             self._get_highlights(
                 output.prompt_with_metadata,
                 output.response,
-                logger,
+                tracer,
             )
             if answer
             else []
@@ -123,17 +123,17 @@ class SingleChunkQa(Task[SingleChunkQaInput, SingleChunkQaOutput]):
             highlights=highlights,
         )
 
-    def _instruct(self, instruction: str, input: str, logger: Tracer) -> PromptOutput:
+    def _instruct(self, instruction: str, input: str, tracer: Tracer) -> PromptOutput:
         return self._instruction.run(
             InstructInput(instruction=instruction, input=input, model=self._model),
-            logger,
+            tracer,
         )
 
     def _get_highlights(
         self,
         prompt_with_metadata: PromptWithMetadata,
         completion: str,
-        logger: Tracer,
+        tracer: Tracer,
     ) -> Sequence[str]:
         highlight_input = TextHighlightInput(
             prompt_with_metadata=prompt_with_metadata,
@@ -141,7 +141,7 @@ class SingleChunkQa(Task[SingleChunkQaInput, SingleChunkQaOutput]):
             model=self._model,
             focus_ranges=frozenset({"input"}),
         )
-        highlight_output = self._text_highlight.run(highlight_input, logger)
+        highlight_output = self._text_highlight.run(highlight_input, tracer)
         return [h.text for h in highlight_output.highlights if h.score > 0]
 
     def _no_answer_to_none(self, completion: str) -> Optional[str]:

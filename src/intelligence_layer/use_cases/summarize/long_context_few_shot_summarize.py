@@ -63,24 +63,24 @@ class LongContextFewShotSummarize(
         self._detect_language = DetectLanguage()
 
     def run(
-        self, input: LongContextSummarizeInput, logger: Tracer
+        self, input: LongContextSummarizeInput, tracer: Tracer
     ) -> LongContextSummarizeOutput:
         lang = (
             self._detect_language.run(
                 DetectLanguageInput(
                     text=input.text, possible_languages=self._allowed_langauges
                 ),
-                logger,
+                tracer,
             ).best_fit
             or self._fallback_language
         )
-        chunk_output = self._chunk.run(ChunkInput(text=input.text), logger)
+        chunk_output = self._chunk.run(ChunkInput(text=input.text), tracer)
         summary_outputs = self._single_chunk_summarize.run_concurrently(
             [
                 SingleChunkSummarizeInput(chunk=c, language=lang)
                 for c in chunk_output.chunks
             ],
-            logger,
+            tracer,
         )
         return LongContextSummarizeOutput(
             partial_summaries=[

@@ -45,13 +45,13 @@ class SingleChunkFewShotSummarize(
         self._maximum_tokens = maximum_tokens
 
     def run(
-        self, input: SingleChunkSummarizeInput, logger: Tracer
+        self, input: SingleChunkSummarizeInput, tracer: Tracer
     ) -> SingleChunkSummarizeOutput:
-        prompt_output = self._get_prompt_and_complete(input, logger)
+        prompt_output = self._get_prompt_and_complete(input, tracer)
         return SingleChunkSummarizeOutput(summary=prompt_output.response.strip())
 
     def _get_prompt_and_complete(
-        self, input: SingleChunkSummarizeInput, logger: Tracer
+        self, input: SingleChunkSummarizeInput, tracer: Tracer
     ) -> PromptOutput:
         prompt_config = self._few_shot_configs.get(input.language)
         if not prompt_config:
@@ -63,5 +63,5 @@ class SingleChunkFewShotSummarize(
                 model=self._model,
                 maximum_response_tokens=self._maximum_tokens,
             ),
-            logger,
+            tracer,
         )

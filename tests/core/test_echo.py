@@ -39,7 +39,7 @@ def test_can_run_echo_task(echo_task: EchoTask) -> None:
     )
     tokens = tokenize_completion(expected_completion, input.model, echo_task._client)
 
-    result = echo_task.run(input, logger=NoOpTracer())
+    result = echo_task.run(input, tracer=NoOpTracer())
 
     assert len(tokens) == len(result.tokens_with_log_probs)
     assert all([isinstance(t, TokenWithLogProb) for t in result.tokens_with_log_probs])
@@ -58,7 +58,7 @@ def test_echo_works_with_whitespaces_in_expected_completion(
     )
     tokens = tokenize_completion(expected_completion, input.model, echo_task._client)
 
-    result = echo_task.run(input, logger=NoOpTracer())
+    result = echo_task.run(input, tracer=NoOpTracer())
 
     assert len(tokens) == len(result.tokens_with_log_probs)
     assert all([isinstance(t, TokenWithLogProb) for t in result.tokens_with_log_probs])
@@ -83,7 +83,7 @@ def test_overlapping_tokens_generate_correct_tokens(echo_task: EchoTask) -> None
     )
 
     tokens = tokenize_completion(expected_completion, input.model, echo_task._client)
-    result = echo_task.run(input, logger=NoOpTracer())
+    result = echo_task.run(input, tracer=NoOpTracer())
 
     assert len(tokens) == len(result.tokens_with_log_probs)
 

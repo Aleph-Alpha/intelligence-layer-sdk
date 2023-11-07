@@ -67,7 +67,7 @@ class ExampleTask(Task[ExampleTaskInput, ExampleTaskOutput]):
 
     # For now, we assume that run will be the only explicitly public method for each `Task`.
     # `run` should be the first method after dunder methods.
-    def run(self, input: ExampleTaskInput, logger: Tracer) -> ExampleOutput:
+    def run(self, input: ExampleTaskInput, tracer: Tracer) -> ExampleOutput:
         return self._some_calculation(input.some_number)
 
     # Example for a private method.
@@ -96,7 +96,7 @@ Here's how we differentiate and allocate content between them:
 - **Detailed Walkthrough**:
     - **Input/Output Specifications**: Clearly define the expected input format and the resulting output.
     Mention any constraints or specific requirements.
-    - **Debugging Insights**: Explain what information is available in the debug log and how it can aid in troubleshooting.
+    - **Debugging Insights**: Explain what information is available in the trace and how it can aid in troubleshooting.
     - **Use-case Examples**: What are concrete use-cases I can solve with this task?
     Run through examples.
     - **Evaluation Metrics**: (Optional) Suggest methods or metrics to evaluate the performance or accuracy of this task.
@@ -223,7 +223,7 @@ completion_task = complete.Complete()
 
 This ensures that the documentation is easily accessible by hovering over the imported task.
 
-## When to use a debug log
+## When to use a tracer
 
 Each task's input and output are automatically logged.
 For most task, we assume that this suffices.

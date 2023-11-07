@@ -73,7 +73,7 @@ def embedding_based_classify(client: Client) -> EmbeddingBasedClassify:
 
 def test_qdrant_search(
     qdrant_search: QdrantSearch,
-    no_op_debug_logger: NoOpTracer,
+    no_op_tracer: NoOpTracer,
     in_memory_retriever_documents: Sequence[Document],
 ) -> None:
     search_input = QdrantSearchInput(
@@ -87,7 +87,7 @@ def test_qdrant_search(
             ]
         ),
     )
-    result = qdrant_search.run(search_input, no_op_debug_logger)
+    result = qdrant_search.run(search_input, no_op_tracer)
     assert [r.document for r in result.results] == [in_memory_retriever_documents[0]]
 
 
@@ -160,7 +160,7 @@ def test_can_evaluate_embedding_based_classify(
     evaluator = ClassifyEvaluator(task=embedding_based_classify)
 
     evaluation = evaluator.evaluate(
-        input=classify_input, logger=NoOpTracer(), expected_output=["positive"]
+        input=classify_input, tracer=NoOpTracer(), expected_output=["positive"]
     )
 
     assert evaluation.correct is True

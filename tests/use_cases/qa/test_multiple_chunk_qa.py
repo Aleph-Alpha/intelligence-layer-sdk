@@ -47,8 +47,8 @@ def test_multiple_chunk_qa_without_answer(qa: MultipleChunkQa) -> None:
     ]
 
     input = MultipleChunkQaInput(chunks=chunks, question=question)
-    debug_log = InMemoryTracer()
-    output = qa.run(input, debug_log)
+    tracer = InMemoryTracer()
+    output = qa.run(input, tracer)
 
     assert output.answer is None
 
@@ -66,8 +66,8 @@ def test_multiple_chunk_qa_with_mulitple_chunks(qa: MultipleChunkQa) -> None:
     ]
 
     input = MultipleChunkQaInput(chunks=chunks, question=question)
-    logger = InMemoryTracer()
-    output = qa.run(input, logger)
+    tracer = InMemoryTracer()
+    output = qa.run(input, tracer)
 
     assert output.answer
     assert "Henri" in output.answer

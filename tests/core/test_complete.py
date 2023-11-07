@@ -22,15 +22,13 @@ def few_shot(client: Client) -> FewShot:
     return FewShot(client)
 
 
-def test_instruct_without_input(
-    instruct: Instruct, no_op_debug_logger: NoOpTracer
-) -> None:
+def test_instruct_without_input(instruct: Instruct, no_op_tracer: NoOpTracer) -> None:
     input = InstructInput(
         instruction="What is the capital of Germany?",
         input=None,
         model="luminous-base-control",
     )
-    output = instruct.run(input, no_op_debug_logger)
+    output = instruct.run(input, no_op_tracer)
 
     assert "Berlin" in output.response
     prompt_text_item = output.prompt_with_metadata.prompt.items[0]
@@ -38,7 +36,7 @@ def test_instruct_without_input(
     assert "Input" not in prompt_text_item.text
 
 
-def test_few_shot(few_shot: FewShot, no_op_debug_logger: NoOpTracer) -> None:
+def test_few_shot(few_shot: FewShot, no_op_tracer: NoOpTracer) -> None:
     input = FewShotInput(
         input="What is the capital of Germany?",
         few_shot_config=FewShotConfig(
@@ -54,6 +52,6 @@ def test_few_shot(few_shot: FewShot, no_op_debug_logger: NoOpTracer) -> None:
         ),
         model="luminous-base",
     )
-    output = few_shot.run(input, no_op_debug_logger)
+    output = few_shot.run(input, no_op_tracer)
 
     assert "Berlin" in output.response

@@ -48,8 +48,8 @@ class Search(Task[SearchInput, SearchOutput]):
         >>> input = SearchInput(
                 query="When did East and West Germany reunite?"
             )
-        >>> logger = InMemoryLogger(name="Search")
-        >>> output = task.run(input, logger)
+        >>> tracer = InMemoryTracer()
+        >>> output = task.run(input, tracer)
         >>> print(output.results[0].text[-5:])
         1990.
     """
@@ -58,6 +58,6 @@ class Search(Task[SearchInput, SearchOutput]):
         super().__init__()
         self._retriever = retriever
 
-    def run(self, input: SearchInput, logger: Tracer) -> SearchOutput:
+    def run(self, input: SearchInput, tracer: Tracer) -> SearchOutput:
         results = self._retriever.get_relevant_documents_with_scores(input.query)
         return SearchOutput(results=results)

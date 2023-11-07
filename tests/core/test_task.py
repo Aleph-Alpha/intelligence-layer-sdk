@@ -14,7 +14,7 @@ class ConcurrencyCounter(Task[None, None]):
     def __init__(self) -> None:
         self.lock = Lock()
 
-    def run(self, input: None, logger: Tracer) -> None:
+    def run(self, input: None, tracer: Tracer) -> None:
         with self.lock:
             self.concurrency_counter += 1
             self.max_concurrency_counter = max(
@@ -33,17 +33,17 @@ def dummy_decorator(
     def wrap(
         self: "BaseTask",
         input: None,
-        logger: Tracer,
+        tracer: Tracer,
     ) -> None:
-        return f(self, input, logger)
+        return f(self, input, tracer)
 
     return wrap
 
 
 class BaseTask(Task[None, None]):
     @dummy_decorator
-    def run(self, input: None, logger: Tracer) -> None:
-        logger.log("Plain", "Entry")
+    def run(self, input: None, tracer: Tracer) -> None:
+        tracer.log("Plain", "Entry")
 
 
 class SubTask(BaseTask):
@@ -64,11 +64,11 @@ def test_run_concurrently_limited() -> None:
 
 
 def test_sub_tasks_do_not_introduce_multiple_task_spans() -> None:
-    logger = InMemoryTracer()
+    tracer = InMemoryTracer()
 
-    SubTask().run(None, logger)
+    SubTask().run(None, tracer)
 
-    assert logger.logs
-    assert isinstance(logger.logs[0], TaskSpan)
-    assert logger.logs[0].logs
-    assert not isinstance(logger.logs[0].logs[0], TaskSpan)
+    assert tracer.logs
+    assert isinstance(tracer.logs[0], TaskSpan)
+    assert tracer.logs[0].logs
+    assert not isinstance(tracer.logs[0].logs[0], TaskSpan)
