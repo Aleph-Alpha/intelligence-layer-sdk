@@ -19,14 +19,37 @@ These smaller segments are referred to as chunks.
 
 
 class ChunkInput(BaseModel):
+    """The input for a `ChunkTask`.
+
+    Attributes:
+        text: A text of arbitrary length.
+    """
+
     text: str
 
 
 class ChunkOutput(BaseModel):
+    """The output of a `ChunkTask`.
+
+    Attributes:
+        chunks: A list of smaller sections of the input text.
+    """
+
     chunks: Sequence[Chunk]
 
 
 class ChunkTask(Task[ChunkInput, ChunkOutput]):
+    """Splits a longer text into smaller text chunks.
+
+    Provide a text of any length and chunk it into smaller pieces using a
+    tokenizer that is available within the Aleph Alpha client.
+
+    Args:
+        client: Aleph Alpha client instance for running model related API calls.
+        model: A valid Aleph Alpha model name.
+        max_tokens_per_chunk: The maximum number of tokens to fit into one chunk.
+    """
+
     def __init__(self, client: Client, model: str, max_tokens_per_chunk: int):
         super().__init__()
         tokenizer = client.tokenizer(model)
