@@ -53,6 +53,9 @@ class LongContextQa(Task[LongContextQaInput, MultipleChunkQaOutput]):
             Used to tweak the length of the chunks.
         k: The number of top relevant chunks to retrieve.
         model: A valid Aleph Alpha model name.
+        allowed_languages: List of languages to which the language detection is limited (ISO619).
+        fallback_language: The default language of the output.
+
 
     Example:
         >>> client = Client(os.getenv("AA_TOKEN"))
@@ -82,6 +85,7 @@ class LongContextQa(Task[LongContextQaInput, MultipleChunkQaOutput]):
         self._language_detector = DetectLanguage(threshold=0.5)
         self.allowed_languages = allowed_languages
         self._fallback_language = fallback_language
+        assert fallback_language in allowed_languages
 
     def run(
         self, input: LongContextQaInput, logger: DebugLogger

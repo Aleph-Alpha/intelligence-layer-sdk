@@ -38,6 +38,8 @@ class LongContextFewShotSummarize(Task[LongContextSummarizeInput, SummarizeOutpu
         max_generated_tokens: The maximum number of tokens per sub-summary.
         max_tokens_per_chunk: The maximum number of tokens per chunk that the long text
             is divided into.
+        allowed_languages: List of languages to which the language detection is limited (ISO619).
+        fallback_language: The default language of the output.
     """
 
     _client: Client
