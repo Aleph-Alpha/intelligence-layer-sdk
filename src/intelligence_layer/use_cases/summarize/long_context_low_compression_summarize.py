@@ -142,6 +142,8 @@ class LongContextLowCompressionSummarize(LongContextFewShotSummarize):
             model="luminous-extended",
             max_generated_tokens=160,
             max_tokens_per_chunk=200,
-            allowed_languages=[Language(lang) for lang in ["en", "de", "es", "fr", "it"]],
+            allowed_languages=[
+                Language(lang) for lang in ["en", "de", "es", "fr", "it"]
+            ],
             fallback_language=fallback_language,
         )
