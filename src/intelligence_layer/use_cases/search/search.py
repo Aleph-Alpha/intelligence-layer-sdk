@@ -6,8 +6,8 @@ from intelligence_layer.connectors.retrievers.base_retriever import (
     BaseRetriever,
     SearchResult,
 )
-from intelligence_layer.core.task import Task
 from intelligence_layer.core.logger import DebugLogger
+from intelligence_layer.core.task import Task
 
 
 class SearchInput(BaseModel):

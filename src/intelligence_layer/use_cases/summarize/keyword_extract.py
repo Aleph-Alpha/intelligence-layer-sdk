@@ -1,6 +1,8 @@
 from typing import Mapping
+
 from aleph_alpha_client import Client
 from pydantic import BaseModel
+
 from intelligence_layer.core.chunk import Chunk
 from intelligence_layer.core.complete import (
     FewShot,
@@ -11,7 +13,6 @@ from intelligence_layer.core.complete import (
 from intelligence_layer.core.detect_language import Language, LanguageNotSupportedError
 from intelligence_layer.core.logger import DebugLogger
 from intelligence_layer.core.task import Task
-
 
 FEW_SHOT_CONFIGS = {
     Language("de"): FewShotConfig(

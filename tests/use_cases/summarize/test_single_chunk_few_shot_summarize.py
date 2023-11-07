@@ -1,10 +1,10 @@
 from aleph_alpha_client import Client
 from pytest import fixture
-from intelligence_layer.core.complete import FewShotConfig, FewShotExample
 
+from intelligence_layer.core.chunk import Chunk
+from intelligence_layer.core.complete import FewShotConfig, FewShotExample
 from intelligence_layer.core.detect_language import Language
 from intelligence_layer.core.logger import NoOpDebugLogger
-from intelligence_layer.core.chunk import Chunk
 from intelligence_layer.use_cases.summarize.single_chunk_few_shot_summarize import (
     SingleChunkFewShotSummarize,
 )

@@ -5,19 +5,18 @@ from typing import Sequence, cast
 from aleph_alpha_client import Client, Image
 from dotenv import load_dotenv
 from pytest import fixture
-from intelligence_layer.connectors.retrievers.base_retriever import Document
 
-from intelligence_layer.connectors.retrievers.document_index_retriever import (
-    DocumentIndexRetriever,
-)
 from intelligence_layer.connectors.document_index.document_index import (
     DocumentIndexClient,
+)
+from intelligence_layer.connectors.retrievers.base_retriever import Document
+from intelligence_layer.connectors.retrievers.document_index_retriever import (
+    DocumentIndexRetriever,
 )
 from intelligence_layer.connectors.retrievers.qdrant_in_memory_retriever import (
     QdrantInMemoryRetriever,
     RetrieverType,
 )
-
 from intelligence_layer.core.logger import NoOpDebugLogger
 
 

@@ -5,9 +5,7 @@ from intelligence_layer.core.logger import NoOpDebugLogger
 from intelligence_layer.use_cases.summarize.long_context_high_compression_summarize import (
     LongContextHighCompressionSummarize,
 )
-from intelligence_layer.use_cases.summarize.summarize import (
-    LongContextSummarizeInput,
-)
+from intelligence_layer.use_cases.summarize.summarize import LongContextSummarizeInput
 
 
 @fixture

@@ -10,7 +10,6 @@ from intelligence_layer.core.logger import DebugLogger
 from intelligence_layer.core.prompt_template import PromptTemplate
 from intelligence_layer.core.task import Task, Token
 
-
 LogProb = NewType("LogProb", float)
 
 

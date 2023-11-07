@@ -1,4 +1,5 @@
 from typing import Mapping
+
 from aleph_alpha_client import Client
 
 from intelligence_layer.core.complete import (
@@ -7,9 +8,7 @@ from intelligence_layer.core.complete import (
     FewShotInput,
     PromptOutput,
 )
-from intelligence_layer.core.detect_language import (
-    Language,
-)
+from intelligence_layer.core.detect_language import Language
 from intelligence_layer.core.logger import DebugLogger
 from intelligence_layer.core.task import Task
 from intelligence_layer.use_cases.summarize.summarize import (

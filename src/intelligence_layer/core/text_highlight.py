@@ -4,15 +4,16 @@ from aleph_alpha_client import (
     Client,
     ExplanationRequest,
     ExplanationResponse,
+    Prompt,
     PromptGranularity,
     Text,
     TextPromptItemExplanation,
-    Prompt,
 )
 from aleph_alpha_client.explanation import TextScoreWithRaw
 from pydantic import BaseModel
 
 from intelligence_layer.core.explain import Explain, ExplainInput
+from intelligence_layer.core.logger import DebugLogger
 from intelligence_layer.core.prompt_template import (
     Cursor,
     PromptRange,
@@ -20,7 +21,6 @@ from intelligence_layer.core.prompt_template import (
     TextCursor,
 )
 from intelligence_layer.core.task import Task
-from intelligence_layer.core.logger import DebugLogger
 
 
 class TextHighlightInput(BaseModel):

@@ -18,19 +18,18 @@ from typing import (
 )
 from uuid import UUID, uuid4
 
+from aleph_alpha_client.prompt import Image, Prompt, PromptItem, Text, Tokens
 from liquid import BoundTemplate, Context, Environment
-from liquid.tag import Tag
-from liquid.parse import get_parser, expect
-from liquid.token import TOKEN_TAG, TOKEN_EOF, TOKEN_EXPRESSION
-from liquid.ast import Node, BlockNode
+from liquid.ast import BlockNode, Node
+from liquid.context import Namespace
+from liquid.exceptions import LiquidTypeError
 from liquid.expressions.common import parse_unchained_identifier
 from liquid.expressions.filtered.lex import tokenize
-from liquid.stream import TokenStream
 from liquid.expressions.stream import TokenStream as AstTokenStream
-from liquid.exceptions import LiquidTypeError
-from liquid.context import Namespace
-
-from aleph_alpha_client.prompt import Image, Prompt, PromptItem, Text, Tokens
+from liquid.parse import expect, get_parser
+from liquid.stream import TokenStream
+from liquid.tag import Tag
+from liquid.token import TOKEN_EOF, TOKEN_EXPRESSION, TOKEN_TAG
 
 Placeholder = NewType("Placeholder", UUID)
 
@@ -81,7 +80,7 @@ class PromptWithMetadata:
 
     Args:
       prompt: The actual `Prompt`.
-      ranges: A mapping of range name to a `Sequence` of corresponding `PromptRange`\ s.
+      ranges: A mapping of range name to a `Sequence` of corresponding `PromptRange` instances.
     """
 
     prompt: Prompt

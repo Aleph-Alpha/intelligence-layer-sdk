@@ -3,9 +3,9 @@ from typing import Optional, Sequence
 from aleph_alpha_client import Client, CompletionRequest, CompletionResponse, Prompt
 from pydantic import BaseModel
 
+from intelligence_layer.core.logger import DebugLogger
 from intelligence_layer.core.prompt_template import PromptTemplate, PromptWithMetadata
 from intelligence_layer.core.task import Task
-from intelligence_layer.core.logger import DebugLogger
 
 
 class CompleteInput(BaseModel):
@@ -88,7 +88,7 @@ class PromptOutput(BaseModel):
     Attributes:
         response: The generated response to the instruction.
         prompt_with_metadata: To handle the instruction, a `PromptTemplate` is used.
-            The template defines two `PromptRange`\ s:
+            The template defines two `PromptRange` instances:
             - "instruction": covering the instruction text.
             - "input": covering the input text.
             These can for example be used for downstream `TextHighlight` tasks.

@@ -1,7 +1,7 @@
 import statistics
 from typing import Sequence
-from aleph_alpha_client import Client
 
+from aleph_alpha_client import Client
 from pydantic import BaseModel
 from qdrant_client.http.models import models
 
@@ -10,8 +10,8 @@ from intelligence_layer.connectors.retrievers.qdrant_in_memory_retriever import 
     QdrantInMemoryRetriever,
     RetrieverType,
 )
-from intelligence_layer.core.logger import DebugLogger
 from intelligence_layer.core.chunk import Chunk
+from intelligence_layer.core.logger import DebugLogger
 from intelligence_layer.core.task import Task
 from intelligence_layer.use_cases.classify.classify import (
     ClassifyInput,

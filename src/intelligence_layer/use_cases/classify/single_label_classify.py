@@ -1,22 +1,11 @@
 import math
 import re
-from typing import (
-    Iterable,
-    Mapping,
-    Optional,
-    Sequence,
-)
+from typing import Iterable, Mapping, Optional, Sequence
 
-from aleph_alpha_client import (
-    Client,
-    PromptTemplate,
-    Prompt,
-)
+from aleph_alpha_client import Client, Prompt, PromptTemplate
 from pydantic import BaseModel
 
-from intelligence_layer.core.complete import (
-    Complete,
-)
+from intelligence_layer.core.complete import Complete
 from intelligence_layer.core.echo import EchoInput, EchoTask, TokenWithLogProb
 from intelligence_layer.core.logger import DebugLogger
 from intelligence_layer.core.task import Task, Token

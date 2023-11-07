@@ -3,8 +3,8 @@ from http import HTTPStatus
 from json import dumps
 from typing import Any, Mapping, Sequence
 
-from pydantic import BaseModel, Field
 import requests
+from pydantic import BaseModel, Field
 from requests import HTTPError
 
 
@@ -292,7 +292,7 @@ class DocumentIndexClient:
                 Typically corresponds to an organization.
 
         Returns:
-            List of all `CollectionPath`\ s in the given namespace.
+            List of all `CollectionPath` instances in the given namespace.
         """
 
         url = f"{self._base_document_index_url}/collections/{namespace}"

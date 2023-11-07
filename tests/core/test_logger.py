@@ -4,15 +4,16 @@ from uuid import UUID
 
 from pydantic import BaseModel, Field
 from pytest import fixture
+
 from intelligence_layer.core.logger import (
     CompositeLogger,
     DebugLogger,
     EndSpan,
     EndTask,
+    FileDebugLogger,
     InMemoryDebugLogger,
     InMemorySpan,
     InMemoryTaskSpan,
-    FileDebugLogger,
     LogEntry,
     LogLine,
     PlainEntry,

@@ -3,23 +3,14 @@ from contextlib import AbstractContextManager
 from datetime import datetime
 from pathlib import Path
 from types import TracebackType
+from typing import TYPE_CHECKING, Any, Mapping, Optional, Sequence, Union
 from uuid import UUID, uuid4
 
 from pydantic import BaseModel, Field, RootModel, SerializeAsAny
 from rich.panel import Panel
 from rich.syntax import Syntax
 from rich.tree import Tree
-
-from typing_extensions import TypeAliasType, Self
-
-from typing import (
-    TYPE_CHECKING,
-    Any,
-    Mapping,
-    Optional,
-    Sequence,
-    Union,
-)
+from typing_extensions import Self, TypeAliasType
 
 if TYPE_CHECKING:
     PydanticSerializable = (

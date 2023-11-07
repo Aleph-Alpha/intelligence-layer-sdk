@@ -1,19 +1,10 @@
+import functools
 from abc import ABC, abstractmethod
 from concurrent.futures import ThreadPoolExecutor
-import functools
 from itertools import islice
-from typing import (
-    Any,
-    Generic,
-    Iterable,
-    Sequence,
-    TypeVar,
-    Callable,
-)
+from typing import Any, Callable, Generic, Iterable, Sequence, TypeVar
 
-from pydantic import (
-    BaseModel,
-)
+from pydantic import BaseModel
 
 from intelligence_layer.core.logger import DebugLogger, PydanticSerializable
 

@@ -1,16 +1,10 @@
 from aleph_alpha_client import Client
 
-from intelligence_layer.core.complete import (
-    FewShotConfig,
-    FewShotExample,
-)
-from intelligence_layer.core.detect_language import (
-    Language,
-)
+from intelligence_layer.core.complete import FewShotConfig, FewShotExample
+from intelligence_layer.core.detect_language import Language
 from intelligence_layer.use_cases.summarize.long_context_few_shot_summarize import (
     LongContextFewShotSummarize,
 )
-
 
 FEW_SHOT_CONFIGS = {
     Language("en"): FewShotConfig(
