@@ -84,6 +84,13 @@ class RetrieverBasedQa(Task[RetrieverBasedQaInput, MultipleChunkQaOutput]):
             or self._fallback_language
         )
 
+        question_language = (
+            self._language_detector.run(
+                DetectLanguageInput(text=input.question), logger
+            ).best_fit
+            or self._fallback_language
+        )
+
         multi_chunk_qa_input = MultipleChunkQaInput(
             chunks=[Chunk(result.document.text) for result in search_output.results],
             question=input.question,
