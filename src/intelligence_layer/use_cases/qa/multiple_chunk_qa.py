@@ -77,7 +77,6 @@ class MultipleChunkQa(Task[MultipleChunkQaInput, MultipleChunkQaOutput]):
     Args:
         client: Aleph Alpha client instance for running model related API calls.
         model: A valid Aleph Alpha model name.
-        qa_instructions: All languages supported by the task. Mapping ISO619 str to prompt string
 
     Attributes:
         MERGE_ANSWERS_INSTRUCTION: The instruction template used for combining multiple answers into one.
@@ -103,12 +102,11 @@ Condense multiple answers into a single answer. Rely only on the provided answer
         self,
         client: Client,
         model: str = "luminous-supreme-control",
-        qa_instructions: dict[Language, str] = LANGUAGES_QA_INSTRUCTIONS,
     ):
         super().__init__()
         self._client = client
         self._instruction = Instruct(client)
-        self._single_chunk_qa = SingleChunkQa(client, model, qa_instructions)
+        self._single_chunk_qa = SingleChunkQa(client, model)
         self._model = model
 
     def run(
