@@ -80,7 +80,7 @@ def test_retriever_based_qa_with_document_index(
 def test_retriever_based_qa_fallback_language_throws_an_assertion_error(
     client: Client, asymmetric_in_memory_retriever: QdrantInMemoryRetriever
 ) -> None:
-    with pytest.raises(AssertionError):
+    with pytest.raises(AssertionError) as _:
         RetrieverBasedQa(
             client,
             asymmetric_in_memory_retriever,
