@@ -34,7 +34,7 @@ class BaseRetriever(ABC):
 
     Retrievers are used to find texts given a user query.
     Each Retriever implementation owns its own logic for retrieval.
-    For comparison purposes, we assume scores in the `SearchResult`\ s to be between 0 and 1.
+    For comparison purposes, we assume scores in the `SearchResult` instances to be between 0 and 1.
     """
 
     @abstractmethod
