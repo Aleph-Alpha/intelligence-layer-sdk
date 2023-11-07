@@ -27,7 +27,6 @@ from .logger import (
     FileSpan,
     FileTaskSpan,
     NoOpDebugLogger,
-    NoOpTaskSpan,
 )
 from .prompt_template import (
     PromptTemplate,
