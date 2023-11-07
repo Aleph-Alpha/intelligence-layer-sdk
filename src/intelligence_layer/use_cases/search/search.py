@@ -45,8 +45,8 @@ class Search(Task[SearchInput, SearchOutput]):
         >>> retriever = DocumentIndexRetriever(document_index, "my_namespace", "country_facts_collection", 3)
         >>> task = Search(retriever)
         >>> input = SearchInput(
-        >>>     query="When did East and West Germany reunite?"
-        >>> )
+                query="When did East and West Germany reunite?"
+            )
         >>> logger = InMemoryLogger(name="Search")
         >>> output = task.run(input, logger)
         >>> print(output.results[0].text[-5:])
