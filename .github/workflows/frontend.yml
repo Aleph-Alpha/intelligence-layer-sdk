@@ -5,13 +5,13 @@ on:
     branches:
       - main
     tags:
-      - log-viewer-v*
+      - trace-viewer-v*
     paths:
-      - "log-viewer/**"
+      - "trace-viewer/**"
       - ".github/workflows/frontend.yml"
   pull_request:
     paths:
-      - "log-viewer/**"
+      - "trace-viewer/**"
       - ".github/workflows/frontend.yml"
   workflow_dispatch:
 
@@ -21,7 +21,7 @@ concurrency:
 
 defaults:
   run:
-    working-directory: log-viewer
+    working-directory: trace-viewer
 
 jobs:
   lint:
@@ -35,7 +35,7 @@ jobs:
         with:
           node-version: 20
           cache: "pnpm"
-          cache-dependency-path: "./log-viewer/pnpm-lock.yaml"
+          cache-dependency-path: "./trace-viewer/pnpm-lock.yaml"
       - run: pnpm install
       - run: pnpm check
       - run: pnpm lint
@@ -50,7 +50,7 @@ jobs:
         with:
           node-version: 20
           cache: "pnpm"
-          cache-dependency-path: "./log-viewer/pnpm-lock.yaml"
+          cache-dependency-path: "./trace-viewer/pnpm-lock.yaml"
       - run: pnpm install
       - run: pnpm exec playwright install --with-deps
       - run: pnpm test
@@ -66,7 +66,7 @@ jobs:
     # Defines two custom environment variables for the workflow. These are used for the Container registry domain, and a name for the Docker image that this workflow builds.
     env:
       REGISTRY: ghcr.io
-      IMAGE_NAME: ${{ github.repository }}-log-viewer
+      IMAGE_NAME: ${{ github.repository }}-trace-viewer
     runs-on: ubuntu-latest
     # Sets the permissions granted to the `GITHUB_TOKEN` for the actions in this job.
     permissions:
@@ -101,7 +101,7 @@ jobs:
       - name: Build and push Docker image
         uses: docker/build-push-action@v5
         with:
-          context: ./log-viewer
+          context: ./trace-viewer
           push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
