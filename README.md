@@ -148,7 +148,7 @@ echo $GITHUB_TOKEN | docker login ghcr.io -u YOUR_GITHUB_USERNAME --password-std
 Run the container locally:
 
 ```bash
-docker run -p 3000:3000 ghcr.io/aleph-alpha/intelligence-layer-log-viewer:main
+docker run -p 3000:3000 ghcr.io/aleph-alpha/intelligence-layer-trace-viewer:main
 ```
 
 Finally, visit `http://localhost:3000`, where you can upload a trace to interact with the data.

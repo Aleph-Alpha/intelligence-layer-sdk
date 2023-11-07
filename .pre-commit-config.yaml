@@ -3,16 +3,16 @@ repos:
     rev: v3.4.0
     hooks:
       - id: check-json
-        exclude: log-viewer/
+        exclude: trace-viewer/
       - id: pretty-format-json
         files: .json
         args:
           - --autofix
-        exclude: log-viewer/
+        exclude: trace-viewer/
       - id: end-of-file-fixer
-        exclude: log-viewer/
+        exclude: trace-viewer/
       - id: trailing-whitespace
-        exclude: log-viewer/
+        exclude: trace-viewer/
   - repo: https://github.com/pycqa/isort
     rev: 5.12.0
     hooks:
@@ -33,4 +33,4 @@ repos:
     hooks:
       - id: codespell
         args: ["-L", "newyorker,te,responde,ist,als,oder,technik,sie"]
-        exclude: '^(poetry\.lock|log-viewer/.*|tests/connectors/retrievers/test_document_index_retriever\.py|src/intelligence_layer/use_cases/summarize/.*|tests/connectors/retrievers/test_document_index_retriever\.py|src/intelligence_layer/use_cases/classify/keyword_extract.py|tests/use_cases/summarize/test_single_chunk_few_shot_summarize.py)$'
+        exclude: '^(poetry\.lock|trace-viewer/.*|tests/connectors/retrievers/test_document_index_retriever\.py|src/intelligence_layer/use_cases/summarize/.*|tests/connectors/retrievers/test_document_index_retriever\.py|src/intelligence_layer/use_cases/classify/keyword_extract.py|tests/use_cases/summarize/test_single_chunk_few_shot_summarize.py)$'
