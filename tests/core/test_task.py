@@ -64,7 +64,7 @@ def test_run_concurrently_limited() -> None:
 
 
 def test_sub_tasks_do_not_introduce_multiple_task_spans() -> None:
-    logger = InMemoryTracer(name="demo")
+    logger = InMemoryTracer()
 
     SubTask().run(None, logger)
 
