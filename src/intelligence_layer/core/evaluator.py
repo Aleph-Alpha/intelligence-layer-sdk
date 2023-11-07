@@ -6,8 +6,8 @@ from uuid import uuid4
 from pydantic import BaseModel, Field
 from tqdm import tqdm
 
-from intelligence_layer.core.logger import DebugLogger, PydanticSerializable
 from intelligence_layer.core.task import Input
+from intelligence_layer.core.tracer import PydanticSerializable, Tracer
 
 ExpectedOutput = TypeVar("ExpectedOutput", bound=PydanticSerializable)
 Evaluation = TypeVar("Evaluation", bound=PydanticSerializable)
@@ -57,7 +57,7 @@ class Evaluator(ABC, Generic[Input, ExpectedOutput, Evaluation, AggregatedEvalua
     def evaluate(
         self,
         input: Input,
-        logger: DebugLogger,
+        logger: Tracer,
         expected_output: ExpectedOutput,
     ) -> Evaluation:
         """Executes the evaluation for this use-case.
@@ -76,7 +76,7 @@ class Evaluator(ABC, Generic[Input, ExpectedOutput, Evaluation, AggregatedEvalua
         pass
 
     def evaluate_dataset(
-        self, dataset: Dataset[Input, ExpectedOutput], logger: DebugLogger
+        self, dataset: Dataset[Input, ExpectedOutput], logger: Tracer
     ) -> AggregatedEvaluation:
         """Evaluates an entire datasets in a threaded manner and aggregates the results into an `AggregatedEvaluation`.
 

@@ -9,8 +9,8 @@ from intelligence_layer.core.complete import (
     PromptOutput,
 )
 from intelligence_layer.core.detect_language import Language
-from intelligence_layer.core.logger import DebugLogger
 from intelligence_layer.core.task import Task
+from intelligence_layer.core.tracer import Tracer
 from intelligence_layer.use_cases.summarize.summarize import (
     SingleChunkSummarizeInput,
     SingleChunkSummarizeOutput,
@@ -45,13 +45,13 @@ class SingleChunkFewShotSummarize(
         self._maximum_tokens = maximum_tokens
 
     def run(
-        self, input: SingleChunkSummarizeInput, logger: DebugLogger
+        self, input: SingleChunkSummarizeInput, logger: Tracer
     ) -> SingleChunkSummarizeOutput:
         prompt_output = self._get_prompt_and_complete(input, logger)
         return SingleChunkSummarizeOutput(summary=prompt_output.response.strip())
 
     def _get_prompt_and_complete(
-        self, input: SingleChunkSummarizeInput, logger: DebugLogger
+        self, input: SingleChunkSummarizeInput, logger: Tracer
     ) -> PromptOutput:
         prompt_config = self._few_shot_configs.get(input.language)
         if not prompt_config:

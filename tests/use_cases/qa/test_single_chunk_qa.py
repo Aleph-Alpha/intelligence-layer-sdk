@@ -4,7 +4,7 @@ from pytest import fixture
 
 from intelligence_layer.core.chunk import Chunk
 from intelligence_layer.core.detect_language import Language, LanguageNotSupportedError
-from intelligence_layer.core.logger import NoOpDebugLogger
+from intelligence_layer.core.tracer import NoOpTracer
 from intelligence_layer.use_cases.qa.single_chunk_qa import (
     SingleChunkQa,
     SingleChunkQaInput,
@@ -24,7 +24,7 @@ def test_qa_with_answer(qa: SingleChunkQa) -> None:
         question="What is the name of Paul Nicolas' brother?",
         language=Language("en"),
     )
-    output = qa.run(input, NoOpDebugLogger())
+    output = qa.run(input, NoOpTracer())
 
     assert output.answer
     assert "Henri" in output.answer
@@ -39,7 +39,7 @@ def test_qa_with_no_answer(qa: SingleChunkQa) -> None:
         ),
         question="What is the capital of Germany?",
     )
-    output = qa.run(input, NoOpDebugLogger())
+    output = qa.run(input, NoOpTracer())
 
     assert output.answer is None
 
@@ -54,4 +54,4 @@ def test_language_not_supported_exception(qa: SingleChunkQa) -> None:
     )
 
     with pytest.raises(LanguageNotSupportedError):
-        qa.run(input, NoOpDebugLogger())
+        qa.run(input, NoOpTracer())

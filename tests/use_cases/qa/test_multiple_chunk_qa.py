@@ -4,7 +4,7 @@ from aleph_alpha_client import Client
 from pytest import fixture
 
 from intelligence_layer.core.chunk import Chunk
-from intelligence_layer.core.logger import InMemoryDebugLogger, NoOpDebugLogger
+from intelligence_layer.core.tracer import InMemoryTracer, NoOpTracer
 from intelligence_layer.use_cases.qa.multiple_chunk_qa import (
     MultipleChunkQa,
     MultipleChunkQaInput,
@@ -26,7 +26,7 @@ def test_multiple_chunk_qa_with_answer(qa: MultipleChunkQa) -> None:
     ]
 
     input = MultipleChunkQaInput(chunks=chunks, question=question)
-    output = qa.run(input, NoOpDebugLogger())
+    output = qa.run(input, NoOpTracer())
 
     assert output.answer
     assert "Henri" in output.answer
@@ -47,7 +47,7 @@ def test_multiple_chunk_qa_without_answer(qa: MultipleChunkQa) -> None:
     ]
 
     input = MultipleChunkQaInput(chunks=chunks, question=question)
-    debug_log = InMemoryDebugLogger(name="qa")
+    debug_log = InMemoryTracer(name="qa")
     output = qa.run(input, debug_log)
 
     assert output.answer is None
@@ -66,7 +66,7 @@ def test_multiple_chunk_qa_with_mulitple_chunks(qa: MultipleChunkQa) -> None:
     ]
 
     input = MultipleChunkQaInput(chunks=chunks, question=question)
-    logger = InMemoryDebugLogger(name="x")
+    logger = InMemoryTracer(name="x")
     output = qa.run(input, logger)
 
     assert output.answer

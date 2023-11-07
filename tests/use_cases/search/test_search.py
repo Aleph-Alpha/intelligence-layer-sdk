@@ -6,7 +6,7 @@ from intelligence_layer.connectors.retrievers.base_retriever import Document
 from intelligence_layer.connectors.retrievers.qdrant_in_memory_retriever import (
     QdrantInMemoryRetriever,
 )
-from intelligence_layer.core.logger import NoOpDebugLogger
+from intelligence_layer.core.tracer import NoOpTracer
 from intelligence_layer.use_cases.search.search import Search, SearchInput
 
 
@@ -26,7 +26,7 @@ def search(asymmetric_in_memory_retriever: QdrantInMemoryRetriever) -> Search:
 
 def test_search(
     search: Search,
-    no_op_debug_logger: NoOpDebugLogger,
+    no_op_debug_logger: NoOpTracer,
     in_memory_retriever_documents: Sequence[Document],
 ) -> None:
     search_input = SearchInput(query="Are we so back?")

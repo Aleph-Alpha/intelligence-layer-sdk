@@ -9,8 +9,8 @@ from intelligence_layer.core.detect_language import (
     DetectLanguageInput,
     Language,
 )
-from intelligence_layer.core.logger import DebugLogger
 from intelligence_layer.core.task import Task
+from intelligence_layer.core.tracer import Tracer
 from intelligence_layer.use_cases.summarize.single_chunk_few_shot_summarize import (
     SingleChunkFewShotSummarize,
 )
@@ -63,7 +63,7 @@ class LongContextFewShotSummarize(
         self._detect_language = DetectLanguage()
 
     def run(
-        self, input: LongContextSummarizeInput, logger: DebugLogger
+        self, input: LongContextSummarizeInput, logger: Tracer
     ) -> LongContextSummarizeOutput:
         lang = (
             self._detect_language.run(

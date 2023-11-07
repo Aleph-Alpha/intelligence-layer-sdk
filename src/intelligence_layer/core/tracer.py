@@ -43,7 +43,7 @@ else:
     )
 
 
-class DebugLogger(ABC):
+class Tracer(ABC):
     """Provides a consistent way to instrument a :class:`Task` with logging for each step of the
     workflow.
 
@@ -121,7 +121,7 @@ class DebugLogger(ABC):
         ...
 
 
-class Span(DebugLogger, AbstractContextManager["Span"]):
+class Span(Tracer, AbstractContextManager["Span"]):
     """Captures a logical step within the overall workflow
 
     Logs and other spans can be nested underneath.
@@ -176,7 +176,7 @@ class TaskSpan(Span):
 
 
 class CompositeLogger(TaskSpan):
-    """A :class:`DebugLogger` that allows for recording to multiple loggers simultaneously.
+    """A :class:`Tracer` that allows for recording to multiple loggers simultaneously.
 
     Each log-entry and span will be forwarded to all subloggers.
 
@@ -184,14 +184,14 @@ class CompositeLogger(TaskSpan):
         loggers: Loggers that will be forwarded all subsequent log and span calls.
 
     Example:
-        >>> sub_logger1 = InMemoryDebugLogger(name="memory")
-        >>> sub_logger2 = FileDebugLogger("./log.log")
+        >>> sub_logger1 = InMemoryTracer(name="memory")
+        >>> sub_logger2 = FileTracer("./log.log")
         >>> logger = CompositeLogger([logger1, logger2])
         >>>
         >>> SomeTask.run(input, logger)
     """
 
-    def __init__(self, loggers: Sequence[DebugLogger | Span | TaskSpan]) -> None:
+    def __init__(self, loggers: Sequence[Tracer | Span | TaskSpan]) -> None:
         self.loggers = loggers
 
     def log(
@@ -235,7 +235,7 @@ class CompositeLogger(TaskSpan):
                 logger.record_output(output)
 
 
-class NoOpDebugLogger(TaskSpan):
+class NoOpTracer(TaskSpan):
     """A no-op logger.
 
     Useful for cases, like testing, where a logger is needed for a task, but you
@@ -252,9 +252,7 @@ class NoOpDebugLogger(TaskSpan):
     ) -> None:
         pass
 
-    def span(
-        self, name: str, timestamp: Optional[datetime] = None
-    ) -> "NoOpDebugLogger":
+    def span(self, name: str, timestamp: Optional[datetime] = None) -> "NoOpTracer":
         return self
 
     def task_span(
@@ -262,7 +260,7 @@ class NoOpDebugLogger(TaskSpan):
         task_name: str,
         input: PydanticSerializable,
         timestamp: Optional[datetime] = None,
-    ) -> "NoOpDebugLogger":
+    ) -> "NoOpTracer":
         return self
 
     def record_output(self, output: PydanticSerializable) -> None:
@@ -290,7 +288,7 @@ def _render_log_value(value: PydanticSerializable, title: str) -> Panel:
 
 class LogEntry(BaseModel):
     """An individual log entry, currently used to represent individual logs by the
-    `InMemoryDebugLogger`.
+    `InMemoryTracer`.
 
     Attributes:
         message: A description of the value you are logging, such as the step in the task this
@@ -315,7 +313,7 @@ class LogEntry(BaseModel):
         print(self._rich_render_())
 
 
-class InMemoryDebugLogger(BaseModel, DebugLogger):
+class InMemoryTracer(BaseModel, Tracer):
     """Collects log entries in a nested structure, and keeps them in memory.
 
     If desired, the structure is serializable with Pydantic, so you can write out the JSON
@@ -323,7 +321,7 @@ class InMemoryDebugLogger(BaseModel, DebugLogger):
 
     Attributes:
         name: A descriptive name of what the logger contains log entries about.
-        logs: A sequential list of log entries and/or nested InMemoryDebugLoggers with their own
+        logs: A sequential list of log entries and/or nested InMemoryTracers with their own
             log entries.
     """
 
@@ -375,7 +373,7 @@ class InMemoryDebugLogger(BaseModel, DebugLogger):
         print(self._rich_render_())
 
 
-class InMemorySpan(InMemoryDebugLogger, Span):
+class InMemorySpan(InMemoryTracer, Span):
     start_timestamp: datetime = Field(default_factory=datetime.utcnow)
     end_timestamp: Optional[datetime] = None
 
@@ -416,16 +414,16 @@ class InMemoryTaskSpan(InMemorySpan, TaskSpan):
 
 # Required for sphinx, see also: https://docs.pydantic.dev/2.4/errors/usage_errors/#class-not-fully-defined
 InMemorySpan.model_rebuild()
-InMemoryDebugLogger.model_rebuild()
+InMemoryTracer.model_rebuild()
 
 
 class StartTask(BaseModel):
-    """Represents the payload/entry of a log-line indicating that a `TaskSpan` was opened through `DebugLogger.task_span`.
+    """Represents the payload/entry of a log-line indicating that a `TaskSpan` was opened through `Tracer.task_span`.
 
     Attributes:
         uuid: A unique id for the opened `TaskSpan`.
         parent: The unique id of the parent element of opened `TaskSpan`.
-            This could refer to either a surrounding `TaskSpan`, `Span` or the top-level `DebugLogger`.
+            This could refer to either a surrounding `TaskSpan`, `Span` or the top-level `Tracer`.
         name: The name of the task.
         start: The timestamp when this `Task` was started (i.e. `run` was called).
         input: The `Input` (i.e. parameter for `run`) the `Task` was started with.
@@ -453,12 +451,12 @@ class EndTask(BaseModel):
 
 
 class StartSpan(BaseModel):
-    """Represents the payload/entry of a log-line indicating that a `Span` was opened through `DebugLogger.span`.
+    """Represents the payload/entry of a log-line indicating that a `Span` was opened through `Tracer.span`.
 
     Attributes:
         uuid: A unique id for the opened `Span`.
         parent: The unique id of the parent element of opened `TaskSpan`.
-            This could refer to either a surrounding `TaskSpan`, `Span` or the top-level `DebugLogger`.
+            This could refer to either a surrounding `TaskSpan`, `Span` or the top-level `Tracer`.
         name: The name of the task.
         start: The timestamp when this `Span` was started.
     """
@@ -482,14 +480,14 @@ class EndSpan(BaseModel):
 
 
 class PlainEntry(BaseModel):
-    """Represents a plain log-entry created through `DebugLogger.log`.
+    """Represents a plain log-entry created through `Tracer.log`.
 
     Attributes:
-        message: the message-parameter of `DebugLogger.log`
-        value: the value-parameter of `DebugLogger.log`
-        timestamp: the timestamp when `DebugLogger.log` was called.
+        message: the message-parameter of `Tracer.log`
+        value: the value-parameter of `Tracer.log`
+        timestamp: the timestamp when `Tracer.log` was called.
         parent: The unique id of the parent element of the log.
-            This could refer to either a surrounding `TaskSpan`, `Span` or the top-level `DebugLogger`.
+            This could refer to either a surrounding `TaskSpan`, `Span` or the top-level `Tracer`.
     """
 
     message: str
@@ -512,8 +510,8 @@ class LogLine(BaseModel):
     entry: SerializeAsAny[Any]
 
 
-class FileDebugLogger(DebugLogger):
-    """A `DebugLogger` that logs to a file.
+class FileTracer(Tracer):
+    """A `Tracer` that logs to a file.
 
     Each log-entry is represented by a JSON object. The information logged allows
     to reconstruct the hierarchical nature of the logs, i.e. all entries have a
@@ -524,7 +522,7 @@ class FileDebugLogger(DebugLogger):
         log_file_path: Denotes the file to log to.
 
     Attributes:
-        uuid: a uuid for the logger. If multiple :class:`FileDebugLogger` instances log to the same file
+        uuid: a uuid for the logger. If multiple :class:`FileTracer` instances log to the same file
             the child-elements for a logger can be identified by referring to this id as parent.
     """
 
@@ -585,8 +583,8 @@ class FileDebugLogger(DebugLogger):
         return task
 
 
-class FileSpan(Span, FileDebugLogger):
-    """A `Span` created by `FileDebugLogger.span`."""
+class FileSpan(Span, FileTracer):
+    """A `Span` created by `FileTracer.span`."""
 
     end_timestamp: Optional[datetime] = None
 
@@ -600,7 +598,7 @@ class FileSpan(Span, FileDebugLogger):
 
 
 class FileTaskSpan(TaskSpan, FileSpan):
-    """A `TaskSpan` created by `FileDebugLogger.task_span`."""
+    """A `TaskSpan` created by `FileTracer.task_span`."""
 
     output: Optional[PydanticSerializable] = None
 

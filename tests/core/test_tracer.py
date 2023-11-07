@@ -5,17 +5,17 @@ from aleph_alpha_client.aleph_alpha_client import Client
 from aleph_alpha_client.completion import CompletionRequest
 
 from intelligence_layer.core.complete import Complete, CompleteInput
-from intelligence_layer.core.logger import (
+from intelligence_layer.core.tracer import (
     CompositeLogger,
-    InMemoryDebugLogger,
     InMemoryTaskSpan,
+    InMemoryTracer,
     LogEntry,
 )
 
 
 def test_debug_add_log_entries() -> None:
     before_log_time = datetime.utcnow()
-    logger = InMemoryDebugLogger(name="test")
+    logger = InMemoryTracer(name="test")
     logger.log("Test", "message")
 
     assert len(logger.logs) == 1
@@ -27,30 +27,30 @@ def test_debug_add_log_entries() -> None:
 
 
 def test_can_add_child_debug_logger() -> None:
-    logger = InMemoryDebugLogger(name="parent")
+    logger = InMemoryTracer(name="parent")
     logger.span("child")
 
     assert len(logger.logs) == 1
 
     log = logger.logs[0]
-    assert isinstance(log, InMemoryDebugLogger)
+    assert isinstance(log, InMemoryTracer)
     assert log.name == "child"
     assert len(log.logs) == 0
 
 
 def test_can_add_parent_and_child_logs() -> None:
-    parent = InMemoryDebugLogger(name="parent")
+    parent = InMemoryTracer(name="parent")
     parent.log("One", 1)
     with parent.span("child") as child:
         child.log("Two", 2)
 
     assert isinstance(parent.logs[0], LogEntry)
-    assert isinstance(parent.logs[1], InMemoryDebugLogger)
+    assert isinstance(parent.logs[1], InMemoryTracer)
     assert isinstance(parent.logs[1].logs[0], LogEntry)
 
 
 def test_task_automatically_logs_input_and_output(client: Client) -> None:
-    logger = InMemoryDebugLogger(name="completion")
+    logger = InMemoryTracer(name="completion")
     input = CompleteInput(
         request=CompletionRequest(prompt=Prompt.from_text("test")),
         model="luminous-base",
@@ -68,7 +68,7 @@ def test_task_automatically_logs_input_and_output(client: Client) -> None:
 
 
 def test_logger_can_set_custom_start_time_for_log_entry() -> None:
-    logger = InMemoryDebugLogger(name="completion")
+    logger = InMemoryTracer(name="completion")
     timestamp = datetime.utcnow()
 
     logger.log("log", "message", timestamp)
@@ -78,7 +78,7 @@ def test_logger_can_set_custom_start_time_for_log_entry() -> None:
 
 
 def test_logger_can_set_custom_start_time_for_span() -> None:
-    logger = InMemoryDebugLogger(name="completion")
+    logger = InMemoryTracer(name="completion")
     start = datetime.utcnow()
 
     span = logger.span("span", start)
@@ -87,7 +87,7 @@ def test_logger_can_set_custom_start_time_for_span() -> None:
 
 
 def test_span_sets_end_timestamp() -> None:
-    logger = InMemoryDebugLogger(name="completion")
+    logger = InMemoryTracer(name="completion")
     start = datetime.utcnow()
 
     span = logger.span("span", start)
@@ -97,7 +97,7 @@ def test_span_sets_end_timestamp() -> None:
 
 
 def test_span_only_updates_end_timestamp_once() -> None:
-    logger = InMemoryDebugLogger(name="completion")
+    logger = InMemoryTracer(name="completion")
 
     span = logger.span("span")
     end = datetime.utcnow()
@@ -108,8 +108,8 @@ def test_span_only_updates_end_timestamp_once() -> None:
 
 
 def test_composite_logger(client: Client) -> None:
-    logger1 = InMemoryDebugLogger(name="logger")
-    logger2 = InMemoryDebugLogger(name="logger")
+    logger1 = InMemoryTracer(name="logger")
+    logger2 = InMemoryTracer(name="logger")
     input = CompleteInput(
         request=CompletionRequest(prompt=Prompt.from_text("test")),
         model="luminous-base",

@@ -6,9 +6,9 @@ from pydantic import BaseModel
 from tokenizers import Encoding, Tokenizer  # type: ignore
 
 from intelligence_layer.core.complete import Complete, CompleteInput
-from intelligence_layer.core.logger import DebugLogger
 from intelligence_layer.core.prompt_template import PromptTemplate
 from intelligence_layer.core.task import Task, Token
+from intelligence_layer.core.tracer import Tracer
 
 LogProb = NewType("LogProb", float)
 
@@ -77,7 +77,7 @@ class EchoTask(Task[EchoInput, EchoOutput]):
         self._client = client
         self._completion = Complete(client=client)
 
-    def run(self, input: EchoInput, logger: DebugLogger) -> EchoOutput:
+    def run(self, input: EchoInput, logger: Tracer) -> EchoOutput:
         # We tokenize the prompt separately so we don't have an overlap in the tokens.
         # If we don't do this, the end of the prompt and expected completion can be merged into unexpected tokens.
         expected_completion_tokens = self._tokenize(

@@ -6,8 +6,8 @@ from pydantic import BaseModel
 from intelligence_layer.core.chunk import Chunk
 from intelligence_layer.core.complete import Instruct, InstructInput, PromptOutput
 from intelligence_layer.core.detect_language import Language
-from intelligence_layer.core.logger import DebugLogger
 from intelligence_layer.core.task import Task
+from intelligence_layer.core.tracer import Tracer
 from intelligence_layer.use_cases.qa.single_chunk_qa import (
     SingleChunkQa,
     SingleChunkQaInput,
@@ -104,9 +104,7 @@ Condense multiple answers into a single answer. Rely only on the provided answer
         self._single_chunk_qa = SingleChunkQa(client, model)
         self._model = model
 
-    def run(
-        self, input: MultipleChunkQaInput, logger: DebugLogger
-    ) -> MultipleChunkQaOutput:
+    def run(self, input: MultipleChunkQaInput, logger: Tracer) -> MultipleChunkQaOutput:
         qa_outputs = self._single_chunk_qa.run_concurrently(
             (
                 SingleChunkQaInput(
@@ -135,7 +133,7 @@ Condense multiple answers into a single answer. Rely only on the provided answer
         self,
         question: str,
         qa_outputs: Iterable[SingleChunkQaOutput],
-        logger: DebugLogger,
+        logger: Tracer,
     ) -> Optional[str]:
         answers = [output.answer for output in qa_outputs if output.answer]
         if len(answers) == 0:
@@ -152,7 +150,7 @@ Answers:
             logger,
         ).response
 
-    def _instruct(self, input: str, logger: DebugLogger) -> PromptOutput:
+    def _instruct(self, input: str, logger: Tracer) -> PromptOutput:
         return self._instruction.run(
             InstructInput(
                 instruction=self.MERGE_ANSWERS_INSTRUCTION,

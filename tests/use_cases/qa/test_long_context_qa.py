@@ -3,7 +3,7 @@ from aleph_alpha_client import Client
 from pytest import fixture
 
 from intelligence_layer.core.detect_language import Language
-from intelligence_layer.core.logger import NoOpDebugLogger
+from intelligence_layer.core.tracer import NoOpTracer
 from intelligence_layer.use_cases.qa.long_context_qa import (
     LongContextQa,
     LongContextQaInput,
@@ -55,7 +55,7 @@ def qa(client: Client) -> LongContextQa:
 def test_qa_with_answer(qa: LongContextQa) -> None:
     question = "What is the name of the book about Robert Moses?"
     input = LongContextQaInput(text=LONG_TEXT, question=question)
-    output = qa.run(input, NoOpDebugLogger())
+    output = qa.run(input, NoOpTracer())
     assert output.answer
     assert "The Power Broker" in output.answer
     # highlights TODO
@@ -64,7 +64,7 @@ def test_qa_with_answer(qa: LongContextQa) -> None:
 def test_qa_with_no_answer(qa: LongContextQa) -> None:
     question = "Who is the President of the united states?"
     input = LongContextQaInput(text=LONG_TEXT, question=question)
-    output = qa.run(input, NoOpDebugLogger())
+    output = qa.run(input, NoOpTracer())
 
     assert output.answer is None
 
@@ -72,12 +72,12 @@ def test_qa_with_no_answer(qa: LongContextQa) -> None:
 def test_multiple_qa_on_single_task_instance(qa: LongContextQa) -> None:
     question = "Where was Robert Moses born?"
     input = LongContextQaInput(text=LONG_TEXT, question=question)
-    output = qa.run(input, NoOpDebugLogger())
+    output = qa.run(input, NoOpTracer())
 
     input = LongContextQaInput(
         text="This is some arbitrary text without content,", question=question
     )
-    output = qa.run(input, NoOpDebugLogger())
+    output = qa.run(input, NoOpTracer())
 
     assert output.answer is None
 

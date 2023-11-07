@@ -3,7 +3,7 @@ from aleph_alpha_client import Client
 
 from intelligence_layer.core.chunk import Chunk
 from intelligence_layer.core.detect_language import Language, LanguageNotSupportedError
-from intelligence_layer.core.logger import NoOpDebugLogger
+from intelligence_layer.core.tracer import NoOpTracer
 from intelligence_layer.use_cases.classify.keyword_extract import (
     KeywordExtract,
     KeywordExtractInput,
@@ -20,7 +20,7 @@ def test_keyword_extract_works(keyword_extract: KeywordExtract) -> None:
         chunk=Chunk("text about computers"), language=Language("en")
     )
 
-    result = keyword_extract.run(input, NoOpDebugLogger())
+    result = keyword_extract.run(input, NoOpTracer())
     assert "computers" in [keyword.lower() for keyword in result]
 
 
@@ -31,4 +31,4 @@ def test_keyword_extract_raises_for_unsupported_language(
         chunk=Chunk("text about computers"), language=Language("pt")
     )
     with pytest.raises(LanguageNotSupportedError) as _:
-        keyword_extract.run(input, NoOpDebugLogger())
+        keyword_extract.run(input, NoOpTracer())

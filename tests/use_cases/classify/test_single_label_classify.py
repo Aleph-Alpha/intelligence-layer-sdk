@@ -5,7 +5,7 @@ from pytest import fixture
 
 from intelligence_layer.core.chunk import Chunk
 from intelligence_layer.core.evaluator import Dataset, Example
-from intelligence_layer.core.logger import InMemoryDebugLogger, NoOpDebugLogger
+from intelligence_layer.core.tracer import InMemoryTracer, NoOpTracer
 from intelligence_layer.use_cases.classify.classify import (
     ClassifyEvaluator,
     ClassifyInput,
@@ -29,7 +29,7 @@ def test_single_label_classify_returns_score_for_all_labels(
         labels=frozenset({"positive", "negative"}),
     )
 
-    classify_output = single_label_classify.run(classify_input, NoOpDebugLogger())
+    classify_output = single_label_classify.run(classify_input, NoOpTracer())
 
     # Output contains everything we expect
     assert isinstance(classify_output, ClassifyOutput)
@@ -43,7 +43,7 @@ def test_single_label_classify_accomodates_labels_starting_with_spaces(
         chunk=Chunk("This is good"), labels=frozenset({" positive", "negative"})
     )
 
-    logger = InMemoryDebugLogger(name="log")
+    logger = InMemoryTracer(name="log")
     classify_output = single_label_classify.run(classify_input, logger)
 
     # Output contains everything we expect
@@ -57,7 +57,7 @@ def test_single_label_classify_accomodates_labels_starting_with_different_spaces
         chunk=Chunk("This is good"), labels=frozenset({" positive", "  positive"})
     )
 
-    classify_output = single_label_classify.run(classify_input, NoOpDebugLogger())
+    classify_output = single_label_classify.run(classify_input, NoOpTracer())
 
     # Output contains everything we expect
     assert classify_input.labels == set(r for r in classify_output.scores)
@@ -71,7 +71,7 @@ def test_single_label_classify_sentiment_classification(
         chunk=Chunk("This is good"), labels=frozenset({"positive", "negative"})
     )
 
-    classify_output = single_label_classify.run(classify_input, NoOpDebugLogger())
+    classify_output = single_label_classify.run(classify_input, NoOpTracer())
 
     # Verify we got a higher positive score
     assert classify_output.scores["positive"] > classify_output.scores["negative"]
@@ -85,7 +85,7 @@ def test_single_label_classify_emotion_classification(
         labels=frozenset({"happy", "sad", "frustrated", "angry"}),
     )
 
-    classify_output = single_label_classify.run(classify_input, NoOpDebugLogger())
+    classify_output = single_label_classify.run(classify_input, NoOpTracer())
 
     # Verify it correctly calculated happy
     assert classify_output.scores["happy"] == max(classify_output.scores.values())
@@ -99,7 +99,7 @@ def test_single_label_classify_handles_labels_starting_with_same_token(
         labels=frozenset({"positive", "positive positive"}),
     )
 
-    classify_output = single_label_classify.run(classify_input, NoOpDebugLogger())
+    classify_output = single_label_classify.run(classify_input, NoOpTracer())
 
     assert classify_input.labels == set(r for r in classify_output.scores)
 
@@ -112,7 +112,7 @@ def test_can_evaluate_classify(single_label_classify: SingleLabelClassify) -> No
     evaluator = ClassifyEvaluator(task=single_label_classify)
 
     evaluation = evaluator.evaluate(
-        input=classify_input, logger=NoOpDebugLogger(), expected_output=["positive"]
+        input=classify_input, logger=NoOpTracer(), expected_output=["positive"]
     )
 
     assert evaluation.correct is True
@@ -144,7 +144,7 @@ def test_can_aggregate_evaluations(
     )
 
     aggregated_evaluations = single_label_classify_evaluator.evaluate_dataset(
-        dataset, logger=NoOpDebugLogger()
+        dataset, logger=NoOpTracer()
     )
 
     assert aggregated_evaluations.percentage_correct == 0.5
@@ -156,7 +156,7 @@ def test_aggregating_evaluations_works_with_empty_list(
     single_label_classify_evaluator = ClassifyEvaluator(task=single_label_classify)
 
     aggregated_evaluations = single_label_classify_evaluator.evaluate_dataset(
-        Dataset(name="empty_dataset", examples=[]), logger=NoOpDebugLogger()
+        Dataset(name="empty_dataset", examples=[]), logger=NoOpTracer()
     )
 
     assert aggregated_evaluations.percentage_correct == 0

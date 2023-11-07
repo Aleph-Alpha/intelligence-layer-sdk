@@ -4,7 +4,7 @@ from pytest import fixture
 from intelligence_layer.core.chunk import Chunk
 from intelligence_layer.core.complete import FewShotConfig, FewShotExample
 from intelligence_layer.core.detect_language import Language
-from intelligence_layer.core.logger import NoOpDebugLogger
+from intelligence_layer.core.tracer import NoOpTracer
 from intelligence_layer.use_cases.summarize.single_chunk_few_shot_summarize import (
     SingleChunkFewShotSummarize,
 )
@@ -65,7 +65,7 @@ def test_high_compression_summarize_en(
         "The brown bear (Ursus arctos) is a large bear species found across Eurasia and North America.[1][3] In North America, the populations of brown bears are called grizzly bears, while the subspecies that inhabits the Kodiak Islands of Alaska is known as the Kodiak bear. It is one of the largest living terrestrial members of the order Carnivora, rivaled in size only by its closest relative, the polar bear (Ursus maritimus), which is much less variable in size and slightly bigger on average.[4][5][6][7][8] The brown bear's range includes parts of Russia, Central Asia, the Himalayas, China, Canada, the United States, Hokkaido, Scandinavia, Finland, the Balkans, the Picos de Europa and the Carpathian region (especially Romania), Iran, Anatolia, and the Caucasus.[1][9] The brown bear is recognized as a national and state animal in several European countries.[10]"
     )
     input = SingleChunkSummarizeInput(chunk=text, language=Language("en"))
-    output = single_chunk_few_shot_summarize.run(input, NoOpDebugLogger())
+    output = single_chunk_few_shot_summarize.run(input, NoOpTracer())
 
     assert output.summary
     assert "bear" in output.summary.lower()
@@ -81,7 +81,7 @@ def test_high_compression_summarize_is_language_sensitive(
     input_en = SingleChunkSummarizeInput(chunk=text, language=Language("en"))
     input_de = SingleChunkSummarizeInput(chunk=text, language=Language("de"))
     output_en, output_de = single_chunk_few_shot_summarize.run_concurrently(
-        [input_en, input_de], NoOpDebugLogger(), concurrency_limit=2
+        [input_en, input_de], NoOpTracer(), concurrency_limit=2
     )
 
     assert output_en.summary != output_de.summary

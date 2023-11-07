@@ -4,8 +4,8 @@ from aleph_alpha_client import Client
 from pydantic import BaseModel
 from semantic_text_splitter import HuggingFaceTextSplitter
 
-from intelligence_layer.core.logger import DebugLogger
 from intelligence_layer.core.task import Task
+from intelligence_layer.core.tracer import Tracer
 
 Chunk = NewType("Chunk", str)
 """Segment of a larger text.
@@ -56,7 +56,7 @@ class ChunkTask(Task[ChunkInput, ChunkOutput]):
         self._splitter = HuggingFaceTextSplitter(tokenizer)
         self._max_tokens_per_chunk = max_tokens_per_chunk
 
-    def run(self, input: ChunkInput, logger: DebugLogger) -> ChunkOutput:
+    def run(self, input: ChunkInput, logger: Tracer) -> ChunkOutput:
         chunks = [
             Chunk(t)
             for t in self._splitter.chunks(input.text, self._max_tokens_per_chunk)

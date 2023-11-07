@@ -5,8 +5,8 @@ from aleph_alpha_client import Client, Prompt
 from pytest import fixture
 
 from intelligence_layer.core.echo import EchoInput, EchoTask, TokenWithLogProb
-from intelligence_layer.core.logger import NoOpDebugLogger
 from intelligence_layer.core.task import Token
+from intelligence_layer.core.tracer import NoOpTracer
 
 
 @fixture
@@ -39,7 +39,7 @@ def test_can_run_echo_task(echo_task: EchoTask) -> None:
     )
     tokens = tokenize_completion(expected_completion, input.model, echo_task._client)
 
-    result = echo_task.run(input, logger=NoOpDebugLogger())
+    result = echo_task.run(input, logger=NoOpTracer())
 
     assert len(tokens) == len(result.tokens_with_log_probs)
     assert all([isinstance(t, TokenWithLogProb) for t in result.tokens_with_log_probs])
@@ -58,7 +58,7 @@ def test_echo_works_with_whitespaces_in_expected_completion(
     )
     tokens = tokenize_completion(expected_completion, input.model, echo_task._client)
 
-    result = echo_task.run(input, logger=NoOpDebugLogger())
+    result = echo_task.run(input, logger=NoOpTracer())
 
     assert len(tokens) == len(result.tokens_with_log_probs)
     assert all([isinstance(t, TokenWithLogProb) for t in result.tokens_with_log_probs])
@@ -83,7 +83,7 @@ def test_overlapping_tokens_generate_correct_tokens(echo_task: EchoTask) -> None
     )
 
     tokens = tokenize_completion(expected_completion, input.model, echo_task._client)
-    result = echo_task.run(input, logger=NoOpDebugLogger())
+    result = echo_task.run(input, logger=NoOpTracer())
 
     assert len(tokens) == len(result.tokens_with_log_probs)
 
