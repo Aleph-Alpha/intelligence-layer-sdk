@@ -1,31 +1,20 @@
 import { z } from 'zod';
-import type { Tracer, Span, TaskSpan } from './trace';
-
 const plainEntry = z.object({
 	parent: z.string(),
 	message: z.string(),
 	value: z.any(),
 	timestamp: z.string()
 });
-
-type PlainEntry = z.infer<typeof plainEntry>;
-
 const spanStart = z.object({
 	uuid: z.string(),
 	parent: z.string(),
 	name: z.string(),
 	start: z.string()
 });
-
-type SpanStart = z.infer<typeof spanStart>;
-
 const spanEnd = z.object({
 	uuid: z.string(),
 	end: z.string()
 });
-
-type SpanEnd = z.infer<typeof spanEnd>;
-
 const taskStart = z.object({
 	uuid: z.string(),
 	parent: z.string(),
@@ -33,17 +22,11 @@ const taskStart = z.object({
 	start: z.string(),
 	input: z.any()
 });
-
-type TaskStart = z.infer<typeof taskStart>;
-
 const taskEnd = z.object({
 	uuid: z.string(),
 	end: z.string(),
 	output: z.any()
 });
-
-type TaskEnd = z.infer<typeof taskEnd>;
-
 const logLine = z.discriminatedUnion('entry_type', [
 	z.object({
 		entry_type: z.literal('PlainEntry'),
@@ -66,10 +49,7 @@ const logLine = z.discriminatedUnion('entry_type', [
 		entry: taskEnd
 	})
 ]);
-
-export type LogLine = z.infer<typeof logLine>;
-
-export async function parseTraceFile(file: File): Promise<Tracer> {
+export async function parseTraceFile(file) {
 	return parseLogLines(
 		(await file.text())
 			.split(/\r?\n/)
@@ -77,8 +57,7 @@ export async function parseTraceFile(file: File): Promise<Tracer> {
 			.map((line) => logLine.parse(JSON.parse(line)))
 	);
 }
-
-export function parseLogLines(lines: LogLine[]): Tracer {
+export function parseLogLines(lines) {
 	const builder = new TraceBuilder();
 	for (const line of lines) {
 		switch (line.entry_type) {
@@ -101,23 +80,20 @@ export function parseLogLines(lines: LogLine[]): Tracer {
 	}
 	return builder.root();
 }
-
 class TraceBuilder {
-	private roots: string[] = [];
-	private tracers: Map<string, Tracer> = new Map<string, Tracer>();
-	private spans: Map<string, Span> = new Map<string, Span>();
-	private tasks: Map<string, TaskSpan> = new Map<string, TaskSpan>();
-
-	addPlainEntry(entry: PlainEntry) {
+	roots = [];
+	tracers = new Map();
+	spans = new Map();
+	tasks = new Map();
+	addPlainEntry(entry) {
 		const parent = this.parentTrace(entry.parent);
 		// entry.value is any, but value is "Json"
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 		parent.entries.push({ message: entry.message, value: entry.value, timestamp: entry.timestamp });
 	}
-
-	startSpan(entry: SpanStart) {
+	startSpan(entry) {
 		const parent = this.parentTrace(entry.parent);
-		const span: Span = {
+		const span = {
 			name: entry.name,
 			start_timestamp: entry.start,
 			end_timestamp: entry.start,
@@ -127,15 +103,13 @@ class TraceBuilder {
 		this.spans.set(entry.uuid, span);
 		this.tracers.set(entry.uuid, span);
 	}
-
-	endSpan(entry: SpanEnd) {
+	endSpan(entry) {
 		const span = this.spans.get(entry.uuid);
-		span!.end_timestamp = entry.end;
+		span.end_timestamp = entry.end;
 	}
-
-	startTask(entry: TaskStart) {
+	startTask(entry) {
 		const parent = this.parentTrace(entry.parent);
-		const task: TaskSpan = {
+		const task = {
 			name: entry.name,
 			start_timestamp: entry.start,
 			end_timestamp: entry.start,
@@ -148,15 +122,13 @@ class TraceBuilder {
 		this.tasks.set(entry.uuid, task);
 		this.tracers.set(entry.uuid, task);
 	}
-
-	endTask(entry: TaskEnd) {
+	endTask(entry) {
 		const task = this.tasks.get(entry.uuid);
-		task!.end_timestamp = entry.end;
+		task.end_timestamp = entry.end;
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-		task!.output = entry.output;
+		task.output = entry.output;
 	}
-
-	parentTrace(uuid: string): Tracer {
+	parentTrace(uuid) {
 		const parent = this.tracers.get(uuid);
 		if (parent) {
 			return parent;
@@ -166,8 +138,8 @@ class TraceBuilder {
 		this.tracers.set(uuid, parentTracer);
 		return parentTracer;
 	}
-
-	root(): Tracer {
-		return this.tracers.get(this.roots[0])!;
+	root() {
+		return this.tracers.get(this.roots[0]);
 	}
 }
+//# sourceMappingURL=tracefile.parser.js.map
