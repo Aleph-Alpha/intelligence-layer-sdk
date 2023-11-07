@@ -10,7 +10,7 @@ from intelligence_layer.core.complete import (
 )
 from intelligence_layer.core.detect_language import Language
 from intelligence_layer.core.task import Task
-from intelligence_layer.core.tracer import Tracer
+from intelligence_layer.core.tracer import Span
 from intelligence_layer.use_cases.summarize.summarize import (
     SingleChunkSummarizeInput,
     SingleChunkSummarizeOutput,
@@ -44,14 +44,14 @@ class SingleChunkFewShotSummarize(
         self._model = model
         self._maximum_tokens = maximum_tokens
 
-    def run(
-        self, input: SingleChunkSummarizeInput, tracer: Tracer
+    def do_run(
+        self, input: SingleChunkSummarizeInput, span: Span
     ) -> SingleChunkSummarizeOutput:
-        prompt_output = self._get_prompt_and_complete(input, tracer)
+        prompt_output = self._get_prompt_and_complete(input, span)
         return SingleChunkSummarizeOutput(summary=prompt_output.response.strip())
 
     def _get_prompt_and_complete(
-        self, input: SingleChunkSummarizeInput, tracer: Tracer
+        self, input: SingleChunkSummarizeInput, span: Span
     ) -> PromptOutput:
         prompt_config = self._few_shot_configs.get(input.language)
         if not prompt_config:
@@ -63,5 +63,5 @@ class SingleChunkFewShotSummarize(
                 model=self._model,
                 maximum_response_tokens=self._maximum_tokens,
             ),
-            tracer,
+            span,
         )

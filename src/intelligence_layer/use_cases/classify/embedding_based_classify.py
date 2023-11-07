@@ -12,7 +12,7 @@ from intelligence_layer.connectors.retrievers.qdrant_in_memory_retriever import 
 )
 from intelligence_layer.core.chunk import Chunk
 from intelligence_layer.core.task import Task
-from intelligence_layer.core.tracer import Tracer
+from intelligence_layer.core.tracer import Span
 from intelligence_layer.use_cases.classify.classify import (
     ClassifyInput,
     ClassifyOutput,
@@ -71,7 +71,7 @@ class QdrantSearch(Task[QdrantSearchInput, SearchOutput]):
         super().__init__()
         self._in_memory_retriever = in_memory_retriever
 
-    def run(self, input: QdrantSearchInput, tracer: Tracer) -> SearchOutput:
+    def do_run(self, input: QdrantSearchInput, span: Span) -> SearchOutput:
         results = self._in_memory_retriever.get_filtered_documents_with_scores(
             input.query, input.filter
         )
@@ -156,10 +156,10 @@ class EmbeddingBasedClassify(Task[ClassifyInput, ClassifyOutput]):
         )
         self._qdrant_search = QdrantSearch(retriever)
 
-    def run(self, input: ClassifyInput, tracer: Tracer) -> ClassifyOutput:
+    def do_run(self, input: ClassifyInput, span: Span) -> ClassifyOutput:
         self._validate_input_labels(input)
         results_per_label = [
-            self._label_search(input.chunk, label, tracer) for label in input.labels
+            self._label_search(input.chunk, label, span) for label in input.labels
         ]
         scores = self._calculate_scores(results_per_label)
         return ClassifyOutput(
@@ -186,7 +186,7 @@ class EmbeddingBasedClassify(Task[ClassifyInput, ClassifyOutput]):
         if unknown_labels:
             raise ValueError(f"Got unexpected labels: {', '.join(unknown_labels)}.")
 
-    def _label_search(self, chunk: Chunk, label: str, tracer: Tracer) -> SearchOutput:
+    def _label_search(self, chunk: Chunk, label: str, span: Span) -> SearchOutput:
         search_input = QdrantSearchInput(
             query=chunk,
             filter=models.Filter(
@@ -198,7 +198,7 @@ class EmbeddingBasedClassify(Task[ClassifyInput, ClassifyOutput]):
                 ]
             ),
         )
-        return self._qdrant_search.run(search_input, tracer)
+        return self._qdrant_search.run(search_input, span)
 
     def _calculate_scores(
         self, results_per_label: Sequence[SearchOutput]

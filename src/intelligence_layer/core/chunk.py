@@ -5,7 +5,7 @@ from pydantic import BaseModel
 from semantic_text_splitter import HuggingFaceTextSplitter
 
 from intelligence_layer.core.task import Task
-from intelligence_layer.core.tracer import Tracer
+from intelligence_layer.core.tracer import Span
 
 Chunk = NewType("Chunk", str)
 """Segment of a larger text.
@@ -56,7 +56,7 @@ class ChunkTask(Task[ChunkInput, ChunkOutput]):
         self._splitter = HuggingFaceTextSplitter(tokenizer)
         self._max_tokens_per_chunk = max_tokens_per_chunk
 
-    def run(self, input: ChunkInput, tracer: Tracer) -> ChunkOutput:
+    def do_run(self, input: ChunkInput, span: Span) -> ChunkOutput:
         chunks = [
             Chunk(t)
             for t in self._splitter.chunks(input.text, self._max_tokens_per_chunk)

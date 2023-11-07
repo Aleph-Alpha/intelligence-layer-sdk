@@ -14,7 +14,7 @@ from intelligence_layer.core.detect_language import (
     Language,
 )
 from intelligence_layer.core.task import Task
-from intelligence_layer.core.tracer import Tracer
+from intelligence_layer.core.tracer import Span
 from intelligence_layer.use_cases.qa.luminous_prompts import (
     LANGUAGES_QA_INSTRUCTIONS as LUMINOUS_LANGUAGES_QA_INSTRUCTIONS,
 )
@@ -88,8 +88,8 @@ class LongContextQa(Task[LongContextQaInput, MultipleChunkQaOutput]):
         self._fallback_language = fallback_language
         assert fallback_language in allowed_languages
 
-    def run(self, input: LongContextQaInput, tracer: Tracer) -> MultipleChunkQaOutput:
-        chunk_output = self._chunk_task.run(ChunkInput(text=input.text), tracer)
+    def do_run(self, input: LongContextQaInput, span: Span) -> MultipleChunkQaOutput:
+        chunk_output = self._chunk_task.run(ChunkInput(text=input.text), span)
         retriever = QdrantInMemoryRetriever(
             self._client,
             documents=[Document(text=c) for c in chunk_output.chunks],
@@ -97,14 +97,14 @@ class LongContextQa(Task[LongContextQaInput, MultipleChunkQaOutput]):
             threshold=0.5,
         )
 
-        search_output = Search(retriever).run(SearchInput(query=input.question), tracer)
+        search_output = Search(retriever).run(SearchInput(query=input.question), span)
 
         question_language = (
             self._language_detector.run(
                 DetectLanguageInput(
                     text=input.question, possible_languages=self.allowed_languages
                 ),
-                tracer,
+                span,
             ).best_fit
             or self._fallback_language
         )
@@ -114,5 +114,5 @@ class LongContextQa(Task[LongContextQaInput, MultipleChunkQaOutput]):
             question=input.question,
             language=question_language,
         )
-        qa_output = self._multi_chunk_qa.run(multi_chunk_qa_input, tracer)
+        qa_output = self._multi_chunk_qa.run(multi_chunk_qa_input, span)
         return qa_output

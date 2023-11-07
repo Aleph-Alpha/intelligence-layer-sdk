@@ -2,11 +2,11 @@ import functools
 from abc import ABC, abstractmethod
 from concurrent.futures import ThreadPoolExecutor
 from itertools import islice
-from typing import Any, Callable, Generic, Iterable, Sequence, TypeVar
+from typing import Any, Callable, Generic, Iterable, Sequence, TypeVar, final
 
 from pydantic import BaseModel
 
-from intelligence_layer.core.tracer import PydanticSerializable, Tracer
+from intelligence_layer.core.tracer import PydanticSerializable, Span, Tracer
 
 
 class Token(BaseModel):
@@ -43,35 +43,25 @@ class Task(ABC, Generic[Input, Output]):
         Output: Interface of the output returned by the task.
     """
 
-    _logging_decorator_added_to_run = False
-
-    def __init_subclass__(cls, **kwargs: Any) -> None:
-        """Decorates run method to auto log input and output for the task"""
-        super().__init_subclass__(**kwargs)
-
-        def log_run_input_output(
-            func: Callable[["Task[Input, Output]", Input, Tracer], Output]
-        ) -> Callable[["Task[Input, Output]", Input, Tracer], Output]:
-            @functools.wraps(func)
-            def inner(
-                self: "Task[Input, Output]",
-                input: Input,
-                tracer: Tracer,
-            ) -> Output:
-                with tracer.task_span(type(self).__name__, input) as task_span:
-                    output = func(self, input, task_span)
-                    task_span.record_output(output)
-                    return output
-
-            return inner
-
-        if not cls._logging_decorator_added_to_run:
-            cls._logging_decorator_added_to_run = True
-            cls.run = log_run_input_output(cls.run)  # type: ignore
-
     @abstractmethod
+    def do_run(self, input: Input, span: Span) -> Output:
+        """The implementation for this use case.
+
+        This takes an input and runs the implementation to generate an output.
+        It takes a `Span` for tracing of the process.
+        The Input and Output are logged by default.
+
+        Args:
+            input: Generic input defined by the task implementation
+            span: The `Span` used for tracing.
+        Returns:
+            Generic output defined by the task implementation.
+        """
+        ...
+
+    @final
     def run(self, input: Input, tracer: Tracer) -> Output:
-        """Executes the implementation of run for this use case.
+        """Executes the implementation of `do_run` for this use case.
 
         This takes an input and runs the implementation to generate an output.
         It takes a `Tracer` for tracing of the process.
@@ -83,8 +73,12 @@ class Task(ABC, Generic[Input, Output]):
         Returns:
             Generic output defined by the task implementation.
         """
-        ...
+        with tracer.task_span(type(self).__name__, input) as task_span:
+            output = self.do_run(input, task_span)
+            task_span.record_output(output)
+            return output
 
+    @final
     def run_concurrently(
         self,
         inputs: Iterable[Input],

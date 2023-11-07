@@ -7,23 +7,11 @@ from aleph_alpha_client.completion import CompletionRequest
 from intelligence_layer.core.complete import Complete, CompleteInput
 from intelligence_layer.core.tracer import (
     CompositeTracer,
+    InMemorySpan,
     InMemoryTaskSpan,
     InMemoryTracer,
     LogEntry,
 )
-
-
-def test_tracer_add_log_entries() -> None:
-    before_log_time = datetime.utcnow()
-    tracer = InMemoryTracer()
-    tracer.log("Test", "message")
-
-    assert len(tracer.entries) == 1
-    log = tracer.entries[0]
-    assert isinstance(log, LogEntry)
-    assert log.message == "Test"
-    assert log.value == "message"
-    assert before_log_time <= log.timestamp <= datetime.utcnow()
 
 
 def test_can_add_child_tracer() -> None:
@@ -40,13 +28,11 @@ def test_can_add_child_tracer() -> None:
 
 def test_can_add_parent_and_child_entries() -> None:
     parent = InMemoryTracer()
-    parent.log("One", 1)
     with parent.span("child") as child:
         child.log("Two", 2)
 
-    assert isinstance(parent.entries[0], LogEntry)
-    assert isinstance(parent.entries[1], InMemoryTracer)
-    assert isinstance(parent.entries[1].entries[0], LogEntry)
+    assert isinstance(parent.entries[0], InMemoryTracer)
+    assert isinstance(parent.entries[0].entries[0], LogEntry)
 
 
 def test_task_automatically_logs_input_and_output(client: Client) -> None:
@@ -71,10 +57,12 @@ def test_tracer_can_set_custom_start_time_for_log_entry() -> None:
     tracer = InMemoryTracer()
     timestamp = datetime.utcnow()
 
-    tracer.log("log", "message", timestamp)
+    with tracer.span("span") as span:
+        span.log("log", "message", timestamp)
 
-    assert isinstance(tracer.entries[0], LogEntry)
-    assert tracer.entries[0].timestamp == timestamp
+    assert isinstance(tracer.entries[0], InMemorySpan)
+    assert isinstance(tracer.entries[0].entries[0], LogEntry)
+    assert tracer.entries[0].entries[0].timestamp == timestamp
 
 
 def test_tracer_can_set_custom_start_time_for_span() -> None:

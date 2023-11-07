@@ -20,7 +20,7 @@ from intelligence_layer.core.prompt_template import (
     TextCursor,
 )
 from intelligence_layer.core.task import Task
-from intelligence_layer.core.tracer import Tracer
+from intelligence_layer.core.tracer import Span
 
 
 class TextHighlightInput(BaseModel):
@@ -102,13 +102,13 @@ class TextHighlight(Task[TextHighlightInput, TextHighlightOutput]):
         self._explain_task = Explain(client)
         self._granularity = granularity
 
-    def run(self, input: TextHighlightInput, tracer: Tracer) -> TextHighlightOutput:
+    def do_run(self, input: TextHighlightInput, span: Span) -> TextHighlightOutput:
         self._raise_on_invalid_focus_range(input)
         explanation = self._explain(
             prompt=input.prompt_with_metadata.prompt,
             target=input.target,
             model=input.model,
-            tracer=tracer,
+            span=span,
         )
         prompt_ranges = self._flatten_prompt_ranges(
             range
@@ -123,7 +123,7 @@ class TextHighlight(Task[TextHighlightInput, TextHighlightOutput]):
         highlights = self._to_highlights(
             prompt_ranges,
             text_prompt_item_explanations_and_indices,
-            tracer,
+            span,
         )
         return TextHighlightOutput(highlights=highlights)
 
@@ -135,7 +135,7 @@ class TextHighlight(Task[TextHighlightInput, TextHighlightOutput]):
             raise ValueError(f"Unknown focus ranges: {', '.join(unknown_focus_ranges)}")
 
     def _explain(
-        self, prompt: Prompt, target: str, model: str, tracer: Tracer
+        self, prompt: Prompt, target: str, model: str, span: Span
     ) -> ExplanationResponse:
         request = ExplanationRequest(
             prompt,
@@ -143,7 +143,7 @@ class TextHighlight(Task[TextHighlightInput, TextHighlightOutput]):
             prompt_granularity=self._granularity,
         )
         output = self._explain_task.run(
-            ExplainInput(request=request, model=model), tracer
+            ExplainInput(request=request, model=model), span
         )
         return output.response
 
@@ -184,7 +184,7 @@ class TextHighlight(Task[TextHighlightInput, TextHighlightOutput]):
         text_prompt_item_explanations_and_indices: Sequence[
             tuple[TextPromptItemExplanation, int]
         ],
-        tracer: Tracer,
+        span: Span,
     ) -> Sequence[ScoredTextHighlight]:
         overlapping_and_flat = [
             text_score
@@ -195,7 +195,7 @@ class TextHighlight(Task[TextHighlightInput, TextHighlightOutput]):
                 explanation_idx, text_score, prompt_ranges
             )
         ]
-        tracer.log(
+        span.log(
             "Raw explanation scores",
             [
                 {
