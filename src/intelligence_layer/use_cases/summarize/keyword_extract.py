@@ -1,4 +1,4 @@
-from typing import Mapping, Sequence
+from typing import Mapping
 from aleph_alpha_client import Client
 from pydantic import BaseModel
 from intelligence_layer.core.chunk import Chunk
