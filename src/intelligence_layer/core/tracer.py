@@ -321,11 +321,11 @@ class InMemoryTracer(BaseModel, Tracer):
 
     Attributes:
         name: A descriptive name of what the tracer contains log entries about.
-        logs: A sequential list of log entries and/or nested InMemoryTracers with their own
+        entries: A sequential list of log entries and/or nested InMemoryTracers with their own
             log entries.
     """
 
-    logs: list[Union[LogEntry, "InMemorySpan", "InMemoryTaskSpan"]] = []
+    entries: list[Union[LogEntry, "InMemorySpan", "InMemoryTaskSpan"]] = []
 
     def log(
         self,
@@ -333,7 +333,7 @@ class InMemoryTracer(BaseModel, Tracer):
         value: PydanticSerializable,
         timestamp: Optional[datetime] = None,
     ) -> None:
-        self.logs.append(
+        self.entries.append(
             LogEntry(
                 message=message, value=value, timestamp=timestamp or datetime.utcnow()
             )
@@ -341,7 +341,7 @@ class InMemoryTracer(BaseModel, Tracer):
 
     def span(self, name: str, timestamp: Optional[datetime] = None) -> "InMemorySpan":
         child = InMemorySpan(name=name, start_timestamp=timestamp or datetime.utcnow())
-        self.logs.append(child)
+        self.entries.append(child)
         return child
 
     def task_span(
@@ -353,14 +353,14 @@ class InMemoryTracer(BaseModel, Tracer):
         child = InMemoryTaskSpan(
             name=task_name, input=input, start_timestamp=timestamp or datetime.utcnow()
         )
-        self.logs.append(child)
+        self.entries.append(child)
         return child
 
     def _rich_render_(self) -> Tree:
         """Renders the trace via classes in the `rich` package"""
         tree = Tree(label="Trace")
 
-        for log in self.logs:
+        for log in self.entries:
             tree.add(log._rich_render_())
 
         return tree
@@ -385,7 +385,7 @@ class InMemorySpan(InMemoryTracer, Span):
         """Renders the trace via classes in the `rich` package"""
         tree = Tree(label=self.name)
 
-        for log in self.logs:
+        for log in self.entries:
             tree.add(log._rich_render_())
 
         return tree
@@ -404,7 +404,7 @@ class InMemoryTaskSpan(InMemorySpan, TaskSpan):
 
         tree.add(_render_log_value(self.input, "Input"))
 
-        for log in self.logs:
+        for log in self.entries:
             tree.add(log._rich_render_())
 
         tree.add(_render_log_value(self.output, "Output"))

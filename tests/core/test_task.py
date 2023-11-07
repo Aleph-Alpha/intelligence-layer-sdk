@@ -68,7 +68,7 @@ def test_sub_tasks_do_not_introduce_multiple_task_spans() -> None:
 
     SubTask().run(None, tracer)
 
-    assert tracer.logs
-    assert isinstance(tracer.logs[0], TaskSpan)
-    assert tracer.logs[0].logs
-    assert not isinstance(tracer.logs[0].logs[0], TaskSpan)
+    assert tracer.entries
+    assert isinstance(tracer.entries[0], TaskSpan)
+    assert tracer.entries[0].entries
+    assert not isinstance(tracer.entries[0].entries[0], TaskSpan)
