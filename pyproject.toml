@@ -56,4 +56,4 @@ filterwarnings = [ 'ignore:.*\`general_plain_validator_function\` is deprecated.
 
 [tool.pylama]
 skip = "*/__init__.py"
-ignore = "E501,C901,W605"
+ignore = "E501,C901,W605,E203"
