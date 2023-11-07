@@ -15,7 +15,7 @@ def keyword_extract(client: Client) -> KeywordExtract:
     return KeywordExtract(client)
 
 
-def test_keyword_extract_works(keyword_extract: KeywordExtract):
+def test_keyword_extract_works(keyword_extract: KeywordExtract) -> None:
     input = KeywordExtractInput(
         chunk=Chunk("text about computers"), language=Language("en")
     )
