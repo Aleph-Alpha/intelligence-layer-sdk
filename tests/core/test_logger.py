@@ -1,4 +1,3 @@
-from datetime import datetime
 from json import loads
 from pathlib import Path
 from uuid import UUID
@@ -49,7 +48,7 @@ def test_file_debug_logger(file_debug_log: FileDebugLogger) -> None:
     input = "input"
     expected = InMemoryDebugLogger(name="")
 
-    output = TestTask().run(input, CompositeLogger([expected, file_debug_log]))
+    TestTask().run(input, CompositeLogger([expected, file_debug_log]))
 
     log_tree = parse_log(file_debug_log._log_file_path)
     assert log_tree == expected
