@@ -13,11 +13,13 @@ from intelligence_layer.core.logger import DebugLogger
 from intelligence_layer.core.task import Task
 from intelligence_layer.use_cases.summarize.summarize import (
     SingleChunkSummarizeInput,
-    SummarizeOutput,
+    SingleChunkSummarizeOutput,
 )
 
 
-class SingleChunkFewShotSummarize(Task[SingleChunkSummarizeInput, SummarizeOutput]):
+class SingleChunkFewShotSummarize(
+    Task[SingleChunkSummarizeInput, SingleChunkSummarizeOutput]
+):
     """Summarises a section into a text of medium length.
 
     Generate a summary given a few-shot setup.
@@ -44,9 +46,9 @@ class SingleChunkFewShotSummarize(Task[SingleChunkSummarizeInput, SummarizeOutpu
 
     def run(
         self, input: SingleChunkSummarizeInput, logger: DebugLogger
-    ) -> SummarizeOutput:
+    ) -> SingleChunkSummarizeOutput:
         prompt_output = self._get_prompt_and_complete(input, logger)
-        return SummarizeOutput(summary=prompt_output.response.strip())
+        return SingleChunkSummarizeOutput(summary=prompt_output.response.strip())
 
     def _get_prompt_and_complete(
         self, input: SingleChunkSummarizeInput, logger: DebugLogger

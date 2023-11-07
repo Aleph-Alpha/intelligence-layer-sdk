@@ -51,7 +51,13 @@ def test_long_context_high_compression_summarize_en(
     input = LongContextSummarizeInput(text=long_text)
     output = long_context_high_compression_summarize.run(input, NoOpDebugLogger())
 
-    assert output.summary
-    assert "bear" in output.summary.lower()
-    assert "\n–" in output.summary.lower()
-    assert len(output.summary) < len(long_text)
+    assert output.partial_summaries
+    assert any(
+        "bear" in partial_summary.summary
+        for partial_summary in output.partial_summaries
+    )
+    assert len(
+        " ".join(
+            partial_summary.summary for partial_summary in output.partial_summaries
+        )
+    ) < len(long_text)

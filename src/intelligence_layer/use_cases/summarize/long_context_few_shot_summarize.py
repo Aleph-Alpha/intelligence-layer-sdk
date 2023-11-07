@@ -16,12 +16,15 @@ from intelligence_layer.use_cases.summarize.single_chunk_few_shot_summarize impo
 )
 from intelligence_layer.use_cases.summarize.summarize import (
     LongContextSummarizeInput,
+    LongContextSummarizeOutput,
+    PartialSummary,
     SingleChunkSummarizeInput,
-    SummarizeOutput,
 )
 
 
-class LongContextFewShotSummarize(Task[LongContextSummarizeInput, SummarizeOutput]):
+class LongContextFewShotSummarize(
+    Task[LongContextSummarizeInput, LongContextSummarizeOutput]
+):
     """Condenses a long text into a summary.
 
     Generate a summary given a few-shot setup.
@@ -61,7 +64,7 @@ class LongContextFewShotSummarize(Task[LongContextSummarizeInput, SummarizeOutpu
 
     def run(
         self, input: LongContextSummarizeInput, logger: DebugLogger
-    ) -> SummarizeOutput:
+    ) -> LongContextSummarizeOutput:
         lang = (
             self._detect_language.run(
                 DetectLanguageInput(
@@ -79,5 +82,9 @@ class LongContextFewShotSummarize(Task[LongContextSummarizeInput, SummarizeOutpu
             ],
             logger,
         )
-        long_summary = "\n".join("– " + s.summary for s in summary_outputs)
-        return SummarizeOutput(summary=long_summary)
+        return LongContextSummarizeOutput(
+            partial_summaries=[
+                PartialSummary(summary=summary_output.summary, chunk=chunk)
+                for summary_output, chunk in zip(summary_outputs, chunk_output.chunks)
+            ]
+        )
