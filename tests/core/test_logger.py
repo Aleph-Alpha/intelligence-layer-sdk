@@ -90,6 +90,7 @@ class TreeBuilder(BaseModel):
         child = InMemoryTaskSpan(
             name=start_task.name,
             input=start_task.input,
+            start_timestamp=start_task.start,
         )
         self.loggers[start_task.uuid] = child
         self.tasks[start_task.uuid] = child
@@ -98,14 +99,12 @@ class TreeBuilder(BaseModel):
     def end_task(self, log_line: LogLine) -> None:
         end_task = EndTask.model_validate(log_line.entry)
         task_span = self.tasks[end_task.uuid]
-        task_span.end_timestamp = None  # end_task.end
+        task_span.end_timestamp = end_task.end
         task_span.record_output(end_task.output)
 
     def start_span(self, log_line: LogLine) -> None:
         start_span = StartSpan.model_validate(log_line.entry)
-        child = InMemorySpan(
-            name=start_span.name,
-        )
+        child = InMemorySpan(name=start_span.name, start_timestamp=start_span.start)
         self.loggers[start_span.uuid] = child
         self.spans[start_span.uuid] = child
         self.loggers.get(start_span.parent, self.root).logs.append(child)
@@ -113,16 +112,13 @@ class TreeBuilder(BaseModel):
     def end_span(self, log_line: LogLine) -> None:
         end_span = EndSpan.model_validate(log_line.entry)
         span = self.spans[end_span.uuid]
-        span.end_timestamp = None  # end_span.end
+        span.end_timestamp = end_span.end
 
     def plain_entry(self, log_line: LogLine) -> None:
         plain_entry = PlainEntry.model_validate(log_line.entry)
         entry = LogEntry(
             message=plain_entry.message,
             value=plain_entry.value,
-            timestamp=FIX_TIMESTAMP,
+            timestamp=plain_entry.timestamp,
         )
         self.loggers[plain_entry.parent].logs.append(entry)
-
-
-FIX_TIMESTAMP = datetime.utcnow()
