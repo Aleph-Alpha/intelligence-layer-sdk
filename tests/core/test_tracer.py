@@ -18,8 +18,8 @@ def test_tracer_add_log_entries() -> None:
     tracer = InMemoryTracer()
     tracer.log("Test", "message")
 
-    assert len(tracer.logs) == 1
-    log = tracer.logs[0]
+    assert len(tracer.entries) == 1
+    log = tracer.entries[0]
     assert isinstance(log, LogEntry)
     assert log.message == "Test"
     assert log.value == "message"
@@ -30,23 +30,23 @@ def test_can_add_child_tracer() -> None:
     tracer = InMemoryTracer()
     tracer.span("child")
 
-    assert len(tracer.logs) == 1
+    assert len(tracer.entries) == 1
 
-    log = tracer.logs[0]
+    log = tracer.entries[0]
     assert isinstance(log, InMemoryTracer)
     assert log.name == "child"
-    assert len(log.logs) == 0
+    assert len(log.entries) == 0
 
 
-def test_can_add_parent_and_child_logs() -> None:
+def test_can_add_parent_and_child_entries() -> None:
     parent = InMemoryTracer()
     parent.log("One", 1)
     with parent.span("child") as child:
         child.log("Two", 2)
 
-    assert isinstance(parent.logs[0], LogEntry)
-    assert isinstance(parent.logs[1], InMemoryTracer)
-    assert isinstance(parent.logs[1].logs[0], LogEntry)
+    assert isinstance(parent.entries[0], LogEntry)
+    assert isinstance(parent.entries[1], InMemoryTracer)
+    assert isinstance(parent.entries[1].entries[0], LogEntry)
 
 
 def test_task_automatically_logs_input_and_output(client: Client) -> None:
@@ -57,8 +57,8 @@ def test_task_automatically_logs_input_and_output(client: Client) -> None:
     )
     output = Complete(client=client).run(input=input, tracer=tracer)
 
-    assert len(tracer.logs) == 1
-    task_span = tracer.logs[0]
+    assert len(tracer.entries) == 1
+    task_span = tracer.entries[0]
     assert isinstance(task_span, InMemoryTaskSpan)
     assert task_span.name == "Complete"
     assert task_span.input == input
@@ -73,8 +73,8 @@ def test_tracer_can_set_custom_start_time_for_log_entry() -> None:
 
     tracer.log("log", "message", timestamp)
 
-    assert isinstance(tracer.logs[0], LogEntry)
-    assert tracer.logs[0].timestamp == timestamp
+    assert isinstance(tracer.entries[0], LogEntry)
+    assert tracer.entries[0].timestamp == timestamp
 
 
 def test_tracer_can_set_custom_start_time_for_span() -> None:

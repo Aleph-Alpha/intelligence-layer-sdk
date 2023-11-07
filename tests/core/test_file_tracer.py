@@ -92,7 +92,7 @@ class TreeBuilder(BaseModel):
         )
         self.tracers[start_task.uuid] = child
         self.tasks[start_task.uuid] = child
-        self.tracers.get(start_task.parent, self.root).logs.append(child)
+        self.tracers.get(start_task.parent, self.root).entries.append(child)
 
     def end_task(self, log_line: LogLine) -> None:
         end_task = EndTask.model_validate(log_line.entry)
@@ -105,7 +105,7 @@ class TreeBuilder(BaseModel):
         child = InMemorySpan(name=start_span.name, start_timestamp=start_span.start)
         self.tracers[start_span.uuid] = child
         self.spans[start_span.uuid] = child
-        self.tracers.get(start_span.parent, self.root).logs.append(child)
+        self.tracers.get(start_span.parent, self.root).entries.append(child)
 
     def end_span(self, log_line: LogLine) -> None:
         end_span = EndSpan.model_validate(log_line.entry)
@@ -119,4 +119,4 @@ class TreeBuilder(BaseModel):
             value=plain_entry.value,
             timestamp=plain_entry.timestamp,
         )
-        self.tracers[plain_entry.parent].logs.append(entry)
+        self.tracers[plain_entry.parent].entries.append(entry)
