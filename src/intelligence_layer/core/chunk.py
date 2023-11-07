@@ -1,11 +1,11 @@
 from typing import NewType, Sequence
+
 from aleph_alpha_client import Client
 from pydantic import BaseModel
 from semantic_text_splitter import HuggingFaceTextSplitter
+
 from intelligence_layer.core.logger import DebugLogger
-
 from intelligence_layer.core.task import Task
-
 
 Chunk = NewType("Chunk", str)
 """Segment of a larger text.

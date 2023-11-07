@@ -2,8 +2,8 @@ from typing import Sequence
 
 from aleph_alpha_client import Client
 from pytest import fixture
-from intelligence_layer.connectors.retrievers.base_retriever import Document
 
+from intelligence_layer.connectors.retrievers.base_retriever import Document
 from intelligence_layer.connectors.retrievers.document_index_retriever import (
     DocumentIndexRetriever,
 )

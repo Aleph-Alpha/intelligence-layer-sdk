@@ -1,14 +1,13 @@
+import pytest
 from aleph_alpha_client import Client
 from pytest import fixture
-import pytest
-from intelligence_layer.core.detect_language import Language
 
+from intelligence_layer.core.detect_language import Language
 from intelligence_layer.core.logger import NoOpDebugLogger
 from intelligence_layer.use_cases.qa.long_context_qa import (
     LongContextQa,
     LongContextQaInput,
 )
-
 
 LONG_TEXT = """Robert Moses''' (December 18, 1888 – July 29, 1981) was an American [[urban planner]] and public official who worked in the [[New York metropolitan area]] during the early to mid 20th century. Despite never being elected to any office, Moses is regarded as one of the most powerful and influential individuals in the history of New York City and New York State. The grand scale of his infrastructural projects and his philosophy of urban development influenced a generation of engineers, architects, and urban planners across the United States.<ref name=":0" />
 

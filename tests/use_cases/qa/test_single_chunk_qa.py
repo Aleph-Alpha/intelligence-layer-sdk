@@ -1,9 +1,9 @@
+import pytest
 from aleph_alpha_client import Client
 from pytest import fixture
-import pytest
-from intelligence_layer.core.detect_language import Language, LanguageNotSupportedError
 
 from intelligence_layer.core.chunk import Chunk
+from intelligence_layer.core.detect_language import Language, LanguageNotSupportedError
 from intelligence_layer.core.logger import NoOpDebugLogger
 from intelligence_layer.use_cases.qa.single_chunk_qa import (
     SingleChunkQa,

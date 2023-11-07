@@ -3,9 +3,9 @@ from typing import Optional, Sequence
 from aleph_alpha_client import Client, CompletionRequest, CompletionResponse, Prompt
 from pydantic import BaseModel
 
+from intelligence_layer.core.logger import DebugLogger
 from intelligence_layer.core.prompt_template import PromptTemplate, PromptWithMetadata
 from intelligence_layer.core.task import Task
-from intelligence_layer.core.logger import DebugLogger
 
 
 class CompleteInput(BaseModel):

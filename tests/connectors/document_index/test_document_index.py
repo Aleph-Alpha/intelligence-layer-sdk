@@ -1,6 +1,8 @@
 from http import HTTPStatus
-from pytest import fixture, raises
+
 import pytest
+from pytest import fixture, raises
+
 from intelligence_layer.connectors.document_index.document_index import (
     CollectionPath,
     DocumentContents,

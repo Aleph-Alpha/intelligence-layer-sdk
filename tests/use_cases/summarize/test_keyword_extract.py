@@ -1,7 +1,7 @@
-from aleph_alpha_client import Client
 import pytest
-from intelligence_layer.core.chunk import Chunk
+from aleph_alpha_client import Client
 
+from intelligence_layer.core.chunk import Chunk
 from intelligence_layer.core.detect_language import Language, LanguageNotSupportedError
 from intelligence_layer.core.logger import NoOpDebugLogger
 from intelligence_layer.use_cases.summarize.keyword_extract import (
