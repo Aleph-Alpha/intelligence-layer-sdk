@@ -20,7 +20,10 @@ from intelligence_layer.core.text_highlight import (
 from intelligence_layer.core.chunk import Chunk
 from intelligence_layer.core.task import Task
 from intelligence_layer.core.logger import DebugLogger
-from intelligence_layer.use_cases.qa.luminous_prompts import LANGUAGES_QA_INSTRUCTIONS
+
+from intelligence_layer.use_cases.qa.luminous_prompts import (
+    LANGUAGES_QA_INSTRUCTIONS as LUMINOUS_LANGUAGES_QA_INSTRUCTIONS,
+)
 
 
 class SingleChunkQaInput(BaseModel):
@@ -64,7 +67,6 @@ class SingleChunkQa(Task[SingleChunkQaInput, SingleChunkQaOutput]):
     Args:
         client: Aleph Alpha client instance for running model related API calls.
         model: A valid Aleph Alpha model name.
-        qa_instructions: All languages supported by the task. Mapping ISO619 str to prompt string
 
     Attributes:
         PROMPT_TEMPLATE_STR: The prompt template used for answering the question.
@@ -93,24 +95,22 @@ class SingleChunkQa(Task[SingleChunkQaInput, SingleChunkQaOutput]):
         self,
         client: Client,
         model: str = "luminous-supreme-control",
-        qa_instructions: dict[Language, str] = LANGUAGES_QA_INSTRUCTIONS,
     ):
         super().__init__()
         self._client = client
         self._model = model
         self._instruction = Instruct(client)
         self._text_highlight = TextHighlight(client)
-        self._qa_instructions = qa_instructions
 
     def run(
         self, input: SingleChunkQaInput, logger: DebugLogger
     ) -> SingleChunkQaOutput:
         try:
-            prompt = self._qa_instructions[input.language]
+            prompt = LUMINOUS_LANGUAGES_QA_INSTRUCTIONS[input.language]
         except KeyError:
-            supported_languages = self._qa_instructions.keys()
+            allowed_languages = list(LUMINOUS_LANGUAGES_QA_INSTRUCTIONS.keys())
             raise LanguageNotSupportedError(
-                f"{input.language} not in supported languages ({supported_languages})"
+                f"{input.language} not in allowed languages ({allowed_languages})"
             )
 
         output = self._instruct(
