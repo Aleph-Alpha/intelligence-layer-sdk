@@ -87,7 +87,7 @@ class DebugLogger(ABC):
         logs and duration together as a single, logical step in the process.
 
         Each logger implementation can decide on how it wants to represent this, but they should
-        all capture the heirarchical nature of nested spans, as well as the idea of the duration of
+        all capture the hierarchical nature of nested spans, as well as the idea of the duration of
         the span.
 
         Args:
