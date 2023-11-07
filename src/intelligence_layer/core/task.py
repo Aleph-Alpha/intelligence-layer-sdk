@@ -6,7 +6,6 @@ from typing import (
     Any,
     Generic,
     Iterable,
-    NewType,
     Sequence,
     TypeVar,
     Callable,
@@ -17,17 +16,6 @@ from pydantic import (
 )
 
 from intelligence_layer.core.logger import DebugLogger, PydanticSerializable
-
-
-Chunk = NewType("Chunk", str)
-"""Segment of a larger text.
-
-This type infers that the string is smaller than the context size of the model where it is used.
-
-LLMs can't process documents larger than their context size.
-To handle this, documents have to be split up into smaller segments that fit within their context size.
-These smaller segments are referred to as chunks.
-"""
 
 
 class Token(BaseModel):

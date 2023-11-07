@@ -1,3 +1,4 @@
+from abc import ABC, abstractmethod
 from contextlib import AbstractContextManager
 from datetime import datetime
 from json import dumps
@@ -17,10 +18,8 @@ from typing import (
     Any,
     Mapping,
     Optional,
-    Protocol,
     Sequence,
     Union,
-    runtime_checkable,
 )
 
 if TYPE_CHECKING:
@@ -50,9 +49,8 @@ else:
     )
 
 
-@runtime_checkable
-class DebugLogger(Protocol):
-    """A protocol for instrumenting `Task`\ s with structured logging.
+class DebugLogger(ABC):
+    """A protocol for instrumenting `Task`s with structured logging.
 
     A logger needs to provide a way to collect an individual log, which should be serializable, and
     a way to generate nested loggers, so that sub-tasks can emit logs that are grouped together.
@@ -63,6 +61,7 @@ class DebugLogger(Protocol):
     documentation of each implementation to see how to use the resulting logger.
     """
 
+    @abstractmethod
     def log(self, message: str, value: PydanticSerializable) -> None:
         """Record a log of relevant information as part of a step within a task.
 
@@ -77,6 +76,7 @@ class DebugLogger(Protocol):
         """
         ...
 
+    @abstractmethod
     def span(self, name: str) -> "Span":
         """Generate a span from the current logging instance.
 
@@ -91,6 +91,7 @@ class DebugLogger(Protocol):
         """
         ...
 
+    @abstractmethod
     def task_span(self, task_name: str, input: PydanticSerializable) -> "TaskSpan":
         """Generate a task-specific span from the current logging instance.
 
@@ -109,8 +110,7 @@ class DebugLogger(Protocol):
         ...
 
 
-@runtime_checkable
-class Span(AbstractContextManager["Span"], DebugLogger, Protocol):
+class Span(DebugLogger, AbstractContextManager["Span"]):
     """A protocol for instrumenting logs nested within a span of time. Groups logs by some logical
     step.
 
@@ -121,11 +121,13 @@ class Span(AbstractContextManager["Span"], DebugLogger, Protocol):
     documentation of each implementation to see how to use the resulting logger.
     """
 
+    def __enter__(self) -> Self:
+        return self
+
     ...
 
 
-@runtime_checkable
-class TaskSpan(AbstractContextManager["TaskSpan"], DebugLogger, Protocol):
+class TaskSpan(Span, AbstractContextManager["TaskSpan"]):
     """A protocol for instrumenting a `Task`'s input, output, and nested logs.
 
     Most likely, generating this task logger will capture the `Task`'s input, as well as the task
@@ -138,6 +140,10 @@ class TaskSpan(AbstractContextManager["TaskSpan"], DebugLogger, Protocol):
     documentation of each implementation to see how to use the resulting logger.
     """
 
+    def __enter__(self) -> Self:
+        return self
+
+    @abstractmethod
     def record_output(self, output: PydanticSerializable) -> None:
         """Record a `Task`'s output. Since a Context Manager can't provide this in the `__exit__`
         method, output should be captured once it is generated.
@@ -150,7 +156,7 @@ class TaskSpan(AbstractContextManager["TaskSpan"], DebugLogger, Protocol):
         ...
 
 
-class NoOpDebugLogger:
+class NoOpDebugLogger(DebugLogger):
     """A no-op logger. Useful for cases, like testing, where a logger is needed for a task, but you
     don't have a need to collect or inspect the actual logs.
 
@@ -194,7 +200,7 @@ class NoOpDebugLogger:
         return NoOpTaskSpan()
 
 
-class NoOpTaskSpan(NoOpDebugLogger, AbstractContextManager["NoOpTaskSpan"]):
+class NoOpTaskSpan(NoOpDebugLogger, TaskSpan):
     def record_output(self, output: PydanticSerializable) -> None:
         """The `NoOpTaskSpan` does not do anything.
 
@@ -255,7 +261,7 @@ class LogEntry(BaseModel):
         print(self._rich_render_())
 
 
-class InMemoryDebugLogger(BaseModel):
+class InMemoryDebugLogger(BaseModel, DebugLogger):
     """Collects log entries in a nested structure, and keeps them in memory.
 
     If desired, the structure is serializable with Pydantic, so you can write out the JSON
@@ -333,12 +339,9 @@ class InMemoryDebugLogger(BaseModel):
         print(self._rich_render_())
 
 
-class InMemorySpan(AbstractContextManager["InMemorySpan"], InMemoryDebugLogger):
+class InMemorySpan(InMemoryDebugLogger, Span):
     start_timestamp: Optional[datetime] = Field(default_factory=datetime.utcnow)
     end_timestamp: Optional[datetime] = None
-
-    def __enter__(self) -> Self:
-        return self
 
     def __exit__(
         self,
@@ -358,7 +361,7 @@ class InMemorySpan(AbstractContextManager["InMemorySpan"], InMemoryDebugLogger):
         return tree
 
 
-class InMemoryTaskSpan(InMemorySpan):
+class InMemoryTaskSpan(InMemorySpan, TaskSpan):
     input: SerializeAsAny[PydanticSerializable]
     output: Optional[SerializeAsAny[PydanticSerializable]] = None
 
@@ -497,7 +500,7 @@ class FileDebugLogger(DebugLogger):
         log_file_path: Denotes the file to log to.
 
     Attributes:
-        uuid: a uuid for the logger. If multiple `FileDebugLogger`\ s log to the same file
+        uuid: a uuid for the logger. If multiple `FileDebugLogger`s log to the same file
             the child-elements for a logger can be identified by referring to this id as parent.
     """
 
@@ -545,14 +548,11 @@ class FileDebugLogger(DebugLogger):
         return task
 
 
-class FileSpan(FileDebugLogger, AbstractContextManager["FileSpan"]):
+class FileSpan(Span, FileDebugLogger):
     """A `Span` created by `FileDebugLogger.span`."""
 
     def __init__(self, log_file_path: Path, name: str) -> None:
         super().__init__(log_file_path)
-
-    def __enter__(self) -> Self:
-        return self
 
     def __exit__(
         self,
@@ -563,7 +563,7 @@ class FileSpan(FileDebugLogger, AbstractContextManager["FileSpan"]):
         self._log_entry(EndSpan(uuid=self.uuid, end=datetime.utcnow()))
 
 
-class FileTaskSpan(FileSpan, AbstractContextManager["FileTaskSpan"]):
+class FileTaskSpan(TaskSpan, FileSpan):
     """A `TaskSpan` created by `FileDebugLogger.task_span`."""
 
     output: Optional[PydanticSerializable] = None

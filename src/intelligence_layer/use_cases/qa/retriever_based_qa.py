@@ -7,6 +7,11 @@ from intelligence_layer.core.detect_language import (
     DetectLanguageInput,
     Language,
 )
+from intelligence_layer.core.detect_language import (
+    DetectLanguage,
+    DetectLanguageInput,
+    Language,
+)
 
 from intelligence_layer.use_cases.qa.multiple_chunk_qa import (
     MultipleChunkQa,
@@ -15,7 +20,8 @@ from intelligence_layer.use_cases.qa.multiple_chunk_qa import (
 )
 from intelligence_layer.connectors.retrievers.base_retriever import BaseRetriever
 from intelligence_layer.use_cases.search.search import Search, SearchInput
-from intelligence_layer.core.task import Chunk, Task
+from intelligence_layer.core.chunk import Chunk
+from intelligence_layer.core.task import Task
 from intelligence_layer.core.logger import DebugLogger
 
 
@@ -69,11 +75,21 @@ class RetrieverBasedQa(Task[RetrieverBasedQaInput, MultipleChunkQaOutput]):
         self._multi_chunk_qa = MultipleChunkQa(self._client, self._model)
         self._language_detector = DetectLanguage(threshold=0.5)
         self._fallback_language = Language("en")
+        self._language_detector = DetectLanguage(threshold=0.5)
+        self._fallback_language = Language("en")
 
     def run(
         self, input: RetrieverBasedQaInput, logger: DebugLogger
     ) -> MultipleChunkQaOutput:
         search_output = self._search.run(SearchInput(query=input.question), logger)
+
+        question_language = (
+            self._language_detector.run(
+                DetectLanguageInput(text=input.question), logger
+            ).best_fit
+            or self._fallback_language
+        )
+
 
         question_language = (
             self._language_detector.run(

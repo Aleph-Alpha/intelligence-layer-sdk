@@ -180,6 +180,20 @@ class FewShotConfig(BaseModel):
         examples: A number of few shot examples to prime the model.
         input_prefix: The prefix for each `FewShotExample.input` as well as the final input.
         response_prefix: The prefix for each `FewShotExample.response` as well as the completion.
+    """
+
+    instruction: str
+    examples: Sequence[FewShotExample]
+    input_prefix: str
+    response_prefix: str
+
+
+class FewShotInput(BaseModel):
+    """The input for a `FewShot` task.
+
+    Attributes:
+        few_shot_config: The configuration to be used for generating a response.
+        input: The text input for the prompt, e.g. a text to be translated.
         model: The name of the model that should handle the prompt.
             Vanilla models work best with few-shot promptung.
             These include 'luminous-base', 'extended' & 'supreme'.
@@ -187,23 +201,10 @@ class FewShotConfig(BaseModel):
             The default corresponds to roughly one short paragraph.
     """
 
-    instruction: str
-    examples: Sequence[FewShotExample]
-    input_prefix: str
-    response_prefix: str
+    few_shot_config: FewShotConfig
+    input: str
     model: str
     maximum_response_tokens: int = 64
-
-
-class FewShotInput(BaseModel):
-    """The input for a `FewShot` task.
-
-    input: The text input for the prompt, e.g. a text to be translated.
-    few_shot_config: The configuration to be used for generating a response.
-    """
-
-    input: str
-    few_shot_config: FewShotConfig
 
 
 class FewShot(Task[FewShotInput, PromptOutput]):
@@ -268,8 +269,8 @@ class FewShot(Task[FewShotInput, PromptOutput]):
         )
         completion = self._complete(
             prompt_with_metadata.prompt,
-            input.few_shot_config.maximum_response_tokens,
-            input.few_shot_config.model,
+            input.maximum_response_tokens,
+            input.model,
             logger,
         )
         return PromptOutput(

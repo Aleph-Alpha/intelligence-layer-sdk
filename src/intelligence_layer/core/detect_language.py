@@ -1,4 +1,4 @@
-from typing import Mapping, NewType, Optional, Sequence
+from typing import NewType, Optional, Sequence
 
 from langdetect import detect_langs  # type: ignore
 from pydantic import BaseModel
@@ -53,8 +53,8 @@ class AnnotatedLanguage(BaseModel):
 class DetectLanguage(Task[DetectLanguageInput, DetectLanguageOutput]):
     """Task that detects the language of a text.
 
-    Analyzes the likelihood of that a given text is written in one of the
-    `possible_languages`.
+    Analyzes the likelihood that a given text is written in one of the
+    `possible_languages`. Returns the best match or `None`.
 
     Args:
         threshold: Minimum probability value for a language to be considered
@@ -64,7 +64,7 @@ class DetectLanguage(Task[DetectLanguageInput, DetectLanguageOutput]):
         >>> task = DetectLanguage()
         >>> input = DetectLanguageInput(
                 text="This is an English text.",
-                allowed_langs=["en", "fr],
+                allowed_langs=[Language(l) for l in ("en", "fr)],
             )
         >>> logger = InMemoryLogger(name="DetectLanguage")
         >>> output = task.run(input, logger)
