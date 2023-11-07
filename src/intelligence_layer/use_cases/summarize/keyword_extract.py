@@ -2,7 +2,12 @@ from typing import Mapping, Sequence
 from aleph_alpha_client import Client
 from pydantic import BaseModel
 from intelligence_layer.core.chunk import Chunk
-from intelligence_layer.core.complete import FewShot, FewShotConfig, FewShotExample, FewShotInput
+from intelligence_layer.core.complete import (
+    FewShot,
+    FewShotConfig,
+    FewShotExample,
+    FewShotInput,
+)
 from intelligence_layer.core.detect_language import Language, LanguageNotSupportedError
 from intelligence_layer.core.logger import DebugLogger
 from intelligence_layer.core.task import Task
@@ -21,7 +26,7 @@ FEW_SHOT_CONFIGS = {
                 response="KI, Technolgie, Machine Learning",
             ),
             FewShotExample(
-                input="Das Restaurant hat fünf Köche und sechs Servicekräfte, braucht aber ein oder zwei weitere Köche und zwei weitere Servicekräfte. Es ist nicht das einzige Restaurant, das von einer \"existenziellen Bedrohung\" für das Gastgewerbe betroffen ist.",
+                input='Das Restaurant hat fünf Köche und sechs Servicekräfte, braucht aber ein oder zwei weitere Köche und zwei weitere Servicekräfte. Es ist nicht das einzige Restaurant, das von einer "existenziellen Bedrohung" für das Gastgewerbe betroffen ist.',
                 response="Restaurant, Personalmangel, Gastgewerbe",
             ),
             FewShotExample(
@@ -44,7 +49,7 @@ FEW_SHOT_CONFIGS = {
                 response="AI, Technology, Machine Learning",
             ),
             FewShotExample(
-                input="The restaurant has five cooks and six servers, but needs one or two more cooks and two more servers. It's not the only restaurant facing an \"existential threat\" to the hospitality industry.",
+                input='The restaurant has five cooks and six servers, but needs one or two more cooks and two more servers. It\'s not the only restaurant facing an "existential threat" to the hospitality industry.',
                 response="restaurant, staff shortage, hospitality industry",
             ),
             FewShotExample(
@@ -67,7 +72,7 @@ FEW_SHOT_CONFIGS = {
                 response="IA, Tecnología, Aprendizaje automático",
             ),
             FewShotExample(
-                input="El restaurante tiene cinco cocineros y seis camareros, pero necesita uno o dos cocineros y dos camareros más. No es el único restaurante afectado por una \"amenaza existencial\" para la hostelería.",
+                input='El restaurante tiene cinco cocineros y seis camareros, pero necesita uno o dos cocineros y dos camareros más. No es el único restaurante afectado por una "amenaza existencial" para la hostelería.',
                 response="restaurante, escasez de personal, hostelería",
             ),
             FewShotExample(
@@ -126,28 +131,38 @@ FEW_SHOT_CONFIGS = {
     ),
 }
 
+
 class KeywordExtractInput(BaseModel):
     chunk: Chunk
     language: Language
 
 
-class KeywordExtract(Task[KeywordExtractInput, set[str]]):
-    def __init__(self, 
+class KeywordExtract(Task[KeywordExtractInput, frozenset[str]]):
+    def __init__(
+        self,
         client: Client,
         few_shot_configs: Mapping[Language, FewShotConfig] = FEW_SHOT_CONFIGS,
         model: str = "luminous-base",
-        maximum_tokens: int = 32
+        maximum_tokens: int = 32,
     ) -> None:
         self._few_shot_configs = few_shot_configs
         self._few_shot = FewShot(client)
         self._model = model
         self._maximum_tokens = maximum_tokens
 
-    def run(self, input: KeywordExtractInput, logger: DebugLogger) -> Sequence[str]:
+    def run(self, input: KeywordExtractInput, logger: DebugLogger) -> frozenset[str]:
         config = self._few_shot_configs.get(input.language)
         if config is None:
             raise LanguageNotSupportedError(
                 f"{input.language} not in ({', '.join(self._few_shot_configs.keys())})"
             )
-        result = self._few_shot.run(FewShotInput(few_shot_config=config, input=input.chunk, model=self._model,maximum_response_tokens=self._maximum_tokens), logger)
-        return set(s.strip() for s in result.response.split(","))
+        result = self._few_shot.run(
+            FewShotInput(
+                few_shot_config=config,
+                input=input.chunk,
+                model=self._model,
+                maximum_response_tokens=self._maximum_tokens,
+            ),
+            logger,
+        )
+        return frozenset(s.strip() for s in result.response.split(","))
