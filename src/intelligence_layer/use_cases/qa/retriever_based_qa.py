@@ -11,7 +11,7 @@ from intelligence_layer.core.detect_language import (
     Language,
 )
 from intelligence_layer.core.task import Task
-from intelligence_layer.core.tracer import Tracer
+from intelligence_layer.core.tracer import Span
 from intelligence_layer.use_cases.qa.luminous_prompts import (
     LANGUAGES_QA_INSTRUCTIONS as LUMINOUS_LANGUAGES_QA_INSTRUCTIONS,
 )
@@ -83,17 +83,15 @@ class RetrieverBasedQa(Task[RetrieverBasedQaInput, MultipleChunkQaOutput]):
         self._fallback_language = fallback_language
         assert fallback_language in allowed_languages
 
-    def run(
-        self, input: RetrieverBasedQaInput, tracer: Tracer
-    ) -> MultipleChunkQaOutput:
-        search_output = self._search.run(SearchInput(query=input.question), tracer)
+    def do_run(self, input: RetrieverBasedQaInput, span: Span) -> MultipleChunkQaOutput:
+        search_output = self._search.run(SearchInput(query=input.question), span)
 
         question_language = (
             self._language_detector.run(
                 DetectLanguageInput(
                     text=input.question, possible_languages=self.allowed_languages
                 ),
-                tracer,
+                span,
             ).best_fit
             or self._fallback_language
         )
@@ -103,4 +101,4 @@ class RetrieverBasedQa(Task[RetrieverBasedQaInput, MultipleChunkQaOutput]):
             question=input.question,
             language=question_language,
         )
-        return self._multi_chunk_qa.run(multi_chunk_qa_input, tracer)
+        return self._multi_chunk_qa.run(multi_chunk_qa_input, span)

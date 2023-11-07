@@ -8,7 +8,7 @@ from pydantic import BaseModel
 from intelligence_layer.core.complete import Complete
 from intelligence_layer.core.echo import EchoInput, EchoTask, TokenWithLogProb
 from intelligence_layer.core.task import Task, Token
-from intelligence_layer.core.tracer import Tracer
+from intelligence_layer.core.tracer import Span
 from intelligence_layer.use_cases.classify.classify import (
     ClassifyInput,
     ClassifyOutput,
@@ -73,15 +73,15 @@ Reply with only the class label.
         self._completion_task = Complete(client)
         self._echo_task = EchoTask(client)
 
-    def run(self, input: ClassifyInput, tracer: Tracer) -> ClassifyOutput:
+    def do_run(self, input: ClassifyInput, span: Span) -> ClassifyOutput:
         log_probs_per_label = self._log_probs_per_label(
             text_to_classify=input.chunk,
             labels=input.labels,
             model=self.MODEL,
-            tracer=tracer,
+            span=span,
         )
-        tracer.log("Log probs per label", log_probs_per_label)
-        normalized_probs_per_label = self._normalize(log_probs_per_label, tracer)
+        span.log("Log probs per label", log_probs_per_label)
+        normalized_probs_per_label = self._normalize(log_probs_per_label, span)
         scores = self._compute_scores(normalized_probs_per_label)
         return ClassifyOutput(
             scores=scores,
@@ -92,7 +92,7 @@ Reply with only the class label.
         text_to_classify: str,
         labels: frozenset[str],
         model: str,
-        tracer: Tracer,
+        span: Span,
     ) -> Mapping[str, Sequence[TokenWithLogProb]]:
         prompt = PromptTemplate(template_str=self.PROMPT_TEMPLATE).to_prompt(
             text=text_to_classify
@@ -105,7 +105,7 @@ Reply with only the class label.
             )
             for label in labels
         )
-        outputs = self._echo_task.run_concurrently(inputs, tracer)
+        outputs = self._echo_task.run_concurrently(inputs, span)
         return {
             label: output.tokens_with_log_probs
             for label, output in zip(labels, outputs)
@@ -129,7 +129,7 @@ Reply with only the class label.
     def _normalize(
         self,
         log_probs_per_label: Mapping[str, Sequence[TokenWithLogProb]],
-        tracer: Tracer,
+        span: Span,
     ) -> Mapping[str, Sequence[TokenWithProb]]:
         node = TreeNode()
         for log_probs in log_probs_per_label.values():
@@ -145,7 +145,7 @@ Reply with only the class label.
             )
             for label in log_probs_per_label
         }
-        tracer.log("Normalized Probs", normalized_probs)
+        span.log("Normalized Probs", normalized_probs)
         return normalized_probs
 
 

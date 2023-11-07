@@ -55,27 +55,6 @@ class Tracer(ABC):
     """
 
     @abstractmethod
-    def log(
-        self,
-        message: str,
-        value: PydanticSerializable,
-        timestamp: Optional[datetime] = None,
-    ) -> None:
-        """Record a log of relevant information as part of a step within a task.
-
-        By default, the `Input` and `Output` of each :class:`Task` are logged automatically, but
-        you can log anything else that seems relevant to understanding the process of a given task.
-
-        Args:
-            message: A description of the value you are logging, such as the step in the task this
-                is related to.
-            value: The relevant data you want to log. Can be anything that is serializable by
-                Pydantic, which gives the tracers flexibility in how they store and emit the logs.
-            timestamp: optional override of the timestamp. Otherwise should default to now
-        """
-        ...
-
-    @abstractmethod
     def span(self, name: str, timestamp: Optional[datetime] = None) -> "Span":
         """Generate a span from the current span or logging instance.
 
@@ -132,6 +111,27 @@ class Span(Tracer, AbstractContextManager["Span"]):
 
     def __enter__(self) -> Self:
         return self
+
+    @abstractmethod
+    def log(
+        self,
+        message: str,
+        value: PydanticSerializable,
+        timestamp: Optional[datetime] = None,
+    ) -> None:
+        """Record a log of relevant information as part of a step within a task.
+
+        By default, the `Input` and `Output` of each :class:`Task` are logged automatically, but
+        you can log anything else that seems relevant to understanding the process of a given task.
+
+        Args:
+            message: A description of the value you are logging, such as the step in the task this
+                is related to.
+            value: The relevant data you want to log. Can be anything that is serializable by
+                Pydantic, which gives the tracers flexibility in how they store and emit the logs.
+            timestamp: optional override of the timestamp. Otherwise should default to now
+        """
+        ...
 
     @abstractmethod
     def end(self, timestamp: Optional[datetime] = None) -> None:
@@ -202,7 +202,8 @@ class CompositeTracer(TaskSpan):
     ) -> None:
         timestamp = timestamp or datetime.utcnow()
         for tracer in self.tracers:
-            tracer.log(message, value, timestamp)
+            if isinstance(tracer, Span):
+                tracer.log(message, value, timestamp)
 
     def span(
         self, name: str, timestamp: Optional[datetime] = None
@@ -327,18 +328,6 @@ class InMemoryTracer(BaseModel, Tracer):
 
     entries: list[Union[LogEntry, "InMemorySpan", "InMemoryTaskSpan"]] = []
 
-    def log(
-        self,
-        message: str,
-        value: PydanticSerializable,
-        timestamp: Optional[datetime] = None,
-    ) -> None:
-        self.entries.append(
-            LogEntry(
-                message=message, value=value, timestamp=timestamp or datetime.utcnow()
-            )
-        )
-
     def span(self, name: str, timestamp: Optional[datetime] = None) -> "InMemorySpan":
         child = InMemorySpan(name=name, start_timestamp=timestamp or datetime.utcnow())
         self.entries.append(child)
@@ -376,6 +365,18 @@ class InMemorySpan(InMemoryTracer, Span):
     name: str
     start_timestamp: datetime = Field(default_factory=datetime.utcnow)
     end_timestamp: Optional[datetime] = None
+
+    def log(
+        self,
+        message: str,
+        value: PydanticSerializable,
+        timestamp: Optional[datetime] = None,
+    ) -> None:
+        self.entries.append(
+            LogEntry(
+                message=message, value=value, timestamp=timestamp or datetime.utcnow()
+            )
+        )
 
     def end(self, timestamp: Optional[datetime] = None) -> None:
         if not self.end_timestamp:
@@ -530,21 +531,6 @@ class FileTracer(Tracer):
         self._log_file_path = log_file_path
         self.uuid = uuid4()
 
-    def log(
-        self,
-        message: str,
-        value: PydanticSerializable,
-        timestamp: Optional[datetime] = None,
-    ) -> None:
-        self._log_entry(
-            PlainEntry(
-                message=message,
-                value=value,
-                timestamp=timestamp or datetime.utcnow(),
-                parent=self.uuid,
-            )
-        )
-
     def _log_entry(self, entry: BaseModel) -> None:
         with self._log_file_path.open("a") as f:
             f.write(
@@ -590,6 +576,21 @@ class FileSpan(Span, FileTracer):
 
     def __init__(self, log_file_path: Path, name: str) -> None:
         super().__init__(log_file_path)
+
+    def log(
+        self,
+        message: str,
+        value: PydanticSerializable,
+        timestamp: Optional[datetime] = None,
+    ) -> None:
+        self._log_entry(
+            PlainEntry(
+                message=message,
+                value=value,
+                timestamp=timestamp or datetime.utcnow(),
+                parent=self.uuid,
+            )
+        )
 
     def end(self, timestamp: Optional[datetime] = None) -> None:
         if not self.end_timestamp:

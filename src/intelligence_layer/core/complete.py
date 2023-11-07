@@ -5,7 +5,7 @@ from pydantic import BaseModel
 
 from intelligence_layer.core.prompt_template import PromptTemplate, PromptWithMetadata
 from intelligence_layer.core.task import Task
-from intelligence_layer.core.tracer import Tracer
+from intelligence_layer.core.tracer import Span
 
 
 class CompleteInput(BaseModel):
@@ -51,7 +51,7 @@ class Complete(Task[CompleteInput, CompleteOutput]):
         super().__init__()
         self._client = client
 
-    def run(self, input: CompleteInput, tracer: Tracer) -> CompleteOutput:
+    def do_run(self, input: CompleteInput, span: Span) -> CompleteOutput:
         response = self._client.complete(
             input.request,
             model=input.model,
@@ -137,7 +137,7 @@ class Instruct(Task[InstructInput, PromptOutput]):
         self._client = client
         self._completion = Complete(client)
 
-    def run(self, input: InstructInput, tracer: Tracer) -> PromptOutput:
+    def do_run(self, input: InstructInput, span: Span) -> PromptOutput:
         prompt_with_metadata = PromptTemplate(
             self.INSTRUCTION_PROMPT_TEMPLATE
         ).to_prompt_with_metadata(
@@ -149,19 +149,19 @@ class Instruct(Task[InstructInput, PromptOutput]):
             prompt_with_metadata.prompt,
             input.maximum_response_tokens,
             input.model,
-            tracer,
+            span,
         )
         return PromptOutput(
             response=completion, prompt_with_metadata=prompt_with_metadata
         )
 
     def _complete(
-        self, prompt: Prompt, maximum_tokens: int, model: str, tracer: Tracer
+        self, prompt: Prompt, maximum_tokens: int, model: str, span: Span
     ) -> str:
         request = CompletionRequest(prompt, maximum_tokens=maximum_tokens)
         return self._completion.run(
             CompleteInput(request=request, model=model),
-            tracer,
+            span,
         ).completion
 
 
@@ -254,7 +254,7 @@ class FewShot(Task[FewShotInput, PromptOutput]):
         self._client = client
         self._completion = Complete(client)
 
-    def run(self, input: FewShotInput, tracer: Tracer) -> PromptOutput:
+    def do_run(self, input: FewShotInput, span: Span) -> PromptOutput:
         prompt_with_metadata = PromptTemplate(
             self.FEW_SHOT_PROMPT_TEMPLATE
         ).to_prompt_with_metadata(
@@ -270,19 +270,19 @@ class FewShot(Task[FewShotInput, PromptOutput]):
             prompt_with_metadata.prompt,
             input.maximum_response_tokens,
             input.model,
-            tracer,
+            span,
         )
         return PromptOutput(
             response=completion, prompt_with_metadata=prompt_with_metadata
         )
 
     def _complete(
-        self, prompt: Prompt, maximum_tokens: int, model: str, tracer: Tracer
+        self, prompt: Prompt, maximum_tokens: int, model: str, span: Span
     ) -> str:
         request = CompletionRequest(
             prompt, maximum_tokens=maximum_tokens, stop_sequences=["###"]
         )
         return self._completion.run(
             CompleteInput(request=request, model=model),
-            tracer,
+            span,
         ).completion
