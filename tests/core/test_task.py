@@ -1,7 +1,12 @@
 from threading import Lock
 from time import sleep
 
-from intelligence_layer.core.logger import DebugLogger, NoOpDebugLogger
+from intelligence_layer.core.logger import (
+    DebugLogger,
+    InMemoryDebugLogger,
+    NoOpDebugLogger,
+    TaskSpan,
+)
 from intelligence_layer.core.task import MAX_CONCURRENCY, Task, global_executor
 
 
@@ -24,6 +29,15 @@ class ConcurrencyCounter(Task[None, None]):
             self.concurrency_counter -= 1
 
 
+class BaseTask(Task[None, None]):
+    def run(self, input: None, logger: DebugLogger) -> None:
+        logger.log("Plain", "Entry")
+
+
+class SubTask(BaseTask):
+    pass
+
+
 def test_run_concurrently() -> None:
     task = ConcurrencyCounter()
     task.run_concurrently([None] * MAX_CONCURRENCY * 10, NoOpDebugLogger())
@@ -37,3 +51,14 @@ def test_run_concurrently_limited() -> None:
         [None] * MAX_CONCURRENCY * 3, NoOpDebugLogger(), limit_concurrency
     )
     assert task.max_concurrency_counter == limit_concurrency
+
+
+def test_sub_tasks_do_not_introduce_multiple_task_spans() -> None:
+    logger = InMemoryDebugLogger(name="demo")
+
+    SubTask().run(None, logger)
+
+    assert logger.logs
+    assert isinstance(logger.logs[0], TaskSpan)
+    assert logger.logs[0].logs
+    assert not isinstance(logger.logs[0].logs[0], TaskSpan)
