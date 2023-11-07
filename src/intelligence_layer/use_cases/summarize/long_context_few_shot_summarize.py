@@ -1,12 +1,10 @@
-from typing import Mapping, Optional, Sequence
+from typing import Mapping, Sequence
+
 from aleph_alpha_client import Client
 from intelligence_layer.core.chunk import ChunkInput, ChunkTask
 
 from intelligence_layer.core.complete import (
-    FewShot,
     FewShotConfig,
-    FewShotInput,
-    PromptOutput,
 )
 from intelligence_layer.core.detect_language import (
     DetectLanguage,
