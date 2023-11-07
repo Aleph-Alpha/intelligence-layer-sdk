@@ -524,7 +524,7 @@ class FileDebugLogger(DebugLogger):
         log_file_path: Denotes the file to log to.
 
     Attributes:
-        uuid: a uuid for the logger. If multiple `FileDebugLogger`s log to the same file
+        uuid: a uuid for the logger. If multiple :class:`FileDebugLogger` instances log to the same file
             the child-elements for a logger can be identified by referring to this id as parent.
     """
 
