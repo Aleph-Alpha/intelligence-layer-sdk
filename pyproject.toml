@@ -55,5 +55,5 @@ addopts = "--capture=tee-sys"
 filterwarnings = [ 'ignore:.*\`general_plain_validator_function\` is deprecated.*' ]
 
 [tool.pylama]
-skip = "*/__init__.py"
+skip = "*/__init__.py,.venv/*"
 ignore = "E501,C901,W605,E203"
