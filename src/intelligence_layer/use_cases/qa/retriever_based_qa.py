@@ -7,11 +7,6 @@ from intelligence_layer.core.detect_language import (
     DetectLanguageInput,
     Language,
 )
-from intelligence_layer.core.detect_language import (
-    DetectLanguage,
-    DetectLanguageInput,
-    Language,
-)
 
 from intelligence_layer.use_cases.qa.multiple_chunk_qa import (
     MultipleChunkQa,
@@ -34,6 +29,7 @@ class RetrieverBasedQaInput(BaseModel):
     """
 
     question: str
+
 
 class RetrieverBasedQa(Task[RetrieverBasedQaInput, MultipleChunkQaOutput]):
     """Answer a question based on documents found by a retriever.
@@ -75,8 +71,6 @@ class RetrieverBasedQa(Task[RetrieverBasedQaInput, MultipleChunkQaOutput]):
         self._multi_chunk_qa = MultipleChunkQa(self._client, self._model)
         self._language_detector = DetectLanguage(threshold=0.5)
         self._fallback_language = Language("en")
-        self._language_detector = DetectLanguage(threshold=0.5)
-        self._fallback_language = Language("en")
 
     def run(
         self, input: RetrieverBasedQaInput, logger: DebugLogger
@@ -89,7 +83,6 @@ class RetrieverBasedQa(Task[RetrieverBasedQaInput, MultipleChunkQaOutput]):
             ).best_fit
             or self._fallback_language
         )
-
 
         question_language = (
             self._language_detector.run(
