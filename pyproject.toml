@@ -30,7 +30,6 @@ langdetect = "^1.0.9"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "*"
-mypy = "*"
 black = "*"
 pre-commit = "*"
 httpx = "*"
@@ -44,10 +43,6 @@ types-tqdm = "*"
 sphinx = "^7.2.6"
 sphinx-rtd-theme = "^1.3.0"
 pylama = {extras = ["all"], version = "^8.4.1"}
-
-[tool.mypy]
-files = "src,tests"
-strict = "True"
 
 [tool.pytest.ini_options]
 markers = ["internal: marks tests as internal (deselect with '-k \"not internal\"')"]
