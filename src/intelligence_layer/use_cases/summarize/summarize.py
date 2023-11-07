@@ -1,4 +1,5 @@
 from typing import Sequence
+
 from pydantic import BaseModel
 
 from intelligence_layer.core.chunk import Chunk
