@@ -39,7 +39,7 @@ jobs:
       - name: Install dependencies
         if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
         run: poetry install --no-interaction
-#
+
       - name: set PY for pre-commit
         run: echo "PY=$(python -VV | sha256sum | cut -d' ' -f1)" >> $GITHUB_ENV
       - uses: actions/cache@v3
@@ -55,7 +55,7 @@ jobs:
           poetry run mypy
       - name: Run pylama
         run: |
-          poetry run pylama src tests
+          poetry run pylama 
 
 
   test:
