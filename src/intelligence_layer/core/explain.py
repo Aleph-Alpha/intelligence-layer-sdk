@@ -43,6 +43,6 @@ class Explain(Task[ExplainInput, ExplainOutput]):
         super().__init__()
         self._client = client
 
-    def run(self, input: ExplainInput, logger: Tracer) -> ExplainOutput:
+    def run(self, input: ExplainInput, tracer: Tracer) -> ExplainOutput:
         response = self._client.explain(input.request, input.model)
         return ExplainOutput(response=response)

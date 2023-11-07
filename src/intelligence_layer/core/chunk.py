@@ -56,7 +56,7 @@ class ChunkTask(Task[ChunkInput, ChunkOutput]):
         self._splitter = HuggingFaceTextSplitter(tokenizer)
         self._max_tokens_per_chunk = max_tokens_per_chunk
 
-    def run(self, input: ChunkInput, logger: Tracer) -> ChunkOutput:
+    def run(self, input: ChunkInput, tracer: Tracer) -> ChunkOutput:
         chunks = [
             Chunk(t)
             for t in self._splitter.chunks(input.text, self._max_tokens_per_chunk)

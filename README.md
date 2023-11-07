@@ -21,7 +21,7 @@ The key features of the Intelligence Layer are:
 3. [How to use this in your project](#how-to-use-this-in-your-project)
 4. [Use-case index](#use-case-index)
 5. [How to make your own use case](#how-to-make-your-own-use-case)
-6. [Running the Debug Log Viewer](#running-the-debug-log-viewer)
+6. [Running the Trace Viewer](#running-the-trace-viewer)
 7. [References](#references)
 8. [License](#license)
 
@@ -135,7 +135,7 @@ From here, you can customize everything, including the prompt, model, and more i
 This not only saves you time but also ensures you're building on a tried and tested foundation.
 Therefore, think of these use-cases as stepping stones, guiding you towards crafting tailored solutions that best fit your unique requirements.
 
-## Running the Debug Log Viewer
+## Running the Trace Viewer
 
 Make sure you have your `GITHUB_TOKEN` env variable set the same as above for installing the Python package, and that it has the `read:packages` permission.
 
@@ -151,7 +151,7 @@ Run the container locally:
 docker run -p 3000:3000 ghcr.io/aleph-alpha/intelligence-layer-log-viewer:main
 ```
 
-Finally, visit `http://localhost:3000`, where you can upload a debug log to interact with the data.
+Finally, visit `http://localhost:3000`, where you can upload a trace to interact with the data.
 
 ## References
 

@@ -6,33 +6,33 @@ from aleph_alpha_client.completion import CompletionRequest
 
 from intelligence_layer.core.complete import Complete, CompleteInput
 from intelligence_layer.core.tracer import (
-    CompositeLogger,
+    CompositeTracer,
     InMemoryTaskSpan,
     InMemoryTracer,
     LogEntry,
 )
 
 
-def test_debug_add_log_entries() -> None:
+def test_tracer_add_log_entries() -> None:
     before_log_time = datetime.utcnow()
-    logger = InMemoryTracer()
-    logger.log("Test", "message")
+    tracer = InMemoryTracer()
+    tracer.log("Test", "message")
 
-    assert len(logger.logs) == 1
-    log = logger.logs[0]
+    assert len(tracer.logs) == 1
+    log = tracer.logs[0]
     assert isinstance(log, LogEntry)
     assert log.message == "Test"
     assert log.value == "message"
     assert before_log_time <= log.timestamp <= datetime.utcnow()
 
 
-def test_can_add_child_debug_logger() -> None:
-    logger = InMemoryTracer()
-    logger.span("child")
+def test_can_add_child_tracer() -> None:
+    tracer = InMemoryTracer()
+    tracer.span("child")
 
-    assert len(logger.logs) == 1
+    assert len(tracer.logs) == 1
 
-    log = logger.logs[0]
+    log = tracer.logs[0]
     assert isinstance(log, InMemoryTracer)
     assert log.name == "child"
     assert len(log.logs) == 0
@@ -50,15 +50,15 @@ def test_can_add_parent_and_child_logs() -> None:
 
 
 def test_task_automatically_logs_input_and_output(client: Client) -> None:
-    logger = InMemoryTracer()
+    tracer = InMemoryTracer()
     input = CompleteInput(
         request=CompletionRequest(prompt=Prompt.from_text("test")),
         model="luminous-base",
     )
-    output = Complete(client=client).run(input=input, logger=logger)
+    output = Complete(client=client).run(input=input, tracer=tracer)
 
-    assert len(logger.logs) == 1
-    task_span = logger.logs[0]
+    assert len(tracer.logs) == 1
+    task_span = tracer.logs[0]
     assert isinstance(task_span, InMemoryTaskSpan)
     assert task_span.name == "Complete"
     assert task_span.input == input
@@ -67,39 +67,39 @@ def test_task_automatically_logs_input_and_output(client: Client) -> None:
     assert task_span.start_timestamp < task_span.end_timestamp
 
 
-def test_logger_can_set_custom_start_time_for_log_entry() -> None:
-    logger = InMemoryTracer()
+def test_tracer_can_set_custom_start_time_for_log_entry() -> None:
+    tracer = InMemoryTracer()
     timestamp = datetime.utcnow()
 
-    logger.log("log", "message", timestamp)
+    tracer.log("log", "message", timestamp)
 
-    assert isinstance(logger.logs[0], LogEntry)
-    assert logger.logs[0].timestamp == timestamp
+    assert isinstance(tracer.logs[0], LogEntry)
+    assert tracer.logs[0].timestamp == timestamp
 
 
-def test_logger_can_set_custom_start_time_for_span() -> None:
-    logger = InMemoryTracer()
+def test_tracer_can_set_custom_start_time_for_span() -> None:
+    tracer = InMemoryTracer()
     start = datetime.utcnow()
 
-    span = logger.span("span", start)
+    span = tracer.span("span", start)
 
     assert span.start_timestamp == start
 
 
 def test_span_sets_end_timestamp() -> None:
-    logger = InMemoryTracer()
+    tracer = InMemoryTracer()
     start = datetime.utcnow()
 
-    span = logger.span("span", start)
+    span = tracer.span("span", start)
     span.end()
 
     assert span.end_timestamp and span.start_timestamp <= span.end_timestamp
 
 
 def test_span_only_updates_end_timestamp_once() -> None:
-    logger = InMemoryTracer()
+    tracer = InMemoryTracer()
 
-    span = logger.span("span")
+    span = tracer.span("span")
     end = datetime.utcnow()
     span.end(end)
     span.end()
@@ -107,13 +107,13 @@ def test_span_only_updates_end_timestamp_once() -> None:
     assert span.end_timestamp == end
 
 
-def test_composite_logger(client: Client) -> None:
-    logger1 = InMemoryTracer()
-    logger2 = InMemoryTracer()
+def test_composite_tracer(client: Client) -> None:
+    tracer1 = InMemoryTracer()
+    tracer2 = InMemoryTracer()
     input = CompleteInput(
         request=CompletionRequest(prompt=Prompt.from_text("test")),
         model="luminous-base",
     )
-    Complete(client=client).run(input=input, logger=CompositeLogger([logger1, logger2]))
+    Complete(client=client).run(input=input, tracer=CompositeTracer([tracer1, tracer2]))
 
-    assert logger1 == logger2
+    assert tracer1 == tracer2

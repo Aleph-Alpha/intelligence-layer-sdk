@@ -51,7 +51,7 @@ class Complete(Task[CompleteInput, CompleteOutput]):
         super().__init__()
         self._client = client
 
-    def run(self, input: CompleteInput, logger: Tracer) -> CompleteOutput:
+    def run(self, input: CompleteInput, tracer: Tracer) -> CompleteOutput:
         response = self._client.complete(
             input.request,
             model=input.model,
@@ -118,8 +118,8 @@ class Instruct(Task[InstructInput, PromptOutput]):
                 instruction="Translate the following to text to German.",
                 input="An apple a day keeps the doctor away."
             )
-        >>> logger = InMemoryLogger(name="Instruction")
-        >>> output = task.run(input, logger)
+        >>> tracer = InMemoryTracer()
+        >>> output = task.run(input, tracer)
         >>> print(output.response)
         Ein Apfel am Tag hält den Arzt fern.
     """
@@ -137,7 +137,7 @@ class Instruct(Task[InstructInput, PromptOutput]):
         self._client = client
         self._completion = Complete(client)
 
-    def run(self, input: InstructInput, logger: Tracer) -> PromptOutput:
+    def run(self, input: InstructInput, tracer: Tracer) -> PromptOutput:
         prompt_with_metadata = PromptTemplate(
             self.INSTRUCTION_PROMPT_TEMPLATE
         ).to_prompt_with_metadata(
@@ -149,19 +149,19 @@ class Instruct(Task[InstructInput, PromptOutput]):
             prompt_with_metadata.prompt,
             input.maximum_response_tokens,
             input.model,
-            logger,
+            tracer,
         )
         return PromptOutput(
             response=completion, prompt_with_metadata=prompt_with_metadata
         )
 
     def _complete(
-        self, prompt: Prompt, maximum_tokens: int, model: str, logger: Tracer
+        self, prompt: Prompt, maximum_tokens: int, model: str, tracer: Tracer
     ) -> str:
         request = CompletionRequest(prompt, maximum_tokens=maximum_tokens)
         return self._completion.run(
             CompleteInput(request=request, model=model),
-            logger,
+            tracer,
         ).completion
 
 
@@ -235,8 +235,8 @@ class FewShot(Task[FewShotInput, PromptOutput]):
                     model="luminous-base"
                 )
             )
-        >>> logger = InMemoryLogger(name="FewShot")
-        >>> output = task.run(input, logger)
+        >>> tracer = InMemoryTracer()
+        >>> output = task.run(input, tracer)
         >>> print(output.response)
         Berlin.
     """
@@ -254,7 +254,7 @@ class FewShot(Task[FewShotInput, PromptOutput]):
         self._client = client
         self._completion = Complete(client)
 
-    def run(self, input: FewShotInput, logger: Tracer) -> PromptOutput:
+    def run(self, input: FewShotInput, tracer: Tracer) -> PromptOutput:
         prompt_with_metadata = PromptTemplate(
             self.FEW_SHOT_PROMPT_TEMPLATE
         ).to_prompt_with_metadata(
@@ -270,19 +270,19 @@ class FewShot(Task[FewShotInput, PromptOutput]):
             prompt_with_metadata.prompt,
             input.maximum_response_tokens,
             input.model,
-            logger,
+            tracer,
         )
         return PromptOutput(
             response=completion, prompt_with_metadata=prompt_with_metadata
         )
 
     def _complete(
-        self, prompt: Prompt, maximum_tokens: int, model: str, logger: Tracer
+        self, prompt: Prompt, maximum_tokens: int, model: str, tracer: Tracer
     ) -> str:
         request = CompletionRequest(
             prompt, maximum_tokens=maximum_tokens, stop_sequences=["###"]
         )
         return self._completion.run(
             CompleteInput(request=request, model=model),
-            logger,
+            tracer,
         ).completion

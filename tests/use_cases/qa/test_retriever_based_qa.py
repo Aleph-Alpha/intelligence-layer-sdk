@@ -57,22 +57,22 @@ def retriever_based_qa_with_document_index(
 
 def test_retriever_based_qa_using_in_memory_retriever(
     retriever_based_qa_with_in_memory_retriever: RetrieverBasedQa,
-    no_op_debug_logger: NoOpTracer,
+    no_op_tracer: NoOpTracer,
 ) -> None:
     question = "When was Robert Moses born?"
     input = RetrieverBasedQaInput(question=question)
-    output = retriever_based_qa_with_in_memory_retriever.run(input, no_op_debug_logger)
+    output = retriever_based_qa_with_in_memory_retriever.run(input, no_op_tracer)
     assert output.answer
     assert "1888" in output.answer
 
 
 def test_retriever_based_qa_with_document_index(
     retriever_based_qa_with_document_index: RetrieverBasedQa,
-    no_op_debug_logger: NoOpTracer,
+    no_op_tracer: NoOpTracer,
 ) -> None:
     question = "When was Robert Moses born?"
     input = RetrieverBasedQaInput(question=question)
-    output = retriever_based_qa_with_document_index.run(input, no_op_debug_logger)
+    output = retriever_based_qa_with_document_index.run(input, no_op_tracer)
     assert output.answer
     assert "1888" in output.answer
 

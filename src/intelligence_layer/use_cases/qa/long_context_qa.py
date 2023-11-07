@@ -62,8 +62,8 @@ class LongContextQa(Task[LongContextQaInput, MultipleChunkQaOutput]):
         >>> client = Client(os.getenv("AA_TOKEN"))
         >>> task = LongContextQa(client)
         >>> input = LongContextQaInput(text="Lengthy text goes here...", question="Where does the text go?")
-        >>> logger = InMemoryTracer()
-        >>> output = task.run(input, logger)
+        >>> tracer = InMemoryTracer()
+        >>> output = task.run(input, tracer)
     """
 
     def __init__(
@@ -88,8 +88,8 @@ class LongContextQa(Task[LongContextQaInput, MultipleChunkQaOutput]):
         self._fallback_language = fallback_language
         assert fallback_language in allowed_languages
 
-    def run(self, input: LongContextQaInput, logger: Tracer) -> MultipleChunkQaOutput:
-        chunk_output = self._chunk_task.run(ChunkInput(text=input.text), logger)
+    def run(self, input: LongContextQaInput, tracer: Tracer) -> MultipleChunkQaOutput:
+        chunk_output = self._chunk_task.run(ChunkInput(text=input.text), tracer)
         retriever = QdrantInMemoryRetriever(
             self._client,
             documents=[Document(text=c) for c in chunk_output.chunks],
@@ -97,14 +97,14 @@ class LongContextQa(Task[LongContextQaInput, MultipleChunkQaOutput]):
             threshold=0.5,
         )
 
-        search_output = Search(retriever).run(SearchInput(query=input.question), logger)
+        search_output = Search(retriever).run(SearchInput(query=input.question), tracer)
 
         question_language = (
             self._language_detector.run(
                 DetectLanguageInput(
                     text=input.question, possible_languages=self.allowed_languages
                 ),
-                logger,
+                tracer,
             ).best_fit
             or self._fallback_language
         )
@@ -114,5 +114,5 @@ class LongContextQa(Task[LongContextQaInput, MultipleChunkQaOutput]):
             question=input.question,
             language=question_language,
         )
-        qa_output = self._multi_chunk_qa.run(multi_chunk_qa_input, logger)
+        qa_output = self._multi_chunk_qa.run(multi_chunk_qa_input, tracer)
         return qa_output

@@ -63,15 +63,15 @@ class QdrantSearch(Task[QdrantSearchInput, SearchOutput]):
                     ]
                 )
             )
-        >>> logger = InMemoryLogger(name="Qdrant Search")
-        >>> output = task.run(input, logger)
+        >>> tracer = InMemoryTracer()
+        >>> output = task.run(input, tracer)
     """
 
     def __init__(self, in_memory_retriever: QdrantInMemoryRetriever):
         super().__init__()
         self._in_memory_retriever = in_memory_retriever
 
-    def run(self, input: QdrantSearchInput, logger: Tracer) -> SearchOutput:
+    def run(self, input: QdrantSearchInput, tracer: Tracer) -> SearchOutput:
         results = self._in_memory_retriever.get_filtered_documents_with_scores(
             input.query, input.filter
         )
@@ -130,8 +130,8 @@ class EmbeddingBasedClassify(Task[ClassifyInput, ClassifyOutput]):
                 text="This is a happy text.",
                 labels={"positive", "negative"}
         >>> )
-        >>> logger = InMemoryLogger(name="Classify")
-        >>> output = task.run(input, logger)
+        >>> tracer = InMemoryTracer()
+        >>> output = task.run(input, tracer)
         >>> print(output.scores["positive"])
         0.7
     """
@@ -156,10 +156,10 @@ class EmbeddingBasedClassify(Task[ClassifyInput, ClassifyOutput]):
         )
         self._qdrant_search = QdrantSearch(retriever)
 
-    def run(self, input: ClassifyInput, logger: Tracer) -> ClassifyOutput:
+    def run(self, input: ClassifyInput, tracer: Tracer) -> ClassifyOutput:
         self._validate_input_labels(input)
         results_per_label = [
-            self._label_search(input.chunk, label, logger) for label in input.labels
+            self._label_search(input.chunk, label, tracer) for label in input.labels
         ]
         scores = self._calculate_scores(results_per_label)
         return ClassifyOutput(
@@ -186,7 +186,7 @@ class EmbeddingBasedClassify(Task[ClassifyInput, ClassifyOutput]):
         if unknown_labels:
             raise ValueError(f"Got unexpected labels: {', '.join(unknown_labels)}.")
 
-    def _label_search(self, chunk: Chunk, label: str, logger: Tracer) -> SearchOutput:
+    def _label_search(self, chunk: Chunk, label: str, tracer: Tracer) -> SearchOutput:
         search_input = QdrantSearchInput(
             query=chunk,
             filter=models.Filter(
@@ -198,7 +198,7 @@ class EmbeddingBasedClassify(Task[ClassifyInput, ClassifyOutput]):
                 ]
             ),
         )
-        return self._qdrant_search.run(search_input, logger)
+        return self._qdrant_search.run(search_input, tracer)
 
     def _calculate_scores(
         self, results_per_label: Sequence[SearchOutput]

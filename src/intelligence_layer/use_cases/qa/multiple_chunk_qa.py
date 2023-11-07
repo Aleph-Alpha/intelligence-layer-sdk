@@ -84,8 +84,8 @@ class MultipleChunkQa(Task[MultipleChunkQaInput, MultipleChunkQaOutput]):
                 question="Who likes pizza?",
                 language=Language("en")
             )
-        >>> logger = InMemoryLogger(name="Multiple Chunk QA")
-        >>> output = task.run(input, logger)
+        >>> tracer = InMemoryTracer()
+        >>> output = task.run(input, tracer)
         >>> print(output.answer)
         Mike likes pizza.
     """
@@ -104,7 +104,7 @@ Condense multiple answers into a single answer. Rely only on the provided answer
         self._single_chunk_qa = SingleChunkQa(client, model)
         self._model = model
 
-    def run(self, input: MultipleChunkQaInput, logger: Tracer) -> MultipleChunkQaOutput:
+    def run(self, input: MultipleChunkQaInput, tracer: Tracer) -> MultipleChunkQaOutput:
         qa_outputs = self._single_chunk_qa.run_concurrently(
             (
                 SingleChunkQaInput(
@@ -112,9 +112,9 @@ Condense multiple answers into a single answer. Rely only on the provided answer
                 )
                 for chunk in input.chunks
             ),
-            logger,
+            tracer,
         )
-        final_answer = self._merge_answers(input.question, qa_outputs, logger)
+        final_answer = self._merge_answers(input.question, qa_outputs, tracer)
 
         return MultipleChunkQaOutput(
             answer=final_answer,
@@ -133,7 +133,7 @@ Condense multiple answers into a single answer. Rely only on the provided answer
         self,
         question: str,
         qa_outputs: Iterable[SingleChunkQaOutput],
-        logger: Tracer,
+        tracer: Tracer,
     ) -> Optional[str]:
         answers = [output.answer for output in qa_outputs if output.answer]
         if len(answers) == 0:
@@ -147,10 +147,10 @@ Condense multiple answers into a single answer. Rely only on the provided answer
 
 Answers:
 {joined_answers}""",
-            logger,
+            tracer,
         ).response
 
-    def _instruct(self, input: str, logger: Tracer) -> PromptOutput:
+    def _instruct(self, input: str, tracer: Tracer) -> PromptOutput:
         return self._instruction.run(
             InstructInput(
                 instruction=self.MERGE_ANSWERS_INSTRUCTION,
@@ -158,5 +158,5 @@ Answers:
                 model=self._model,
                 response_prefix="\nFinal answer:",
             ),
-            logger,
+            tracer,
         )

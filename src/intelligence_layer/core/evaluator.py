@@ -57,7 +57,7 @@ class Evaluator(ABC, Generic[Input, ExpectedOutput, Evaluation, AggregatedEvalua
     def evaluate(
         self,
         input: Input,
-        logger: Tracer,
+        tracer: Tracer,
         expected_output: ExpectedOutput,
     ) -> Evaluation:
         """Executes the evaluation for this use-case.
@@ -68,7 +68,7 @@ class Evaluator(ABC, Generic[Input, ExpectedOutput, Evaluation, AggregatedEvalua
 
         Args:
             input: Interface to be passed to the task that shall be evaluated.
-            logger: Debug logger used for tracing of tasks.
+            tracer: Ttracer used for tracing of tasks.
             expected_output: Output that is expected from the task run with the supplied input.
         Returns:
             Evaluation: interface of the metrics that come from the evaluated task.
@@ -76,7 +76,7 @@ class Evaluator(ABC, Generic[Input, ExpectedOutput, Evaluation, AggregatedEvalua
         pass
 
     def evaluate_dataset(
-        self, dataset: Dataset[Input, ExpectedOutput], logger: Tracer
+        self, dataset: Dataset[Input, ExpectedOutput], tracer: Tracer
     ) -> AggregatedEvaluation:
         """Evaluates an entire datasets in a threaded manner and aggregates the results into an `AggregatedEvaluation`.
 
@@ -85,7 +85,7 @@ class Evaluator(ABC, Generic[Input, ExpectedOutput, Evaluation, AggregatedEvalua
 
         Args:
             dataset: Dataset that will be used to evaluate a task.
-            logger: Logger used for tracing.
+            tracer: tracer used for tracing.
         Returns:
             AggregatedEvaluation: The aggregated results of an evaluation run with a dataset.
         """
@@ -95,7 +95,7 @@ class Evaluator(ABC, Generic[Input, ExpectedOutput, Evaluation, AggregatedEvalua
                     executor.map(
                         lambda idx_example: self.evaluate(
                             idx_example.input,
-                            logger,
+                            tracer,
                             idx_example.expected_output,
                         ),
                         dataset.examples,

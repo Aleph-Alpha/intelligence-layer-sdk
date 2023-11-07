@@ -121,8 +121,8 @@ class LongContextLowCompressionSummarize(LongContextFewShotSummarize):
         >>> input = SummarizeInput(
                 text="This is a story about pizza. Tina hates pizza. However, Mike likes it. Pete strongly believes that pizza is the best thing to exist."
             )
-        >>> logger = InMemoryLogger(name="LongContextLowCompressionSummarize")
-        >>> output = task.run(input, logger)
+        >>> tracer = InMemoryTracer()
+        >>> output = task.run(input, tracer)
         >>> print(output.summary)
         Tina doesn't like pizza, but Mike and Pete do.
     """

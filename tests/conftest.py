@@ -35,7 +35,7 @@ def client(token: str) -> Client:
 
 
 @fixture
-def no_op_debug_logger() -> NoOpTracer:
+def no_op_tracer() -> NoOpTracer:
     return NoOpTracer()
 
 

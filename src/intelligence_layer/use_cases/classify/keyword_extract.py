@@ -151,7 +151,7 @@ class KeywordExtract(Task[KeywordExtractInput, frozenset[str]]):
         self._model = model
         self._maximum_tokens = maximum_tokens
 
-    def run(self, input: KeywordExtractInput, logger: Tracer) -> frozenset[str]:
+    def run(self, input: KeywordExtractInput, tracer: Tracer) -> frozenset[str]:
         config = self._few_shot_configs.get(input.language)
         if config is None:
             raise LanguageNotSupportedError(
@@ -164,6 +164,6 @@ class KeywordExtract(Task[KeywordExtractInput, frozenset[str]]):
                 model=self._model,
                 maximum_response_tokens=self._maximum_tokens,
             ),
-            logger,
+            tracer,
         )
         return frozenset(s.strip() for s in result.response.split(","))

@@ -57,8 +57,8 @@ class RetrieverBasedQa(Task[RetrieverBasedQaInput, MultipleChunkQaOutput]):
         >>> retriever = DocumentIndexRetriever(document_index, "my_namespace", "ancient_facts_collection", 3)
         >>> task = RetrieverBasedQa(client, retriever)
         >>> input_data = RetrieverBasedQaInput(question="When was Rome founded?")
-        >>> logger = InMemoryTracer()
-        >>> output = task.run(input_data, logger)
+        >>> tracer = InMemoryTracer()
+        >>> output = task.run(input_data, tracer)
         >>> print(output.answer)
         Rome was founded in 753 BC.
     """
@@ -84,16 +84,16 @@ class RetrieverBasedQa(Task[RetrieverBasedQaInput, MultipleChunkQaOutput]):
         assert fallback_language in allowed_languages
 
     def run(
-        self, input: RetrieverBasedQaInput, logger: Tracer
+        self, input: RetrieverBasedQaInput, tracer: Tracer
     ) -> MultipleChunkQaOutput:
-        search_output = self._search.run(SearchInput(query=input.question), logger)
+        search_output = self._search.run(SearchInput(query=input.question), tracer)
 
         question_language = (
             self._language_detector.run(
                 DetectLanguageInput(
                     text=input.question, possible_languages=self.allowed_languages
                 ),
-                logger,
+                tracer,
             ).best_fit
             or self._fallback_language
         )
@@ -103,4 +103,4 @@ class RetrieverBasedQa(Task[RetrieverBasedQaInput, MultipleChunkQaOutput]):
             question=input.question,
             language=question_language,
         )
-        return self._multi_chunk_qa.run(multi_chunk_qa_input, logger)
+        return self._multi_chunk_qa.run(multi_chunk_qa_input, tracer)

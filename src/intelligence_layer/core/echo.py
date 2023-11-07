@@ -62,8 +62,8 @@ class EchoTask(Task[EchoInput, EchoOutput]):
                 expected_completion="happy text",
                 model="luminous-base",
             )
-        >>> logger = InMemoryLogger(name="EchoTask")
-        >>> output = task.run(input, logger)
+        >>> tracer = InMemoryTracer()
+        >>> output = task.run(input, tracer)
         >>> print(output.tokens_with_log_probs[0].prob)
         0.6
     """
@@ -77,7 +77,7 @@ class EchoTask(Task[EchoInput, EchoOutput]):
         self._client = client
         self._completion = Complete(client=client)
 
-    def run(self, input: EchoInput, logger: Tracer) -> EchoOutput:
+    def run(self, input: EchoInput, tracer: Tracer) -> EchoOutput:
         # We tokenize the prompt separately so we don't have an overlap in the tokens.
         # If we don't do this, the end of the prompt and expected completion can be merged into unexpected tokens.
         expected_completion_tokens = self._tokenize(
@@ -95,7 +95,7 @@ class EchoTask(Task[EchoInput, EchoOutput]):
             request=self._completion_request(prompt=prompt),
             model=input.model,
         )
-        output = self._completion.run(completion_input, logger)
+        output = self._completion.run(completion_input, tracer)
         assert output.response.completions[0].log_probs
         log_prob_dicts = output.response.completions[0].log_probs[
             -len(expected_completion_tokens) :
