@@ -15,7 +15,7 @@ from intelligence_layer.core.tracer import (
 
 def test_debug_add_log_entries() -> None:
     before_log_time = datetime.utcnow()
-    logger = InMemoryTracer(name="test")
+    logger = InMemoryTracer()
     logger.log("Test", "message")
 
     assert len(logger.logs) == 1
@@ -27,7 +27,7 @@ def test_debug_add_log_entries() -> None:
 
 
 def test_can_add_child_debug_logger() -> None:
-    logger = InMemoryTracer(name="parent")
+    logger = InMemoryTracer()
     logger.span("child")
 
     assert len(logger.logs) == 1
@@ -39,7 +39,7 @@ def test_can_add_child_debug_logger() -> None:
 
 
 def test_can_add_parent_and_child_logs() -> None:
-    parent = InMemoryTracer(name="parent")
+    parent = InMemoryTracer()
     parent.log("One", 1)
     with parent.span("child") as child:
         child.log("Two", 2)
@@ -50,7 +50,7 @@ def test_can_add_parent_and_child_logs() -> None:
 
 
 def test_task_automatically_logs_input_and_output(client: Client) -> None:
-    logger = InMemoryTracer(name="completion")
+    logger = InMemoryTracer()
     input = CompleteInput(
         request=CompletionRequest(prompt=Prompt.from_text("test")),
         model="luminous-base",
@@ -68,7 +68,7 @@ def test_task_automatically_logs_input_and_output(client: Client) -> None:
 
 
 def test_logger_can_set_custom_start_time_for_log_entry() -> None:
-    logger = InMemoryTracer(name="completion")
+    logger = InMemoryTracer()
     timestamp = datetime.utcnow()
 
     logger.log("log", "message", timestamp)
@@ -78,7 +78,7 @@ def test_logger_can_set_custom_start_time_for_log_entry() -> None:
 
 
 def test_logger_can_set_custom_start_time_for_span() -> None:
-    logger = InMemoryTracer(name="completion")
+    logger = InMemoryTracer()
     start = datetime.utcnow()
 
     span = logger.span("span", start)
@@ -87,7 +87,7 @@ def test_logger_can_set_custom_start_time_for_span() -> None:
 
 
 def test_span_sets_end_timestamp() -> None:
-    logger = InMemoryTracer(name="completion")
+    logger = InMemoryTracer()
     start = datetime.utcnow()
 
     span = logger.span("span", start)
@@ -97,7 +97,7 @@ def test_span_sets_end_timestamp() -> None:
 
 
 def test_span_only_updates_end_timestamp_once() -> None:
-    logger = InMemoryTracer(name="completion")
+    logger = InMemoryTracer()
 
     span = logger.span("span")
     end = datetime.utcnow()
@@ -108,8 +108,8 @@ def test_span_only_updates_end_timestamp_once() -> None:
 
 
 def test_composite_logger(client: Client) -> None:
-    logger1 = InMemoryTracer(name="logger")
-    logger2 = InMemoryTracer(name="logger")
+    logger1 = InMemoryTracer()
+    logger2 = InMemoryTracer()
     input = CompleteInput(
         request=CompletionRequest(prompt=Prompt.from_text("test")),
         model="luminous-base",

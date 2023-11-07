@@ -57,7 +57,7 @@ class RetrieverBasedQa(Task[RetrieverBasedQaInput, MultipleChunkQaOutput]):
         >>> retriever = DocumentIndexRetriever(document_index, "my_namespace", "ancient_facts_collection", 3)
         >>> task = RetrieverBasedQa(client, retriever)
         >>> input_data = RetrieverBasedQaInput(question="When was Rome founded?")
-        >>> logger = InMemoryTracer(name="Retriever Based QA")
+        >>> logger = InMemoryTracer()
         >>> output = task.run(input_data, logger)
         >>> print(output.answer)
         Rome was founded in 753 BC.

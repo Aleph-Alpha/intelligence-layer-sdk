@@ -62,7 +62,7 @@ class LongContextQa(Task[LongContextQaInput, MultipleChunkQaOutput]):
         >>> client = Client(os.getenv("AA_TOKEN"))
         >>> task = LongContextQa(client)
         >>> input = LongContextQaInput(text="Lengthy text goes here...", question="Where does the text go?")
-        >>> logger = InMemoryTracer(name="Long Context QA")
+        >>> logger = InMemoryTracer()
         >>> output = task.run(input, logger)
     """
 

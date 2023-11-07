@@ -184,7 +184,7 @@ class CompositeLogger(TaskSpan):
         loggers: Loggers that will be forwarded all subsequent log and span calls.
 
     Example:
-        >>> sub_logger1 = InMemoryTracer(name="memory")
+        >>> sub_logger1 = InMemoryTracer()
         >>> sub_logger2 = FileTracer("./log.log")
         >>> logger = CompositeLogger([logger1, logger2])
         >>>
@@ -325,7 +325,6 @@ class InMemoryTracer(BaseModel, Tracer):
             log entries.
     """
 
-    name: str
     logs: list[Union[LogEntry, "InMemorySpan", "InMemoryTaskSpan"]] = []
 
     def log(
@@ -359,7 +358,7 @@ class InMemoryTracer(BaseModel, Tracer):
 
     def _rich_render_(self) -> Tree:
         """Renders the debug log via classes in the `rich` package"""
-        tree = Tree(label=self.name)
+        tree = Tree(label="Trace")
 
         for log in self.logs:
             tree.add(log._rich_render_())
@@ -374,6 +373,7 @@ class InMemoryTracer(BaseModel, Tracer):
 
 
 class InMemorySpan(InMemoryTracer, Span):
+    name: str
     start_timestamp: datetime = Field(default_factory=datetime.utcnow)
     end_timestamp: Optional[datetime] = None
 

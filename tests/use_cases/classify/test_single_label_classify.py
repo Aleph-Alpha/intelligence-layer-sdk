@@ -43,7 +43,7 @@ def test_single_label_classify_accomodates_labels_starting_with_spaces(
         chunk=Chunk("This is good"), labels=frozenset({" positive", "negative"})
     )
 
-    logger = InMemoryTracer(name="log")
+    logger = InMemoryTracer()
     classify_output = single_label_classify.run(classify_input, logger)
 
     # Output contains everything we expect

@@ -47,7 +47,7 @@ def file_debug_log(tmp_path: Path) -> FileTracer:
 
 def test_file_debug_logger(file_debug_log: FileTracer) -> None:
     input = "input"
-    expected = InMemoryTracer(name="")
+    expected = InMemoryTracer()
 
     TestTask().run(input, CompositeLogger([expected, file_debug_log]))
 
@@ -78,7 +78,7 @@ def parse_log(log_path: Path) -> InMemoryTracer:
 
 
 class TreeBuilder(BaseModel):
-    root: InMemoryTracer = InMemoryTracer(name="")
+    root: InMemoryTracer = InMemoryTracer()
     loggers: dict[UUID, InMemoryTracer] = Field(default_factory=dict)
     tasks: dict[UUID, InMemoryTaskSpan] = Field(default_factory=dict)
     spans: dict[UUID, InMemorySpan] = Field(default_factory=dict)
