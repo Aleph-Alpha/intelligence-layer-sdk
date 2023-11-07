@@ -48,7 +48,7 @@ jobs:
           poetry run mypy
       - name: Run pylama
         run: |
-          poetry run pylama
+          poetry run pylama src tests
 
 
   test:
