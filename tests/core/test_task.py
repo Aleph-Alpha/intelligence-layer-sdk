@@ -36,7 +36,7 @@ def dummy_decorator(
 ) -> Callable[["BaseTask", None, DebugLogger], None]:
     @wraps(f)
     def wrap(
-        self: BaseTask,
+        self: "BaseTask",
         input: None,
         logger: DebugLogger,
     ) -> None:
