@@ -9,6 +9,7 @@ from intelligence_layer.core.complete import (
     PromptOutput,
 )
 from intelligence_layer.core.detect_language import Language
+from intelligence_layer.use_cases.qa.luminous_prompts import LANGUAGES_QA_INSTRUCTIONS
 from intelligence_layer.use_cases.qa.single_chunk_qa import (
     SingleChunkQaInput,
     SingleChunkQaOutput,
@@ -26,6 +27,7 @@ class MultipleChunkQaInput(BaseModel):
         chunks: The list of chunks that will be used to answer the question.
             Can be arbitrarily long list of chunks.
         question: The question that will be answered based on the chunks.
+        language: The desired language of the answer. ISO 619 str with language e.g. en, fr, etc.
     """
 
     chunks: Sequence[Chunk]
@@ -75,6 +77,7 @@ class MultipleChunkQa(Task[MultipleChunkQaInput, MultipleChunkQaOutput]):
     Args:
         client: Aleph Alpha client instance for running model related API calls.
         model: A valid Aleph Alpha model name.
+        qa_instructions: All languages supported by the task. Mapping ISO619 str to prompt string
 
     Attributes:
         MERGE_ANSWERS_INSTRUCTION: The instruction template used for combining multiple answers into one.
@@ -84,7 +87,8 @@ class MultipleChunkQa(Task[MultipleChunkQaInput, MultipleChunkQaOutput]):
         >>> task = MultipleChunkQa(client)
         >>> input = MultipleChunkQaInput(
                 chunks=["Tina does not like pizza.", "Mike is a big fan of pizza."],
-                question="Who likes pizza?"
+                question="Who likes pizza?",
+                language=Language("en")
             )
         >>> logger = InMemoryLogger(name="Multiple Chunk QA")
         >>> output = task.run(input, logger)
@@ -99,11 +103,12 @@ Condense multiple answers into a single answer. Rely only on the provided answer
         self,
         client: Client,
         model: str = "luminous-supreme-control",
+        qa_instructions: dict[Language, str] = LANGUAGES_QA_INSTRUCTIONS,
     ):
         super().__init__()
         self._client = client
         self._instruction = Instruct(client)
-        self._single_chunk_qa = SingleChunkQa(client, model)
+        self._single_chunk_qa = SingleChunkQa(client, model, qa_instructions)
         self._model = model
 
     def run(
