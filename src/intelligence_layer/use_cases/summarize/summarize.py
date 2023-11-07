@@ -19,7 +19,7 @@ class SingleChunkSummarizeInput(BaseModel):
 
     Attributes:
         chunk: The text chunk to be summarized.
-        language: The desired language of the summary.
+        language: The desired language of the summary. ISO 619 str with language e.g. en, fr, etc.
     """
 
     chunk: Chunk
