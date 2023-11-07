@@ -27,9 +27,9 @@ jupyter = "^1.0.0"
 requests = "^2.31.0"
 pytest-xdist = "^3.3.1"
 langdetect = "^1.0.9"
-mypy = "^1.6.1"
 
 [tool.poetry.group.dev.dependencies]
+mypy = "^1.6.1"
 pytest = "*"
 black = "*"
 pre-commit = "*"
