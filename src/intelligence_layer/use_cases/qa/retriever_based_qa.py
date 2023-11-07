@@ -1,3 +1,4 @@
+from typing import Sequence
 from aleph_alpha_client import (
     Client,
 )
@@ -7,7 +8,9 @@ from intelligence_layer.core.detect_language import (
     DetectLanguageInput,
     Language,
 )
-
+from intelligence_layer.use_cases.qa.luminous_prompts import (
+    LANGUAGES_QA_INSTRUCTIONS as LUMINOUS_LANGUAGES_QA_INSTRUCTIONS,
+)
 from intelligence_layer.use_cases.qa.multiple_chunk_qa import (
     MultipleChunkQa,
     MultipleChunkQaInput,
@@ -63,6 +66,10 @@ class RetrieverBasedQa(Task[RetrieverBasedQaInput, MultipleChunkQaOutput]):
         client: Client,
         retriever: BaseRetriever,
         model: str = "luminous-supreme-control",
+        allowed_languages: Sequence[Language] = list(
+            LUMINOUS_LANGUAGES_QA_INSTRUCTIONS.keys()
+        ),
+        fallback_language: Language = Language("en"),
     ):
         super().__init__()
         self._client = client
@@ -70,7 +77,8 @@ class RetrieverBasedQa(Task[RetrieverBasedQaInput, MultipleChunkQaOutput]):
         self._search = Search(retriever)
         self._multi_chunk_qa = MultipleChunkQa(self._client, self._model)
         self._language_detector = DetectLanguage(threshold=0.5)
-        self._fallback_language = Language("en")
+        self.allowed_languages = allowed_languages
+        self._fallback_language = fallback_language
 
     def run(
         self, input: RetrieverBasedQaInput, logger: DebugLogger
@@ -79,14 +87,10 @@ class RetrieverBasedQa(Task[RetrieverBasedQaInput, MultipleChunkQaOutput]):
 
         question_language = (
             self._language_detector.run(
-                DetectLanguageInput(text=input.question), logger
-            ).best_fit
-            or self._fallback_language
-        )
-
-        question_language = (
-            self._language_detector.run(
-                DetectLanguageInput(text=input.question), logger
+                DetectLanguageInput(
+                    text=input.question, possible_languages=self.allowed_languages
+                ),
+                logger,
             ).best_fit
             or self._fallback_language
         )
