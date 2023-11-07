@@ -20,7 +20,7 @@ test('parseLogFile can parse JSON entries from a file', async () => {
 });
 
 function toFile(expected: Tracer) {
-	const entries = toFlatEntries("test", expected.entries);
+	const entries = toFlatEntries('test', expected.entries);
 	const file = new File(
 		entries.map((entry) => JSON.stringify(entry) + '\n'),
 		'ignored.txt'
