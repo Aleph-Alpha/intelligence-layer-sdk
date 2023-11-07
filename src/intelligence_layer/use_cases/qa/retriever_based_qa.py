@@ -47,6 +47,8 @@ class RetrieverBasedQa(Task[RetrieverBasedQaInput, MultipleChunkQaOutput]):
         client: Aleph Alpha client instance for running model related API calls.
         retriever: Used to access and return a set of texts.
         model: A valid Aleph Alpha model name.
+        allowed_languages: List of languages to which the language detection is limited (ISO619).
+        fallback_language: The default language of the output.
 
     Example:
         >>> token = os.getenv("AA_TOKEN")
