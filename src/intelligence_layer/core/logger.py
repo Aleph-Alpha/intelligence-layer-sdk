@@ -28,6 +28,8 @@ if TYPE_CHECKING:
         | float
         | str
         | Sequence["PydanticSerializable"]
+        | set["PydanticSerializable"]
+        | frozenset["PydanticSerializable"]
         | Mapping[str, "PydanticSerializable"]
         | None
         | bool
@@ -41,6 +43,8 @@ else:
         | float
         | str
         | Sequence["PydanticSerializable"]
+        | set["PydanticSerializable"]
+        | frozenset["PydanticSerializable"]
         | Mapping[str, "PydanticSerializable"]
         | None
         | bool
