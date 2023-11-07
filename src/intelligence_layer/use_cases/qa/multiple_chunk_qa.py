@@ -83,9 +83,9 @@ class MultipleChunkQa(Task[MultipleChunkQaInput, MultipleChunkQaOutput]):
         >>> client = Client(token="AA_TOKEN")
         >>> task = MultipleChunkQa(client)
         >>> input = MultipleChunkQaInput(
-        >>>     chunks=["Tina does not like pizza.", "Mike is a big fan of pizza."],
-        >>>     question="Who likes pizza?"
-        >>> )
+                chunks=["Tina does not like pizza.", "Mike is a big fan of pizza."],
+                question="Who likes pizza?"
+            )
         >>> logger = InMemoryLogger(name="Multiple Chunk QA")
         >>> output = task.run(input, logger)
         >>> print(output.answer)

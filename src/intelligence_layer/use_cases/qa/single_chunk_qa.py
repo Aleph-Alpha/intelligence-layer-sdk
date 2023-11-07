@@ -82,9 +82,9 @@ class SingleChunkQa(Task[SingleChunkQaInput, SingleChunkQaOutput]):
         >>> client = Client(os.getenv("AA_TOKEN"))
         >>> task = SingleChunkQa(client)
         >>> input = SingleChunkQaInput(
-        >>>     chunk="Tina does not like pizza. However, Mike does.",
-        >>>     question="Who likes pizza?"
-        >>> )
+                chunk="Tina does not like pizza. However, Mike does.",
+                question="Who likes pizza?"
+            )
         >>> logger = InMemoryLogger(name="Single Chunk QA")
         >>> output = task.run(input, logger)
         >>> print(output.answer)

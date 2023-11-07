@@ -46,24 +46,24 @@ class QdrantSearch(Task[QdrantSearchInput, SearchOutput]):
     Example:
         >>> client = Client(os.getenv("AA_TOKEN"))
         >>> documents = [
-        >>>  Document(
-        >>>         text="West and East Germany reunited in 1990.
-        >>>         metadata={"title": "Germany"}
-        >>>     )
-        >>> ]
+        >>>     Document(
+                    text="West and East Germany reunited in 1990.
+                    metadata={"title": "Germany"}
+                )
+            ]
         >>> retriever = InMemoryRetriever(client, documents)
         >>> task = QdrantSearch(retriever)
         >>> input = QdrantSearchInput(
-        >>>     query="When did East and West Germany reunite?"
-        >>>     filter=models.Filter(
-        >>>         must=[
-        >>>             models.FieldCondition(
-        >>>                 key="metadata.title",
-        >>>                 match="Germany",
-        >>>             ),
-        >>>         ]
-        >>>     )
-        >>> )
+                query="When did East and West Germany reunite?"
+                filter=models.Filter(
+                    must=[
+                        models.FieldCondition(
+                            key="metadata.title",
+                            match="Germany",
+                        ),
+                    ]
+                )
+            )
         >>> logger = InMemoryLogger(name="Qdrant Search")
         >>> output = task.run(input, logger)
     """
@@ -112,24 +112,24 @@ class EmbeddingBasedClassify(Task[ClassifyInput, ClassifyOutput]):
 
     Example:
         >>> labels_with_examples = [
-        >>>     LabelWithExamples(
-        >>>         name="positive",
-        >>>         examples=[
-        >>>             "I really like this.",
-        >>>         ],
-        >>>     ),
-        >>>     LabelWithExamples(
-        >>>         name="negative",
-        >>>         examples=[
-        >>>             "I really dislike this.",
-        >>>         ],
-        >>>     ),
+                LabelWithExamples(
+                    name="positive",
+                    examples=[
+                        "I really like this.",
+                    ],
+                ),
+                LabelWithExamples(
+                    name="negative",
+                    examples=[
+                        "I really dislike this.",
+                    ],
+                ),
         >>> ]
         >>> client = Client(token="AA_TOKEN")
         >>> task = EmbeddingBasedClassify(labels_with_examples, client)
         >>> input = ClassifyInput(
-        >>>     text="This is a happy text.",
-        >>>     labels={"positive", "negative"}
+                text="This is a happy text.",
+                labels={"positive", "negative"}
         >>> )
         >>> logger = InMemoryLogger(name="Classify")
         >>> output = task.run(input, logger)

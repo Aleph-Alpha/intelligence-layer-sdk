@@ -116,9 +116,9 @@ class Instruct(Task[InstructInput, PromptOutput]):
         >>> client = Client(os.getenv("AA_TOKEN"))
         >>> task = Instruction(client)
         >>> input = InstructionInput(
-        >>>     instruction="Translate the following to text to German.",
-        >>>     input="An apple a day keeps the doctor away."
-        >>> )
+                instruction="Translate the following to text to German.",
+                input="An apple a day keeps the doctor away."
+            )
         >>> logger = InMemoryLogger(name="Instruction")
         >>> output = task.run(input, logger)
         >>> print(output.response)
@@ -224,18 +224,18 @@ class FewShot(Task[FewShotInput, PromptOutput]):
         >>> client = Client(os.getenv("AA_TOKEN"))
         >>> task = FewShot(client)
         >>> input = FewShotInput(
-        >>>     input="What is the capital of Germany?",
-        >>>     few_shot_config=FewShotConfig(
-        >>>         instruction="Answer each question.",
-        >>>         examples=[
-        >>>             FewShotExample(input="How high is Mount Everest?", response="8848 metres."),
-        >>>             FewShotExample(input="When was Caesar killed?", response="44 AD."),
-        >>>         ],
-        >>>         input_prefix="Question",
-        >>>         response_prefix="Answer",
-        >>>         model="luminous-base"
-        >>>     )
-        >>> )
+                input="What is the capital of Germany?",
+                few_shot_config=FewShotConfig(
+                    instruction="Answer each question.",
+                    examples=[
+                        FewShotExample(input="How high is Mount Everest?", response="8848 metres."),
+                        FewShotExample(input="When was Caesar killed?", response="44 AD."),
+                    ],
+                    input_prefix="Question",
+                    response_prefix="Answer",
+                    model="luminous-base"
+                )
+            )
         >>> logger = InMemoryLogger(name="FewShot")
         >>> output = task.run(input, logger)
         >>> print(output.response)
