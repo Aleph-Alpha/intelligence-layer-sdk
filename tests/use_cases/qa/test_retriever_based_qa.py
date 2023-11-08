@@ -1,6 +1,5 @@
 from typing import Sequence
 
-import pytest
 from aleph_alpha_client import Client
 from pytest import fixture
 
@@ -11,7 +10,6 @@ from intelligence_layer.connectors.retrievers.document_index_retriever import (
 from intelligence_layer.connectors.retrievers.qdrant_in_memory_retriever import (
     QdrantInMemoryRetriever,
 )
-from intelligence_layer.core.detect_language import Language
 from intelligence_layer.core.tracer import NoOpTracer
 from intelligence_layer.use_cases.qa.retriever_based_qa import (
     RetrieverBasedQa,
@@ -75,16 +73,3 @@ def test_retriever_based_qa_with_document_index(
     output = retriever_based_qa_with_document_index.run(input, no_op_tracer)
     assert output.answer
     assert "1888" in output.answer
-
-
-def test_retriever_based_qa_fallback_language_throws_an_assertion_error(
-    client: Client, asymmetric_in_memory_retriever: QdrantInMemoryRetriever
-) -> None:
-    with pytest.raises(AssertionError) as _:
-        RetrieverBasedQa(
-            client,
-            asymmetric_in_memory_retriever,
-            model="luminous-base-control",
-            allowed_languages=[Language("en"), Language("de")],
-            fallback_language=Language("es"),
-        )

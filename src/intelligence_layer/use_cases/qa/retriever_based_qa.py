@@ -1,20 +1,11 @@
-from typing import Sequence
-
 from aleph_alpha_client import Client
 from pydantic import BaseModel
 
 from intelligence_layer.connectors.retrievers.base_retriever import BaseRetriever
 from intelligence_layer.core.chunk import Chunk
-from intelligence_layer.core.detect_language import (
-    DetectLanguage,
-    DetectLanguageInput,
-    Language,
-)
+from intelligence_layer.core.detect_language import Language
 from intelligence_layer.core.task import Task
 from intelligence_layer.core.tracer import TaskSpan
-from intelligence_layer.use_cases.qa.luminous_prompts import (
-    LANGUAGES_QA_INSTRUCTIONS as LUMINOUS_LANGUAGES_QA_INSTRUCTIONS,
-)
 from intelligence_layer.use_cases.qa.multiple_chunk_qa import (
     MultipleChunkQa,
     MultipleChunkQaInput,
@@ -29,9 +20,11 @@ class RetrieverBasedQaInput(BaseModel):
     Attributes:
         question: The question to be answered based on the documents accessed
             by the retriever.
+        language: The desired language of the answer. ISO 619 str with language e.g. en, fr, etc.
     """
 
     question: str
+    language: Language = Language("en")
 
 
 class RetrieverBasedQa(Task[RetrieverBasedQaInput, MultipleChunkQaOutput]):
@@ -68,39 +61,21 @@ class RetrieverBasedQa(Task[RetrieverBasedQaInput, MultipleChunkQaOutput]):
         client: Client,
         retriever: BaseRetriever,
         model: str = "luminous-supreme-control",
-        allowed_languages: Sequence[Language] = list(
-            LUMINOUS_LANGUAGES_QA_INSTRUCTIONS.keys()
-        ),
-        fallback_language: Language = Language("en"),
     ):
         super().__init__()
         self._client = client
         self._model = model
         self._search = Search(retriever)
         self._multi_chunk_qa = MultipleChunkQa(self._client, self._model)
-        self._language_detector = DetectLanguage(threshold=0.5)
-        self.allowed_languages = allowed_languages
-        self._fallback_language = fallback_language
-        assert fallback_language in allowed_languages
 
     def do_run(
         self, input: RetrieverBasedQaInput, task_span: TaskSpan
     ) -> MultipleChunkQaOutput:
         search_output = self._search.run(SearchInput(query=input.question), task_span)
 
-        question_language = (
-            self._language_detector.run(
-                DetectLanguageInput(
-                    text=input.question, possible_languages=self.allowed_languages
-                ),
-                task_span,
-            ).best_fit
-            or self._fallback_language
-        )
-
         multi_chunk_qa_input = MultipleChunkQaInput(
             chunks=[Chunk(result.document.text) for result in search_output.results],
             question=input.question,
-            language=question_language,
+            language=input.language,
         )
         return self._multi_chunk_qa.run(multi_chunk_qa_input, task_span)

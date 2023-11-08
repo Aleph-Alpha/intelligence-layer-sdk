@@ -1,8 +1,6 @@
-import pytest
 from aleph_alpha_client import Client
 from pytest import fixture
 
-from intelligence_layer.core.detect_language import Language
 from intelligence_layer.core.tracer import NoOpTracer
 from intelligence_layer.use_cases.qa.long_context_qa import (
     LongContextQa,
@@ -80,12 +78,3 @@ def test_multiple_qa_on_single_task_instance(qa: LongContextQa) -> None:
     output = qa.run(input, NoOpTracer())
 
     assert output.answer is None
-
-
-def test_fallback_language_throws_an_assertion_error(client: Client) -> None:
-    with pytest.raises(AssertionError) as _:
-        LongContextQa(
-            client,
-            allowed_languages=[Language("en"), Language("de")],
-            fallback_language=Language("es"),
-        )
