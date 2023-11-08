@@ -79,7 +79,7 @@ You can add it to the poetry dependencies by adding the following in the pyproje
 ```toml
 [tool.poetry.dependencies]
 python = ">=3.10,<3.13"
-intelligence-layer = { git = "https://github.com/aleph-alpha-intelligence-layer/intelligence-layer.git", branch = "main", extras = ["${GITHUB_TOKEN}"] }
+intelligence-layer = { git = "https://github.com/Aleph-Alpha/intelligence-layer.git", branch = "main", extras = ["${GITHUB_TOKEN}"] }
 ```
 
 Remember to run
@@ -91,13 +91,13 @@ to update dependencies.
 Alternatively you can also add it to a `requirements.txt`
 
 ```txt
-git+https://${GITHUB_TOKEN}@github.com/aleph-alpha-intelligence-layer/intelligence-layer.git
+git+https://${GITHUB_TOKEN}https://github.com/Aleph-Alpha/intelligence-layer.git
 ```
 
 Finally you can also install the package manually using pip
 
 ```bash
-pip install git+https://$GITHUB_TOKEN@github.com/aleph-alpha-intelligence-layer/intelligence-layer.git
+pip install git+https://$GITHUB_TOKEN@https://github.com/Aleph-Alpha/intelligence-layer.git
 ```
 
 Now the Intelligence Layer should be available as a Python package and ready to use.
