@@ -75,18 +75,20 @@ export GITHUB_TOKEN=<YOUR_GITHUB_TOKEN>
 
 We recommend setting up a dedicated virtual environment. You can do so by using [conda](https://conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html#creating-an-environment-with-commands) or [venv](https://docs.python.org/3/library/venv.html) or [poetry](https://python-poetry.org/).
 
-You can add it to the poetry dependencies by adding the following in the pyproject.toml
+You can add `intelligence-layer` to poetry dependencies. To do so, due to the limitations of poetry, you will need to modify the `git config` to make use of the `GITHUB_TOKEN`. To do so, prior to `poetry install`, run:
+
+```bash
+git config --global url."https://${GITHUB_TOKEN}@github.com/Aleph-Alpha/intelligence-layer".insteadOf "https://github.com/Aleph-Alpha/intelligence-layer"
+```
+
+after that add:
+
 ```toml
 [tool.poetry.dependencies]
 python = ">=3.10,<3.13"
-intelligence-layer = { git = "https://github.com/Aleph-Alpha/intelligence-layer.git", branch = "main", extras = ["${GITHUB_TOKEN}"] }
+intelligence-layer = { git = "https://github.com/Aleph-Alpha/intelligence-layer.git", branch = "main"}
 ```
-
-Remember to run
-```bash
-poetry lock
-```
-to update dependencies.
+to your `pyproject.toml` and run `poetry update`
 
 Alternatively you can also add it to a `requirements.txt`
 
