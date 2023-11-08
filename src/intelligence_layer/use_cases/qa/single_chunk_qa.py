@@ -95,12 +95,10 @@ class SingleChunkQa(Task[SingleChunkQaInput, SingleChunkQaOutput]):
     def do_run(
         self, input: SingleChunkQaInput, task_span: TaskSpan
     ) -> SingleChunkQaOutput:
-        try:
-            prompt = LUMINOUS_LANGUAGES_QA_INSTRUCTIONS[input.language]
-        except KeyError:
-            allowed_languages = list(LUMINOUS_LANGUAGES_QA_INSTRUCTIONS.keys())
+        prompt = LUMINOUS_LANGUAGES_QA_INSTRUCTIONS.get(input.language)
+        if not prompt:
             raise LanguageNotSupportedError(
-                f"{input.language} not in allowed languages ({allowed_languages})"
+                f"{input.language} not in ({', '.join(LUMINOUS_LANGUAGES_QA_INSTRUCTIONS.keys())})"
             )
 
         output = self._instruct(
