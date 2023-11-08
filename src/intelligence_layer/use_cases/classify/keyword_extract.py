@@ -138,7 +138,11 @@ class KeywordExtractInput(BaseModel):
     language: Language
 
 
-class KeywordExtract(Task[KeywordExtractInput, frozenset[str]]):
+class KeywordExtractOutput(BaseModel):
+    keywords: frozenset[str]
+
+
+class KeywordExtract(Task[KeywordExtractInput, KeywordExtractOutput]):
     def __init__(
         self,
         client: Client,
@@ -151,7 +155,9 @@ class KeywordExtract(Task[KeywordExtractInput, frozenset[str]]):
         self._model = model
         self._maximum_tokens = maximum_tokens
 
-    def do_run(self, input: KeywordExtractInput, task_span: TaskSpan) -> frozenset[str]:
+    def do_run(
+        self, input: KeywordExtractInput, task_span: TaskSpan
+    ) -> KeywordExtractOutput:
         config = self._few_shot_configs.get(input.language)
         if config is None:
             raise LanguageNotSupportedError(
@@ -166,4 +172,6 @@ class KeywordExtract(Task[KeywordExtractInput, frozenset[str]]):
             ),
             task_span,
         )
-        return frozenset(s.strip() for s in result.response.split(","))
+        return KeywordExtractOutput(
+            keywords=frozenset(s.strip() for s in result.response.split(","))
+        )

@@ -21,7 +21,7 @@ def test_keyword_extract_works(keyword_extract: KeywordExtract) -> None:
     )
 
     result = keyword_extract.run(input, NoOpTracer())
-    assert "computers" in [keyword.lower() for keyword in result]
+    assert "computers" in [keyword.lower() for keyword in result.keywords]
 
 
 def test_keyword_extract_raises_for_unsupported_language(
