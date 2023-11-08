@@ -55,7 +55,7 @@ class LongContextFewShotSummarize(
         fallback_language: Language,
     ) -> None:
         self._single_chunk_summarize = SingleChunkFewShotSummarize(
-            client, few_shot_configs, model, max_generated_tokens
+            client, model, max_generated_tokens, few_shot_configs
         )
         self._chunk = ChunkTask(client, model, max_tokens_per_chunk)
         self._allowed_langauges = allowed_languages
