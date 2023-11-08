@@ -91,13 +91,13 @@ to update dependencies.
 Alternatively you can also add it to a `requirements.txt`
 
 ```txt
-git+https://${GITHUB_TOKEN}https://github.com/Aleph-Alpha/intelligence-layer.git
+git+https://$GITHUB_TOKEN@github.com/Aleph-Alpha/intelligence-layer.git
 ```
 
 Finally you can also install the package manually using pip
 
 ```bash
-pip install git+https://$GITHUB_TOKEN@https://github.com/Aleph-Alpha/intelligence-layer.git
+pip install git+https://$GITHUB_TOKEN@github.com/Aleph-Alpha/intelligence-layer.git
 ```
 
 Now the Intelligence Layer should be available as a Python package and ready to use.
