@@ -3,7 +3,16 @@ from contextlib import AbstractContextManager
 from datetime import datetime
 from pathlib import Path
 from types import TracebackType
-from typing import TYPE_CHECKING, Any, Mapping, Optional, Sequence, Union
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    Generic,
+    Mapping,
+    Optional,
+    Sequence,
+    TypeVar,
+    Union,
+)
 from uuid import UUID, uuid4
 
 from pydantic import BaseModel, Field, RootModel, SerializeAsAny
@@ -175,7 +184,10 @@ class TaskSpan(Span):
         ...
 
 
-class CompositeTracer(TaskSpan):
+TracerVar = TypeVar("TracerVar", bound=Tracer)
+
+
+class CompositeTracer(Tracer, Generic[TracerVar]):
     """A :class:`Tracer` that allows for recording to multiple tracers simultaneously.
 
     Each log-entry and span will be forwarded to all subtracers.
@@ -191,8 +203,38 @@ class CompositeTracer(TaskSpan):
         >>> SomeTask.run(input, tracer)
     """
 
-    def __init__(self, tracers: Sequence[Tracer | Span | TaskSpan]) -> None:
+    def __init__(self, tracers: Sequence[TracerVar]) -> None:
         self.tracers = tracers
+
+    def span(
+        self, name: str, timestamp: Optional[datetime] = None
+    ) -> "CompositeSpan[Span]":
+        timestamp = timestamp or datetime.utcnow()
+        return CompositeSpan([tracer.span(name, timestamp) for tracer in self.tracers])
+
+    def task_span(
+        self,
+        task_name: str,
+        input: PydanticSerializable,
+        timestamp: Optional[datetime] = None,
+    ) -> "CompositeTaskSpan":
+        timestamp = timestamp or datetime.utcnow()
+        return CompositeTaskSpan(
+            [tracer.task_span(task_name, input, timestamp) for tracer in self.tracers]
+        )
+
+
+SpanVar = TypeVar("SpanVar", bound=Span)
+
+
+class CompositeSpan(Generic[SpanVar], CompositeTracer[SpanVar], Span):
+    """A :class:`Span` that allows for recording to multiple spans simultaneously.
+
+    Each log-entry and span will be forwarded to all subspans.
+
+    Args:
+        tracers: spans that will be forwarded all subsequent log and span calls.
+    """
 
     def log(
         self,
@@ -202,38 +244,26 @@ class CompositeTracer(TaskSpan):
     ) -> None:
         timestamp = timestamp or datetime.utcnow()
         for tracer in self.tracers:
-            if isinstance(tracer, Span):
-                tracer.log(message, value, timestamp)
-
-    def span(
-        self, name: str, timestamp: Optional[datetime] = None
-    ) -> "CompositeTracer":
-        timestamp = timestamp or datetime.utcnow()
-        return CompositeTracer(
-            [tracer.span(name, timestamp) for tracer in self.tracers]
-        )
-
-    def task_span(
-        self,
-        task_name: str,
-        input: PydanticSerializable,
-        timestamp: Optional[datetime] = None,
-    ) -> "CompositeTracer":
-        timestamp = timestamp or datetime.utcnow()
-        return CompositeTracer(
-            [tracer.task_span(task_name, input, timestamp) for tracer in self.tracers]
-        )
+            tracer.log(message, value, timestamp)
 
     def end(self, timestamp: Optional[datetime] = None) -> None:
         timestamp = timestamp or datetime.utcnow()
         for tracer in self.tracers:
-            if isinstance(tracer, Span):
-                tracer.end(timestamp)
+            tracer.end(timestamp)
+
+
+class CompositeTaskSpan(CompositeSpan[TaskSpan], TaskSpan):
+    """A :class:`TaskSpan` that allows for recording to multiple TaskSpans simultaneously.
+
+    Each log-entry and span will be forwarded to all subspans.
+
+    Args:
+        tracers: task spans that will be forwarded all subsequent log and span calls.
+    """
 
     def record_output(self, output: PydanticSerializable) -> None:
         for tracer in self.tracers:
-            if isinstance(tracer, TaskSpan):
-                tracer.record_output(output)
+            tracer.record_output(output)
 
 
 class NoOpTracer(TaskSpan):
