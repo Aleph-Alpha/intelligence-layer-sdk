@@ -1,14 +1,10 @@
-from typing import Mapping, Sequence
+from typing import Mapping
 
 from aleph_alpha_client import Client
 
 from intelligence_layer.core.chunk import ChunkInput, ChunkTask
 from intelligence_layer.core.complete import FewShotConfig
-from intelligence_layer.core.detect_language import (
-    DetectLanguage,
-    DetectLanguageInput,
-    Language,
-)
+from intelligence_layer.core.detect_language import Language
 from intelligence_layer.core.task import Task
 from intelligence_layer.core.tracer import TaskSpan
 from intelligence_layer.use_cases.summarize.single_chunk_few_shot_summarize import (
@@ -51,33 +47,19 @@ class LongContextFewShotSummarize(
         model: str,
         max_generated_tokens: int,
         max_tokens_per_chunk: int,
-        allowed_languages: Sequence[Language],
-        fallback_language: Language,
     ) -> None:
         self._single_chunk_summarize = SingleChunkFewShotSummarize(
             client, model, max_generated_tokens, few_shot_configs
         )
         self._chunk = ChunkTask(client, model, max_tokens_per_chunk)
-        self._allowed_langauges = allowed_languages
-        self._fallback_language = fallback_language
-        self._detect_language = DetectLanguage()
 
     def do_run(
         self, input: LongContextSummarizeInput, task_span: TaskSpan
     ) -> LongContextSummarizeOutput:
-        lang = (
-            self._detect_language.run(
-                DetectLanguageInput(
-                    text=input.text, possible_languages=self._allowed_langauges
-                ),
-                task_span,
-            ).best_fit
-            or self._fallback_language
-        )
         chunk_output = self._chunk.run(ChunkInput(text=input.text), task_span)
         summary_outputs = self._single_chunk_summarize.run_concurrently(
             [
-                SingleChunkSummarizeInput(chunk=c, language=lang)
+                SingleChunkSummarizeInput(chunk=c, language=input.language)
                 for c in chunk_output.chunks
             ],
             task_span,

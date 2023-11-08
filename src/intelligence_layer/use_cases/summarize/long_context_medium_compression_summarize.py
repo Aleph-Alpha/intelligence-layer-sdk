@@ -127,17 +127,11 @@ class LongContextMediumCompressionSummarize(LongContextFewShotSummarize):
         Tina doesn't like pizza, but Mike and Pete do.
     """
 
-    def __init__(
-        self, client: Client, fallback_language: Language = Language("en")
-    ) -> None:
+    def __init__(self, client: Client) -> None:
         super().__init__(
             client,
             FEW_SHOT_CONFIGS,
             model="luminous-extended",
             max_generated_tokens=128,
             max_tokens_per_chunk=400,
-            allowed_languages=[
-                Language(lang) for lang in ["en", "de", "es", "fr", "it"]
-            ],
-            fallback_language=fallback_language,
         )

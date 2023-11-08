@@ -11,9 +11,11 @@ class LongContextSummarizeInput(BaseModel):
 
     Attributes:
         text: A text of any length.
+        language: The desired language of the summary. ISO 619 str with language e.g. en, fr, etc.
     """
 
     text: str
+    language: Language = Language("en")
 
 
 class PartialSummary(BaseModel):
@@ -40,7 +42,7 @@ class SingleChunkSummarizeInput(BaseModel):
     """
 
     chunk: Chunk
-    language: Language
+    language: Language = Language("en")
 
 
 class SingleChunkSummarizeOutput(BaseModel):
