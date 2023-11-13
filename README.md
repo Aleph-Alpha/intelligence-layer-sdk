@@ -22,8 +22,9 @@ The key features of the Intelligence Layer are:
 4. [Use-case index](#use-case-index)
 5. [How to make your own use case](#how-to-make-your-own-use-case)
 6. [Running the Trace Viewer](#running-the-trace-viewer)
-7. [References](#references)
-8. [License](#license)
+7. [Using the Intelligence Layer in Docker](#using-the-intelligence-layer-in-docker)
+8. [References](#references)
+9. [License](#license)
 
 ## Getting started
 
@@ -63,6 +64,7 @@ cd src/examples && poetry run jupyter lab
 
 To install this as a dependency in your project, you need a [Github access token](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens#creating-a-personal-access-token-classic).
 This token needs the following permissions
+
 - `repo`
 - `read:packages`
 
@@ -71,6 +73,7 @@ Set your access token:
 ```bash
 export GITHUB_TOKEN=<YOUR_GITHUB_TOKEN>
 ```
+
 [](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens#creating-a-personal-access-token-classic)
 
 We recommend setting up a dedicated virtual environment. You can do so by using [conda](https://conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html#creating-an-environment-with-commands) or [venv](https://docs.python.org/3/library/venv.html) or [poetry](https://python-poetry.org/).
@@ -88,6 +91,7 @@ after that add:
 python = ">=3.10,<3.13"
 intelligence-layer = { git = "https://github.com/Aleph-Alpha/intelligence-layer.git", branch = "main"}
 ```
+
 to your `pyproject.toml` and run `poetry update`
 
 Alternatively you can also add it to a `requirements.txt`
@@ -154,6 +158,47 @@ docker run -p 3000:3000 ghcr.io/aleph-alpha/intelligence-layer-trace-viewer:late
 ```
 
 Finally, visit `http://localhost:3000`, where you can upload a trace to interact with the data.
+
+## Using the Intelligence Layer in Docker
+
+To use the Intelligence Layer in Docker, a few settings are needed to not leak your Github token.
+
+You will need your Github token set in your environment.
+
+Add the following to your docker container:
+
+```dockerfile
+RUN apt-get -y update
+RUN apt-get -y install git
+RUN --mount=type=secret,id=GITHUB_TOKEN \
+    git config --global url."https://$(cat /run/secrets/GITHUB_TOKEN)@github.com/Aleph-Alpha/intelligence-layer".insteadOf "https://github.com/Aleph-Alpha/intelligence-layer" \
+    && poetry install --no-dev --no-interaction --no-ansi \
+    &&  rm -f ~/.gitconfig
+```
+
+Then to build your container, use the following command:
+
+```bash
+GITHUB_TOKEN=$GITHUB_TOKEN docker build --secret id=GITHUB_TOKEN <PATH_TO_DOCKERFILE>
+```
+
+If using a Docker compose file, add the following to your `docker-compose.yml`:
+
+```yaml
+services:
+  service-using-intelligence-layer:
+    build:
+      context: .
+      secrets:
+        - GITHUB_TOKEN
+
+secrets:
+  GITHUB_TOKEN:
+    # Needs to be set in your environment under the same name.
+    environment: "GITHUB_TOKEN"
+```
+
+You can read more about this in the [official documentation](https://docs.docker.com/engine/swarm/secrets/).
 
 ## References
 
