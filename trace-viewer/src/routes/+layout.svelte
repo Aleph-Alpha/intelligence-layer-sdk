@@ -4,7 +4,8 @@
 </script>
 
 <svelte:head>
-	{#if !env.PUBLIC_DISABLE_ANALYTICS || env.PUBLIC_DISABLE_ANALYTICS !== "false" }
+	{#if !env.PUBLIC_DISABLE_ANALYTICS || env.PUBLIC_DISABLE_ANALYTICS !== 'false'}
+		<!-- Fathom - beautiful, simple website analytics -->
 		<!-- Fathom - beautiful, simple website analytics -->
 		<script
 			src="https://cdn-eu.usefathom.com/script.js"
