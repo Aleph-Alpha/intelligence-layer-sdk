@@ -11,7 +11,6 @@ from pydantic import BaseModel, Field
 from rouge import Rouge  # type: ignore
 from tqdm import tqdm
 
-from intelligence_layer.core.detect_language import Language
 from intelligence_layer.core.task import Input
 from intelligence_layer.core.tracer import PydanticSerializable, Tracer
 

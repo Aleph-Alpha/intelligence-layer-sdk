@@ -12,7 +12,6 @@ from intelligence_layer.core.complete import (
 )
 from intelligence_layer.core.detect_language import (
     Language,
-    LanguageNotSupportedError,
     language_config,
 )
 from intelligence_layer.core.task import Task
