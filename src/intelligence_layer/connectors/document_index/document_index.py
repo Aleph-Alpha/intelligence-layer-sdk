@@ -241,7 +241,7 @@ class DocumentIndexClient:
     def __init__(
         self,
         token: str,
-        base_document_index_url: str = "https://knowledge.aleph-alpha.com",
+        base_document_index_url: str = "https://document-index.aleph-alpha.com",
     ) -> None:
         self._base_document_index_url = base_document_index_url
         self.headers = {

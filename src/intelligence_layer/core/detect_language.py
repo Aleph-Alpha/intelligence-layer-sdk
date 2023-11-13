@@ -1,4 +1,4 @@
-from typing import NewType, Optional, Sequence
+from typing import Mapping, NewType, Optional, Sequence, TypeVar
 
 from langdetect import detect_langs  # type: ignore
 from pydantic import BaseModel
@@ -13,6 +13,18 @@ class LanguageNotSupportedError(ValueError):
 
 Language = NewType("Language", str)
 """A language identified by its `ISO 639-1 code <https://en.wikipedia.org/wiki/List_of_ISO_639-1_codes>`_."""
+
+
+Config = TypeVar("Config")
+
+
+def language_config(language: Language, configs: Mapping[Language, Config]) -> Config:
+    config = configs.get(language)
+    if config is None:
+        raise LanguageNotSupportedError(
+            f"{language} not in ({', '.join(configs.keys())})"
+        )
+    return config
 
 
 class DetectLanguageInput(BaseModel):
