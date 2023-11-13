@@ -1,16 +1,21 @@
 from abc import ABC, abstractmethod
 from concurrent.futures import ThreadPoolExecutor
-from typing import Generic, Optional, Sequence, TypeVar
+from dataclasses import dataclass
+from typing import Generic, Mapping, Optional, Sequence, TypeVar
 from uuid import uuid4
 
-from nltk.tokenize import word_tokenize  # type: ignore
-from nltk.translate.bleu_score import sentence_bleu
+import nltk  # type: ignore
+from nltk.tokenize import RegexpTokenizer  # type: ignore
+from nltk.translate.bleu_score import sentence_bleu  # type: ignore
 from pydantic import BaseModel, Field
+from rouge import Rouge  # type: ignore
 from tqdm import tqdm
 
 from intelligence_layer.core.detect_language import Language
 from intelligence_layer.core.task import Input
 from intelligence_layer.core.tracer import PydanticSerializable, Tracer
+
+nltk.download("punkt")
 
 ExpectedOutput = TypeVar("ExpectedOutput", bound=PydanticSerializable)
 Evaluation = TypeVar("Evaluation", bound=PydanticSerializable)
@@ -124,11 +129,40 @@ class Evaluator(ABC, Generic[Input, ExpectedOutput, Evaluation, AggregatedEvalua
         pass
 
 
-def calculate_bleu(
-    hypothesis: str, hypothesis_lang: Language, reference: str, reference_lang: Language
-) -> float:
-    hypothesis_tokens = word_tokenize(hypothesis, hypothesis_lang.get_name())
-    reference_tokens = word_tokenize(reference, reference_lang.get_name())
+def tokenize(input: str) -> Sequence[str]:
+    tokenizer = RegexpTokenizer(r"\w+")
+    tokens = tokenizer.tokenize(input.lower())
+    assert isinstance(tokens, list)
+    return tokens
+
+
+def calculate_bleu(hypothesis: str, reference: str) -> float:
+    hypothesis_tokens = tokenize(hypothesis)
+    reference_tokens = tokenize(reference)
     bleu_score = sentence_bleu(
         references=[reference_tokens], hypothesis=hypothesis_tokens
     )
+    return bleu_score if isinstance(bleu_score, float) else 0.0
+
+
+@dataclass
+class RougeScores:
+    precision: float
+    recall: float
+    f1: float
+
+    @classmethod
+    def from_rouge_results(cls, rouge_results: Mapping[str, float]) -> "RougeScores":
+        return cls(
+            precision=rouge_results["p"],
+            recall=rouge_results["r"],
+            f1=rouge_results["f"],
+        )
+
+
+def calculate_rouge(hypothesis: str, reference: str) -> RougeScores:
+    hypothesis = " ".join(tokenize(hypothesis))
+    reference = " ".join(tokenize(reference))
+    rouge = Rouge()
+    rouge_scores = rouge.get_scores(hypothesis, reference)[0]["rouge-2"]
+    return RougeScores.from_rouge_results(rouge_scores)

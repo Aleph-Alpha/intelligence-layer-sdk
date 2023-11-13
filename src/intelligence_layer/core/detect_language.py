@@ -17,8 +17,7 @@ class LanguageNotSupportedError(ValueError):
 class Language:
     """A language identified by its `ISO 639-1 code <https://en.wikipedia.org/wiki/List_of_ISO_639-1_codes>`_."""
 
-    def __init__(self, iso_639_1: str) -> None:
-        self.iso_639_1 = iso_639_1
+    iso_639_1: str
 
     def get_name(self) -> Optional[str]:
         language = languages.get(alpha_2=self.iso_639_1)
