@@ -128,7 +128,7 @@ class Evaluator(ABC, Generic[Input, ExpectedOutput, Evaluation, AggregatedEvalua
         pass
 
 
-def tokenize(input: str) -> Sequence[str]:
+def split_into_words(input: str) -> Sequence[str]:
     """Splits a string into a list of words.
 
     Removes non-alphanumeric characters and lowercases the given text.
@@ -156,8 +156,8 @@ def calculate_bleu(hypothesis: str, reference: str) -> float:
     Returns:
         BLEU-score, float between 0 and 1. Where 1 means perfect match and 0 no overlap.
     """
-    hypothesis_tokens = tokenize(hypothesis)
-    reference_tokens = tokenize(reference)
+    hypothesis_tokens = split_into_words(hypothesis)
+    reference_tokens = split_into_words(reference)
     bleu_score = sentence_bleu(
         references=[reference_tokens], hypothesis=hypothesis_tokens
     )
@@ -191,8 +191,8 @@ def calculate_rouge(hypothesis: str, reference: str) -> RougeScores:
     Returns:
         ROUGE-score, which contains precision, recall and f1 metrics, all will be floats between 0 and 1. Where 1 means perfect match and 0 no overlap.
     """
-    hypothesis = " ".join(tokenize(hypothesis))
-    reference = " ".join(tokenize(reference))
+    hypothesis = " ".join(split_into_words(hypothesis))
+    reference = " ".join(split_into_words(reference))
     rouge = Rouge()
     rouge_scores = rouge.get_scores(hypothesis, reference)[0]["rouge-2"]
     return RougeScores.from_rouge_results(rouge_scores)
