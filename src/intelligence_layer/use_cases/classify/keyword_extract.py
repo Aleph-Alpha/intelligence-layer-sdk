@@ -10,10 +10,7 @@ from intelligence_layer.core.complete import (
     FewShotExample,
     FewShotInput,
 )
-from intelligence_layer.core.detect_language import (
-    Language,
-    language_config,
-)
+from intelligence_layer.core.detect_language import Language, language_config
 from intelligence_layer.core.task import Task
 from intelligence_layer.core.tracer import TaskSpan
 
