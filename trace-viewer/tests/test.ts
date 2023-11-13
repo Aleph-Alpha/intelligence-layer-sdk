@@ -8,7 +8,7 @@ test('user can paste a new trace', async ({ page }) => {
 
 	const trace = randomTracer();
 
-	const textbox = page.getByLabel('Upload a trace to render');
+	const textbox = page.getByLabel('JSON output from InMemoryTracer');
 	await textbox.fill(JSON.stringify(trace));
 	await textbox.blur();
 
