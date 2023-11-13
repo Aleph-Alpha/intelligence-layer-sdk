@@ -8,7 +8,6 @@ from intelligence_layer.core.chunk import Chunk
 from intelligence_layer.core.complete import Instruct, InstructInput, PromptOutput
 from intelligence_layer.core.detect_language import (
     Language,
-    LanguageNotSupportedError,
     language_config,
 )
 from intelligence_layer.core.prompt_template import PromptWithMetadata
