@@ -141,7 +141,7 @@ class TraceBuilder {
 			end_timestamp: entry.start,
 			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 			input: entry.input,
-			output: undefined,
+			output: null,
 			entries: []
 		};
 		parent.entries.push(task);

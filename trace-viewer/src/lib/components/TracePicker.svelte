@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { activeTrace } from '$lib/active';
+	import { tracer } from '$lib/trace';
 	import { parseTraceFile } from '$lib/tracefile.parser';
 
 	let files: FileList;
@@ -18,9 +19,7 @@
 		id="trace"
 		bind:value
 		on:change={(e) => {
-			// TODO: do zod validation
-			// eslint-disable-next-line @typescript-eslint/no-unsafe-argument
-			activeTrace.set(JSON.parse(e.currentTarget.value));
+			activeTrace.set(tracer.parse(JSON.parse(e.currentTarget.value)));
 		}}
 	/>
 	<input

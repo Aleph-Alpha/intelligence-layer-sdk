@@ -1,37 +1,57 @@
 import { compareAsc } from 'date-fns';
+import { z } from 'zod';
 
-export type JSONValue =
-	| string
-	| number
-	| boolean
-	| null
-	| undefined
-	| JSONValue[]
-	| { [key: string]: JSONValue };
+const literalSchema = z.union([z.string(), z.number(), z.boolean(), z.null()]);
+type Literal = z.infer<typeof literalSchema>;
+export type JSONValue = Literal | { [key: string]: JSONValue } | JSONValue[];
+const jsonSchema: z.ZodType<JSONValue> = z.lazy(() =>
+	z.union([literalSchema, z.array(jsonSchema), z.record(jsonSchema)])
+);
 
-export interface LogEntry {
-	message: string;
-	value: JSONValue;
-	timestamp: string;
-}
+const logEntry = z.object({
+	message: z.string(),
+	value: jsonSchema,
+	timestamp: z.string()
+});
+export type LogEntry = z.infer<typeof logEntry>;
 
 export type Entry = LogEntry | Span | TaskSpan;
 export type SpanEntry = Span | TaskSpan;
 
-export interface Tracer {
-	entries: Entry[];
-}
+const entry: z.ZodType<Entry> = z.lazy(() => z.union([logEntry, span, taskSpan]));
 
-export interface Span extends Tracer {
+// eslint-disable-next-line @typescript-eslint/consistent-type-definitions
+export type Tracer = {
+	entries: Entry[];
+};
+export const tracer: z.ZodType<Tracer> = z.object({
+	entries: z.array(entry)
+});
+
+export type Span = Tracer & {
 	name: string;
 	start_timestamp: string;
 	end_timestamp: string;
-}
+};
+const span: z.ZodType<Span> = z.object({
+	entries: z.array(entry),
+	name: z.string(),
+	start_timestamp: z.string(),
+	end_timestamp: z.string()
+});
 
-export interface TaskSpan extends Span {
+export type TaskSpan = Span & {
 	input: JSONValue;
 	output: JSONValue;
-}
+};
+const taskSpan: z.ZodType<TaskSpan> = z.object({
+	entries: z.array(entry),
+	name: z.string(),
+	start_timestamp: z.string(),
+	end_timestamp: z.string(),
+	input: jsonSchema,
+	output: jsonSchema
+});
 
 export function isLogEntry(entry: Entry): entry is LogEntry {
 	return 'message' in entry;
