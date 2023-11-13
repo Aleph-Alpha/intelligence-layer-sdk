@@ -1,6 +1,8 @@
-from typing import Mapping, NewType, Optional, Sequence, TypeVar
+from dataclasses import dataclass
+from typing import Mapping, Optional, Sequence, TypeVar
 
 from langdetect import detect_langs  # type: ignore
+from pycountry import languages  # type: ignore
 from pydantic import BaseModel
 
 from intelligence_layer.core.task import Task
@@ -11,8 +13,16 @@ class LanguageNotSupportedError(ValueError):
     """Raised in case language in the input is not compatible with the languages supported in the task"""
 
 
-Language = NewType("Language", str)
-"""A language identified by its `ISO 639-1 code <https://en.wikipedia.org/wiki/List_of_ISO_639-1_codes>`_."""
+@dataclass(frozen=True)
+class Language:
+    """A language identified by its `ISO 639-1 code <https://en.wikipedia.org/wiki/List_of_ISO_639-1_codes>`_."""
+
+    def __init__(self, iso_639_1: str) -> None:
+        self.iso_639_1 = iso_639_1
+
+    def get_name(self) -> Optional[str]:
+        language = languages.get(alpha_2=self.iso_639_1)
+        return language.name if language else None
 
 
 Config = TypeVar("Config")
@@ -22,7 +32,7 @@ def language_config(language: Language, configs: Mapping[Language, Config]) -> C
     config = configs.get(language)
     if config is None:
         raise LanguageNotSupportedError(
-            f"{language} not in ({', '.join(configs.keys())})"
+            f"{language.iso_639_1} not in ({', '.join(lang.iso_639_1 for lang in configs.keys())})"
         )
     return config
 

@@ -1453,17 +1453,6 @@ widgetsnbextension = ">=4.0.9,<4.1.0"
 test = ["ipykernel", "jsonschema", "pytest (>=3.6.0)", "pytest-cov", "pytz"]
 
 [[package]]
-name = "iso639-lang"
-version = "2.1.0"
-description = "A lightweight library for the ISO 639 standard."
-optional = false
-python-versions = ">=3.6"
-files = [
-    {file = "iso639-lang-2.1.0.tar.gz", hash = "sha256:8458e4b45bff6e8d449afc35ff9b5aaefb954400fe93a39f71c37e5b766e9856"},
-    {file = "iso639_lang-2.1.0-py3-none-any.whl", hash = "sha256:abaa4df7aeee0368e6b2b62b149eded5b005a4fea1c1d16e606d4820dcc51cf6"},
-]
-
-[[package]]
 name = "isoduration"
 version = "20.11.0"
 description = "Operations with ISO 8601 durations"
@@ -2907,6 +2896,19 @@ files = [
     {file = "pycodestyle-2.11.1-py2.py3-none-any.whl", hash = "sha256:44fe31000b2d866f2e41841b18528a505fbd7fef9017b04eff4e2648a0fadc67"},
     {file = "pycodestyle-2.11.1.tar.gz", hash = "sha256:41ba0e7afc9752dfb53ced5489e89f8186be00e599e712660695b7a75ff2663f"},
 ]
+
+[[package]]
+name = "pycountry"
+version = "22.3.5"
+description = "ISO country, subdivision, language, currency and script definitions and their translations"
+optional = false
+python-versions = ">=3.6, <4"
+files = [
+    {file = "pycountry-22.3.5.tar.gz", hash = "sha256:b2163a246c585894d808f18783e19137cb70a0c18fb36748dc01fc6f109c1646"},
+]
+
+[package.dependencies]
+setuptools = "*"
 
 [[package]]
 name = "pycparser"
@@ -4858,4 +4860,4 @@ multidict = ">=4.0"
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.10,<3.12"
-content-hash = "a0e4a1f5335b4855ebff5295bf1ed76051e4de8e9857040f4b2521819f7418f5"
+content-hash = "b0ded0837cc22e86184f44b5f645cabc3c6813a76b756923373bf4f7653c89f1"

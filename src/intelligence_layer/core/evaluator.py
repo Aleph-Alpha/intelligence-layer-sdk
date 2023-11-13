@@ -3,10 +3,12 @@ from concurrent.futures import ThreadPoolExecutor
 from typing import Generic, Optional, Sequence, TypeVar
 from uuid import uuid4
 
-from nltk.tokenize import word_tokenize
+from nltk.tokenize import word_tokenize  # type: ignore
+from nltk.translate.bleu_score import sentence_bleu
 from pydantic import BaseModel, Field
 from tqdm import tqdm
 
+from intelligence_layer.core.detect_language import Language
 from intelligence_layer.core.task import Input
 from intelligence_layer.core.tracer import PydanticSerializable, Tracer
 
@@ -122,6 +124,11 @@ class Evaluator(ABC, Generic[Input, ExpectedOutput, Evaluation, AggregatedEvalua
         pass
 
 
-def calculate_bleu(expected: str, completion: str) -> float:
-    # tokens = word_tokenize
-    ...
+def calculate_bleu(
+    hypothesis: str, hypothesis_lang: Language, reference: str, reference_lang: Language
+) -> float:
+    hypothesis_tokens = word_tokenize(hypothesis, hypothesis_lang.get_name())
+    reference_tokens = word_tokenize(reference, reference_lang.get_name())
+    bleu_score = sentence_bleu(
+        references=[reference_tokens], hypothesis=hypothesis_tokens
+    )

@@ -94,7 +94,9 @@ class SingleChunkSummarizeEvaluator(
         AggregatedSingleChunkSummarizeEvaluation,
     ]
 ):
-    def __init__(self, task: Task[SingleChunkSummarizeInput, SingleChunkSummarizeOutput]) -> None:
+    def __init__(
+        self, task: Task[SingleChunkSummarizeInput, SingleChunkSummarizeOutput]
+    ) -> None:
         self.task = task
 
     def evaluate(

@@ -10,7 +10,11 @@ from intelligence_layer.core.complete import (
     FewShotExample,
     FewShotInput,
 )
-from intelligence_layer.core.detect_language import Language, LanguageNotSupportedError
+from intelligence_layer.core.detect_language import (
+    Language,
+    LanguageNotSupportedError,
+    language_config,
+)
 from intelligence_layer.core.task import Task
 from intelligence_layer.core.tracer import TaskSpan
 
@@ -158,11 +162,7 @@ class KeywordExtract(Task[KeywordExtractInput, KeywordExtractOutput]):
     def do_run(
         self, input: KeywordExtractInput, task_span: TaskSpan
     ) -> KeywordExtractOutput:
-        config = self._few_shot_configs.get(input.language)
-        if config is None:
-            raise LanguageNotSupportedError(
-                f"{input.language} not in ({', '.join(self._few_shot_configs.keys())})"
-            )
+        config = language_config(input.language, self._few_shot_configs)
         result = self._few_shot.run(
             FewShotInput(
                 few_shot_config=config,

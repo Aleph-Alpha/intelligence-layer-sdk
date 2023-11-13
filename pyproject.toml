@@ -28,7 +28,7 @@ requests = "^2.31.0"
 pytest-xdist = "^3.3.1"
 langdetect = "^1.0.9"
 nltk = "^3.8.1"
-iso639-lang = "^2.1.0"
+pycountry = "^22.3.5"
 
 [tool.poetry.group.dev.dependencies]
 mypy = "^1.6.1"
