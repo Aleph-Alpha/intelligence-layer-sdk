@@ -16,4 +16,4 @@ def test_detect_language_returns_correct_language() -> None:
     tracer = NoOpTracer()
     output = task.run(input, tracer)
 
-    assert output.best_fit == "en"
+    assert output.best_fit == Language("en")

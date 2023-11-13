@@ -6,7 +6,11 @@ from pydantic import BaseModel
 
 from intelligence_layer.core.chunk import Chunk
 from intelligence_layer.core.complete import Instruct, InstructInput, PromptOutput
-from intelligence_layer.core.detect_language import Language, LanguageNotSupportedError
+from intelligence_layer.core.detect_language import (
+    Language,
+    LanguageNotSupportedError,
+    language_config,
+)
 from intelligence_layer.core.prompt_template import PromptWithMetadata
 from intelligence_layer.core.task import Task
 from intelligence_layer.core.text_highlight import TextHighlight, TextHighlightInput
@@ -109,11 +113,7 @@ class SingleChunkQa(Task[SingleChunkQaInput, SingleChunkQaOutput]):
     def do_run(
         self, input: SingleChunkQaInput, task_span: TaskSpan
     ) -> SingleChunkQaOutput:
-        instruction_text = self._instruction_config.get(input.language)
-        if not instruction_text:
-            raise LanguageNotSupportedError(
-                f"{input.language} not in ({', '.join(self._instruction_config.keys())})"
-            )
+        instruction_text = language_config(input.language, self._instruction_config)
 
         output = self._generate_answer(
             Template(instruction_text).render(
