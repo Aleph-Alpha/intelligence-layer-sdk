@@ -1,10 +1,10 @@
 <script lang="ts">
-	import { PUBLIC_DISABLE_ANALYTICS } from '$env/static/public';
+	import { env } from '$env/dynamic/public';
 	import '../app.css';
 </script>
 
 <svelte:head>
-	{#if !PUBLIC_DISABLE_ANALYTICS || PUBLIC_DISABLE_ANALYTICS !== "false" }
+	{#if !env.PUBLIC_DISABLE_ANALYTICS || env.PUBLIC_DISABLE_ANALYTICS !== "false" }
 		<!-- Fathom - beautiful, simple website analytics -->
 		<script
 			src="https://cdn-eu.usefathom.com/script.js"
