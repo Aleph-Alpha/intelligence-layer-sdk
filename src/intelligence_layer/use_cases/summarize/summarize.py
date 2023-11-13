@@ -1,10 +1,11 @@
+from statistics import mean
 from typing import Sequence
 
 from pydantic import BaseModel
 
 from intelligence_layer.core.chunk import Chunk
 from intelligence_layer.core.detect_language import Language
-from intelligence_layer.core.evaluator import Evaluator
+from intelligence_layer.core.evaluator import Evaluator, calculate_bleu, calculate_rouge
 from intelligence_layer.core.task import Task
 from intelligence_layer.core.tracer import Tracer
 
@@ -89,7 +90,7 @@ class AggregatedSingleChunkSummarizeEvaluation(BaseModel):
 class SingleChunkSummarizeEvaluator(
     Evaluator[
         SingleChunkSummarizeInput,
-        Sequence[str],
+        str,
         SingleChunkSummarizeEvaluation,
         AggregatedSingleChunkSummarizeEvaluation,
     ]
@@ -103,11 +104,25 @@ class SingleChunkSummarizeEvaluator(
         self,
         input: SingleChunkSummarizeInput,
         tracer: Tracer,
-        expected_output: Sequence[str],
+        expected_output: str,
     ) -> SingleChunkSummarizeEvaluation:
-        pass
+        summary = self.task.run(input, tracer)
+        bleu_score = calculate_bleu(summary.summary, expected_output)
+        rouge_score = calculate_rouge(summary.summary, expected_output)
+
+        return SingleChunkSummarizeEvaluation(
+            bleu=bleu_score, rouge=rouge_score.recall, output=summary
+        )
 
     def aggregate(
         self, evaluations: Sequence[SingleChunkSummarizeEvaluation]
     ) -> AggregatedSingleChunkSummarizeEvaluation:
-        pass
+        if len(evaluations) != 0:
+            bleu_avg = mean(eval.bleu for eval in evaluations)
+            rouge_avg = mean(eval.rouge for eval in evaluations)
+        else:
+            bleu_avg = 0.0
+            rouge_avg = 0.0
+        return AggregatedSingleChunkSummarizeEvaluation(
+            aggregate_bleu=bleu_avg, aggregate_rouge=rouge_avg, evaluations=evaluations
+        )
