@@ -1,5 +1,5 @@
 from statistics import mean
-from typing import Sequence
+from typing import Sequence, Union
 
 from pydantic import BaseModel
 
@@ -59,40 +59,40 @@ class SingleChunkSummarizeOutput(BaseModel):
     summary: str
 
 
-class SingleChunkSummarizeEvaluation(BaseModel):
-    """The evaluation of a single chunk summarization run.
+class SummarizeEvaluation(BaseModel):
+    """The evaluation of a summarization run.
 
     Attributes:
-        bleu: TODO
-        rouge: TODO
+        bleu: roughly corresponds to precision
+        rouge: rougly corresponds to recall
         output: The actual output from the task run
     """
 
     bleu: float
     rouge: float
-    output: SingleChunkSummarizeOutput
+    output: Union[SingleChunkSummarizeOutput, LongContextSummarizeOutput]
 
 
-class AggregatedSingleChunkSummarizeEvaluation(BaseModel):
-    """The aggregated evaluation of a single chunk summarization implementation against a dataset.
+class AggregatedSummarizeEvaluation(BaseModel):
+    """The aggregated evaluation of a summarization implementation against a dataset.
 
     Attributes:
-        aggregate_bleu: TODO
-        aggregate_rouge: TODO
+        aggregate_bleu: average over BLEU-scores
+        aggregate_rouge: average over ROUGE-scores
         evaluation: The actual evaluations
     """
 
     aggregate_bleu: float
     aggregate_rouge: float
-    evaluations: Sequence[SingleChunkSummarizeEvaluation]
+    evaluations: Sequence[SummarizeEvaluation]
 
 
 class SingleChunkSummarizeEvaluator(
     Evaluator[
         SingleChunkSummarizeInput,
         str,
-        SingleChunkSummarizeEvaluation,
-        AggregatedSingleChunkSummarizeEvaluation,
+        SummarizeEvaluation,
+        AggregatedSummarizeEvaluation,
     ]
 ):
     def __init__(
@@ -105,24 +105,68 @@ class SingleChunkSummarizeEvaluator(
         input: SingleChunkSummarizeInput,
         tracer: Tracer,
         expected_output: str,
-    ) -> SingleChunkSummarizeEvaluation:
+    ) -> SummarizeEvaluation:
         summary = self.task.run(input, tracer)
         bleu_score = calculate_bleu(summary.summary, expected_output)
         rouge_score = calculate_rouge(summary.summary, expected_output)
 
-        return SingleChunkSummarizeEvaluation(
+        return SummarizeEvaluation(
             bleu=bleu_score, rouge=rouge_score.recall, output=summary
         )
 
     def aggregate(
-        self, evaluations: Sequence[SingleChunkSummarizeEvaluation]
-    ) -> AggregatedSingleChunkSummarizeEvaluation:
+        self, evaluations: Sequence[SummarizeEvaluation]
+    ) -> AggregatedSummarizeEvaluation:
         if len(evaluations) != 0:
             bleu_avg = mean(eval.bleu for eval in evaluations)
             rouge_avg = mean(eval.rouge for eval in evaluations)
         else:
             bleu_avg = 0.0
             rouge_avg = 0.0
-        return AggregatedSingleChunkSummarizeEvaluation(
+        return AggregatedSummarizeEvaluation(
+            aggregate_bleu=bleu_avg, aggregate_rouge=rouge_avg, evaluations=evaluations
+        )
+
+
+class LongContextSummarizeEvaluator(
+    Evaluator[
+        LongContextSummarizeInput,
+        str,
+        SummarizeEvaluation,
+        AggregatedSummarizeEvaluation,
+    ]
+):
+    def __init__(
+        self, task: Task[LongContextSummarizeInput, LongContextSummarizeOutput]
+    ) -> None:
+        self.task = task
+
+    def evaluate(
+        self,
+        input: LongContextSummarizeInput,
+        tracer: Tracer,
+        expected_output: str,
+    ) -> SummarizeEvaluation:
+        output = self.task.run(input, tracer)
+        joint_summary = " ".join(
+            partial_summary.summary for partial_summary in output.partial_summaries
+        )
+        bleu_score = calculate_bleu(joint_summary, expected_output)
+        rouge_score = calculate_rouge(joint_summary, expected_output)
+
+        return SummarizeEvaluation(
+            bleu=bleu_score, rouge=rouge_score.recall, output=output
+        )
+
+    def aggregate(
+        self, evaluations: Sequence[SummarizeEvaluation]
+    ) -> AggregatedSummarizeEvaluation:
+        if len(evaluations) != 0:
+            bleu_avg = mean(eval.bleu for eval in evaluations)
+            rouge_avg = mean(eval.rouge for eval in evaluations)
+        else:
+            bleu_avg = 0.0
+            rouge_avg = 0.0
+        return AggregatedSummarizeEvaluation(
             aggregate_bleu=bleu_avg, aggregate_rouge=rouge_avg, evaluations=evaluations
         )
