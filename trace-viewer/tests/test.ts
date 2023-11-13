@@ -24,10 +24,10 @@ test('user can paste a new trace', async ({ page }) => {
 		}
 
 		if ('input' in span && 'output' in span) {
-			await page.getByText('Input').click();
+			await page.getByRole('tab', { name: 'Input' }).click();
 			await expect(page.getByText('No input for this span')).not.toBeVisible();
 
-			await page.getByText('Output').click();
+			await page.getByRole('tab', { name: 'Output' }).click();
 			await expect(page.getByText('No output for this span')).not.toBeVisible();
 		}
 	}

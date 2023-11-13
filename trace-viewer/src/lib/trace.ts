@@ -18,7 +18,7 @@ export type LogEntry = z.infer<typeof logEntry>;
 export type Entry = LogEntry | Span | TaskSpan;
 export type SpanEntry = Span | TaskSpan;
 
-const entry: z.ZodType<Entry> = z.lazy(() => z.union([logEntry, span, taskSpan]));
+const entry: z.ZodType<Entry> = z.lazy(() => z.union([logEntry, taskSpan, span]));
 
 // eslint-disable-next-line @typescript-eslint/consistent-type-definitions
 export type Tracer = {
