@@ -78,7 +78,7 @@ class Evaluator(ABC, Generic[Input, ExpectedOutput, Evaluation, AggregatedEvalua
             tracer: Ttracer used for tracing of tasks.
             expected_output: Output that is expected from the task run with the supplied input.
         Returns:
-            Evaluation: interface of the metrics that come from the evaluated task.
+            Interface of the metrics that come from the evaluated task.
         """
         pass
 
@@ -94,7 +94,7 @@ class Evaluator(ABC, Generic[Input, ExpectedOutput, Evaluation, AggregatedEvalua
             dataset: Dataset that will be used to evaluate a task.
             tracer: tracer used for tracing.
         Returns:
-            AggregatedEvaluation: The aggregated results of an evaluation run with a dataset.
+            The aggregated results of an evaluation run with a dataset.
         """
         with ThreadPoolExecutor(max_workers=10) as executor:
             evaluations = list(
@@ -123,12 +123,21 @@ class Evaluator(ABC, Generic[Input, ExpectedOutput, Evaluation, AggregatedEvalua
         Args:
             evalautions: The results from running `evaluate_dataset` with a task.
         Returns:
-            AggregatedEvaluation: The aggregated results of an evaluation run with a dataset.
+            The aggregated results of an evaluation run with a dataset.
         """
         pass
 
 
 def tokenize(input: str) -> Sequence[str]:
+    """Splits a string into a list of words.
+
+    Removes non-alphanumeric characters and lowercases the given text.
+
+    Args:
+        input: String to split.
+    Returns:
+        List of words.
+    """
     tokenizer = RegexpTokenizer(r"\w+")
     tokens = tokenizer.tokenize(input.lower())
     assert isinstance(tokens, list)
@@ -136,6 +145,17 @@ def tokenize(input: str) -> Sequence[str]:
 
 
 def calculate_bleu(hypothesis: str, reference: str) -> float:
+    """Calculates the BLEU-score for the given hypothesis and reference.
+
+    In the summarization use-case the BLEU-score roughly corresponds to the precision of the generated summary with regard to the expected summary.
+
+    Args:
+        hypothesis: The generation to be evaluated.
+        reference: The baseline for the evaluation.
+
+    Returns:
+        BLEU-score, float between 0 and 1. Where 1 means perfect match and 0 no overlap.
+    """
     hypothesis_tokens = tokenize(hypothesis)
     reference_tokens = tokenize(reference)
     bleu_score = sentence_bleu(
@@ -160,6 +180,17 @@ class RougeScores:
 
 
 def calculate_rouge(hypothesis: str, reference: str) -> RougeScores:
+    """Calculates the ROUGE-score for the hypothesis and reference.
+
+    In the summarization use-case the ROUGE-score roughly corresponds to the recall of the generated summary with regard to the expected summary.
+
+    Args:
+        hypothesis: The generation to be evaluated.
+        reference: The baseline for the evaluation.
+
+    Returns:
+        ROUGE-score, which contains precision, recall and f1 metrics, all will be floats between 0 and 1. Where 1 means perfect match and 0 no overlap.
+    """
     hypothesis = " ".join(tokenize(hypothesis))
     reference = " ".join(tokenize(reference))
     rouge = Rouge()
