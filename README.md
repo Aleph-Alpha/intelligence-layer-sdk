@@ -1,6 +1,6 @@
-# Aleph Alpha Intelligence Layer ☯️
+# Aleph Alpha Intelligence Layer
 
-The Aleph Alpha Intelligence Layer ☯️ offers a comprehensive suite of development tools for crafting solutions that harness the capabilities of large language models (LLMs).
+The Aleph Alpha Intelligence Layer️ offers a comprehensive suite of development tools for crafting solutions that harness the capabilities of large language models (LLMs).
 With a unified framework for LLM-based workflows, it facilitates seamless AI product development, from prototyping and prompt experimentation to result evaluation and deployment.
 
 The key features of the Intelligence Layer are:
@@ -89,7 +89,7 @@ after that add:
 ```toml
 [tool.poetry.dependencies]
 python = ">=3.10,<3.13"
-intelligence-layer = { git = "https://github.com/Aleph-Alpha/intelligence-layer.git", branch = "main"}
+intelligence-layer = { git = "https://github.com/Aleph-Alpha/intelligence-layer.git", tag = "VERSION_TAG"}
 ```
 
 to your `pyproject.toml` and run `poetry update`
@@ -97,13 +97,13 @@ to your `pyproject.toml` and run `poetry update`
 Alternatively you can also add it to a `requirements.txt`
 
 ```txt
-git+https://$GITHUB_TOKEN@github.com/Aleph-Alpha/intelligence-layer.git
+git+https://$GITHUB_TOKEN@github.com/Aleph-Alpha/intelligence-layer.git@VERSION_TAG
 ```
 
 Finally you can also install the package manually using pip
 
 ```bash
-pip install git+https://$GITHUB_TOKEN@github.com/Aleph-Alpha/intelligence-layer.git
+pip install git+https://$GITHUB_TOKEN@github.com/Aleph-Alpha/intelligence-layer.git@VERSION_TAG
 ```
 
 Now the Intelligence Layer should be available as a Python package and ready to use.
