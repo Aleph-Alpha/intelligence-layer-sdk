@@ -4,6 +4,9 @@ from pydantic import BaseModel
 
 from intelligence_layer.core.chunk import Chunk
 from intelligence_layer.core.detect_language import Language
+from intelligence_layer.core.evaluator import Evaluator
+from intelligence_layer.core.task import Task
+from intelligence_layer.core.tracer import Tracer
 
 
 class LongContextSummarizeInput(BaseModel):
@@ -53,3 +56,56 @@ class SingleChunkSummarizeOutput(BaseModel):
     """
 
     summary: str
+
+
+class SingleChunkSummarizeEvaluation(BaseModel):
+    """The evaluation of a single chunk summarization run.
+
+    Attributes:
+        bleu: TODO
+        rouge: TODO
+        output: The actual output from the task run
+    """
+
+    bleu: float
+    rouge: float
+    output: SingleChunkSummarizeOutput
+
+
+class AggregatedSingleChunkSummarizeEvaluation(BaseModel):
+    """The aggregated evaluation of a single chunk summarization implementation against a dataset.
+
+    Attributes:
+        aggregate_bleu: TODO
+        aggregate_rouge: TODO
+        evaluation: The actual evaluations
+    """
+
+    aggregate_bleu: float
+    aggregate_rouge: float
+    evaluations: Sequence[SingleChunkSummarizeEvaluation]
+
+
+class SingleChunkSummarizeEvaluator(
+    Evaluator[
+        SingleChunkSummarizeInput,
+        Sequence[str],
+        SingleChunkSummarizeEvaluation,
+        AggregatedSingleChunkSummarizeEvaluation,
+    ]
+):
+    def __init__(self, task: Task[SingleChunkSummarizeInput, SingleChunkSummarizeOutput]) -> None:
+        self.task = task
+
+    def evaluate(
+        self,
+        input: SingleChunkSummarizeInput,
+        tracer: Tracer,
+        expected_output: Sequence[str],
+    ) -> SingleChunkSummarizeEvaluation:
+        pass
+
+    def aggregate(
+        self, evaluations: Sequence[SingleChunkSummarizeEvaluation]
+    ) -> AggregatedSingleChunkSummarizeEvaluation:
+        pass

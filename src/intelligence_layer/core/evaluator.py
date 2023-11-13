@@ -3,6 +3,7 @@ from concurrent.futures import ThreadPoolExecutor
 from typing import Generic, Optional, Sequence, TypeVar
 from uuid import uuid4
 
+from nltk.tokenize import word_tokenize
 from pydantic import BaseModel, Field
 from tqdm import tqdm
 
@@ -119,3 +120,8 @@ class Evaluator(ABC, Generic[Input, ExpectedOutput, Evaluation, AggregatedEvalua
             AggregatedEvaluation: The aggregated results of an evaluation run with a dataset.
         """
         pass
+
+
+def calculate_bleu(expected: str, completion: str) -> float:
+    # tokens = word_tokenize
+    ...
