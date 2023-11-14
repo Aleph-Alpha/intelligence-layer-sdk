@@ -147,7 +147,7 @@ def split_into_words(input: str) -> Sequence[str]:
 def calculate_bleu(hypothesis: str, reference: str) -> float:
     """Calculates the BLEU-score for the given hypothesis and reference.
 
-    In the summarization use-case the BLEU-score roughly corresponds to the precision of the generated summary with regard to the expected summary.
+    In the summarization use-case the `BLEU-score <https://aclanthology.org/P02-1040.pdf>`_ roughly corresponds to the precision of the generated summary with regard to the expected summary.
 
     Args:
         hypothesis: The generation to be evaluated.
@@ -182,7 +182,7 @@ class RougeScores:
 def calculate_rouge(hypothesis: str, reference: str) -> RougeScores:
     """Calculates the ROUGE-score for the hypothesis and reference.
 
-    In the summarization use-case the ROUGE-score roughly corresponds to the recall of the generated summary with regard to the expected summary.
+    In the summarization use-case the `ROUGE-score <https://aclanthology.org/W04-1013>`_ roughly corresponds to the recall of the generated summary with regard to the expected summary.
 
     Args:
         hypothesis: The generation to be evaluated.

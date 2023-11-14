@@ -14,7 +14,7 @@ from .detect_language import (
     Language,
 )
 from .echo import EchoInput, EchoOutput, EchoTask
-from .evaluator import AggregatedEvaluation, Dataset, Evaluation, Evaluator, Example
+from .evaluator import AggregatedEvaluation, Dataset, Evaluation, Evaluator, Example, calculate_bleu, calculate_rouge
 from .explain import Explain, ExplainInput, ExplainOutput
 from .prompt_template import (
     Cursor,
