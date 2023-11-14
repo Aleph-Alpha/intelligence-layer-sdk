@@ -147,7 +147,7 @@ def split_into_words(input: str) -> Sequence[str]:
 def calculate_bleu(hypothesis: str, reference: str) -> float:
     """Calculates the BLEU-score for the given hypothesis and reference.
 
-    In the summarization use-case the `BLEU-score <https://aclanthology.org/P02-1040.pdf>`_ roughly corresponds to the precision of the generated summary with regard to the expected summary.
+    In the summarization use-case the `BLEU-score <https://aclanthology.org/P02-1040/>`_ roughly corresponds to the precision of the generated summary with regard to the expected summary.
 
     Args:
         hypothesis: The generation to be evaluated.
