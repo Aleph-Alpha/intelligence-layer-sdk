@@ -1,7 +1,7 @@
 from typing import Optional, Sequence
 
 from aleph_alpha_client import Client, CompletionRequest, CompletionResponse, Prompt
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from intelligence_layer.core.prompt_template import PromptTemplate, PromptWithMetadata
 from intelligence_layer.core.task import Task
@@ -185,7 +185,7 @@ class FewShotConfig(BaseModel):
     examples: Sequence[FewShotExample]
     input_prefix: str
     response_prefix: str
-    additional_stop_sequences: Sequence[str] = []
+    additional_stop_sequences: Sequence[str] = Field(default_factory=list)
 
 
 class FewShotInput(BaseModel):
@@ -289,7 +289,7 @@ class FewShot(Task[FewShotInput, PromptOutput]):
         request = CompletionRequest(
             prompt,
             maximum_tokens=maximum_tokens,
-            stop_sequences=["###"] + additional_stop_sequences,
+            stop_sequences=["###"] + list(additional_stop_sequences),
         )
         return self._completion.run(
             CompleteInput(request=request, model=model),
