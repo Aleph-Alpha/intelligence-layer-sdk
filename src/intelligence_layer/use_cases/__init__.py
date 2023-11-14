@@ -1,5 +1,10 @@
 from .classify.classify import ClassifyInput, ClassifyOutput
 from .classify.embedding_based_classify import EmbeddingBasedClassify, LabelWithExamples
+from .classify.keyword_extract import (
+    KeywordExtract,
+    KeywordExtractInput,
+    KeywordExtractOutput,
+)
 from .classify.single_label_classify import SingleLabelClassify
 from .qa.long_context_qa import LongContextQa, LongContextQaInput
 from .qa.multiple_chunk_qa import MultipleChunkQa, MultipleChunkQaInput
