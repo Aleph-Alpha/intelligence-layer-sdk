@@ -185,6 +185,7 @@ class FewShotConfig(BaseModel):
     examples: Sequence[FewShotExample]
     input_prefix: str
     response_prefix: str
+    additional_stop_sequences: Sequence[str] = []
 
 
 class FewShotInput(BaseModel):
@@ -269,6 +270,7 @@ class FewShot(Task[FewShotInput, PromptOutput]):
         completion = self._complete(
             prompt_with_metadata.prompt,
             input.maximum_response_tokens,
+            input.few_shot_config.additional_stop_sequences,
             input.model,
             task_span,
         )
@@ -277,10 +279,17 @@ class FewShot(Task[FewShotInput, PromptOutput]):
         )
 
     def _complete(
-        self, prompt: Prompt, maximum_tokens: int, model: str, task_span: TaskSpan
+        self,
+        prompt: Prompt,
+        maximum_tokens: int,
+        additional_stop_sequences: Sequence[str],
+        model: str,
+        task_span: TaskSpan,
     ) -> str:
         request = CompletionRequest(
-            prompt, maximum_tokens=maximum_tokens, stop_sequences=["###"]
+            prompt,
+            maximum_tokens=maximum_tokens,
+            stop_sequences=["###"] + additional_stop_sequences,
         )
         return self._completion.run(
             CompleteInput(request=request, model=model),

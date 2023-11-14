@@ -25,6 +25,7 @@ FEW_SHOT_CONFIGS = {
         ],
         input_prefix="Text",
         response_prefix="Summary",
+        additional_stop_sequences=["\n"],
     ),
     Language("de"): FewShotConfig(
         instruction="Fasse jeden Text in ein bis drei Sätzen zusammen.",
@@ -44,6 +45,7 @@ FEW_SHOT_CONFIGS = {
         ],
         input_prefix="Text",
         response_prefix="Zusammenfassung",
+        additional_stop_sequences=["\n"],
     ),
     Language("es"): FewShotConfig(
         instruction="Resuma cada texto en una o tres frases.",
@@ -63,6 +65,7 @@ FEW_SHOT_CONFIGS = {
         ],
         input_prefix="Texto",
         response_prefix="Resumen",
+        additional_stop_sequences=["\n"],
     ),
     Language("fr"): FewShotConfig(
         instruction="Résume chaque texte en une à trois phrases.",
@@ -82,6 +85,7 @@ FEW_SHOT_CONFIGS = {
         ],
         input_prefix="Texte",
         response_prefix="Résumé",
+        additional_stop_sequences=["\n"],
     ),
     Language("it"): FewShotConfig(
         instruction="Riassumete ogni testo in una o tre frasi.",
@@ -101,6 +105,7 @@ FEW_SHOT_CONFIGS = {
         ],
         input_prefix="Testo",
         response_prefix="Sintesi",
+        additional_stop_sequences=["\n"],
     ),
 }
 
