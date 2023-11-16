@@ -34,9 +34,9 @@ Not sure where to start? Familiarize yourself with the Intelligence Layer using 
 | ----- | ------------------ | ----------------------------------------- | ------------------------------------------------------------- |
 | 1     | Summarization      | Summarize a document                      | [summarize.ipynb](./src/examples/summarize.ipynb)             |
 | 2     | Question Answering | Various approaches for QA                 | [qa.ipynb](./src/examples/qa.ipynb)                           |
-| 3     | Quickstart task    | Build a custom task for your use case     | [quickstart_task.ipynb](./src/examples/quickstart_task.ipynb) |
-| 4     | Classification     | Learn about two methods of classification | [classification.ipynb](./src/examples/classification.ipynb)   |
-| 5     | Evaluation         | Evaluate LLM-based methodologies          | [evaluation.ipynb](./src/examples/evaluation.ipynb)           |
+| 3     | Classification     | Learn about two methods of classification | [classification.ipynb](./src/examples/classification.ipynb)   |
+| 4     | Evaluation         | Evaluate LLM-based methodologies          | [evaluation.ipynb](./src/examples/evaluation.ipynb)           |
+| 5     | Quickstart task    | Build a custom task for your use case     | [quickstart_task.ipynb](./src/examples/quickstart_task.ipynb) |
 | 6     | Document Index     | Connect your proprietary knowledge base   | [document_index.ipynb](./src/examples/document_index.ipynb)   |
 
 ## Getting started with the Jupyter Notebooks
