@@ -26,14 +26,14 @@ if TYPE_CHECKING:
         int
         | float
         | str
-        | Sequence["PydanticSerializable"]
-        | set["PydanticSerializable"]
-        | frozenset["PydanticSerializable"]
-        | Mapping[str, "PydanticSerializable"]
         | None
         | bool
         | BaseModel
         | UUID
+        | Sequence["PydanticSerializable"]
+        | set["PydanticSerializable"]
+        | frozenset["PydanticSerializable"]
+        | Mapping[str, "PydanticSerializable"]
     )
 else:
     PydanticSerializable = TypeAliasType(
@@ -41,14 +41,14 @@ else:
         int
         | float
         | str
-        | Sequence["PydanticSerializable"]
-        | set["PydanticSerializable"]
-        | frozenset["PydanticSerializable"]
-        | Mapping[str, "PydanticSerializable"]
         | None
         | bool
         | BaseModel
-        | UUID,
+        | UUID
+        | Sequence["PydanticSerializable"]
+        | set["PydanticSerializable"]
+        | frozenset["PydanticSerializable"]
+        | Mapping[str, "PydanticSerializable"],
     )
 
 
