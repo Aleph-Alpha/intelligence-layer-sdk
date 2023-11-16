@@ -129,8 +129,8 @@ class EchoTask(Task[EchoInput, EchoOutput]):
         # Turns the expected output into list of token ids. Important so that we know how many tokens
         # the label is and can retrieve the last N log probs for the label
         tokenizer = self.tokenizer(model)
-        assert tokenizer.pre_tokenizer
-        tokenizer.pre_tokenizer.add_prefix_space = False
+        if tokenizer.pre_tokenizer:
+            tokenizer.pre_tokenizer.add_prefix_space = False
         encoding: Encoding = tokenizer.encode(text)
         return [
             Token(
