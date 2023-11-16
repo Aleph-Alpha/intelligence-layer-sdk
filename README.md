@@ -88,7 +88,7 @@ after that add:
 
 ```toml
 [tool.poetry.dependencies]
-python = ">=3.10,<3.13"
+python = ">=3.10,<3.12"
 intelligence-layer = { git = "https://github.com/Aleph-Alpha/intelligence-layer.git", tag = "VERSION_TAG"}
 ```
 
@@ -166,11 +166,13 @@ To use the Intelligence Layer in Docker, a few settings are needed to not leak y
 
 You will need your Github token set in your environment.
 
-Add the following to your docker container:
+In order to modify the `git config` add the following to your docker container:
 
 ```dockerfile
 RUN apt-get -y update
-RUN apt-get -y install git
+RUN apt-get -y install git curl gcc python3-dev
+RUN pip install poetry
+
 RUN --mount=type=secret,id=GITHUB_TOKEN \
     git config --global url."https://$(cat /run/secrets/GITHUB_TOKEN)@github.com/Aleph-Alpha/intelligence-layer".insteadOf "https://github.com/Aleph-Alpha/intelligence-layer" \
     && poetry install --no-dev --no-interaction --no-ansi \
@@ -195,7 +197,7 @@ services:
 
 secrets:
   GITHUB_TOKEN:
-    # Needs to be set in your environment under the same name.
+    # Needs to be set in your environment (.env) under the same name.
     environment: "GITHUB_TOKEN"
 ```
 
