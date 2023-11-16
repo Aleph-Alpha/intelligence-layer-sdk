@@ -1,4 +1,4 @@
-from typing import Mapping, NewType, Sequence
+from typing import Mapping, NewType, Sequence, Union
 
 from pydantic import BaseModel
 
@@ -22,7 +22,7 @@ class ClassifyInput(BaseModel):
     labels: frozenset[str]
 
 
-class ClassifyOutput(BaseModel):
+class SingleLabelClassifyOutput(BaseModel):
     """Output for a single label classification task.
 
     Attributes:
@@ -35,16 +35,29 @@ class ClassifyOutput(BaseModel):
     scores: Mapping[str, Probability]
 
 
+class MultiLabelClassifyOutput(BaseModel):
+    """Output for a single label classification task.
+
+    Attributes:
+        scores: Mapping of the provided label (key) to corresponding score (value).
+            The score represents how sure the model is that this is the correct label.
+            This will be a value between 0 and 1.
+            There is not constraint on the sum of the individual probabilities.
+    """
+
+    scores: Mapping[str, Probability]
+
+
 class ClassifyEvaluation(BaseModel):
     """The evaluation of a single label classification run.
 
     Attributes:
-        correct: Was the highest scoring class from the output in the set of "correct classes"
-        output: The actual output from the task run
+        correct: Was the highest scoring class from the output in the set of "correct classes".
+        output: The actual output from the task run.
     """
 
     correct: bool
-    output: ClassifyOutput
+    output: Union[SingleLabelClassifyOutput, MultiLabelClassifyOutput]
 
 
 class AggregatedClassifyEvaluation(BaseModel):
@@ -67,7 +80,13 @@ class ClassifyEvaluator(
         AggregatedClassifyEvaluation,
     ]
 ):
-    def __init__(self, task: Task[ClassifyInput, ClassifyOutput]):
+    def __init__(
+        self,
+        task: Union[
+            Task[ClassifyInput, SingleLabelClassifyOutput],
+            Task[ClassifyInput, MultiLabelClassifyOutput],
+        ],
+    ):
         self.task = task
 
     def evaluate(

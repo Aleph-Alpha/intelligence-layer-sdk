@@ -13,7 +13,7 @@ from intelligence_layer.core.tracer import NoOpTracer
 from intelligence_layer.use_cases.classify.classify import (
     ClassifyEvaluator,
     ClassifyInput,
-    ClassifyOutput,
+    MultiLabelClassifyOutput,
 )
 from intelligence_layer.use_cases.classify.embedding_based_classify import (
     EmbeddingBasedClassify,
@@ -101,7 +101,7 @@ def test_embedding_based_classify_returns_score_for_all_labels(
     classify_output = embedding_based_classify.run(classify_input, NoOpTracer())
 
     # Output contains everything we expect
-    assert isinstance(classify_output, ClassifyOutput)
+    assert isinstance(classify_output, MultiLabelClassifyOutput)
     assert classify_input.labels == set(r for r in classify_output.scores)
 
 

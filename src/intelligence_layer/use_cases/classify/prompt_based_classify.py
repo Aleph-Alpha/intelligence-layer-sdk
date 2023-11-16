@@ -11,8 +11,8 @@ from intelligence_layer.core.task import Task, Token
 from intelligence_layer.core.tracer import TaskSpan
 from intelligence_layer.use_cases.classify.classify import (
     ClassifyInput,
-    ClassifyOutput,
     Probability,
+    SingleLabelClassifyOutput,
 )
 
 
@@ -25,7 +25,7 @@ def to_aa_tokens_prompt(tokens: Sequence[Token]) -> Prompt:
     return Prompt.from_tokens([token.token_id for token in tokens])
 
 
-class SingleLabelClassify(Task[ClassifyInput, ClassifyOutput]):
+class PromptBasedClassify(Task[ClassifyInput, SingleLabelClassifyOutput]):
     """Task that classifies a given input text with one of the given classes.
 
     The input contains a complete set of all possible labels. The output will return a score for
@@ -45,7 +45,7 @@ class SingleLabelClassify(Task[ClassifyInput, ClassifyOutput]):
 
     Example:
         >>> client = Client(token="AA_TOKEN")
-        >>> task = SingleLabelClassify(client)
+        >>> task = PromptBasedClassify(client)
         >>> input = ClassifyInput(
                 text="This is a happy text.",
                 labels={"positive", "negative"}
@@ -73,7 +73,9 @@ Reply with only the class label.
         self._completion_task = Complete(client)
         self._echo_task = EchoTask(client)
 
-    def do_run(self, input: ClassifyInput, task_span: TaskSpan) -> ClassifyOutput:
+    def do_run(
+        self, input: ClassifyInput, task_span: TaskSpan
+    ) -> SingleLabelClassifyOutput:
         log_probs_per_label = self._log_probs_per_label(
             text_to_classify=input.chunk,
             labels=input.labels,
@@ -83,7 +85,7 @@ Reply with only the class label.
         task_span.log("Log probs per label", log_probs_per_label)
         normalized_probs_per_label = self._normalize(log_probs_per_label, task_span)
         scores = self._compute_scores(normalized_probs_per_label)
-        return ClassifyOutput(
+        return SingleLabelClassifyOutput(
             scores=scores,
         )
 
