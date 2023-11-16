@@ -1,7 +1,6 @@
 from typing import Iterable, Sequence
 
 from aleph_alpha_client import (
-    Client,
     ExplanationRequest,
     ExplanationResponse,
     Prompt,
@@ -12,6 +11,9 @@ from aleph_alpha_client import (
 from aleph_alpha_client.explanation import TextScoreWithRaw
 from pydantic import BaseModel
 
+from intelligence_layer.connectors.limited_concurrency_client import (
+    AlephAlphaClientProtocol,
+)
 from intelligence_layer.core.explain import Explain, ExplainInput
 from intelligence_layer.core.prompt_template import (
     Cursor,
@@ -76,8 +78,8 @@ class TextHighlight(Task[TextHighlightInput, TextHighlightOutput]):
 
     Example:
         >>> from intelligence_layer import TextHighlight
-        >>> from aleph_alpha_client import Client
-        >>> client = Client(os.getenv("AA_TOKEN"))
+        >>> from intelligence_layer.connectors.limited_concurrency_client import LimitedConcurrencyClient
+        >>> client = LimitedConcurrencyClient.from_token(os.getenv("AA_TOKEN"))
         >>> text_highlight = TextHighlight(client=client)
         >>> prompt_template_str = "{% promptrange r1 %}Question: What is 2 + 2?{% endpromptrange %}\\nAnswer:"
         >>> template = PromptTemplate(prompt_template_str)
@@ -90,11 +92,11 @@ class TextHighlight(Task[TextHighlightInput, TextHighlightOutput]):
         >>> output = text_highlight.run(input, InMemoryTracer())
     """
 
-    _client: Client
+    _client: AlephAlphaClientProtocol
 
     def __init__(
         self,
-        client: Client,
+        client: AlephAlphaClientProtocol,
         granularity: PromptGranularity = PromptGranularity.Sentence,
     ) -> None:
         super().__init__()

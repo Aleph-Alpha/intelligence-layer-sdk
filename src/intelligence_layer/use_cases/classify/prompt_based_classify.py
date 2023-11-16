@@ -2,9 +2,12 @@ import math
 import re
 from typing import Iterable, Mapping, Optional, Sequence
 
-from aleph_alpha_client import Client, Prompt, PromptTemplate
+from aleph_alpha_client import Prompt, PromptTemplate
 from pydantic import BaseModel
 
+from intelligence_layer.connectors.limited_concurrency_client import (
+    AlephAlphaClientProtocol,
+)
 from intelligence_layer.core.complete import Complete
 from intelligence_layer.core.echo import EchoInput, EchoTask, TokenWithLogProb
 from intelligence_layer.core.task import Task, Token
@@ -44,7 +47,7 @@ class PromptBasedClassify(Task[ClassifyInput, SingleLabelClassifyOutput]):
         MODEL: A valid Aleph Alpha model name.
 
     Example:
-        >>> client = Client(token="AA_TOKEN")
+        >>> client = LimitedConcurrencyClient.from_token(token="AA_TOKEN")
         >>> task = PromptBasedClassify(client)
         >>> input = ClassifyInput(
                 text="This is a happy text.",
@@ -65,9 +68,9 @@ Reply with only the class label.
 
 ### Response:"""
     MODEL: str = "luminous-base-control"
-    _client: Client
+    _client: AlephAlphaClientProtocol
 
-    def __init__(self, client: Client) -> None:
+    def __init__(self, client: AlephAlphaClientProtocol) -> None:
         super().__init__()
         self._client = client
         self._completion_task = Complete(client)

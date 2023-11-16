@@ -4,11 +4,13 @@ from pathlib import Path
 from uuid import UUID
 
 from aleph_alpha_client import Prompt
-from aleph_alpha_client.aleph_alpha_client import Client
 from aleph_alpha_client.completion import CompletionRequest
 from pydantic import BaseModel, Field
 from pytest import fixture
 
+from intelligence_layer.connectors.limited_concurrency_client import (
+    AlephAlphaClientProtocol,
+)
 from intelligence_layer.core.complete import Complete, CompleteInput
 from intelligence_layer.core.task import Task
 from intelligence_layer.core.tracer import (
@@ -49,7 +51,9 @@ def test_can_add_parent_and_child_entries() -> None:
     assert isinstance(parent.entries[0].entries[0], LogEntry)
 
 
-def test_task_automatically_logs_input_and_output(client: Client) -> None:
+def test_task_automatically_logs_input_and_output(
+    client: AlephAlphaClientProtocol,
+) -> None:
     tracer = InMemoryTracer()
     input = CompleteInput(
         request=CompletionRequest(prompt=Prompt.from_text("test")),
@@ -109,7 +113,7 @@ def test_span_only_updates_end_timestamp_once() -> None:
     assert span.end_timestamp == end
 
 
-def test_composite_tracer(client: Client) -> None:
+def test_composite_tracer(client: AlephAlphaClientProtocol) -> None:
     tracer1 = InMemoryTracer()
     tracer2 = InMemoryTracer()
     input = CompleteInput(

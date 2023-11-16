@@ -1,8 +1,10 @@
 from typing import Mapping
 
-from aleph_alpha_client import Client
 from pydantic import BaseModel
 
+from intelligence_layer.connectors.limited_concurrency_client import (
+    AlephAlphaClientProtocol,
+)
 from intelligence_layer.core.chunk import Chunk
 from intelligence_layer.core.complete import (
     FewShot,
@@ -145,7 +147,7 @@ class KeywordExtractOutput(BaseModel):
 class KeywordExtract(Task[KeywordExtractInput, KeywordExtractOutput]):
     def __init__(
         self,
-        client: Client,
+        client: AlephAlphaClientProtocol,
         few_shot_configs: Mapping[Language, FewShotConfig] = FEW_SHOT_CONFIGS,
         model: str = "luminous-base",
         maximum_tokens: int = 32,

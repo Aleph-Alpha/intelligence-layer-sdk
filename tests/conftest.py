@@ -2,12 +2,16 @@ from os import getenv
 from pathlib import Path
 from typing import Sequence, cast
 
-from aleph_alpha_client import Client, Image
+from aleph_alpha_client import Image
 from dotenv import load_dotenv
 from pytest import fixture
 
 from intelligence_layer.connectors.document_index.document_index import (
     DocumentIndexClient,
+)
+from intelligence_layer.connectors.limited_concurrency_client import (
+    AlephAlphaClientProtocol,
+    LimitedConcurrencyClient,
 )
 from intelligence_layer.connectors.retrievers.base_retriever import Document
 from intelligence_layer.connectors.retrievers.document_index_retriever import (
@@ -29,9 +33,9 @@ def token() -> str:
 
 
 @fixture(scope="session")
-def client(token: str) -> Client:
+def client(token: str) -> AlephAlphaClientProtocol:
     """Provide fixture for api."""
-    return Client(token=token)
+    return LimitedConcurrencyClient.from_token(token=token)
 
 
 @fixture
@@ -47,7 +51,7 @@ def prompt_image() -> Image:
 
 @fixture
 def asymmetric_in_memory_retriever(
-    client: Client, in_memory_retriever_documents: Sequence[Document]
+    client: AlephAlphaClientProtocol, in_memory_retriever_documents: Sequence[Document]
 ) -> QdrantInMemoryRetriever:
     return QdrantInMemoryRetriever(
         client,
@@ -59,7 +63,7 @@ def asymmetric_in_memory_retriever(
 
 @fixture
 def symmetric_in_memory_retriever(
-    client: Client, in_memory_retriever_documents: Sequence[Document]
+    client: AlephAlphaClientProtocol, in_memory_retriever_documents: Sequence[Document]
 ) -> QdrantInMemoryRetriever:
     return QdrantInMemoryRetriever(
         client,

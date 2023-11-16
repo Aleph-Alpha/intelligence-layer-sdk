@@ -1,21 +1,24 @@
 from typing import Sequence
 
 import tokenizers  # type: ignore
-from aleph_alpha_client import Client, Prompt
+from aleph_alpha_client import Prompt
 from pytest import fixture
 
+from intelligence_layer.connectors.limited_concurrency_client import (
+    AlephAlphaClientProtocol,
+)
 from intelligence_layer.core.echo import EchoInput, EchoTask, TokenWithLogProb
 from intelligence_layer.core.task import Token
 from intelligence_layer.core.tracer import NoOpTracer
 
 
 @fixture
-def echo_task(client: Client) -> EchoTask:
+def echo_task(client: AlephAlphaClientProtocol) -> EchoTask:
     return EchoTask(client)
 
 
 def tokenize_completion(
-    expected_output: str, model: str, client: Client
+    expected_output: str, model: str, client: AlephAlphaClientProtocol
 ) -> Sequence[Token]:
     tokenizer = client.tokenizer(model)
     assert tokenizer.pre_tokenizer

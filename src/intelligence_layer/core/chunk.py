@@ -1,9 +1,11 @@
 from typing import NewType, Sequence
 
-from aleph_alpha_client import Client
 from pydantic import BaseModel
 from semantic_text_splitter import HuggingFaceTextSplitter
 
+from intelligence_layer.connectors.limited_concurrency_client import (
+    AlephAlphaClientProtocol,
+)
 from intelligence_layer.core.task import Task
 from intelligence_layer.core.tracer import TaskSpan
 
@@ -50,7 +52,9 @@ class ChunkTask(Task[ChunkInput, ChunkOutput]):
         max_tokens_per_chunk: The maximum number of tokens to fit into one chunk.
     """
 
-    def __init__(self, client: Client, model: str, max_tokens_per_chunk: int):
+    def __init__(
+        self, client: AlephAlphaClientProtocol, model: str, max_tokens_per_chunk: int
+    ):
         super().__init__()
         tokenizer = client.tokenizer(model)
         self._splitter = HuggingFaceTextSplitter(tokenizer)

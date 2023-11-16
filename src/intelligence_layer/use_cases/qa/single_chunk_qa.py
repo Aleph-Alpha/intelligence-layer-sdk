@@ -1,9 +1,11 @@
 from typing import Mapping, Optional, Sequence
 
-from aleph_alpha_client import Client
 from liquid import Template
 from pydantic import BaseModel
 
+from intelligence_layer.connectors.limited_concurrency_client import (
+    AlephAlphaClientProtocol,
+)
 from intelligence_layer.core.chunk import Chunk
 from intelligence_layer.core.complete import Instruct, InstructInput, PromptOutput
 from intelligence_layer.core.detect_language import Language, language_config
@@ -78,7 +80,7 @@ class SingleChunkQa(Task[SingleChunkQaInput, SingleChunkQaOutput]):
 
 
     Example:
-        >>> client = Client(os.getenv("AA_TOKEN"))
+        >>> client = LimitedConcurrencyClient.from_token(os.getenv("AA_TOKEN"))
         >>> task = SingleChunkQa(client)
         >>> input = SingleChunkQaInput(
                 chunk="Tina does not like pizza. However, Mike does.",
@@ -95,7 +97,7 @@ class SingleChunkQa(Task[SingleChunkQaInput, SingleChunkQaOutput]):
 
     def __init__(
         self,
-        client: Client,
+        client: AlephAlphaClientProtocol,
         model: str = "luminous-supreme-control",
         instruction_config: Mapping[Language, str] = QA_INSTRUCTIONS,
     ):

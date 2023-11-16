@@ -1,13 +1,16 @@
-from aleph_alpha_client import Client, Image
+from aleph_alpha_client import Image
 from pytest import fixture, raises
 
+from intelligence_layer.connectors.limited_concurrency_client import (
+    AlephAlphaClientProtocol,
+)
 from intelligence_layer.core.prompt_template import PromptTemplate
 from intelligence_layer.core.text_highlight import TextHighlight, TextHighlightInput
 from intelligence_layer.core.tracer import NoOpTracer
 
 
 @fixture
-def text_highlight(client: Client) -> TextHighlight:
+def text_highlight(client: AlephAlphaClientProtocol) -> TextHighlight:
     return TextHighlight(client)
 
 

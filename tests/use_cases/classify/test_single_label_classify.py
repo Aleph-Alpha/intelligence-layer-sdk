@@ -1,8 +1,10 @@
 from typing import Sequence
 
-from aleph_alpha_client import Client
 from pytest import fixture
 
+from intelligence_layer.connectors.limited_concurrency_client import (
+    AlephAlphaClientProtocol,
+)
 from intelligence_layer.core.chunk import Chunk
 from intelligence_layer.core.evaluator import Dataset, Example
 from intelligence_layer.core.tracer import InMemoryTracer, NoOpTracer
@@ -17,7 +19,7 @@ from intelligence_layer.use_cases.classify.prompt_based_classify import (
 
 
 @fixture
-def prompt_based_classify(client: Client) -> PromptBasedClassify:
+def prompt_based_classify(client: AlephAlphaClientProtocol) -> PromptBasedClassify:
     return PromptBasedClassify(client)
 
 

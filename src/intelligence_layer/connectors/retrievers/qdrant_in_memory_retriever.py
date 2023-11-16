@@ -2,16 +2,14 @@ from concurrent.futures import ThreadPoolExecutor
 from enum import Enum
 from typing import Sequence
 
-from aleph_alpha_client import (
-    Client,
-    Prompt,
-    SemanticEmbeddingRequest,
-    SemanticRepresentation,
-)
+from aleph_alpha_client import Prompt, SemanticEmbeddingRequest, SemanticRepresentation
 from qdrant_client import QdrantClient
 from qdrant_client.conversions.common_types import ScoredPoint
 from qdrant_client.http.models import Distance, PointStruct, VectorParams, models
 
+from intelligence_layer.connectors.limited_concurrency_client import (
+    AlephAlphaClientProtocol,
+)
 from intelligence_layer.connectors.retrievers.base_retriever import (
     BaseRetriever,
     Document,
@@ -47,7 +45,7 @@ class QdrantInMemoryRetriever(BaseRetriever):
             for similar document retrieval.
 
     Example:
-        >>> client = Client(os.getenv("AA_TOKEN"))
+        >>> client = LimitedConcurrencyClient.from_token(os.getenv("AA_TOKEN"))
         >>> documents = [Document(text=t) for t in ["I do not like rain.", "Summer is warm.", "We are so back."]]
         >>> retriever = QdrantInMemoryRetriever(client, documents)
         >>> query = "Do you like summer?"
@@ -58,7 +56,7 @@ class QdrantInMemoryRetriever(BaseRetriever):
 
     def __init__(
         self,
-        client: Client,
+        client: AlephAlphaClientProtocol,
         documents: Sequence[Document],
         k: int,
         threshold: float = 0.5,

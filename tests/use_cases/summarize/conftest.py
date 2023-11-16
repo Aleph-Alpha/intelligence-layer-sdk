@@ -1,6 +1,8 @@
-from aleph_alpha_client import Client
 from pytest import fixture
 
+from intelligence_layer.connectors.limited_concurrency_client import (
+    AlephAlphaClientProtocol,
+)
 from intelligence_layer.core.chunk import Chunk
 from intelligence_layer.use_cases.summarize.long_context_high_compression_summarize import (
     LongContextHighCompressionSummarize,
@@ -11,7 +13,9 @@ from intelligence_layer.use_cases.summarize.single_chunk_few_shot_summarize impo
 
 
 @fixture
-def single_chunk_few_shot_summarize(client: Client) -> SingleChunkFewShotSummarize:
+def single_chunk_few_shot_summarize(
+    client: AlephAlphaClientProtocol,
+) -> SingleChunkFewShotSummarize:
     return SingleChunkFewShotSummarize(client, "luminous-extended", 128)
 
 
@@ -24,7 +28,7 @@ def chunk() -> Chunk:
 
 @fixture
 def long_context_high_compression_summarize(
-    client: Client,
+    client: AlephAlphaClientProtocol,
 ) -> LongContextHighCompressionSummarize:
     return LongContextHighCompressionSummarize(client)
 

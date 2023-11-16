@@ -1,6 +1,8 @@
-from aleph_alpha_client import Client
 from pydantic import BaseModel
 
+from intelligence_layer.connectors.limited_concurrency_client import (
+    AlephAlphaClientProtocol,
+)
 from intelligence_layer.connectors.retrievers.base_retriever import BaseRetriever
 from intelligence_layer.core.chunk import Chunk
 from intelligence_layer.core.detect_language import Language
@@ -45,7 +47,7 @@ class RetrieverBasedQa(Task[RetrieverBasedQaInput, MultipleChunkQaOutput]):
 
     Example:
         >>> token = os.getenv("AA_TOKEN")
-        >>> client = Client(token)
+        >>> client = LimitedConcurrencyClient.from_token(token)
         >>> document_index = DocumentIndex(token)
         >>> retriever = DocumentIndexRetriever(document_index, "my_namespace", "ancient_facts_collection", 3)
         >>> task = RetrieverBasedQa(client, retriever)
@@ -58,7 +60,7 @@ class RetrieverBasedQa(Task[RetrieverBasedQaInput, MultipleChunkQaOutput]):
 
     def __init__(
         self,
-        client: Client,
+        client: AlephAlphaClientProtocol,
         retriever: BaseRetriever,
         model: str = "luminous-supreme-control",
     ):

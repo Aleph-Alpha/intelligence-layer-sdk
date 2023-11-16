@@ -4,6 +4,7 @@ from typing import Any, Mapping, Optional, Protocol, Sequence
 from aleph_alpha_client import (
     BatchSemanticEmbeddingRequest,
     BatchSemanticEmbeddingResponse,
+    Client,
     CompletionRequest,
     CompletionResponse,
     DetokenizationRequest,
@@ -90,11 +91,17 @@ class AlephAlphaClientProtocol(Protocol):
 
 
 class LimitedConcurrencyClient:
-    """A Aleph Alpha"""
+    """An Aleph Alpha Client"""
 
-    def __init__(self, client: AlephAlphaClientProtocol, max_concurrency: int) -> None:
+    def __init__(
+        self, client: AlephAlphaClientProtocol, max_concurrency: int = 20
+    ) -> None:
         self._client = client
         self._concurrency_limit_semaphore = Semaphore(max_concurrency)
+
+    @classmethod
+    def from_token(cls, token: str) -> "LimitedConcurrencyClient":
+        return cls(Client(token))
 
     def complete(
         self,

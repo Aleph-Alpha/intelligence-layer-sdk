@@ -1,6 +1,8 @@
-from aleph_alpha_client import Client
 from pytest import fixture
 
+from intelligence_layer.connectors.limited_concurrency_client import (
+    AlephAlphaClientProtocol,
+)
 from intelligence_layer.core.tracer import NoOpTracer
 from intelligence_layer.use_cases.qa.long_context_qa import (
     LongContextQa,
@@ -46,7 +48,7 @@ Moses was a highly influential figure in the initiation of many of the reforms t
 
 
 @fixture
-def qa(client: Client) -> LongContextQa:
+def qa(client: AlephAlphaClientProtocol) -> LongContextQa:
     return LongContextQa(client, model="luminous-base-control")
 
 

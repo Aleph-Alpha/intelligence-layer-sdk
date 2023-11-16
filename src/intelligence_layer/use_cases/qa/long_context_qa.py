@@ -1,6 +1,8 @@
-from aleph_alpha_client import Client
 from pydantic import BaseModel
 
+from intelligence_layer.connectors.limited_concurrency_client import (
+    AlephAlphaClientProtocol,
+)
 from intelligence_layer.connectors.retrievers.base_retriever import Document
 from intelligence_layer.connectors.retrievers.qdrant_in_memory_retriever import (
     QdrantInMemoryRetriever,
@@ -52,7 +54,7 @@ class LongContextQa(Task[LongContextQaInput, MultipleChunkQaOutput]):
 
 
     Example:
-        >>> client = Client(os.getenv("AA_TOKEN"))
+        >>> client = LimitedConcurrencyClient.from_token(os.getenv("AA_TOKEN"))
         >>> task = LongContextQa(client)
         >>> input = LongContextQaInput(text="Lengthy text goes here...", question="Where does the text go?")
         >>> tracer = InMemoryTracer()
@@ -61,7 +63,7 @@ class LongContextQa(Task[LongContextQaInput, MultipleChunkQaOutput]):
 
     def __init__(
         self,
-        client: Client,
+        client: AlephAlphaClientProtocol,
         max_tokens_per_chunk: int = 512,
         k: int = 4,
         model: str = "luminous-supreme-control",

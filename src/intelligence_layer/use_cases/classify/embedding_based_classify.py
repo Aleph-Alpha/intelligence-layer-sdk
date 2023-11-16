@@ -1,10 +1,12 @@
 import statistics
 from typing import Sequence
 
-from aleph_alpha_client import Client
 from pydantic import BaseModel
 from qdrant_client.http.models import models
 
+from intelligence_layer.connectors.limited_concurrency_client import (
+    AlephAlphaClientProtocol,
+)
 from intelligence_layer.connectors.retrievers.base_retriever import Document
 from intelligence_layer.connectors.retrievers.qdrant_in_memory_retriever import (
     QdrantInMemoryRetriever,
@@ -43,7 +45,7 @@ class QdrantSearch(Task[QdrantSearchInput, SearchOutput]):
         in_memory_retriever: Implements logic to retrieve matching texts to the query.
 
     Example:
-        >>> client = Client(os.getenv("AA_TOKEN"))
+        >>> client = LimitedConcurrencyClient.from_token(os.getenv("AA_TOKEN"))
         >>> documents = [
         >>>     Document(
                     text="West and East Germany reunited in 1990.
@@ -124,7 +126,7 @@ class EmbeddingBasedClassify(Task[ClassifyInput, MultiLabelClassifyOutput]):
                     ],
                 ),
         >>> ]
-        >>> client = Client(token="AA_TOKEN")
+        >>> client = LimitedConcurrencyClient.from_token(token="AA_TOKEN")
         >>> task = EmbeddingBasedClassify(labels_with_examples, client)
         >>> input = ClassifyInput(
                 text="This is a happy text.",
@@ -141,7 +143,7 @@ class EmbeddingBasedClassify(Task[ClassifyInput, MultiLabelClassifyOutput]):
     def __init__(
         self,
         labels_with_examples: Sequence[LabelWithExamples],
-        client: Client,
+        client: AlephAlphaClientProtocol,
         top_k_per_label: int = 5,
     ) -> None:
         super().__init__()

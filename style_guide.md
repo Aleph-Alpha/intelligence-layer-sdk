@@ -17,7 +17,7 @@ import math
 from typing import Sequence
 
 # 2) Third-party libraries
-from aleph_alpha_client import Client
+from intelligence_layer.connectors.limited_concurrency_client import LimitedConcurrencyClient
 from pydantic import BaseModel
 import requests # type: ignore
 # Use 'type: ignore' for libraries that cause mypy issues (if there's no other fix).
@@ -57,7 +57,7 @@ class ExampleTask(Task[ExampleTaskInput, ExampleTaskOutput]):
     # - Used for parameters that are initialized some time before and handed down/reused, such as the AA client.
     def __init__(
         init_model: str,
-        init_client: Client
+        init_client: AlephAlphaClientProtocol
     ) -> None:
         super().__init__()
         # In general: most attributes should be private, unless there is a specific reason for them being public.
