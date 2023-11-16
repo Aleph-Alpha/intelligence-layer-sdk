@@ -6,9 +6,12 @@ from dotenv import load_dotenv
 from fastapi import Depends, FastAPI
 
 from intelligence_layer.core.tracer import NoOpTracer
-from intelligence_layer.use_cases.classify.classify import ClassifyInput, ClassifyOutput
-from intelligence_layer.use_cases.classify.single_label_classify import (
-    SingleLabelClassify,
+from intelligence_layer.use_cases.classify.classify import (
+    ClassifyInput,
+    SingleLabelClassifyOutput,
+)
+from intelligence_layer.use_cases.classify.prompt_based_classify import (
+    PromptBasedClassify,
 )
 
 app = FastAPI()
@@ -25,7 +28,7 @@ def client() -> Client:
 @app.post("/classify")
 async def classify(
     classify_input: ClassifyInput, client: Client = Depends(client)
-) -> ClassifyOutput:
-    classify = SingleLabelClassify(client)
+) -> SingleLabelClassifyOutput:
+    classify = PromptBasedClassify(client)
     classify_output = classify.run(classify_input, NoOpTracer())
     return classify_output

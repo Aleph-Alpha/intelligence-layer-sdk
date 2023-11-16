@@ -9,107 +9,107 @@ from intelligence_layer.core.tracer import InMemoryTracer, NoOpTracer
 from intelligence_layer.use_cases.classify.classify import (
     ClassifyEvaluator,
     ClassifyInput,
-    ClassifyOutput,
+    SingleLabelClassifyOutput,
 )
-from intelligence_layer.use_cases.classify.single_label_classify import (
-    SingleLabelClassify,
+from intelligence_layer.use_cases.classify.prompt_based_classify import (
+    PromptBasedClassify,
 )
 
 
 @fixture
-def single_label_classify(client: Client) -> SingleLabelClassify:
-    return SingleLabelClassify(client)
+def prompt_based_classify(client: Client) -> PromptBasedClassify:
+    return PromptBasedClassify(client)
 
 
-def test_single_label_classify_returns_score_for_all_labels(
-    single_label_classify: SingleLabelClassify,
+def test_prompt_based_classify_returns_score_for_all_labels(
+    prompt_based_classify: PromptBasedClassify,
 ) -> None:
     classify_input = ClassifyInput(
         chunk=Chunk("This is good"),
         labels=frozenset({"positive", "negative"}),
     )
 
-    classify_output = single_label_classify.run(classify_input, NoOpTracer())
+    classify_output = prompt_based_classify.run(classify_input, NoOpTracer())
 
     # Output contains everything we expect
-    assert isinstance(classify_output, ClassifyOutput)
+    assert isinstance(classify_output, SingleLabelClassifyOutput)
     assert classify_input.labels == set(r for r in classify_output.scores)
 
 
-def test_single_label_classify_accomodates_labels_starting_with_spaces(
-    single_label_classify: SingleLabelClassify,
+def test_prompt_based_classify_accomodates_labels_starting_with_spaces(
+    prompt_based_classify: PromptBasedClassify,
 ) -> None:
     classify_input = ClassifyInput(
         chunk=Chunk("This is good"), labels=frozenset({" positive", "negative"})
     )
 
     tracer = InMemoryTracer()
-    classify_output = single_label_classify.run(classify_input, tracer)
+    classify_output = prompt_based_classify.run(classify_input, tracer)
 
     # Output contains everything we expect
     assert classify_input.labels == set(r for r in classify_output.scores)
 
 
-def test_single_label_classify_accomodates_labels_starting_with_different_spaces(
-    single_label_classify: SingleLabelClassify,
+def test_prompt_based_classify_accomodates_labels_starting_with_different_spaces(
+    prompt_based_classify: PromptBasedClassify,
 ) -> None:
     classify_input = ClassifyInput(
         chunk=Chunk("This is good"), labels=frozenset({" positive", "  positive"})
     )
 
-    classify_output = single_label_classify.run(classify_input, NoOpTracer())
+    classify_output = prompt_based_classify.run(classify_input, NoOpTracer())
 
     # Output contains everything we expect
     assert classify_input.labels == set(r for r in classify_output.scores)
     assert classify_output.scores[" positive"] != classify_output.scores["  positive"]
 
 
-def test_single_label_classify_sentiment_classification(
-    single_label_classify: SingleLabelClassify,
+def test_prompt_based_classify_sentiment_classification(
+    prompt_based_classify: PromptBasedClassify,
 ) -> None:
     classify_input = ClassifyInput(
         chunk=Chunk("This is good"), labels=frozenset({"positive", "negative"})
     )
 
-    classify_output = single_label_classify.run(classify_input, NoOpTracer())
+    classify_output = prompt_based_classify.run(classify_input, NoOpTracer())
 
     # Verify we got a higher positive score
     assert classify_output.scores["positive"] > classify_output.scores["negative"]
 
 
-def test_single_label_classify_emotion_classification(
-    single_label_classify: SingleLabelClassify,
+def test_prompt_based_classify_emotion_classification(
+    prompt_based_classify: PromptBasedClassify,
 ) -> None:
     classify_input = ClassifyInput(
         chunk=Chunk("I love my job"),
         labels=frozenset({"happy", "sad", "frustrated", "angry"}),
     )
 
-    classify_output = single_label_classify.run(classify_input, NoOpTracer())
+    classify_output = prompt_based_classify.run(classify_input, NoOpTracer())
 
     # Verify it correctly calculated happy
     assert classify_output.scores["happy"] == max(classify_output.scores.values())
 
 
-def test_single_label_classify_handles_labels_starting_with_same_token(
-    single_label_classify: SingleLabelClassify,
+def test_prompt_based_classify_handles_labels_starting_with_same_token(
+    prompt_based_classify: PromptBasedClassify,
 ) -> None:
     classify_input = ClassifyInput(
         chunk=Chunk("This is good"),
         labels=frozenset({"positive", "positive positive"}),
     )
 
-    classify_output = single_label_classify.run(classify_input, NoOpTracer())
+    classify_output = prompt_based_classify.run(classify_input, NoOpTracer())
 
     assert classify_input.labels == set(r for r in classify_output.scores)
 
 
-def test_can_evaluate_classify(single_label_classify: SingleLabelClassify) -> None:
+def test_can_evaluate_classify(prompt_based_classify: PromptBasedClassify) -> None:
     classify_input = ClassifyInput(
         chunk=Chunk("This is good"),
         labels=frozenset({"positive", "negative"}),
     )
-    evaluator = ClassifyEvaluator(task=single_label_classify)
+    evaluator = ClassifyEvaluator(task=prompt_based_classify)
 
     evaluation = evaluator.evaluate(
         input=classify_input, tracer=NoOpTracer(), expected_output=["positive"]
@@ -119,7 +119,7 @@ def test_can_evaluate_classify(single_label_classify: SingleLabelClassify) -> No
 
 
 def test_can_aggregate_evaluations(
-    single_label_classify: SingleLabelClassify,
+    prompt_based_classify: PromptBasedClassify,
 ) -> None:
     positive_lst: Sequence[str] = ["positive"]
     correct_example = Example(
@@ -137,13 +137,13 @@ def test_can_aggregate_evaluations(
         expected_output=positive_lst,
     )
 
-    single_label_classify_evaluator = ClassifyEvaluator(task=single_label_classify)
+    prompt_based_classify_evaluator = ClassifyEvaluator(task=prompt_based_classify)
 
     dataset = Dataset(
         name="classify_test", examples=[correct_example, incorrect_example]
     )
 
-    aggregated_evaluations = single_label_classify_evaluator.evaluate_dataset(
+    aggregated_evaluations = prompt_based_classify_evaluator.evaluate_dataset(
         dataset, tracer=NoOpTracer()
     )
 
@@ -151,11 +151,11 @@ def test_can_aggregate_evaluations(
 
 
 def test_aggregating_evaluations_works_with_empty_list(
-    single_label_classify: SingleLabelClassify,
+    prompt_based_classify: PromptBasedClassify,
 ) -> None:
-    single_label_classify_evaluator = ClassifyEvaluator(task=single_label_classify)
+    prompt_based_classify_evaluator = ClassifyEvaluator(task=prompt_based_classify)
 
-    aggregated_evaluations = single_label_classify_evaluator.evaluate_dataset(
+    aggregated_evaluations = prompt_based_classify_evaluator.evaluate_dataset(
         Dataset(name="empty_dataset", examples=[]), tracer=NoOpTracer()
     )
 

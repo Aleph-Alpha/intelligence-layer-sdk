@@ -15,7 +15,7 @@ from intelligence_layer.core.task import Task
 from intelligence_layer.core.tracer import TaskSpan
 from intelligence_layer.use_cases.classify.classify import (
     ClassifyInput,
-    ClassifyOutput,
+    MultiLabelClassifyOutput,
     Probability,
 )
 from intelligence_layer.use_cases.search.search import SearchOutput
@@ -91,7 +91,7 @@ class LabelWithExamples(BaseModel):
     examples: Sequence[str]
 
 
-class EmbeddingBasedClassify(Task[ClassifyInput, ClassifyOutput]):
+class EmbeddingBasedClassify(Task[ClassifyInput, MultiLabelClassifyOutput]):
     """Task that classifies a given input text based on examples.
 
     The input contains a complete set of all possible labels. The output will return a score
@@ -156,13 +156,15 @@ class EmbeddingBasedClassify(Task[ClassifyInput, ClassifyOutput]):
         )
         self._qdrant_search = QdrantSearch(retriever)
 
-    def do_run(self, input: ClassifyInput, task_span: TaskSpan) -> ClassifyOutput:
+    def do_run(
+        self, input: ClassifyInput, task_span: TaskSpan
+    ) -> MultiLabelClassifyOutput:
         self._validate_input_labels(input)
         results_per_label = [
             self._label_search(input.chunk, label, task_span) for label in input.labels
         ]
         scores = self._calculate_scores(results_per_label)
-        return ClassifyOutput(
+        return MultiLabelClassifyOutput(
             scores={lang: Probability(s) for lang, s in zip(input.labels, scores)}
         )
 
