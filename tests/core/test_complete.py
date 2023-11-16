@@ -1,6 +1,9 @@
-from aleph_alpha_client import Client, Text
+from aleph_alpha_client import Text
 from pytest import fixture
 
+from intelligence_layer.connectors.limited_concurrency_client import (
+    AlephAlphaClientProtocol,
+)
 from intelligence_layer.core.complete import (
     FewShot,
     FewShotConfig,
@@ -13,12 +16,12 @@ from intelligence_layer.core.tracer import NoOpTracer
 
 
 @fixture
-def instruct(client: Client) -> Instruct:
+def instruct(client: AlephAlphaClientProtocol) -> Instruct:
     return Instruct(client)
 
 
 @fixture
-def few_shot(client: Client) -> FewShot:
+def few_shot(client: AlephAlphaClientProtocol) -> FewShot:
     return FewShot(client)
 
 

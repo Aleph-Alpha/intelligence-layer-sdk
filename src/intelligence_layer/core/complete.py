@@ -1,8 +1,11 @@
 from typing import Optional, Sequence
 
-from aleph_alpha_client import Client, CompletionRequest, CompletionResponse, Prompt
+from aleph_alpha_client import CompletionRequest, CompletionResponse, Prompt
 from pydantic import BaseModel, Field
 
+from intelligence_layer.connectors.limited_concurrency_client import (
+    AlephAlphaClientProtocol,
+)
 from intelligence_layer.core.prompt_template import PromptTemplate, PromptWithMetadata
 from intelligence_layer.core.task import Task
 from intelligence_layer.core.tracer import TaskSpan
@@ -47,7 +50,7 @@ class Complete(Task[CompleteInput, CompleteOutput]):
         client: Aleph Alpha client instance for running model related API calls.
     """
 
-    def __init__(self, client: Client) -> None:
+    def __init__(self, client: AlephAlphaClientProtocol) -> None:
         super().__init__()
         self._client = client
 
@@ -112,7 +115,7 @@ class Instruct(Task[InstructInput, PromptOutput]):
             to the inference API.
 
     Example:
-        >>> client = Client(os.getenv("AA_TOKEN"))
+        >>> client = LimitedConcurrencyClient.from_token(os.getenv("AA_TOKEN"))
         >>> task = Instruction(client)
         >>> input = InstructionInput(
                 instruction="Translate the following to text to German.",
@@ -132,7 +135,7 @@ class Instruct(Task[InstructInput, PromptOutput]):
 {% endif %}
 ### Response:{{response_prefix}}"""
 
-    def __init__(self, client: Client) -> None:
+    def __init__(self, client: AlephAlphaClientProtocol) -> None:
         super().__init__()
         self._client = client
         self._completion = Complete(client)
@@ -221,7 +224,7 @@ class FewShot(Task[FewShotInput, PromptOutput]):
             to the inference API.
 
     Example:
-        >>> client = Client(os.getenv("AA_TOKEN"))
+        >>> client = LimitedConcurrencyClient.from_token(os.getenv("AA_TOKEN"))
         >>> task = FewShot(client)
         >>> input = FewShotInput(
                 input="What is the capital of Germany?",
@@ -250,7 +253,7 @@ class FewShot(Task[FewShotInput, PromptOutput]):
 {{input_prefix}}: {% promptrange input %}{{input}}{% endpromptrange %}
 {{response_prefix}}:"""
 
-    def __init__(self, client: Client) -> None:
+    def __init__(self, client: AlephAlphaClientProtocol) -> None:
         super().__init__()
         self._client = client
         self._completion = Complete(client)

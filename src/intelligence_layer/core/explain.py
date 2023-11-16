@@ -1,6 +1,9 @@
-from aleph_alpha_client import Client, ExplanationRequest, ExplanationResponse
+from aleph_alpha_client import ExplanationRequest, ExplanationResponse
 from pydantic import BaseModel
 
+from intelligence_layer.connectors.limited_concurrency_client import (
+    AlephAlphaClientProtocol,
+)
 from intelligence_layer.core.task import Task
 from intelligence_layer.core.tracer import TaskSpan
 
@@ -39,7 +42,7 @@ class Explain(Task[ExplainInput, ExplainOutput]):
         client: Aleph Alpha client instance for running model related API calls.
     """
 
-    def __init__(self, client: Client) -> None:
+    def __init__(self, client: AlephAlphaClientProtocol) -> None:
         super().__init__()
         self._client = client
 

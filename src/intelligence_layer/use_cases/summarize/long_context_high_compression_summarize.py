@@ -1,5 +1,6 @@
-from aleph_alpha_client import Client
-
+from intelligence_layer.connectors.limited_concurrency_client import (
+    AlephAlphaClientProtocol,
+)
 from intelligence_layer.core.complete import FewShotConfig, FewShotExample
 from intelligence_layer.core.detect_language import Language
 from intelligence_layer.use_cases.summarize.long_context_few_shot_summarize import (
@@ -120,7 +121,7 @@ class LongContextHighCompressionSummarize(LongContextFewShotSummarize):
         fallback_language: The default language of the output.
 
     Example:
-        >>> client = Client(os.getenv("AA_TOKEN"))
+        >>> client = LimitedConcurrencyClient.from_token(os.getenv("AA_TOKEN"))
         >>> task = LongContextHighCompressionSummarize(client)
         >>> input = SummarizeInput(
                 text="This is a story about pizza. Tina hates pizza. However, Mike likes it. Pete strongly believes that pizza is the best thing to exist."
@@ -131,7 +132,7 @@ class LongContextHighCompressionSummarize(LongContextFewShotSummarize):
         Tina doesn't like pizza, but Mike and Pete do.
     """
 
-    def __init__(self, client: Client) -> None:
+    def __init__(self, client: AlephAlphaClientProtocol) -> None:
         super().__init__(
             client=client,
             few_shot_configs=FEW_SHOT_CONFIGS,

@@ -1,8 +1,10 @@
 from typing import Iterable, Mapping, Optional, Sequence
 
-from aleph_alpha_client import Client
 from pydantic import BaseModel
 
+from intelligence_layer.connectors.limited_concurrency_client import (
+    AlephAlphaClientProtocol,
+)
 from intelligence_layer.core.chunk import Chunk
 from intelligence_layer.core.complete import Instruct, InstructInput, PromptOutput
 from intelligence_layer.core.detect_language import Language, language_config
@@ -134,7 +136,7 @@ class MultipleChunkQa(Task[MultipleChunkQaInput, MultipleChunkQaOutput]):
         MERGE_ANSWERS_INSTRUCTION: The instruction template used for combining multiple answers into one.
 
     Example:
-        >>> client = Client(token="AA_TOKEN")
+        >>> client = LimitedConcurrencyClient.from_token(token="AA_TOKEN")
         >>> task = MultipleChunkQa(client)
         >>> input = MultipleChunkQaInput(
                 chunks=["Tina does not like pizza.", "Mike is a big fan of pizza."],
@@ -152,7 +154,7 @@ Condense multiple answers into a single answer. Rely only on the provided answer
 
     def __init__(
         self,
-        client: Client,
+        client: AlephAlphaClientProtocol,
         model: str = "luminous-supreme-control",
         merge_answers_instruct_configs: Optional[
             Mapping[Language, MergeAnswersInstructConfig]

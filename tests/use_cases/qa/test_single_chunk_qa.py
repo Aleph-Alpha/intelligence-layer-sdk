@@ -1,7 +1,9 @@
 import pytest
-from aleph_alpha_client import Client
 from pytest import fixture
 
+from intelligence_layer.connectors.limited_concurrency_client import (
+    AlephAlphaClientProtocol,
+)
 from intelligence_layer.core.chunk import Chunk
 from intelligence_layer.core.detect_language import Language, LanguageNotSupportedError
 from intelligence_layer.core.tracer import NoOpTracer
@@ -12,7 +14,7 @@ from intelligence_layer.use_cases.qa.single_chunk_qa import (
 
 
 @fixture
-def qa(client: Client) -> SingleChunkQa:
+def qa(client: AlephAlphaClientProtocol) -> SingleChunkQa:
     return SingleChunkQa(client)
 
 

@@ -1,9 +1,11 @@
 from typing import Sequence
 
-from aleph_alpha_client import Client
 from pytest import fixture, raises
 from qdrant_client.http.models import models
 
+from intelligence_layer.connectors.limited_concurrency_client import (
+    AlephAlphaClientProtocol,
+)
 from intelligence_layer.connectors.retrievers.base_retriever import Document
 from intelligence_layer.connectors.retrievers.qdrant_in_memory_retriever import (
     QdrantInMemoryRetriever,
@@ -49,7 +51,9 @@ def qdrant_search(
 
 
 @fixture
-def embedding_based_classify(client: Client) -> EmbeddingBasedClassify:
+def embedding_based_classify(
+    client: AlephAlphaClientProtocol,
+) -> EmbeddingBasedClassify:
     labels_with_examples = [
         LabelWithExamples(
             name="positive",
@@ -129,7 +133,7 @@ def test_embedding_based_classify_works_for_empty_labels_in_request(
 
 
 def test_embedding_based_classify_works_without_examples(
-    client: Client,
+    client: AlephAlphaClientProtocol,
 ) -> None:
     labels_with_examples = [
         LabelWithExamples(

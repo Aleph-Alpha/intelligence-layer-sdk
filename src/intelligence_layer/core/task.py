@@ -101,18 +101,10 @@ class Task(ABC, Generic[Input, Output]):
         """
 
         with tracer.span(f"Concurrent {type(self).__name__} tasks") as span:
-
-            def run_batch(inputs: Iterable[Input]) -> Iterable[Output]:
-                return global_executor.map(
-                    lambda input: self.run(input, span),
-                    inputs,
-                )
-
-            return [
-                output
-                for batch in batched(inputs, concurrency_limit)
-                for output in run_batch(batch)
-            ]
+            with ThreadPoolExecutor(
+                max_workers=min(concurrency_limit, MAX_CONCURRENCY)
+            ) as executor:
+                return list(executor.map(lambda input: self.run(input, span), inputs))
 
 
 T = TypeVar("T")

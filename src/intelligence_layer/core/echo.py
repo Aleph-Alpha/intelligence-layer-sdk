@@ -1,10 +1,13 @@
 from functools import lru_cache
 from typing import NewType, Sequence
 
-from aleph_alpha_client import Client, CompletionRequest, Prompt, Tokens
+from aleph_alpha_client import CompletionRequest, Prompt, Tokens
 from pydantic import BaseModel
 from tokenizers import Encoding, Tokenizer  # type: ignore
 
+from intelligence_layer.connectors.limited_concurrency_client import (
+    AlephAlphaClientProtocol,
+)
 from intelligence_layer.core.complete import Complete, CompleteInput
 from intelligence_layer.core.prompt_template import PromptTemplate
 from intelligence_layer.core.task import Task, Token
@@ -55,7 +58,7 @@ class EchoTask(Task[EchoInput, EchoOutput]):
         client: Aleph Alpha client instance for running model related API calls.
 
     Example:
-        >>> client = Client(token="AA_TOKEN")
+        >>> client = LimitedConcurrencyClient.from_token(token="AA_TOKEN")
         >>> task = EchoTask(client)
         >>> input = EchoTaskInput(
                 prompt="This is a ",
@@ -72,7 +75,7 @@ class EchoTask(Task[EchoInput, EchoOutput]):
         "{{prompt}}{{expected_completion}}"
     )
 
-    def __init__(self, client: Client) -> None:
+    def __init__(self, client: AlephAlphaClientProtocol) -> None:
         super().__init__()
         self._client = client
         self._completion = Complete(client=client)

@@ -1,8 +1,10 @@
 from typing import Sequence
 
-from aleph_alpha_client import Client
 from pytest import fixture
 
+from intelligence_layer.connectors.limited_concurrency_client import (
+    AlephAlphaClientProtocol,
+)
 from intelligence_layer.connectors.retrievers.base_retriever import Document
 from intelligence_layer.connectors.retrievers.document_index_retriever import (
     DocumentIndexRetriever,
@@ -37,7 +39,8 @@ def in_memory_retriever_documents() -> Sequence[Document]:
 
 @fixture
 def retriever_based_qa_with_in_memory_retriever(
-    client: Client, asymmetric_in_memory_retriever: QdrantInMemoryRetriever
+    client: AlephAlphaClientProtocol,
+    asymmetric_in_memory_retriever: QdrantInMemoryRetriever,
 ) -> RetrieverBasedQa:
     return RetrieverBasedQa(
         client, asymmetric_in_memory_retriever, model="luminous-base-control"
@@ -46,7 +49,7 @@ def retriever_based_qa_with_in_memory_retriever(
 
 @fixture
 def retriever_based_qa_with_document_index(
-    client: Client, document_index_retriever: DocumentIndexRetriever
+    client: AlephAlphaClientProtocol, document_index_retriever: DocumentIndexRetriever
 ) -> RetrieverBasedQa:
     return RetrieverBasedQa(
         client, document_index_retriever, model="luminous-base-control"

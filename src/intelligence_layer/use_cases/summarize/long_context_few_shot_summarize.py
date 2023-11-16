@@ -1,7 +1,8 @@
 from typing import Mapping
 
-from aleph_alpha_client import Client
-
+from intelligence_layer.connectors.limited_concurrency_client import (
+    AlephAlphaClientProtocol,
+)
 from intelligence_layer.core.chunk import ChunkInput, ChunkTask
 from intelligence_layer.core.complete import FewShotConfig
 from intelligence_layer.core.detect_language import Language
@@ -42,7 +43,7 @@ class LongContextFewShotSummarize(
 
     def __init__(
         self,
-        client: Client,
+        client: AlephAlphaClientProtocol,
         few_shot_configs: Mapping[Language, FewShotConfig],
         model: str,
         max_generated_tokens: int,

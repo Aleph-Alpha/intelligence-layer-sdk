@@ -1,6 +1,8 @@
 import pytest
-from aleph_alpha_client import Client
 
+from intelligence_layer.connectors.limited_concurrency_client import (
+    AlephAlphaClientProtocol,
+)
 from intelligence_layer.core.chunk import Chunk
 from intelligence_layer.core.detect_language import Language, LanguageNotSupportedError
 from intelligence_layer.core.tracer import NoOpTracer
@@ -11,7 +13,7 @@ from intelligence_layer.use_cases.classify.keyword_extract import (
 
 
 @pytest.fixture()
-def keyword_extract(client: Client) -> KeywordExtract:
+def keyword_extract(client: AlephAlphaClientProtocol) -> KeywordExtract:
     return KeywordExtract(client)
 
 
