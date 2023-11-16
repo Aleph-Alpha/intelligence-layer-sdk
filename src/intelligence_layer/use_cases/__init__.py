@@ -1,4 +1,11 @@
-from .classify.classify import ClassifyInput, SingleLabelClassifyOutput
+from .classify.classify import (
+    AggregatedClassifyEvaluation,
+    ClassifyEvaluation,
+    ClassifyEvaluator,
+    ClassifyInput,
+    MultiLabelClassifyOutput,
+    SingleLabelClassifyOutput,
+)
 from .classify.embedding_based_classify import EmbeddingBasedClassify, LabelWithExamples
 from .classify.keyword_extract import (
     KeywordExtract,
