@@ -1,3 +1,4 @@
+from concurrent.futures import ThreadPoolExecutor
 from functools import wraps
 from threading import Lock
 from time import sleep
@@ -24,6 +25,31 @@ class ConcurrencyCounter(Task[None, None]):
         sleep(0.01)
         with self.lock:
             self.concurrency_counter -= 1
+
+
+class DeadlockDetector(Task[None, None]):
+    def __init__(self) -> None:
+        super().__init__()
+        self.inner_task = InnerTask()
+
+    def do_run(self, input: None, task_span: TaskSpan) -> None:
+        # wait a bit so all DeadlockDetector tasks run before the first InnerTask is submitted
+        sleep(0.01)
+        with ThreadPoolExecutor(max_workers=1) as executor:
+            future = executor.submit(
+                self.inner_task.run_concurrently, [input], task_span
+            )
+            # wait a bit to ensure the future has finished
+            # (even if the InnerTasks of all DeadlockDetector tasks are scheduled sequentially)
+            sleep(0.1)
+            if not future.done():
+                executor.shutdown(wait=False)
+                raise RuntimeError("Deadlock detected")
+
+
+class InnerTask(Task[None, None]):
+    def do_run(self, input: None, task_span: TaskSpan) -> None:
+        pass
 
 
 def dummy_decorator(
@@ -61,6 +87,11 @@ def test_run_concurrently_limited() -> None:
     limit_concurrency = MAX_CONCURRENCY // 2
     task.run_concurrently([None] * MAX_CONCURRENCY * 3, NoOpTracer(), limit_concurrency)
     assert task.max_concurrency_counter == limit_concurrency
+
+
+def test_run_concurrently_does_not_deadlock_if_nested() -> None:
+    task = DeadlockDetector()
+    task.run_concurrently([None] * MAX_CONCURRENCY, NoOpTracer())
 
 
 def test_sub_tasks_do_not_introduce_multiple_task_spans() -> None:
