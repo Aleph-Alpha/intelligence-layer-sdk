@@ -91,7 +91,17 @@ class AlephAlphaClientProtocol(Protocol):
 
 
 class LimitedConcurrencyClient:
-    """An Aleph Alpha Client"""
+    """An Aleph Alpha Client wrapper that limits the number of concurrent requests.
+
+    This just delegates each call to the wrapped Aleph Alpha Client and ensures that
+    never more then a given number of concurrent calls are executed against the API.
+
+    Args:
+        client: The wrapped `Client`.
+        max_concurrency: the maximal number of requests that may run concurrently
+            against the API.
+
+    """
 
     def __init__(
         self, client: AlephAlphaClientProtocol, max_concurrency: int = 20
