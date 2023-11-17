@@ -20,8 +20,6 @@ from .evaluator import (
     Evaluation,
     Evaluator,
     Example,
-    calculate_bleu,
-    calculate_rouge,
 )
 from .explain import Explain, ExplainInput, ExplainOutput
 from .prompt_template import (
@@ -38,6 +36,10 @@ from .text_highlight import (
     TextHighlight,
     TextHighlightInput,
     TextHighlightOutput,
+)
+from .graders import (
+    BleuGrader,
+    RougeScores
 )
 from .tracer import (
     FileSpan,

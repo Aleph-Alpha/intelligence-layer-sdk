@@ -5,7 +5,8 @@ from pydantic import BaseModel
 
 from intelligence_layer.core.chunk import Chunk
 from intelligence_layer.core.detect_language import Language
-from intelligence_layer.core.evaluator import Evaluator, calculate_bleu, calculate_rouge
+from intelligence_layer.core.evaluator import Evaluator
+from intelligence_layer.core.graders import BleuGrader, RougeGrader
 from intelligence_layer.core.task import Task
 from intelligence_layer.core.tracer import Tracer
 
@@ -99,6 +100,8 @@ class SingleChunkSummarizeEvaluator(
         self, task: Task[SingleChunkSummarizeInput, SingleChunkSummarizeOutput]
     ) -> None:
         self.task = task
+        self.bleu_grader = BleuGrader()
+        self.rouge_grader = RougeGrader()
 
     def evaluate(
         self,
@@ -107,8 +110,8 @@ class SingleChunkSummarizeEvaluator(
         expected_output: str,
     ) -> SummarizeEvaluation:
         summary = self.task.run(input, tracer)
-        bleu_score = calculate_bleu(summary.summary, expected_output)
-        rouge_score = calculate_rouge(summary.summary, expected_output)
+        bleu_score = self.bleu_grader.calculate_bleu(summary.summary, expected_output)
+        rouge_score = self.rouge_grader.calculate_rouge(summary.summary, expected_output)
 
         return SummarizeEvaluation(
             bleu=bleu_score, rouge=rouge_score.recall, output=summary
@@ -140,6 +143,8 @@ class LongContextSummarizeEvaluator(
         self, task: Task[LongContextSummarizeInput, LongContextSummarizeOutput]
     ) -> None:
         self.task = task
+        self.bleu_grader = BleuGrader()
+        self.rouge_grader = RougeGrader()
 
     def evaluate(
         self,
@@ -151,8 +156,8 @@ class LongContextSummarizeEvaluator(
         joint_summary = " ".join(
             partial_summary.summary for partial_summary in output.partial_summaries
         )
-        bleu_score = calculate_bleu(joint_summary, expected_output)
-        rouge_score = calculate_rouge(joint_summary, expected_output)
+        bleu_score = self.bleu_grader.calculate_bleu(joint_summary, expected_output)
+        rouge_score = self.rouge_grader.calculate_rouge(joint_summary, expected_output)
 
         return SummarizeEvaluation(
             bleu=bleu_score, rouge=rouge_score.recall, output=output
