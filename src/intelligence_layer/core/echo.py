@@ -107,6 +107,10 @@ class EchoTask(Task[EchoInput, EchoOutput]):
         for token, log_prob in zip(
             expected_completion_tokens, log_prob_dicts, strict=True
         ):
+            if not token.token in log_prob:
+                print(f"token: {token}")
+                print(f"Log prob: {log_prob}")
+
             assert token.token in log_prob
             tokens_with_prob.append(
                 TokenWithLogProb(
