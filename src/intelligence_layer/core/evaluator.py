@@ -2,6 +2,7 @@ from abc import ABC, abstractmethod
 from concurrent.futures import ThreadPoolExecutor
 from typing import Generic, Optional, Sequence, TypeVar
 from uuid import uuid4
+
 from pydantic import BaseModel, Field
 from tqdm import tqdm
 
