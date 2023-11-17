@@ -1,11 +1,11 @@
-
+from dataclasses import dataclass
 from threading import Lock
 from typing import Mapping, Sequence
+
 import nltk  # type: ignore
 from nltk.tokenize import RegexpTokenizer  # type: ignore
-from rouge import Rouge  # type: ignore
 from nltk.translate.bleu_score import sentence_bleu  # type: ignore
-from dataclasses import dataclass
+from rouge import Rouge  # type: ignore
 
 _nltk_lock = Lock()
 
@@ -31,7 +31,7 @@ def _split_into_words(input: str) -> Sequence[str]:
     return tokens
 
 
-class BleuGrader():
+class BleuGrader:
     def __init__(self) -> None:
         _download_nltk()
 
@@ -70,7 +70,7 @@ class RougeScores:
         )
 
 
-class RougeGrader():
+class RougeGrader:
     def __init__(self) -> None:
         _download_nltk()
 

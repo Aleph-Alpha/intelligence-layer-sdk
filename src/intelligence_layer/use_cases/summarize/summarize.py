@@ -111,7 +111,9 @@ class SingleChunkSummarizeEvaluator(
     ) -> SummarizeEvaluation:
         summary = self.task.run(input, tracer)
         bleu_score = self.bleu_grader.calculate_bleu(summary.summary, expected_output)
-        rouge_score = self.rouge_grader.calculate_rouge(summary.summary, expected_output)
+        rouge_score = self.rouge_grader.calculate_rouge(
+            summary.summary, expected_output
+        )
 
         return SummarizeEvaluation(
             bleu=bleu_score, rouge=rouge_score.recall, output=summary
