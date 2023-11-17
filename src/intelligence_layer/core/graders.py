@@ -12,7 +12,7 @@ _nltk_lock = Lock()
 
 def _download_nltk() -> None:
     with _nltk_lock:
-        nltk.download("punkt", raise_on_error=True, quiet=True)
+        nltk.download("punkt", quiet=True)
 
 
 def _split_into_words(input: str) -> Sequence[str]:
