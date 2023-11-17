@@ -1,11 +1,34 @@
 from datetime import datetime
 from http import HTTPStatus
 from json import dumps
-from typing import Any, Mapping, Sequence
+from typing import TYPE_CHECKING, Any, Mapping, Sequence
 
 import requests
 from pydantic import BaseModel, Field
 from requests import HTTPError
+from typing_extensions import TypeAliasType
+
+if TYPE_CHECKING:
+    JsonSerializable = (
+        int
+        | float
+        | str
+        | None
+        | bool
+        | Sequence["JsonSerializable"]
+        | Mapping[str, "JsonSerializable"]
+    )
+else:
+    JsonSerializable = TypeAliasType(
+        "JsonSerializable",
+        int
+        | float
+        | str
+        | None
+        | bool
+        | Sequence["JsonSerializable"]
+        | Mapping[str, "JsonSerializable"],
+    )
 
 
 class DocumentContents(BaseModel):
@@ -19,6 +42,7 @@ class DocumentContents(BaseModel):
     """
 
     contents: Sequence[str]
+    metadata: JsonSerializable = None
 
     @classmethod
     def from_text(cls, text: str) -> "DocumentContents":
@@ -41,7 +65,7 @@ class DocumentContents(BaseModel):
         return {
             "schema_version": "V1",
             "contents": [{"modality": "text", "text": c} for c in self.contents],
-            "metadata": JsonSerializer(root=self.metadata).model_dump(mode="json"),
+            "metadata": self.metadata,
         }
 
 
