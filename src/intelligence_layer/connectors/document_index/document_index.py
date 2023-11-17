@@ -28,19 +28,21 @@ class DocumentContents(BaseModel):
     def _from_modalities_json(
         cls, modalities_json: Mapping[str, Any]
     ) -> "DocumentContents":
-        contents = []
-        for m in modalities_json.get("contents", []):
-            if m["modality"] == "text":
-                contents.append(m["text"])
-        return cls(contents=contents)
+        return cls(
+            contents=[
+                modality["text"]
+                for modality in modalities_json.get("contents", [])
+                if modality["modality"] == "text"
+            ],
+            metadata=modalities_json.get("metadata"),
+        )
 
-    def _to_modalities_json(self) -> Sequence[Mapping[str, str]]:
-        text_contents = []
-        for c in self.contents:
-            if not isinstance(c, str):
-                raise TypeError("Currently, only str modality is supported.")
-            text_contents.append({"modality": "text", "text": c})
-        return text_contents
+    def _to_modalities_json(self) -> Mapping[str, Any]:
+        return {
+            "schema_version": "V1",
+            "contents": [{"modality": "text", "text": c} for c in self.contents],
+            "metadata": JsonSerializer(root=self.metadata).model_dump(mode="json"),
+        }
 
 
 class CollectionPath(BaseModel):
@@ -320,11 +322,9 @@ class DocumentIndexClient:
         """
 
         url = f"{self._base_document_index_url}/collections/{document_path.collection_path.namespace}/{document_path.collection_path.collection}/docs/{document_path.document_name}"
-        data = {
-            "schema_version": "V1",
-            "contents": contents._to_modalities_json(),
-        }
-        response = requests.put(url, data=dumps(data), headers=self.headers)
+        response = requests.put(
+            url, data=dumps(contents._to_modalities_json()), headers=self.headers
+        )
         self._raise_for_status(response)
 
     def delete_document(self, document_path: DocumentPath) -> None:

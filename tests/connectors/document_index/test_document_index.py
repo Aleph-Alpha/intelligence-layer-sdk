@@ -45,7 +45,7 @@ Pemberton advertised his new creation as a "brain tonic" and "temperance drink,"
 Under Candler's leadership, Coca-Cola transformed from a pharmacist's concoction into a mass-produced and marketed beverage that became a staple of American culture and a global icon. Despite the changes and the immense growth of the brand, the legacy of John Stith Pemberton as the inventor of Coca-Cola remains an integral part of the beverage's history.
 
 Pemberton's life story is a testament to the spirit of innovation and resilience. His creation, borne out of personal struggles and the context of his times, went on to transcend its origins and become a symbol recognized across the globe. Today, when we think of Coca-Cola, we are reminded of Pemberton's journey from a small-town pharmacist to the creator of one of the world's most enduring and beloved brands."""
-    return DocumentContents.from_text(text)
+    return DocumentContents(contents=[text], metadata={"Some": "Metadata"})
 
 
 @pytest.mark.internal
@@ -65,9 +65,7 @@ def test_document_index_adds_document(
     document_contents: DocumentContents,
 ) -> None:
     document_index.add_document(document_path, document_contents)
-    document_paths = document_index.list_documents(document_path.collection_path)
-
-    assert any(d.document_path == document_path for d in document_paths)
+    assert document_contents == document_index.document(document_path)
 
 
 @pytest.mark.internal
@@ -84,15 +82,6 @@ def test_document_index_searches_asymmetrically(
     )
 
     assert "Mark" in search_result[0].section
-
-
-@pytest.mark.internal
-def test_document_index_gets_document(
-    document_index: DocumentIndexClient, document_path: DocumentPath
-) -> None:
-    document = document_index.document(document_path)
-
-    assert any("John Stith Pemberton" in c for c in document.contents)
 
 
 @pytest.mark.internal
