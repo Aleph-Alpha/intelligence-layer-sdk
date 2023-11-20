@@ -6,7 +6,7 @@ from intelligence_layer.connectors.limited_concurrency_client import (
     AlephAlphaClientProtocol,
 )
 from intelligence_layer.core.chunk import Chunk
-from intelligence_layer.core.evaluator import Dataset, Example
+from intelligence_layer.core.evaluator import Example, SequenceDataset
 from intelligence_layer.core.tracer import InMemoryTracer, NoOpTracer
 from intelligence_layer.use_cases.classify.classify import (
     ClassifyEvaluator,
@@ -141,7 +141,7 @@ def test_can_aggregate_evaluations(
 
     prompt_based_classify_evaluator = ClassifyEvaluator(task=prompt_based_classify)
 
-    dataset = Dataset(
+    dataset = SequenceDataset(
         name="classify_test", examples=[correct_example, incorrect_example]
     )
 
@@ -158,7 +158,7 @@ def test_aggregating_evaluations_works_with_empty_list(
     prompt_based_classify_evaluator = ClassifyEvaluator(task=prompt_based_classify)
 
     aggregated_evaluations = prompt_based_classify_evaluator.evaluate_dataset(
-        Dataset(name="empty_dataset", examples=[]), tracer=NoOpTracer()
+        SequenceDataset(name="empty_dataset", examples=[]), tracer=NoOpTracer()
     )
 
     assert aggregated_evaluations.percentage_correct == 0

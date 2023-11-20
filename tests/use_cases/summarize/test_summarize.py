@@ -2,7 +2,7 @@ from pytest import fixture
 
 from intelligence_layer.core.chunk import Chunk
 from intelligence_layer.core.detect_language import Language
-from intelligence_layer.core.evaluator import Dataset, Example
+from intelligence_layer.core.evaluator import Example, SequenceDataset
 from intelligence_layer.core.tracer import NoOpTracer
 from intelligence_layer.use_cases.summarize.long_context_high_compression_summarize import (
     LongContextHighCompressionSummarize,
@@ -43,7 +43,7 @@ def test_single_chunk_summarize_evaluator(
         "The brown bear is a large mammal that lives in Eurasia and North America."
     )
     outputs = [bad_expected_output, good_expected_output]
-    dataset = Dataset(
+    dataset = SequenceDataset(
         name="summarize_eval_test",
         examples=[Example(input=input, expected_output=output) for output in outputs],
     )
@@ -73,7 +73,7 @@ def test_long_context_summarize_evaluator(
         "The brown bear is a large mammal that lives in Eurasia and North America."
     )
     outputs = [bad_expected_output, good_expected_output]
-    dataset = Dataset(
+    dataset = SequenceDataset(
         name="summarize_eval_test",
         examples=[Example(input=input, expected_output=output) for output in outputs],
     )

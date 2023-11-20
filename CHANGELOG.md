@@ -1,5 +1,11 @@
 # Changelog
 
+## Next version:
+
+### Breaking Changes
+
+- `Dataset` is now a protocol. `SequenceDataset` replaces the old `Dataset`.
+
 ## 0.2.0
 
 ### Breaking Changes

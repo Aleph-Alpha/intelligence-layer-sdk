@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from concurrent.futures import ThreadPoolExecutor
-from typing import Generic, Iterable, Optional, Sequence, TypeVar
+from typing import Generic, Iterable, Optional, Protocol, Sequence, TypeVar
 from uuid import uuid4
 
 from pydantic import BaseModel, Field
@@ -29,7 +29,7 @@ class Example(BaseModel, Generic[Input, ExpectedOutput]):
     ident: Optional[str] = Field(default_factory=lambda: str(uuid4()))
 
 
-class Dataset(BaseModel, Generic[Input, ExpectedOutput]):
+class Dataset(Protocol, Generic[Input, ExpectedOutput]):
     """A dataset of examples used for evaluation of a task.
 
     Attributes:
@@ -37,8 +37,18 @@ class Dataset(BaseModel, Generic[Input, ExpectedOutput]):
         examples: The actual examples that a task will be evaluated on.
     """
 
+    @property
+    def name(self) -> str:
+        ...
+
+    @property
+    def examples(self) -> Iterable[Example[Input, ExpectedOutput]]:
+        ...
+
+
+class SequenceDataset(BaseModel, Generic[Input, ExpectedOutput]):
     name: str
-    examples: Iterable[Example[Input, ExpectedOutput]]
+    examples: Sequence[Example[Input, ExpectedOutput]]
 
 
 class Evaluator(ABC, Generic[Input, ExpectedOutput, Evaluation, AggregatedEvaluation]):
