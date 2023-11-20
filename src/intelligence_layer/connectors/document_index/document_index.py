@@ -39,6 +39,9 @@ class DocumentContents(BaseModel):
 
     Args:
         contents: List of text items.
+        metadata: Any metadata that is kept along with the document. This could contain things like
+            author, creation-data, references to external systems. The content must be serializable using
+            `json.dumps`. The document-index leaves it unchanged.
     """
 
     contents: Sequence[str]
