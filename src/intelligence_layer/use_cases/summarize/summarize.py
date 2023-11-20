@@ -1,5 +1,5 @@
 from statistics import mean
-from typing import Sequence, Union
+from typing import Iterable, Sequence, Union
 
 from pydantic import BaseModel
 
@@ -120,16 +120,19 @@ class SingleChunkSummarizeEvaluator(
         )
 
     def aggregate(
-        self, evaluations: Sequence[SummarizeEvaluation]
+        self, evaluations: Iterable[SummarizeEvaluation]
     ) -> AggregatedSummarizeEvaluation:
-        if len(evaluations) != 0:
-            bleu_avg = mean(eval.bleu for eval in evaluations)
-            rouge_avg = mean(eval.rouge for eval in evaluations)
+        evaluations_list = list(evaluations)
+        if len(evaluations_list) != 0:
+            bleu_avg = mean(eval.bleu for eval in evaluations_list)
+            rouge_avg = mean(eval.rouge for eval in evaluations_list)
         else:
             bleu_avg = 0.0
             rouge_avg = 0.0
         return AggregatedSummarizeEvaluation(
-            aggregate_bleu=bleu_avg, aggregate_rouge=rouge_avg, evaluations=evaluations
+            aggregate_bleu=bleu_avg,
+            aggregate_rouge=rouge_avg,
+            evaluations=evaluations_list,
         )
 
 
@@ -166,14 +169,17 @@ class LongContextSummarizeEvaluator(
         )
 
     def aggregate(
-        self, evaluations: Sequence[SummarizeEvaluation]
+        self, evaluations: Iterable[SummarizeEvaluation]
     ) -> AggregatedSummarizeEvaluation:
-        if len(evaluations) != 0:
-            bleu_avg = mean(eval.bleu for eval in evaluations)
-            rouge_avg = mean(eval.rouge for eval in evaluations)
+        evaluations_list = list(evaluations)
+        if len(evaluations_list) != 0:
+            bleu_avg = mean(eval.bleu for eval in evaluations_list)
+            rouge_avg = mean(eval.rouge for eval in evaluations_list)
         else:
             bleu_avg = 0.0
             rouge_avg = 0.0
         return AggregatedSummarizeEvaluation(
-            aggregate_bleu=bleu_avg, aggregate_rouge=rouge_avg, evaluations=evaluations
+            aggregate_bleu=bleu_avg,
+            aggregate_rouge=rouge_avg,
+            evaluations=evaluations_list,
         )

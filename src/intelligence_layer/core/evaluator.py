@@ -116,7 +116,7 @@ class Evaluator(ABC, Generic[Input, ExpectedOutput, Evaluation, AggregatedEvalua
         return self.aggregate(evaluations)
 
     @abstractmethod
-    def aggregate(self, evaluations: Sequence[Evaluation]) -> AggregatedEvaluation:
+    def aggregate(self, evaluations: Iterable[Evaluation]) -> AggregatedEvaluation:
         """`Evaluator`-specific method for aggregating individual `Evaluations` into report-like `Aggregated Evaluation`.
 
         This method is responsible for taking the results of an evaluation run and aggregating all the results.

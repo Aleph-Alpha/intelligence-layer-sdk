@@ -1,4 +1,4 @@
-from typing import Mapping, NewType, Sequence, Union
+from typing import Iterable, Mapping, NewType, Sequence, Union
 
 from pydantic import BaseModel
 
@@ -106,14 +106,15 @@ class ClassifyEvaluator(
         return ClassifyEvaluation(correct=correct, output=output)
 
     def aggregate(
-        self, evaluations: Sequence[ClassifyEvaluation]
+        self, evaluations: Iterable[ClassifyEvaluation]
     ) -> AggregatedClassifyEvaluation:
-        if len(evaluations) != 0:
+        evaluations_list = list(evaluations)
+        if len(evaluations_list) != 0:
             correct_answers = len(
-                [eval.correct for eval in evaluations if eval.correct is True]
-            ) / len(evaluations)
+                [eval.correct for eval in evaluations_list if eval.correct is True]
+            ) / len(evaluations_list)
         else:
             correct_answers = 0
         return AggregatedClassifyEvaluation(
-            percentage_correct=correct_answers, evaluations=evaluations
+            percentage_correct=correct_answers, evaluations=evaluations_list
         )
