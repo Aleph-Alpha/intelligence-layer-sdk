@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from concurrent.futures import ThreadPoolExecutor
-from typing import Generic, Optional, Sequence, TypeVar
+from typing import Generic, Iterable, Optional, Sequence, TypeVar
 from uuid import uuid4
 
 from pydantic import BaseModel, Field
@@ -38,7 +38,7 @@ class Dataset(BaseModel, Generic[Input, ExpectedOutput]):
     """
 
     name: str
-    examples: Sequence[Example[Input, ExpectedOutput]]
+    examples: Iterable[Example[Input, ExpectedOutput]]
 
 
 class Evaluator(ABC, Generic[Input, ExpectedOutput, Evaluation, AggregatedEvaluation]):
@@ -100,7 +100,6 @@ class Evaluator(ABC, Generic[Input, ExpectedOutput, Evaluation, AggregatedEvalua
                         ),
                         dataset.examples,
                     ),
-                    total=len(dataset.examples),
                     desc="Evaluating",
                 )
             )
