@@ -14,7 +14,10 @@ from .detect_language import (
     Language,
 )
 from .echo import EchoInput, EchoOutput, EchoTask
-from .evaluator import AggregatedEvaluation, Dataset, Evaluation, Evaluator, Example
+from .evaluator import AggregatedEvaluation, Dataset, Evaluation
+from .evaluator import Evaluator as Evaluator
+from .evaluator import Example as Example
+from .evaluator import SequenceDataset as SequenceDataset
 from .explain import Explain, ExplainInput, ExplainOutput
 from .graders import BleuGrader, RougeScores
 from .prompt_template import (
@@ -39,10 +42,9 @@ from .tracer import (
     InMemorySpan,
     InMemoryTaskSpan,
     InMemoryTracer,
-    NoOpTracer,
-    Span,
-    TaskSpan,
-    Tracer,
 )
+from .tracer import NoOpTracer as NoOpTracer
+from .tracer import Span, TaskSpan
+from .tracer import Tracer as Tracer
 
 __all__ = [symbol for symbol in dir()]

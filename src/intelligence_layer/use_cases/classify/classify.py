@@ -89,7 +89,7 @@ class ClassifyEvaluator(
     ):
         self.task = task
 
-    def evaluate(
+    def do_evaluate(
         self,
         input: ClassifyInput,
         tracer: Tracer,

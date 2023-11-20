@@ -103,7 +103,7 @@ class SingleChunkSummarizeEvaluator(
         self.bleu_grader = BleuGrader()
         self.rouge_grader = RougeGrader()
 
-    def evaluate(
+    def do_evaluate(
         self,
         input: SingleChunkSummarizeInput,
         tracer: Tracer,
@@ -151,7 +151,7 @@ class LongContextSummarizeEvaluator(
         self.bleu_grader = BleuGrader()
         self.rouge_grader = RougeGrader()
 
-    def evaluate(
+    def do_evaluate(
         self,
         input: LongContextSummarizeInput,
         tracer: Tracer,

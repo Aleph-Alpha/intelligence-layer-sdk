@@ -9,6 +9,7 @@ from intelligence_layer.core.chunk import Chunk
 from intelligence_layer.core.evaluator import Example, SequenceDataset
 from intelligence_layer.core.tracer import InMemoryTracer, NoOpTracer
 from intelligence_layer.use_cases.classify.classify import (
+    ClassifyEvaluation,
     ClassifyEvaluator,
     ClassifyInput,
     SingleLabelClassifyOutput,
@@ -117,6 +118,7 @@ def test_can_evaluate_classify(prompt_based_classify: PromptBasedClassify) -> No
         input=classify_input, tracer=NoOpTracer(), expected_output=["positive"]
     )
 
+    assert isinstance(evaluation, ClassifyEvaluation)
     assert evaluation.correct is True
 
 

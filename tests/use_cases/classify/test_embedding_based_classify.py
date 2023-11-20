@@ -13,6 +13,7 @@ from intelligence_layer.connectors.retrievers.qdrant_in_memory_retriever import 
 from intelligence_layer.core.chunk import Chunk
 from intelligence_layer.core.tracer import NoOpTracer
 from intelligence_layer.use_cases.classify.classify import (
+    ClassifyEvaluation,
     ClassifyEvaluator,
     ClassifyInput,
     MultiLabelClassifyOutput,
@@ -167,4 +168,5 @@ def test_can_evaluate_embedding_based_classify(
         input=classify_input, tracer=NoOpTracer(), expected_output=["positive"]
     )
 
+    assert isinstance(evaluation, ClassifyEvaluation)
     assert evaluation.correct is True

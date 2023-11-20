@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from concurrent.futures import ThreadPoolExecutor
-from typing import Generic, Iterable, Optional, Protocol, Sequence, TypeVar
+from typing import Generic, Iterable, Optional, Protocol, Sequence, TypeVar, final
 from uuid import uuid4
 
 from pydantic import BaseModel, Field
@@ -51,6 +51,10 @@ class SequenceDataset(BaseModel, Generic[Input, ExpectedOutput]):
     examples: Sequence[Example[Input, ExpectedOutput]]
 
 
+class EvaluationException(BaseModel):
+    error_message: str
+
+
 class Evaluator(ABC, Generic[Input, ExpectedOutput, Evaluation, AggregatedEvaluation]):
     """Base evaluator interface. This should run certain evaluation steps for some job.
 
@@ -64,7 +68,7 @@ class Evaluator(ABC, Generic[Input, ExpectedOutput, Evaluation, AggregatedEvalua
     """
 
     @abstractmethod
-    def evaluate(
+    def do_evaluate(
         self,
         input: Input,
         tracer: Tracer,
@@ -85,6 +89,18 @@ class Evaluator(ABC, Generic[Input, ExpectedOutput, Evaluation, AggregatedEvalua
         """
         pass
 
+    def evaluate(
+        self,
+        input: Input,
+        tracer: Tracer,
+        expected_output: ExpectedOutput,
+    ) -> Evaluation | EvaluationException:
+        try:
+            return self.do_evaluate(input, tracer, expected_output)
+        except Exception as e:
+            return EvaluationException(error_message=str(e))
+
+    @final
     def evaluate_dataset(
         self, dataset: Dataset[Input, ExpectedOutput], tracer: Tracer
     ) -> AggregatedEvaluation:
@@ -111,7 +127,12 @@ class Evaluator(ABC, Generic[Input, ExpectedOutput, Evaluation, AggregatedEvalua
                 ),
                 desc="Evaluating",
             )
-        return self.aggregate(evaluations)
+        # collect errors with debug log
+        return self.aggregate(
+            evaluation
+            for evaluation in evaluations
+            if not isinstance(evaluation, EvaluationException)
+        )
 
     @abstractmethod
     def aggregate(self, evaluations: Iterable[Evaluation]) -> AggregatedEvaluation:
