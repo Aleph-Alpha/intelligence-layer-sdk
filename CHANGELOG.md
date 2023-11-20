@@ -5,6 +5,7 @@
 ### Breaking Changes
 
 - `Dataset` is now a protocol. `SequenceDataset` replaces the old `Dataset`.
+- The `ident` attribute on `Example` is now `id`.
 
 ## 0.2.0
 

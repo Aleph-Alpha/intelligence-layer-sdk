@@ -26,7 +26,7 @@ class Example(BaseModel, Generic[Input, ExpectedOutput]):
 
     input: Input
     expected_output: ExpectedOutput
-    ident: Optional[str] = Field(default_factory=lambda: str(uuid4()))
+    id: Optional[str] = Field(default_factory=lambda: str(uuid4()))
 
 
 class Dataset(Protocol, Generic[Input, ExpectedOutput]):
