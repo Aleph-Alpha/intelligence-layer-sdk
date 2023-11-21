@@ -1,16 +1,17 @@
 from abc import ABC, abstractmethod
+from collections import defaultdict
 from concurrent.futures import ThreadPoolExecutor
 from typing import Generic, Iterable, Optional, Protocol, Sequence, TypeVar, final
 from uuid import uuid4
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, SerializeAsAny
 from tqdm import tqdm
 
 from intelligence_layer.core.task import Input
-from intelligence_layer.core.tracer import PydanticSerializable, Tracer
+from intelligence_layer.core.tracer import JsonSerializer, PydanticSerializable, Tracer
 
 ExpectedOutput = TypeVar("ExpectedOutput", bound=PydanticSerializable)
-Evaluation = TypeVar("Evaluation", bound=PydanticSerializable)
+Evaluation = TypeVar("Evaluation", bound=BaseModel)
 AggregatedEvaluation = TypeVar("AggregatedEvaluation", bound=PydanticSerializable)
 
 
@@ -55,6 +56,74 @@ class EvaluationException(BaseModel):
     error_message: str
 
 
+class ExampleResult(BaseModel, Generic[Evaluation]):
+    result: SerializeAsAny[Evaluation | EvaluationException]
+
+
+class EvaluationRepository(ABC):
+    @abstractmethod
+    def evaluation_run_results(
+        self, run_id: str, evaluation_type: type[Evaluation]
+    ) -> Sequence[ExampleResult[Evaluation]]:
+        ...
+
+    @abstractmethod
+    def store_example_result(
+        self, run_id: str, result: ExampleResult[Evaluation]
+    ) -> None:
+        ...
+
+
+class InMemoryEvaluationRepository(EvaluationRepository):
+    class SerializedExampleResult(BaseModel):
+        is_exception: bool
+        json_result: str
+
+    example_results: dict[str, list[str]] = defaultdict(list)
+
+    def evaluation_run_results(
+        self, run_id: str, evaluation_type: type[Evaluation]
+    ) -> Sequence[ExampleResult[Evaluation]]:
+        def to_example_result(
+            serialized_example: InMemoryEvaluationRepository.SerializedExampleResult,
+        ) -> ExampleResult[Evaluation]:
+            return (
+                ExampleResult(
+                    result=evaluation_type.model_validate_json(
+                        serialized_example.json_result
+                    )
+                )
+                if not serialized_example.is_exception
+                else ExampleResult(
+                    result=EvaluationException.model_validate_json(
+                        serialized_example.json_result
+                    )
+                )
+            )
+
+        result_jsons = self.example_results.get(run_id, [])
+        return [
+            to_example_result(
+                self.SerializedExampleResult.model_validate_json(json_str)
+            )
+            for json_str in result_jsons
+        ]
+
+    def store_example_result(
+        self, run_id: str, result: ExampleResult[Evaluation]
+    ) -> None:
+        json_result = self.SerializedExampleResult(
+            json_result=JsonSerializer(root=result.result).model_dump_json(),
+            is_exception=isinstance(result.result, EvaluationException),
+        )
+        self.example_results[run_id].append(json_result.model_dump_json())
+
+
+class EvaluationRunOverview(BaseModel, Generic[AggregatedEvaluation]):
+    id: str
+    statistics: SerializeAsAny[AggregatedEvaluation]
+
+
 class Evaluator(ABC, Generic[Input, ExpectedOutput, Evaluation, AggregatedEvaluation]):
     """Base evaluator interface. This should run certain evaluation steps for some job.
 
@@ -66,6 +135,9 @@ class Evaluator(ABC, Generic[Input, ExpectedOutput, Evaluation, AggregatedEvalua
         Evaluation: Interface of the metrics that come from the evaluated task.
         AggregatedEvaluation: The aggregated results of an evaluation run with a dataset.
     """
+
+    def __init__(self, repository: EvaluationRepository) -> None:
+        self.repository = repository
 
     @abstractmethod
     def do_evaluate(
@@ -89,21 +161,26 @@ class Evaluator(ABC, Generic[Input, ExpectedOutput, Evaluation, AggregatedEvalua
         """
         pass
 
-    def evaluate(
+    def _evaluate(
         self,
+        run_id: str,
         input: Input,
         tracer: Tracer,
         expected_output: ExpectedOutput,
     ) -> Evaluation | EvaluationException:
         try:
-            return self.do_evaluate(input, tracer, expected_output)
+            result = ExampleResult(
+                result=self.do_evaluate(input, tracer, expected_output)
+            )
         except Exception as e:
-            return EvaluationException(error_message=str(e))
+            result = ExampleResult(result=EvaluationException(error_message=str(e)))
+        self.repository.store_example_result(run_id, result)
+        return result.result
 
     @final
     def evaluate_dataset(
         self, dataset: Dataset[Input, ExpectedOutput], tracer: Tracer
-    ) -> AggregatedEvaluation:
+    ) -> EvaluationRunOverview[AggregatedEvaluation]:
         """Evaluates an entire datasets in a threaded manner and aggregates the results into an `AggregatedEvaluation`.
 
         This will call the `run` method for each example in the dataset.
@@ -115,10 +192,13 @@ class Evaluator(ABC, Generic[Input, ExpectedOutput, Evaluation, AggregatedEvalua
         Returns:
             The aggregated results of an evaluation run with a dataset.
         """
+
+        run_id = str(uuid4())
         with ThreadPoolExecutor(max_workers=10) as executor:
             evaluations = tqdm(
                 executor.map(
-                    lambda idx_example: self.evaluate(
+                    lambda idx_example: self._evaluate(
+                        run_id,
                         idx_example.input,
                         tracer,
                         idx_example.expected_output,
@@ -127,12 +207,15 @@ class Evaluator(ABC, Generic[Input, ExpectedOutput, Evaluation, AggregatedEvalua
                 ),
                 desc="Evaluating",
             )
+
         # collect errors with debug log
-        return self.aggregate(
+        statistics = self.aggregate(
             evaluation
             for evaluation in evaluations
             if not isinstance(evaluation, EvaluationException)
         )
+
+        return EvaluationRunOverview(id=run_id, statistics=statistics)
 
     @abstractmethod
     def aggregate(self, evaluations: Iterable[Evaluation]) -> AggregatedEvaluation:

@@ -5,7 +5,7 @@ from pydantic import BaseModel
 
 from intelligence_layer.core.chunk import Chunk
 from intelligence_layer.core.detect_language import Language
-from intelligence_layer.core.evaluator import Evaluator
+from intelligence_layer.core.evaluator import EvaluationRepository, Evaluator
 from intelligence_layer.core.graders import BleuGrader, RougeGrader
 from intelligence_layer.core.task import Task
 from intelligence_layer.core.tracer import Tracer
@@ -97,8 +97,11 @@ class SingleChunkSummarizeEvaluator(
     ]
 ):
     def __init__(
-        self, task: Task[SingleChunkSummarizeInput, SingleChunkSummarizeOutput]
+        self,
+        task: Task[SingleChunkSummarizeInput, SingleChunkSummarizeOutput],
+        repository: EvaluationRepository,
     ) -> None:
+        super().__init__(repository)
         self.task = task
         self.bleu_grader = BleuGrader()
         self.rouge_grader = RougeGrader()
@@ -145,8 +148,11 @@ class LongContextSummarizeEvaluator(
     ]
 ):
     def __init__(
-        self, task: Task[LongContextSummarizeInput, LongContextSummarizeOutput]
+        self,
+        task: Task[LongContextSummarizeInput, LongContextSummarizeOutput],
+        repository: EvaluationRepository,
     ) -> None:
+        super().__init__(repository)
         self.task = task
         self.bleu_grader = BleuGrader()
         self.rouge_grader = RougeGrader()

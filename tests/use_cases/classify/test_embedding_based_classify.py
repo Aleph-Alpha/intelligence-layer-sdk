@@ -11,6 +11,7 @@ from intelligence_layer.connectors.retrievers.qdrant_in_memory_retriever import 
     QdrantInMemoryRetriever,
 )
 from intelligence_layer.core.chunk import Chunk
+from intelligence_layer.core.evaluator import InMemoryEvaluationRepository
 from intelligence_layer.core.tracer import NoOpTracer
 from intelligence_layer.use_cases.classify.classify import (
     ClassifyEvaluation,
@@ -74,6 +75,13 @@ def embedding_based_classify(
         ),
     ]
     return EmbeddingBasedClassify(labels_with_examples, client)
+
+
+@fixture
+def classify_evaluator(
+    embedding_based_classify: EmbeddingBasedClassify,
+) -> ClassifyEvaluator:
+    return ClassifyEvaluator(embedding_based_classify, InMemoryEvaluationRepository())
 
 
 def test_qdrant_search(
@@ -156,16 +164,18 @@ def test_embedding_based_classify_works_without_examples(
 
 
 def test_can_evaluate_embedding_based_classify(
-    embedding_based_classify: EmbeddingBasedClassify,
+    classify_evaluator: ClassifyEvaluator,
 ) -> None:
     classify_input = ClassifyInput(
         chunk=Chunk("This is good"),
         labels=frozenset({"positive", "negative"}),
     )
-    evaluator = ClassifyEvaluator(task=embedding_based_classify)
 
-    evaluation = evaluator.evaluate(
-        input=classify_input, tracer=NoOpTracer(), expected_output=["positive"]
+    evaluation = classify_evaluator._evaluate(
+        "run-id",
+        input=classify_input,
+        tracer=NoOpTracer(),
+        expected_output=["positive"],
     )
 
     assert isinstance(evaluation, ClassifyEvaluation)

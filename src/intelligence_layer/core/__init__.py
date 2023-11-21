@@ -15,8 +15,11 @@ from .detect_language import (
 )
 from .echo import EchoInput, EchoOutput, EchoTask
 from .evaluator import AggregatedEvaluation, Dataset, Evaluation
+from .evaluator import EvaluationException as EvaluationException
+from .evaluator import EvaluationRepository as EvaluationRepository
 from .evaluator import Evaluator as Evaluator
 from .evaluator import Example as Example
+from .evaluator import InMemoryEvaluationRepository as InMemoryEvaluationRepository
 from .evaluator import SequenceDataset as SequenceDataset
 from .explain import Explain, ExplainInput, ExplainOutput
 from .graders import BleuGrader, RougeScores

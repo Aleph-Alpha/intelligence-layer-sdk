@@ -6,7 +6,11 @@ from intelligence_layer.connectors.limited_concurrency_client import (
     AlephAlphaClientProtocol,
 )
 from intelligence_layer.core.chunk import Chunk
-from intelligence_layer.core.evaluator import Example, SequenceDataset
+from intelligence_layer.core.evaluator import (
+    Example,
+    InMemoryEvaluationRepository,
+    SequenceDataset,
+)
 from intelligence_layer.core.tracer import InMemoryTracer, NoOpTracer
 from intelligence_layer.use_cases.classify.classify import (
     ClassifyEvaluation,
@@ -22,6 +26,11 @@ from intelligence_layer.use_cases.classify.prompt_based_classify import (
 @fixture
 def prompt_based_classify(client: AlephAlphaClientProtocol) -> PromptBasedClassify:
     return PromptBasedClassify(client)
+
+
+@fixture
+def classify_evaluator(prompt_based_classify: PromptBasedClassify) -> ClassifyEvaluator:
+    return ClassifyEvaluator(prompt_based_classify, InMemoryEvaluationRepository())
 
 
 def test_prompt_based_classify_returns_score_for_all_labels(
@@ -107,15 +116,17 @@ def test_prompt_based_classify_handles_labels_starting_with_same_token(
     assert classify_input.labels == set(r for r in classify_output.scores)
 
 
-def test_can_evaluate_classify(prompt_based_classify: PromptBasedClassify) -> None:
+def test_can_evaluate_classify(classify_evaluator: ClassifyEvaluator) -> None:
     classify_input = ClassifyInput(
         chunk=Chunk("This is good"),
         labels=frozenset({"positive", "negative"}),
     )
-    evaluator = ClassifyEvaluator(task=prompt_based_classify)
 
-    evaluation = evaluator.evaluate(
-        input=classify_input, tracer=NoOpTracer(), expected_output=["positive"]
+    evaluation = classify_evaluator._evaluate(
+        "run-id",
+        input=classify_input,
+        tracer=NoOpTracer(),
+        expected_output=["positive"],
     )
 
     assert isinstance(evaluation, ClassifyEvaluation)
@@ -123,7 +134,7 @@ def test_can_evaluate_classify(prompt_based_classify: PromptBasedClassify) -> No
 
 
 def test_can_aggregate_evaluations(
-    prompt_based_classify: PromptBasedClassify,
+    classify_evaluator: ClassifyEvaluator,
 ) -> None:
     positive_lst: Sequence[str] = ["positive"]
     correct_example = Example(
@@ -141,26 +152,22 @@ def test_can_aggregate_evaluations(
         expected_output=positive_lst,
     )
 
-    prompt_based_classify_evaluator = ClassifyEvaluator(task=prompt_based_classify)
-
     dataset = SequenceDataset(
         name="classify_test", examples=[correct_example, incorrect_example]
     )
 
-    aggregated_evaluations = prompt_based_classify_evaluator.evaluate_dataset(
+    evaluation_overview = classify_evaluator.evaluate_dataset(
         dataset, tracer=NoOpTracer()
     )
 
-    assert aggregated_evaluations.percentage_correct == 0.5
+    assert evaluation_overview.statistics.percentage_correct == 0.5
 
 
 def test_aggregating_evaluations_works_with_empty_list(
-    prompt_based_classify: PromptBasedClassify,
+    classify_evaluator: ClassifyEvaluator,
 ) -> None:
-    prompt_based_classify_evaluator = ClassifyEvaluator(task=prompt_based_classify)
-
-    aggregated_evaluations = prompt_based_classify_evaluator.evaluate_dataset(
+    evaluation_overview = classify_evaluator.evaluate_dataset(
         SequenceDataset(name="empty_dataset", examples=[]), tracer=NoOpTracer()
     )
 
-    assert aggregated_evaluations.percentage_correct == 0
+    assert evaluation_overview.statistics.percentage_correct == 0

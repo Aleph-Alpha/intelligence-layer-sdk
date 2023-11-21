@@ -3,7 +3,7 @@ from typing import Iterable, Mapping, NewType, Sequence, Union
 from pydantic import BaseModel
 
 from intelligence_layer.core.chunk import Chunk
-from intelligence_layer.core.evaluator import Evaluator
+from intelligence_layer.core.evaluator import EvaluationRepository, Evaluator
 from intelligence_layer.core.task import Task
 from intelligence_layer.core.tracer import Tracer
 
@@ -86,7 +86,9 @@ class ClassifyEvaluator(
             Task[ClassifyInput, SingleLabelClassifyOutput],
             Task[ClassifyInput, MultiLabelClassifyOutput],
         ],
+        repository: EvaluationRepository,
     ):
+        super().__init__(repository)
         self.task = task
 
     def do_evaluate(
