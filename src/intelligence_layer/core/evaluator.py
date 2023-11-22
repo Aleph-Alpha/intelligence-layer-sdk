@@ -100,18 +100,16 @@ class Evaluator(ABC, Generic[Input, ExpectedOutput, Evaluation, AggregatedEvalua
             The aggregated results of an evaluation run with a dataset.
         """
         with ThreadPoolExecutor(max_workers=10) as executor:
-            evaluations = list(
-                tqdm(
-                    executor.map(
-                        lambda idx_example: self.evaluate(
-                            idx_example.input,
-                            tracer,
-                            idx_example.expected_output,
-                        ),
-                        dataset.examples,
+            evaluations = tqdm(
+                executor.map(
+                    lambda idx_example: self.evaluate(
+                        idx_example.input,
+                        tracer,
+                        idx_example.expected_output,
                     ),
-                    desc="Evaluating",
-                )
+                    dataset.examples,
+                ),
+                desc="Evaluating",
             )
         return self.aggregate(evaluations)
 
