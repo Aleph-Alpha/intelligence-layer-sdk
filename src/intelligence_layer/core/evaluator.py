@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from collections import defaultdict
 from concurrent.futures import ThreadPoolExecutor
-import datetime
+from datetime import datetime
 from typing import Generic, Iterable, Optional, Protocol, Sequence, TypeVar, Union, final
 from uuid import uuid4
 
@@ -9,7 +9,7 @@ from pydantic import BaseModel, Field, SerializeAsAny
 from tqdm import tqdm
 
 from intelligence_layer.core.task import Input
-from intelligence_layer.core.tracer import JsonSerializer, PydanticSerializable, Tracer
+from intelligence_layer.core.tracer import InMemoryTracer, JsonSerializer, PydanticSerializable, Tracer
 
 ExpectedOutput = TypeVar("ExpectedOutput", bound=PydanticSerializable)
 Evaluation = TypeVar("Evaluation", bound=BaseModel)
@@ -172,7 +172,7 @@ class Evaluator(ABC, Generic[Input, ExpectedOutput, Evaluation, AggregatedEvalua
 
         Args:
             input: Interface to be passed to the task that shall be evaluated.
-            tracer: Ttracer used for tracing of tasks.
+            tracer: Tracer used for tracing of tasks.
             expected_output: Output that is expected from the task run with the supplied input.
         Returns:
             Interface of the metrics that come from the evaluated task.
@@ -186,12 +186,14 @@ class Evaluator(ABC, Generic[Input, ExpectedOutput, Evaluation, AggregatedEvalua
         tracer: Tracer,
         expected_output: ExpectedOutput,
     ) -> Evaluation | EvaluationException:
+        eval_tracer = InMemoryTracer()
         try:
+            result=self.do_evaluate(input, eval_tracer, expected_output)
             result = ExampleResult(
-                result=self.do_evaluate(input, tracer, expected_output)
+                result = result, example_trace=eval_tracer
             )
         except Exception as e:
-            result = ExampleResult(result=EvaluationException(error_message=str(e)))
+            result = ExampleResult(result=EvaluationException(error_message=str(e)), example_trace=eval_tracer)
         self.repository.store_example_result(run_id, result)
         return result.result
 
