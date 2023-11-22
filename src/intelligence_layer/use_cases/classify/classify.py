@@ -72,9 +72,10 @@ class AggregatedClassifyEvaluation(BaseModel):
     evaluations: Sequence[ClassifyEvaluation]
 
 
-class ClassifyEvaluator(
+class SingleLabelClassifyEvaluator(
     Evaluator[
         ClassifyInput,
+        SingleLabelClassifyOutput,
         Sequence[str],
         ClassifyEvaluation,
         AggregatedClassifyEvaluation,
@@ -82,22 +83,61 @@ class ClassifyEvaluator(
 ):
     def __init__(
         self,
-        task: Union[
-            Task[ClassifyInput, SingleLabelClassifyOutput],
-            Task[ClassifyInput, MultiLabelClassifyOutput],
-        ],
+        task: Task[ClassifyInput, SingleLabelClassifyOutput],
         repository: EvaluationRepository,
     ):
-        super().__init__(repository)
-        self.task = task
+        super().__init__(task, repository)
 
     def do_evaluate(
         self,
-        input: ClassifyInput,
-        tracer: Tracer,
+        output: SingleLabelClassifyOutput,
         expected_output: Sequence[str],
     ) -> ClassifyEvaluation:
-        output = self.task.run(input, tracer)
+        sorted_classes = sorted(
+            output.scores.items(), key=lambda item: item[1], reverse=True
+        )
+        if sorted_classes[0][0] in expected_output:
+            correct = True
+        else:
+            correct = False
+        return ClassifyEvaluation(correct=correct, output=output)
+
+    def aggregate(
+        self, evaluations: Iterable[ClassifyEvaluation]
+    ) -> AggregatedClassifyEvaluation:
+        evaluations_list = list(evaluations)
+        if len(evaluations_list) != 0:
+            correct_answers = len(
+                [eval.correct for eval in evaluations_list if eval.correct is True]
+            ) / len(evaluations_list)
+        else:
+            correct_answers = 0
+        return AggregatedClassifyEvaluation(
+            percentage_correct=correct_answers, evaluations=evaluations_list
+        )
+
+
+class MultiLabelClassifyEvaluator(
+    Evaluator[
+        ClassifyInput,
+        MultiLabelClassifyOutput,
+        Sequence[str],
+        ClassifyEvaluation,
+        AggregatedClassifyEvaluation,
+    ]
+):
+    def __init__(
+        self,
+        task: Task[ClassifyInput, MultiLabelClassifyOutput],
+        repository: EvaluationRepository,
+    ):
+        super().__init__(task, repository)
+
+    def do_evaluate(
+        self,
+        output: MultiLabelClassifyOutput,
+        expected_output: Sequence[str],
+    ) -> ClassifyEvaluation:
         sorted_classes = sorted(
             output.scores.items(), key=lambda item: item[1], reverse=True
         )

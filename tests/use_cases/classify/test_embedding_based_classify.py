@@ -12,11 +12,12 @@ from intelligence_layer.connectors.retrievers.qdrant_in_memory_retriever import 
 )
 from intelligence_layer.core.chunk import Chunk
 from intelligence_layer.core.evaluator import InMemoryEvaluationRepository
+from intelligence_layer.core.task import Task
 from intelligence_layer.core.tracer import NoOpTracer
 from intelligence_layer.use_cases.classify.classify import (
     ClassifyEvaluation,
-    ClassifyEvaluator,
     ClassifyInput,
+    MultiLabelClassifyEvaluator,
     MultiLabelClassifyOutput,
 )
 from intelligence_layer.use_cases.classify.embedding_based_classify import (
@@ -79,9 +80,11 @@ def embedding_based_classify(
 
 @fixture
 def classify_evaluator(
-    embedding_based_classify: EmbeddingBasedClassify,
-) -> ClassifyEvaluator:
-    return ClassifyEvaluator(embedding_based_classify, InMemoryEvaluationRepository())
+    embedding_based_classify: Task[ClassifyInput, MultiLabelClassifyOutput],
+) -> MultiLabelClassifyEvaluator:
+    return MultiLabelClassifyEvaluator(
+        embedding_based_classify, InMemoryEvaluationRepository()
+    )
 
 
 def test_qdrant_search(
@@ -164,7 +167,7 @@ def test_embedding_based_classify_works_without_examples(
 
 
 def test_can_evaluate_embedding_based_classify(
-    classify_evaluator: ClassifyEvaluator,
+    classify_evaluator: MultiLabelClassifyEvaluator,
 ) -> None:
     classify_input = ClassifyInput(
         chunk=Chunk("This is good"),

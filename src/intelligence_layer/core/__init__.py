@@ -14,7 +14,9 @@ from .detect_language import (
     Language,
 )
 from .echo import EchoInput, EchoOutput, EchoTask
-from .evaluator import AggregatedEvaluation, Dataset, Evaluation
+from .evaluator import AggregatedEvaluation
+from .evaluator import Dataset as Dataset
+from .evaluator import Evaluation
 from .evaluator import EvaluationException as EvaluationException
 from .evaluator import EvaluationRepository as EvaluationRepository
 from .evaluator import Evaluator as Evaluator
@@ -22,8 +24,8 @@ from .evaluator import Example as Example
 from .evaluator import InMemoryEvaluationRepository as InMemoryEvaluationRepository
 from .evaluator import SequenceDataset as SequenceDataset
 from .evaluator import SpanTrace as SpanTrace
-from .evaluator import TaskTrace as TaskTrace 
-from .evaluator import TraceEntry as TraceEntry
+from .evaluator import TaskTrace as TaskTrace
+from .evaluator import TraceLog as TraceLog
 from .explain import Explain, ExplainInput, ExplainOutput
 from .graders import BleuGrader, RougeScores
 from .prompt_template import (
@@ -48,6 +50,7 @@ from .tracer import (
     InMemorySpan,
     InMemoryTaskSpan,
     InMemoryTracer,
+    LogEntry,
 )
 from .tracer import NoOpTracer as NoOpTracer
 from .tracer import Span, TaskSpan

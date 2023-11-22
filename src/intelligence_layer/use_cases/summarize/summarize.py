@@ -91,6 +91,7 @@ class AggregatedSummarizeEvaluation(BaseModel):
 class SingleChunkSummarizeEvaluator(
     Evaluator[
         SingleChunkSummarizeInput,
+        SingleChunkSummarizeOutput,
         str,
         SummarizeEvaluation,
         AggregatedSummarizeEvaluation,
@@ -101,25 +102,20 @@ class SingleChunkSummarizeEvaluator(
         task: Task[SingleChunkSummarizeInput, SingleChunkSummarizeOutput],
         repository: EvaluationRepository,
     ) -> None:
-        super().__init__(repository)
-        self.task = task
+        super().__init__(task, repository)
         self.bleu_grader = BleuGrader()
         self.rouge_grader = RougeGrader()
 
     def do_evaluate(
         self,
-        input: SingleChunkSummarizeInput,
-        tracer: Tracer,
+        output: SingleChunkSummarizeOutput,
         expected_output: str,
     ) -> SummarizeEvaluation:
-        summary = self.task.run(input, tracer)
-        bleu_score = self.bleu_grader.calculate_bleu(summary.summary, expected_output)
-        rouge_score = self.rouge_grader.calculate_rouge(
-            summary.summary, expected_output
-        )
+        bleu_score = self.bleu_grader.calculate_bleu(output.summary, expected_output)
+        rouge_score = self.rouge_grader.calculate_rouge(output.summary, expected_output)
 
         return SummarizeEvaluation(
-            bleu=bleu_score, rouge=rouge_score.recall, output=summary
+            bleu=bleu_score, rouge=rouge_score.recall, output=output
         )
 
     def aggregate(
@@ -142,6 +138,7 @@ class SingleChunkSummarizeEvaluator(
 class LongContextSummarizeEvaluator(
     Evaluator[
         LongContextSummarizeInput,
+        LongContextSummarizeOutput,
         str,
         SummarizeEvaluation,
         AggregatedSummarizeEvaluation,
@@ -152,18 +149,15 @@ class LongContextSummarizeEvaluator(
         task: Task[LongContextSummarizeInput, LongContextSummarizeOutput],
         repository: EvaluationRepository,
     ) -> None:
-        super().__init__(repository)
-        self.task = task
+        super().__init__(task, repository)
         self.bleu_grader = BleuGrader()
         self.rouge_grader = RougeGrader()
 
     def do_evaluate(
         self,
-        input: LongContextSummarizeInput,
-        tracer: Tracer,
+        output: LongContextSummarizeOutput,
         expected_output: str,
     ) -> SummarizeEvaluation:
-        output = self.task.run(input, tracer)
         joint_summary = " ".join(
             partial_summary.summary for partial_summary in output.partial_summaries
         )

@@ -1,9 +1,10 @@
 from .classify.classify import (
     AggregatedClassifyEvaluation,
     ClassifyEvaluation,
-    ClassifyEvaluator,
     ClassifyInput,
+    MultiLabelClassifyEvaluator,
     MultiLabelClassifyOutput,
+    SingleLabelClassifyEvaluator,
     SingleLabelClassifyOutput,
 )
 from .classify.embedding_based_classify import EmbeddingBasedClassify, LabelWithExamples

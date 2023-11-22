@@ -14,8 +14,8 @@ from intelligence_layer.core.evaluator import (
 from intelligence_layer.core.tracer import InMemoryTracer, NoOpTracer
 from intelligence_layer.use_cases.classify.classify import (
     ClassifyEvaluation,
-    ClassifyEvaluator,
     ClassifyInput,
+    SingleLabelClassifyEvaluator,
     SingleLabelClassifyOutput,
 )
 from intelligence_layer.use_cases.classify.prompt_based_classify import (
@@ -29,8 +29,12 @@ def prompt_based_classify(client: AlephAlphaClientProtocol) -> PromptBasedClassi
 
 
 @fixture
-def classify_evaluator(prompt_based_classify: PromptBasedClassify) -> ClassifyEvaluator:
-    return ClassifyEvaluator(prompt_based_classify, InMemoryEvaluationRepository())
+def classify_evaluator(
+    prompt_based_classify: PromptBasedClassify,
+) -> SingleLabelClassifyEvaluator:
+    return SingleLabelClassifyEvaluator(
+        prompt_based_classify, InMemoryEvaluationRepository()
+    )
 
 
 def test_prompt_based_classify_returns_score_for_all_labels(
@@ -116,7 +120,9 @@ def test_prompt_based_classify_handles_labels_starting_with_same_token(
     assert classify_input.labels == set(r for r in classify_output.scores)
 
 
-def test_can_evaluate_classify(classify_evaluator: ClassifyEvaluator) -> None:
+def test_can_evaluate_classify(
+    classify_evaluator: SingleLabelClassifyEvaluator,
+) -> None:
     classify_input = ClassifyInput(
         chunk=Chunk("This is good"),
         labels=frozenset({"positive", "negative"}),
@@ -134,7 +140,7 @@ def test_can_evaluate_classify(classify_evaluator: ClassifyEvaluator) -> None:
 
 
 def test_can_aggregate_evaluations(
-    classify_evaluator: ClassifyEvaluator,
+    classify_evaluator: SingleLabelClassifyEvaluator,
 ) -> None:
     positive_lst: Sequence[str] = ["positive"]
     correct_example = Example(
@@ -164,7 +170,7 @@ def test_can_aggregate_evaluations(
 
 
 def test_aggregating_evaluations_works_with_empty_list(
-    classify_evaluator: ClassifyEvaluator,
+    classify_evaluator: SingleLabelClassifyEvaluator,
 ) -> None:
     evaluation_overview = classify_evaluator.evaluate_dataset(
         SequenceDataset(name="empty_dataset", examples=[]), tracer=NoOpTracer()

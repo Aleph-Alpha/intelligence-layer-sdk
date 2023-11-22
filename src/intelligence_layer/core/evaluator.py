@@ -2,14 +2,33 @@ from abc import ABC, abstractmethod
 from collections import defaultdict
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime
-from typing import Generic, Iterable, Optional, Protocol, Sequence, TypeVar, Union, final
+from typing import (
+    Generic,
+    Iterable,
+    Optional,
+    Protocol,
+    Sequence,
+    TypeVar,
+    Union,
+    cast,
+    final,
+)
 from uuid import uuid4
 
-from pydantic import BaseModel, Field, SerializeAsAny
+from pydantic import BaseModel, ConfigDict, Field, SerializeAsAny
 from tqdm import tqdm
 
-from intelligence_layer.core.task import Input
-from intelligence_layer.core.tracer import InMemoryTracer, JsonSerializer, PydanticSerializable, Tracer
+from intelligence_layer.core.task import Input, Output, Task
+from intelligence_layer.core.tracer import (
+    InMemorySpan,
+    InMemoryTaskSpan,
+    InMemoryTracer,
+    JsonSerializer,
+    LogEntry,
+    PydanticSerializable,
+    TaskSpan,
+    Tracer,
+)
 
 ExpectedOutput = TypeVar("ExpectedOutput", bound=PydanticSerializable)
 Evaluation = TypeVar("Evaluation", bound=BaseModel)
@@ -57,25 +76,65 @@ class EvaluationException(BaseModel):
     error_message: str
 
 
-class SpanTrace(BaseModel): 
-    traces: Sequence[Union["TaskTrace", "SpanTrace" , "TraceEntry"]]
-    start: datetime 
-    end: datetime 
+TraceEntry = Union["TaskTrace", "SpanTrace", "TraceLog"]
+
+
+class SpanTrace(BaseModel):
+    model_config = ConfigDict(frozen=True)
+
+    traces: Sequence[TraceEntry]
+    start: datetime
+    end: Optional[datetime]
+
+    @staticmethod
+    def from_span(span: InMemorySpan) -> "SpanTrace":
+        return SpanTrace(
+            traces=[to_trace_entry(t) for t in span.entries],
+            start=span.start_timestamp,
+            end=span.end_timestamp,
+        )
 
 
 class TaskTrace(SpanTrace):
+    model_config = ConfigDict(frozen=True)
+
     input: SerializeAsAny[PydanticSerializable]
     output: SerializeAsAny[PydanticSerializable]
 
+    @staticmethod
+    def from_task_span(task_span: InMemoryTaskSpan) -> "TaskTrace":
+        return TaskTrace(
+            traces=[to_trace_entry(t) for t in task_span.entries],
+            start=task_span.start_timestamp,
+            end=task_span.end_timestamp,
+            input=JsonSerializer(root=task_span.input).model_dump(),
+            output=JsonSerializer(root=task_span.output).model_dump(),
+        )
 
-class TraceEntry(BaseModel):
+
+class TraceLog(BaseModel):
+    model_config = ConfigDict(frozen=True)
+
     message: str
     value: SerializeAsAny[PydanticSerializable]
+
+    @staticmethod
+    def from_log_entry(entry: LogEntry) -> "TraceLog":
+        return TraceLog(message=entry.message, value=entry.value)
+
+
+def to_trace_entry(entry: InMemoryTaskSpan | InMemorySpan | LogEntry) -> TraceEntry:
+    if isinstance(entry, InMemoryTaskSpan):
+        return TaskTrace.from_task_span(entry)
+    elif isinstance(entry, InMemorySpan):
+        return SpanTrace.from_span(entry)
+    else:
+        return TraceLog.from_log_entry(entry)
 
 
 class ExampleResult(BaseModel, Generic[Evaluation]):
     result: SerializeAsAny[Evaluation | EvaluationException]
-    example_trace: TaskTrace 
+    trace: TaskTrace
 
 
 class EvaluationRepository(ABC):
@@ -96,6 +155,7 @@ class InMemoryEvaluationRepository(EvaluationRepository):
     class SerializedExampleResult(BaseModel):
         is_exception: bool
         json_result: str
+        trace: TaskTrace
 
     example_results: dict[str, list[str]] = defaultdict(list)
 
@@ -109,13 +169,15 @@ class InMemoryEvaluationRepository(EvaluationRepository):
                 ExampleResult(
                     result=evaluation_type.model_validate_json(
                         serialized_example.json_result
-                    )
+                    ),
+                    trace=serialized_example.trace,
                 )
                 if not serialized_example.is_exception
                 else ExampleResult(
                     result=EvaluationException.model_validate_json(
                         serialized_example.json_result
-                    )
+                    ),
+                    trace=serialized_example.trace,
                 )
             )
 
@@ -133,6 +195,7 @@ class InMemoryEvaluationRepository(EvaluationRepository):
         json_result = self.SerializedExampleResult(
             json_result=JsonSerializer(root=result.result).model_dump_json(),
             is_exception=isinstance(result.result, EvaluationException),
+            trace=result.trace,
         )
         self.example_results[run_id].append(json_result.model_dump_json())
 
@@ -142,7 +205,9 @@ class EvaluationRunOverview(BaseModel, Generic[AggregatedEvaluation]):
     statistics: SerializeAsAny[AggregatedEvaluation]
 
 
-class Evaluator(ABC, Generic[Input, ExpectedOutput, Evaluation, AggregatedEvaluation]):
+class Evaluator(
+    ABC, Generic[Input, Output, ExpectedOutput, Evaluation, AggregatedEvaluation]
+):
     """Base evaluator interface. This should run certain evaluation steps for some job.
 
     We suggest supplying a `Task` in the `__init__` method and running it in the `evaluate` method.
@@ -154,14 +219,16 @@ class Evaluator(ABC, Generic[Input, ExpectedOutput, Evaluation, AggregatedEvalua
         AggregatedEvaluation: The aggregated results of an evaluation run with a dataset.
     """
 
-    def __init__(self, repository: EvaluationRepository) -> None:
+    def __init__(
+        self, task: Task[Input, Output], repository: EvaluationRepository
+    ) -> None:
+        self.task = task
         self.repository = repository
 
     @abstractmethod
     def do_evaluate(
         self,
-        input: Input,
-        tracer: Tracer,
+        output: Output,
         expected_output: ExpectedOutput,
     ) -> Evaluation:
         """Executes the evaluation for this use-case.
@@ -171,9 +238,8 @@ class Evaluator(ABC, Generic[Input, ExpectedOutput, Evaluation, AggregatedEvalua
         Based on the results, it should create an `Evaluation` class with all the metrics and return it.
 
         Args:
-            input: Interface to be passed to the task that shall be evaluated.
-            tracer: Tracer used for tracing of tasks.
-            expected_output: Output that is expected from the task run with the supplied input.
+            output: Output of the task that shall be evaluated
+            expected_output: Output that is expected from the task.
         Returns:
             Interface of the metrics that come from the evaluated task.
         """
@@ -187,15 +253,24 @@ class Evaluator(ABC, Generic[Input, ExpectedOutput, Evaluation, AggregatedEvalua
         expected_output: ExpectedOutput,
     ) -> Evaluation | EvaluationException:
         eval_tracer = InMemoryTracer()
+        output = self.task.run(input, eval_tracer)
         try:
-            result=self.do_evaluate(input, eval_tracer, expected_output)
-            result = ExampleResult(
-                result = result, example_trace=eval_tracer
+            evaluation = self.do_evaluate(output, expected_output)
+            example_result = ExampleResult(
+                result=evaluation,
+                trace=TaskTrace.from_task_span(
+                    cast(InMemoryTaskSpan, eval_tracer.entries[0])
+                ),
             )
         except Exception as e:
-            result = ExampleResult(result=EvaluationException(error_message=str(e)), example_trace=eval_tracer)
-        self.repository.store_example_result(run_id, result)
-        return result.result
+            example_result = ExampleResult(
+                result=EvaluationException(error_message=str(e)),
+                trace=TaskTrace.from_task_span(
+                    cast(InMemoryTaskSpan, eval_tracer.entries[0])
+                ),
+            )
+        self.repository.store_example_result(run_id, example_result)
+        return example_result.result
 
     @final
     def evaluate_dataset(
