@@ -1,7 +1,8 @@
 from abc import ABC, abstractmethod
 from collections import defaultdict
 from concurrent.futures import ThreadPoolExecutor
-from typing import Generic, Iterable, Optional, Protocol, Sequence, TypeVar, final
+import datetime
+from typing import Generic, Iterable, Optional, Protocol, Sequence, TypeVar, Union, final
 from uuid import uuid4
 
 from pydantic import BaseModel, Field, SerializeAsAny
@@ -56,8 +57,25 @@ class EvaluationException(BaseModel):
     error_message: str
 
 
+class SpanTrace(BaseModel): 
+    traces: Sequence[Union["TaskTrace", "SpanTrace" , "TraceEntry"]]
+    start: datetime 
+    end: datetime 
+
+
+class TaskTrace(SpanTrace):
+    input: SerializeAsAny[PydanticSerializable]
+    output: SerializeAsAny[PydanticSerializable]
+
+
+class TraceEntry(BaseModel):
+    message: str
+    value: SerializeAsAny[PydanticSerializable]
+
+
 class ExampleResult(BaseModel, Generic[Evaluation]):
     result: SerializeAsAny[Evaluation | EvaluationException]
+    example_trace: TaskTrace 
 
 
 class EvaluationRepository(ABC):

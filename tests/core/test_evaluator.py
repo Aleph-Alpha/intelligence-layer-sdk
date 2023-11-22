@@ -1,6 +1,7 @@
-from typing import Iterable
+from typing import Iterable, Optional
 
 from pydantic import BaseModel
+from pytest import fixture
 
 from intelligence_layer.core import (
     EvaluationException,
@@ -10,6 +11,8 @@ from intelligence_layer.core import (
     NoOpTracer,
     SequenceDataset,
     Tracer,
+    Dataset,
+    TaskTrace
 )
 
 
@@ -17,26 +20,48 @@ class DummyEvaluation(BaseModel):
     result: str
 
 
-class DummyEvaluator(Evaluator[None, None, DummyEvaluation, None]):
+class DummyEvaluator(Evaluator[Optional[str], None, DummyEvaluation, None]):
     def do_evaluate(
-        self, input: None, tracer: Tracer, expected_output: None
+        self, input: Optional[str], tracer: Tracer, expected_output: None
     ) -> DummyEvaluation:
-        raise RuntimeError("Test Exception")
+        if input is None:
+            return DummyEvaluation(result="pass") 
+        raise RuntimeError(input) 
+
 
     def aggregate(self, evaluations: Iterable[DummyEvaluation]) -> None:
         return None
 
 
-def test_evaluate_dataset_does_not_raise_exception_on_failed_example() -> None:
-    evaluation_repository = InMemoryEvaluationRepository()
-    evaluator = DummyEvaluator(evaluation_repository)
-    dataset = SequenceDataset(
+@fixture
+def evaluation_repository() -> InMemoryEvaluationRepository:
+    return InMemoryEvaluationRepository()
+
+@fixture
+def dummy_evaluator(evaluation_repository: InMemoryEvaluationRepository) -> DummyEvaluator:
+    return DummyEvaluator(evaluation_repository)
+    
+
+def test_evaluate_dataset_does_not_throw_an_exception_for_failure(dummy_evaluator: DummyEvaluator) -> None:
+    dataset: Dataset[Optional[str], None] = SequenceDataset(
         name="test",
-        examples=[Example(input=None, expected_output=None)],
+        examples=[Example(input="fail", expected_output=None) ],
     )
-    evaluation_run_overview = evaluator.evaluate_dataset(dataset, NoOpTracer())
+    dummy_evaluator.evaluate_dataset(dataset, NoOpTracer())
+
+    
+def test_evaluate_dataset_stores_example_results(dummy_evaluator: DummyEvaluator, evaluation_repository: InMemoryEvaluationRepository) -> None:
+    dataset: Dataset[Optional[str], None] = SequenceDataset(
+        name="test",
+        examples=[Example(input=None, expected_output=None), Example(input="fail", expected_output=None) ],
+    )
+    evaluation_run_overview = dummy_evaluator.evaluate_dataset(dataset, NoOpTracer())
     results = evaluation_repository.evaluation_run_results(
         evaluation_run_overview.id, DummyEvaluation
     )
-    assert all(isinstance(result.result, EvaluationException) for result in results)
+
+    assert isinstance(results[0].result, DummyEvaluation)
+    assert isinstance(results[1].result, EvaluationException)
+    assert [isinstance(r.example_trace, TaskTrace) for r in results]
     assert len(results) == len(dataset.examples)
+    
