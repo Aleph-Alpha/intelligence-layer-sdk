@@ -464,7 +464,7 @@ class StartTask(BaseModel):
     parent: UUID
     name: str
     start: datetime
-    input: SerializeAsAny[Any]
+    input: SerializeAsAny[PydanticSerializable]
 
 
 class EndTask(BaseModel):
@@ -478,7 +478,7 @@ class EndTask(BaseModel):
 
     uuid: UUID
     end: datetime
-    output: SerializeAsAny[Any]
+    output: SerializeAsAny[PydanticSerializable]
 
 
 class StartSpan(BaseModel):
@@ -522,7 +522,7 @@ class PlainEntry(BaseModel):
     """
 
     message: str
-    value: SerializeAsAny[Any]
+    value: SerializeAsAny[PydanticSerializable]
     timestamp: datetime
     parent: UUID
 
@@ -538,7 +538,7 @@ class LogLine(BaseModel):
     """
 
     entry_type: str
-    entry: SerializeAsAny[Any]
+    entry: SerializeAsAny[PydanticSerializable]
 
 
 class FileTracer(Tracer):
