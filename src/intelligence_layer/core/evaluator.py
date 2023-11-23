@@ -2,6 +2,7 @@ from abc import ABC, abstractmethod
 from collections import defaultdict
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime
+from json import dumps
 from typing import (
     Generic,
     Iterable,
@@ -16,8 +17,12 @@ from typing import (
 from uuid import uuid4
 
 from pydantic import BaseModel, ConfigDict, Field, SerializeAsAny
+from rich.panel import Panel
+from rich.syntax import Syntax
+from rich.tree import Tree
 from tqdm import tqdm
 
+from intelligence_layer.connectors.document_index.document_index import JsonSerializable
 from intelligence_layer.core.task import Input, Output, Task
 from intelligence_layer.core.tracer import (
     InMemorySpan,
@@ -26,7 +31,6 @@ from intelligence_layer.core.tracer import (
     JsonSerializer,
     LogEntry,
     PydanticSerializable,
-    TaskSpan,
     Tracer,
 )
 
@@ -94,12 +98,18 @@ class SpanTrace(BaseModel):
             end=span.end_timestamp,
         )
 
+    def _rich_render_(self) -> Tree:
+        tree = Tree(label="span")
+        for log in self.traces:
+            tree.add(log._rich_render_())
+        return tree
+
 
 class TaskTrace(SpanTrace):
     model_config = ConfigDict(frozen=True)
 
-    input: SerializeAsAny[PydanticSerializable]
-    output: SerializeAsAny[PydanticSerializable]
+    input: SerializeAsAny[JsonSerializable]
+    output: SerializeAsAny[JsonSerializable]
 
     @staticmethod
     def from_task_span(task_span: InMemoryTaskSpan) -> "TaskTrace":
@@ -107,20 +117,51 @@ class TaskTrace(SpanTrace):
             traces=[to_trace_entry(t) for t in task_span.entries],
             start=task_span.start_timestamp,
             end=task_span.end_timestamp,
-            input=JsonSerializer(root=task_span.input).model_dump(),
-            output=JsonSerializer(root=task_span.output).model_dump(),
+            # RootModel.model_dump is declared to return the type of root, but actually returns
+            # a JSON-like structure that fits to the JsonSerializable type
+            input=JsonSerializer(root=task_span.input).model_dump(mode="json"),  # type: ignore
+            output=JsonSerializer(root=task_span.output).model_dump(mode="json"),  # type: ignore
         )
+
+    def _rich_render_(self) -> Tree:
+        tree = Tree(label="task")
+        tree.add(_render_log_value(self.input, "Input"))
+        for log in self.traces:
+            tree.add(log._rich_render_())
+        tree.add(_render_log_value(self.output, "Output"))
+        return tree
+
+    def _ipython_display_(self) -> None:
+        """Default rendering for Jupyter notebooks"""
+        from rich import print
+
+        print(self._rich_render_())
 
 
 class TraceLog(BaseModel):
     model_config = ConfigDict(frozen=True)
 
     message: str
-    value: SerializeAsAny[PydanticSerializable]
+    value: SerializeAsAny[JsonSerializable]
 
     @staticmethod
     def from_log_entry(entry: LogEntry) -> "TraceLog":
-        return TraceLog(message=entry.message, value=entry.value)
+        return TraceLog(
+            message=entry.message,
+            # RootModel.model_dump is declared to return the type of root, but actually returns
+            # a JSON-like structure that fits to the JsonSerializable type
+            value=JsonSerializer(root=entry.value).model_dump(mode="json"),  # type: ignore
+        )
+
+    def _rich_render_(self) -> Panel:
+        return _render_log_value(self.value, self.message)
+
+
+def _render_log_value(value: JsonSerializable, title: str) -> Panel:
+    return Panel(
+        Syntax(dumps(value, indent=2), "json", word_wrap=True),
+        title=title,
+    )
 
 
 def to_trace_entry(entry: InMemoryTaskSpan | InMemorySpan | LogEntry) -> TraceEntry:
@@ -157,7 +198,7 @@ class InMemoryEvaluationRepository(EvaluationRepository):
         json_result: str
         trace: TaskTrace
 
-    example_results: dict[str, list[str]] = defaultdict(list)
+    _example_results: dict[str, list[str]] = defaultdict(list)
 
     def evaluation_run_results(
         self, run_id: str, evaluation_type: type[Evaluation]
@@ -181,7 +222,7 @@ class InMemoryEvaluationRepository(EvaluationRepository):
                 )
             )
 
-        result_jsons = self.example_results.get(run_id, [])
+        result_jsons = self._example_results.get(run_id, [])
         return [
             to_example_result(
                 self.SerializedExampleResult.model_validate_json(json_str)
@@ -197,7 +238,7 @@ class InMemoryEvaluationRepository(EvaluationRepository):
             is_exception=isinstance(result.result, EvaluationException),
             trace=result.trace,
         )
-        self.example_results[run_id].append(json_result.model_dump_json())
+        self._example_results[run_id].append(json_result.model_dump_json())
 
 
 class EvaluationRunOverview(BaseModel, Generic[AggregatedEvaluation]):
@@ -228,6 +269,7 @@ class Evaluator(
     @abstractmethod
     def do_evaluate(
         self,
+        input: Input,
         output: Output,
         expected_output: ExpectedOutput,
     ) -> Evaluation:
@@ -238,6 +280,7 @@ class Evaluator(
         Based on the results, it should create an `Evaluation` class with all the metrics and return it.
 
         Args:
+            input: The input that was passed to the task to produce the output
             output: Output of the task that shall be evaluated
             expected_output: Output that is expected from the task.
         Returns:
@@ -253,24 +296,25 @@ class Evaluator(
         expected_output: ExpectedOutput,
     ) -> Evaluation | EvaluationException:
         eval_tracer = InMemoryTracer()
-        output = self.task.run(input, eval_tracer)
-        try:
-            evaluation = self.do_evaluate(output, expected_output)
-            example_result = ExampleResult(
-                result=evaluation,
-                trace=TaskTrace.from_task_span(
-                    cast(InMemoryTaskSpan, eval_tracer.entries[0])
-                ),
-            )
-        except Exception as e:
-            example_result = ExampleResult(
-                result=EvaluationException(error_message=str(e)),
-                trace=TaskTrace.from_task_span(
-                    cast(InMemoryTaskSpan, eval_tracer.entries[0])
-                ),
-            )
-        self.repository.store_example_result(run_id, example_result)
+        result = self.evaluate(input, expected_output, eval_tracer)
+        example_result = ExampleResult(
+            result=result,
+            trace=TaskTrace.from_task_span(
+                cast(InMemoryTaskSpan, eval_tracer.entries[0])
+            ),
+        )
+        self.repository.store_example_result(run_id=run_id, result=example_result)
         return example_result.result
+
+    @final
+    def evaluate(
+        self, input: Input, expected_output: ExpectedOutput, tracer: Tracer
+    ) -> Evaluation | EvaluationException:
+        output = self.task.run(input, tracer)
+        try:
+            return self.do_evaluate(input, output, expected_output)
+        except Exception as e:
+            return EvaluationException(error_message=str(e))
 
     @final
     def evaluate_dataset(

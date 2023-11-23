@@ -5,7 +5,6 @@ from pydantic import BaseModel
 from intelligence_layer.core.chunk import Chunk
 from intelligence_layer.core.evaluator import EvaluationRepository, Evaluator
 from intelligence_layer.core.task import Task
-from intelligence_layer.core.tracer import Tracer
 
 Probability = NewType("Probability", float)
 
@@ -90,6 +89,7 @@ class SingleLabelClassifyEvaluator(
 
     def do_evaluate(
         self,
+        input: ClassifyInput,
         output: SingleLabelClassifyOutput,
         expected_output: Sequence[str],
     ) -> ClassifyEvaluation:
@@ -135,6 +135,7 @@ class MultiLabelClassifyEvaluator(
 
     def do_evaluate(
         self,
+        input: ClassifyInput,
         output: MultiLabelClassifyOutput,
         expected_output: Sequence[str],
     ) -> ClassifyEvaluation:

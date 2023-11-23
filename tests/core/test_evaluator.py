@@ -28,7 +28,7 @@ class DummyEvaluator(
     Evaluator[Optional[str], Optional[str], None, DummyEvaluation, None]
 ):
     def do_evaluate(
-        self, output: Optional[str], expected_output: None
+        self, input: Optional[str], output: Optional[str], expected_output: None
     ) -> DummyEvaluation:
         if output is None:
             return DummyEvaluation(result="pass")
@@ -114,3 +114,14 @@ def test_to_trace_entry() -> None:
             SpanTrace(traces=[], start=now, end=now),
         ],
     )
+
+
+def test_deserialize_task_trace() -> None:
+    trace = TaskTrace(
+        start=datetime.utcnow(),
+        end=datetime.utcnow(),
+        traces=[],
+        input=[{"a": "b"}],
+        output=["c"],
+    )
+    assert trace.model_validate_json(trace.model_dump_json()) == trace

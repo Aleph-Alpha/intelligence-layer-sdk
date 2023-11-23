@@ -8,7 +8,6 @@ from intelligence_layer.core.detect_language import Language
 from intelligence_layer.core.evaluator import EvaluationRepository, Evaluator
 from intelligence_layer.core.graders import BleuGrader, RougeGrader
 from intelligence_layer.core.task import Task
-from intelligence_layer.core.tracer import Tracer
 
 
 class LongContextSummarizeInput(BaseModel):
@@ -108,6 +107,7 @@ class SingleChunkSummarizeEvaluator(
 
     def do_evaluate(
         self,
+        input: SingleChunkSummarizeInput,
         output: SingleChunkSummarizeOutput,
         expected_output: str,
     ) -> SummarizeEvaluation:
@@ -155,6 +155,7 @@ class LongContextSummarizeEvaluator(
 
     def do_evaluate(
         self,
+        input: LongContextSummarizeInput,
         output: LongContextSummarizeOutput,
         expected_output: str,
     ) -> SummarizeEvaluation:
