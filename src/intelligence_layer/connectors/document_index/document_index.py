@@ -1,34 +1,13 @@
 from datetime import datetime
 from http import HTTPStatus
 from json import dumps
-from typing import TYPE_CHECKING, Any, Mapping, Sequence
+from typing import Any, Mapping, Sequence
 
 import requests
 from pydantic import BaseModel, Field
 from requests import HTTPError
-from typing_extensions import TypeAliasType
 
-if TYPE_CHECKING:
-    JsonSerializable = (
-        int
-        | float
-        | str
-        | None
-        | bool
-        | Sequence["JsonSerializable"]
-        | Mapping[str, "JsonSerializable"]
-    )
-else:
-    JsonSerializable = TypeAliasType(
-        "JsonSerializable",
-        int
-        | float
-        | str
-        | None
-        | bool
-        | Sequence["JsonSerializable"]
-        | Mapping[str, "JsonSerializable"],
-    )
+from intelligence_layer.connectors.base.json_serializable import JsonSerializable
 
 
 class DocumentContents(BaseModel):

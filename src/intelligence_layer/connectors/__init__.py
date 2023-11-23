@@ -1,3 +1,4 @@
+from .base.json_serializable import JsonSerializable as JsonSerializable
 from .document_index.document_index import (
     ConstraintViolation,
     DocumentContents,

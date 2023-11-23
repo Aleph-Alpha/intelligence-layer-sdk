@@ -22,7 +22,7 @@ from rich.syntax import Syntax
 from rich.tree import Tree
 from tqdm import tqdm
 
-from intelligence_layer.connectors.document_index.document_index import JsonSerializable
+from intelligence_layer.connectors import JsonSerializable
 from intelligence_layer.core.task import Input, Output, Task
 from intelligence_layer.core.tracer import (
     InMemorySpan,
