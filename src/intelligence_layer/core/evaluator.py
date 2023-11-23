@@ -73,7 +73,7 @@ class Dataset(Protocol, Generic[Input, ExpectedOutput]):
 
 class SequenceDataset(BaseModel, Generic[Input, ExpectedOutput]):
     """A :class:`Dataset` that contains all examples in a sequence.
-    
+
     We recommend using this when it is certain that all examples
     fit in memory.
 
@@ -88,11 +88,11 @@ class SequenceDataset(BaseModel, Generic[Input, ExpectedOutput]):
 
 class EvaluationException(BaseModel):
     """Captures an exception raised during evaluating a :class:`Task`.
-    
+
     Attributes:
         error_message: String-representation of the exception.
     """
-    
+
     error_message: str
 
 
@@ -101,12 +101,13 @@ Trace = Union["TaskSpanTrace", "SpanTrace", "LogTrace"]
 
 class SpanTrace(BaseModel):
     """Represents traces contained by :class:`Span`
-    
+
     Attributes:
         traces: The child traces.
         start: Start time of the span.
         end: End time of the span.
     """
+
     model_config = ConfigDict(frozen=True)
 
     traces: Sequence[Trace]
@@ -135,6 +136,7 @@ class TaskSpanTrace(SpanTrace):
         input: Input from the traced :class:`Task`.
         output: Output of the traced :class:`Task`.
     """
+
     model_config = ConfigDict(frozen=True)
 
     input: SerializeAsAny[JsonSerializable]
@@ -169,7 +171,7 @@ class TaskSpanTrace(SpanTrace):
 
 class LogTrace(BaseModel):
     """Represents a :class:`LogEntry`.
-    
+
     Attributes:
         message: A description of the value that is being logged, such as the step in the
             :class:`Task` this is related to.
@@ -213,9 +215,9 @@ def _to_trace_entry(entry: InMemoryTaskSpan | InMemorySpan | LogEntry) -> Trace:
 
 class ExampleResult(BaseModel, Generic[Evaluation]):
     """Result of a single evaluated :class:`Example`
-    
+
     Created to persist the evaluation result in the repository.
-    
+
     Attributes:
         example_id: Identifier of the :class:`Example` evaluated.
         result: If the evaluation was successful, evaluation's result,
@@ -231,12 +233,12 @@ class ExampleResult(BaseModel, Generic[Evaluation]):
 
 class EvaluationRunOverview(BaseModel, Generic[AggregatedEvaluation]):
     """Overview of the results of evaluating a :class:`Task` on a :class:`Dataset`.
-    
+
     Created when running :func:`Evaluator.evaluate_dataset`. Contains high-level information and statistics.
-    
+
     Attributes:
         id: Identifier of the run.
-        statistics: Aggregated statistics of the run.  
+        statistics: Aggregated statistics of the run.
     """
 
     id: str
@@ -250,7 +252,7 @@ class EvaluationRunOverview(BaseModel, Generic[AggregatedEvaluation]):
 
 class EvaluationRepository(ABC):
     """Base evaluation repository interface.
-    
+
     Provides methods to store and load evaluation results for individual examples
     of a run and the aggregated evaluation of said run.
     """
@@ -260,12 +262,12 @@ class EvaluationRepository(ABC):
         self, run_id: str, evaluation_type: type[Evaluation]
     ) -> Sequence[ExampleResult[Evaluation]]:
         """Returns all :class:`ExampleResult` instances of a given run
-        
+
         Args:
             run_id: Identifier of the run to obtain the results for.
             evaluation_type: Type of evaluations that the :class:`Evaluator` returned
                 in :func:`Evaluator.do_evaluate`
-        
+
         Returns:
             All :class:`ExampleResult` of the run. Will return an empty list if there's none.
         """
@@ -276,13 +278,13 @@ class EvaluationRepository(ABC):
         self, run_id: str, example_id: str, evaluation_type: type[Evaluation]
     ) -> Optional[ExampleResult[Evaluation]]:
         """Returns an :class:`ExampleResult` of a given run by its id.
-        
+
         Args:
             run_id: Identifier of the run to obtain the results for.
             example_id: Identifier of the :class:`ExampleResult` to be retrieved.
             evaluation_type: Type of evaluations that the `Evaluator` returned
                 in :func:`Evaluator.do_evaluate`
-        
+
         Returns:
             :class:`ExampleResult` if one was found, `None` otherwise.
         """
@@ -293,7 +295,7 @@ class EvaluationRepository(ABC):
         self, run_id: str, result: ExampleResult[Evaluation]
     ) -> None:
         """Stores an :class:`ExampleResult` for a run in the repository.
-        
+
         Args:
             run_id: Identifier of the run.
             result: The result to be persisted.
@@ -305,12 +307,12 @@ class EvaluationRepository(ABC):
         self, run_id: str, aggregation_type: type[AggregatedEvaluation]
     ) -> Optional[EvaluationRunOverview[AggregatedEvaluation]]:
         """Returns an :class:`EvaluationRunOverview` of a given run by its id.
-        
+
         Args:
             run_id: Identifier of the run to obtain the overview for.
             aggregation_type: Type of aggregations that the :class:`Evaluator` returned
                 in :func:`Evaluator.aggregate`
-        
+
         Returns:
             :class:`EvaluationRunOverview` if one was found, `None` otherwise.
         """
@@ -321,7 +323,7 @@ class EvaluationRepository(ABC):
         self, overview: EvaluationRunOverview[AggregatedEvaluation]
     ) -> None:
         """Stores an :class:`EvaluationRunOverview` in the repository.
-        
+
         Args:
             overview: The overview to be persisted.
         """

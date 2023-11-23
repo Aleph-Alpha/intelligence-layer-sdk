@@ -17,11 +17,10 @@ from .echo import EchoInput, EchoOutput, EchoTask
 from .evaluator import Dataset as Dataset
 from .evaluator import EvaluationException as EvaluationException
 from .evaluator import EvaluationRepository as EvaluationRepository
-from .evaluator import Evaluator as Evaluator
-from .evaluator import ExampleResult as ExampleResult
-from .evaluator import EvaluationException as EvaluationException
 from .evaluator import EvaluationRunOverview as EvaluationRunOverview
+from .evaluator import Evaluator as Evaluator
 from .evaluator import Example as Example
+from .evaluator import ExampleResult as ExampleResult
 from .evaluator import InMemoryEvaluationRepository as InMemoryEvaluationRepository
 from .evaluator import LogTrace as LogTrace
 from .evaluator import SequenceDataset as SequenceDataset

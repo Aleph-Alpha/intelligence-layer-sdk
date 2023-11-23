@@ -1,11 +1,10 @@
 from datetime import datetime
-from typing import Iterable, Literal, Optional, Sequence
+from typing import Iterable, Literal, Sequence
 
 from pydantic import BaseModel
 from pytest import fixture
 
 from intelligence_layer.core import (
-    Dataset,
     EvaluationException,
     Evaluator,
     Example,
@@ -18,7 +17,6 @@ from intelligence_layer.core import (
 from intelligence_layer.core.evaluator import LogTrace, SpanTrace, _to_trace_entry
 from intelligence_layer.core.task import Task
 from intelligence_layer.core.tracer import InMemorySpan, InMemoryTaskSpan, LogEntry
-
 
 DummyTaskInput = Literal["success", "fail in task", "fail in eval"]
 DummyTaskOutput = DummyTaskInput
@@ -34,7 +32,11 @@ class AggregatedDummyEvaluation(BaseModel):
 
 class DummyEvaluator(
     Evaluator[
-        DummyTaskInput, DummyTaskOutput, None, DummyEvaluation, AggregatedDummyEvaluation
+        DummyTaskInput,
+        DummyTaskOutput,
+        None,
+        DummyEvaluation,
+        AggregatedDummyEvaluation,
     ]
 ):
     def do_evaluate(
@@ -42,7 +44,7 @@ class DummyEvaluator(
     ) -> DummyEvaluation:
         if output == "fail in eval":
             raise RuntimeError(output)
-        return DummyEvaluation(result="pass")    
+        return DummyEvaluation(result="pass")
 
     def aggregate(
         self, evaluations: Iterable[DummyEvaluation]
@@ -51,10 +53,10 @@ class DummyEvaluator(
 
 
 class DummyTask(Task[DummyTaskInput, DummyTaskOutput]):
-    def do_run(self, input: str | None, tracer: Tracer) -> str | None:
+    def do_run(self, input: DummyTaskInput, tracer: Tracer) -> DummyTaskOutput:
         if input == "fail in task":
             raise RuntimeError(input)
-        return input    
+        return input
 
 
 @fixture
@@ -69,16 +71,6 @@ def dummy_evaluator(
     return DummyEvaluator(DummyTask(), evaluation_repository)
 
 
-def test_evaluate_dataset_does_not_throw_an_exception_for_failure(
-    dummy_evaluator: DummyEvaluator,
-) -> None:
-    dataset: Dataset[Optional[str], None] = SequenceDataset(
-        name="test",
-        examples=[Example(input="fail", expected_output=None)],
-    )
-    dummy_evaluator.evaluate_dataset(dataset, NoOpTracer())
-
-
 def test_evaluate_dataset_stores_example_results(
     dummy_evaluator: DummyEvaluator,
 ) -> None:
@@ -89,7 +81,7 @@ def test_evaluate_dataset_stores_example_results(
         Example(input="fail in eval", expected_output=None),
     ]
 
-    dataset: SequenceDataset[str | None, None] = SequenceDataset(
+    dataset: SequenceDataset[DummyTaskInput, None] = SequenceDataset(
         name="test",
         examples=examples,
     )
@@ -106,8 +98,12 @@ def test_evaluate_dataset_stores_example_results(
     )
 
     assert success_result and isinstance(success_result.result, DummyEvaluation)
-    assert failure_result_task and isinstance(failure_result_task.result, EvaluationException)
-    assert failure_result_eval and isinstance(failure_result_eval.result, EvaluationException)
+    assert failure_result_task and isinstance(
+        failure_result_task.result, EvaluationException
+    )
+    assert failure_result_eval and isinstance(
+        failure_result_eval.result, EvaluationException
+    )
     assert success_result.trace.input == "success"
     assert failure_result_task.trace.input == "fail in task"
     assert failure_result_eval.trace.input == "fail in eval"
@@ -118,7 +114,7 @@ def test_evaluate_dataset_stores_aggregated_results(
 ) -> None:
     evaluation_repository = dummy_evaluator.repository
 
-    dataset: SequenceDataset[str | None, None] = SequenceDataset(
+    dataset: SequenceDataset[DummyTaskInput, None] = SequenceDataset(
         name="test",
         examples=[],
     )
