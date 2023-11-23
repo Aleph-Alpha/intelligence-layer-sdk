@@ -22,10 +22,10 @@ from .evaluator import EvaluationRepository as EvaluationRepository
 from .evaluator import Evaluator as Evaluator
 from .evaluator import Example as Example
 from .evaluator import InMemoryEvaluationRepository as InMemoryEvaluationRepository
+from .evaluator import LogTrace as LogTrace
 from .evaluator import SequenceDataset as SequenceDataset
 from .evaluator import SpanTrace as SpanTrace
-from .evaluator import TaskTrace as TaskTrace
-from .evaluator import TraceLog as TraceLog
+from .evaluator import TaskSpanTrace as TaskSpanTrace
 from .explain import Explain, ExplainInput, ExplainOutput
 from .graders import BleuGrader, RougeScores
 from .prompt_template import (

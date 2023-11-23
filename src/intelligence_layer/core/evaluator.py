@@ -80,13 +80,13 @@ class EvaluationException(BaseModel):
     error_message: str
 
 
-TraceEntry = Union["TaskTrace", "SpanTrace", "TraceLog"]
+Trace = Union["TaskSpanTrace", "SpanTrace", "LogTrace"]
 
 
 class SpanTrace(BaseModel):
     model_config = ConfigDict(frozen=True)
 
-    traces: Sequence[TraceEntry]
+    traces: Sequence[Trace]
     start: datetime
     end: Optional[datetime]
 
@@ -105,15 +105,15 @@ class SpanTrace(BaseModel):
         return tree
 
 
-class TaskTrace(SpanTrace):
+class TaskSpanTrace(SpanTrace):
     model_config = ConfigDict(frozen=True)
 
     input: SerializeAsAny[JsonSerializable]
     output: SerializeAsAny[JsonSerializable]
 
     @staticmethod
-    def from_task_span(task_span: InMemoryTaskSpan) -> "TaskTrace":
-        return TaskTrace(
+    def from_task_span(task_span: InMemoryTaskSpan) -> "TaskSpanTrace":
+        return TaskSpanTrace(
             traces=[to_trace_entry(t) for t in task_span.entries],
             start=task_span.start_timestamp,
             end=task_span.end_timestamp,
@@ -138,15 +138,15 @@ class TaskTrace(SpanTrace):
         print(self._rich_render_())
 
 
-class TraceLog(BaseModel):
+class LogTrace(BaseModel):
     model_config = ConfigDict(frozen=True)
 
     message: str
     value: SerializeAsAny[JsonSerializable]
 
     @staticmethod
-    def from_log_entry(entry: LogEntry) -> "TraceLog":
-        return TraceLog(
+    def from_log_entry(entry: LogEntry) -> "LogTrace":
+        return LogTrace(
             message=entry.message,
             # RootModel.model_dump is declared to return the type of root, but actually returns
             # a JSON-like structure that fits to the JsonSerializable type
@@ -164,19 +164,29 @@ def _render_log_value(value: JsonSerializable, title: str) -> Panel:
     )
 
 
-def to_trace_entry(entry: InMemoryTaskSpan | InMemorySpan | LogEntry) -> TraceEntry:
+def to_trace_entry(entry: InMemoryTaskSpan | InMemorySpan | LogEntry) -> Trace:
     if isinstance(entry, InMemoryTaskSpan):
-        return TaskTrace.from_task_span(entry)
+        return TaskSpanTrace.from_task_span(entry)
     elif isinstance(entry, InMemorySpan):
         return SpanTrace.from_span(entry)
     else:
-        return TraceLog.from_log_entry(entry)
+        return LogTrace.from_log_entry(entry)
 
 
 class ExampleResult(BaseModel, Generic[Evaluation]):
     example_id: str
     result: SerializeAsAny[Evaluation | EvaluationException]
-    trace: TaskTrace
+    trace: TaskSpanTrace
+
+
+class EvaluationRunOverview(BaseModel, Generic[AggregatedEvaluation]):
+    id: str
+    # dataset_id: str
+    # failed_evaluation_count: int
+    # successful_evaluation_count: int
+    # start: datetime
+    # end: datetime
+    statistics: SerializeAsAny[AggregatedEvaluation]
 
 
 class EvaluationRepository(ABC):
@@ -198,13 +208,25 @@ class EvaluationRepository(ABC):
     ) -> None:
         ...
 
+    @abstractmethod
+    def store_evaluation_run_overview(
+        self, overview: EvaluationRunOverview[AggregatedEvaluation]
+    ) -> None:
+        ...
+
+    @abstractmethod
+    def evaluation_run_overview(
+        self, run_id: str, aggregation_type: type[AggregatedEvaluation]
+    ) -> Optional[EvaluationRunOverview[AggregatedEvaluation]]:
+        ...
+
 
 class InMemoryEvaluationRepository(EvaluationRepository):
     class SerializedExampleResult(BaseModel):
         example_id: str
         is_exception: bool
         json_result: str
-        trace: TaskTrace
+        trace: TaskSpanTrace
 
     _example_results: dict[str, list[str]] = defaultdict(list)
 
@@ -263,10 +285,15 @@ class InMemoryEvaluationRepository(EvaluationRepository):
         )
         self._example_results[run_id].append(json_result.model_dump_json())
 
+    def store_evaluation_run_overview(
+        self, overview: EvaluationRunOverview[AggregatedEvaluation]
+    ) -> None:
+        pass
 
-class EvaluationRunOverview(BaseModel, Generic[AggregatedEvaluation]):
-    id: str
-    statistics: SerializeAsAny[AggregatedEvaluation]
+    def evaluation_run_overview(
+        self, run_id: str, aggregation_type: type[AggregatedEvaluation]
+    ) -> EvaluationRunOverview[AggregatedEvaluation] | None:
+        return None
 
 
 class Evaluator(
@@ -322,7 +349,7 @@ class Evaluator(
         example_result = ExampleResult(
             example_id=example.id,
             result=result,
-            trace=TaskTrace.from_task_span(
+            trace=TaskSpanTrace.from_task_span(
                 cast(InMemoryTaskSpan, eval_tracer.entries[0])
             ),
         )

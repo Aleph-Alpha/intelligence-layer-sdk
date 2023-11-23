@@ -12,10 +12,10 @@ from intelligence_layer.core import (
     InMemoryEvaluationRepository,
     NoOpTracer,
     SequenceDataset,
-    TaskTrace,
+    TaskSpanTrace,
     Tracer,
 )
-from intelligence_layer.core.evaluator import SpanTrace, TraceLog, to_trace_entry
+from intelligence_layer.core.evaluator import LogTrace, SpanTrace, to_trace_entry
 from intelligence_layer.core.task import Task
 from intelligence_layer.core.tracer import InMemorySpan, InMemoryTaskSpan, LogEntry
 
@@ -109,20 +109,20 @@ def test_to_trace_entry() -> None:
         )
     )
 
-    assert entry == TaskTrace(
+    assert entry == TaskSpanTrace(
         input="input",
         output="output",
         start=now,
         end=now,
         traces=[
-            TraceLog(message="message", value="value"),
+            LogTrace(message="message", value="value"),
             SpanTrace(traces=[], start=now, end=now),
         ],
     )
 
 
 def test_deserialize_task_trace() -> None:
-    trace = TaskTrace(
+    trace = TaskSpanTrace(
         start=datetime.utcnow(),
         end=datetime.utcnow(),
         traces=[],
@@ -130,3 +130,13 @@ def test_deserialize_task_trace() -> None:
         output=["c"],
     )
     assert trace.model_validate_json(trace.model_dump_json()) == trace
+
+
+# TODO
+
+# - check ci problem
+# - add documentation to evaluator
+# - store aggregation result
+# - file bases repo
+# - refactor _rich_render_ (reuse in tracer and evaluator?)
+# - introduce MappingTask (to remove redundancy in ClassifyEvaluators)
