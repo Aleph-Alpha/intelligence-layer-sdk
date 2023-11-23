@@ -36,7 +36,7 @@ from intelligence_layer.core.tracer import (
 
 ExpectedOutput = TypeVar("ExpectedOutput", bound=PydanticSerializable)
 Evaluation = TypeVar("Evaluation", bound=BaseModel)
-AggregatedEvaluation = TypeVar("AggregatedEvaluation", bound=PydanticSerializable)
+AggregatedEvaluation = TypeVar("AggregatedEvaluation", bound=BaseModel)
 
 
 class Example(BaseModel, Generic[Input, ExpectedOutput]):
@@ -230,6 +230,8 @@ class InMemoryEvaluationRepository(EvaluationRepository):
 
     _example_results: dict[str, list[str]] = defaultdict(list)
 
+    _run_overviews: dict[str, str] = dict()
+
     def evaluation_run_results(
         self, run_id: str, evaluation_type: type[Evaluation]
     ) -> Sequence[ExampleResult[Evaluation]]:
@@ -288,12 +290,18 @@ class InMemoryEvaluationRepository(EvaluationRepository):
     def store_evaluation_run_overview(
         self, overview: EvaluationRunOverview[AggregatedEvaluation]
     ) -> None:
-        pass
+        self._run_overviews[overview.id] = overview.model_dump_json()
 
     def evaluation_run_overview(
         self, run_id: str, aggregation_type: type[AggregatedEvaluation]
     ) -> EvaluationRunOverview[AggregatedEvaluation] | None:
-        return None
+        loaded_json = self._run_overviews.get(run_id)
+        # mypy doesn't accept dynamic types as type parameter
+        return (
+            EvaluationRunOverview[aggregation_type].model_validate_json(loaded_json)  # type: ignore
+            if loaded_json
+            else None
+        )
 
 
 class Evaluator(
@@ -402,7 +410,9 @@ class Evaluator(
             if not isinstance(evaluation, EvaluationException)
         )
 
-        return EvaluationRunOverview(id=run_id, statistics=statistics)
+        run_overview = EvaluationRunOverview(id=run_id, statistics=statistics)
+        self.repository.store_evaluation_run_overview(run_overview)
+        return run_overview
 
     @abstractmethod
     def aggregate(self, evaluations: Iterable[Evaluation]) -> AggregatedEvaluation:

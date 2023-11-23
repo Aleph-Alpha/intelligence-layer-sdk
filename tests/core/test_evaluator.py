@@ -24,8 +24,14 @@ class DummyEvaluation(BaseModel):
     result: str
 
 
+class AggregatedDummyEvaluation(BaseModel):
+    results: Sequence[DummyEvaluation]
+
+
 class DummyEvaluator(
-    Evaluator[Optional[str], Optional[str], None, DummyEvaluation, None]
+    Evaluator[
+        Optional[str], Optional[str], None, DummyEvaluation, AggregatedDummyEvaluation
+    ]
 ):
     def do_evaluate(
         self, input: Optional[str], output: Optional[str], expected_output: None
@@ -34,8 +40,10 @@ class DummyEvaluator(
             return DummyEvaluation(result="pass")
         raise RuntimeError(output)
 
-    def aggregate(self, evaluations: Iterable[DummyEvaluation]) -> None:
-        list(evaluations)
+    def aggregate(
+        self, evaluations: Iterable[DummyEvaluation]
+    ) -> AggregatedDummyEvaluation:
+        return AggregatedDummyEvaluation(results=list(evaluations))
 
 
 class DummyTask(Task[Optional[str], Optional[str]]):
@@ -91,6 +99,24 @@ def test_evaluate_dataset_stores_example_results(
     assert failure_result and isinstance(failure_result.result, EvaluationException)
     assert success_result.trace.input is None
     assert failure_result.trace.input == "fail"
+
+
+def test_evaluate_dataset_stores_aggregated_results(
+    dummy_evaluator: DummyEvaluator,
+) -> None:
+    evaluation_repository = dummy_evaluator.repository
+
+    dataset: SequenceDataset[str | None, None] = SequenceDataset(
+        name="test",
+        examples=[],
+    )
+
+    evaluation_run_overview = dummy_evaluator.evaluate_dataset(dataset, NoOpTracer())
+    loaded_evaluation_run_overview = evaluation_repository.evaluation_run_overview(
+        evaluation_run_overview.id, AggregatedDummyEvaluation
+    )
+
+    assert evaluation_run_overview == loaded_evaluation_run_overview
 
 
 def test_to_trace_entry() -> None:
