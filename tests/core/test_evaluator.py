@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Iterable, Optional, Sequence
+from typing import Iterable, Literal, Optional, Sequence
 
 from pydantic import BaseModel
 from pytest import fixture
@@ -15,9 +15,13 @@ from intelligence_layer.core import (
     TaskSpanTrace,
     Tracer,
 )
-from intelligence_layer.core.evaluator import LogTrace, SpanTrace, to_trace_entry
+from intelligence_layer.core.evaluator import LogTrace, SpanTrace, _to_trace_entry
 from intelligence_layer.core.task import Task
 from intelligence_layer.core.tracer import InMemorySpan, InMemoryTaskSpan, LogEntry
+
+
+DummyTaskInput = Literal["success", "fail in task", "fail in eval"]
+DummyTaskOutput = DummyTaskInput
 
 
 class DummyEvaluation(BaseModel):
@@ -30,15 +34,15 @@ class AggregatedDummyEvaluation(BaseModel):
 
 class DummyEvaluator(
     Evaluator[
-        Optional[str], Optional[str], None, DummyEvaluation, AggregatedDummyEvaluation
+        DummyTaskInput, DummyTaskOutput, None, DummyEvaluation, AggregatedDummyEvaluation
     ]
 ):
     def do_evaluate(
-        self, input: Optional[str], output: Optional[str], expected_output: None
+        self, input: DummyTaskInput, output: DummyTaskOutput, expected_output: None
     ) -> DummyEvaluation:
-        if output is None:
-            return DummyEvaluation(result="pass")
-        raise RuntimeError(output)
+        if output == "fail in eval":
+            raise RuntimeError(output)
+        return DummyEvaluation(result="pass")    
 
     def aggregate(
         self, evaluations: Iterable[DummyEvaluation]
@@ -46,9 +50,11 @@ class DummyEvaluator(
         return AggregatedDummyEvaluation(results=list(evaluations))
 
 
-class DummyTask(Task[Optional[str], Optional[str]]):
+class DummyTask(Task[DummyTaskInput, DummyTaskOutput]):
     def do_run(self, input: str | None, tracer: Tracer) -> str | None:
-        return input
+        if input == "fail in task":
+            raise RuntimeError(input)
+        return input    
 
 
 @fixture
@@ -77,9 +83,10 @@ def test_evaluate_dataset_stores_example_results(
     dummy_evaluator: DummyEvaluator,
 ) -> None:
     evaluation_repository = dummy_evaluator.repository
-    examples: Sequence[Example[str | None, None]] = [
-        Example(input=None, expected_output=None),
-        Example(input="fail", expected_output=None),
+    examples: Sequence[Example[DummyTaskInput, None]] = [
+        Example(input="success", expected_output=None),
+        Example(input="fail in task", expected_output=None),
+        Example(input="fail in eval", expected_output=None),
     ]
 
     dataset: SequenceDataset[str | None, None] = SequenceDataset(
@@ -91,14 +98,19 @@ def test_evaluate_dataset_stores_example_results(
     success_result = evaluation_repository.evaluation_example_result(
         evaluation_run_overview.id, examples[0].id, DummyEvaluation
     )
-    failure_result = evaluation_repository.evaluation_example_result(
+    failure_result_task = evaluation_repository.evaluation_example_result(
         evaluation_run_overview.id, examples[1].id, DummyEvaluation
+    )
+    failure_result_eval = evaluation_repository.evaluation_example_result(
+        evaluation_run_overview.id, examples[2].id, DummyEvaluation
     )
 
     assert success_result and isinstance(success_result.result, DummyEvaluation)
-    assert failure_result and isinstance(failure_result.result, EvaluationException)
-    assert success_result.trace.input is None
-    assert failure_result.trace.input == "fail"
+    assert failure_result_task and isinstance(failure_result_task.result, EvaluationException)
+    assert failure_result_eval and isinstance(failure_result_eval.result, EvaluationException)
+    assert success_result.trace.input == "success"
+    assert failure_result_task.trace.input == "fail in task"
+    assert failure_result_eval.trace.input == "fail in eval"
 
 
 def test_evaluate_dataset_stores_aggregated_results(
@@ -121,7 +133,7 @@ def test_evaluate_dataset_stores_aggregated_results(
 
 def test_to_trace_entry() -> None:
     now = datetime.utcnow()
-    entry = to_trace_entry(
+    entry = _to_trace_entry(
         InMemoryTaskSpan(
             name="ignored",
             input="input",
@@ -161,8 +173,6 @@ def test_deserialize_task_trace() -> None:
 # TODO
 
 # - check ci problem
-# - add documentation to evaluator
-# - store aggregation result
 # - file bases repo
 # - refactor _rich_render_ (reuse in tracer and evaluator?)
 # - introduce MappingTask (to remove redundancy in ClassifyEvaluators)
