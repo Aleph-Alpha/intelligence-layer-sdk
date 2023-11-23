@@ -46,12 +46,12 @@ class Example(BaseModel, Generic[Input, ExpectedOutput]):
         input: Input for the task. Has to be same type as the input for the task used.
         expected_output: The expected output from a given example run.
             This will be used by the evaluator to compare the received output with.
-        ident: Identifier for the example, defaults to uuid.
+        id: Identifier for the example, defaults to uuid.
     """
 
     input: Input
     expected_output: ExpectedOutput
-    id: Optional[str] = Field(default_factory=lambda: str(uuid4()))
+    id: str = Field(default_factory=lambda: str(uuid4()))
 
 
 class Dataset(Protocol, Generic[Input, ExpectedOutput]):
@@ -174,6 +174,7 @@ def to_trace_entry(entry: InMemoryTaskSpan | InMemorySpan | LogEntry) -> TraceEn
 
 
 class ExampleResult(BaseModel, Generic[Evaluation]):
+    example_id: str
     result: SerializeAsAny[Evaluation | EvaluationException]
     trace: TaskTrace
 
@@ -186,6 +187,12 @@ class EvaluationRepository(ABC):
         ...
 
     @abstractmethod
+    def evaluation_example_result(
+        self, run_id: str, example_id: str, evaluation_type: type[Evaluation]
+    ) -> Optional[ExampleResult[Evaluation]]:
+        ...
+
+    @abstractmethod
     def store_example_result(
         self, run_id: str, result: ExampleResult[Evaluation]
     ) -> None:
@@ -194,6 +201,7 @@ class EvaluationRepository(ABC):
 
 class InMemoryEvaluationRepository(EvaluationRepository):
     class SerializedExampleResult(BaseModel):
+        example_id: str
         is_exception: bool
         json_result: str
         trace: TaskTrace
@@ -208,6 +216,7 @@ class InMemoryEvaluationRepository(EvaluationRepository):
         ) -> ExampleResult[Evaluation]:
             return (
                 ExampleResult(
+                    example_id=serialized_example.example_id,
                     result=evaluation_type.model_validate_json(
                         serialized_example.json_result
                     ),
@@ -215,6 +224,7 @@ class InMemoryEvaluationRepository(EvaluationRepository):
                 )
                 if not serialized_example.is_exception
                 else ExampleResult(
+                    example_id=serialized_example.example_id,
                     result=EvaluationException.model_validate_json(
                         serialized_example.json_result
                     ),
@@ -230,6 +240,18 @@ class InMemoryEvaluationRepository(EvaluationRepository):
             for json_str in result_jsons
         ]
 
+    def evaluation_example_result(
+        self, run_id: str, example_id: str, evaluation_type: type[Evaluation]
+    ) -> ExampleResult[Evaluation] | None:
+        return next(
+            (
+                result
+                for result in self.evaluation_run_results(run_id, evaluation_type)
+                if result.example_id == example_id
+            ),
+            None,
+        )
+
     def store_example_result(
         self, run_id: str, result: ExampleResult[Evaluation]
     ) -> None:
@@ -237,6 +259,7 @@ class InMemoryEvaluationRepository(EvaluationRepository):
             json_result=JsonSerializer(root=result.result).model_dump_json(),
             is_exception=isinstance(result.result, EvaluationException),
             trace=result.trace,
+            example_id=result.example_id,
         )
         self._example_results[run_id].append(json_result.model_dump_json())
 
@@ -291,13 +314,13 @@ class Evaluator(
     def _evaluate(
         self,
         run_id: str,
-        input: Input,
+        example: Example[Input, ExpectedOutput],
         tracer: Tracer,
-        expected_output: ExpectedOutput,
     ) -> Evaluation | EvaluationException:
         eval_tracer = InMemoryTracer()
-        result = self.evaluate(input, expected_output, eval_tracer)
+        result = self.evaluate(example.input, example.expected_output, eval_tracer)
         example_result = ExampleResult(
+            example_id=example.id,
             result=result,
             trace=TaskTrace.from_task_span(
                 cast(InMemoryTaskSpan, eval_tracer.entries[0])
@@ -336,17 +359,15 @@ class Evaluator(
         with ThreadPoolExecutor(max_workers=10) as executor:
             evaluations = tqdm(
                 executor.map(
-                    lambda idx_example: self._evaluate(
+                    lambda example: self._evaluate(
                         run_id,
-                        idx_example.input,
+                        example,
                         tracer,
-                        idx_example.expected_output,
                     ),
                     dataset.examples,
                 ),
                 desc="Evaluating",
             )
-
         # collect errors with debug log
         statistics = self.aggregate(
             evaluation

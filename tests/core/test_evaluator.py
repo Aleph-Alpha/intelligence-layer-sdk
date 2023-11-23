@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Iterable, Optional
+from typing import Iterable, Optional, Sequence
 
 from pydantic import BaseModel
 from pytest import fixture
@@ -35,7 +35,7 @@ class DummyEvaluator(
         raise RuntimeError(output)
 
     def aggregate(self, evaluations: Iterable[DummyEvaluation]) -> None:
-        return None
+        list(evaluations)
 
 
 class DummyTask(Task[Optional[str], Optional[str]]):
@@ -69,23 +69,28 @@ def test_evaluate_dataset_stores_example_results(
     dummy_evaluator: DummyEvaluator,
 ) -> None:
     evaluation_repository = dummy_evaluator.repository
+    examples: Sequence[Example[str | None, None]] = [
+        Example(input=None, expected_output=None),
+        Example(input="fail", expected_output=None),
+    ]
+
     dataset: SequenceDataset[str | None, None] = SequenceDataset(
         name="test",
-        examples=[
-            Example(input=None, expected_output=None),
-            Example(input="fail", expected_output=None),
-        ],
+        examples=examples,
     )
 
     evaluation_run_overview = dummy_evaluator.evaluate_dataset(dataset, NoOpTracer())
-    results = evaluation_repository.evaluation_run_results(
-        evaluation_run_overview.id, DummyEvaluation
+    success_result = evaluation_repository.evaluation_example_result(
+        evaluation_run_overview.id, examples[0].id, DummyEvaluation
+    )
+    failure_result = evaluation_repository.evaluation_example_result(
+        evaluation_run_overview.id, examples[1].id, DummyEvaluation
     )
 
-    assert isinstance(results[0].result, DummyEvaluation)
-    assert isinstance(results[1].result, EvaluationException)
-    assert [isinstance(r.trace, TaskTrace) for r in results]
-    assert len(results) == len(dataset.examples)
+    assert success_result and isinstance(success_result.result, DummyEvaluation)
+    assert failure_result and isinstance(failure_result.result, EvaluationException)
+    assert success_result.trace.input is None
+    assert failure_result.trace.input == "fail"
 
 
 def test_to_trace_entry() -> None:
