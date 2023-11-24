@@ -537,7 +537,8 @@ class Evaluator(
             return self.do_evaluate(input, output, expected_output)
         except Exception as e:
             print(JsonSerializer(tracer.entries).model_dump_json(indent=2))
-            return EvaluationException(error_message=str(e))
+            raise e
+            # return EvaluationException(error_message=str(e))
 
     @final
     def evaluate_dataset(
