@@ -248,7 +248,6 @@ class Evaluator(
         Returns:
             The aggregated results of an evaluation run with a dataset.
         """
-
         run_id = str(uuid4())
         start = datetime.utcnow()
         with ThreadPoolExecutor(max_workers=10) as executor:
