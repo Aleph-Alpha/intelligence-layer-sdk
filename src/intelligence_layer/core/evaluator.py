@@ -4,8 +4,10 @@ from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime
 from json import dumps
 from typing import (
+    Callable,
     Generic,
     Iterable,
+    Iterator,
     Optional,
     Protocol,
     Sequence,
@@ -234,19 +236,25 @@ class ExampleResult(BaseModel, Generic[Evaluation]):
 class EvaluationRunOverview(BaseModel, Generic[AggregatedEvaluation]):
     """Overview of the results of evaluating a :class:`Task` on a :class:`Dataset`.
 
-    Created when running :func:`Evaluator.evaluate_dataset`. Contains high-level information and statistics.
+    Created when running :meth:`Evaluator.evaluate_dataset`. Contains high-level information and statistics.
 
     Attributes:
         id: Identifier of the run.
-        statistics: Aggregated statistics of the run.
+        dataset_name: The name of the evaluated :class:`Dataset`, i.e. :attr:`Dataset.name`
+        failed_evaluation_count: The number of examples where an exception was raised when running the task or
+            evaluating the output
+        successful_evaluation_count: The number of examples that where successfully evaluated
+        start: The time when the evaluation run was started
+        end: The time when the evaluation run ended
+        statistics: Aggregated statistics of the run. Whatever is returned by :meth:`Evaluator.aggregate`
     """
 
     id: str
-    # dataset_id: str
-    # failed_evaluation_count: int
-    # successful_evaluation_count: int
-    # start: datetime
-    # end: datetime
+    dataset_name: str
+    failed_evaluation_count: int
+    successful_evaluation_count: int
+    start: datetime
+    end: datetime
     statistics: SerializeAsAny[AggregatedEvaluation]
 
 
@@ -413,6 +421,36 @@ class InMemoryEvaluationRepository(EvaluationRepository):
         )
 
 
+T = TypeVar("T")
+
+
+class CountingFilterIterable(Iterable[T]):
+    def __init__(
+        self, wrapped_iterable: Iterable[T], filter: Callable[[T], bool]
+    ) -> None:
+        self._wrapped_iterator = iter(wrapped_iterable)
+        self._filter = filter
+        self._included_count = 0
+        self._excluded_count = 0
+
+    def __next__(self) -> T:
+        e = next(self._wrapped_iterator)
+        while not self._filter(e):
+            self._excluded_count += 1
+            e = next(self._wrapped_iterator)
+        self._included_count += 1
+        return e
+
+    def __iter__(self) -> Iterator[T]:
+        return self
+
+    def included_count(self) -> int:
+        return self._included_count
+
+    def excluded_count(self) -> int:
+        return self._excluded_count
+
+
 class Evaluator(
     ABC, Generic[Input, Output, ExpectedOutput, Evaluation, AggregatedEvaluation]
 ):
@@ -517,6 +555,7 @@ class Evaluator(
         """
 
         run_id = str(uuid4())
+        start = datetime.utcnow()
         with ThreadPoolExecutor(max_workers=10) as executor:
             evaluations = tqdm(
                 executor.map(
@@ -530,13 +569,23 @@ class Evaluator(
                 desc="Evaluating",
             )
         # collect errors with debug log
-        statistics = self.aggregate(
-            evaluation
-            for evaluation in evaluations
-            if not isinstance(evaluation, EvaluationException)
+        successful_evaluations = CountingFilterIterable(
+            evaluations,
+            lambda evaluation: not isinstance(evaluation, EvaluationException),
         )
+        # The filter above ensures that only `Evaluation` instances are passed along
+        statistics = self.aggregate(cast(Iterable[Evaluation], successful_evaluations))
+        end = datetime.utcnow()
 
-        run_overview = EvaluationRunOverview(id=run_id, statistics=statistics)
+        run_overview = EvaluationRunOverview(
+            id=run_id,
+            statistics=statistics,
+            start=start,
+            end=end,
+            dataset_name=dataset.name,
+            successful_evaluation_count=successful_evaluations.included_count(),
+            failed_evaluation_count=successful_evaluations.excluded_count(),
+        )
         self.repository.store_evaluation_run_overview(run_overview)
         return run_overview
 

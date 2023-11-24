@@ -71,6 +71,29 @@ def dummy_evaluator(
     return DummyEvaluator(DummyTask(), evaluation_repository)
 
 
+def test_evaluate_dataset_returns_generic_statistics(
+    dummy_evaluator: DummyEvaluator,
+) -> None:
+    test_start = datetime.utcnow()
+    examples: Sequence[Example[DummyTaskInput, None]] = [
+        Example(input="success", expected_output=None),
+        Example(input="fail in task", expected_output=None),
+        Example(input="fail in eval", expected_output=None),
+    ]
+
+    dataset: SequenceDataset[DummyTaskInput, None] = SequenceDataset(
+        name="test",
+        examples=examples,
+    )
+
+    evaluation_run_overview = dummy_evaluator.evaluate_dataset(dataset, NoOpTracer())
+
+    assert evaluation_run_overview.dataset_name == dataset.name
+    assert test_start <= evaluation_run_overview.start <= evaluation_run_overview.end
+    assert evaluation_run_overview.failed_evaluation_count == 2
+    assert evaluation_run_overview.successful_evaluation_count == 1
+
+
 def test_evaluate_dataset_stores_example_results(
     dummy_evaluator: DummyEvaluator,
 ) -> None:
@@ -164,11 +187,3 @@ def test_deserialize_task_trace() -> None:
         output=["c"],
     )
     assert trace.model_validate_json(trace.model_dump_json()) == trace
-
-
-# TODO
-
-# - check ci problem
-# - file bases repo
-# - refactor _rich_render_ (reuse in tracer and evaluator?)
-# - introduce MappingTask (to remove redundancy in ClassifyEvaluators)
