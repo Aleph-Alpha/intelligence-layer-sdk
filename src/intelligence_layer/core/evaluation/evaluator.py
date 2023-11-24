@@ -28,12 +28,7 @@ from intelligence_layer.core.evaluation.domain import (
     TaskSpanTrace,
 )
 from intelligence_layer.core.task import Input, Output, Task
-from intelligence_layer.core.tracer import (
-    InMemoryTaskSpan,
-    InMemoryTracer,
-    JsonSerializer,
-    Tracer,
-)
+from intelligence_layer.core.tracer import InMemoryTaskSpan, InMemoryTracer, Tracer
 
 
 class EvaluationRepository(ABC):
