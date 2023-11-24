@@ -2,17 +2,21 @@ from datetime import datetime
 from json import dumps
 from typing import Generic, Iterable, Optional, Protocol, Sequence, TypeVar, Union
 from uuid import uuid4
-from rich.tree import Tree
-from rich.panel import Panel
-from rich.syntax import Syntax
 
 from pydantic import BaseModel, ConfigDict, Field, SerializeAsAny
+from rich.panel import Panel
+from rich.syntax import Syntax
+from rich.tree import Tree
+
 from intelligence_layer.connectors import JsonSerializable
 from intelligence_layer.core.task import Input
-from intelligence_layer.core.tracer import JsonSerializer
-
-from intelligence_layer.core.tracer import InMemorySpan, InMemoryTaskSpan, LogEntry, PydanticSerializable
-
+from intelligence_layer.core.tracer import (
+    InMemorySpan,
+    InMemoryTaskSpan,
+    JsonSerializer,
+    LogEntry,
+    PydanticSerializable,
+)
 
 ExpectedOutput = TypeVar("ExpectedOutput", bound=PydanticSerializable)
 Evaluation = TypeVar("Evaluation", bound=BaseModel)

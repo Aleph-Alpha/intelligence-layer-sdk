@@ -1,11 +1,12 @@
 from datetime import datetime
+
 from intelligence_layer.core import (
+    InMemorySpan,
     InMemoryTaskSpan,
     LogEntry,
-    InMemorySpan,
-    TaskSpanTrace,
     LogTrace,
-    SpanTrace
+    SpanTrace,
+    TaskSpanTrace,
 )
 from intelligence_layer.core.evaluation.domain import _to_trace_entry
 

@@ -25,6 +25,7 @@ from .evaluation.domain import SpanTrace as SpanTrace
 from .evaluation.domain import TaskSpanTrace as TaskSpanTrace
 from .evaluation.evaluator import EvaluationRepository as EvaluationRepository
 from .evaluation.evaluator import Evaluator as Evaluator
+from .evaluation.repository import FileEvaluationRepository as FileEvaluationRepository
 from .evaluation.repository import (
     InMemoryEvaluationRepository as InMemoryEvaluationRepository,
 )
