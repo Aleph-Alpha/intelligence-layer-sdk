@@ -2,7 +2,7 @@ from pytest import fixture
 
 from intelligence_layer.core.chunk import Chunk
 from intelligence_layer.core.detect_language import Language
-from intelligence_layer.core.evaluator import (
+from intelligence_layer.core import (
     Example,
     InMemoryEvaluationRepository,
     SequenceDataset,

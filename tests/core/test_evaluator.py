@@ -14,7 +14,8 @@ from intelligence_layer.core import (
     TaskSpanTrace,
     Tracer,
 )
-from intelligence_layer.core.evaluator import LogTrace, SpanTrace, _to_trace_entry
+from intelligence_layer.core import LogTrace, SpanTrace
+from intelligence_layer.core.evaluation.evaluator import _to_trace_entry 
 from intelligence_layer.core.task import Task
 from intelligence_layer.core.tracer import InMemorySpan, InMemoryTaskSpan, LogEntry
 
@@ -148,6 +149,9 @@ def test_evaluate_dataset_stores_aggregated_results(
     )
 
     assert evaluation_run_overview == loaded_evaluation_run_overview
+
+
+
 
 
 def test_to_trace_entry() -> None:

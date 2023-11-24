@@ -11,7 +11,7 @@ from intelligence_layer.connectors.retrievers.qdrant_in_memory_retriever import 
     QdrantInMemoryRetriever,
 )
 from intelligence_layer.core.chunk import Chunk
-from intelligence_layer.core.evaluator import InMemoryEvaluationRepository
+from intelligence_layer.core import InMemoryEvaluationRepository
 from intelligence_layer.core.task import Task
 from intelligence_layer.core.tracer import NoOpTracer
 from intelligence_layer.use_cases.classify.classify import (

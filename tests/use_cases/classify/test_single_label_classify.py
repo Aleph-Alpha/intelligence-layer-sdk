@@ -6,7 +6,7 @@ from intelligence_layer.connectors.limited_concurrency_client import (
     AlephAlphaClientProtocol,
 )
 from intelligence_layer.core.chunk import Chunk
-from intelligence_layer.core.evaluator import (
+from intelligence_layer.core import (
     Example,
     InMemoryEvaluationRepository,
     SequenceDataset,

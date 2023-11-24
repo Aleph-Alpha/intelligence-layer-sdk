@@ -14,18 +14,18 @@ from .detect_language import (
     Language,
 )
 from .echo import EchoInput, EchoOutput, EchoTask
-from .evaluator import Dataset as Dataset
-from .evaluator import EvaluationException as EvaluationException
-from .evaluator import EvaluationRepository as EvaluationRepository
-from .evaluator import EvaluationRunOverview as EvaluationRunOverview
-from .evaluator import Evaluator as Evaluator
-from .evaluator import Example as Example
-from .evaluator import ExampleResult as ExampleResult
-from .evaluator import InMemoryEvaluationRepository as InMemoryEvaluationRepository
-from .evaluator import LogTrace as LogTrace
-from .evaluator import SequenceDataset as SequenceDataset
-from .evaluator import SpanTrace as SpanTrace
-from .evaluator import TaskSpanTrace as TaskSpanTrace
+from .evaluation.evaluator import Dataset as Dataset
+from .evaluation.evaluator import EvaluationException as EvaluationException
+from .evaluation.evaluator import EvaluationRepository as EvaluationRepository
+from .evaluation.evaluator import EvaluationRunOverview as EvaluationRunOverview
+from .evaluation.evaluator import Evaluator as Evaluator
+from .evaluation.evaluator import Example as Example
+from .evaluation.evaluator import ExampleResult as ExampleResult
+from .evaluation.evaluator import InMemoryEvaluationRepository as InMemoryEvaluationRepository
+from .evaluation.evaluator import LogTrace as LogTrace
+from .evaluation.evaluator import SequenceDataset as SequenceDataset
+from .evaluation.evaluator import SpanTrace as SpanTrace
+from .evaluation.evaluator import TaskSpanTrace as TaskSpanTrace
 from .explain import Explain, ExplainInput, ExplainOutput
 from .graders import BleuGrader, RougeScores
 from .prompt_template import (
