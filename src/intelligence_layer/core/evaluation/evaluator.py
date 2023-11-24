@@ -231,12 +231,7 @@ class Evaluator(
             output = self.task.run(input, tracer)
             return self.do_evaluate(input, output, expected_output)
         except Exception as e:
-            print(
-                JsonSerializer(
-                    root=cast(InMemoryTracer, tracer).entries
-                ).model_dump_json(indent=2)
-            )
-            raise e
+            return EvaluationException(error_message=str(e))
 
     @final
     def evaluate_dataset(
