@@ -2,8 +2,8 @@ from typing import Iterable, Mapping, NewType, Sequence, Union
 
 from pydantic import BaseModel
 
-from intelligence_layer.core.chunk import Chunk
 from intelligence_layer.core import EvaluationRepository, Evaluator
+from intelligence_layer.core.chunk import Chunk
 from intelligence_layer.core.task import Task
 
 Probability = NewType("Probability", float)

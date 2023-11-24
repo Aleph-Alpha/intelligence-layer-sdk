@@ -1,12 +1,12 @@
 from pytest import fixture
 
-from intelligence_layer.core.chunk import Chunk
-from intelligence_layer.core.detect_language import Language
 from intelligence_layer.core import (
     Example,
     InMemoryEvaluationRepository,
     SequenceDataset,
 )
+from intelligence_layer.core.chunk import Chunk
+from intelligence_layer.core.detect_language import Language
 from intelligence_layer.core.tracer import NoOpTracer
 from intelligence_layer.use_cases.summarize.long_context_high_compression_summarize import (
     LongContextHighCompressionSummarize,

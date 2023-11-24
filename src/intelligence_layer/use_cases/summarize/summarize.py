@@ -3,9 +3,9 @@ from typing import Iterable, Sequence, Union
 
 from pydantic import BaseModel
 
+from intelligence_layer.core import EvaluationRepository, Evaluator
 from intelligence_layer.core.chunk import Chunk
 from intelligence_layer.core.detect_language import Language
-from intelligence_layer.core import EvaluationRepository, Evaluator
 from intelligence_layer.core.graders import BleuGrader, RougeGrader
 from intelligence_layer.core.task import Task
 

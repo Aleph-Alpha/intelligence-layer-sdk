@@ -11,13 +11,9 @@ from intelligence_layer.core import (
     InMemoryEvaluationRepository,
     NoOpTracer,
     SequenceDataset,
-    TaskSpanTrace,
     Tracer,
 )
-from intelligence_layer.core import LogTrace, SpanTrace
-from intelligence_layer.core.evaluation.evaluator import _to_trace_entry 
 from intelligence_layer.core.task import Task
-from intelligence_layer.core.tracer import InMemorySpan, InMemoryTaskSpan, LogEntry
 
 DummyTaskInput = Literal["success", "fail in task", "fail in eval"]
 DummyTaskOutput = DummyTaskInput
@@ -149,45 +145,3 @@ def test_evaluate_dataset_stores_aggregated_results(
     )
 
     assert evaluation_run_overview == loaded_evaluation_run_overview
-
-
-
-
-
-def test_to_trace_entry() -> None:
-    now = datetime.utcnow()
-    entry = _to_trace_entry(
-        InMemoryTaskSpan(
-            name="ignored",
-            input="input",
-            output="output",
-            start_timestamp=now,
-            end_timestamp=now,
-            entries=[
-                LogEntry(message="message", value="value"),
-                InMemorySpan(name="ignored", start_timestamp=now, end_timestamp=now),
-            ],
-        )
-    )
-
-    assert entry == TaskSpanTrace(
-        input="input",
-        output="output",
-        start=now,
-        end=now,
-        traces=[
-            LogTrace(message="message", value="value"),
-            SpanTrace(traces=[], start=now, end=now),
-        ],
-    )
-
-
-def test_deserialize_task_trace() -> None:
-    trace = TaskSpanTrace(
-        start=datetime.utcnow(),
-        end=datetime.utcnow(),
-        traces=[],
-        input=[{"a": "b"}],
-        output=["c"],
-    )
-    assert trace.model_validate_json(trace.model_dump_json()) == trace

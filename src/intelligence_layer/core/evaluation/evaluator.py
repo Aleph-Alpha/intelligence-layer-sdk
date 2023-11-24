@@ -1,261 +1,39 @@
 from abc import ABC, abstractmethod
-from collections import defaultdict
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime
-from json import dumps
 from typing import (
     Callable,
     Generic,
     Iterable,
     Iterator,
     Optional,
-    Protocol,
     Sequence,
     TypeVar,
-    Union,
     cast,
     final,
 )
 from uuid import uuid4
 
-from pydantic import BaseModel, ConfigDict, Field, SerializeAsAny
-from rich.panel import Panel
-from rich.syntax import Syntax
-from rich.tree import Tree
 from tqdm import tqdm
 
-from intelligence_layer.connectors import JsonSerializable
+from intelligence_layer.core.evaluation.domain import (
+    AggregatedEvaluation,
+    Dataset,
+    Evaluation,
+    EvaluationException,
+    EvaluationRunOverview,
+    Example,
+    ExampleResult,
+    ExpectedOutput,
+    TaskSpanTrace,
+)
 from intelligence_layer.core.task import Input, Output, Task
 from intelligence_layer.core.tracer import (
-    InMemorySpan,
     InMemoryTaskSpan,
     InMemoryTracer,
     JsonSerializer,
-    LogEntry,
-    PydanticSerializable,
     Tracer,
 )
-
-ExpectedOutput = TypeVar("ExpectedOutput", bound=PydanticSerializable)
-Evaluation = TypeVar("Evaluation", bound=BaseModel)
-AggregatedEvaluation = TypeVar("AggregatedEvaluation", bound=BaseModel)
-
-
-class Example(BaseModel, Generic[Input, ExpectedOutput]):
-    """Example case used for evaluations.
-
-    Attributes:
-        input: Input for the :class:`Task`. Has to be same type as the input for the task used.
-        expected_output: The expected output from a given example run.
-            This will be used by the evaluator to compare the received output with.
-        id: Identifier for the example, defaults to uuid.
-    """
-
-    input: Input
-    expected_output: ExpectedOutput
-    id: str = Field(default_factory=lambda: str(uuid4()))
-
-
-class Dataset(Protocol, Generic[Input, ExpectedOutput]):
-    """A dataset of examples used for evaluation of a :class:`Task`.
-
-    Attributes:
-        name: This a human readable identifier for a dataset.
-        examples: The actual examples that a :class:`Task` will be evaluated on.
-    """
-
-    @property
-    def name(self) -> str:
-        ...
-
-    @property
-    def examples(self) -> Iterable[Example[Input, ExpectedOutput]]:
-        ...
-
-
-class SequenceDataset(BaseModel, Generic[Input, ExpectedOutput]):
-    """A :class:`Dataset` that contains all examples in a sequence.
-
-    We recommend using this when it is certain that all examples
-    fit in memory.
-
-    Attributes:
-        name: This a human readable identifier for a :class:`Dataset`.
-        examples: The actual examples that a :class:`Task` will be evaluated on.
-    """
-
-    name: str
-    examples: Sequence[Example[Input, ExpectedOutput]]
-
-
-class EvaluationException(BaseModel):
-    """Captures an exception raised during evaluating a :class:`Task`.
-
-    Attributes:
-        error_message: String-representation of the exception.
-    """
-
-    error_message: str
-
-
-Trace = Union["TaskSpanTrace", "SpanTrace", "LogTrace"]
-
-
-class SpanTrace(BaseModel):
-    """Represents traces contained by :class:`Span`
-
-    Attributes:
-        traces: The child traces.
-        start: Start time of the span.
-        end: End time of the span.
-    """
-
-    model_config = ConfigDict(frozen=True)
-
-    traces: Sequence[Trace]
-    start: datetime
-    end: Optional[datetime]
-
-    @staticmethod
-    def from_span(span: InMemorySpan) -> "SpanTrace":
-        return SpanTrace(
-            traces=[_to_trace_entry(t) for t in span.entries],
-            start=span.start_timestamp,
-            end=span.end_timestamp,
-        )
-
-    def _rich_render_(self) -> Tree:
-        tree = Tree(label="span")
-        for log in self.traces:
-            tree.add(log._rich_render_())
-        return tree
-
-
-class TaskSpanTrace(SpanTrace):
-    """Represents traces contained by :class:`TaskSpan`
-
-    Attributes:
-        input: Input from the traced :class:`Task`.
-        output: Output of the traced :class:`Task`.
-    """
-
-    model_config = ConfigDict(frozen=True)
-
-    input: SerializeAsAny[JsonSerializable]
-    output: SerializeAsAny[JsonSerializable]
-
-    @staticmethod
-    def from_task_span(task_span: InMemoryTaskSpan) -> "TaskSpanTrace":
-        return TaskSpanTrace(
-            traces=[_to_trace_entry(t) for t in task_span.entries],
-            start=task_span.start_timestamp,
-            end=task_span.end_timestamp,
-            # RootModel.model_dump is declared to return the type of root, but actually returns
-            # a JSON-like structure that fits to the JsonSerializable type
-            input=JsonSerializer(root=task_span.input).model_dump(mode="json"),  # type: ignore
-            output=JsonSerializer(root=task_span.output).model_dump(mode="json"),  # type: ignore
-        )
-
-    def _rich_render_(self) -> Tree:
-        tree = Tree(label="task")
-        tree.add(_render_log_value(self.input, "Input"))
-        for log in self.traces:
-            tree.add(log._rich_render_())
-        tree.add(_render_log_value(self.output, "Output"))
-        return tree
-
-    def _ipython_display_(self) -> None:
-        """Default rendering for Jupyter notebooks"""
-        from rich import print
-
-        print(self._rich_render_())
-
-
-class LogTrace(BaseModel):
-    """Represents a :class:`LogEntry`.
-
-    Attributes:
-        message: A description of the value that is being logged, such as the step in the
-            :class:`Task` this is related to.
-        value: The logged data. Can be anything that is serializable by Pydantic,
-            which gives the tracers flexibility in how they store and emit the logs.
-    """
-
-    model_config = ConfigDict(frozen=True)
-
-    message: str
-    value: SerializeAsAny[JsonSerializable]
-
-    @staticmethod
-    def from_log_entry(entry: LogEntry) -> "LogTrace":
-        return LogTrace(
-            message=entry.message,
-            # RootModel.model_dump is declared to return the type of root, but actually returns
-            # a JSON-like structure that fits to the JsonSerializable type
-            value=JsonSerializer(root=entry.value).model_dump(mode="json"),  # type: ignore
-        )
-
-    def _rich_render_(self) -> Panel:
-        return _render_log_value(self.value, self.message)
-
-
-def _render_log_value(value: JsonSerializable, title: str) -> Panel:
-    return Panel(
-        Syntax(dumps(value, indent=2), "json", word_wrap=True),
-        title=title,
-    )
-
-
-def _to_trace_entry(entry: InMemoryTaskSpan | InMemorySpan | LogEntry) -> Trace:
-    if isinstance(entry, InMemoryTaskSpan):
-        return TaskSpanTrace.from_task_span(entry)
-    elif isinstance(entry, InMemorySpan):
-        return SpanTrace.from_span(entry)
-    else:
-        return LogTrace.from_log_entry(entry)
-
-
-class ExampleResult(BaseModel, Generic[Evaluation]):
-    """Result of a single evaluated :class:`Example`
-
-    Created to persist the evaluation result in the repository.
-
-    Attributes:
-        example_id: Identifier of the :class:`Example` evaluated.
-        result: If the evaluation was successful, evaluation's result,
-            otherwise the exception raised during running or evaluating
-            the :class:`Task`.
-        trace: Generated when running the :class:`Task`.
-    """
-
-    example_id: str
-    result: SerializeAsAny[Evaluation | EvaluationException]
-    trace: TaskSpanTrace
-
-
-class EvaluationRunOverview(BaseModel, Generic[AggregatedEvaluation]):
-    """Overview of the results of evaluating a :class:`Task` on a :class:`Dataset`.
-
-    Created when running :meth:`Evaluator.evaluate_dataset`. Contains high-level information and statistics.
-
-    Attributes:
-        id: Identifier of the run.
-        dataset_name: The name of the evaluated :class:`Dataset`, i.e. :attr:`Dataset.name`
-        failed_evaluation_count: The number of examples where an exception was raised when running the task or
-            evaluating the output
-        successful_evaluation_count: The number of examples that where successfully evaluated
-        start: The time when the evaluation run was started
-        end: The time when the evaluation run ended
-        statistics: Aggregated statistics of the run. Whatever is returned by :meth:`Evaluator.aggregate`
-    """
-
-    id: str
-    dataset_name: str
-    failed_evaluation_count: int
-    successful_evaluation_count: int
-    start: datetime
-    end: datetime
-    statistics: SerializeAsAny[AggregatedEvaluation]
 
 
 class EvaluationRepository(ABC):
@@ -336,89 +114,6 @@ class EvaluationRepository(ABC):
             overview: The overview to be persisted.
         """
         ...
-
-
-class InMemoryEvaluationRepository(EvaluationRepository):
-    class SerializedExampleResult(BaseModel):
-        example_id: str
-        is_exception: bool
-        json_result: str
-        trace: TaskSpanTrace
-
-    _example_results: dict[str, list[str]] = defaultdict(list)
-
-    _run_overviews: dict[str, str] = dict()
-
-    def evaluation_run_results(
-        self, run_id: str, evaluation_type: type[Evaluation]
-    ) -> Sequence[ExampleResult[Evaluation]]:
-        def to_example_result(
-            serialized_example: InMemoryEvaluationRepository.SerializedExampleResult,
-        ) -> ExampleResult[Evaluation]:
-            return (
-                ExampleResult(
-                    example_id=serialized_example.example_id,
-                    result=evaluation_type.model_validate_json(
-                        serialized_example.json_result
-                    ),
-                    trace=serialized_example.trace,
-                )
-                if not serialized_example.is_exception
-                else ExampleResult(
-                    example_id=serialized_example.example_id,
-                    result=EvaluationException.model_validate_json(
-                        serialized_example.json_result
-                    ),
-                    trace=serialized_example.trace,
-                )
-            )
-
-        result_jsons = self._example_results.get(run_id, [])
-        return [
-            to_example_result(
-                self.SerializedExampleResult.model_validate_json(json_str)
-            )
-            for json_str in result_jsons
-        ]
-
-    def evaluation_example_result(
-        self, run_id: str, example_id: str, evaluation_type: type[Evaluation]
-    ) -> ExampleResult[Evaluation] | None:
-        return next(
-            (
-                result
-                for result in self.evaluation_run_results(run_id, evaluation_type)
-                if result.example_id == example_id
-            ),
-            None,
-        )
-
-    def store_example_result(
-        self, run_id: str, result: ExampleResult[Evaluation]
-    ) -> None:
-        json_result = self.SerializedExampleResult(
-            json_result=JsonSerializer(root=result.result).model_dump_json(),
-            is_exception=isinstance(result.result, EvaluationException),
-            trace=result.trace,
-            example_id=result.example_id,
-        )
-        self._example_results[run_id].append(json_result.model_dump_json())
-
-    def store_evaluation_run_overview(
-        self, overview: EvaluationRunOverview[AggregatedEvaluation]
-    ) -> None:
-        self._run_overviews[overview.id] = overview.model_dump_json()
-
-    def evaluation_run_overview(
-        self, run_id: str, aggregation_type: type[AggregatedEvaluation]
-    ) -> EvaluationRunOverview[AggregatedEvaluation] | None:
-        loaded_json = self._run_overviews.get(run_id)
-        # mypy doesn't accept dynamic types as type parameter
-        return (
-            EvaluationRunOverview[aggregation_type].model_validate_json(loaded_json)  # type: ignore
-            if loaded_json
-            else None
-        )
 
 
 T = TypeVar("T")
@@ -536,7 +231,11 @@ class Evaluator(
             output = self.task.run(input, tracer)
             return self.do_evaluate(input, output, expected_output)
         except Exception as e:
-            print(JsonSerializer(root=cast(InMemoryTracer, tracer).entries).model_dump_json(indent=2))
+            print(
+                JsonSerializer(
+                    root=cast(InMemoryTracer, tracer).entries
+                ).model_dump_json(indent=2)
+            )
             raise e
 
     @final

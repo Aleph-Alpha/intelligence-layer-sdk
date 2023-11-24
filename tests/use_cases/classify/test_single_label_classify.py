@@ -5,12 +5,12 @@ from pytest import fixture
 from intelligence_layer.connectors.limited_concurrency_client import (
     AlephAlphaClientProtocol,
 )
-from intelligence_layer.core.chunk import Chunk
 from intelligence_layer.core import (
     Example,
     InMemoryEvaluationRepository,
     SequenceDataset,
 )
+from intelligence_layer.core.chunk import Chunk
 from intelligence_layer.core.tracer import InMemoryTracer, NoOpTracer
 from intelligence_layer.use_cases.classify.classify import (
     ClassifyEvaluation,

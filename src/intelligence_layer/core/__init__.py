@@ -14,18 +14,20 @@ from .detect_language import (
     Language,
 )
 from .echo import EchoInput, EchoOutput, EchoTask
-from .evaluation.evaluator import Dataset as Dataset
-from .evaluation.evaluator import EvaluationException as EvaluationException
+from .evaluation.domain import Dataset as Dataset
+from .evaluation.domain import EvaluationException as EvaluationException
+from .evaluation.domain import EvaluationRunOverview as EvaluationRunOverview
+from .evaluation.domain import Example as Example
+from .evaluation.domain import ExampleResult as ExampleResult
+from .evaluation.domain import LogTrace as LogTrace
+from .evaluation.domain import SequenceDataset as SequenceDataset
+from .evaluation.domain import SpanTrace as SpanTrace
+from .evaluation.domain import TaskSpanTrace as TaskSpanTrace
 from .evaluation.evaluator import EvaluationRepository as EvaluationRepository
-from .evaluation.evaluator import EvaluationRunOverview as EvaluationRunOverview
 from .evaluation.evaluator import Evaluator as Evaluator
-from .evaluation.evaluator import Example as Example
-from .evaluation.evaluator import ExampleResult as ExampleResult
-from .evaluation.evaluator import InMemoryEvaluationRepository as InMemoryEvaluationRepository
-from .evaluation.evaluator import LogTrace as LogTrace
-from .evaluation.evaluator import SequenceDataset as SequenceDataset
-from .evaluation.evaluator import SpanTrace as SpanTrace
-from .evaluation.evaluator import TaskSpanTrace as TaskSpanTrace
+from .evaluation.repository import (
+    InMemoryEvaluationRepository as InMemoryEvaluationRepository,
+)
 from .explain import Explain, ExplainInput, ExplainOutput
 from .graders import BleuGrader, RougeScores
 from .prompt_template import (
@@ -43,15 +45,13 @@ from .text_highlight import (
     TextHighlightInput,
     TextHighlightOutput,
 )
-from .tracer import (
-    FileSpan,
-    FileTaskSpan,
-    FileTracer,
-    InMemorySpan,
-    InMemoryTaskSpan,
-    InMemoryTracer,
-    LogEntry,
-)
+from .tracer import FileSpan as FileSpan
+from .tracer import FileTaskSpan as FileTaskSpan
+from .tracer import FileTracer as FileTracer
+from .tracer import InMemorySpan as InMemorySpan
+from .tracer import InMemoryTaskSpan as InMemoryTaskSpan
+from .tracer import InMemoryTracer as InMemoryTracer
+from .tracer import LogEntry as LogEntry
 from .tracer import NoOpTracer as NoOpTracer
 from .tracer import Span, TaskSpan
 from .tracer import Tracer as Tracer
