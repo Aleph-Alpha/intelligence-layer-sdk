@@ -62,15 +62,28 @@ class FileEvaluationRepository(EvaluationRepository):
     def evaluation_run_results(
         self, run_id: str, evaluation_type: type[Evaluation]
     ) -> Sequence[ExampleResult[Evaluation]]:
-        return []
+        def fetch_result_from_file_name(
+            path: Path,
+        ) -> Optional[ExampleResult[Evaluation]]:
+            id = path.with_suffix("").name
+            return self.evaluation_example_result(run_id, id, evaluation_type)
+
+        path = self._root_directory / run_id
+        logs = path.glob("*.json")
+        return [
+            example_result
+            for example_result in (fetch_result_from_file_name(file) for file in logs)
+            if example_result
+        ]
 
     def evaluation_example_result(
         self, run_id: str, example_id: str, evaluation_type: type[Evaluation]
     ) -> Optional[ExampleResult[Evaluation]]:
-        file_path = self._root_directory / run_id / example_id
+        file_path = (self._root_directory / run_id / example_id).with_suffix(".json")
+        if not file_path.exists():
+            return None
         content = file_path.read_text()
         serialized_example = SerializedExampleResult.model_validate_json(content)
-        print(serialized_example)
         return serialized_example.to_example_result(evaluation_type)
 
     def store_example_result(
@@ -79,19 +92,26 @@ class FileEvaluationRepository(EvaluationRepository):
         run_path = self._root_directory / run_id
         run_path.mkdir(exist_ok=True)
         serialized_result = SerializedExampleResult.from_example_result(result)
-        (run_path / result.example_id).write_text(
+        (run_path / result.example_id).with_suffix(".json").write_text(
             serialized_result.model_dump_json(indent=2)
         )
 
     def evaluation_run_overview(
         self, run_id: str, aggregation_type: type[AggregatedEvaluation]
     ) -> Optional[EvaluationRunOverview[AggregatedEvaluation]]:
-        ...
+        file_path = (self._root_directory / run_id).with_suffix(".json")
+        if not file_path.exists():
+            return None
+        content = file_path.read_text()
+        # Mypy does not accept dynamic types
+        return EvaluationRunOverview[aggregation_type].model_validate_json(content)  # type: ignore
 
     def store_evaluation_run_overview(
         self, overview: EvaluationRunOverview[AggregatedEvaluation]
     ) -> None:
-        ...
+        (self._root_directory / overview.id).with_suffix(".json").write_text(
+            overview.model_dump_json(indent=2)
+        )
 
 
 class InMemoryEvaluationRepository(EvaluationRepository):
