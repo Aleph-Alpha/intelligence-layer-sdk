@@ -15,32 +15,34 @@ def test_to_trace_entry() -> None:
     now = datetime.utcnow()
     entry = _to_trace_entry(
         InMemoryTaskSpan(
-            name="ignored",
+            name="task",
             input="input",
             output="output",
             start_timestamp=now,
             end_timestamp=now,
             entries=[
                 LogEntry(message="message", value="value"),
-                InMemorySpan(name="ignored", start_timestamp=now, end_timestamp=now),
+                InMemorySpan(name="span", start_timestamp=now, end_timestamp=now),
             ],
         )
     )
 
     assert entry == TaskSpanTrace(
+        name="task",
         input="input",
         output="output",
         start=now,
         end=now,
         traces=[
             LogTrace(message="message", value="value"),
-            SpanTrace(traces=[], start=now, end=now),
+            SpanTrace(name="span", traces=[], start=now, end=now),
         ],
     )
 
 
 def test_deserialize_task_trace() -> None:
     trace = TaskSpanTrace(
+        name="task",
         start=datetime.utcnow(),
         end=datetime.utcnow(),
         traces=[],

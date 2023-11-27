@@ -47,6 +47,7 @@ class SpanTrace(BaseModel):
 
     model_config = ConfigDict(frozen=True)
 
+    name: str
     traces: Sequence[Trace]
     start: datetime
     end: Optional[datetime]
@@ -54,6 +55,7 @@ class SpanTrace(BaseModel):
     @staticmethod
     def from_span(span: InMemorySpan) -> "SpanTrace":
         return SpanTrace(
+            name=span.name,
             traces=[_to_trace_entry(t) for t in span.entries],
             start=span.start_timestamp,
             end=span.end_timestamp,
@@ -82,6 +84,7 @@ class TaskSpanTrace(SpanTrace):
     @staticmethod
     def from_task_span(task_span: InMemoryTaskSpan) -> "TaskSpanTrace":
         return TaskSpanTrace(
+            name=task_span.name,
             traces=[_to_trace_entry(t) for t in task_span.entries],
             start=task_span.start_timestamp,
             end=task_span.end_timestamp,
