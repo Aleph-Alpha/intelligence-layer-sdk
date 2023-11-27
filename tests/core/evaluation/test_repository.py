@@ -34,7 +34,9 @@ def file_evaluation_repository(tmp_path: Path) -> FileEvaluationRepository:
 @fixture
 def task_span_trace() -> TaskSpanTrace:
     now = datetime.now()
-    return TaskSpanTrace(traces=[], start=now, end=now, input="input", output="output")
+    return TaskSpanTrace(
+        name="task name", traces=[], start=now, end=now, input="input", output="output"
+    )
 
 
 @fixture

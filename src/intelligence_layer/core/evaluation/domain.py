@@ -171,6 +171,13 @@ class ExampleResult(BaseModel, Generic[Evaluation]):
     trace: TaskSpanTrace
 
 
+class EvaluationFailed(Exception):
+    def __init__(self, run_id: str, failed_count: int) -> None:
+        super().__init__(
+            f"Evaluation run {run_id} failed with {failed_count} failed examples."
+        )
+
+
 class EvaluationRunOverview(BaseModel, Generic[AggregatedEvaluation]):
     """Overview of the results of evaluating a :class:`Task` on a :class:`Dataset`.
 
@@ -194,6 +201,10 @@ class EvaluationRunOverview(BaseModel, Generic[AggregatedEvaluation]):
     start: datetime
     end: datetime
     statistics: SerializeAsAny[AggregatedEvaluation]
+
+    def raise_on_evaluation_failure(self) -> None:
+        if self.failed_evaluation_count > 0:
+            raise EvaluationFailed(self.id, self.failed_evaluation_count)
 
 
 class Example(BaseModel, Generic[Input, ExpectedOutput]):

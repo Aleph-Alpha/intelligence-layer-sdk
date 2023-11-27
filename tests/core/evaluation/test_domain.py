@@ -1,5 +1,8 @@
 from datetime import datetime
 
+from pydantic import BaseModel
+from pytest import raises
+
 from intelligence_layer.core import (
     InMemorySpan,
     InMemoryTaskSpan,
@@ -8,7 +11,11 @@ from intelligence_layer.core import (
     SpanTrace,
     TaskSpanTrace,
 )
-from intelligence_layer.core.evaluation.domain import _to_trace_entry
+from intelligence_layer.core.evaluation.domain import (
+    EvaluationFailed,
+    EvaluationRunOverview,
+    _to_trace_entry,
+)
 
 
 def test_to_trace_entry() -> None:
@@ -50,3 +57,23 @@ def test_deserialize_task_trace() -> None:
         output=["c"],
     )
     assert trace.model_validate_json(trace.model_dump_json()) == trace
+
+
+class StatisticsDummy(BaseModel):
+    result: str
+
+
+def test_raise_on_exception_for_evaluation_run_overview() -> None:
+    now = datetime.now()
+    overview = EvaluationRunOverview(
+        id="id",
+        dataset_name="name",
+        failed_evaluation_count=1,
+        successful_evaluation_count=0,
+        start=now,
+        end=now,
+        statistics=StatisticsDummy(result="result"),
+    )
+
+    with raises(EvaluationFailed):
+        overview.raise_on_evaluation_failure()
