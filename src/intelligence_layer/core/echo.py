@@ -71,9 +71,7 @@ class EchoTask(Task[EchoInput, EchoOutput]):
         0.6
     """
 
-    PROMPT_TEMPLATE: PromptTemplate = PromptTemplate(
-        "{{prompt}}{{expected_completion}}"
-    )
+    PROMPT_TEMPLATE_STR: str = "{{prompt}}{{expected_completion}}"
 
     def __init__(self, client: AlephAlphaClientProtocol) -> None:
         super().__init__()
@@ -86,9 +84,10 @@ class EchoTask(Task[EchoInput, EchoOutput]):
         expected_completion_tokens = self._tokenize(
             input.expected_completion, input.model
         )
-        prompt = self.PROMPT_TEMPLATE.to_prompt(
-            prompt=self.PROMPT_TEMPLATE.embed_prompt(input.prompt),
-            expected_completion=self.PROMPT_TEMPLATE.placeholder(
+        prompt_template = PromptTemplate(self.PROMPT_TEMPLATE_STR)
+        prompt = prompt_template.to_prompt(
+            prompt=prompt_template.embed_prompt(input.prompt),
+            expected_completion=prompt_template.placeholder(
                 Tokens.from_token_ids(
                     [token.token_id for token in expected_completion_tokens]
                 )
