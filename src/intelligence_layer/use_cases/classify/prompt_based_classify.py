@@ -73,7 +73,6 @@ Reply with only the class label.
     def __init__(self, client: AlephAlphaClientProtocol) -> None:
         super().__init__()
         self._client = client
-        self._completion_task = Complete(client)
         self._echo_task = EchoTask(client)
 
     def do_run(
