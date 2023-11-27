@@ -210,11 +210,15 @@ class Evaluator(
         self,
         run_id: str,
         example: Example[Input, ExpectedOutput],
-        tracer: Tracer,
+        tracer: Optional[Tracer] = None,
     ) -> Evaluation | EvaluationException:
         in_memory_tracer = InMemoryTracer()
-        composite_tracer = CompositeTracer(tracers=[in_memory_tracer, tracer])
-        result = self.evaluate(example.input, example.expected_output, composite_tracer)
+        evaluate_tracer = (
+            CompositeTracer(tracers=[in_memory_tracer, tracer])
+            if tracer
+            else in_memory_tracer
+        )
+        result = self.evaluate(example.input, example.expected_output, evaluate_tracer)
         example_result = ExampleResult(
             example_id=example.id,
             result=result,
@@ -252,7 +256,7 @@ class Evaluator(
 
     @final
     def evaluate_dataset(
-        self, dataset: Dataset[Input, ExpectedOutput], tracer: Tracer
+        self, dataset: Dataset[Input, ExpectedOutput], tracer: Optional[Tracer] = None
     ) -> EvaluationRunOverview[AggregatedEvaluation]:
         """Evaluates an entire :class:`Dataset` in a threaded manner and aggregates the results into an `AggregatedEvaluation`.
 
@@ -261,7 +265,9 @@ class Evaluator(
 
         Args:
             dataset: Dataset that will be used to evaluate a :class:`Task`.
-            tracer: tracer used for tracing.
+            tracer: Optional tracer used for extra tracing.
+                Traces are always saved in the evaluation repository.
+
         Returns:
             The aggregated results of an evaluation run with a dataset.
         """
