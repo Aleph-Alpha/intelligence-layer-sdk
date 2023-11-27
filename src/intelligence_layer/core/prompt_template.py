@@ -210,8 +210,8 @@ class PromptTemplate:
         """
         env = Environment()
         env.add_tag(PromptRangeTag)
-        self.template = env.from_string(template_str)
-        self.prompt_item_placeholders: Dict[Placeholder, Union[Image, Tokens]] = {}
+        self._template = env.from_string(template_str)
+        self._prompt_item_placeholders: dict[Placeholder, Union[Image, Tokens]] = {}
 
     def placeholder(self, value: Union[Image, Tokens]) -> Placeholder:
         """Saves a non-text prompt item to the template and returns a placeholder
@@ -219,7 +219,7 @@ class PromptTemplate:
         The placeholder is used to embed the prompt item in the template
         """
         id = Placeholder(uuid4())
-        self.prompt_item_placeholders[id] = value
+        self._prompt_item_placeholders[id] = value
         return id
 
     def _join_character(
@@ -275,16 +275,16 @@ class PromptTemplate:
         Provided parameters are passed to `liquid.Template.render`.
         """
         context = PromptRangeContext(
-            self.template.env,
-            globals=self.template.make_globals(kwargs),
-            template=self.template,
+            self._template.env,
+            globals=self._template.make_globals(kwargs),
+            template=self._template,
         )
-        buffer = self.template._get_buffer()
-        self.template.render_with_context(context, buffer, **kwargs)
+        buffer = self._template._get_buffer()
+        self._template.render_with_context(context, buffer, **kwargs)
         liquid_prompt = buffer.getvalue()
         placeholder_indices = self._compute_indices(
             chain(
-                self.prompt_item_placeholders.keys(),
+                self._prompt_item_placeholders.keys(),
                 context.placeholder_range_names().keys(),
             ),
             liquid_prompt,
@@ -305,7 +305,7 @@ class PromptTemplate:
         return self.to_prompt_with_metadata(**kwargs).prompt
 
     def _reset_placeholder_state(self) -> None:
-        self.prompt_item_placeholders = {}
+        self._prompt_item_placeholders = {}
 
     def _compute_indices(
         self, placeholders: Iterable[Placeholder], template: str
@@ -386,7 +386,7 @@ class PromptTemplate:
         for placeholder_from, placeholder_to in placeholder_indices:
             placeholder = Placeholder(UUID(template[placeholder_from:placeholder_to]))
             accumulated_text += template[last_to:placeholder_from]
-            placeholder_prompt_item = self.prompt_item_placeholders.get(placeholder)
+            placeholder_prompt_item = self._prompt_item_placeholders.get(placeholder)
             if placeholder_prompt_item:
                 if accumulated_text:
                     yield new_prompt_item(Text.from_text(accumulated_text))
