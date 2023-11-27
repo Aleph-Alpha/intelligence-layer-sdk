@@ -28,7 +28,12 @@ from intelligence_layer.core.evaluation.domain import (
     TaskSpanTrace,
 )
 from intelligence_layer.core.task import Input, Output, Task
-from intelligence_layer.core.tracer import InMemoryTaskSpan, InMemoryTracer, Tracer
+from intelligence_layer.core.tracer import (
+    CompositeTracer,
+    InMemoryTaskSpan,
+    InMemoryTracer,
+    Tracer,
+)
 
 
 class EvaluationRepository(ABC):
@@ -207,13 +212,14 @@ class Evaluator(
         example: Example[Input, ExpectedOutput],
         tracer: Tracer,
     ) -> Evaluation | EvaluationException:
-        eval_tracer = InMemoryTracer()
-        result = self.evaluate(example.input, example.expected_output, eval_tracer)
+        in_memory_tracer = InMemoryTracer()
+        composite_tracer = CompositeTracer(tracers=[in_memory_tracer, tracer])
+        result = self.evaluate(example.input, example.expected_output, composite_tracer)
         example_result = ExampleResult(
             example_id=example.id,
             result=result,
             trace=TaskSpanTrace.from_task_span(
-                cast(InMemoryTaskSpan, eval_tracer.entries[0])
+                cast(InMemoryTaskSpan, in_memory_tracer.entries[0])
             ),
         )
         self.repository.store_example_result(run_id=run_id, result=example_result)

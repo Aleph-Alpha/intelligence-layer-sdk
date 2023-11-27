@@ -9,6 +9,8 @@ from intelligence_layer.core import (
     Evaluator,
     Example,
     InMemoryEvaluationRepository,
+    InMemoryTaskSpan,
+    InMemoryTracer,
     NoOpTracer,
     SequenceDataset,
     Tracer,
@@ -89,6 +91,27 @@ def test_evaluate_dataset_returns_generic_statistics(
     assert test_start <= evaluation_run_overview.start <= evaluation_run_overview.end
     assert evaluation_run_overview.failed_evaluation_count == 2
     assert evaluation_run_overview.successful_evaluation_count == 1
+
+
+def test_evaluate_dataset_uses_passed_tracer(
+    dummy_evaluator: DummyEvaluator,
+) -> None:
+    examples: Sequence[Example[DummyTaskInput, None]] = [
+        Example(input="success", expected_output=None),
+        Example(input="fail in task", expected_output=None),
+        Example(input="fail in eval", expected_output=None),
+    ]
+
+    dataset: SequenceDataset[DummyTaskInput, None] = SequenceDataset(
+        name="test",
+        examples=examples,
+    )
+    in_memory_tracer = InMemoryTracer()
+    dummy_evaluator.evaluate_dataset(dataset, in_memory_tracer)
+
+    entries = in_memory_tracer.entries
+    assert len(entries) == 3
+    assert all([isinstance(e, InMemoryTaskSpan) for e in entries])
 
 
 def test_evaluate_dataset_stores_example_results(
