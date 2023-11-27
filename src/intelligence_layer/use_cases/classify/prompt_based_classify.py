@@ -8,7 +8,6 @@ from pydantic import BaseModel
 from intelligence_layer.connectors.limited_concurrency_client import (
     AlephAlphaClientProtocol,
 )
-from intelligence_layer.core.complete import Complete
 from intelligence_layer.core.echo import EchoInput, EchoTask, TokenWithLogProb
 from intelligence_layer.core.task import Task, Token
 from intelligence_layer.core.tracer import TaskSpan

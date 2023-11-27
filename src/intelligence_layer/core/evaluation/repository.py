@@ -51,9 +51,12 @@ class SerializedExampleResult(BaseModel):
 
 
 class FileEvaluationRepository(EvaluationRepository):
-    class SerializedExampleResult(BaseModel):
-        is_exception: bool
-        json_result: str
+    """An :class:`EvaluationRepository` that stores evaluation results in json-files.
+
+    Args:
+        root_directory: The folder where the json-files are stored. The folder (along with its parents)
+            will be created if it does not exist yet.
+    """
 
     def __init__(self, root_directory: Path) -> None:
         root_directory.mkdir(parents=True, exist_ok=True)
