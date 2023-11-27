@@ -9,6 +9,7 @@ from intelligence_layer.core import (
     EvaluationException,
     ExampleResult,
     FileEvaluationRepository,
+    InMemoryEvaluationRepository,
     TaskSpanTrace,
 )
 from intelligence_layer.core.evaluation.domain import EvaluationRunOverview
@@ -32,6 +33,11 @@ def file_evaluation_repository(tmp_path: Path) -> FileEvaluationRepository:
 
 
 @fixture
+def in_memory_evaluation_repository() -> InMemoryEvaluationRepository:
+    return InMemoryEvaluationRepository()
+
+
+@fixture
 def task_span_trace() -> TaskSpanTrace:
     now = datetime.now()
     return TaskSpanTrace(
@@ -46,6 +52,17 @@ def successful_example_result(
     return ExampleResult(
         example_id="example_id",
         result=DummyEvaluation(result="result"),
+        trace=task_span_trace,
+    )
+
+
+@fixture
+def failed_example_result(
+    task_span_trace: TaskSpanTrace,
+) -> ExampleResult[DummyEvaluation]:
+    return ExampleResult(
+        example_id="other",
+        result=EvaluationException(error_message="error"),
         trace=task_span_trace,
     )
 
@@ -100,16 +117,12 @@ def test_file_repository_returns_none_in_case_example_result_does_not_exist(
 def test_file_repository_can_fetch_full_evaluation_runs(
     file_evaluation_repository: FileEvaluationRepository,
     successful_example_result: ExampleResult[DummyEvaluation],
-    task_span_trace: TaskSpanTrace,
+    failed_example_result: ExampleResult[DummyEvaluation],
 ) -> None:
     run_id = "id"
     results: Sequence[ExampleResult[DummyEvaluation]] = [
         successful_example_result,
-        ExampleResult(
-            example_id="other",
-            result=EvaluationException(error_message="error"),
-            trace=task_span_trace,
-        ),
+        failed_example_result,
     ]
     for result in results:
         file_evaluation_repository.store_example_result(run_id, result)
@@ -121,6 +134,46 @@ def test_file_repository_can_fetch_full_evaluation_runs(
     assert sorted(results, key=lambda i: i.example_id) == sorted(
         run_results, key=lambda i: i.example_id
     )
+
+
+def test_file_repository_can_fetch_failed_examples_from_evaluation_run(
+    file_evaluation_repository: FileEvaluationRepository,
+    successful_example_result: ExampleResult[DummyEvaluation],
+    failed_example_result: ExampleResult[DummyEvaluation],
+) -> None:
+    run_id = "id"
+    results: Sequence[ExampleResult[DummyEvaluation]] = [
+        successful_example_result,
+        failed_example_result,
+    ]
+    for result in results:
+        file_evaluation_repository.store_example_result(run_id, result)
+
+    run_results = file_evaluation_repository.failed_evaluation_run_results(
+        run_id, DummyEvaluation
+    )
+
+    assert run_results == [failed_example_result]
+
+
+def test_in_memory_repository_can_fetch_failed_examples_from_evaluation_run(
+    in_memory_evaluation_repository: InMemoryEvaluationRepository,
+    successful_example_result: ExampleResult[DummyEvaluation],
+    failed_example_result: ExampleResult[DummyEvaluation],
+) -> None:
+    run_id = "id"
+    results: Sequence[ExampleResult[DummyEvaluation]] = [
+        successful_example_result,
+        failed_example_result,
+    ]
+    for result in results:
+        in_memory_evaluation_repository.store_example_result(run_id, result)
+
+    run_results = in_memory_evaluation_repository.failed_evaluation_run_results(
+        run_id, DummyEvaluation
+    )
+
+    assert run_results == [failed_example_result]
 
 
 def test_file_repository_returns_empty_sequence_for_non_existing_run_id(

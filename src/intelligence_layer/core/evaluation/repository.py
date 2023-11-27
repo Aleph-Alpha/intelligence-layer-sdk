@@ -79,6 +79,12 @@ class FileEvaluationRepository(EvaluationRepository):
             if example_result
         ]
 
+    def failed_evaluation_run_results(
+        self, run_id: str, evaluation_type: type[Evaluation]
+    ) -> Sequence[ExampleResult[Evaluation]]:
+        results = self.evaluation_run_results(run_id, evaluation_type)
+        return [r for r in results if isinstance(r.result, EvaluationException)]
+
     def evaluation_example_result(
         self, run_id: str, example_id: str, evaluation_type: type[Evaluation]
     ) -> Optional[ExampleResult[Evaluation]]:
@@ -132,6 +138,12 @@ class InMemoryEvaluationRepository(EvaluationRepository):
             )
             for json_str in result_jsons
         ]
+
+    def failed_evaluation_run_results(
+        self, run_id: str, evaluation_type: type[Evaluation]
+    ) -> Sequence[ExampleResult[Evaluation]]:
+        results = self.evaluation_run_results(run_id, evaluation_type)
+        return [r for r in results if isinstance(r.result, EvaluationException)]
 
     def evaluation_example_result(
         self, run_id: str, example_id: str, evaluation_type: type[Evaluation]

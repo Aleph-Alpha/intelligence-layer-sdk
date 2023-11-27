@@ -55,6 +55,22 @@ class EvaluationRepository(ABC):
         ...
 
     @abstractmethod
+    def failed_evaluation_run_results(
+        self, run_id: str, evaluation_type: type[Evaluation]
+    ) -> Sequence[ExampleResult[Evaluation]]:
+        """Returns all failed :class:`ExampleResult` instances of a given run
+
+        Args:
+            run_id: Identifier of the run to obtain the results for.
+            evaluation_type: Type of evaluations that the :class:`Evaluator` returned
+                in :func:`Evaluator.do_evaluate`
+
+        Returns:
+            All failed :class:`ExampleResult` of the run. Will return an empty list if there's none.
+        """
+        ...
+
+    @abstractmethod
     def evaluation_example_result(
         self, run_id: str, example_id: str, evaluation_type: type[Evaluation]
     ) -> Optional[ExampleResult[Evaluation]]:
