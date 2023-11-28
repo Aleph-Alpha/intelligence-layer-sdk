@@ -128,7 +128,9 @@ class SingleChunkSummarizeEvaluator(
             bleu_avg = 0.0
             rouge_avg = 0.0
         return AggregatedSummarizeEvaluation(
-            aggregate_bleu=bleu_avg, aggregate_rouge=rouge_avg, evaluations=evaluations
+            aggregate_bleu=bleu_avg,
+            aggregate_rouge=rouge_avg,
+            evaluations=list(evaluations),
         )
 
 
@@ -177,5 +179,7 @@ class LongContextSummarizeEvaluator(
             bleu_avg = 0.0
             rouge_avg = 0.0
         return AggregatedSummarizeEvaluation(
-            aggregate_bleu=bleu_avg, aggregate_rouge=rouge_avg, evaluations=evaluations
+            aggregate_bleu=bleu_avg,
+            aggregate_rouge=rouge_avg,
+            evaluations=list(evaluations),
         )
