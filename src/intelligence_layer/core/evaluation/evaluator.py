@@ -171,6 +171,11 @@ class Evaluator(
 
     We suggest supplying a :class:`Task` in the `__init__` method and running it in the :func:`Evaluator.evaluate` method.
 
+    Arguments:
+        task: The task that will be evaluated.
+        repository: The repository that will be used to store evaluation results.
+        directory: If specified, evaluation traces will be stored here to be used by the trace-viewer.
+
     Generics:
         Input: Interface to be passed to the :class:`Task` that shall be evaluated.
         Output: Type of the output of the :class:`Task` to be evaluated.
