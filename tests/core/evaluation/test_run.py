@@ -54,6 +54,7 @@ class DummyEvaluator(Evaluator[None, None, None, DummyEvaluation, DummyAggregati
 def test_run_evaluation(tmp_path: Path) -> None:
     main(
         [
+            "",
             "tests.core.evaluation.test_run.DummyEvaluator",
             "tests.core.evaluation.test_run.DummyTask",
             "tests.core.evaluation.test_run.dataset",

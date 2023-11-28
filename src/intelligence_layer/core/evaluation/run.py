@@ -3,6 +3,8 @@ from pathlib import Path
 from sys import argv
 from typing import Any, Sequence
 
+from dotenv import load_dotenv
+
 from intelligence_layer.core import FileEvaluationRepository
 
 
@@ -14,6 +16,7 @@ def function_from_string(fully_qualified_function_name: str) -> Any:
 
 def main(args: Sequence[str]) -> None:
     (
+        _,
         evaluator_function,
         task_function,
         dataset_function,
@@ -27,4 +30,5 @@ def main(args: Sequence[str]) -> None:
 
 
 if __name__ == "__main__":
+    load_dotenv()
     main(argv)
