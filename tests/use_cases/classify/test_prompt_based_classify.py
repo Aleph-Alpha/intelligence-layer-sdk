@@ -13,8 +13,8 @@ from intelligence_layer.core import (
 from intelligence_layer.core.chunk import Chunk
 from intelligence_layer.core.tracer import InMemoryTracer, NoOpTracer
 from intelligence_layer.use_cases.classify.classify import (
-    SingleLabelClassifyEvaluation,
     ClassifyInput,
+    SingleLabelClassifyEvaluation,
     SingleLabelClassifyEvaluator,
     SingleLabelClassifyOutput,
 )

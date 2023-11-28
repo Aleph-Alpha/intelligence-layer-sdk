@@ -15,10 +15,10 @@ from intelligence_layer.core.chunk import Chunk
 from intelligence_layer.core.task import Task
 from intelligence_layer.core.tracer import NoOpTracer
 from intelligence_layer.use_cases.classify.classify import (
-    SingleLabelClassifyEvaluation,
     ClassifyInput,
     MultiLabelClassifyEvaluator,
     MultiLabelClassifyOutput,
+    SingleLabelClassifyEvaluation,
 )
 from intelligence_layer.use_cases.classify.embedding_based_classify import (
     EmbeddingBasedClassify,

@@ -1,3 +1,4 @@
+from typing import Sequence
 from pytest import fixture
 
 from intelligence_layer.connectors.limited_concurrency_client import (
@@ -61,7 +62,7 @@ def embedding_based_classify(
 
 
 @fixture
-def embedding_based_classify_example():
+def embedding_based_classify_example() -> Example[ClassifyInput, Sequence[str]]:
     return Example(
         input=ClassifyInput(
             chunk=Chunk("My university biology class really sucks."),
@@ -73,9 +74,9 @@ def embedding_based_classify_example():
 
 @fixture
 def embedding_based_classify_dataset(
-    embedding_based_classify_example: Example,
-) -> Dataset:
-    dataset = SequenceDataset(
+    embedding_based_classify_example: Example[ClassifyInput, Sequence[str]],
+) -> Dataset[ClassifyInput, Sequence[str]]:
+    return SequenceDataset(
         name="summarize_eval_test",
         examples=[
             embedding_based_classify_example,
@@ -87,11 +88,17 @@ def embedding_based_classify_dataset(
                 expected_output=["negative", "finance", "school"],
             ),
             Example(
-                input=ClassifyInput(chunk=Chunk("I did great on the recent exam.")),
+                input=ClassifyInput(
+                    chunk=Chunk("I did great on the recent exam."),
+                    labels=frozenset(["positive", "negative", "finance", "school"]),
+                ),
                 expected_output=["positive", "school"],
             ),
             Example(
-                input=ClassifyInput(chunk=Chunk("Dogs are animals")),
+                input=ClassifyInput(
+                    chunk=Chunk("Dogs are animals"),
+                    labels=frozenset(["positive", "negative", "finance", "school"]),
+                ),
                 expected_output=[],
             ),
         ],
@@ -107,8 +114,8 @@ def classify_evaluator(
     )
 
 
-def test_multi_label_classify_evaluator_single_input(
-    embedding_based_classify_example: Example,
+def test_multi_label_classify_evaluator_single_example(
+    embedding_based_classify_example: Example[ClassifyInput, Sequence[str]],
     classify_evaluator: MultiLabelClassifyEvaluator,
 ) -> None:
     evaluation = classify_evaluator._evaluate_example(
@@ -120,3 +127,14 @@ def test_multi_label_classify_evaluator_single_input(
     assert evaluation.tn == frozenset({"finance"})
     assert evaluation.fp == frozenset({"negative"})
     assert evaluation.fn == frozenset({"positive"})
+
+
+def test_multi_label_classify_evaluator_full_dataset(
+    embedding_based_classify_dataset: Dataset[ClassifyInput, Sequence[str]],
+    classify_evaluator: MultiLabelClassifyEvaluator,
+) -> None:
+    evaluation = classify_evaluator.evaluate_dataset(embedding_based_classify_dataset)
+
+    assert set(["positive", "negative", "finance", "school"]) == set(
+        evaluation.statistics.class_metrics.keys()
+    )

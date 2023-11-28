@@ -1,3 +1,4 @@
+from collections import defaultdict
 from typing import Iterable, Mapping, NewType, Sequence, Union
 
 from pydantic import BaseModel
@@ -126,7 +127,7 @@ class MultiLabelClassifyEvaluation(BaseModel):
     fn: frozenset[str]
 
 
-class MultiLabelClassifyClassMetrics(BaseModel):
+class MultiLabelClassifyMetrics(BaseModel):
     """TODO"""
 
     precision: float
@@ -137,11 +138,9 @@ class MultiLabelClassifyClassMetrics(BaseModel):
 class AggregatedMultiLabelClassifyEvaluation(BaseModel):
     """TODO"""
 
-    class_metrics: Mapping[str, MultiLabelClassifyClassMetrics]
-    micro_avg: float
-    macro_avg: float
-    weighted_avg: float
-    samples_avg: float
+    class_metrics: Mapping[str, MultiLabelClassifyMetrics]
+    micro_avg: MultiLabelClassifyMetrics
+    macro_avg: MultiLabelClassifyMetrics
 
 
 class MultiLabelClassifyEvaluator(
@@ -150,7 +149,7 @@ class MultiLabelClassifyEvaluator(
         MultiLabelClassifyOutput,
         Sequence[str],
         MultiLabelClassifyEvaluation,
-        AggregatedSingleLabelClassifyEvaluation,
+        AggregatedMultiLabelClassifyEvaluation,
     ]
 ):
     def __init__(
@@ -165,7 +164,7 @@ class MultiLabelClassifyEvaluator(
         input: ClassifyInput,
         output: MultiLabelClassifyOutput,
         expected_output: Sequence[str],
-    ) -> SingleLabelClassifyEvaluation:
+    ) -> MultiLabelClassifyEvaluation:
         predicted_classes = frozenset(
             label for label, score in output.scores.items() if score > 0.5
         )
@@ -178,15 +177,58 @@ class MultiLabelClassifyEvaluator(
         return MultiLabelClassifyEvaluation(tp=tp, tn=tn, fp=fp, fn=fn)
 
     def aggregate(
-        self, evaluations: Iterable[SingleLabelClassifyEvaluation]
-    ) -> AggregatedSingleLabelClassifyEvaluation:
-        evaluations_list = list(evaluations)
-        if len(evaluations_list) != 0:
-            correct_answers = len(
-                [eval.correct for eval in evaluations_list if eval.correct is True]
-            ) / len(evaluations_list)
-        else:
-            correct_answers = 0
-        return AggregatedSingleLabelClassifyEvaluation(
-            percentage_correct=correct_answers
+        self, evaluations: Iterable[MultiLabelClassifyEvaluation]
+    ) -> AggregatedMultiLabelClassifyEvaluation:
+        label_confusion_matrix: dict[str, dict[str, int]] = defaultdict(
+            lambda: {"tp": 0, "tn": 0, "fp": 0, "fn": 0}
+        )
+
+        for evaluation in evaluations:
+            for tp in evaluation.tp:
+                label_confusion_matrix[tp]["tp"] += 1
+            for tn in evaluation.tn:
+                label_confusion_matrix[tn]["tn"] += 1
+            for fp in evaluation.fp:
+                label_confusion_matrix[fp]["fp"] += 1
+            for fn in evaluation.fn:
+                label_confusion_matrix[fn]["fn"] += 1
+
+        class_metrics = {}
+        sum_tp, sum_fp, sum_fn = 0, 0, 0
+        sum_precision, sum_recall, sum_f1 = 0.0, 0.0, 0.0
+
+        for label, confusion_matrix in label_confusion_matrix.items():
+            precision = confusion_matrix["tp"] / (
+                confusion_matrix["tp"] + confusion_matrix["fp"]
+            )
+            recall = confusion_matrix["tp"] / (
+                confusion_matrix["tp"] + confusion_matrix["fn"]
+            )
+            f1 = (2 * precision * recall) / (precision + recall)
+
+            class_metrics[label] = MultiLabelClassifyMetrics(
+                precision=precision, recall=recall, f1=f1
+            )
+
+            sum_tp += confusion_matrix["tp"]
+            sum_fp += confusion_matrix["fp"]
+            sum_fn += confusion_matrix["fn"]
+            sum_precision += precision
+            sum_recall += recall
+            sum_f1 += f1
+
+        micro_avg = MultiLabelClassifyMetrics(
+            precision=sum_tp / (sum_tp + sum_fp),
+            recall=sum_tp / (sum_tp + sum_fn),
+            f1=(2 * (sum_tp / (sum_tp + sum_fp)) * (sum_tp / (sum_tp + sum_fn)))
+            / ((sum_tp / (sum_tp + sum_fp)) + (sum_tp / (sum_tp + sum_fn))),
+        )
+        macro_avg = MultiLabelClassifyMetrics(
+            precision=sum_precision / len(class_metrics),
+            recall=sum_recall / len(class_metrics),
+            f1=sum_f1 / len(class_metrics),
+        )
+
+        return AggregatedMultiLabelClassifyEvaluation(
+            class_metrics=class_metrics, micro_avg=micro_avg, macro_avg=macro_avg
         )
