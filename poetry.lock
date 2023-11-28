@@ -2913,12 +2913,12 @@ files = [
 
 [[package]]
 name = "pycountry"
-version = "22.1.10"
+version = "22.3.5"
 description = "ISO country, subdivision, language, currency and script definitions and their translations"
 optional = false
-python-versions = ">=3.5, <4"
+python-versions = ">=3.6, <4"
 files = [
-    {file = "pycountry-22.1.10.tar.gz", hash = "sha256:b9a6d9cdbf53f81ccdf73f6f5de01b0d8493cab2213a230af3e34458de85ea32"},
+    {file = "pycountry-22.3.5.tar.gz", hash = "sha256:b2163a246c585894d808f18783e19137cb70a0c18fb36748dc01fc6f109c1646"},
 ]
 
 [package.dependencies]
@@ -4897,4 +4897,4 @@ multidict = ">=4.0"
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.10,<3.12"
-content-hash = "5415943564c26951d855e0cc9e1500827ff501d9731762f899b1102d45601e69"
+content-hash = "b347fc3a5639322ddd0cddf1e249d13f7755db4c8fccecddeaf7f1b7631e99a5"
