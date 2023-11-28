@@ -39,7 +39,9 @@ from .prompt_template import (
     PromptWithMetadata,
     TextCursor,
 )
-from .task import Input, Output, Task
+from .task import Input as Input
+from .task import Output as Output
+from .task import Task as Task
 from .text_highlight import (
     ScoredTextHighlight,
     TextHighlight,

@@ -122,6 +122,11 @@ class FileEvaluationRepository(EvaluationRepository):
             overview.model_dump_json(indent=2)
         )
 
+    def run_ids(self) -> Sequence[str]:
+        return [
+            path.with_suffix("").name for path in self._root_directory.glob("*.json")
+        ]
+
 
 class InMemoryEvaluationRepository(EvaluationRepository):
     _example_results: dict[str, list[str]] = defaultdict(list)
@@ -178,3 +183,6 @@ class InMemoryEvaluationRepository(EvaluationRepository):
             if loaded_json
             else None
         )
+
+    def run_ids(self) -> Sequence[str]:
+        return list(self._run_overviews.keys())
