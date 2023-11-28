@@ -32,7 +32,7 @@ pycountry = "22.1.10" #22.3.5 crushes the readthedocs
 rouge = "^1.0.1"
 
 [tool.poetry.group.dev.dependencies]
-mypy = "^1.6.1"
+mypy = "^1.7.1"
 pytest = "*"
 black = "*"
 pre-commit = "*"
