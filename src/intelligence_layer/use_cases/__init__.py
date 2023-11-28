@@ -1,14 +1,14 @@
 from .classify.classify import (
+    AggregatedMultiLabelClassifyEvaluation,
     AggregatedSingleLabelClassifyEvaluation,
     ClassifyInput,
+    MultiLabelClassifyEvaluation,
     MultiLabelClassifyEvaluator,
+    MultiLabelClassifyMetrics,
     MultiLabelClassifyOutput,
     SingleLabelClassifyEvaluation,
     SingleLabelClassifyEvaluator,
     SingleLabelClassifyOutput,
-    MultiLabelClassifyEvaluation,
-    MultiLabelClassifyMetrics,
-    AggregatedMultiLabelClassifyEvaluation
 )
 from .classify.embedding_based_classify import EmbeddingBasedClassify, LabelWithExamples
 from .classify.keyword_extract import (
