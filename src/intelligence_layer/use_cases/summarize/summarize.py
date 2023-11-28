@@ -65,21 +65,25 @@ class SummarizeEvaluation(BaseModel):
     Attributes:
         bleu: roughly corresponds to precision
         rouge: rougly corresponds to recall
+        output: The actual output from the task run
     """
 
     bleu: float
     rouge: float
+    output: Union[SingleChunkSummarizeOutput, LongContextSummarizeOutput]
+
 
 class AggregatedSummarizeEvaluation(BaseModel):
     """The aggregated evaluation of a summarization implementation against a dataset.
-
     Attributes:
         aggregate_bleu: average over BLEU-scores
         aggregate_rouge: average over ROUGE-scores
+        evaluation: The actual evaluations
     """
 
     aggregate_bleu: float
     aggregate_rouge: float
+    evaluations: Sequence[SummarizeEvaluation]
 
 
 class SingleChunkSummarizeEvaluator(
@@ -110,7 +114,7 @@ class SingleChunkSummarizeEvaluator(
         rouge_score = self.rouge_grader.calculate_rouge(output.summary, expected_output)
 
         return SummarizeEvaluation(
-            bleu=bleu_score, rouge=rouge_score.recall
+            bleu=bleu_score, rouge=rouge_score.recall, output=output
         )
 
     def aggregate(
@@ -124,8 +128,7 @@ class SingleChunkSummarizeEvaluator(
             bleu_avg = 0.0
             rouge_avg = 0.0
         return AggregatedSummarizeEvaluation(
-            aggregate_bleu=bleu_avg,
-            aggregate_rouge=rouge_avg
+            aggregate_bleu=bleu_avg, aggregate_rouge=rouge_avg, evaluations=evaluations
         )
 
 
@@ -160,7 +163,7 @@ class LongContextSummarizeEvaluator(
         rouge_score = self.rouge_grader.calculate_rouge(joint_summary, expected_output)
 
         return SummarizeEvaluation(
-            bleu=bleu_score, rouge=rouge_score.recall
+            bleu=bleu_score, rouge=rouge_score.recall, output=output
         )
 
     def aggregate(
@@ -174,6 +177,5 @@ class LongContextSummarizeEvaluator(
             bleu_avg = 0.0
             rouge_avg = 0.0
         return AggregatedSummarizeEvaluation(
-            aggregate_bleu=bleu_avg,
-            aggregate_rouge=rouge_avg
+            aggregate_bleu=bleu_avg, aggregate_rouge=rouge_avg, evaluations=evaluations
         )
