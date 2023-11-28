@@ -1,6 +1,6 @@
 from .classify.classify import (
-    AggregatedClassifyEvaluation,
-    ClassifyEvaluation,
+    AggregatedSingleLabelClassifyEvaluation,
+    SingleLabelClassifyEvaluation,
     ClassifyInput,
     MultiLabelClassifyEvaluator,
     MultiLabelClassifyOutput,

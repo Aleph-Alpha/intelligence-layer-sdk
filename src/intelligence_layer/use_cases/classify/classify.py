@@ -47,28 +47,24 @@ class MultiLabelClassifyOutput(BaseModel):
     scores: Mapping[str, Probability]
 
 
-class ClassifyEvaluation(BaseModel):
+class SingleLabelClassifyEvaluation(BaseModel):
     """The evaluation of a single label classification run.
 
     Attributes:
         correct: Was the highest scoring class from the output in the set of "correct classes".
-        output: The actual output from the task run.
     """
 
     correct: bool
-    output: Union[SingleLabelClassifyOutput, MultiLabelClassifyOutput]
 
 
-class AggregatedClassifyEvaluation(BaseModel):
+class AggregatedSingleLabelClassifyEvaluation(BaseModel):
     """The aggregated evaluation of a single label classify implementation against a dataset.
 
     Attributes:
         percentage_correct: Percentage of answers that were considered to be correct
-        evaluation: The actual evaluations
     """
 
     percentage_correct: float
-    evaluations: Sequence[ClassifyEvaluation]
 
 
 class SingleLabelClassifyEvaluator(
@@ -76,8 +72,8 @@ class SingleLabelClassifyEvaluator(
         ClassifyInput,
         SingleLabelClassifyOutput,
         Sequence[str],
-        ClassifyEvaluation,
-        AggregatedClassifyEvaluation,
+        SingleLabelClassifyEvaluation,
+        AggregatedSingleLabelClassifyEvaluation,
     ]
 ):
     def __init__(
@@ -92,7 +88,7 @@ class SingleLabelClassifyEvaluator(
         input: ClassifyInput,
         output: SingleLabelClassifyOutput,
         expected_output: Sequence[str],
-    ) -> ClassifyEvaluation:
+    ) -> SingleLabelClassifyEvaluation:
         sorted_classes = sorted(
             output.scores.items(), key=lambda item: item[1], reverse=True
         )
@@ -100,11 +96,11 @@ class SingleLabelClassifyEvaluator(
             correct = True
         else:
             correct = False
-        return ClassifyEvaluation(correct=correct, output=output)
+        return SingleLabelClassifyEvaluation(correct=correct)
 
     def aggregate(
-        self, evaluations: Iterable[ClassifyEvaluation]
-    ) -> AggregatedClassifyEvaluation:
+        self, evaluations: Iterable[SingleLabelClassifyEvaluation]
+    ) -> AggregatedSingleLabelClassifyEvaluation:
         evaluations_list = list(evaluations)
         if len(evaluations_list) != 0:
             correct_answers = len(
@@ -112,9 +108,40 @@ class SingleLabelClassifyEvaluator(
             ) / len(evaluations_list)
         else:
             correct_answers = 0
-        return AggregatedClassifyEvaluation(
-            percentage_correct=correct_answers, evaluations=evaluations_list
+        return AggregatedSingleLabelClassifyEvaluation(
+            percentage_correct=correct_answers
         )
+
+
+class MultiLabelClassifyEvaluation(BaseModel):
+    """The evaluation of a multi-label classification run.
+
+    Attributes:
+        correct: TODO.
+    """
+
+    tp: frozenset[str]
+    tn: frozenset[str]
+    fp: frozenset[str]
+    fn: frozenset[str]
+
+
+class MultiLabelClassifyClassMetrics(BaseModel):
+    """TODO"""
+
+    precision: float
+    recall: float
+    f1: float
+
+
+class AggregatedMultiLabelClassifyEvaluation(BaseModel):
+    """TODO"""
+
+    class_metrics: Mapping[str, MultiLabelClassifyClassMetrics]
+    micro_avg: float
+    macro_avg: float
+    weighted_avg: float
+    samples_avg: float
 
 
 class MultiLabelClassifyEvaluator(
@@ -122,8 +149,8 @@ class MultiLabelClassifyEvaluator(
         ClassifyInput,
         MultiLabelClassifyOutput,
         Sequence[str],
-        ClassifyEvaluation,
-        AggregatedClassifyEvaluation,
+        MultiLabelClassifyEvaluation,
+        AggregatedSingleLabelClassifyEvaluation,
     ]
 ):
     def __init__(
@@ -138,19 +165,21 @@ class MultiLabelClassifyEvaluator(
         input: ClassifyInput,
         output: MultiLabelClassifyOutput,
         expected_output: Sequence[str],
-    ) -> ClassifyEvaluation:
-        sorted_classes = sorted(
-            output.scores.items(), key=lambda item: item[1], reverse=True
+    ) -> SingleLabelClassifyEvaluation:
+        predicted_classes = frozenset(
+            label for label, score in output.scores.items() if score > 0.5
         )
-        if sorted_classes[0][0] in expected_output:
-            correct = True
-        else:
-            correct = False
-        return ClassifyEvaluation(correct=correct, output=output)
+        expected_classes = frozenset(expected_output)
+        tp = predicted_classes & expected_classes
+        tn = (input.labels - predicted_classes) & (input.labels - expected_classes)
+        fp = (input.labels - expected_classes) - (input.labels - predicted_classes)
+        fn = expected_classes - predicted_classes
+
+        return MultiLabelClassifyEvaluation(tp=tp, tn=tn, fp=fp, fn=fn)
 
     def aggregate(
-        self, evaluations: Iterable[ClassifyEvaluation]
-    ) -> AggregatedClassifyEvaluation:
+        self, evaluations: Iterable[SingleLabelClassifyEvaluation]
+    ) -> AggregatedSingleLabelClassifyEvaluation:
         evaluations_list = list(evaluations)
         if len(evaluations_list) != 0:
             correct_answers = len(
@@ -158,6 +187,6 @@ class MultiLabelClassifyEvaluator(
             ) / len(evaluations_list)
         else:
             correct_answers = 0
-        return AggregatedClassifyEvaluation(
-            percentage_correct=correct_answers, evaluations=evaluations_list
+        return AggregatedSingleLabelClassifyEvaluation(
+            percentage_correct=correct_answers
         )

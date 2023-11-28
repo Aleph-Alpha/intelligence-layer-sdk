@@ -210,6 +210,6 @@ class EmbeddingBasedClassify(Task[ClassifyInput, MultiLabelClassifyOutput]):
         self, results_per_label: Sequence[SearchOutput]
     ) -> Sequence[float]:
         return [
-            statistics.mean(r.score for r in r_per_l.results)
+            (statistics.mean(r.score for r in r_per_l.results) + 1) / 2
             for r_per_l in results_per_label
         ]
