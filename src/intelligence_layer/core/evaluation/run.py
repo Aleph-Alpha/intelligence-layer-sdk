@@ -1,3 +1,4 @@
+from argparse import ArgumentParser
 from importlib import import_module
 from pathlib import Path
 from sys import argv
@@ -14,18 +15,17 @@ def function_from_string(fully_qualified_function_name: str) -> Any:
     return getattr(mod, func_name)
 
 
-def main(args: Sequence[str]) -> None:
-    (
-        _,
-        evaluator_function,
-        task_function,
-        dataset_function,
-        evaluation_repository_directory,
-    ) = args
-    repository = FileEvaluationRepository(Path(evaluation_repository_directory))
-    task = function_from_string(task_function)()
-    evaluator = function_from_string(evaluator_function)(task, repository)
-    dataset = function_from_string(dataset_function)()
+def main(cli_args: Sequence[str]) -> None:
+    parser = ArgumentParser(description="Runs the given evaluation")
+    parser.add_argument("--evaluator", required=True, type=function_from_string)
+    parser.add_argument("--task", required=True, type=function_from_string)
+    parser.add_argument("--dataset", required=True, type=function_from_string)
+    parser.add_argument("--target-dir", required=True, type=Path)
+    args = parser.parse_args(cli_args[1:])
+    repository = FileEvaluationRepository(args.target_dir)
+    task = args.task()
+    evaluator = args.evaluator(task, repository)
+    dataset = args.dataset()
     evaluator.evaluate_dataset(dataset)
 
 
