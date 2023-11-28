@@ -6,6 +6,9 @@ from .classify.classify import (
     SingleLabelClassifyEvaluation,
     SingleLabelClassifyEvaluator,
     SingleLabelClassifyOutput,
+    MultiLabelClassifyEvaluation,
+    MultiLabelClassifyMetrics,
+    AggregatedMultiLabelClassifyEvaluation
 )
 from .classify.embedding_based_classify import EmbeddingBasedClassify, LabelWithExamples
 from .classify.keyword_extract import (

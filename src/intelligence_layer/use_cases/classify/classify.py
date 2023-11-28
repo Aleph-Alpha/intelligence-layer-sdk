@@ -36,7 +36,7 @@ class SingleLabelClassifyOutput(BaseModel):
 
 
 class MultiLabelClassifyOutput(BaseModel):
-    """Output for a single label classification task.
+    """Output for a multi label classification task.
 
     Attributes:
         scores: Mapping of the provided label (key) to corresponding score (value).
@@ -115,10 +115,13 @@ class SingleLabelClassifyEvaluator(
 
 
 class MultiLabelClassifyEvaluation(BaseModel):
-    """The evaluation of a multi-label classification run.
+    """The evaluation of a single multi-label classification example.
 
     Attributes:
-        correct: TODO.
+        tp: The classes that were expected and correctly predicted (true positives).
+        tn: The classes that were not expected and correctly not predicted (true negatives).
+        fp: The classes that were not expected and falsely predicted (false positives).
+        fn: The classes that were expected and falsely not predicted (false negatives).
     """
 
     tp: frozenset[str]
@@ -128,7 +131,13 @@ class MultiLabelClassifyEvaluation(BaseModel):
 
 
 class MultiLabelClassifyMetrics(BaseModel):
-    """TODO"""
+    """The relevant metrics resulting from a confusion matrix in a classification run.
+
+    Attributes:
+        precision: Proportion of correctly predicted classes to all predicted classes.
+        recall: Proportion of correctly predicted classes to all expected classes.
+        f1: Aggregated performance, formally the harmonic mean of precision and recall.
+    """
 
     precision: float
     recall: float
@@ -136,7 +145,14 @@ class MultiLabelClassifyMetrics(BaseModel):
 
 
 class AggregatedMultiLabelClassifyEvaluation(BaseModel):
-    """TODO"""
+    """The aggregated evaluation of a multi-label classify dataset.
+
+    Attributes:
+        class_metrics: Mapping of all labels to their aggregated metrics.
+        micro_avg: Calculated by considering the tp, tn, fp and fn for each class, adding them up and dividing by them.
+        macro_avg: The metrics' mean across all classes.
+
+    """
 
     class_metrics: Mapping[str, MultiLabelClassifyMetrics]
     micro_avg: MultiLabelClassifyMetrics
