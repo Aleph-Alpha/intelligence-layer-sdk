@@ -46,6 +46,18 @@ class EvaluationRepository(ABC):
     """
 
     @abstractmethod
+    def run_ids(self) -> Sequence[str]:
+        """Returns the ids of all stored runs.
+
+        Having the id of a run its details can be retrieved with
+        :meth:`EvaluationRepository.evaluation_run_overview`.
+
+        Returns:
+            The ids of all stored runs.
+        """
+        ...
+
+    @abstractmethod
     def evaluation_run_results(
         self, run_id: str, evaluation_type: type[Evaluation]
     ) -> Sequence[ExampleResult[Evaluation]]:
