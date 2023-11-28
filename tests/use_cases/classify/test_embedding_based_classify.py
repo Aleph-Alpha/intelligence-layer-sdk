@@ -10,14 +10,10 @@ from intelligence_layer.connectors.retrievers.base_retriever import Document
 from intelligence_layer.connectors.retrievers.qdrant_in_memory_retriever import (
     QdrantInMemoryRetriever,
 )
-from intelligence_layer.core import InMemoryEvaluationRepository
 from intelligence_layer.core.chunk import Chunk
-from intelligence_layer.core.task import Task
 from intelligence_layer.core.tracer import NoOpTracer
 from intelligence_layer.use_cases.classify.classify import (
-    ClassifyEvaluation,
     ClassifyInput,
-    MultiLabelClassifyEvaluator,
     MultiLabelClassifyOutput,
 )
 from intelligence_layer.use_cases.classify.embedding_based_classify import (
@@ -76,15 +72,6 @@ def embedding_based_classify(
         ),
     ]
     return EmbeddingBasedClassify(labels_with_examples, client)
-
-
-@fixture
-def classify_evaluator(
-    embedding_based_classify: Task[ClassifyInput, MultiLabelClassifyOutput],
-) -> MultiLabelClassifyEvaluator:
-    return MultiLabelClassifyEvaluator(
-        embedding_based_classify, InMemoryEvaluationRepository()
-    )
 
 
 def test_qdrant_search(
@@ -164,21 +151,3 @@ def test_embedding_based_classify_works_without_examples(
     )
     result = embedding_based_classify.run(classify_input, NoOpTracer())
     assert result.scores == {}
-
-
-def test_can_evaluate_embedding_based_classify(
-    classify_evaluator: MultiLabelClassifyEvaluator,
-) -> None:
-    classify_input = ClassifyInput(
-        chunk=Chunk("This is good"),
-        labels=frozenset({"positive", "negative"}),
-    )
-
-    evaluation = classify_evaluator.evaluate(
-        input=classify_input,
-        tracer=NoOpTracer(),
-        expected_output=["positive"],
-    )
-
-    assert isinstance(evaluation, ClassifyEvaluation)
-    assert evaluation.correct is True

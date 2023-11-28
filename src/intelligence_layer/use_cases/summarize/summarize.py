@@ -75,7 +75,6 @@ class SummarizeEvaluation(BaseModel):
 
 class AggregatedSummarizeEvaluation(BaseModel):
     """The aggregated evaluation of a summarization implementation against a dataset.
-
     Attributes:
         aggregate_bleu: average over BLEU-scores
         aggregate_rouge: average over ROUGE-scores

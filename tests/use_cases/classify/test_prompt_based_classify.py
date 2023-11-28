@@ -13,8 +13,8 @@ from intelligence_layer.core import (
 from intelligence_layer.core.chunk import Chunk
 from intelligence_layer.core.tracer import InMemoryTracer, NoOpTracer
 from intelligence_layer.use_cases.classify.classify import (
-    ClassifyEvaluation,
     ClassifyInput,
+    SingleLabelClassifyEvaluation,
     SingleLabelClassifyEvaluator,
     SingleLabelClassifyOutput,
 )
@@ -134,7 +134,7 @@ def test_can_evaluate_classify(
         expected_output=["positive"],
     )
 
-    assert isinstance(evaluation, ClassifyEvaluation)
+    assert isinstance(evaluation, SingleLabelClassifyEvaluation)
     assert evaluation.correct is True
 
 
