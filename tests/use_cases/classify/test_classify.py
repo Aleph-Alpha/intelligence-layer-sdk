@@ -1,4 +1,5 @@
 from typing import Sequence
+
 from pytest import fixture
 
 from intelligence_layer.connectors.limited_concurrency_client import (

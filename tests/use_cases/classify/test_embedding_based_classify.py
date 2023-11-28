@@ -10,15 +10,11 @@ from intelligence_layer.connectors.retrievers.base_retriever import Document
 from intelligence_layer.connectors.retrievers.qdrant_in_memory_retriever import (
     QdrantInMemoryRetriever,
 )
-from intelligence_layer.core import InMemoryEvaluationRepository
 from intelligence_layer.core.chunk import Chunk
-from intelligence_layer.core.task import Task
 from intelligence_layer.core.tracer import NoOpTracer
 from intelligence_layer.use_cases.classify.classify import (
     ClassifyInput,
-    MultiLabelClassifyEvaluator,
     MultiLabelClassifyOutput,
-    SingleLabelClassifyEvaluation,
 )
 from intelligence_layer.use_cases.classify.embedding_based_classify import (
     EmbeddingBasedClassify,

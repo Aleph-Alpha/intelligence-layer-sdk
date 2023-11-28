@@ -1,5 +1,5 @@
 from collections import defaultdict
-from typing import Iterable, Mapping, NewType, Sequence, Union
+from typing import Iterable, Mapping, NewType, Sequence
 
 from pydantic import BaseModel
 
