@@ -1,7 +1,10 @@
 from .classify.classify import (
+    AggregatedMultiLabelClassifyEvaluation,
     AggregatedSingleLabelClassifyEvaluation,
     ClassifyInput,
+    MultiLabelClassifyEvaluation,
     MultiLabelClassifyEvaluator,
+    MultiLabelClassifyMetrics,
     MultiLabelClassifyOutput,
     SingleLabelClassifyEvaluation,
     SingleLabelClassifyEvaluator,
