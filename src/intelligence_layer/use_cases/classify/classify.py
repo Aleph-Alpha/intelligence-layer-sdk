@@ -1,6 +1,6 @@
 from collections import defaultdict
-from typing import Iterable, Mapping, NewType, Sequence
 from pathlib import Path
+from typing import Iterable, Mapping, NewType, Optional, Sequence
 
 from pydantic import BaseModel
 
