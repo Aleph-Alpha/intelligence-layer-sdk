@@ -55,9 +55,13 @@ def test_run_evaluation(tmp_path: Path) -> None:
     main(
         [
             "",
+            "--evaluator",
             "tests.core.evaluation.test_run.DummyEvaluator",
+            "--task",
             "tests.core.evaluation.test_run.DummyTask",
+            "--dataset",
             "tests.core.evaluation.test_run.dataset",
+            "--target-dir",
             str(tmp_path),
         ]
     )
