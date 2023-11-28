@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime
+from pathlib import Path
 from typing import (
     Callable,
     Generic,
@@ -30,6 +31,7 @@ from intelligence_layer.core.evaluation.domain import (
 from intelligence_layer.core.task import Input, Output, Task
 from intelligence_layer.core.tracer import (
     CompositeTracer,
+    FileTracer,
     InMemoryTaskSpan,
     InMemoryTracer,
     Tracer,
@@ -178,10 +180,14 @@ class Evaluator(
     """
 
     def __init__(
-        self, task: Task[Input, Output], repository: EvaluationRepository
+        self,
+        task: Task[Input, Output],
+        repository: EvaluationRepository,
+        directory: Optional[Path] = None,
     ) -> None:
-        self.task = task
-        self.repository = repository
+        self._task = task
+        self._repository = repository
+        self._directory = directory
 
     @abstractmethod
     def do_evaluate(
@@ -206,6 +212,7 @@ class Evaluator(
         """
         pass
 
+    @final
     def _evaluate_example(
         self,
         run_id: str,
@@ -213,11 +220,9 @@ class Evaluator(
         tracer: Optional[Tracer] = None,
     ) -> Evaluation | EvaluationException:
         in_memory_tracer = InMemoryTracer()
-        evaluate_tracer = (
-            CompositeTracer(tracers=[in_memory_tracer, tracer])
-            if tracer
-            else in_memory_tracer
-        )
+        file_tracer = FileTracer(self._directory / run_id) if self._directory else None
+        tracers = [in_memory_tracer, file_tracer, tracer]
+        evaluate_tracer = CompositeTracer(tracers=[t for t in tracers if t is not None])
         result = self.evaluate(example.input, example.expected_output, evaluate_tracer)
         example_result = ExampleResult(
             example_id=example.id,
@@ -226,7 +231,7 @@ class Evaluator(
                 cast(InMemoryTaskSpan, in_memory_tracer.entries[0])
             ),
         )
-        self.repository.store_example_result(run_id=run_id, result=example_result)
+        self._repository.store_example_result(run_id=run_id, result=example_result)
         return example_result.result
 
     @final
@@ -249,14 +254,16 @@ class Evaluator(
         """
 
         try:
-            output = self.task.run(input, tracer)
+            output = self._task.run(input, tracer)
             return self.do_evaluate(input, output, expected_output)
         except Exception as e:
             return EvaluationException(error_message=str(e))
 
     @final
     def evaluate_dataset(
-        self, dataset: Dataset[Input, ExpectedOutput], tracer: Optional[Tracer] = None
+        self,
+        dataset: Dataset[Input, ExpectedOutput],
+        tracer: Optional[Tracer] = None,
     ) -> EvaluationRunOverview[AggregatedEvaluation]:
         """Evaluates an entire :class:`Dataset` in a threaded manner and aggregates the results into an `AggregatedEvaluation`.
 
@@ -303,7 +310,7 @@ class Evaluator(
             successful_evaluation_count=successful_evaluations.included_count(),
             failed_evaluation_count=successful_evaluations.excluded_count(),
         )
-        self.repository.store_evaluation_run_overview(run_overview)
+        self._repository.store_evaluation_run_overview(run_overview)
         return run_overview
 
     @abstractmethod

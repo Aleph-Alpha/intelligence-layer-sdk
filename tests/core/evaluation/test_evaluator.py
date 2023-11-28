@@ -1,4 +1,5 @@
 from datetime import datetime
+from pathlib import Path
 from typing import Iterable, Literal, Sequence
 
 from pydantic import BaseModel
@@ -16,6 +17,7 @@ from intelligence_layer.core import (
     Tracer,
 )
 from intelligence_layer.core.task import Task
+from tests.core.test_tracer import parse_log
 
 DummyTaskInput = Literal["success", "fail in task", "fail in eval"]
 DummyTaskOutput = DummyTaskInput
@@ -27,6 +29,17 @@ class DummyEvaluation(BaseModel):
 
 class AggregatedDummyEvaluation(BaseModel):
     results: Sequence[DummyEvaluation]
+
+
+@fixture
+def sequence_dataset() -> SequenceDataset[DummyTaskInput, None]:
+    examples: Sequence[Example[DummyTaskInput, None]] = [
+        Example(input="success", expected_output=None),
+    ]
+    return SequenceDataset(
+        name="test",
+        examples=examples,
+    )
 
 
 class DummyEvaluator(
@@ -85,7 +98,7 @@ def test_evaluate_dataset_returns_generic_statistics(
         examples=examples,
     )
 
-    evaluation_run_overview = dummy_evaluator.evaluate_dataset(dataset, NoOpTracer())
+    evaluation_run_overview = dummy_evaluator.evaluate_dataset(dataset)
 
     assert evaluation_run_overview.dataset_name == dataset.name
     assert test_start <= evaluation_run_overview.start <= evaluation_run_overview.end
@@ -114,10 +127,24 @@ def test_evaluate_dataset_uses_passed_tracer(
     assert all([isinstance(e, InMemoryTaskSpan) for e in entries])
 
 
+def test_evaluate_dataset_saves_result_to_file(
+    evaluation_repository: InMemoryEvaluationRepository,
+    sequence_dataset: SequenceDataset[DummyTaskInput, None],
+    tmp_path: Path,
+) -> None:
+    expected = InMemoryTracer()
+    dummy_evaluator = DummyEvaluator(DummyTask(), evaluation_repository, tmp_path)
+    overview = dummy_evaluator.evaluate_dataset(sequence_dataset, expected)
+
+    found = parse_log(tmp_path / overview.id)
+
+    assert found == expected
+
+
 def test_evaluate_dataset_stores_example_results(
     dummy_evaluator: DummyEvaluator,
 ) -> None:
-    evaluation_repository = dummy_evaluator.repository
+    evaluation_repository = dummy_evaluator._repository
     examples: Sequence[Example[DummyTaskInput, None]] = [
         Example(input="success", expected_output=None),
         Example(input="fail in task", expected_output=None),
@@ -155,7 +182,7 @@ def test_evaluate_dataset_stores_example_results(
 def test_evaluate_dataset_stores_aggregated_results(
     dummy_evaluator: DummyEvaluator,
 ) -> None:
-    evaluation_repository = dummy_evaluator.repository
+    evaluation_repository = dummy_evaluator._repository
 
     dataset: SequenceDataset[DummyTaskInput, None] = SequenceDataset(
         name="test",
