@@ -136,7 +136,7 @@ def test_evaluate_dataset_saves_result_to_file(
     dummy_evaluator = DummyEvaluator(DummyTask(), evaluation_repository, tmp_path)
     overview = dummy_evaluator.evaluate_dataset(sequence_dataset, expected)
 
-    found = parse_log(tmp_path / f"{overview.id}.jsonl")
+    found = parse_log((tmp_path / overview.id).with_suffix(".jsonl"))
 
     assert found == expected
 
