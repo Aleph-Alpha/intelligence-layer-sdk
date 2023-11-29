@@ -3,7 +3,7 @@ name: CI Pipeline
 on:
   push:
     paths-ignore:
-      - "log-viewer/**"
+      - "trace-viewer/**"
       - ".github/workflows/frontend.yml"
 
 concurrency:
