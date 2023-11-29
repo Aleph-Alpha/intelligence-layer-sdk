@@ -3,6 +3,7 @@ from typing import Iterable
 
 from pydantic import BaseModel
 
+from intelligence_layer.connectors import AlephAlphaClientProtocol
 from intelligence_layer.core import (
     Dataset,
     EvaluationRepository,
@@ -31,8 +32,16 @@ class DummyAggregation(BaseModel):
 
 
 class DummyTask(Task[None, None]):
+    def __init__(self) -> None:
+        pass
+
     def do_run(self, input: None, task_span: TaskSpan) -> None:
         return input
+
+
+class DummyTaskWithClient(DummyTask):
+    def __init__(self, client: AlephAlphaClientProtocol) -> None:
+        pass
 
 
 class DummyEvaluator(Evaluator[None, None, None, DummyEvaluation, DummyAggregation]):
@@ -71,3 +80,19 @@ def test_run_evaluation(tmp_path: Path) -> None:
     overview = repository.evaluation_run_overview(run_ids[0], DummyAggregation)
     assert overview
     assert overview.successful_evaluation_count == 1
+
+
+def test_run_evaluation_with_task_with_client(tmp_path: Path) -> None:
+    main(
+        [
+            "",
+            "--evaluator",
+            "tests.core.evaluation.test_run.DummyEvaluator",
+            "--task",
+            "tests.core.evaluation.test_run.DummyTaskWithClient",
+            "--dataset",
+            "tests.core.evaluation.test_run.dataset",
+            "--target-dir",
+            str(tmp_path),
+        ]
+    )

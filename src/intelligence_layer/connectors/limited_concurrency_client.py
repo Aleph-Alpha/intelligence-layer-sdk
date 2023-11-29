@@ -1,3 +1,4 @@
+from os import getenv
 from threading import Semaphore
 from typing import Any, Mapping, Optional, Protocol, Sequence
 
@@ -110,7 +111,12 @@ class LimitedConcurrencyClient:
         self._concurrency_limit_semaphore = Semaphore(max_concurrency)
 
     @classmethod
-    def from_token(cls, token: str) -> "LimitedConcurrencyClient":
+    def from_token(cls, token: Optional[str] = None) -> "LimitedConcurrencyClient":
+        if not token:
+            token = getenv("AA_TOKEN")
+            assert (
+                token
+            ), "Define environment variable AA_TOKEN with a valid token for the Aleph Alpha API"
         return cls(Client(token))
 
     def complete(
