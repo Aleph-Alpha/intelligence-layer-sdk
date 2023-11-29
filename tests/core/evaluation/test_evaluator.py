@@ -174,6 +174,34 @@ def test_evaluate_dataset_stores_example_results(
     assert failure_result_eval and isinstance(
         failure_result_eval.result, EvaluationException
     )
+
+
+def test_evaluate_dataset_stores_example_traces(
+    dummy_evaluator: DummyEvaluator,
+) -> None:
+    evaluation_repository = dummy_evaluator._repository
+    examples: Sequence[Example[DummyTaskInput, None]] = [
+        Example(input="success", expected_output=None),
+        Example(input="fail in task", expected_output=None),
+        Example(input="fail in eval", expected_output=None),
+    ]
+
+    dataset: SequenceDataset[DummyTaskInput, None] = SequenceDataset(
+        name="test",
+        examples=examples,
+    )
+
+    evaluation_run_overview = dummy_evaluator.evaluate_dataset(dataset)
+    success_result = evaluation_repository.evaluation_example_trace(
+        evaluation_run_overview.id, examples[0].id
+    )
+    failure_result_task = evaluation_repository.evaluation_example_trace(
+        evaluation_run_overview.id, examples[1].id
+    )
+    failure_result_eval = evaluation_repository.evaluation_example_trace(
+        evaluation_run_overview.id, examples[2].id
+    )
+
     assert success_result.trace.input == "success"
     assert failure_result_task.trace.input == "fail in task"
     assert failure_result_eval.trace.input == "fail in eval"

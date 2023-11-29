@@ -1,8 +1,10 @@
 from collections import defaultdict
+from json import loads
 from pathlib import Path
 from typing import Optional, Sequence
+from uuid import UUID
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from intelligence_layer.core.evaluation.domain import (
     AggregatedEvaluation,
@@ -10,17 +12,31 @@ from intelligence_layer.core.evaluation.domain import (
     EvaluationException,
     EvaluationRunOverview,
     ExampleResult,
+    ExampleTrace,
     TaskSpanTrace,
 )
 from intelligence_layer.core.evaluation.evaluator import EvaluationRepository
-from intelligence_layer.core.tracer import JsonSerializer
+from intelligence_layer.core.tracer import (
+    EndSpan,
+    EndTask,
+    FileTracer,
+    InMemorySpan,
+    InMemoryTaskSpan,
+    InMemoryTracer,
+    JsonSerializer,
+    LogEntry,
+    LogLine,
+    PlainEntry,
+    StartSpan,
+    StartTask,
+    Tracer,
+)
 
 
 class SerializedExampleResult(BaseModel):
     example_id: str
     is_exception: bool
     json_result: str
-    trace: TaskSpanTrace
 
     @classmethod
     def from_example_result(
@@ -29,7 +45,6 @@ class SerializedExampleResult(BaseModel):
         return cls(
             json_result=JsonSerializer(root=result.result).model_dump_json(),
             is_exception=isinstance(result.result, EvaluationException),
-            trace=result.trace,
             example_id=result.example_id,
         )
 
@@ -40,13 +55,11 @@ class SerializedExampleResult(BaseModel):
             return ExampleResult(
                 example_id=self.example_id,
                 result=EvaluationException.model_validate_json(self.json_result),
-                trace=self.trace,
             )
         else:
             return ExampleResult(
                 example_id=self.example_id,
                 result=evaluation_type.model_validate_json(self.json_result),
-                trace=self.trace,
             )
 
 
@@ -78,8 +91,8 @@ class FileEvaluationRepository(EvaluationRepository):
             for example_result in (fetch_result_from_file_name(file) for file in logs)
             if example_result
         ]
-
     def failed_evaluation_run_results(
+
         self, run_id: str, evaluation_type: type[Evaluation]
     ) -> Sequence[ExampleResult[Evaluation]]:
         results = self.evaluation_run_results(run_id, evaluation_type)
@@ -88,12 +101,26 @@ class FileEvaluationRepository(EvaluationRepository):
     def evaluation_example_result(
         self, run_id: str, example_id: str, evaluation_type: type[Evaluation]
     ) -> Optional[ExampleResult[Evaluation]]:
-        file_path = (self._root_directory / run_id / example_id).with_suffix(".json")
+        file_path = (
+            self._root_directory / run_id / f"{example_id}_result"
+        ).with_suffix(".json")
         if not file_path.exists():
             return None
         content = file_path.read_text()
         serialized_example = SerializedExampleResult.model_validate_json(content)
         return serialized_example.to_example_result(evaluation_type)
+
+    def evaluation_example_trace(
+        self, run_id: str, example_id: str
+    ) -> Optional[ExampleTrace]:
+        file_path = (self._root_directory / run_id / f"{example_id}_trace").with_suffix(
+            ".jsonl"
+        )
+        if not file_path.exists():
+            return None
+        in_memory_tracer = _parse_log(file_path)
+        trace = TaskSpanTrace.from_task_span(in_memory_tracer.entries[0])
+        return ExampleTrace(example_id=example_id, trace=trace)
 
     def store_example_result(
         self, run_id: str, result: ExampleResult[Evaluation]
@@ -101,9 +128,16 @@ class FileEvaluationRepository(EvaluationRepository):
         run_path = self._root_directory / run_id
         run_path.mkdir(exist_ok=True)
         serialized_result = SerializedExampleResult.from_example_result(result)
-        (run_path / result.example_id).with_suffix(".json").write_text(
+        (run_path / f"{result.example_id}_result").with_suffix(".json").write_text(
             serialized_result.model_dump_json(indent=2)
         )
+
+    def example_tracer(self, run_id: str, example_id: str) -> Tracer:
+        run_dir = self._root_directory / run_id
+        run_dir.mkdir(exist_ok=True)
+        file_path = (run_dir / f"{example_id}_trace").with_suffix(".jsonl")
+        return FileTracer(file_path)
+        
 
     def evaluation_run_overview(
         self, run_id: str, aggregation_type: type[AggregatedEvaluation]
@@ -128,8 +162,76 @@ class FileEvaluationRepository(EvaluationRepository):
         ]
 
 
+def _parse_log(log_path: Path) -> InMemoryTracer:
+    tree_builder = TreeBuilder()
+    with log_path.open("r") as f:
+        for line in f:
+            json_line = loads(line)
+            log_line = LogLine.model_validate(json_line)
+            if log_line.entry_type == StartTask.__name__:
+                tree_builder.start_task(log_line)
+            elif log_line.entry_type == EndTask.__name__:
+                tree_builder.end_task(log_line)
+            elif log_line.entry_type == StartSpan.__name__:
+                tree_builder.start_span(log_line)
+            elif log_line.entry_type == EndSpan.__name__:
+                tree_builder.end_span(log_line)
+            elif log_line.entry_type == PlainEntry.__name__:
+                tree_builder.plain_entry(log_line)
+            else:
+                raise RuntimeError(f"Unexpected entry_type in {log_line}")
+    assert tree_builder.root
+    return tree_builder.root
+
+class TreeBuilder(BaseModel):
+    root: InMemoryTracer = InMemoryTracer()
+    tracers: dict[UUID, InMemoryTracer] = Field(default_factory=dict)
+    tasks: dict[UUID, InMemoryTaskSpan] = Field(default_factory=dict)
+    spans: dict[UUID, InMemorySpan] = Field(default_factory=dict)
+
+    def start_task(self, log_line: LogLine) -> None:
+        start_task = StartTask.model_validate(log_line.entry)
+        child = InMemoryTaskSpan(
+            name=start_task.name,
+            input=start_task.input,
+            start_timestamp=start_task.start,
+        )
+        self.tracers[start_task.uuid] = child
+        self.tasks[start_task.uuid] = child
+        self.tracers.get(start_task.parent, self.root).entries.append(child)
+
+    def end_task(self, log_line: LogLine) -> None:
+        end_task = EndTask.model_validate(log_line.entry)
+        task_span = self.tasks[end_task.uuid]
+        task_span.end_timestamp = end_task.end
+        task_span.record_output(end_task.output)
+
+    def start_span(self, log_line: LogLine) -> None:
+        start_span = StartSpan.model_validate(log_line.entry)
+        child = InMemorySpan(name=start_span.name, start_timestamp=start_span.start)
+        self.tracers[start_span.uuid] = child
+        self.spans[start_span.uuid] = child
+        self.tracers.get(start_span.parent, self.root).entries.append(child)
+
+    def end_span(self, log_line: LogLine) -> None:
+        end_span = EndSpan.model_validate(log_line.entry)
+        span = self.spans[end_span.uuid]
+        span.end_timestamp = end_span.end
+
+    def plain_entry(self, log_line: LogLine) -> None:
+        plain_entry = PlainEntry.model_validate(log_line.entry)
+        entry = LogEntry(
+            message=plain_entry.message,
+            value=plain_entry.value,
+            timestamp=plain_entry.timestamp,
+        )
+        self.tracers[plain_entry.parent].entries.append(entry)
+
+
+
 class InMemoryEvaluationRepository(EvaluationRepository):
     _example_results: dict[str, list[str]] = defaultdict(list)
+    _example_traces: dict[str, InMemoryTracer] = dict()
 
     _run_overviews: dict[str, str] = dict()
 
@@ -161,6 +263,19 @@ class InMemoryEvaluationRepository(EvaluationRepository):
             ),
             None,
         )
+
+    def evaluation_example_trace(
+        self, run_id: str, example_id: str
+    ) -> Optional[ExampleTrace]:
+        json = self._example_traces.get(f"{run_id}/{example_id}")
+        if json == None:
+            return None
+        return ExampleTrace.model_validate_json(json)
+
+    def example_tracer(self, run_id: str, example_id: str) -> Tracer:
+        tracer = InMemoryTracer()
+        self._example_traces[f"{run_id}/{example_id}"] = tracer
+        return tracer
 
     def store_example_result(
         self, run_id: str, result: ExampleResult[Evaluation]
