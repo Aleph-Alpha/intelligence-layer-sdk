@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { json } from '@codemirror/lang-json';
+	// @ts-expect-error - can't pick up types for some reason...
 	import CodeMirror from 'svelte-codemirror-editor';
 	import { EditorView } from 'codemirror';
 	import type { JSONValue } from '$lib/trace';
