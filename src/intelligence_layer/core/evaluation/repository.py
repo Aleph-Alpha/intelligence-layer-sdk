@@ -1,7 +1,7 @@
 from collections import defaultdict
 from json import loads
 from pathlib import Path
-from typing import Optional, Sequence
+from typing import Optional, Sequence, cast
 from uuid import UUID
 
 from pydantic import BaseModel, Field
@@ -91,8 +91,8 @@ class FileEvaluationRepository(EvaluationRepository):
             for example_result in (fetch_result_from_file_name(file) for file in logs)
             if example_result
         ]
-    def failed_evaluation_run_results(
 
+    def failed_evaluation_run_results(
         self, run_id: str, evaluation_type: type[Evaluation]
     ) -> Sequence[ExampleResult[Evaluation]]:
         results = self.evaluation_run_results(run_id, evaluation_type)
@@ -119,7 +119,7 @@ class FileEvaluationRepository(EvaluationRepository):
         if not file_path.exists():
             return None
         in_memory_tracer = _parse_log(file_path)
-        trace = TaskSpanTrace.from_task_span(in_memory_tracer.entries[0])
+        trace = TaskSpanTrace.from_task_span(cast(InMemoryTaskSpan, in_memory_tracer.entries[0]))
         return ExampleTrace(example_id=example_id, trace=trace)
 
     def store_example_result(
@@ -135,9 +135,8 @@ class FileEvaluationRepository(EvaluationRepository):
     def example_tracer(self, run_id: str, example_id: str) -> Tracer:
         run_dir = self._root_directory / run_id
         run_dir.mkdir(exist_ok=True)
-        file_path = (run_dir / f"{example_id}_trace").with_suffix(".jsonl")
+        file_path = run_dir / run_id / example_id 
         return FileTracer(file_path)
-        
 
     def evaluation_run_overview(
         self, run_id: str, aggregation_type: type[AggregatedEvaluation]
@@ -267,10 +266,10 @@ class InMemoryEvaluationRepository(EvaluationRepository):
     def evaluation_example_trace(
         self, run_id: str, example_id: str
     ) -> Optional[ExampleTrace]:
-        json = self._example_traces.get(f"{run_id}/{example_id}")
-        if json == None:
+        tracer = self._example_traces.get(f"{run_id}/{example_id}")
+        if tracer == None:
             return None
-        return ExampleTrace.model_validate_json(json)
+        return ExampleTrace(example_id=example_id, trace=TaskSpanTrace.from_task_span(cast(InMemoryTaskSpan, tracer.entries[0])))
 
     def example_tracer(self, run_id: str, example_id: str) -> Tracer:
         tracer = InMemoryTracer()

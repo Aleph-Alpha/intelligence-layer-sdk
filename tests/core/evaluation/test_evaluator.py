@@ -10,6 +10,7 @@ from intelligence_layer.core import (
     Evaluator,
     Example,
     InMemoryEvaluationRepository,
+    FileEvaluationRepository,
     InMemoryTaskSpan,
     InMemoryTracer,
     NoOpTracer,
@@ -18,6 +19,7 @@ from intelligence_layer.core import (
 )
 from intelligence_layer.core.task import Task
 from tests.core.test_tracer import parse_log
+from tests.core.evaluation.test_repository import file_evaluation_repository # type: ignore
 
 DummyTaskInput = Literal["success", "fail in task", "fail in eval"]
 DummyTaskOutput = DummyTaskInput
@@ -128,12 +130,12 @@ def test_evaluate_dataset_uses_passed_tracer(
 
 
 def test_evaluate_dataset_saves_result_to_file(
-    evaluation_repository: InMemoryEvaluationRepository,
+    file_evaluation_repository: FileEvaluationRepository,
     sequence_dataset: SequenceDataset[DummyTaskInput, None],
     tmp_path: Path,
 ) -> None:
     expected = InMemoryTracer()
-    dummy_evaluator = DummyEvaluator(DummyTask(), evaluation_repository, tmp_path)
+    dummy_evaluator = DummyEvaluator(DummyTask(), file_evaluation_repository)
     overview = dummy_evaluator.evaluate_dataset(sequence_dataset, expected)
 
     found = parse_log((tmp_path / overview.id).with_suffix(".jsonl"))
