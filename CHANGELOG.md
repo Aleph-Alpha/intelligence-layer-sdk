@@ -19,6 +19,7 @@
   - There is a `FileEvaluationRepository` and an `InMemoryEvaluationRepository` available for storing your evaluation results
 - Support passing `Metadata` field through `DocumentIndexClient` (already supported in the Document Index, new in client only)
 - New `MultiLabelClassifyEvaluator` to evaluate classification use cases that support multi-label classification
+- `Evaluators` can now be called via the CLI
 
 ### Fixes
 
