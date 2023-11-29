@@ -237,7 +237,7 @@ class Evaluator(
         tracer: Optional[Tracer] = None,
     ) -> Evaluation | EvaluationException:
         in_memory_tracer = InMemoryTracer()
-        file_tracer = FileTracer(self._directory / run_id) if self._directory else None
+        file_tracer = FileTracer(self._directory / f"{run_id}.jsonl") if self._directory else None
         tracers = [in_memory_tracer, file_tracer, tracer]
         evaluate_tracer = CompositeTracer(tracers=[t for t in tracers if t is not None])
         result = self.evaluate(example.input, example.expected_output, evaluate_tracer)
