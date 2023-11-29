@@ -347,7 +347,7 @@ class InMemoryTracer(BaseModel, Tracer):
             log entries.
     """
 
-    entries: list[Union[LogEntry, "InMemorySpan", "InMemoryTaskSpan"]] = []
+    entries: list[Union[LogEntry, "InMemoryTaskSpan", "InMemorySpan"]] = []
 
     def span(self, name: str, timestamp: Optional[datetime] = None) -> "InMemorySpan":
         child = InMemorySpan(name=name, start_timestamp=timestamp or datetime.utcnow())

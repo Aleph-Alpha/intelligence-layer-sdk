@@ -19,6 +19,7 @@ from .evaluation.domain import EvaluationException as EvaluationException
 from .evaluation.domain import EvaluationRunOverview as EvaluationRunOverview
 from .evaluation.domain import Example as Example
 from .evaluation.domain import ExampleResult as ExampleResult
+from .evaluation.domain import ExampleTrace as ExampleTrace
 from .evaluation.domain import LogTrace as LogTrace
 from .evaluation.domain import SequenceDataset as SequenceDataset
 from .evaluation.domain import SpanTrace as SpanTrace

@@ -163,11 +163,23 @@ class ExampleResult(BaseModel, Generic[Evaluation]):
         result: If the evaluation was successful, evaluation's result,
             otherwise the exception raised during running or evaluating
             the :class:`Task`.
-        trace: Generated when running the :class:`Task`.
     """
 
     example_id: str
     result: SerializeAsAny[Evaluation | EvaluationException]
+
+
+class ExampleTrace(BaseModel):
+    """Result of a single evaluated :class:`Example`
+
+    Created to persist the evaluation result in the repository.
+
+    Attributes:
+        example_id: Identifier of the :class:`Example` evaluated.
+        trace: Generated when running the :class:`Task`.
+    """
+
+    example_id: str
     trace: TaskSpanTrace
 
 

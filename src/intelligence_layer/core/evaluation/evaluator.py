@@ -25,6 +25,7 @@ from intelligence_layer.core.evaluation.domain import (
     EvaluationRunOverview,
     Example,
     ExampleResult,
+    ExampleTrace,
     ExpectedOutput,
     TaskSpanTrace,
 )
@@ -104,6 +105,16 @@ class EvaluationRepository(ABC):
         Returns:
             :class:`ExampleResult` if one was found, `None` otherwise.
         """
+        ...
+
+    @abstractmethod
+    def evaluation_example_trace(
+        self, run_id: str, example_id: str
+    ) -> Optional[ExampleTrace]:
+        ...
+
+    @abstractmethod
+    def example_tracer(self, run_id: str, example_id: str) -> Tracer:
         ...
 
     @abstractmethod
@@ -236,17 +247,17 @@ class Evaluator(
         example: Example[Input, ExpectedOutput],
         tracer: Optional[Tracer] = None,
     ) -> Evaluation | EvaluationException:
-        in_memory_tracer = InMemoryTracer()
-        file_tracer = FileTracer((self._directory / run_id).with_suffix(".jsonl")) if self._directory else None
-        tracers = [in_memory_tracer, file_tracer, tracer]
-        evaluate_tracer = CompositeTracer(tracers=[t for t in tracers if t is not None])
+        evaluate_tracer = (
+            CompositeTracer(
+                tracers=[tracer, self._repository.example_tracer(run_id, example.id)]
+            )
+            if tracer
+            else self._repository.example_tracer(run_id, example.id)
+        )
         result = self.evaluate(example.input, example.expected_output, evaluate_tracer)
         example_result = ExampleResult(
             example_id=example.id,
             result=result,
-            trace=TaskSpanTrace.from_task_span(
-                cast(InMemoryTaskSpan, in_memory_tracer.entries[0])
-            ),
         )
         self._repository.store_example_result(run_id=run_id, result=example_result)
         return example_result.result
