@@ -5,8 +5,7 @@ from pydantic import BaseModel
 
 
 class Document(BaseModel):
-    """Document abstraction, specifically for retrieval use cases.wiofjhwifhwaiuofhowaahfiowahfiowhfiowahfiowhfiowhfiwohfwoaihfwaoifhwiaofhwaiofhwaoifhwaiofwhaiofahfoi
-
+    """Document abstraction, specifically for retrieval use cases.
     Attributes:
         text: The document's text.
         metadata: Any json-serializable object.
