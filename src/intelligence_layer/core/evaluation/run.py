@@ -36,10 +36,40 @@ def create_task(factory: Any) -> Any:
 
 def parse_args(cli_args: Sequence[str]) -> Namespace:
     parser = ArgumentParser(description="Runs the given evaluation")
-    parser.add_argument("--evaluator", required=True, type=function_from_string)
-    parser.add_argument("--task", required=True, type=function_from_string)
-    parser.add_argument("--dataset", required=True, type=function_from_string)
-    parser.add_argument("--target-dir", required=True, type=Path)
+    parser.add_argument(
+        "--evaluator",
+        required=True,
+        type=function_from_string,
+        help="A factory function for the evaluator. "
+        "This function has to take 2 arguments: an instance of the Task to be evaluated and "
+        "an EvaluationRepository where the results are stored. "
+        "If this corresponds to the init-parameters of the Evaluator "
+        "the class-type can actually be provided as argument.",
+    )
+    parser.add_argument(
+        "--task",
+        required=True,
+        type=function_from_string,
+        help="A factory function for the task to be evaluated. "
+        "This function can either take no parameter or an Aleph Alpha client as only parameter. "
+        "If this corresponds to the init-parameters of the Evaluator "
+        "the class-type can actually be provided as argument.",
+    )
+    parser.add_argument(
+        "--dataset",
+        required=True,
+        type=function_from_string,
+        help="A factory function for the dataset that is used for evaluation. "
+        "This function must not take any arguments.",
+    )
+    parser.add_argument(
+        "--target-dir",
+        required=True,
+        type=Path,
+        help="Path to a directory where the evaluation results are stored. "
+        "The directory is created if it does not exist. "
+        "The process must have corresponding write permissions.",
+    )
     args = parser.parse_args(cli_args[1:])
     return args
 
