@@ -37,13 +37,13 @@ devDependencies:
     version: 1.3.7(less@4.2.0)(postcss@8.4.31)(react-dom@18.2.0)(react@18.2.0)(typescript@5.3.2)(webpack@5.89.0)
   '@storybook/addon-svelte-csf':
     specifier: ^4.0.13
-    version: 4.0.13(@storybook/svelte@7.6.0)(@storybook/theming@7.6.1)(@sveltejs/vite-plugin-svelte@2.5.3)(svelte@4.2.7)(vite@4.5.0)
+    version: 4.0.13(@storybook/svelte@7.6.2)(@storybook/theming@7.6.1)(@sveltejs/vite-plugin-svelte@2.5.3)(svelte@4.2.7)(vite@4.5.0)
   '@storybook/blocks':
     specifier: ^7.6.1
     version: 7.6.1(react-dom@18.2.0)(react@18.2.0)
   '@storybook/svelte':
-    specifier: ^7.6.0
-    version: 7.6.0(svelte@4.2.7)
+    specifier: ^7.6.2
+    version: 7.6.2(svelte@4.2.7)
   '@storybook/sveltekit':
     specifier: ^7.6.1
     version: 7.6.1(@babel/core@7.23.3)(less@4.2.0)(postcss@8.4.31)(svelte@4.2.7)(typescript@5.3.2)(vite@4.5.0)
@@ -2882,7 +2882,7 @@ packages:
       - typescript
     dev: true
 
-  /@storybook/addon-svelte-csf@4.0.13(@storybook/svelte@7.6.0)(@storybook/theming@7.6.1)(@sveltejs/vite-plugin-svelte@2.5.3)(svelte@4.2.7)(vite@4.5.0):
+  /@storybook/addon-svelte-csf@4.0.13(@storybook/svelte@7.6.2)(@storybook/theming@7.6.1)(@sveltejs/vite-plugin-svelte@2.5.3)(svelte@4.2.7)(vite@4.5.0):
     resolution: {integrity: sha512-WHp8MSM8IFvhwJoJ3ghJ5K7FO0oQgnbstdd0iEk6wAW0KWN1KpwdSYMRFNrdSF3gar5Dol4PWOC/6+3SMdsZMQ==}
     peerDependencies:
       '@storybook/svelte': ^7.0.0
@@ -2900,7 +2900,7 @@ packages:
         optional: true
     dependencies:
       '@babel/runtime': 7.23.4
-      '@storybook/svelte': 7.6.0(svelte@4.2.7)
+      '@storybook/svelte': 7.6.2(svelte@4.2.7)
       '@storybook/theming': 7.6.1(react-dom@18.2.0)(react@18.2.0)
       '@sveltejs/vite-plugin-svelte': 2.5.3(svelte@4.2.7)(vite@4.5.0)
       dedent: 1.5.1
@@ -3202,18 +3202,18 @@ packages:
       - '@types/react-dom'
     dev: true
 
-  /@storybook/core-client@7.6.0:
-    resolution: {integrity: sha512-zc2v1WoyN64okcVWfZb1/fWasaZX3mdFVigqavUOIeXsxWFcywU5bcr0bWCCwwk19xKaNzJ2FvWVqXrkOUq22w==}
-    dependencies:
-      '@storybook/client-logger': 7.6.0
-      '@storybook/preview-api': 7.6.0
-    dev: true
-
   /@storybook/core-client@7.6.1:
     resolution: {integrity: sha512-izolLY0QAPREwm3ZCp9PZasa0OBchzxWYFaVekgbX66lhFJvAVfp84L17oi3HyVbQt7xbAlGPoSoP6wcfMecTw==}
     dependencies:
       '@storybook/client-logger': 7.6.1
       '@storybook/preview-api': 7.6.1
+    dev: true
+
+  /@storybook/core-client@7.6.2:
+    resolution: {integrity: sha512-hYSLZM6F2K2WxNoXsI+V+8Ya7mymNrdZpqKhCfQrr8Oi3HPaBRdNWyBD5k96lLp4dHR5ctEUWd8LcdNc+dwGsg==}
+    dependencies:
+      '@storybook/client-logger': 7.6.2
+      '@storybook/preview-api': 7.6.2
     dev: true
 
   /@storybook/core-common@7.6.0:
@@ -3435,12 +3435,12 @@ packages:
     resolution: {integrity: sha512-JDaBR9lwVY4eSH5W8EGHrhODjygPd6QImRbwjAuJNEnY0Vw4ie3bPkeGfnacB3OBW6u/agqPv2aRlR46JcAQLg==}
     dev: true
 
-  /@storybook/docs-tools@7.6.0:
-    resolution: {integrity: sha512-06M/Vo3AwOdr4VP1LbvnSih8eWT5zO6Mkm3ZZikMQVn+eDr5YJ9PzUeI2/SAymgCs4jH9qRf4lmKTPMl4bjGsQ==}
+  /@storybook/docs-tools@7.6.1:
+    resolution: {integrity: sha512-F6mbKFWwqzCTM39xnsW5FH/wSxeQTZ/N9j1MM8J+x39QbWbLi2VodSuPjKyS1L7CPcYhc3N1Re/F3lIgpF2piw==}
     dependencies:
-      '@storybook/core-common': 7.6.0
-      '@storybook/preview-api': 7.6.0
-      '@storybook/types': 7.6.0
+      '@storybook/core-common': 7.6.1
+      '@storybook/preview-api': 7.6.1
+      '@storybook/types': 7.6.1
       '@types/doctrine': 0.0.3
       assert: 2.1.0
       doctrine: 3.0.0
@@ -3450,12 +3450,12 @@ packages:
       - supports-color
     dev: true
 
-  /@storybook/docs-tools@7.6.1:
-    resolution: {integrity: sha512-F6mbKFWwqzCTM39xnsW5FH/wSxeQTZ/N9j1MM8J+x39QbWbLi2VodSuPjKyS1L7CPcYhc3N1Re/F3lIgpF2piw==}
+  /@storybook/docs-tools@7.6.2:
+    resolution: {integrity: sha512-mmTW7K36ghNfUouRKu0x1cTCdwircsIXg7+LOen6GHRUdy/6G6Xa176A4zoCp9vAO4UKgAS2N+FJfD/p3sR9Ow==}
     dependencies:
-      '@storybook/core-common': 7.6.1
-      '@storybook/preview-api': 7.6.1
-      '@storybook/types': 7.6.1
+      '@storybook/core-common': 7.6.2
+      '@storybook/preview-api': 7.6.2
+      '@storybook/types': 7.6.2
       '@types/doctrine': 0.0.3
       assert: 2.1.0
       doctrine: 3.0.0
@@ -3660,28 +3660,6 @@ packages:
       - vite-plugin-glimmerx
     dev: true
 
-  /@storybook/svelte@7.6.0(svelte@4.2.7):
-    resolution: {integrity: sha512-GtkD5vjQZrUJBo7J0LphhncfRvn9m3IhhjgZEuv0fIILq7uO1xLMmfozzoIFa2c1kgPtB6nIA+DeIsKlDEQK2g==}
-    engines: {node: '>=16.0.0'}
-    peerDependencies:
-      svelte: ^3.1.0 || ^4.0.0
-    dependencies:
-      '@storybook/client-logger': 7.6.0
-      '@storybook/core-client': 7.6.0
-      '@storybook/core-events': 7.6.0
-      '@storybook/docs-tools': 7.6.0
-      '@storybook/global': 5.0.0
-      '@storybook/preview-api': 7.6.0
-      '@storybook/types': 7.6.0
-      svelte: 4.2.7
-      sveltedoc-parser: 4.2.1
-      ts-dedent: 2.2.0
-      type-fest: 2.19.0
-    transitivePeerDependencies:
-      - encoding
-      - supports-color
-    dev: true
-
   /@storybook/svelte@7.6.1(svelte@4.2.7):
     resolution: {integrity: sha512-2KXA6PWm3f+JMlicAWyqvPYniRFU8RhJl1WlPCVpUgfYM8awL/wz33P+0T4wvIVa3Ru0ysO5H+HOuY7jEzSfvA==}
     engines: {node: '>=16.0.0'}
@@ -3695,6 +3673,28 @@ packages:
       '@storybook/global': 5.0.0
       '@storybook/preview-api': 7.6.1
       '@storybook/types': 7.6.1
+      svelte: 4.2.7
+      sveltedoc-parser: 4.2.1
+      ts-dedent: 2.2.0
+      type-fest: 2.19.0
+    transitivePeerDependencies:
+      - encoding
+      - supports-color
+    dev: true
+
+  /@storybook/svelte@7.6.2(svelte@4.2.7):
+    resolution: {integrity: sha512-j6MuQ9v3KxJwGLhmE/5zN13p/e++GVd571Z+h0sY0MtE8nT6TYPUn17lvTnteR9u5TIV+gDSYlbQE8plttBh/A==}
+    engines: {node: '>=16.0.0'}
+    peerDependencies:
+      svelte: ^3.1.0 || ^4.0.0
+    dependencies:
+      '@storybook/client-logger': 7.6.2
+      '@storybook/core-client': 7.6.2
+      '@storybook/core-events': 7.6.2
+      '@storybook/docs-tools': 7.6.2
+      '@storybook/global': 5.0.0
+      '@storybook/preview-api': 7.6.2
+      '@storybook/types': 7.6.2
       svelte: 4.2.7
       sveltedoc-parser: 4.2.1
       ts-dedent: 2.2.0
