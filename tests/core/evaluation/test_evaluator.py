@@ -1,5 +1,4 @@
 from datetime import datetime
-from pathlib import Path
 from typing import Iterable, Literal, Sequence
 
 from pydantic import BaseModel
@@ -10,7 +9,6 @@ from intelligence_layer.core import (
     Evaluator,
     Example,
     InMemoryEvaluationRepository,
-    FileEvaluationRepository,
     InMemoryTaskSpan,
     InMemoryTracer,
     NoOpTracer,
@@ -18,8 +16,6 @@ from intelligence_layer.core import (
     Tracer,
 )
 from intelligence_layer.core.task import Task
-from tests.core.test_tracer import parse_log
-from tests.core.evaluation.test_repository import file_evaluation_repository # type: ignore
 
 DummyTaskInput = Literal["success", "fail in task", "fail in eval"]
 DummyTaskOutput = DummyTaskInput
@@ -129,18 +125,16 @@ def test_evaluate_dataset_uses_passed_tracer(
     assert all([isinstance(e, InMemoryTaskSpan) for e in entries])
 
 
-def test_evaluate_dataset_saves_result_to_file(
-    file_evaluation_repository: FileEvaluationRepository,
+def test_evaluate_dataset_saves_overview(
+    in_memory_evaluation_repository: InMemoryEvaluationRepository,
     sequence_dataset: SequenceDataset[DummyTaskInput, None],
-    tmp_path: Path,
 ) -> None:
-    expected = InMemoryTracer()
-    dummy_evaluator = DummyEvaluator(DummyTask(), file_evaluation_repository)
-    overview = dummy_evaluator.evaluate_dataset(sequence_dataset, expected)
+    dummy_evaluator = DummyEvaluator(DummyTask(), in_memory_evaluation_repository)
+    overview = dummy_evaluator.evaluate_dataset(sequence_dataset)
 
-    found = parse_log((tmp_path / overview.id).with_suffix(".jsonl"))
-
-    assert found == expected
+    assert overview == in_memory_evaluation_repository.evaluation_run_overview(
+        overview.id, AggregatedDummyEvaluation
+    )
 
 
 def test_evaluate_dataset_stores_example_results(
@@ -204,6 +198,9 @@ def test_evaluate_dataset_stores_example_traces(
         evaluation_run_overview.id, examples[2].id
     )
 
+    assert success_result
+    assert failure_result_task
+    assert failure_result_eval
     assert success_result.trace.input == "success"
     assert failure_result_task.trace.input == "fail in task"
     assert failure_result_eval.trace.input == "fail in eval"

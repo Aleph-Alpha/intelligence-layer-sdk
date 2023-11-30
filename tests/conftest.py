@@ -21,7 +21,11 @@ from intelligence_layer.connectors.retrievers.qdrant_in_memory_retriever import 
     QdrantInMemoryRetriever,
     RetrieverType,
 )
-from intelligence_layer.core.tracer import NoOpTracer
+from intelligence_layer.core import (
+    FileEvaluationRepository,
+    InMemoryEvaluationRepository,
+    NoOpTracer,
+)
 
 
 @fixture(scope="session")
@@ -47,6 +51,16 @@ def no_op_tracer() -> NoOpTracer:
 def prompt_image() -> Image:
     image_source_path = Path(__file__).parent / "dog-and-cat-cover.jpg"
     return cast(Image, Image.from_file(image_source_path))  # from_file lacks type-hint
+
+
+@fixture
+def file_evaluation_repository(tmp_path: Path) -> FileEvaluationRepository:
+    return FileEvaluationRepository(tmp_path)
+
+
+@fixture
+def in_memory_evaluation_repository() -> InMemoryEvaluationRepository:
+    return InMemoryEvaluationRepository()
 
 
 @fixture
