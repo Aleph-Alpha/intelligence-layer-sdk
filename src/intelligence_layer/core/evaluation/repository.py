@@ -81,7 +81,7 @@ class FileEvaluationRepository(EvaluationRepository):
         def fetch_result_from_file_name(
             path: Path,
         ) -> Optional[ExampleResult[Evaluation]]:
-            id = path.with_suffix("").name
+            id = path.with_suffix("").name.removesuffix("_result")
             return self.evaluation_example_result(run_id, id, evaluation_type)
 
         path = self._root_directory / run_id
@@ -119,7 +119,9 @@ class FileEvaluationRepository(EvaluationRepository):
         if not file_path.exists():
             return None
         in_memory_tracer = _parse_log(file_path)
-        trace = TaskSpanTrace.from_task_span(cast(InMemoryTaskSpan, in_memory_tracer.entries[0]))
+        trace = TaskSpanTrace.from_task_span(
+            cast(InMemoryTaskSpan, in_memory_tracer.entries[0])
+        )
         return ExampleTrace(example_id=example_id, trace=trace)
 
     def store_example_result(
@@ -135,7 +137,7 @@ class FileEvaluationRepository(EvaluationRepository):
     def example_tracer(self, run_id: str, example_id: str) -> Tracer:
         run_dir = self._root_directory / run_id
         run_dir.mkdir(exist_ok=True)
-        file_path = run_dir / run_id / example_id 
+        file_path = (run_dir / f"{example_id}_trace").with_suffix(".jsonl")
         return FileTracer(file_path)
 
     def evaluation_run_overview(
@@ -182,6 +184,7 @@ def _parse_log(log_path: Path) -> InMemoryTracer:
     assert tree_builder.root
     return tree_builder.root
 
+
 class TreeBuilder(BaseModel):
     root: InMemoryTracer = InMemoryTracer()
     tracers: dict[UUID, InMemoryTracer] = Field(default_factory=dict)
@@ -227,7 +230,6 @@ class TreeBuilder(BaseModel):
         self.tracers[plain_entry.parent].entries.append(entry)
 
 
-
 class InMemoryEvaluationRepository(EvaluationRepository):
     _example_results: dict[str, list[str]] = defaultdict(list)
     _example_traces: dict[str, InMemoryTracer] = dict()
@@ -267,9 +269,15 @@ class InMemoryEvaluationRepository(EvaluationRepository):
         self, run_id: str, example_id: str
     ) -> Optional[ExampleTrace]:
         tracer = self._example_traces.get(f"{run_id}/{example_id}")
-        if tracer == None:
+        if tracer is None:
             return None
-        return ExampleTrace(example_id=example_id, trace=TaskSpanTrace.from_task_span(cast(InMemoryTaskSpan, tracer.entries[0])))
+        assert tracer
+        return ExampleTrace(
+            example_id=example_id,
+            trace=TaskSpanTrace.from_task_span(
+                cast(InMemoryTaskSpan, tracer.entries[0])
+            ),
+        )
 
     def example_tracer(self, run_id: str, example_id: str) -> Tracer:
         tracer = InMemoryTracer()

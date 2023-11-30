@@ -27,16 +27,9 @@ from intelligence_layer.core.evaluation.domain import (
     ExampleResult,
     ExampleTrace,
     ExpectedOutput,
-    TaskSpanTrace,
 )
 from intelligence_layer.core.task import Input, Output, Task
-from intelligence_layer.core.tracer import (
-    CompositeTracer,
-    FileTracer,
-    InMemoryTaskSpan,
-    InMemoryTracer,
-    Tracer,
-)
+from intelligence_layer.core.tracer import CompositeTracer, Tracer
 
 
 class EvaluationRepository(ABC):

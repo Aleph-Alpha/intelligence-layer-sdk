@@ -1,6 +1,5 @@
 from datetime import datetime
-from pathlib import Path
-from typing import Sequence
+from typing import Sequence, cast
 
 from pydantic import BaseModel
 from pytest import fixture
@@ -11,11 +10,11 @@ from intelligence_layer.core import (
     ExampleTrace,
     FileEvaluationRepository,
     InMemoryEvaluationRepository,
+    InMemoryTaskSpan,
     TaskSpanTrace,
 )
 from intelligence_layer.core.evaluation.domain import EvaluationRunOverview
 from intelligence_layer.core.evaluation.repository import _parse_log
-from intelligence_layer.core.tracer import CompositeTracer
 
 
 class DummyEvaluation(BaseModel):
@@ -32,16 +31,6 @@ class DummyEvaluationWithExceptionStructure(BaseModel):
 
 class DummyTaskInput(BaseModel):
     input: str
-
-
-@fixture
-def file_evaluation_repository(tmp_path: Path) -> FileEvaluationRepository:
-    return FileEvaluationRepository(tmp_path)
-
-
-@fixture
-def in_memory_evaluation_repository() -> InMemoryEvaluationRepository:
-    return InMemoryEvaluationRepository()
 
 
 @fixture
@@ -63,7 +52,7 @@ def successful_example_result() -> ExampleResult[DummyEvaluation]:
 @fixture
 def example_trace(
     task_span_trace: TaskSpanTrace,
-) -> ExampleResult[DummyEvaluation]:
+) -> ExampleTrace:
     return ExampleTrace(
         example_id="example_id",
         trace=task_span_trace,
@@ -71,13 +60,10 @@ def example_trace(
 
 
 @fixture
-def failed_example_result(
-    task_span_trace: TaskSpanTrace,
-) -> ExampleResult[DummyEvaluation]:
+def failed_example_result() -> ExampleResult[DummyEvaluation]:
     return ExampleResult(
         example_id="other",
         result=EvaluationException(error_message="error"),
-        trace=task_span_trace,
     )
 
 
@@ -90,11 +76,20 @@ def test_can_store_example_evaluation_traces_in_file(
 
     tracer = file_evaluation_repository.example_tracer(run_id, example_id)
     tracer.task_span("task", DummyTaskInput(input="input"), now)
-    in_memory_tracer = _parse_log((file_evaluation_repository._root_directory / run_id / f"{example_id}_trace").with_suffix(".jsonl"))
+    in_memory_tracer = _parse_log(
+        (
+            file_evaluation_repository._root_directory / run_id / f"{example_id}_trace"
+        ).with_suffix(".jsonl")
+    )
 
     assert file_evaluation_repository.evaluation_example_trace(
         run_id, example_id
-    ) == ExampleTrace(example_id=example_id, trace=TaskSpanTrace.from_task_span(in_memory_tracer.entries[0]))
+    ) == ExampleTrace(
+        example_id=example_id,
+        trace=TaskSpanTrace.from_task_span(
+            cast(InMemoryTaskSpan, in_memory_tracer.entries[0])
+        ),
+    )
 
 
 def test_can_store_example_results_in_file(
@@ -114,12 +109,11 @@ def test_can_store_example_results_in_file(
 
 
 def test_storing_exception_with_same_structure_as_type_still_deserializes_exception(
-    file_evaluation_repository: FileEvaluationRepository, task_span_trace: TaskSpanTrace
+    file_evaluation_repository: FileEvaluationRepository,
 ) -> None:
     exception: ExampleResult[DummyEvaluation] = ExampleResult(
         example_id="id",
         result=EvaluationException(error_message="error"),
-        trace=task_span_trace,
     )
     run_id = "id"
 
