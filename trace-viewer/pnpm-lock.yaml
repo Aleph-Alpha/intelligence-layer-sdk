@@ -45,8 +45,8 @@ devDependencies:
     specifier: ^7.6.0
     version: 7.6.0(svelte@4.2.7)
   '@storybook/sveltekit':
-    specifier: ^7.6.0
-    version: 7.6.0(@babel/core@7.23.3)(less@4.2.0)(postcss@8.4.31)(svelte@4.2.7)(typescript@5.3.2)(vite@4.5.0)
+    specifier: ^7.6.1
+    version: 7.6.1(@babel/core@7.23.3)(less@4.2.0)(postcss@8.4.31)(svelte@4.2.7)(typescript@5.3.2)(vite@4.5.0)
   '@storybook/testing-library':
     specifier: ^0.2.2
     version: 0.2.2
@@ -2685,17 +2685,6 @@ packages:
     resolution: {integrity: sha512-+Fj43pSMwJs4KRrH/938Uf+uAELIgVBmQzg/q1YG10djyfA3TnrU8N8XzqCh/okZdszqBQTZf96idMfE5lnwTA==}
     dev: true
 
-  /@storybook/addon-actions@7.6.0:
-    resolution: {integrity: sha512-yc4d/6j0XaTQPkEMkT0JxWPjRwZUg0oC929/vpouYhaC60Ch/b3PnzUFkSQ2BqgeUUH0c9wfzs/9np6USRXpBQ==}
-    dependencies:
-      '@storybook/core-events': 7.6.0
-      '@storybook/global': 5.0.0
-      '@types/uuid': 9.0.7
-      dequal: 2.0.3
-      polished: 4.2.2
-      uuid: 9.0.1
-    dev: true
-
   /@storybook/addon-actions@7.6.1:
     resolution: {integrity: sha512-KSaIv1LKGyaCJuPuEIwwLtMp/Md8t/jprng3FwYW/lChbsYw40lexiLYRy2LHomsyvXT0acsjLuSmJ8FrynSoA==}
     dependencies:
@@ -3005,8 +2994,8 @@ packages:
       - supports-color
     dev: true
 
-  /@storybook/builder-vite@7.6.0(typescript@5.3.2)(vite@4.5.0):
-    resolution: {integrity: sha512-gYJbQxquk/REN0Gg3okC56gFsrWHvnNtvc5Dbs+WRN8Zm2hUr7Gyrp3BQGgqvbinLFy2oK4Hq+Z18UAptG4LGw==}
+  /@storybook/builder-vite@7.6.1(typescript@5.3.2)(vite@4.5.0):
+    resolution: {integrity: sha512-e1jFxr795+lxZlRQNuVZo3/UTs93i6Xj6a+ob5UO10f/QpFPo/n11M30HbuHBQzlOiFoqzRlhO9hYSwJUKiqyA==}
     peerDependencies:
       '@preact/preset-vite': '*'
       typescript: '>= 4.3.x'
@@ -3020,14 +3009,14 @@ packages:
       vite-plugin-glimmerx:
         optional: true
     dependencies:
-      '@storybook/channels': 7.6.0
-      '@storybook/client-logger': 7.6.0
-      '@storybook/core-common': 7.6.0
-      '@storybook/csf-plugin': 7.6.0
-      '@storybook/node-logger': 7.6.0
-      '@storybook/preview': 7.6.0
-      '@storybook/preview-api': 7.6.0
-      '@storybook/types': 7.6.0
+      '@storybook/channels': 7.6.1
+      '@storybook/client-logger': 7.6.1
+      '@storybook/core-common': 7.6.1
+      '@storybook/csf-plugin': 7.6.1
+      '@storybook/node-logger': 7.6.1
+      '@storybook/preview': 7.6.1
+      '@storybook/preview-api': 7.6.1
+      '@storybook/types': 7.6.1
       '@types/find-cache-dir': 3.2.1
       browser-assert: 1.2.1
       es-module-lexer: 0.9.3
@@ -3203,6 +3192,13 @@ packages:
       '@storybook/preview-api': 7.6.0
     dev: true
 
+  /@storybook/core-client@7.6.1:
+    resolution: {integrity: sha512-izolLY0QAPREwm3ZCp9PZasa0OBchzxWYFaVekgbX66lhFJvAVfp84L17oi3HyVbQt7xbAlGPoSoP6wcfMecTw==}
+    dependencies:
+      '@storybook/client-logger': 7.6.1
+      '@storybook/preview-api': 7.6.1
+    dev: true
+
   /@storybook/core-common@7.6.0:
     resolution: {integrity: sha512-Le11+Pcbi2D+i63utkhjHEAUIVO65CNiZiDFa/ZJI5aSajy209ece2eX0Z12wPecfYu5TXlqhqaeXAVBABAUow==}
     dependencies:
@@ -3326,15 +3322,6 @@ packages:
       - encoding
       - supports-color
       - utf-8-validate
-    dev: true
-
-  /@storybook/csf-plugin@7.6.0:
-    resolution: {integrity: sha512-d/rcRcNad+tLGXV3GQiQdFJOBS4fj90fqa4joJIekgVh+LfRBS+KYuiPeukBxfnmz2AbhF9ezwXQMFIYYyHmzg==}
-    dependencies:
-      '@storybook/csf-tools': 7.6.0
-      unplugin: 1.5.1
-    transitivePeerDependencies:
-      - supports-color
     dev: true
 
   /@storybook/csf-plugin@7.6.1:
@@ -3532,8 +3519,8 @@ packages:
       util-deprecate: 1.0.2
     dev: true
 
-  /@storybook/preview@7.6.0:
-    resolution: {integrity: sha512-/zHTMl3aj1S3xxnffwaGzhMi1KySCKeln3xX15RBme014ZQ8cNYwnSDRAsiW/n3viDFFyZ6ybrtmw2HnpNBUhw==}
+  /@storybook/preview@7.6.1:
+    resolution: {integrity: sha512-5qC/skcs0gQenTfCNa2LLp7X9++ZuLQwoweNmAtRJ8Gxn9ac6Yd3/pf9xjxAhlLDhb4Ojdrb9owrPAOf9b4woA==}
     dev: true
 
   /@storybook/react-dom-shim@7.6.1(react-dom@18.2.0)(react@18.2.0):
@@ -3562,16 +3549,16 @@ packages:
       qs: 6.11.2
     dev: true
 
-  /@storybook/svelte-vite@7.6.0(@babel/core@7.23.3)(less@4.2.0)(postcss@8.4.31)(svelte@4.2.7)(typescript@5.3.2)(vite@4.5.0):
-    resolution: {integrity: sha512-dJzRpTAExYkqpd1wWGBFFq5piWhqtiJg3HU4aJzzp7VCoeJGDEN1CR4/0vD6A/ldYGFzA4EurqNUP0kc3sEj7w==}
+  /@storybook/svelte-vite@7.6.1(@babel/core@7.23.3)(less@4.2.0)(postcss@8.4.31)(svelte@4.2.7)(typescript@5.3.2)(vite@4.5.0):
+    resolution: {integrity: sha512-B8f+pkvGGSV7SoSAF9vJn1NqTZF3vQZa4YgDV3mVBHsHup1uWcUyiFC+uVcM16R3dITR1uV5hZ8pwLpTd42BoQ==}
     engines: {node: ^14.18 || >=16}
     peerDependencies:
       svelte: ^3.0.0 || ^4.0.0
       vite: ^3.0.0 || ^4.0.0 || ^5.0.0
     dependencies:
-      '@storybook/builder-vite': 7.6.0(typescript@5.3.2)(vite@4.5.0)
-      '@storybook/node-logger': 7.6.0
-      '@storybook/svelte': 7.6.0(svelte@4.2.7)
+      '@storybook/builder-vite': 7.6.1(typescript@5.3.2)(vite@4.5.0)
+      '@storybook/node-logger': 7.6.1
+      '@storybook/svelte': 7.6.1(svelte@4.2.7)
       '@sveltejs/vite-plugin-svelte': 2.5.3(svelte@4.2.7)(vite@4.5.0)
       magic-string: 0.30.5
       svelte: 4.2.7
@@ -3618,17 +3605,39 @@ packages:
       - supports-color
     dev: true
 
-  /@storybook/sveltekit@7.6.0(@babel/core@7.23.3)(less@4.2.0)(postcss@8.4.31)(svelte@4.2.7)(typescript@5.3.2)(vite@4.5.0):
-    resolution: {integrity: sha512-eWfZd0K4qfIJssLnSEV3XnklznjZTdvbof11EBorwc+jB9E3KiTipBMdl3QnSteAQNeEYcJ/ytBBFuwK1b4MWg==}
+  /@storybook/svelte@7.6.1(svelte@4.2.7):
+    resolution: {integrity: sha512-2KXA6PWm3f+JMlicAWyqvPYniRFU8RhJl1WlPCVpUgfYM8awL/wz33P+0T4wvIVa3Ru0ysO5H+HOuY7jEzSfvA==}
+    engines: {node: '>=16.0.0'}
+    peerDependencies:
+      svelte: ^3.1.0 || ^4.0.0
+    dependencies:
+      '@storybook/client-logger': 7.6.1
+      '@storybook/core-client': 7.6.1
+      '@storybook/core-events': 7.6.1
+      '@storybook/docs-tools': 7.6.1
+      '@storybook/global': 5.0.0
+      '@storybook/preview-api': 7.6.1
+      '@storybook/types': 7.6.1
+      svelte: 4.2.7
+      sveltedoc-parser: 4.2.1
+      ts-dedent: 2.2.0
+      type-fest: 2.19.0
+    transitivePeerDependencies:
+      - encoding
+      - supports-color
+    dev: true
+
+  /@storybook/sveltekit@7.6.1(@babel/core@7.23.3)(less@4.2.0)(postcss@8.4.31)(svelte@4.2.7)(typescript@5.3.2)(vite@4.5.0):
+    resolution: {integrity: sha512-QA9wh/qACREQ/uGi+mekT3o7aLo1/vB+XRHunrOTbAC31icvArpxSby2wC6s5tAvKnBWqnJ3cWUcHQAToPVSkA==}
     engines: {node: ^14.18 || >=16}
     peerDependencies:
       svelte: ^3.0.0 || ^4.0.0
       vite: ^4.0.0
     dependencies:
-      '@storybook/addon-actions': 7.6.0
-      '@storybook/builder-vite': 7.6.0(typescript@5.3.2)(vite@4.5.0)
-      '@storybook/svelte': 7.6.0(svelte@4.2.7)
-      '@storybook/svelte-vite': 7.6.0(@babel/core@7.23.3)(less@4.2.0)(postcss@8.4.31)(svelte@4.2.7)(typescript@5.3.2)(vite@4.5.0)
+      '@storybook/addon-actions': 7.6.1
+      '@storybook/builder-vite': 7.6.1(typescript@5.3.2)(vite@4.5.0)
+      '@storybook/svelte': 7.6.1(svelte@4.2.7)
+      '@storybook/svelte-vite': 7.6.1(@babel/core@7.23.3)(less@4.2.0)(postcss@8.4.31)(svelte@4.2.7)(typescript@5.3.2)(vite@4.5.0)
       svelte: 4.2.7
       vite: 4.5.0(@types/node@20.10.0)(less@4.2.0)
     transitivePeerDependencies:
@@ -5908,7 +5917,7 @@ packages:
       eslint-scope: 7.2.2
       eslint-utils: 3.0.0(eslint@8.4.1)
       eslint-visitor-keys: 3.4.3
-      espree: 9.2.0
+      espree: 9.6.1
       esquery: 1.5.0
       esutils: 2.0.3
       fast-deep-equal: 3.1.3
