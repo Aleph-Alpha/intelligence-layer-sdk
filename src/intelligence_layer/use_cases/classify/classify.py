@@ -174,9 +174,11 @@ class MultiLabelClassifyEvaluator(
         self,
         task: Task[ClassifyInput, MultiLabelClassifyOutput],
         repository: EvaluationRepository,
+        threshold: float = 0.55,
         directory: Optional[Path] = None,
     ):
         super().__init__(task, repository, directory)
+        self.threshold = threshold
 
     def do_evaluate(
         self,
@@ -185,7 +187,7 @@ class MultiLabelClassifyEvaluator(
         expected_output: Sequence[str],
     ) -> MultiLabelClassifyEvaluation:
         predicted_classes = frozenset(
-            label for label, score in output.scores.items() if score > 0.5
+            label for label, score in output.scores.items() if score > self.threshold
         )
         expected_classes = frozenset(expected_output)
         tp = predicted_classes & expected_classes
@@ -217,13 +219,23 @@ class MultiLabelClassifyEvaluator(
         sum_precision, sum_recall, sum_f1 = 0.0, 0.0, 0.0
 
         for label, confusion_matrix in label_confusion_matrix.items():
-            precision = confusion_matrix["tp"] / (
-                confusion_matrix["tp"] + confusion_matrix["fp"]
+            precision = (
+                confusion_matrix["tp"]
+                / (confusion_matrix["tp"] + confusion_matrix["fp"])
+                if confusion_matrix["tp"] + confusion_matrix["fp"]
+                else 0
             )
-            recall = confusion_matrix["tp"] / (
-                confusion_matrix["tp"] + confusion_matrix["fn"]
+            recall = (
+                confusion_matrix["tp"]
+                / (confusion_matrix["tp"] + confusion_matrix["fn"])
+                if confusion_matrix["tp"] + confusion_matrix["fn"]
+                else 0
             )
-            f1 = (2 * precision * recall) / (precision + recall)
+            f1 = (
+                (2 * precision * recall) / (precision + recall)
+                if precision + recall
+                else 0
+            )
 
             class_metrics[label] = MultiLabelClassifyMetrics(
                 precision=precision, recall=recall, f1=f1
@@ -236,12 +248,19 @@ class MultiLabelClassifyEvaluator(
             sum_recall += recall
             sum_f1 += f1
 
-        micro_avg = MultiLabelClassifyMetrics(
-            precision=sum_tp / (sum_tp + sum_fp),
-            recall=sum_tp / (sum_tp + sum_fn),
-            f1=(2 * (sum_tp / (sum_tp + sum_fp)) * (sum_tp / (sum_tp + sum_fn)))
-            / ((sum_tp / (sum_tp + sum_fp)) + (sum_tp / (sum_tp + sum_fn))),
-        )
+        try:
+            micro_avg = MultiLabelClassifyMetrics(
+                precision=sum_tp / (sum_tp + sum_fp),
+                recall=sum_tp / (sum_tp + sum_fn),
+                f1=(2 * (sum_tp / (sum_tp + sum_fp)) * (sum_tp / (sum_tp + sum_fn)))
+                / ((sum_tp / (sum_tp + sum_fp)) + (sum_tp / (sum_tp + sum_fn))),
+            )
+        except ZeroDivisionError:
+            micro_avg = MultiLabelClassifyMetrics(
+                precision=0,
+                recall=0,
+                f1=0,
+            )
         macro_avg = MultiLabelClassifyMetrics(
             precision=sum_precision / len(class_metrics),
             recall=sum_recall / len(class_metrics),
