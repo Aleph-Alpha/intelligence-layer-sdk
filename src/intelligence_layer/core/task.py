@@ -105,14 +105,3 @@ class Task(ABC, Generic[Input, Output]):
                 max_workers=min(concurrency_limit, MAX_CONCURRENCY)
             ) as executor:
                 return list(executor.map(lambda input: self.run(input, span), inputs))
-
-
-T = TypeVar("T")
-
-
-def batched(iterable: Iterable[T], n: int) -> Iterable[Iterable[T]]:
-    if n < 1:
-        raise ValueError("n must be at least one")
-    it = iter(iterable)
-    while batch := tuple(islice(it, n)):
-        yield batch
