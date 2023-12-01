@@ -1,22 +1,50 @@
-from abc import ABC, abstractmethod
 from inspect import get_annotations
-from pprint import pprint
-from typing import Annotated, Any, Callable, Sequence
+from typing import Annotated
 
 from fastapi import Body, FastAPI
 
 from intelligence_layer.core.task import Input, Output, Task
 from intelligence_layer.core.tracer import NoOpTracer, TaskSpan
 
+class InvalidTaskError(TypeError):
+    """Error raised when incorrectly initialising a task for an IntelligenceApp."""
+    def __init__(self, message: str) -> None:
+        super().__init__(message)
+        self.message = message
+
 
 class IntelligenceApp:
+    """The Intelligence App is the easiest way to turn your tasks into an application.
+    
+    This app is used to quickly setup a FastAPI server with any registered tasks that you would like. 
+    By registering your tasks you can expose them as endpoints ready for usage.
+    
+    Args:
+        fast_api_app: This is the FastAPI app the IntelligenceApp relies on for routing. 
+    """
     def __init__(self, fast_api_app: FastAPI) -> None:
         self.fast_api_app = fast_api_app
 
     def register_task(self, task: Task[Input, Output], path: str) -> None:
+        """Registers a task to your application.
+
+        Registering a task will make it available as an endpoint.
+        For technical reasons, your endpoint cannot have a `TaskSpan` as input.
+
+        Args:
+            task: The task you would like exposed.
+            path: The path your exposed endpoint will have.
+        """
         annotations = get_annotations(task.do_run)
-        annotations.pop("return", None)
-        assert any(ty is TaskSpan for ty in annotations.values())
+        if len(annotations) < 3:
+            raise InvalidTaskError("The task `do_run` method needs a type for its input, task_span and return value.")
+        if not annotations.pop("return", None) :
+            raise InvalidTaskError("The task `do_run` method needs a type for it's return value.")
+        task_span_arguments = [ty for ty in annotations.values() if ty is TaskSpan]
+        if len(task_span_arguments) >= 2:
+            raise InvalidTaskError("The task `do_run` method cannot have a `TaskSpan` type as input.")
+        elif len(task_span_arguments) == 0:
+            raise InvalidTaskError("The task `do_run` method needs a `TaskSpan` type as its second argument.")
         input_type = next(
             (
                 ty
@@ -31,66 +59,3 @@ class IntelligenceApp:
         def task_route(input: Annotated[input_type, Body()]) -> Output:  # type: ignore
             print(f"{type(input)}: {input}")
             return task.run(input, NoOpTracer())
-
-
-# class Authenticator(ABC):
-#     @abstractmethod
-#     def check_scopes(self, required_scopes: frozenset[str]) -> bool:
-#         pass
-
-
-# class OAuthAuthenticator(Authenticator):
-#     def __init__(self, request: Any) -> None:
-#         # extract user scopes from request
-#         self.user_scopes: frozenset[str] = frozenset()
-#         pass
-
-#     def check_scopes(self, required_scopes: frozenset[str]) -> bool:
-#         return required_scopes.issubset(self.user_scopes)
-
-
-# class ILApp:
-#     def __init__(self, app: FastAPI) -> None:
-#         ...
-
-#     def register(
-#         self, task: Task[Input, Output], path: str, required_scopres={}
-#     ) -> None:
-#         ...
-
-#     def register_with_auth(
-#         self, task: Task[Input, Output], path: str, required_scopes: frozenset[str]
-#     ) -> None:
-#         ...
-
-#     def serve(self) -> None:
-#         ...
-
-#     def authenticator(self, authenticator: Callable[[Any], Authenticator]) -> None:
-#         ...
-
-
-# class MyTask(Task[str, int]):
-#     def do_run(self, input: str, task_span: TaskSpan) -> int:
-#         return int(input)
-
-
-# def main(argv: Sequence[str]) -> None:
-#     app = ILApp(FastAPI())
-#     # default path = task-name
-#     app.register(
-#         MyTask(), "/{task_name}?trace"
-#     )  # POST input -> {"output": output, "trace": trace}
-#     # trace? return from endpoint? (and/or send to service)
-#     app.register_with_auth(MyTask(), "/mytask", frozenset({"my-task-permission"}))
-#     app.authenticator(OAuthAuthenticator)
-#     app.serve()
-
-
-# # TODO?
-# # - prototyp
-# # - integrate auth
-# # - automatically add feedback-route for each task, evaluate the output for a given input
-# #   -> could be added to fine tuning dataset
-# # - preconfigured routes
-# # - production environment
