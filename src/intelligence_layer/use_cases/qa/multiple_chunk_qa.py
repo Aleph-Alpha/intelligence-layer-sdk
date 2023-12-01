@@ -74,7 +74,7 @@ MERGE_ANSWERS_INSTRUCT_CONFIGS = {
         "and the other saying that the colour is black, say that there are contradicting answers saying the colour is green or the colour is black.",
         question_label="Question",
         answers_label="Answers",
-        final_answer_label="Final answer",
+        final_answer_label="Final answer:",
     ),
     Language("it"): MergeAnswersInstructConfig(
         instruction="Vi verranno fornite diverse risposte a una domanda. Sulla base di queste, generate una singola risposta finale. "
@@ -83,7 +83,7 @@ MERGE_ANSWERS_INSTRUCT_CONFIGS = {
         "l'altra dice che il colore è nero, dire che ci sono risposte contraddittorie che dicono che il colore è verde o che il colore è nero.",
         question_label="Domanda",
         answers_label="Risposte",
-        final_answer_label="Risposta finale",
+        final_answer_label="Risposta finale:",
     ),
     Language("fr"): MergeAnswersInstructConfig(
         instruction="Vous recevrez un certain nombre de réponses à une question. Sur la base de ces réponses, générez une seule réponse finale. "
@@ -92,7 +92,7 @@ MERGE_ANSWERS_INSTRUCT_CONFIGS = {
         "l'autre que la couleur est noire, dites qu'il y a des réponses contradictoires disant que la couleur est verte ou que la couleur est noire.",
         question_label="Question",
         answers_label="Réponses",
-        final_answer_label="Réponse finale",
+        final_answer_label="Réponse finale:",
     ),
     Language("de"): MergeAnswersInstructConfig(
         instruction="Sie erhalten eine Reihe von Antworten auf eine Frage. Erstellen Sie auf dieser Grundlage eine einzige endgültige Antwort. "
@@ -102,7 +102,7 @@ MERGE_ANSWERS_INSTRUCT_CONFIGS = {
         "dass es widersprüchliche Antworten gibt, die besagen, dass die Farbe grün oder die Farbe schwarz ist.",
         question_label="Frage",
         answers_label="Antworten",
-        final_answer_label="Endgültige Antwort",
+        final_answer_label="Endgültige Antwort:",
     ),
     Language("es"): MergeAnswersInstructConfig(
         instruction="Se le darán varias respuestas a una pregunta. A partir de ellas, genere una única respuesta final. "
@@ -111,7 +111,7 @@ MERGE_ANSWERS_INSTRUCT_CONFIGS = {
         "y la otra que el color es negro, di que hay respuestas contradictorias que dicen que el color es verde o que el color es negro.",
         question_label="Pregunta",
         answers_label="Respuestas",
-        final_answer_label="Respuesta final",
+        final_answer_label="Respuesta final:",
     ),
 }
 

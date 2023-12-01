@@ -142,8 +142,8 @@ class EmbeddingBasedClassify(Task[ClassifyInput, MultiLabelClassifyOutput]):
 
     def __init__(
         self,
-        labels_with_examples: Sequence[LabelWithExamples],
         client: AlephAlphaClientProtocol,
+        labels_with_examples: Sequence[LabelWithExamples],
         top_k_per_label: int = 5,
     ) -> None:
         super().__init__()
