@@ -1,4 +1,6 @@
-from intelligence_layer.core.intelligence_app import IntelligenceApp as IntelligenceApp, InvalidTaskError 
+from intelligence_layer.core.intelligence_app import IntelligenceApp as IntelligenceApp
+from intelligence_layer.core.intelligence_app import InvalidTaskError as InvalidTaskError
+
 from .chunk import Chunk, ChunkInput, ChunkOutput, ChunkTask
 from .complete import (
     Complete,
