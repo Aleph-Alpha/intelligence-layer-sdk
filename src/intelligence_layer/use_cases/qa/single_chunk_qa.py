@@ -100,6 +100,7 @@ class SingleChunkQa(Task[SingleChunkQaInput, SingleChunkQaOutput]):
         client: AlephAlphaClientProtocol,
         model: str = "luminous-supreme-control",
         instruction_config: Mapping[Language, str] = QA_INSTRUCTIONS,
+        maximum_tokens: int = 64,
     ):
         super().__init__()
         self._client = client
@@ -107,6 +108,7 @@ class SingleChunkQa(Task[SingleChunkQaInput, SingleChunkQaOutput]):
         self._instruction = Instruct(client)
         self._text_highlight = TextHighlight(client)
         self._instruction_config = instruction_config
+        self._maximum_tokens = maximum_tokens
 
     def do_run(
         self, input: SingleChunkQaInput, task_span: TaskSpan
@@ -139,7 +141,12 @@ class SingleChunkQa(Task[SingleChunkQaInput, SingleChunkQaOutput]):
         self, instruction: str, input: str, task_span: TaskSpan
     ) -> PromptOutput:
         return self._instruction.run(
-            InstructInput(instruction=instruction, input=input, model=self._model),
+            InstructInput(
+                instruction=instruction,
+                input=input,
+                model=self._model,
+                maximum_response_tokens=self._maximum_tokens,
+            ),
             task_span,
         )
 
