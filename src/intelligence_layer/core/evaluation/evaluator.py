@@ -24,6 +24,7 @@ from intelligence_layer.core.evaluation.domain import (
     EvaluationException,
     EvaluationRunOverview,
     Example,
+    ExampleOutput,
     ExampleResult,
     ExampleTrace,
     ExpectedOutput,
@@ -49,6 +50,10 @@ class EvaluationRepository(ABC):
         Returns:
             The ids of all stored runs.
         """
+        ...
+
+    @abstractmethod
+    def example_outputs(self, run_id: str) -> Iterable[ExampleOutput[Output]]:
         ...
 
     @abstractmethod
@@ -280,6 +285,67 @@ class Evaluator(
         except Exception as e:
             return EvaluationException(error_message=str(e))
 
+    def run_dataset(
+        self, dataset: Dataset[Input, ExpectedOutput], tracer: Optional[Tracer] = None
+    ) -> str:
+        def run(example: Example[Input, ExpectedOutput]) -> None:
+            evaluate_tracer = self._repository.example_tracer(run_id, example.id)
+            if tracer:
+                evaluate_tracer = CompositeTracer([evaluate_tracer, tracer])
+            output = self._task.run(example.input, evaluate_tracer)
+            self._repository.store_output(
+                run_id, ExampleOutput(example_id=example.id, output=output)
+            )
+
+        run_id = str(uuid4())
+        with ThreadPoolExecutor(max_workers=10) as executor:
+            tqdm(executor.map(run, dataset.examples), desc="Evaluating")
+        return run_id
+
+    def evaluate_run(
+        self, dataset: Dataset[Input, ExpectedOutput], run_id: str, output_type
+    ) -> str:
+        eval_id = str(uuid4())
+        for example_output in self._repository.example_outputs(run_id, output_type):
+            example = dataset.example(example_output.example_id)
+            assert example
+            # TODO this will eventually produce a side-effect as in case of human eval
+            #  the result will not be available (but maybe next step)
+            evaluation = self.do_evaluate(
+                example.input, example_output.output, example.expected_output
+            )
+            self._repository.store_example_result(
+                eval_id, ExampleResult(example_id=example.id, result=evaluation)
+            )
+        # TODO store ExampleResults with run-id, eval-id, dataset-name
+        return eval_id
+
+    def aggregate_evaluation(
+        self, eval_id: str, evaluation_type: type[Evaluation]
+    ) -> EvaluationRunOverview[AggregatedEvaluation]:
+        # TODO load ExampleResults to get run-id, dataset-name
+        example_results = self._repository.evaluation_run_results(
+            eval_id, evaluation_type
+        )
+        successful_evaluations = CountingFilterIterable(
+            example_results,
+            lambda evaluation: not isinstance(evaluation, EvaluationException),
+        )
+
+        statistics = self.aggregate(cast(Iterable[Evaluation], successful_evaluations))
+
+        run_overview = EvaluationRunOverview(
+            id=eval_id,
+            statistics=statistics,
+            start=None,
+            end=None,
+            dataset_name=dataset.name,
+            successful_evaluation_count=successful_evaluations.included_count(),
+            failed_evaluation_count=successful_evaluations.excluded_count(),
+        )
+        self._repository.store_evaluation_run_overview(run_overview)
+        return run_overview
+
     @final
     def evaluate_dataset(
         self,
@@ -299,6 +365,9 @@ class Evaluator(
         Returns:
             The aggregated results of an evaluation run with a dataset.
         """
+        run_id = self.run_dataset(dataset, tracer)
+        eval_id = self.evaluate_run(dataset, run_id)
+        return self.aggregate_evaluation(eval_id)
         run_id = str(uuid4())
         start = datetime.utcnow()
         with ThreadPoolExecutor(max_workers=10) as executor:

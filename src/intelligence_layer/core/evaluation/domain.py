@@ -9,7 +9,7 @@ from rich.syntax import Syntax
 from rich.tree import Tree
 
 from intelligence_layer.connectors import JsonSerializable
-from intelligence_layer.core.task import Input
+from intelligence_layer.core.task import Input, Output
 from intelligence_layer.core.tracer import (
     InMemorySpan,
     InMemoryTaskSpan,
@@ -153,6 +153,11 @@ def _to_trace_entry(entry: InMemoryTaskSpan | InMemorySpan | LogEntry) -> Trace:
         return LogTrace.from_log_entry(entry)
 
 
+class ExampleOutput(BaseModel, Generic[Output]):
+    example_id: str
+    output: Output
+
+
 class ExampleResult(BaseModel, Generic[Evaluation]):
     """Result of a single evaluated :class:`Example`
 
@@ -210,8 +215,8 @@ class EvaluationRunOverview(BaseModel, Generic[AggregatedEvaluation]):
     dataset_name: str
     failed_evaluation_count: int
     successful_evaluation_count: int
-    start: datetime
-    end: datetime
+    start: Optional[datetime]
+    end: Optional[datetime]
     statistics: SerializeAsAny[AggregatedEvaluation]
 
     def raise_on_evaluation_failure(self) -> None:
@@ -234,7 +239,7 @@ class Example(BaseModel, Generic[Input, ExpectedOutput]):
     id: str = Field(default_factory=lambda: str(uuid4()))
 
 
-class Dataset(Protocol, Generic[Input, ExpectedOutput]):
+class Dataset(Protocol[Input, ExpectedOutput]):
     """A dataset of examples used for evaluation of a :class:`Task`.
 
     Attributes:
@@ -250,8 +255,11 @@ class Dataset(Protocol, Generic[Input, ExpectedOutput]):
     def examples(self) -> Iterable[Example[Input, ExpectedOutput]]:
         ...
 
+    def example(self, example_id: str) -> Optional[Example[Input, ExpectedOutput]]:
+        ...
 
-class SequenceDataset(BaseModel, Generic[Input, ExpectedOutput]):
+
+class SequenceDataset(BaseModel, Dataset[Input, ExpectedOutput]):
     """A :class:`Dataset` that contains all examples in a sequence.
 
     We recommend using this when it is certain that all examples
@@ -264,3 +272,8 @@ class SequenceDataset(BaseModel, Generic[Input, ExpectedOutput]):
 
     name: str
     examples: Sequence[Example[Input, ExpectedOutput]]
+
+    def example(self, example_id: str) -> Optional[Example[Input, ExpectedOutput]]:
+        return next(
+            (example for example in self.examples if example.id == example_id), None
+        )
