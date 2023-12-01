@@ -131,6 +131,22 @@ To give you a starting point for using the Intelligence Layer, we provide some p
 | Summarize | [LongContextMediumCompressionSummarize](https://aleph-alpha-intelligence-layer.readthedocs-hosted.com/en/latest/intelligence_layer.use_cases.html#intelligence_layer.use_cases.LongContextMediumCompressionSummarize) | Condense a text into a summary of medium length.                                                                                                                                                                                           |
 | Summarize | [LongContextLowCompressionSummarize](https://aleph-alpha-intelligence-layer.readthedocs-hosted.com/en/latest/intelligence_layer.use_cases.html#intelligence_layer.use_cases.LongContextLowCompressionSummarize)       | Condense a text into a long summary.                                                                                                                                                                                                       |
 
+## How to run the Intelligence Layer Starter App
+
+The Starter App contains some of the core use-cases we offer out of the box.
+
+To run it, run the following command:
+
+```python
+python3 src/intelligence_layer/use_cases/intelligence_starter_app.py
+```
+
+Now your app is running and you can start sending requests!
+
+```bash
+curl localhost:8000/openapi.json
+```
+
 ## How to make your own use case
 
 Note that we do not expect the above use cases to solve all of your issues.
