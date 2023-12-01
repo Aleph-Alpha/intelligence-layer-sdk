@@ -17,6 +17,9 @@ from .classify.keyword_extract import (
     KeywordExtractOutput,
 )
 from .classify.prompt_based_classify import PromptBasedClassify
+from .intelligence_starter_app import (
+    intelligence_starter_app as intelligence_starter_app,
+)
 from .qa.long_context_qa import LongContextQa, LongContextQaInput
 from .qa.multiple_chunk_qa import MultipleChunkQa, MultipleChunkQaInput
 from .qa.retriever_based_qa import RetrieverBasedQa, RetrieverBasedQaInput
@@ -39,6 +42,5 @@ from .summarize.summarize import (
     SingleChunkSummarizeInput,
     SingleChunkSummarizeOutput,
 )
-from .intelligence_starter_app import intelligence_starter_app as intelligence_starter_app
 
 __all__ = [symbol for symbol in dir() if symbol and symbol[0].isupper()]
