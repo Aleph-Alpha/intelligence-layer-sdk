@@ -22,12 +22,14 @@ from intelligence_layer.core.evaluation.domain import (
     Dataset,
     Evaluation,
     EvaluationException,
+    EvaluationOverview,
     EvaluationRunOverview,
     Example,
     ExampleOutput,
     ExampleResult,
     ExampleTrace,
     ExpectedOutput,
+    RunOverview,
 )
 from intelligence_layer.core.task import Input, Output, Task
 from intelligence_layer.core.tracer import CompositeTracer, Tracer
@@ -53,7 +55,15 @@ class EvaluationRepository(ABC):
         ...
 
     @abstractmethod
-    def example_outputs(self, run_id: str) -> Iterable[ExampleOutput[Output]]:
+    def store_example_output(
+        self, run_id: str, example_output: ExampleOutput[Output]
+    ) -> None:
+        ...
+
+    @abstractmethod
+    def example_outputs(
+        self, run_id: str, output_type: type[Output]
+    ) -> Iterable[ExampleOutput[Output]]:
         ...
 
     @abstractmethod
@@ -216,6 +226,14 @@ class Evaluator(
         self._directory = directory
 
     @abstractmethod
+    def output_type(self) -> type[Output]:
+        ...
+
+    @abstractmethod
+    def evaluation_type(self) -> type[Evaluation]:
+        ...
+
+    @abstractmethod
     def do_evaluate(
         self,
         input: Input,
@@ -287,26 +305,36 @@ class Evaluator(
 
     def run_dataset(
         self, dataset: Dataset[Input, ExpectedOutput], tracer: Optional[Tracer] = None
-    ) -> str:
+    ) -> RunOverview:
         def run(example: Example[Input, ExpectedOutput]) -> None:
             evaluate_tracer = self._repository.example_tracer(run_id, example.id)
             if tracer:
                 evaluate_tracer = CompositeTracer([evaluate_tracer, tracer])
             output = self._task.run(example.input, evaluate_tracer)
-            self._repository.store_output(
+            self._repository.store_example_output(
                 run_id, ExampleOutput(example_id=example.id, output=output)
             )
 
         run_id = str(uuid4())
+        start = datetime.utcnow()
         with ThreadPoolExecutor(max_workers=10) as executor:
             tqdm(executor.map(run, dataset.examples), desc="Evaluating")
-        return run_id
+        return RunOverview(
+            dataset_name=dataset.name,
+            run_id=run_id,
+            start=start,
+            end=datetime.utcnow(),
+            failed_example_count=0,
+            successful_example_count=0,
+        )
 
     def evaluate_run(
-        self, dataset: Dataset[Input, ExpectedOutput], run_id: str, output_type
-    ) -> str:
+        self, dataset: Dataset[Input, ExpectedOutput], run_overview: RunOverview
+    ) -> EvaluationOverview:
         eval_id = str(uuid4())
-        for example_output in self._repository.example_outputs(run_id, output_type):
+        for example_output in self._repository.example_outputs(
+            run_overview.run_id, self.output_type()
+        ):
             example = dataset.example(example_output.example_id)
             assert example
             # TODO this will eventually produce a side-effect as in case of human eval
@@ -317,15 +345,13 @@ class Evaluator(
             self._repository.store_example_result(
                 eval_id, ExampleResult(example_id=example.id, result=evaluation)
             )
-        # TODO store ExampleResults with run-id, eval-id, dataset-name
-        return eval_id
+        return EvaluationOverview(run_overview=run_overview, eval_id=eval_id)
 
     def aggregate_evaluation(
-        self, eval_id: str, evaluation_type: type[Evaluation]
+        self, evaluation_overview: EvaluationOverview
     ) -> EvaluationRunOverview[AggregatedEvaluation]:
-        # TODO load ExampleResults to get run-id, dataset-name
         example_results = self._repository.evaluation_run_results(
-            eval_id, evaluation_type
+            evaluation_overview.eval_id, self.evaluation_type()
         )
         successful_evaluations = CountingFilterIterable(
             example_results,
@@ -335,11 +361,11 @@ class Evaluator(
         statistics = self.aggregate(cast(Iterable[Evaluation], successful_evaluations))
 
         run_overview = EvaluationRunOverview(
-            id=eval_id,
+            id=evaluation_overview.eval_id,
             statistics=statistics,
             start=None,
             end=None,
-            dataset_name=dataset.name,
+            dataset_name=evaluation_overview.run_overview.dataset_name,
             successful_evaluation_count=successful_evaluations.included_count(),
             failed_evaluation_count=successful_evaluations.excluded_count(),
         )

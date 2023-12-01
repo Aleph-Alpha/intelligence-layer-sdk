@@ -106,6 +106,12 @@ class SingleChunkSummarizeEvaluator(
         self.bleu_grader = BleuGrader()
         self.rouge_grader = RougeGrader()
 
+    def evaluation_type(self) -> type[SummarizeEvaluation]:
+        return SummarizeEvaluation
+
+    def output_type(self) -> type[SingleChunkSummarizeOutput]:
+        return SingleChunkSummarizeOutput
+
     def do_evaluate(
         self,
         input: SingleChunkSummarizeInput,
@@ -154,6 +160,12 @@ class LongContextSummarizeEvaluator(
         super().__init__(task, repository, directory)
         self.bleu_grader = BleuGrader()
         self.rouge_grader = RougeGrader()
+
+    def evaluation_type(self) -> type[SummarizeEvaluation]:
+        return SummarizeEvaluation
+
+    def output_type(self) -> type[LongContextSummarizeOutput]:
+        return LongContextSummarizeOutput
 
     def do_evaluate(
         self,

@@ -158,6 +158,15 @@ class ExampleOutput(BaseModel, Generic[Output]):
     output: Output
 
 
+class RunOverview(BaseModel):
+    dataset_name: str
+    run_id: str
+    start: datetime
+    end: datetime
+    failed_example_count: int
+    successful_example_count: int
+
+
 class ExampleResult(BaseModel, Generic[Evaluation]):
     """Result of a single evaluated :class:`Example`
 
@@ -172,6 +181,11 @@ class ExampleResult(BaseModel, Generic[Evaluation]):
 
     example_id: str
     result: SerializeAsAny[Evaluation | EvaluationException]
+
+
+class EvaluationOverview(BaseModel):
+    run_overview: RunOverview
+    eval_id: str
 
 
 class ExampleTrace(BaseModel):

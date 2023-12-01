@@ -1,7 +1,7 @@
 from collections import defaultdict
 from json import loads
 from pathlib import Path
-from typing import Optional, Sequence, cast
+from typing import Iterable, Optional, Sequence, cast
 from uuid import UUID
 
 from pydantic import BaseModel, Field
@@ -11,11 +11,13 @@ from intelligence_layer.core.evaluation.domain import (
     Evaluation,
     EvaluationException,
     EvaluationRunOverview,
+    ExampleOutput,
     ExampleResult,
     ExampleTrace,
     TaskSpanTrace,
 )
 from intelligence_layer.core.evaluation.evaluator import EvaluationRepository
+from intelligence_layer.core.task import Output
 from intelligence_layer.core.tracer import (
     EndSpan,
     EndTask,
@@ -27,6 +29,7 @@ from intelligence_layer.core.tracer import (
     LogEntry,
     LogLine,
     PlainEntry,
+    PydanticSerializable,
     StartSpan,
     StartTask,
     Tracer,
@@ -75,23 +78,77 @@ class FileEvaluationRepository(EvaluationRepository):
         root_directory.mkdir(parents=True, exist_ok=True)
         self._root_directory = root_directory
 
-    def _evaluation_run_directory(self, run_id: str) -> Path:
-        path = self._root_directory / run_id
+    def _run_directory(self, run_id: str) -> Path:
+        path = self._root_directory / "run" / run_id
         path.mkdir(exist_ok=True)
         return path
 
-    def _example_result_path(self, run_id: str, example_id: str) -> Path:
-        return (
-            self._evaluation_run_directory(run_id) / f"{example_id}_result"
-        ).with_suffix(".json")
+    def _output_directory(self, run_id: str) -> Path:
+        path = self._run_directory(run_id) / "output"
+        path.mkdir(exist_ok=True)
+        return path
+
+    def _trace_directory(self, run_id: str) -> Path:
+        path = self._run_directory(run_id) / "trace"
+        path.mkdir(exist_ok=True)
+        return path
+
+    def _eval_directory(self, eval_id: str) -> Path:
+        path = self._root_directory / "eval" / eval_id
+        path.mkdir(exist_ok=True)
+        return path
+
+    def _example_output_path(self, run_id: str, example_id: str) -> Path:
+        return (self._output_directory(run_id) / example_id).with_suffix(".json")
 
     def _example_trace_path(self, run_id: str, example_id: str) -> Path:
-        return (
-            self._evaluation_run_directory(run_id) / f"{example_id}_trace"
-        ).with_suffix(".jsonl")
+        return (self._trace_directory(run_id) / run_id / example_id).with_suffix(
+            ".jsonl"
+        )
+
+    def _example_result_path(self, run_id: str, example_id: str) -> Path:
+        return (self._eval_directory(run_id) / "eval" / example_id).with_suffix(".json")
+
+    def _eval_overview_path(self, run_id: str) -> Path:
+        return self._eval_directory(run_id).with_suffix(".json")
 
     def _evaluation_run_overview_path(self, run_id: str) -> Path:
-        return self._evaluation_run_directory(run_id).with_suffix(".json")
+        return self._eval_directory(run_id).with_suffix(".json")
+
+    def store_example_output(
+        self, run_id: str, example_output: ExampleOutput[Output]
+    ) -> None:
+        serialized_result = JsonSerializer(root=example_output)
+        self._example_output_path(run_id, example_output.example_id).write_text(
+            serialized_result.model_dump_json(indent=2)
+        )
+
+    def example_output(
+        self, run_id: str, example_id: str, output_type: type[Output]
+    ) -> Optional[ExampleOutput[Output]]:
+        file_path = self._example_output_path(run_id, example_id)
+        if not file_path.exists():
+            return None
+        content = file_path.read_text()
+        # Mypy does not accept dynamic types
+        return ExampleOutput[output_type].model_validate_json(json_data=content)  # type: ignore
+
+    def example_outputs(
+        self, run_id: str, output_type: type[Output]
+    ) -> Iterable[ExampleOutput[Output]]:
+        def load_example_output(
+            path: Path,
+        ) -> Optional[ExampleOutput[Output]]:
+            id = path.with_suffix("").name
+            return self.example_output(run_id, id, output_type)
+
+        path = self._output_directory(run_id)
+        logs = path.glob("*.json")
+        return (
+            example_output
+            for example_output in (load_example_output(file) for file in logs)
+            if example_output
+        )
 
     def evaluation_run_results(
         self, run_id: str, evaluation_type: type[Evaluation]
@@ -99,10 +156,10 @@ class FileEvaluationRepository(EvaluationRepository):
         def fetch_result_from_file_name(
             path: Path,
         ) -> Optional[ExampleResult[Evaluation]]:
-            id = path.with_suffix("").name.removesuffix("_result")
+            id = path.with_suffix("").name
             return self.evaluation_example_result(run_id, id, evaluation_type)
 
-        path = self._evaluation_run_directory(run_id)
+        path = self._eval_directory(run_id)
         logs = path.glob("*.json")
         return [
             example_result
@@ -241,10 +298,28 @@ class TreeBuilder(BaseModel):
 
 
 class InMemoryEvaluationRepository(EvaluationRepository):
+    _example_outputs: dict[
+        str, list[ExampleOutput[PydanticSerializable]]
+    ] = defaultdict(list)
     _example_results: dict[str, list[str]] = defaultdict(list)
     _example_traces: dict[str, InMemoryTracer] = dict()
 
     _run_overviews: dict[str, str] = dict()
+
+    def store_example_output(
+        self, run_id: str, example_output: ExampleOutput[Output]
+    ) -> None:
+        self._example_outputs[run_id].append(
+            cast(ExampleOutput[PydanticSerializable], example_output)
+        )
+
+    def example_outputs(
+        self, run_id: str, output_type: type[Output]
+    ) -> Iterable[ExampleOutput[Output]]:
+        return (
+            cast(ExampleOutput[Output], example_output)
+            for example_output in self._example_outputs[run_id]
+        )
 
     def evaluation_run_results(
         self, run_id: str, evaluation_type: type[Evaluation]
