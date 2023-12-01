@@ -1,5 +1,3 @@
-from pprint import pprint
-
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 from pydantic import BaseModel
@@ -23,18 +21,18 @@ class DummyTask(Task[DummyInput, DummyOutput]):
 
 
 class UntypedTask(Task[None, None]):
-    def do_run(self, input, task_span):
+    def do_run(self, input, task_span):  # type: ignore
         return None
 
 
 class TaskWithoutTaskSpanType(Task[None, None]):
-    def do_run(self, input: DummyInput, task_span: str) -> DummyOutput:
-        return None
+    def do_run(self, input: DummyInput, task_span: str) -> DummyOutput:  # type: ignore
+        return DummyOutput(response="")
 
 
-class TaskWithTaskSpanAsInput(Task[TaskSpan, DummyOutput]):
+class TaskWithTaskSpanAsInput(Task[TaskSpan, DummyOutput]):  # type: ignore
     def do_run(self, input: TaskSpan, task_span: TaskSpan) -> DummyOutput:
-        return None
+        return DummyOutput(response="")
 
 
 class DummyInput2(BaseModel):
@@ -107,8 +105,7 @@ def test_serve_task_throws_error_if_input_is_taskspan(
     path = "/path"
 
     with raises(InvalidTaskError) as error:
-        intelligence_app.register_task(TaskWithTaskSpanAsInput(), path)
-
+        intelligence_app.register_task(TaskWithTaskSpanAsInput(), path)  # type: ignore
     assert (
         error.value.message
         == "The task `do_run` method cannot have a `TaskSpan` type as input."

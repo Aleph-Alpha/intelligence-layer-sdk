@@ -1,6 +1,5 @@
 from abc import ABC, abstractmethod
 from concurrent.futures import ThreadPoolExecutor
-from itertools import islice
 from typing import Generic, Iterable, Sequence, TypeVar, final
 
 from pydantic import BaseModel
