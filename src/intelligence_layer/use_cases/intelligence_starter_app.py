@@ -9,6 +9,8 @@ from intelligence_layer.use_cases.classify.prompt_based_classify import (
     PromptBasedClassify,
 )
 from intelligence_layer.use_cases.qa.long_context_qa import LongContextQa
+from intelligence_layer.use_cases.summarize import long_context_high_compression_summarize
+from intelligence_layer.use_cases.summarize.long_context_few_shot_summarize import LongContextFewShotSummarize
 
 
 def intelligence_starter_app(
@@ -19,6 +21,8 @@ def intelligence_starter_app(
     app.register_task(prompt_based_classify, "/classify")
     long_chunk_qa = LongContextQa(aleph_alpha_client)
     app.register_task(long_chunk_qa, "/qa")
+    summarize = long_context_high_compression_summarize(aleph_alpha_client)
+    app.register_task(summarize, "/summarize")
     return app
 
 
