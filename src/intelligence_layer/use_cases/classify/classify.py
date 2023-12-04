@@ -84,12 +84,6 @@ class SingleLabelClassifyEvaluator(
     ):
         super().__init__(task, repository)
 
-    def evaluation_type(self) -> type[SingleLabelClassifyEvaluation]:
-        return SingleLabelClassifyEvaluation
-
-    def output_type(self) -> type[SingleLabelClassifyOutput]:
-        return SingleLabelClassifyOutput
-
     def do_evaluate(
         self,
         input: ClassifyInput,
@@ -182,12 +176,6 @@ class MultiLabelClassifyEvaluator(
     ):
         super().__init__(task, repository)
         self.threshold = threshold
-
-    def evaluation_type(self) -> type[MultiLabelClassifyEvaluation]:
-        return MultiLabelClassifyEvaluation
-
-    def output_type(self) -> type[MultiLabelClassifyOutput]:
-        return MultiLabelClassifyOutput
 
     def do_evaluate(
         self,

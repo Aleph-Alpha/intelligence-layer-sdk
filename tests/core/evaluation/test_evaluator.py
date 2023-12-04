@@ -48,12 +48,6 @@ class DummyEvaluator(
         AggregatedDummyEvaluation,
     ]
 ):
-    def evaluation_type(self) -> type[DummyEvaluation]:
-        return DummyEvaluation
-
-    def output_type(self) -> type[DummyTaskOutput]:
-        return DummyTaskOutput  # type: ignore
-
     def do_evaluate(
         self, input: DummyTaskInput, output: DummyTaskOutput, expected_output: None
     ) -> DummyEvaluation:
