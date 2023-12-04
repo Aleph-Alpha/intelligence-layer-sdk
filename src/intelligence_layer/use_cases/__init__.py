@@ -10,7 +10,12 @@ from .classify.classify import (
     SingleLabelClassifyEvaluator,
     SingleLabelClassifyOutput,
 )
-from .classify.embedding_based_classify import EmbeddingBasedClassify, LabelWithExamples
+from .classify.embedding_based_classify import (
+    EmbeddingBasedClassify,
+    LabelWithExamples,
+    QdrantSearch,
+    QdrantSearchInput,
+)
 from .classify.keyword_extract import (
     KeywordExtract,
     KeywordExtractInput,
