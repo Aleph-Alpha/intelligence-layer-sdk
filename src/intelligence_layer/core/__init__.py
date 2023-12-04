@@ -1,4 +1,7 @@
-from intelligence_layer.core.intelligence_app import IntelligenceApp as IntelligenceApp
+from intelligence_layer.core.intelligence_app import (
+    IntelligenceApp as IntelligenceApp,
+    UnauthenticatedException as UnauthenticatedException,
+)
 from intelligence_layer.core.intelligence_app import (
     InvalidTaskError as InvalidTaskError,
 )
@@ -60,5 +63,6 @@ from .tracer import LogEntry as LogEntry
 from .tracer import NoOpTracer as NoOpTracer
 from .tracer import Span, TaskSpan
 from .tracer import Tracer as Tracer
+
 
 __all__ = [symbol for symbol in dir()]
