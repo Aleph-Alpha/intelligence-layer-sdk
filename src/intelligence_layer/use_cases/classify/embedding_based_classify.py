@@ -45,26 +45,40 @@ class QdrantSearch(Task[QdrantSearchInput, SearchOutput]):
         in_memory_retriever: Implements logic to retrieve matching texts to the query.
 
     Example:
+        >>> import os
+        >>> from intelligence_layer.connectors import (
+        ...     LimitedConcurrencyClient,
+        ... )
+        >>> from intelligence_layer.connectors import Document
+        >>> from intelligence_layer.connectors import (
+        ...     QdrantInMemoryRetriever,
+        ... )
+        >>> from intelligence_layer.core import InMemoryTracer
+        >>> from intelligence_layer.use_cases import (
+        ...     QdrantSearch,
+        ...     QdrantSearchInput,
+        ... )
+        >>> from qdrant_client.http.models import models
+
         >>> client = LimitedConcurrencyClient.from_token(os.getenv("AA_TOKEN"))
         >>> documents = [
-        >>>     Document(
-                    text="West and East Germany reunited in 1990.
-                    metadata={"title": "Germany"}
-                )
-            ]
-        >>> retriever = InMemoryRetriever(client, documents)
+        ...     Document(
+        ...         text="West and East Germany reunited in 1990.", metadata={"title": "Germany"}
+        ...     )
+        ... ]
+        >>> retriever = QdrantInMemoryRetriever(client, documents, 3)
         >>> task = QdrantSearch(retriever)
         >>> input = QdrantSearchInput(
-                query="When did East and West Germany reunite?"
-                filter=models.Filter(
-                    must=[
-                        models.FieldCondition(
-                            key="metadata.title",
-                            match="Germany",
-                        ),
-                    ]
-                )
-            )
+        ...     query="When did East and West Germany reunite?",
+        ...     filter=models.Filter(
+        ...         must=[
+        ...             models.FieldCondition(
+        ...                 key="metadata.title",
+        ...                 match=models.MatchValue(value="Germany"),
+        ...             ),
+        ...         ]
+        ...     ),
+        ... )
         >>> tracer = InMemoryTracer()
         >>> output = task.run(input, tracer)
     """
@@ -112,30 +126,39 @@ class EmbeddingBasedClassify(Task[ClassifyInput, MultiLabelClassifyOutput]):
         METADATA_LABEL_NAME: The metadata field name for 'label' in the retriever.
 
     Example:
+        >>> from os import getenv
+        >>> from intelligence_layer.connectors.limited_concurrency_client import (
+        ...     LimitedConcurrencyClient,
+        ... )
+        >>> from intelligence_layer.core.tracer import InMemoryTracer
+        >>> from intelligence_layer.use_cases.classify.classify import ClassifyInput
+        >>> from intelligence_layer.use_cases.classify.embedding_based_classify import (
+        ...     EmbeddingBasedClassify,
+        ...     LabelWithExamples,
+        ... )
+
+
         >>> labels_with_examples = [
-                LabelWithExamples(
-                    name="positive",
-                    examples=[
-                        "I really like this.",
-                    ],
-                ),
-                LabelWithExamples(
-                    name="negative",
-                    examples=[
-                        "I really dislike this.",
-                    ],
-                ),
-        >>> ]
-        >>> client = LimitedConcurrencyClient.from_token(token="AA_TOKEN")
-        >>> task = EmbeddingBasedClassify(labels_with_examples, client)
-        >>> input = ClassifyInput(
-                text="This is a happy text.",
-                labels={"positive", "negative"}
-        >>> )
+        ...     LabelWithExamples(
+        ...         name="positive",
+        ...         examples=[
+        ...             "I really like this.",
+        ...         ],
+        ...     ),
+        ...     LabelWithExamples(
+        ...         name="negative",
+        ...         examples=[
+        ...             "I really dislike this.",
+        ...         ],
+        ...     ),
+        ... ]
+        >>> client = LimitedConcurrencyClient.from_token(getenv("AA_TOKEN"))
+        >>> task = EmbeddingBasedClassify(client, labels_with_examples)
+        >>> input = ClassifyInput(chunk="This is a happy text.", labels={"positive", "negative"})
         >>> tracer = InMemoryTracer()
         >>> output = task.run(input, tracer)
         >>> print(output.scores["positive"])
-        0.7
+        0.6445349584776742
     """
 
     METADATA_LABEL_NAME = "label"
