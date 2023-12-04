@@ -86,7 +86,7 @@ class SingleChunkQa(Task[SingleChunkQaInput, SingleChunkQaOutput]):
         >>> from intelligence_layer.core import InMemoryTracer
         >>> from intelligence_layer.core import Chunk
         >>> from intelligence_layer.use_cases import SingleChunkQa, SingleChunkQaInput
-        >>> 
+        >>>
         >>> client = LimitedConcurrencyClient.from_token(os.getenv("AA_TOKEN"))
         >>> task = SingleChunkQa(client)
         >>> input = SingleChunkQaInput(

@@ -3,22 +3,12 @@ from .document_index.document_index import CollectionPath as CollectionPath
 from .document_index.document_index import ConstraintViolation as ConstraintViolation
 from .document_index.document_index import DocumentContents as DocumentContents
 from .document_index.document_index import DocumentIndexClient as DocumentIndexClient
-from .document_index.document_index import DocumentIndexError as DocumentInfo
+from .document_index.document_index import DocumentIndexError as DocumentIndexError
 from .document_index.document_index import DocumentInfo as DocumentInfo
 from .document_index.document_index import DocumentPath as DocumentPath
 from .document_index.document_index import DocumentSearchResult as DocumentSearchResult
 from .document_index.document_index import (
-    ConstraintViolation as ConstraintViolation,
-    DocumentContents as DocumentContents,
-    DocumentIndexClient as DocumentIndexClient,
-    DocumentIndexError as DocumentIndexError,
-    DocumentInfo as DocumentInfo,
-    DocumentPath as DocumentPath,
-    DocumentSearchResult as DocumentSearchResult,
     ExternalServiceUnavailable as ExternalServiceUnavailable,
-    InternalError as InternalError,
-    InvalidInput as InvalidInput,
-    ResourceNotFound as ResourceNotFound,
 )
 from .document_index.document_index import InternalError as InternalError
 from .document_index.document_index import InvalidInput as InvalidInput
