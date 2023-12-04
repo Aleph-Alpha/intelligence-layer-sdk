@@ -1,5 +1,4 @@
-from datetime import datetime
-from typing import Iterable, Literal, Sequence
+from typing import Iterable, Literal, Sequence, TypeAlias
 
 from pydantic import BaseModel
 from pytest import fixture
@@ -17,8 +16,8 @@ from intelligence_layer.core import (
 )
 from intelligence_layer.core.task import Task
 
-DummyTaskInput = Literal["success", "fail in task", "fail in eval"]
-DummyTaskOutput = DummyTaskInput
+DummyTaskInput: TypeAlias = Literal["success", "fail in task", "fail in eval"]
+DummyTaskOutput: TypeAlias = DummyTaskInput
 
 
 class DummyEvaluation(BaseModel):
@@ -49,6 +48,12 @@ class DummyEvaluator(
         AggregatedDummyEvaluation,
     ]
 ):
+    def evaluation_type(self) -> type[DummyEvaluation]:
+        return DummyEvaluation
+
+    def output_type(self) -> type[DummyTaskOutput]:
+        return DummyTaskOutput  # type: ignore
+
     def do_evaluate(
         self, input: DummyTaskInput, output: DummyTaskOutput, expected_output: None
     ) -> DummyEvaluation:
@@ -84,7 +89,6 @@ def dummy_evaluator(
 def test_evaluate_dataset_returns_generic_statistics(
     dummy_evaluator: DummyEvaluator,
 ) -> None:
-    test_start = datetime.utcnow()
     examples: Sequence[Example[DummyTaskInput, None]] = [
         Example(input="success", expected_output=None),
         Example(input="fail in task", expected_output=None),
@@ -98,10 +102,12 @@ def test_evaluate_dataset_returns_generic_statistics(
 
     evaluation_run_overview = dummy_evaluator.evaluate_dataset(dataset)
 
-    assert evaluation_run_overview.dataset_name == dataset.name
-    assert test_start <= evaluation_run_overview.start <= evaluation_run_overview.end
-    assert evaluation_run_overview.failed_evaluation_count == 2
-    assert evaluation_run_overview.successful_evaluation_count == 1
+    assert (
+        evaluation_run_overview.evaluation_overview.run_overview.dataset_name
+        == dataset.name
+    )
+    assert evaluation_run_overview.succesful_count == 1
+    assert evaluation_run_overview.failed_count == 2
 
 
 def test_evaluate_dataset_uses_passed_tracer(
@@ -137,7 +143,7 @@ def test_evaluate_dataset_saves_overview(
     )
 
 
-def test_evaluate_dataset_stores_example_results(
+def test_evaluate_dataset_stores_example_evaluations(
     dummy_evaluator: DummyEvaluator,
 ) -> None:
     evaluation_repository = dummy_evaluator._repository
@@ -164,9 +170,7 @@ def test_evaluate_dataset_stores_example_results(
     )
 
     assert success_result and isinstance(success_result.result, DummyEvaluation)
-    assert failure_result_task and isinstance(
-        failure_result_task.result, EvaluationException
-    )
+    assert failure_result_task is None
     assert failure_result_eval and isinstance(
         failure_result_eval.result, EvaluationException
     )
@@ -189,13 +193,13 @@ def test_evaluate_dataset_stores_example_traces(
 
     evaluation_run_overview = dummy_evaluator.evaluate_dataset(dataset)
     success_result = evaluation_repository.evaluation_example_trace(
-        evaluation_run_overview.id, examples[0].id
+        evaluation_run_overview.run_id, examples[0].id
     )
     failure_result_task = evaluation_repository.evaluation_example_trace(
-        evaluation_run_overview.id, examples[1].id
+        evaluation_run_overview.run_id, examples[1].id
     )
     failure_result_eval = evaluation_repository.evaluation_example_trace(
-        evaluation_run_overview.id, examples[2].id
+        evaluation_run_overview.run_id, examples[2].id
     )
 
     assert success_result

@@ -1,6 +1,5 @@
-from pathlib import Path
 from statistics import mean
-from typing import Iterable, Optional, Sequence, Union
+from typing import Iterable, Sequence, Union
 
 from pydantic import BaseModel
 
@@ -100,11 +99,16 @@ class SingleChunkSummarizeEvaluator(
         self,
         task: Task[SingleChunkSummarizeInput, SingleChunkSummarizeOutput],
         repository: EvaluationRepository,
-        directory: Optional[Path] = None,
     ) -> None:
-        super().__init__(task, repository, directory)
+        super().__init__(task, repository)
         self.bleu_grader = BleuGrader()
         self.rouge_grader = RougeGrader()
+
+    def evaluation_type(self) -> type[SummarizeEvaluation]:
+        return SummarizeEvaluation
+
+    def output_type(self) -> type[SingleChunkSummarizeOutput]:
+        return SingleChunkSummarizeOutput
 
     def do_evaluate(
         self,
@@ -149,11 +153,16 @@ class LongContextSummarizeEvaluator(
         self,
         task: Task[LongContextSummarizeInput, LongContextSummarizeOutput],
         repository: EvaluationRepository,
-        directory: Optional[Path] = None,
     ) -> None:
-        super().__init__(task, repository, directory)
+        super().__init__(task, repository)
         self.bleu_grader = BleuGrader()
         self.rouge_grader = RougeGrader()
+
+    def evaluation_type(self) -> type[SummarizeEvaluation]:
+        return SummarizeEvaluation
+
+    def output_type(self) -> type[LongContextSummarizeOutput]:
+        return LongContextSummarizeOutput
 
     def do_evaluate(
         self,

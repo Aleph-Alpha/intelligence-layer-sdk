@@ -13,7 +13,9 @@ from intelligence_layer.core import (
 )
 from intelligence_layer.core.evaluation.domain import (
     EvaluationFailed,
+    EvaluationOverview,
     EvaluationRunOverview,
+    RunOverview,
     _to_trace_entry,
 )
 
@@ -66,12 +68,21 @@ class StatisticsDummy(BaseModel):
 def test_raise_on_exception_for_evaluation_run_overview() -> None:
     now = datetime.now()
     overview = EvaluationRunOverview(
-        id="id",
-        dataset_name="name",
-        failed_evaluation_count=1,
-        successful_evaluation_count=0,
-        start=now,
-        end=now,
+        evaluation_overview=EvaluationOverview(
+            id="eval-id",
+            run_overview=RunOverview(
+                dataset_name="dataset",
+                id="run-id",
+                start=now,
+                end=now,
+                failed_example_count=0,
+                successful_example_count=0,
+            ),
+            failed_evaluation_count=1,
+            successful_evaluation_count=0,
+            start=now,
+            end=now,
+        ),
         statistics=StatisticsDummy(result="result"),
     )
 
