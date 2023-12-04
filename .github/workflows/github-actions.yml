@@ -28,7 +28,7 @@ jobs:
           virtualenvs-create: true
           virtualenvs-in-project: true
           installer-parallel: true
-          with: dev 
+          with: dev
 
       - name: Load cached venv
         id: cached-poetry-dependencies
