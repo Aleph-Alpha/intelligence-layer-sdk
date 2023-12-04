@@ -28,7 +28,7 @@ jobs:
           virtualenvs-create: true
           virtualenvs-in-project: true
           installer-parallel: true
-          with: dev
+          installation-arguments: --with dev
 
       - name: Load cached venv
         id: cached-poetry-dependencies
@@ -46,8 +46,12 @@ jobs:
       - name: install Sphinx
         run: sudo apt-get install python3-sphinx
 
+      - name: run doctext
+        run: (cd docs  && poetry run make doctest)
+
       - name: set PY for pre-commit
         run: echo "PY=$(python -VV | sha256sum | cut -d' ' -f1)" >> $GITHUB_ENV
+
       - uses: actions/cache@v3
         with:
           path: ~/.cache/pre-commit
