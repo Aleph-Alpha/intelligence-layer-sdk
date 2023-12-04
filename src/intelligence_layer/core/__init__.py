@@ -17,7 +17,7 @@ from .detect_language import (
     DetectLanguage,
     DetectLanguageInput,
     DetectLanguageOutput,
-    Language,
+    Language as Language,
 )
 from .echo import EchoInput, EchoOutput, EchoTask
 from .evaluation.domain import Dataset as Dataset

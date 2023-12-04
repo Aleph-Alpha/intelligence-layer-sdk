@@ -1,7 +1,7 @@
 from .classify.classify import (
     AggregatedMultiLabelClassifyEvaluation,
     AggregatedSingleLabelClassifyEvaluation,
-    ClassifyInput,
+    ClassifyInput as ClassifyInput,
     MultiLabelClassifyEvaluation,
     MultiLabelClassifyEvaluator,
     MultiLabelClassifyMetrics,
@@ -21,15 +21,21 @@ from .classify.keyword_extract import (
     KeywordExtractInput,
     KeywordExtractOutput,
 )
-from .classify.prompt_based_classify import PromptBasedClassify
+from .classify.prompt_based_classify import PromptBasedClassify as PromptBasedClassify
 from .intelligence_starter_app import (
     intelligence_starter_app as intelligence_starter_app,
 )
-from .qa.long_context_qa import LongContextQa, LongContextQaInput
-from .qa.multiple_chunk_qa import MultipleChunkQa, MultipleChunkQaInput
+from .qa.long_context_qa import (
+    LongContextQa as LongContextQa,
+    LongContextQaInput as LongContextQaInput,
+)
+from .qa.multiple_chunk_qa import (
+    MultipleChunkQa as MultipleChunkQa,
+    MultipleChunkQaInput as MultipleChunkQaInput,
+)
 from .qa.retriever_based_qa import RetrieverBasedQa, RetrieverBasedQaInput
 from .qa.single_chunk_qa import SingleChunkQa, SingleChunkQaInput, SingleChunkQaOutput
-from .search.search import Search, SearchInput
+from .search.search import Search as Search, SearchInput as SearchInput
 from .summarize.long_context_few_shot_summarize import LongContextFewShotSummarize
 from .summarize.long_context_high_compression_summarize import (
     LongContextHighCompressionSummarize,
