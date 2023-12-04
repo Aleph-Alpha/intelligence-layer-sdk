@@ -1,5 +1,6 @@
+from abc import ABC
 from inspect import get_annotations
-from typing import Annotated
+from typing import Annotated, Sequence
 
 from fastapi import Body, FastAPI
 from uvicorn import run
@@ -7,9 +8,20 @@ from uvicorn import run
 from intelligence_layer.core.task import Input, Output, Task
 from intelligence_layer.core.tracer import NoOpTracer, TaskSpan
 
+from fastapi.openapi.models import SecurityBase as SecurityBaseModel
+from fastapi import Depends
+
 
 class InvalidTaskError(TypeError):
     """Error raised when incorrectly initialising a task for an IntelligenceApp."""
+
+    def __init__(self, message: str) -> None:
+        super().__init__(message)
+        self.message = message
+
+
+class UnauthenticatedException(RuntimeError):
+    """Error raised for unauthenticated requests."""
 
     def __init__(self, message: str) -> None:
         super().__init__(message)
@@ -28,8 +40,14 @@ class IntelligenceApp:
 
     def __init__(self, fast_api_app: FastAPI) -> None:
         self._fast_api_app = fast_api_app
+        self._auth: list[SecurityBaseModel] = []
 
-    def register_task(self, task: Task[Input, Output], path: str) -> None:
+    def register_task(
+        self,
+        task: Task[Input, Output],
+        path: str,
+        required_permissions: Sequence[str] = [],
+    ) -> None:
         """Registers a task to your application.
 
         Registering a task will make it available as an endpoint.
@@ -79,7 +97,7 @@ class IntelligenceApp:
         assert input_type
 
         @self._fast_api_app.post(path)
-        def task_route(input: Annotated[input_type, Body()]) -> Output:  # type: ignore
+        def task_route(input: Annotated[input_type, Body()], scopes: Depends(str, self.auth())) -> Output:  # type: ignore
             return task.run(input, NoOpTracer())
 
     def serve(self, host: str = "127.0.0.1", port: int = 8000) -> None:
@@ -90,3 +108,6 @@ class IntelligenceApp:
             port: The port the application will listen to.
         """
         run(self._fast_api_app, host=host, port=port)
+
+    def register_auth(self, auth: SecurityBaseModel) -> None:
+        self._auth.append(auth)
