@@ -39,12 +39,12 @@ from .evaluation.repository import (
 from .explain import Explain, ExplainInput, ExplainOutput
 from .graders import BleuGrader, RougeScores
 from .prompt_template import (
-    Cursor,
-    PromptItemCursor,
-    PromptRange,
-    PromptTemplate,
-    PromptWithMetadata,
-    TextCursor,
+    Cursor as Cursor,
+    PromptItemCursor as PromptItemCursor,
+    PromptRange as PromptRange,
+    PromptTemplate as PromptTemplate,
+    PromptWithMetadata as PromptWithMetadata,
+    TextCursor as TextCursor,
 )
 from .task import Input as Input
 from .task import Output as Output
