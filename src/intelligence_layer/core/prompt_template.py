@@ -48,7 +48,7 @@ class TextCursor:
 
     >>> prompt = Prompt.from_text("This is a text")
     >>> # This denotes the "i" in "is" in the text-item of the `Prompt` above
-    >>> TextCursor(item=0, position=5)
+    >>> cursor = TextCursor(item=0, position=5)
     """
 
     item: int
