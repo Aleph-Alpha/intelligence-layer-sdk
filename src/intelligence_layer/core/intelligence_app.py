@@ -25,6 +25,7 @@ class IntelligenceApp:
     Args:
         fast_api_app: This is the FastAPI app the IntelligenceApp relies on for routing.
     """
+
     def __init__(self, fast_api_app: FastAPI) -> None:
         self._fast_api_app = fast_api_app
 
@@ -76,7 +77,7 @@ class IntelligenceApp:
 
     def serve(self, host: str = "127.0.0.1", port: int = 8000) -> None:
         """This starts the application.
-        
+
         Args:
             host: The base url where the application will be served on.
             port: The port the application will listen to.
