@@ -156,15 +156,15 @@ class FileEvaluationRepository(EvaluationRepository):
         )
 
     def example_evaluations(
-        self, run_id: str, evaluation_type: type[Evaluation]
+        self, eval_id: str, evaluation_type: type[Evaluation]
     ) -> Sequence[ExampleEvaluation[Evaluation]]:
         def fetch_result_from_file_name(
             path: Path,
         ) -> Optional[ExampleEvaluation[Evaluation]]:
             id = path.with_suffix("").name
-            return self.example_evaluation(run_id, id, evaluation_type)
+            return self.example_evaluation(eval_id, id, evaluation_type)
 
-        path = self._eval_directory(run_id)
+        path = self._eval_directory(eval_id)
         logs = path.glob("*.json")
         return [
             example_result
@@ -173,15 +173,15 @@ class FileEvaluationRepository(EvaluationRepository):
         ]
 
     def failed_example_evaluations(
-        self, run_id: str, evaluation_type: type[Evaluation]
+        self, eval_id: str, evaluation_type: type[Evaluation]
     ) -> Sequence[ExampleEvaluation[Evaluation]]:
-        results = self.example_evaluations(run_id, evaluation_type)
+        results = self.example_evaluations(eval_id, evaluation_type)
         return [r for r in results if isinstance(r.result, FailedExampleEvaluation)]
 
     def example_evaluation(
-        self, run_id: str, example_id: str, evaluation_type: type[Evaluation]
+        self, eval_id: str, example_id: str, evaluation_type: type[Evaluation]
     ) -> Optional[ExampleEvaluation[Evaluation]]:
-        file_path = self._example_result_path(run_id, example_id)
+        file_path = self._example_result_path(eval_id, example_id)
         if not file_path.exists():
             return None
         content = file_path.read_text()
@@ -198,17 +198,17 @@ class FileEvaluationRepository(EvaluationRepository):
         )
         return ExampleTrace(example_id=example_id, trace=trace)
 
-    def store_example_evaluation(
-        self, run_id: str, result: ExampleEvaluation[Evaluation]
-    ) -> None:
-        serialized_result = SerializedExampleResult.from_example_result(result)
-        self._example_result_path(run_id, result.example_id).write_text(
-            serialized_result.model_dump_json(indent=2)
-        )
-
     def example_tracer(self, run_id: str, example_id: str) -> Tracer:
         file_path = self._example_trace_path(run_id, example_id)
         return FileTracer(file_path)
+
+    def store_example_evaluation(
+        self, eval_id: str, result: ExampleEvaluation[Evaluation]
+    ) -> None:
+        serialized_result = SerializedExampleResult.from_example_result(result)
+        self._example_result_path(eval_id, result.example_id).write_text(
+            serialized_result.model_dump_json(indent=2)
+        )
 
     def evaluation_run_overview(
         self, eval_id: str, aggregation_type: type[AggregatedEvaluation]
@@ -328,9 +328,9 @@ class InMemoryEvaluationRepository(EvaluationRepository):
         )
 
     def example_evaluations(
-        self, run_id: str, evaluation_type: type[Evaluation]
+        self, eval_id: str, evaluation_type: type[Evaluation]
     ) -> Sequence[ExampleEvaluation[Evaluation]]:
-        result_jsons = self._example_results.get(run_id, [])
+        result_jsons = self._example_results.get(eval_id, [])
         return [
             SerializedExampleResult.model_validate_json(json_str).to_example_result(
                 evaluation_type
@@ -339,18 +339,18 @@ class InMemoryEvaluationRepository(EvaluationRepository):
         ]
 
     def failed_example_evaluations(
-        self, run_id: str, evaluation_type: type[Evaluation]
+        self, eval_id: str, evaluation_type: type[Evaluation]
     ) -> Sequence[ExampleEvaluation[Evaluation]]:
-        results = self.example_evaluations(run_id, evaluation_type)
+        results = self.example_evaluations(eval_id, evaluation_type)
         return [r for r in results if isinstance(r.result, FailedExampleEvaluation)]
 
     def example_evaluation(
-        self, run_id: str, example_id: str, evaluation_type: type[Evaluation]
+        self, eval_id: str, example_id: str, evaluation_type: type[Evaluation]
     ) -> ExampleEvaluation[Evaluation] | None:
         return next(
             (
                 result
-                for result in self.example_evaluations(run_id, evaluation_type)
+                for result in self.example_evaluations(eval_id, evaluation_type)
                 if result.example_id == example_id
             ),
             None,
@@ -374,10 +374,10 @@ class InMemoryEvaluationRepository(EvaluationRepository):
         return tracer
 
     def store_example_evaluation(
-        self, run_id: str, result: ExampleEvaluation[Evaluation]
+        self, eval_id: str, result: ExampleEvaluation[Evaluation]
     ) -> None:
         json_result = SerializedExampleResult.from_example_result(result)
-        self._example_results[run_id].append(json_result.model_dump_json())
+        self._example_results[eval_id].append(json_result.model_dump_json())
 
     def store_evaluation_run_overview(
         self, overview: EvaluationRunOverview[AggregatedEvaluation]
@@ -385,9 +385,9 @@ class InMemoryEvaluationRepository(EvaluationRepository):
         self._run_overviews[overview.id] = overview.model_dump_json()
 
     def evaluation_run_overview(
-        self, run_id: str, aggregation_type: type[AggregatedEvaluation]
+        self, eval_id: str, aggregation_type: type[AggregatedEvaluation]
     ) -> EvaluationRunOverview[AggregatedEvaluation] | None:
-        loaded_json = self._run_overviews.get(run_id)
+        loaded_json = self._run_overviews.get(eval_id)
         # mypy doesn't accept dynamic types as type parameter
         return (
             EvaluationRunOverview[aggregation_type].model_validate_json(loaded_json)  # type: ignore
