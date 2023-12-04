@@ -17,11 +17,11 @@ from .detect_language import DetectLanguage, DetectLanguageInput, DetectLanguage
 from .detect_language import Language as Language
 from .echo import EchoInput, EchoOutput, EchoTask
 from .evaluation.domain import Dataset as Dataset
-from .evaluation.domain import EvaluationException as EvaluationException
 from .evaluation.domain import EvaluationRunOverview as EvaluationRunOverview
 from .evaluation.domain import Example as Example
 from .evaluation.domain import ExampleEvaluation as ExampleEvaluation
 from .evaluation.domain import ExampleTrace as ExampleTrace
+from .evaluation.domain import FailedExampleEvaluation as FailedExampleEvaluation
 from .evaluation.domain import LogTrace as LogTrace
 from .evaluation.domain import SequenceDataset as SequenceDataset
 from .evaluation.domain import SpanTrace as SpanTrace

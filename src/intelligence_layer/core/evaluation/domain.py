@@ -23,8 +23,8 @@ Evaluation = TypeVar("Evaluation", bound=BaseModel)
 AggregatedEvaluation = TypeVar("AggregatedEvaluation", bound=BaseModel)
 
 
-class EvaluationException(BaseModel):
-    """Captures an exception raised during evaluating a :class:`Task`.
+class FailedExampleRun(BaseModel):
+    """Captures an exception raised when running a single example with a :class:`Task`.
 
     Attributes:
         error_message: String-representation of the exception.
@@ -33,8 +33,24 @@ class EvaluationException(BaseModel):
     error_message: str
 
     @staticmethod
-    def from_exception(exception: Exception) -> "EvaluationException":
-        return EvaluationException(error_message=f"{type(exception)}: {str(exception)}")
+    def from_exception(exception: Exception) -> "FailedExampleRun":
+        return FailedExampleRun(error_message=f"{type(exception)}: {str(exception)}")
+
+
+class FailedExampleEvaluation(BaseModel):
+    """Captures an exception raised when evaluating an :class:`ExampleOutput`.
+
+    Attributes:
+        error_message: String-representation of the exception.
+    """
+
+    error_message: str
+
+    @staticmethod
+    def from_exception(exception: Exception) -> "FailedExampleEvaluation":
+        return FailedExampleEvaluation(
+            error_message=f"{type(exception)}: {str(exception)}"
+        )
 
 
 Trace = Union["TaskSpanTrace", "SpanTrace", "LogTrace"]
@@ -171,7 +187,7 @@ class ExampleOutput(BaseModel, Generic[Output]):
     """
 
     example_id: str
-    output: Output
+    output: Output | FailedExampleRun
 
 
 class ExampleTrace(BaseModel):
@@ -224,7 +240,7 @@ class ExampleEvaluation(BaseModel, Generic[Evaluation]):
     """
 
     example_id: str
-    result: SerializeAsAny[Evaluation | EvaluationException]
+    result: SerializeAsAny[Evaluation | FailedExampleEvaluation]
 
 
 class EvaluationOverview(BaseModel):
@@ -248,9 +264,9 @@ class EvaluationOverview(BaseModel):
 
 
 class EvaluationFailed(Exception):
-    def __init__(self, run_id: str, failed_count: int) -> None:
+    def __init__(self, eval_id: str, failed_count: int) -> None:
         super().__init__(
-            f"Evaluation run {run_id} failed with {failed_count} failed examples."
+            f"Evaluation {eval_id} failed with {failed_count} failed examples."
         )
 
 
@@ -283,7 +299,7 @@ class EvaluationRunOverview(BaseModel, Generic[AggregatedEvaluation]):
         )
 
     @property
-    def succesful_count(self) -> int:
+    def successful_count(self) -> int:
         return self.evaluation_overview.successful_evaluation_count
 
     def raise_on_evaluation_failure(self) -> None:
