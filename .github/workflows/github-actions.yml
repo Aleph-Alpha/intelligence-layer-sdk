@@ -40,6 +40,7 @@ jobs:
       - name: Install dependencies
         if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
         run: |
+          apt-get install python3-sphinx
           poetry config installer.max-workers 10
           poetry install --no-interaction
 
