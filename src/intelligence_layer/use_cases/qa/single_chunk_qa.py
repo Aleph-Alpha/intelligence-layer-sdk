@@ -80,17 +80,23 @@ class SingleChunkQa(Task[SingleChunkQaInput, SingleChunkQaOutput]):
 
 
     Example:
+        >>> import os
+        >>> from intelligence_layer.connectors import LimitedConcurrencyClient
+        >>> from intelligence_layer.core import Language
+        >>> from intelligence_layer.core import InMemoryTracer
+        >>> from intelligence_layer.core import Chunk
+        >>> from intelligence_layer.use_cases import SingleChunkQa, SingleChunkQaInput
+
+
         >>> client = LimitedConcurrencyClient.from_token(os.getenv("AA_TOKEN"))
         >>> task = SingleChunkQa(client)
         >>> input = SingleChunkQaInput(
-                chunk="Tina does not like pizza. However, Mike does.",
-                question="Who likes pizza?",
-                language=Language("en")
-            )
+        ...     chunk=Chunk("Tina does not like pizza. However, Mike does."),
+        ...     question="Who likes pizza?",
+        ...     language=Language("en"),
+        ... )
         >>> tracer = InMemoryTracer()
         >>> output = task.run(input, tracer)
-        >>> print(output.answer)
-        Mike likes pizza.
     """
 
     NO_ANSWER_STR = "NO_ANSWER_IN_TEXT"
