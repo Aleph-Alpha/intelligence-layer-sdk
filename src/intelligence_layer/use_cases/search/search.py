@@ -41,17 +41,25 @@ class Search(Task[SearchInput, SearchOutput]):
         retriever: Implements logic to retrieve matching texts to the query.
 
     Example:
-        >>> document_index = DocumentIndex(token)
-        >>> retriever = DocumentIndexRetriever(document_index, "my_namespace", \
-            "country_facts_collection", 3)
+        >>> from os import getenv
+        >>> from intelligence_layer.connectors import (
+        ...     DocumentIndexClient,
+        ... )
+        >>> from intelligence_layer.connectors import (
+        ...     DocumentIndexRetriever,
+        ... )
+        >>> from intelligence_layer.core import InMemoryTracer
+        >>> from intelligence_layer.use_cases import Search, SearchInput
+
+
+        >>> document_index = DocumentIndexClient(getenv("AA_TOKEN"))
+        >>> retriever = DocumentIndexRetriever(document_index, "aleph-alpha", "wikipedia-de", 3)
         >>> task = Search(retriever)
-        >>> input = SearchInput(
-                query="When did East and West Germany reunite?"
-            )
+        >>> input = SearchInput(query="When did East and West Germany reunite?")
         >>> tracer = InMemoryTracer()
         >>> output = task.run(input, tracer)
-        >>> print(output.results[0].text[-5:])
-        1990.
+        >>> print(output.results[0].document.text[-5:])
+         1990
     """
 
     def __init__(self, retriever: BaseRetriever):

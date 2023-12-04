@@ -29,7 +29,7 @@ from .qa.long_context_qa import LongContextQa, LongContextQaInput
 from .qa.multiple_chunk_qa import MultipleChunkQa, MultipleChunkQaInput
 from .qa.retriever_based_qa import RetrieverBasedQa, RetrieverBasedQaInput
 from .qa.single_chunk_qa import SingleChunkQa, SingleChunkQaInput, SingleChunkQaOutput
-from .search.search import Search
+from .search.search import Search, SearchInput
 from .summarize.long_context_few_shot_summarize import LongContextFewShotSummarize
 from .summarize.long_context_high_compression_summarize import (
     LongContextHighCompressionSummarize,
