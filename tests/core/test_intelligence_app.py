@@ -70,6 +70,18 @@ def test_serve_task_can_serve_multiple_tasks(intelligence_app: IntelligenceApp) 
     assert task_input.text in DummyOutput.model_validate(response.json()).response
     assert DummyOutput2.model_validate(response2.json()).number == task_input2 + 1
 
+def test_serve_task_refuses_if_not_authorized(
+    intelligence_app: IntelligenceApp,
+) -> None:
+    path = "/path"
+
+    intelligence_app.register_task(DummyTask(), path, permissions=["admin"])  
+    client = TestClient(intelligence_app._fast_api_app)
+
+    task_input = DummyInput(text="something")
+    with raises(UnauthorizedException) as error:
+        response = client.post(path, json=task_input.model_dump(mode="json"))
+        response.raise_for_status()
 
 def test_serve_task_throws_error_if_task_untyped(
     intelligence_app: IntelligenceApp,
