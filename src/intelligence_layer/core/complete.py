@@ -115,16 +115,20 @@ class Instruct(Task[InstructInput, PromptOutput]):
             to the inference API.
 
     Example:
+        >>> import os
+
+        >>> from intelligence_layer.connectors import LimitedConcurrencyClient
+        >>> from intelligence_layer.core import InMemoryTracer, Instruct, InstructInput
+
         >>> client = LimitedConcurrencyClient.from_token(os.getenv("AA_TOKEN"))
-        >>> task = Instruction(client)
-        >>> input = InstructionInput(
-                instruction="Translate the following to text to German.",
-                input="An apple a day keeps the doctor away."
-            )
+        >>> task = Instruct(client)
+        >>> input = InstructInput(
+        ... instruction="Translate the following to text to German.",
+        ... input="An apple a day keeps the doctor away.",
+        ... model="luminous-base-control"
+        ... )
         >>> tracer = InMemoryTracer()
         >>> output = task.run(input, tracer)
-        >>> print(output.response)
-        Ein Apfel am Tag hält den Arzt fern.
     """
 
     INSTRUCTION_PROMPT_TEMPLATE = """### Instruction:
@@ -224,25 +228,34 @@ class FewShot(Task[FewShotInput, PromptOutput]):
             to the inference API.
 
     Example:
+        >>> import os
+
+        >>> from intelligence_layer.connectors import LimitedConcurrencyClient
+        >>> from intelligence_layer.core import (
+        ...    FewShot,
+        ...    FewShotConfig,
+        ...    FewShotExample,
+        ...    FewShotInput,
+        ...    InMemoryTracer,
+        ... )
+
         >>> client = LimitedConcurrencyClient.from_token(os.getenv("AA_TOKEN"))
         >>> task = FewShot(client)
         >>> input = FewShotInput(
-                input="What is the capital of Germany?",
-                few_shot_config=FewShotConfig(
-                    instruction="Answer each question.",
-                    examples=[
-                        FewShotExample(input="How high is Mount Everest?", response="8848 metres."),
-                        FewShotExample(input="When was Caesar killed?", response="44 AD."),
-                    ],
-                    input_prefix="Question",
-                    response_prefix="Answer",
-                    model="luminous-base"
-                )
-            )
-        >>> tracer = InMemoryTracer()
-        >>> output = task.run(input, tracer)
-        >>> print(output.response)
-        Berlin.
+        ...     input="What is the capital of Germany?",
+        ...     model="luminous-base",
+        ...     few_shot_config=FewShotConfig(
+        ...         instruction="Answer each question.",
+        ...         examples=[
+        ...             FewShotExample(input="How high is Mount Everest?", response="8848 metres."),
+        ...             FewShotExample(input="When was Caesar killed?", response="44 AD."),
+        ...         ],
+        ...         input_prefix="Question",
+        ...         response_prefix="Answer",
+        ...         model="luminous-base",
+        ...     ),
+        ... )
+        >>> output = task.run(input, InMemoryTracer())
     """
 
     FEW_SHOT_PROMPT_TEMPLATE = """{% promptrange instruction %}{{instruction}}

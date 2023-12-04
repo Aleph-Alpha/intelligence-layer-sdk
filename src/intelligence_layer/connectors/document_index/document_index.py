@@ -223,27 +223,33 @@ class DocumentIndexClient:
         base_document_index_url: The url of the document index' API.
 
     Example:
-        >>> document_index = DocumentIndex(os.getenv("AA_TOKEN"))
+        >>> import os
+
+        >>> from intelligence_layer.connectors import (
+        ...     CollectionPath,
+        ...     DocumentContents,
+        ...     DocumentIndexClient,
+        ...     DocumentPath,
+        ...     SearchQuery,
+        ... )
+
+        >>> document_index = DocumentIndexClient(os.getenv("AA_TOKEN"))
         >>> collection_path = CollectionPath(
-                namespace="my_namespace",
-                collection="germany_facts_collection"
-            )
+        ...     namespace="aleph-alpha", collection="wikipedia-de"
+        ... )
         >>> document_index.create_collection(collection_path)
         >>> document_index.add_document(
-                document_path=DocumentPath(
-                    collection_path=collection_path,
-                    document_name="Fun facts about Germany"
-                ),
-                contents=DocumentContents.from_text("Germany is a country located in ...")
-            )
+        ...     document_path=DocumentPath(
+        ...         collection_path=collection_path, document_name="Fun facts about Germany"
+        ...     ),
+        ...     contents=DocumentContents.from_text("Germany is a country located in ..."),
+        ... )
         >>> search_result = document_index.asymmetric_search(
-                collection_path=collection_path,
-                search_query=SearchQuery(
-                    query="What is the capital of Germany",
-                    max_results=4,
-                    min_score=0.5
-                )
-            )
+        ...     collection_path=collection_path,
+        ...     search_query=SearchQuery(
+        ...         query="What is the capital of Germany", max_results=4, min_score=0.5
+        ...     ),
+        ... )
     """
 
     def __init__(

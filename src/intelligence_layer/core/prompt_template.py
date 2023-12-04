@@ -43,9 +43,12 @@ class TextCursor:
         position: the character position in the text of the item.
 
     Example:
-    >>> Prompt.from_text("This is a text")
-    >>> TextCursor(item=0, start=5)
+    >>> from aleph_alpha_client import Prompt
+    >>> from intelligence_layer.core import TextCursor
+
+    >>> prompt = Prompt.from_text("This is a text")
     >>> # This denotes the "i" in "is" in the text-item of the `Prompt` above
+    >>> TextCursor(item=0, position=5)
     """
 
     item: int
@@ -176,14 +179,18 @@ class PromptTemplate:
     To embed the items in the template, pass the placeholder in the place(s) where you would like the items.
 
     Example:
-        >>> image = Image.from_file(Path("path-to-image"))
+        >>> from aleph_alpha_client import CompletionRequest,  Tokens
+
+        >>> from intelligence_layer.core import PromptTemplate
+
+        >>> tokens = Tokens.from_token_ids([1, 2, 3])
         >>> template = PromptTemplate(
-            '''{%- for name in names -%}
-            Hello {{name}}!
-            {% endfor -%}
-            {{ image }}
-            ''')
-        >>> placeholder = template.placeholder(image)
+        ...     '''{%- for name in names -%}
+        ...     Hello {{name}}!
+        ...     {% endfor -%}
+        ...     {{ image }}
+        ...     ''')
+        >>> placeholder = template.placeholder(tokens)
         >>> names = ["World", "Rutger"]
         >>> prompt = template.to_prompt(names=names, image=placeholder)
         >>> request = CompletionRequest(prompt=prompt)
@@ -199,14 +206,17 @@ class PromptTemplate:
             template_str: the liquid template string
 
         Example:
-        >>> template = PromptTemplate(
-            '''Answer the following question given the input.
+            >>> from intelligence_layer.core import PromptTemplate
 
-            Input: {% promptrange input %}{{text}}{% endpromptrange %}
-            Question: {% promptrange question %}{{question}}{% endpromptrange %}
-            Answer:''')
-        >>> prompt_data = template.to_prompt_data(text="Some text...", question="A question ...")
-        >>> input_range = prompt_data.range.get("input")
+
+            >>> template = PromptTemplate(
+            ... '''Answer the following question given the input.
+            ...
+            ... Input: {% promptrange input %}{{text}}{% endpromptrange %}
+            ... Question: {% promptrange question %}{{question}}{% endpromptrange %}
+            ... Answer:''')
+            >>> prompt_data = template.to_prompt_with_metadata(text="Some text...", question="A question ...")
+            >>> input_range = prompt_data.ranges.get("input")
         """
         env = Environment()
         env.add_tag(PromptRangeTag)
@@ -240,19 +250,20 @@ class PromptTemplate:
         Adds whitespace between text items if there is no whitespace between them.
         In case of non-text prompt items, this embeds them into the end result.
 
+        Args:
+            prompt: prompt to embed in the template
+
         Example:
-            >>> user_prompt = Prompt(
-                    [
-                        Tokens.from_token_ids([1, 2, 3]),
-                        Text.from_text("cool"),
-                        Image.from_file(Path("path-to-image")),
-                    ]
-                )
+            >>> from aleph_alpha_client import Prompt, Text, Tokens
+
+            >>> from intelligence_layer.core import PromptTemplate
+
+            >>> user_prompt = Prompt([
+            ... Tokens.from_token_ids([1, 2, 3]),
+            ... Text.from_text("cool"),
+            ... ])
             >>> template = PromptTemplate("Question: {{user_prompt}}\\n Answer: ")
             >>> prompt = template.to_prompt(user_prompt=template.embed_prompt(user_prompt))
-
-        Parameters:
-            prompt: prompt to embed in the template
         """
         prompt_text = ""
         last_item = None

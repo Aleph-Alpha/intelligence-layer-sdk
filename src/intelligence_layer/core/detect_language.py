@@ -76,15 +76,19 @@ class DetectLanguage(Task[DetectLanguageInput, DetectLanguageOutput]):
             the `best_fit`.
 
     Example:
+        >>> from intelligence_layer.core import (
+        ...     DetectLanguage,
+        ...     DetectLanguageInput,
+        ...     InMemoryTracer,
+        ...     Language,
+        ... )
+
         >>> task = DetectLanguage()
         >>> input = DetectLanguageInput(
-                text="This is an English text.",
-                allowed_langs=[Language(l) for l in ("en", "fr)],
-            )
-        >>> tracer = InMemoryTogger(")
-        >>> output = task.run(input, tracer)
-        >>> print(output.best_fit)
-        en
+        ...     text="This is an English text.",
+        ...     possible_languages=[Language(l) for l in ("en", "fr")],
+        ... )
+        >>> output = task.run(input, InMemoryTracer())
     """
 
     def __init__(self, threshold: float = 0.5):

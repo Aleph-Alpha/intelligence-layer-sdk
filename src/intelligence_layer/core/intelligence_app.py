@@ -40,8 +40,15 @@ class IntelligenceApp:
             path: The path your exposed endpoint will have.
 
         Example:
-        >>> app = IntelligenceApp()
-        >>> app.register_task(Complete())
+            >>> import os
+            >>> from aleph_alpha_client import Client
+            >>> from fastapi import FastAPI
+            >>> from intelligence_layer.core import Complete, IntelligenceApp
+
+            >>> fast_api = FastAPI()
+            >>> app = IntelligenceApp(fast_api)
+            >>> aa_client = Client(os.getenv("AA_TOKEN"))
+            >>> app.register_task(Complete(aa_client), "/complete")
         """
         annotations = get_annotations(task.do_run)
         if len(annotations) < 3:
