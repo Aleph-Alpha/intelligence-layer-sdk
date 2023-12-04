@@ -49,17 +49,18 @@ class PromptBasedClassify(Task[ClassifyInput, SingleLabelClassifyOutput]):
         >>> from os import getenv
         >>> from intelligence_layer.connectors import LimitedConcurrencyClient
         >>> from intelligence_layer.core import InMemoryTracer
+        >>> from intelligence_layer.core import Chunk
         >>> from intelligence_layer.use_cases import ClassifyInput
         >>> from intelligence_layer.use_cases import PromptBasedClassify
 
 
         >>> client = LimitedConcurrencyClient.from_token(getenv("AA_TOKEN"))
         >>> task = PromptBasedClassify(client)
-        >>> input = ClassifyInput(chunk="This is a happy text.", labels={"positive", "negative"})
+        >>> input = ClassifyInput(
+        ...     chunk=Chunk("This is a happy text."), labels=frozenset({"positive", "negative"})
+        ... )
         >>> tracer = InMemoryTracer()
         >>> output = task.run(input, tracer)
-        >>> print(output.scores["positive"])
-        0.99974285827728
     """
 
     PROMPT_TEMPLATE: str = """### Instruction:

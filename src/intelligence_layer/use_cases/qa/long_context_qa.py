@@ -54,9 +54,17 @@ class LongContextQa(Task[LongContextQaInput, MultipleChunkQaOutput]):
 
 
     Example:
+        >>> import os
+        >>> from intelligence_layer.connectors import LimitedConcurrencyClient
+        >>> from intelligence_layer.core import InMemoryTracer
+        >>> from intelligence_layer.use_cases import LongContextQa, LongContextQaInput
+
+
         >>> client = LimitedConcurrencyClient.from_token(os.getenv("AA_TOKEN"))
         >>> task = LongContextQa(client)
-        >>> input = LongContextQaInput(text="Lengthy text goes here...", question="Where does the text go?")
+        >>> input = LongContextQaInput(
+        ...     text="Lengthy text goes here...", question="Where does the text go?"
+        ... )
         >>> tracer = InMemoryTracer()
         >>> output = task.run(input, tracer)
     """

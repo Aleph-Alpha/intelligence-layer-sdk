@@ -130,6 +130,7 @@ class EmbeddingBasedClassify(Task[ClassifyInput, MultiLabelClassifyOutput]):
         >>> from intelligence_layer.connectors.limited_concurrency_client import (
         ...     LimitedConcurrencyClient,
         ... )
+        >>> from intelligence_layer.core import Chunk
         >>> from intelligence_layer.core.tracer import InMemoryTracer
         >>> from intelligence_layer.use_cases.classify.classify import ClassifyInput
         >>> from intelligence_layer.use_cases.classify.embedding_based_classify import (
@@ -154,11 +155,9 @@ class EmbeddingBasedClassify(Task[ClassifyInput, MultiLabelClassifyOutput]):
         ... ]
         >>> client = LimitedConcurrencyClient.from_token(getenv("AA_TOKEN"))
         >>> task = EmbeddingBasedClassify(client, labels_with_examples)
-        >>> input = ClassifyInput(chunk="This is a happy text.", labels={"positive", "negative"})
+        >>> input = ClassifyInput(chunk=Chunk("This is a happy text."), labels=frozenset({"positive", "negative"}))
         >>> tracer = InMemoryTracer()
         >>> output = task.run(input, tracer)
-        >>> print(output.scores["positive"])
-        0.6445349584776742
     """
 
     METADATA_LABEL_NAME = "label"

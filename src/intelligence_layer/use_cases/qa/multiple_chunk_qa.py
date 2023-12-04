@@ -136,13 +136,26 @@ class MultipleChunkQa(Task[MultipleChunkQaInput, MultipleChunkQaOutput]):
         MERGE_ANSWERS_INSTRUCTION: The instruction template used for combining multiple answers into one.
 
     Example:
-        >>> client = LimitedConcurrencyClient.from_token(token="AA_TOKEN")
+        >>> import os
+        >>> from intelligence_layer.connectors import (
+        ...     LimitedConcurrencyClient,
+        ... )
+        >>> from intelligence_layer.core import Language
+        >>> from intelligence_layer.core import InMemoryTracer
+        >>> from intelligence_layer.core.chunk import Chunk
+        >>> from intelligence_layer.use_cases import (
+        ...     MultipleChunkQa,
+        ...     MultipleChunkQaInput,
+        ... )
+
+
+        >>> client = LimitedConcurrencyClient.from_token(os.getenv("AA_TOKEN"))
         >>> task = MultipleChunkQa(client)
         >>> input = MultipleChunkQaInput(
-                chunks=["Tina does not like pizza.", "Mike is a big fan of pizza."],
-                question="Who likes pizza?",
-                language=Language("en")
-            )
+        ...     chunks=[Chunk("Tina does not like pizza."), Chunk("Mike is a big fan of pizza.")],
+        ...     question="Who likes pizza?",
+        ...     language=Language("en"),
+        ... )
         >>> tracer = InMemoryTracer()
         >>> output = task.run(input, tracer)
         >>> print(output.answer)
