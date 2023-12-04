@@ -46,16 +46,20 @@ class PromptBasedClassify(Task[ClassifyInput, SingleLabelClassifyOutput]):
         MODEL: A valid Aleph Alpha model name.
 
     Example:
-        >>> client = LimitedConcurrencyClient.from_token(token="AA_TOKEN")
+        >>> from os import getenv
+        >>> from intelligence_layer.connectors import LimitedConcurrencyClient
+        >>> from intelligence_layer.core import InMemoryTracer
+        >>> from intelligence_layer.use_cases import ClassifyInput
+        >>> from intelligence_layer.use_cases import PromptBasedClassify
+
+
+        >>> client = LimitedConcurrencyClient.from_token(getenv("AA_TOKEN"))
         >>> task = PromptBasedClassify(client)
-        >>> input = ClassifyInput(
-                text="This is a happy text.",
-                labels={"positive", "negative"}
-            )
+        >>> input = ClassifyInput(chunk="This is a happy text.", labels={"positive", "negative"})
         >>> tracer = InMemoryTracer()
         >>> output = task.run(input, tracer)
         >>> print(output.scores["positive"])
-        0.9
+        0.99974285827728
     """
 
     PROMPT_TEMPLATE: str = """### Instruction:
