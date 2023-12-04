@@ -44,7 +44,7 @@ jobs:
           poetry install --no-interaction
 
       - name: install Sphinx
-        run: sudo apt-get install python3-sphinx 
+        run: sudo apt-get install python3-sphinx
 
       - name: set PY for pre-commit
         run: echo "PY=$(python -VV | sha256sum | cut -d' ' -f1)" >> $GITHUB_ENV
