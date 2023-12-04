@@ -5,9 +5,9 @@ from pydantic import BaseModel
 from pytest import fixture
 
 from intelligence_layer.core import (
-    EvaluationException,
     ExampleEvaluation,
     ExampleTrace,
+    FailedExampleEvaluation,
     FileEvaluationRepository,
     InMemoryEvaluationRepository,
     InMemoryTaskSpan,
@@ -68,7 +68,7 @@ def example_trace(
 def failed_example_result() -> ExampleEvaluation[DummyEvaluation]:
     return ExampleEvaluation(
         example_id="other",
-        result=EvaluationException(error_message="error"),
+        result=FailedExampleEvaluation(error_message="error"),
     )
 
 
@@ -85,9 +85,7 @@ def test_can_store_example_evaluation_traces_in_file(
         "task", DummyTaskInput(input="input"), now
     )
 
-    assert file_evaluation_repository.evaluation_example_trace(
-        run_id, example_id
-    ) == ExampleTrace(
+    assert file_evaluation_repository.example_trace(run_id, example_id) == ExampleTrace(
         example_id=example_id,
         trace=TaskSpanTrace.from_task_span(cast(InMemoryTaskSpan, expected.entries[0])),
     )
@@ -99,10 +97,12 @@ def test_can_store_example_results_in_file(
 ) -> None:
     run_id = "id"
 
-    file_evaluation_repository.store_example_result(run_id, successful_example_result)
+    file_evaluation_repository.store_example_evaluation(
+        run_id, successful_example_result
+    )
 
     assert (
-        file_evaluation_repository.evaluation_example_result(
+        file_evaluation_repository.example_evaluation(
             run_id, successful_example_result.example_id, DummyEvaluation
         )
         == successful_example_result
@@ -114,14 +114,14 @@ def test_storing_exception_with_same_structure_as_type_still_deserializes_except
 ) -> None:
     exception: ExampleEvaluation[DummyEvaluation] = ExampleEvaluation(
         example_id="id",
-        result=EvaluationException(error_message="error"),
+        result=FailedExampleEvaluation(error_message="error"),
     )
     run_id = "id"
 
-    file_evaluation_repository.store_example_result(run_id, exception)
+    file_evaluation_repository.store_example_evaluation(run_id, exception)
 
     assert (
-        file_evaluation_repository.evaluation_example_result(
+        file_evaluation_repository.example_evaluation(
             run_id, exception.example_id, DummyEvaluationWithExceptionStructure
         )
         == exception
@@ -132,9 +132,7 @@ def test_file_repository_returns_none_in_case_example_result_does_not_exist(
     file_evaluation_repository: FileEvaluationRepository,
 ) -> None:
     assert (
-        file_evaluation_repository.evaluation_example_result(
-            "id", "id", DummyEvaluation
-        )
+        file_evaluation_repository.example_evaluation("id", "id", DummyEvaluation)
         is None
     )
 
@@ -150,9 +148,9 @@ def test_file_repository_can_fetch_full_evaluation_runs(
         failed_example_result,
     ]
     for result in results:
-        file_evaluation_repository.store_example_result(run_id, result)
+        file_evaluation_repository.store_example_evaluation(run_id, result)
 
-    run_results = file_evaluation_repository.evaluation_run_results(
+    run_results = file_evaluation_repository.example_evaluations(
         run_id, DummyEvaluation
     )
 
@@ -172,9 +170,9 @@ def test_file_repository_can_fetch_failed_examples_from_evaluation_run(
         failed_example_result,
     ]
     for result in results:
-        file_evaluation_repository.store_example_result(run_id, result)
+        file_evaluation_repository.store_example_evaluation(run_id, result)
 
-    run_results = file_evaluation_repository.failed_evaluation_run_results(
+    run_results = file_evaluation_repository.failed_example_evaluations(
         run_id, DummyEvaluation
     )
 
@@ -192,9 +190,9 @@ def test_in_memory_repository_can_fetch_failed_examples_from_evaluation_run(
         failed_example_result,
     ]
     for result in results:
-        in_memory_evaluation_repository.store_example_result(run_id, result)
+        in_memory_evaluation_repository.store_example_evaluation(run_id, result)
 
-    run_results = in_memory_evaluation_repository.failed_evaluation_run_results(
+    run_results = in_memory_evaluation_repository.failed_example_evaluations(
         run_id, DummyEvaluation
     )
 
@@ -206,9 +204,7 @@ def test_file_repository_returns_empty_sequence_for_non_existing_run_id(
 ) -> None:
     run_id = "does-not-exist"
 
-    assert (
-        file_evaluation_repository.evaluation_run_results(run_id, DummyEvaluation) == []
-    )
+    assert file_evaluation_repository.example_evaluations(run_id, DummyEvaluation) == []
 
 
 def test_file_repository_stores_overview(

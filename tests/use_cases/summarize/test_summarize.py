@@ -64,14 +64,12 @@ def test_single_chunk_summarize_evaluator(
     )
 
     assert len(evaluation_overview.statistics.evaluations) == len(dataset.examples)
-    good_result = (
-        single_chunk_summarize_evaluator._repository.evaluation_example_result(
-            evaluation_overview.id,
-            "good",
-            SummarizeEvaluation,
-        )
+    good_result = single_chunk_summarize_evaluator._repository.example_evaluation(
+        evaluation_overview.id,
+        "good",
+        SummarizeEvaluation,
     )
-    bad_result = single_chunk_summarize_evaluator._repository.evaluation_example_result(
+    bad_result = single_chunk_summarize_evaluator._repository.example_evaluation(
         evaluation_overview.id,
         "bad",
         SummarizeEvaluation,
@@ -105,14 +103,12 @@ def test_long_context_summarize_evaluator(
     )
 
     assert len(evaluation_overview.statistics.evaluations) == len(dataset.examples)
-    good_result = (
-        long_context_summarize_evaluator._repository.evaluation_example_result(
-            evaluation_overview.id,
-            "good",
-            SummarizeEvaluation,
-        )
+    good_result = long_context_summarize_evaluator._repository.example_evaluation(
+        evaluation_overview.id,
+        "good",
+        SummarizeEvaluation,
     )
-    bad_result = long_context_summarize_evaluator._repository.evaluation_example_result(
+    bad_result = long_context_summarize_evaluator._repository.example_evaluation(
         evaluation_overview.id,
         "bad",
         SummarizeEvaluation,

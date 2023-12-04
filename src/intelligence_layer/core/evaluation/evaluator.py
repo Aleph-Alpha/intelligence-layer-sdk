@@ -10,7 +10,6 @@ from intelligence_layer.core.evaluation.domain import (
     AggregatedEvaluation,
     Dataset,
     Evaluation,
-    EvaluationException,
     EvaluationOverview,
     EvaluationRunOverview,
     Example,
@@ -18,6 +17,8 @@ from intelligence_layer.core.evaluation.domain import (
     ExampleOutput,
     ExampleTrace,
     ExpectedOutput,
+    FailedExampleEvaluation,
+    FailedExampleRun,
     RunOverview,
 )
 from intelligence_layer.core.task import Input, Output, Task
@@ -56,25 +57,78 @@ class EvaluationRepository(ABC):
         ...
 
     @abstractmethod
-    def store_example_output(
-        self, run_id: str, example_output: ExampleOutput[Output]
-    ) -> None:
-        ...
-
-    @abstractmethod
     def example_outputs(
         self, run_id: str, output_type: type[Output]
     ) -> Iterable[ExampleOutput[Output]]:
+        """Returns all :class:`ExampleOutput` for a given run.
+
+        Args:
+            run_id: The unique identifier of the run.
+            output_type: Type of output that the `Task` returned
+                in :func:`Task.do_run`
+
+        Returns:
+            Iterable over all outputs.
+        """
         ...
 
     @abstractmethod
-    def evaluation_run_results(
-        self, run_id: str, evaluation_type: type[Evaluation]
+    def store_example_output(
+        self, run_id: str, example_output: ExampleOutput[Output]
+    ) -> None:
+        """Stores an individual :class:`ExampleOutput` for a given run.
+
+        Args:
+            run_id: The unique identifier of the run.
+            example_output: The actual output.
+        """
+        ...
+
+    @abstractmethod
+    def example_trace(self, run_id: str, example_id: str) -> Optional[ExampleTrace]:
+        ...
+
+    @abstractmethod
+    def example_tracer(self, run_id: str, example_id: str) -> Tracer:
+        ...
+
+    @abstractmethod
+    def example_evaluation(
+        self, eval_id: str, example_id: str, evaluation_type: type[Evaluation]
+    ) -> Optional[ExampleEvaluation[Evaluation]]:
+        """Returns an :class:`ExampleEvaluation` of a given run by its id.
+
+        Args:
+            eval_id: Identifier of the run to obtain the results for.
+            example_id: Identifier of the :class:`ExampleEvaluation` to be retrieved.
+            evaluation_type: Type of evaluations that the `Evaluator` returned
+                in :func:`Evaluator.do_evaluate`
+
+        Returns:
+            :class:`ExampleEvaluation` if one was found, `None` otherwise.
+        """
+        ...
+
+    @abstractmethod
+    def store_example_evaluation(
+        self, eval_id: str, result: ExampleEvaluation[Evaluation]
+    ) -> None:
+        """Stores an :class:`ExampleEvaluation` for a run in the repository.
+
+        Args:
+            eval_id: Identifier of the eval run.
+            result: The result to be persisted.
+        """
+        ...
+
+    @abstractmethod
+    def example_evaluations(
+        self, eval_id: str, evaluation_type: type[Evaluation]
     ) -> Sequence[ExampleEvaluation[Evaluation]]:
         """Returns all :class:`ExampleResult` instances of a given run
 
         Args:
-            run_id: Identifier of the run to obtain the results for.
+            eval_id: Identifier of the eval run to obtain the results for.
             evaluation_type: Type of evaluations that the :class:`Evaluator` returned
                 in :func:`Evaluator.do_evaluate`
 
@@ -84,13 +138,13 @@ class EvaluationRepository(ABC):
         ...
 
     @abstractmethod
-    def failed_evaluation_run_results(
-        self, run_id: str, evaluation_type: type[Evaluation]
+    def failed_example_evaluations(
+        self, eval_id: str, evaluation_type: type[Evaluation]
     ) -> Sequence[ExampleEvaluation[Evaluation]]:
         """Returns all failed :class:`ExampleResult` instances of a given run
 
         Args:
-            run_id: Identifier of the run to obtain the results for.
+            eval_id: Identifier of the eval run to obtain the results for.
             evaluation_type: Type of evaluations that the :class:`Evaluator` returned
                 in :func:`Evaluator.do_evaluate`
 
@@ -100,52 +154,13 @@ class EvaluationRepository(ABC):
         ...
 
     @abstractmethod
-    def evaluation_example_result(
-        self, eval_id: str, example_id: str, evaluation_type: type[Evaluation]
-    ) -> Optional[ExampleEvaluation[Evaluation]]:
-        """Returns an :class:`ExampleResult` of a given run by its id.
-
-        Args:
-            eval_id: Identifier of the run to obtain the results for.
-            example_id: Identifier of the :class:`ExampleResult` to be retrieved.
-            evaluation_type: Type of evaluations that the `Evaluator` returned
-                in :func:`Evaluator.do_evaluate`
-
-        Returns:
-            :class:`ExampleResult` if one was found, `None` otherwise.
-        """
-        ...
-
-    @abstractmethod
-    def evaluation_example_trace(
-        self, run_id: str, example_id: str
-    ) -> Optional[ExampleTrace]:
-        ...
-
-    @abstractmethod
-    def example_tracer(self, run_id: str, example_id: str) -> Tracer:
-        ...
-
-    @abstractmethod
-    def store_example_result(
-        self, run_id: str, result: ExampleEvaluation[Evaluation]
-    ) -> None:
-        """Stores an :class:`ExampleResult` for a run in the repository.
-
-        Args:
-            run_id: Identifier of the run.
-            result: The result to be persisted.
-        """
-        ...
-
-    @abstractmethod
     def evaluation_run_overview(
-        self, run_id: str, aggregation_type: type[AggregatedEvaluation]
+        self, eval_id: str, aggregation_type: type[AggregatedEvaluation]
     ) -> Optional[EvaluationRunOverview[AggregatedEvaluation]]:
         """Returns an :class:`EvaluationRunOverview` of a given run by its id.
 
         Args:
-            run_id: Identifier of the run to obtain the overview for.
+            eval_id: Identifier of the eval run to obtain the overview for.
             aggregation_type: Type of aggregations that the :class:`Evaluator` returned
                 in :func:`Evaluator.aggregate`
 
@@ -226,16 +241,14 @@ class BaseEvaluator(
     def run_dataset(
         self, dataset: Dataset[Input, ExpectedOutput], tracer: Optional[Tracer] = None
     ) -> RunOverview:
-        def run(
-            example: Example[Input, ExpectedOutput]
-        ) -> Output | EvaluationException:
+        def run(example: Example[Input, ExpectedOutput]) -> Output | FailedExampleRun:
             evaluate_tracer = self._repository.example_tracer(run_id, example.id)
             if tracer:
                 evaluate_tracer = CompositeTracer([evaluate_tracer, tracer])
             try:
                 return self._task.run(example.input, evaluate_tracer)
             except Exception as e:
-                return EvaluationException.from_exception(e)
+                return FailedExampleRun.from_exception(e)
 
         run_id = str(uuid4())
         start = datetime.utcnow()
@@ -245,12 +258,12 @@ class BaseEvaluator(
         failed_count = 0
         successful_count = 0
         for output, example in zip(outputs, dataset.examples):
-            if isinstance(output, EvaluationException):
+            if isinstance(output, FailedExampleRun):
                 failed_count += 1
             else:
                 successful_count += 1
             self._repository.store_example_output(
-                run_id, ExampleOutput(example_id=example.id, output=output)
+                run_id, ExampleOutput[Output](example_id=example.id, output=output)
             )
 
         return RunOverview(
@@ -274,22 +287,23 @@ class BaseEvaluator(
             for output in self._repository.example_outputs(
                 run_overview.id, self.output_type()
             )
-            if not isinstance(output.output, EvaluationException)
+            if not isinstance(output.output, FailedExampleRun)
         )
         for example_output in successful_output_iter:
             example = dataset.example(example_output.example_id)
             assert example
+            assert not isinstance(example_output.output, FailedExampleRun)
             # TODO this will eventually produce a side-effect as in case of human eval
             # the result will not be available (but maybe next step)
             try:
-                result: Evaluation | EvaluationException = self.do_evaluate(
+                result: Evaluation | FailedExampleEvaluation = self.do_evaluate(
                     example.input, example_output.output, example.expected_output
                 )
                 successful_count += 1
             except Exception as e:
-                result = EvaluationException.from_exception(e)
+                result = FailedExampleEvaluation.from_exception(e)
                 failed_count += 1
-            self._repository.store_example_result(
+            self._repository.store_example_evaluation(
                 eval_id, ExampleEvaluation(example_id=example.id, result=result)
             )
         return EvaluationOverview(
@@ -304,7 +318,7 @@ class BaseEvaluator(
     def aggregate_evaluation(
         self, evaluation_overview: EvaluationOverview
     ) -> EvaluationRunOverview[AggregatedEvaluation]:
-        example_results = self._repository.evaluation_run_results(
+        example_results = self._repository.example_evaluations(
             evaluation_overview.id, self.evaluation_type()
         )
 
@@ -312,7 +326,7 @@ class BaseEvaluator(
             (
                 example_result.result
                 for example_result in example_results
-                if not isinstance(example_result.result, EvaluationException)
+                if not isinstance(example_result.result, FailedExampleEvaluation)
             )
         )
 
@@ -366,7 +380,7 @@ class Evaluator(
     @final
     def evaluate(
         self, input: Input, expected_output: ExpectedOutput, tracer: Tracer
-    ) -> Evaluation | EvaluationException:
+    ) -> Evaluation | FailedExampleEvaluation:
         """Evaluates a single example and returns an `Evaluation` or `EvaluationException`.
 
         This will call the `run` method for the :class:`Task` defined in the `__init__` method.
@@ -386,7 +400,7 @@ class Evaluator(
             output = self._task.run(input, tracer)
             return self.do_evaluate(input, output, expected_output)
         except Exception as e:
-            return EvaluationException.from_exception(e)
+            return FailedExampleEvaluation.from_exception(e)
 
     @final
     def evaluate_dataset(

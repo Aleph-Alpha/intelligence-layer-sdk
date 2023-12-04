@@ -9,11 +9,11 @@ from pydantic import BaseModel, Field
 from intelligence_layer.core.evaluation.domain import (
     AggregatedEvaluation,
     Evaluation,
-    EvaluationException,
     EvaluationRunOverview,
     ExampleEvaluation,
     ExampleOutput,
     ExampleTrace,
+    FailedExampleEvaluation,
     TaskSpanTrace,
 )
 from intelligence_layer.core.evaluation.evaluator import EvaluationRepository
@@ -47,7 +47,7 @@ class SerializedExampleResult(BaseModel):
     ) -> "SerializedExampleResult":
         return cls(
             json_result=JsonSerializer(root=result.result).model_dump_json(),
-            is_exception=isinstance(result.result, EvaluationException),
+            is_exception=isinstance(result.result, FailedExampleEvaluation),
             example_id=result.example_id,
         )
 
@@ -57,7 +57,7 @@ class SerializedExampleResult(BaseModel):
         if self.is_exception:
             return ExampleEvaluation(
                 example_id=self.example_id,
-                result=EvaluationException.model_validate_json(self.json_result),
+                result=FailedExampleEvaluation.model_validate_json(self.json_result),
             )
         else:
             return ExampleEvaluation(
@@ -155,14 +155,14 @@ class FileEvaluationRepository(EvaluationRepository):
             if example_output
         )
 
-    def evaluation_run_results(
+    def example_evaluations(
         self, run_id: str, evaluation_type: type[Evaluation]
     ) -> Sequence[ExampleEvaluation[Evaluation]]:
         def fetch_result_from_file_name(
             path: Path,
         ) -> Optional[ExampleEvaluation[Evaluation]]:
             id = path.with_suffix("").name
-            return self.evaluation_example_result(run_id, id, evaluation_type)
+            return self.example_evaluation(run_id, id, evaluation_type)
 
         path = self._eval_directory(run_id)
         logs = path.glob("*.json")
@@ -172,13 +172,13 @@ class FileEvaluationRepository(EvaluationRepository):
             if example_result
         ]
 
-    def failed_evaluation_run_results(
+    def failed_example_evaluations(
         self, run_id: str, evaluation_type: type[Evaluation]
     ) -> Sequence[ExampleEvaluation[Evaluation]]:
-        results = self.evaluation_run_results(run_id, evaluation_type)
-        return [r for r in results if isinstance(r.result, EvaluationException)]
+        results = self.example_evaluations(run_id, evaluation_type)
+        return [r for r in results if isinstance(r.result, FailedExampleEvaluation)]
 
-    def evaluation_example_result(
+    def example_evaluation(
         self, run_id: str, example_id: str, evaluation_type: type[Evaluation]
     ) -> Optional[ExampleEvaluation[Evaluation]]:
         file_path = self._example_result_path(run_id, example_id)
@@ -188,9 +188,7 @@ class FileEvaluationRepository(EvaluationRepository):
         serialized_example = SerializedExampleResult.model_validate_json(content)
         return serialized_example.to_example_result(evaluation_type)
 
-    def evaluation_example_trace(
-        self, run_id: str, example_id: str
-    ) -> Optional[ExampleTrace]:
+    def example_trace(self, run_id: str, example_id: str) -> Optional[ExampleTrace]:
         file_path = self._example_trace_path(run_id, example_id)
         if not file_path.exists():
             return None
@@ -200,7 +198,7 @@ class FileEvaluationRepository(EvaluationRepository):
         )
         return ExampleTrace(example_id=example_id, trace=trace)
 
-    def store_example_result(
+    def store_example_evaluation(
         self, run_id: str, result: ExampleEvaluation[Evaluation]
     ) -> None:
         serialized_result = SerializedExampleResult.from_example_result(result)
@@ -329,7 +327,7 @@ class InMemoryEvaluationRepository(EvaluationRepository):
             for example_output in self._example_outputs[run_id]
         )
 
-    def evaluation_run_results(
+    def example_evaluations(
         self, run_id: str, evaluation_type: type[Evaluation]
     ) -> Sequence[ExampleEvaluation[Evaluation]]:
         result_jsons = self._example_results.get(run_id, [])
@@ -340,27 +338,25 @@ class InMemoryEvaluationRepository(EvaluationRepository):
             for json_str in result_jsons
         ]
 
-    def failed_evaluation_run_results(
+    def failed_example_evaluations(
         self, run_id: str, evaluation_type: type[Evaluation]
     ) -> Sequence[ExampleEvaluation[Evaluation]]:
-        results = self.evaluation_run_results(run_id, evaluation_type)
-        return [r for r in results if isinstance(r.result, EvaluationException)]
+        results = self.example_evaluations(run_id, evaluation_type)
+        return [r for r in results if isinstance(r.result, FailedExampleEvaluation)]
 
-    def evaluation_example_result(
+    def example_evaluation(
         self, run_id: str, example_id: str, evaluation_type: type[Evaluation]
     ) -> ExampleEvaluation[Evaluation] | None:
         return next(
             (
                 result
-                for result in self.evaluation_run_results(run_id, evaluation_type)
+                for result in self.example_evaluations(run_id, evaluation_type)
                 if result.example_id == example_id
             ),
             None,
         )
 
-    def evaluation_example_trace(
-        self, run_id: str, example_id: str
-    ) -> Optional[ExampleTrace]:
+    def example_trace(self, run_id: str, example_id: str) -> Optional[ExampleTrace]:
         tracer = self._example_traces.get(f"{run_id}/{example_id}")
         if tracer is None:
             return None
@@ -377,7 +373,7 @@ class InMemoryEvaluationRepository(EvaluationRepository):
         self._example_traces[f"{run_id}/{example_id}"] = tracer
         return tracer
 
-    def store_example_result(
+    def store_example_evaluation(
         self, run_id: str, result: ExampleEvaluation[Evaluation]
     ) -> None:
         json_result = SerializedExampleResult.from_example_result(result)

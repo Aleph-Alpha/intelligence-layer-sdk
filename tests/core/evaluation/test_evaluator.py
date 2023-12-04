@@ -4,9 +4,9 @@ from pydantic import BaseModel
 from pytest import fixture
 
 from intelligence_layer.core import (
-    EvaluationException,
     Evaluator,
     Example,
+    FailedExampleEvaluation,
     InMemoryEvaluationRepository,
     InMemoryTaskSpan,
     InMemoryTracer,
@@ -106,7 +106,7 @@ def test_evaluate_dataset_returns_generic_statistics(
         evaluation_run_overview.evaluation_overview.run_overview.dataset_name
         == dataset.name
     )
-    assert evaluation_run_overview.succesful_count == 1
+    assert evaluation_run_overview.successful_count == 1
     assert evaluation_run_overview.failed_count == 2
 
 
@@ -159,20 +159,20 @@ def test_evaluate_dataset_stores_example_evaluations(
     )
 
     evaluation_run_overview = dummy_evaluator.evaluate_dataset(dataset, NoOpTracer())
-    success_result = evaluation_repository.evaluation_example_result(
+    success_result = evaluation_repository.example_evaluation(
         evaluation_run_overview.id, examples[0].id, DummyEvaluation
     )
-    failure_result_task = evaluation_repository.evaluation_example_result(
+    failure_result_task = evaluation_repository.example_evaluation(
         evaluation_run_overview.id, examples[1].id, DummyEvaluation
     )
-    failure_result_eval = evaluation_repository.evaluation_example_result(
+    failure_result_eval = evaluation_repository.example_evaluation(
         evaluation_run_overview.id, examples[2].id, DummyEvaluation
     )
 
     assert success_result and isinstance(success_result.result, DummyEvaluation)
     assert failure_result_task is None
     assert failure_result_eval and isinstance(
-        failure_result_eval.result, EvaluationException
+        failure_result_eval.result, FailedExampleEvaluation
     )
 
 
@@ -192,13 +192,13 @@ def test_evaluate_dataset_stores_example_traces(
     )
 
     evaluation_run_overview = dummy_evaluator.evaluate_dataset(dataset)
-    success_result = evaluation_repository.evaluation_example_trace(
+    success_result = evaluation_repository.example_trace(
         evaluation_run_overview.run_id, examples[0].id
     )
-    failure_result_task = evaluation_repository.evaluation_example_trace(
+    failure_result_task = evaluation_repository.example_trace(
         evaluation_run_overview.run_id, examples[1].id
     )
-    failure_result_eval = evaluation_repository.evaluation_example_trace(
+    failure_result_eval = evaluation_repository.example_trace(
         evaluation_run_overview.run_id, examples[2].id
     )
 
