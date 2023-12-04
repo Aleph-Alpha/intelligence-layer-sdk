@@ -1,17 +1,7 @@
 from abc import ABC, abstractmethod
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime
-from pathlib import Path
-from typing import (
-    Callable,
-    Generic,
-    Iterable,
-    Iterator,
-    Optional,
-    Sequence,
-    TypeVar,
-    final,
-)
+from typing import Generic, Iterable, Optional, Sequence, final
 from uuid import uuid4
 
 from tqdm import tqdm
@@ -176,42 +166,10 @@ class EvaluationRepository(ABC):
         ...
 
 
-T = TypeVar("T")
-
-
-class CountingFilterIterable(Iterable[T]):
-    def __init__(
-        self, wrapped_iterable: Iterable[T], filter: Callable[[T], bool]
-    ) -> None:
-        self._wrapped_iterator = iter(wrapped_iterable)
-        self._filter = filter
-        self._included_count = 0
-        self._excluded_count = 0
-
-    def __next__(self) -> T:
-        e = next(self._wrapped_iterator)
-        while not self._filter(e):
-            self._excluded_count += 1
-            e = next(self._wrapped_iterator)
-        self._included_count += 1
-        return e
-
-    def __iter__(self) -> Iterator[T]:
-        return self
-
-    def included_count(self) -> int:
-        return self._included_count
-
-    def excluded_count(self) -> int:
-        return self._excluded_count
-
-
-class Evaluator(
+class BaseEvaluator(
     ABC, Generic[Input, Output, ExpectedOutput, Evaluation, AggregatedEvaluation]
 ):
-    """Base evaluator interface. This should run certain evaluation steps for some job.
-
-    We suggest supplying a :class:`Task` in the `__init__` method and running it in the :func:`Evaluator.evaluate` method.
+    """Base evaluator interface.
 
     Arguments:
         task: The task that will be evaluated.
@@ -230,11 +188,9 @@ class Evaluator(
         self,
         task: Task[Input, Output],
         repository: EvaluationRepository,
-        directory: Optional[Path] = None,
     ) -> None:
         self._task = task
         self._repository = repository
-        self._directory = directory
 
     @abstractmethod
     def output_type(self) -> type[Output]:
@@ -266,31 +222,6 @@ class Evaluator(
             The metrics that come from the evaluated :class:`Task`.
         """
         pass
-
-    @final
-    def evaluate(
-        self, input: Input, expected_output: ExpectedOutput, tracer: Tracer
-    ) -> Evaluation | EvaluationException:
-        """Evaluates a single example and returns an `Evaluation` or `EvaluationException`.
-
-        This will call the `run` method for the :class:`Task` defined in the `__init__` method.
-        Catches any errors that occur during :func:`Task.run` or :func:`Evaluator.do_evaluate`.
-
-        Args:
-            input: Input for the :class:`Task`. Has to be same type as the input for the task used.
-            expected_output: The expected output for the run.
-                This will be used by the evaluator to compare the received output with.
-            tracer: :class:`Tracer` used for tracing.
-        Returns:
-            Result of the evaluation or exception in case an error during running
-            the :class:`Task` or evaluation.
-        """
-
-        try:
-            output = self._task.run(input, tracer)
-            return self.do_evaluate(input, output, expected_output)
-        except Exception as e:
-            return EvaluationException.from_exception(e)
 
     def run_dataset(
         self, dataset: Dataset[Input, ExpectedOutput], tracer: Optional[Tracer] = None
@@ -392,6 +323,71 @@ class Evaluator(
         self._repository.store_evaluation_run_overview(run_overview)
         return run_overview
 
+    @abstractmethod
+    def aggregate(self, evaluations: Iterable[Evaluation]) -> AggregatedEvaluation:
+        """`Evaluator`-specific method for aggregating individual `Evaluations` into report-like `Aggregated Evaluation`.
+
+        This method is responsible for taking the results of an evaluation run and aggregating all the results.
+        It should create an `AggregatedEvaluation` class and return it at the end.
+
+        Args:
+            evalautions: The results from running `evaluate_dataset` with a :class:`Task`.
+        Returns:
+            The aggregated results of an evaluation run with a :class:`Dataset`.
+        """
+        pass
+
+
+class Evaluator(
+    BaseEvaluator[Input, Output, ExpectedOutput, Evaluation, AggregatedEvaluation]
+):
+    """Evaluator that can handle automatic evaluation scenarios.
+
+    Arguments:
+        task: The task that will be evaluated.
+        repository: The repository that will be used to store evaluation results.
+        directory: If specified, evaluation traces will be stored here to be used by the trace-viewer.
+
+    Generics:
+        Input: Interface to be passed to the :class:`Task` that shall be evaluated.
+        Output: Type of the output of the :class:`Task` to be evaluated.
+        ExpectedOutput: Output that is expected from the run with the supplied input.
+        Evaluation: Interface of the metrics that come from the evaluated :class:`Task`.
+        AggregatedEvaluation: The aggregated results of an evaluation run with a :class:`Dataset`.
+    """
+
+    def __init__(
+        self,
+        task: Task[Input, Output],
+        repository: EvaluationRepository,
+    ) -> None:
+        super().__init__(task, repository)
+
+    @final
+    def evaluate(
+        self, input: Input, expected_output: ExpectedOutput, tracer: Tracer
+    ) -> Evaluation | EvaluationException:
+        """Evaluates a single example and returns an `Evaluation` or `EvaluationException`.
+
+        This will call the `run` method for the :class:`Task` defined in the `__init__` method.
+        Catches any errors that occur during :func:`Task.run` or :func:`Evaluator.do_evaluate`.
+
+        Args:
+            input: Input for the :class:`Task`. Has to be same type as the input for the task used.
+            expected_output: The expected output for the run.
+                This will be used by the evaluator to compare the received output with.
+            tracer: :class:`Tracer` used for tracing.
+        Returns:
+            Result of the evaluation or exception in case an error during running
+            the :class:`Task` or evaluation.
+        """
+
+        try:
+            output = self._task.run(input, tracer)
+            return self.do_evaluate(input, output, expected_output)
+        except Exception as e:
+            return EvaluationException.from_exception(e)
+
     @final
     def evaluate_dataset(
         self,
@@ -414,17 +410,3 @@ class Evaluator(
         run_id = self.run_dataset(dataset, tracer)
         eval_id = self.evaluate_run(dataset, run_id)
         return self.aggregate_evaluation(eval_id)
-
-    @abstractmethod
-    def aggregate(self, evaluations: Iterable[Evaluation]) -> AggregatedEvaluation:
-        """`Evaluator`-specific method for aggregating individual `Evaluations` into report-like `Aggregated Evaluation`.
-
-        This method is responsible for taking the results of an evaluation run and aggregating all the results.
-        It should create an `AggregatedEvaluation` class and return it at the end.
-
-        Args:
-            evalautions: The results from running `evaluate_dataset` with a :class:`Task`.
-        Returns:
-            The aggregated results of an evaluation run with a :class:`Dataset`.
-        """
-        pass

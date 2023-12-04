@@ -1,6 +1,5 @@
 from collections import defaultdict
-from pathlib import Path
-from typing import Iterable, Mapping, NewType, Optional, Sequence
+from typing import Iterable, Mapping, NewType, Sequence
 
 from pydantic import BaseModel
 
@@ -82,9 +81,8 @@ class SingleLabelClassifyEvaluator(
         self,
         task: Task[ClassifyInput, SingleLabelClassifyOutput],
         repository: EvaluationRepository,
-        directory: Optional[Path] = None,
     ):
-        super().__init__(task, repository, directory)
+        super().__init__(task, repository)
 
     def evaluation_type(self) -> type[SingleLabelClassifyEvaluation]:
         return SingleLabelClassifyEvaluation
@@ -181,9 +179,8 @@ class MultiLabelClassifyEvaluator(
         task: Task[ClassifyInput, MultiLabelClassifyOutput],
         repository: EvaluationRepository,
         threshold: float = 0.55,
-        directory: Optional[Path] = None,
     ):
-        super().__init__(task, repository, directory)
+        super().__init__(task, repository)
         self.threshold = threshold
 
     def evaluation_type(self) -> type[MultiLabelClassifyEvaluation]:
