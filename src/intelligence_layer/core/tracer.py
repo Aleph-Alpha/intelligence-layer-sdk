@@ -197,7 +197,7 @@ class CompositeTracer(Tracer, Generic[TracerVar]):
         >>> tracer = CompositeTracer([tracer_1, tracer_2])
         >>> aa_client = Client(os.getenv("AA_TOKEN"))
         >>> task = PromptBasedClassify(aa_client)
-        >>> task.run(ClassifyInput(chunk=Chunk("Cool"), labels=frozenset({"label", "other label"})), tracer)
+        >>> response = task.run(ClassifyInput(chunk=Chunk("Cool"), labels=frozenset({"label", "other label"})), tracer)
     """
 
     def __init__(self, tracers: Sequence[TracerVar]) -> None:
