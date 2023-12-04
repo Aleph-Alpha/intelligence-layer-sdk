@@ -122,15 +122,24 @@ class LongContextLowCompressionSummarize(LongContextFewShotSummarize):
 
 
     Example:
+        >>> import os
+        >>> from intelligence_layer.connectors import (
+        ...     LimitedConcurrencyClient,
+        ... )
+        >>> from intelligence_layer.core import InMemoryTracer
+        >>> from intelligence_layer.use_cases import (
+        ...     LongContextLowCompressionSummarize,
+        ... )
+        >>> from intelligence_layer.use_cases import LongContextSummarizeInput
+
+
         >>> client = LimitedConcurrencyClient.from_token(os.getenv("AA_TOKEN"))
         >>> task = LongContextLowCompressionSummarize(client)
-        >>> input = SummarizeInput(
-                text="This is a story about pizza. Tina hates pizza. However, Mike likes it. Pete strongly believes that pizza is the best thing to exist."
-            )
+        >>> input = LongContextSummarizeInput(
+        ...     text="This is a story about pizza. Tina hates pizza. However, Mike likes it. Pete strongly believes that pizza is the best thing to exist."
+        ... )
         >>> tracer = InMemoryTracer()
         >>> output = task.run(input, tracer)
-        >>> print(output.summary)
-        Tina doesn't like pizza, but Mike and Pete do.
     """
 
     def __init__(self, client: AlephAlphaClientProtocol) -> None:
