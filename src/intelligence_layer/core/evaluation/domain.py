@@ -154,21 +154,58 @@ def _to_trace_entry(entry: InMemoryTaskSpan | InMemorySpan | LogEntry) -> Trace:
 
 
 class ExampleOutput(BaseModel, Generic[Output]):
+    """Output of a single evaluated :class:`Example`
+
+    Created to persist the output of an individual example in the repository.
+
+    Attributes:
+        example_id: Identifier of the :class:`Example`.
+        output: Generated when running the :class:`Task`.
+
+    Generics:
+        Output: Interface of the output returned by the task.
+    """
+
     example_id: str
     output: Output
 
 
+class ExampleTrace(BaseModel):
+    """Trace of a single evaluated :class:`Example`
+
+    Created to persist the trace of an individual example in the repository.
+
+    Attributes:
+        example_id: Identifier of the :class:`Example`.
+        trace: Generated when running the :class:`Task`.
+    """
+
+    example_id: str
+    trace: TaskSpanTrace
+
+
 class RunOverview(BaseModel):
+    """Overview of the run of a :class:`Task` on a :class:`Dataset`.
+
+    Attributes:
+        dataset_name: Identifier of the dataset run.
+        id: The unique identifier of this run.
+        start: The time when the run was started
+        end: The time when the run ended
+        failed_example_count: The number of examples where an exception was raised when running the task.
+        successful_example_count: The number of examples that where successfully run.
+    """
+
     dataset_name: str
-    run_id: str
+    id: str
     start: datetime
     end: datetime
     failed_example_count: int
     successful_example_count: int
 
 
-class ExampleResult(BaseModel, Generic[Evaluation]):
-    """Result of a single evaluated :class:`Example`
+class ExampleEvaluation(BaseModel, Generic[Evaluation]):
+    """Evaluation of a single evaluated :class:`Example`
 
     Created to persist the evaluation result in the repository.
 
@@ -177,6 +214,9 @@ class ExampleResult(BaseModel, Generic[Evaluation]):
         result: If the evaluation was successful, evaluation's result,
             otherwise the exception raised during running or evaluating
             the :class:`Task`.
+
+    Generics:
+        Evaluation: Interface of the metrics that come from the evaluated :class:`Task`.
     """
 
     example_id: str
@@ -184,22 +224,23 @@ class ExampleResult(BaseModel, Generic[Evaluation]):
 
 
 class EvaluationOverview(BaseModel):
-    run_overview: RunOverview
-    eval_id: str
-
-
-class ExampleTrace(BaseModel):
-    """Result of a single evaluated :class:`Example`
-
-    Created to persist the evaluation result in the repository.
+    """Overview of the unaggregated results of evaluating a :class:`Task` on a :class:`Dataset`.
 
     Attributes:
-        example_id: Identifier of the :class:`Example` evaluated.
-        trace: Generated when running the :class:`Task`.
+        run_overview: Overview of the run that was evaluated.
+        id: The unique identifier of this evaluation.
+        start: The time when the evaluation run was started
+        end: The time when the evaluation run ended
+        failed_evaluation_count: The number of examples where an exception was raised when evaluating the output.
+        successful_evaluation_count: The number of examples that where successfully evaluated.
     """
 
-    example_id: str
-    trace: TaskSpanTrace
+    run_overview: RunOverview
+    id: str
+    start: Optional[datetime]
+    end: Optional[datetime]
+    failed_evaluation_count: int
+    successful_evaluation_count: int
 
 
 class EvaluationFailed(Exception):
@@ -210,31 +251,29 @@ class EvaluationFailed(Exception):
 
 
 class EvaluationRunOverview(BaseModel, Generic[AggregatedEvaluation]):
-    """Overview of the results of evaluating a :class:`Task` on a :class:`Dataset`.
+    """Complete overview of the results of evaluating a :class:`Task` on a :class:`Dataset`.
 
     Created when running :meth:`Evaluator.evaluate_dataset`. Contains high-level information and statistics.
 
     Attributes:
-        id: Identifier of the run.
-        failed_evaluation_count: The number of examples where an exception was raised when running the task or
-            evaluating the output
-        successful_evaluation_count: The number of examples that where successfully evaluated
-        start: The time when the evaluation run was started
-        end: The time when the evaluation run ended
+        evaluation_overview: Overview of the evaluation of one run, includes evaluation id.
         statistics: Aggregated statistics of the run. Whatever is returned by :meth:`Evaluator.aggregate`
     """
 
-    id: str
     evaluation_overview: EvaluationOverview
-    failed_evaluation_count: int
-    successful_evaluation_count: int
-    start: Optional[datetime]
-    end: Optional[datetime]
     statistics: SerializeAsAny[AggregatedEvaluation]
 
+    @property
+    def id(self) -> str:
+        return self.evaluation_overview.id
+
     def raise_on_evaluation_failure(self) -> None:
-        if self.failed_evaluation_count > 0:
-            raise EvaluationFailed(self.id, self.failed_evaluation_count)
+        complete_fails = (
+            self.evaluation_overview.failed_evaluation_count
+            + self.evaluation_overview.run_overview.failed_example_count
+        )
+        if complete_fails > 0:
+            raise EvaluationFailed(self.id, complete_fails)
 
 
 class Example(BaseModel, Generic[Input, ExpectedOutput]):
@@ -245,6 +284,10 @@ class Example(BaseModel, Generic[Input, ExpectedOutput]):
         expected_output: The expected output from a given example run.
             This will be used by the evaluator to compare the received output with.
         id: Identifier for the example, defaults to uuid.
+
+    Generics:
+        Input: Interface to be passed to the :class:`Task` that shall be evaluated.
+        ExpectedOutput: Output that is expected from the run with the supplied input.
     """
 
     input: Input
@@ -258,6 +301,10 @@ class Dataset(Protocol[Input, ExpectedOutput]):
     Attributes:
         name: This a human readable identifier for a dataset.
         examples: The actual examples that a :class:`Task` will be evaluated on.
+
+    Generics:
+        Input: Interface to be passed to the :class:`Task` that shall be evaluated.
+        ExpectedOutput: Output that is expected from the run with the supplied input.
     """
 
     @property
@@ -281,6 +328,10 @@ class SequenceDataset(BaseModel, Generic[Input, ExpectedOutput]):
     Attributes:
         name: This a human readable identifier for a :class:`Dataset`.
         examples: The actual examples that a :class:`Task` will be evaluated on.
+
+    Generics:
+        Input: Interface to be passed to the :class:`Task` that shall be evaluated.
+        ExpectedOutput: Output that is expected from the run with the supplied input.
     """
 
     name: str

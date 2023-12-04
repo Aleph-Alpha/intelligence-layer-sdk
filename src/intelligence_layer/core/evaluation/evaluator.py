@@ -25,8 +25,8 @@ from intelligence_layer.core.evaluation.domain import (
     EvaluationOverview,
     EvaluationRunOverview,
     Example,
+    ExampleEvaluation,
     ExampleOutput,
-    ExampleResult,
     ExampleTrace,
     ExpectedOutput,
     RunOverview,
@@ -81,7 +81,7 @@ class EvaluationRepository(ABC):
     @abstractmethod
     def evaluation_run_results(
         self, run_id: str, evaluation_type: type[Evaluation]
-    ) -> Sequence[ExampleResult[Evaluation]]:
+    ) -> Sequence[ExampleEvaluation[Evaluation]]:
         """Returns all :class:`ExampleResult` instances of a given run
 
         Args:
@@ -97,7 +97,7 @@ class EvaluationRepository(ABC):
     @abstractmethod
     def failed_evaluation_run_results(
         self, run_id: str, evaluation_type: type[Evaluation]
-    ) -> Sequence[ExampleResult[Evaluation]]:
+    ) -> Sequence[ExampleEvaluation[Evaluation]]:
         """Returns all failed :class:`ExampleResult` instances of a given run
 
         Args:
@@ -113,7 +113,7 @@ class EvaluationRepository(ABC):
     @abstractmethod
     def evaluation_example_result(
         self, eval_id: str, example_id: str, evaluation_type: type[Evaluation]
-    ) -> Optional[ExampleResult[Evaluation]]:
+    ) -> Optional[ExampleEvaluation[Evaluation]]:
         """Returns an :class:`ExampleResult` of a given run by its id.
 
         Args:
@@ -139,7 +139,7 @@ class EvaluationRepository(ABC):
 
     @abstractmethod
     def store_example_result(
-        self, run_id: str, result: ExampleResult[Evaluation]
+        self, run_id: str, result: ExampleEvaluation[Evaluation]
     ) -> None:
         """Stores an :class:`ExampleResult` for a run in the repository.
 
@@ -283,7 +283,7 @@ class Evaluator(
             else self._repository.example_tracer(run_id, example.id)
         )
         result = self.evaluate(example.input, example.expected_output, evaluate_tracer)
-        example_result = ExampleResult(
+        example_result = ExampleEvaluation(
             example_id=example.id,
             result=result,
         )
@@ -333,7 +333,7 @@ class Evaluator(
             tqdm(executor.map(run, dataset.examples), desc="Evaluating")
         return RunOverview(
             dataset_name=dataset.name,
-            run_id=run_id,
+            id=run_id,
             start=start,
             end=datetime.utcnow(),
             failed_example_count=0,
@@ -344,8 +344,10 @@ class Evaluator(
         self, dataset: Dataset[Input, ExpectedOutput], run_overview: RunOverview
     ) -> EvaluationOverview:
         eval_id = str(uuid4())
+        start = datetime.utcnow()
+        successful_count = 0
         for example_output in self._repository.example_outputs(
-            run_overview.run_id, self.output_type()
+            run_overview.id, self.output_type()
         ):
             example = dataset.example(example_output.example_id)
             assert example
@@ -355,31 +357,36 @@ class Evaluator(
                 example.input, example_output.output, example.expected_output
             )
             self._repository.store_example_result(
-                eval_id, ExampleResult(example_id=example.id, result=evaluation)
+                eval_id, ExampleEvaluation(example_id=example.id, result=evaluation)
             )
-        return EvaluationOverview(run_overview=run_overview, eval_id=eval_id)
+            successful_count += 1
+        return EvaluationOverview(
+            run_overview=run_overview,
+            id=eval_id,
+            start=start,
+            end=datetime.utcnow(),
+            failed_evaluation_count=0,
+            successful_evaluation_count=successful_count,
+        )
 
     def aggregate_evaluation(
         self, evaluation_overview: EvaluationOverview
     ) -> EvaluationRunOverview[AggregatedEvaluation]:
         example_results = self._repository.evaluation_run_results(
-            evaluation_overview.eval_id, self.evaluation_type()
-        )
-        successful_evaluations = CountingFilterIterable(
-            (example_result.result for example_result in example_results),
-            lambda evaluation: not isinstance(evaluation, EvaluationException),
+            evaluation_overview.id, self.evaluation_type()
         )
 
-        statistics = self.aggregate(cast(Iterable[Evaluation], successful_evaluations))
+        statistics = self.aggregate(
+            (
+                example_result.result
+                for example_result in example_results
+                if not isinstance(example_result.result, EvaluationException)
+            )
+        )
 
         run_overview = EvaluationRunOverview(
-            id=evaluation_overview.eval_id,
             evaluation_overview=evaluation_overview,
             statistics=statistics,
-            start=None,
-            end=None,
-            successful_evaluation_count=successful_evaluations.included_count(),
-            failed_evaluation_count=successful_evaluations.excluded_count(),
         )
         self._repository.store_evaluation_run_overview(run_overview)
         return run_overview

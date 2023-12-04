@@ -1,6 +1,7 @@
 from pathlib import Path
 from typing import Iterable
 
+from dotenv import load_dotenv
 from pydantic import BaseModel
 
 from intelligence_layer.connectors import AlephAlphaClientProtocol
@@ -15,6 +16,8 @@ from intelligence_layer.core import (
 )
 from intelligence_layer.core.evaluation.run import main
 from intelligence_layer.core.tracer import TaskSpan
+
+load_dotenv()
 
 
 def dataset() -> Dataset[None, None]:
@@ -85,7 +88,7 @@ def test_run_evaluation(tmp_path: Path) -> None:
     assert len(eval_ids) == 1
     overview = repository.evaluation_run_overview(eval_ids[0], DummyAggregation)
     assert overview
-    assert overview.successful_evaluation_count == 1
+    assert overview.evaluation_overview.successful_evaluation_count == 1
 
 
 def test_run_evaluation_with_task_with_client(tmp_path: Path) -> None:

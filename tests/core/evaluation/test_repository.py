@@ -6,7 +6,7 @@ from pytest import fixture
 
 from intelligence_layer.core import (
     EvaluationException,
-    ExampleResult,
+    ExampleEvaluation,
     ExampleTrace,
     FileEvaluationRepository,
     InMemoryEvaluationRepository,
@@ -47,8 +47,8 @@ def task_span_trace() -> TaskSpanTrace:
 
 
 @fixture
-def successful_example_result() -> ExampleResult[DummyEvaluation]:
-    return ExampleResult(
+def successful_example_result() -> ExampleEvaluation[DummyEvaluation]:
+    return ExampleEvaluation(
         example_id="example_id",
         result=DummyEvaluation(result="result"),
     )
@@ -65,8 +65,8 @@ def example_trace(
 
 
 @fixture
-def failed_example_result() -> ExampleResult[DummyEvaluation]:
-    return ExampleResult(
+def failed_example_result() -> ExampleEvaluation[DummyEvaluation]:
+    return ExampleEvaluation(
         example_id="other",
         result=EvaluationException(error_message="error"),
     )
@@ -95,7 +95,7 @@ def test_can_store_example_evaluation_traces_in_file(
 
 def test_can_store_example_results_in_file(
     file_evaluation_repository: FileEvaluationRepository,
-    successful_example_result: ExampleResult[DummyEvaluation],
+    successful_example_result: ExampleEvaluation[DummyEvaluation],
 ) -> None:
     run_id = "id"
 
@@ -112,7 +112,7 @@ def test_can_store_example_results_in_file(
 def test_storing_exception_with_same_structure_as_type_still_deserializes_exception(
     file_evaluation_repository: FileEvaluationRepository,
 ) -> None:
-    exception: ExampleResult[DummyEvaluation] = ExampleResult(
+    exception: ExampleEvaluation[DummyEvaluation] = ExampleEvaluation(
         example_id="id",
         result=EvaluationException(error_message="error"),
     )
@@ -141,11 +141,11 @@ def test_file_repository_returns_none_in_case_example_result_does_not_exist(
 
 def test_file_repository_can_fetch_full_evaluation_runs(
     file_evaluation_repository: FileEvaluationRepository,
-    successful_example_result: ExampleResult[DummyEvaluation],
-    failed_example_result: ExampleResult[DummyEvaluation],
+    successful_example_result: ExampleEvaluation[DummyEvaluation],
+    failed_example_result: ExampleEvaluation[DummyEvaluation],
 ) -> None:
     run_id = "id"
-    results: Sequence[ExampleResult[DummyEvaluation]] = [
+    results: Sequence[ExampleEvaluation[DummyEvaluation]] = [
         successful_example_result,
         failed_example_result,
     ]
@@ -163,11 +163,11 @@ def test_file_repository_can_fetch_full_evaluation_runs(
 
 def test_file_repository_can_fetch_failed_examples_from_evaluation_run(
     file_evaluation_repository: FileEvaluationRepository,
-    successful_example_result: ExampleResult[DummyEvaluation],
-    failed_example_result: ExampleResult[DummyEvaluation],
+    successful_example_result: ExampleEvaluation[DummyEvaluation],
+    failed_example_result: ExampleEvaluation[DummyEvaluation],
 ) -> None:
     run_id = "id"
-    results: Sequence[ExampleResult[DummyEvaluation]] = [
+    results: Sequence[ExampleEvaluation[DummyEvaluation]] = [
         successful_example_result,
         failed_example_result,
     ]
@@ -183,11 +183,11 @@ def test_file_repository_can_fetch_failed_examples_from_evaluation_run(
 
 def test_in_memory_repository_can_fetch_failed_examples_from_evaluation_run(
     in_memory_evaluation_repository: InMemoryEvaluationRepository,
-    successful_example_result: ExampleResult[DummyEvaluation],
-    failed_example_result: ExampleResult[DummyEvaluation],
+    successful_example_result: ExampleEvaluation[DummyEvaluation],
+    failed_example_result: ExampleEvaluation[DummyEvaluation],
 ) -> None:
     run_id = "id"
-    results: Sequence[ExampleResult[DummyEvaluation]] = [
+    results: Sequence[ExampleEvaluation[DummyEvaluation]] = [
         successful_example_result,
         failed_example_result,
     ]
@@ -216,22 +216,21 @@ def test_file_repository_stores_overview(
 ) -> None:
     now = datetime.now()
     overview = EvaluationRunOverview(
-        id="id",
         evaluation_overview=EvaluationOverview(
-            eval_id="eval-id",
+            id="eval-id",
             run_overview=RunOverview(
                 dataset_name="dataset",
-                run_id="run-id",
+                id="run-id",
                 start=now,
                 end=now,
                 failed_example_count=0,
                 successful_example_count=0,
             ),
+            failed_evaluation_count=3,
+            successful_evaluation_count=5,
+            start=now,
+            end=now,
         ),
-        failed_evaluation_count=3,
-        successful_evaluation_count=5,
-        start=now,
-        end=now,
         statistics=DummyAggregatedEvaluation(score=0.5),
     )
 

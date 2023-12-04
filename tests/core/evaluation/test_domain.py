@@ -68,22 +68,21 @@ class StatisticsDummy(BaseModel):
 def test_raise_on_exception_for_evaluation_run_overview() -> None:
     now = datetime.now()
     overview = EvaluationRunOverview(
-        id="id",
         evaluation_overview=EvaluationOverview(
-            eval_id="eval-id",
+            id="eval-id",
             run_overview=RunOverview(
                 dataset_name="dataset",
-                run_id="run-id",
+                id="run-id",
                 start=now,
                 end=now,
                 failed_example_count=0,
                 successful_example_count=0,
             ),
+            failed_evaluation_count=1,
+            successful_evaluation_count=0,
+            start=now,
+            end=now,
         ),
-        failed_evaluation_count=1,
-        successful_evaluation_count=0,
-        start=now,
-        end=now,
         statistics=StatisticsDummy(result="result"),
     )
 

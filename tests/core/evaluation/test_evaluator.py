@@ -107,8 +107,8 @@ def test_evaluate_dataset_returns_generic_statistics(
         evaluation_run_overview.evaluation_overview.run_overview.dataset_name
         == dataset.name
     )
-    assert evaluation_run_overview.failed_evaluation_count == 2
-    assert evaluation_run_overview.successful_evaluation_count == 1
+    assert evaluation_run_overview.evaluation_overview.failed_evaluation_count == 2
+    assert evaluation_run_overview.evaluation_overview.successful_evaluation_count == 1
 
 
 @mark.skip
