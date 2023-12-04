@@ -1,7 +1,8 @@
 from abc import ABC, abstractmethod
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime
-from typing import Generic, Iterable, Optional, Sequence, final
+from inspect import get_annotations
+from typing import Generic, Iterable, Optional, Sequence, cast, final
 from uuid import uuid4
 
 from tqdm import tqdm
@@ -207,13 +208,11 @@ class BaseEvaluator(
         self._task = task
         self._repository = repository
 
-    @abstractmethod
     def output_type(self) -> type[Output]:
-        ...
+        return cast(type[Output], get_annotations(self._task.do_run)["return"])
 
-    @abstractmethod
     def evaluation_type(self) -> type[Evaluation]:
-        ...
+        return cast(type[Evaluation], get_annotations(self.do_evaluate)["return"])
 
     @abstractmethod
     def do_evaluate(
