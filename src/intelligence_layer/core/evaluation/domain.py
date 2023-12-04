@@ -32,6 +32,10 @@ class EvaluationException(BaseModel):
 
     error_message: str
 
+    @staticmethod
+    def from_exception(exception: Exception) -> "EvaluationException":
+        return EvaluationException(error_message=f"{type(exception)}: {str(exception)}")
+
 
 Trace = Union["TaskSpanTrace", "SpanTrace", "LogTrace"]
 
@@ -267,13 +271,24 @@ class EvaluationRunOverview(BaseModel, Generic[AggregatedEvaluation]):
     def id(self) -> str:
         return self.evaluation_overview.id
 
-    def raise_on_evaluation_failure(self) -> None:
-        complete_fails = (
+    @property
+    def run_id(self) -> str:
+        return self.evaluation_overview.run_overview.id
+
+    @property
+    def failed_count(self) -> int:
+        return (
             self.evaluation_overview.failed_evaluation_count
             + self.evaluation_overview.run_overview.failed_example_count
         )
-        if complete_fails > 0:
-            raise EvaluationFailed(self.id, complete_fails)
+
+    @property
+    def succesful_count(self) -> int:
+        return self.evaluation_overview.successful_evaluation_count
+
+    def raise_on_evaluation_failure(self) -> None:
+        if self.failed_count > 0:
+            raise EvaluationFailed(self.id, self.failed_count)
 
 
 class Example(BaseModel, Generic[Input, ExpectedOutput]):

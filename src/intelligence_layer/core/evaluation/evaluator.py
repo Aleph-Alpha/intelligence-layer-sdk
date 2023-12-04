@@ -10,7 +10,6 @@ from typing import (
     Optional,
     Sequence,
     TypeVar,
-    cast,
     final,
 )
 from uuid import uuid4
@@ -269,28 +268,6 @@ class Evaluator(
         pass
 
     @final
-    def _evaluate_example(
-        self,
-        run_id: str,
-        example: Example[Input, ExpectedOutput],
-        tracer: Optional[Tracer] = None,
-    ) -> Evaluation | EvaluationException:
-        evaluate_tracer = (
-            CompositeTracer(
-                tracers=[tracer, self._repository.example_tracer(run_id, example.id)]
-            )
-            if tracer
-            else self._repository.example_tracer(run_id, example.id)
-        )
-        result = self.evaluate(example.input, example.expected_output, evaluate_tracer)
-        example_result = ExampleEvaluation(
-            example_id=example.id,
-            result=result,
-        )
-        self._repository.store_example_result(run_id=run_id, result=example_result)
-        return example_result.result
-
-    @final
     def evaluate(
         self, input: Input, expected_output: ExpectedOutput, tracer: Tracer
     ) -> Evaluation | EvaluationException:
@@ -313,31 +290,45 @@ class Evaluator(
             output = self._task.run(input, tracer)
             return self.do_evaluate(input, output, expected_output)
         except Exception as e:
-            return EvaluationException(error_message=str(e))
+            return EvaluationException.from_exception(e)
 
     def run_dataset(
         self, dataset: Dataset[Input, ExpectedOutput], tracer: Optional[Tracer] = None
     ) -> RunOverview:
-        def run(example: Example[Input, ExpectedOutput]) -> None:
+        def run(
+            example: Example[Input, ExpectedOutput]
+        ) -> Output | EvaluationException:
             evaluate_tracer = self._repository.example_tracer(run_id, example.id)
             if tracer:
                 evaluate_tracer = CompositeTracer([evaluate_tracer, tracer])
-            output = self._task.run(example.input, evaluate_tracer)
-            self._repository.store_example_output(
-                run_id, ExampleOutput(example_id=example.id, output=output)
-            )
+            try:
+                return self._task.run(example.input, evaluate_tracer)
+            except Exception as e:
+                return EvaluationException.from_exception(e)
 
         run_id = str(uuid4())
         start = datetime.utcnow()
         with ThreadPoolExecutor(max_workers=10) as executor:
-            tqdm(executor.map(run, dataset.examples), desc="Evaluating")
+            outputs = tqdm(executor.map(run, dataset.examples), desc="Evaluating")
+
+        failed_count = 0
+        successful_count = 0
+        for output, example in zip(outputs, dataset.examples):
+            if isinstance(output, EvaluationException):
+                failed_count += 1
+            else:
+                successful_count += 1
+            self._repository.store_example_output(
+                run_id, ExampleOutput(example_id=example.id, output=output)
+            )
+
         return RunOverview(
             dataset_name=dataset.name,
             id=run_id,
             start=start,
             end=datetime.utcnow(),
-            failed_example_count=0,
-            successful_example_count=0,
+            failed_example_count=failed_count,
+            successful_example_count=successful_count,
         )
 
     def evaluate_run(
@@ -346,26 +337,36 @@ class Evaluator(
         eval_id = str(uuid4())
         start = datetime.utcnow()
         successful_count = 0
-        for example_output in self._repository.example_outputs(
-            run_overview.id, self.output_type()
-        ):
+        failed_count = 0
+        successful_output_iter = (
+            output
+            for output in self._repository.example_outputs(
+                run_overview.id, self.output_type()
+            )
+            if not isinstance(output.output, EvaluationException)
+        )
+        for example_output in successful_output_iter:
             example = dataset.example(example_output.example_id)
             assert example
             # TODO this will eventually produce a side-effect as in case of human eval
-            #  the result will not be available (but maybe next step)
-            evaluation = self.do_evaluate(
-                example.input, example_output.output, example.expected_output
-            )
+            # the result will not be available (but maybe next step)
+            try:
+                result: Evaluation | EvaluationException = self.do_evaluate(
+                    example.input, example_output.output, example.expected_output
+                )
+                successful_count += 1
+            except Exception as e:
+                result = EvaluationException.from_exception(e)
+                failed_count += 1
             self._repository.store_example_result(
-                eval_id, ExampleEvaluation(example_id=example.id, result=evaluation)
+                eval_id, ExampleEvaluation(example_id=example.id, result=result)
             )
-            successful_count += 1
         return EvaluationOverview(
             run_overview=run_overview,
             id=eval_id,
             start=start,
             end=datetime.utcnow(),
-            failed_evaluation_count=0,
+            failed_evaluation_count=failed_count,
             successful_evaluation_count=successful_count,
         )
 
@@ -413,40 +414,6 @@ class Evaluator(
         run_id = self.run_dataset(dataset, tracer)
         eval_id = self.evaluate_run(dataset, run_id)
         return self.aggregate_evaluation(eval_id)
-        run_id = str(uuid4())
-        start = datetime.utcnow()
-        with ThreadPoolExecutor(max_workers=10) as executor:
-            evaluations = tqdm(
-                executor.map(
-                    lambda example: self._evaluate_example(
-                        run_id,
-                        example,
-                        tracer,
-                    ),
-                    dataset.examples,
-                ),
-                desc="Evaluating",
-            )
-        # collect errors with debug log
-        successful_evaluations = CountingFilterIterable(
-            evaluations,
-            lambda evaluation: not isinstance(evaluation, EvaluationException),
-        )
-        # The filter above ensures that only `Evaluation` instances are passed along
-        statistics = self.aggregate(cast(Iterable[Evaluation], successful_evaluations))
-        end = datetime.utcnow()
-
-        run_overview = EvaluationRunOverview(
-            id=run_id,
-            statistics=statistics,
-            start=start,
-            end=end,
-            dataset_name=dataset.name,
-            successful_evaluation_count=successful_evaluations.included_count(),
-            failed_evaluation_count=successful_evaluations.excluded_count(),
-        )
-        self._repository.store_evaluation_run_overview(run_overview)
-        return run_overview
 
     @abstractmethod
     def aggregate(self, evaluations: Iterable[Evaluation]) -> AggregatedEvaluation:

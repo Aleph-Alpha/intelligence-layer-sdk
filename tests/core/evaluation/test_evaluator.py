@@ -1,7 +1,7 @@
 from typing import Iterable, Literal, Sequence, TypeAlias
 
 from pydantic import BaseModel
-from pytest import fixture, mark
+from pytest import fixture
 
 from intelligence_layer.core import (
     EvaluationException,
@@ -86,7 +86,6 @@ def dummy_evaluator(
     return DummyEvaluator(DummyTask(), evaluation_repository)
 
 
-@mark.skip
 def test_evaluate_dataset_returns_generic_statistics(
     dummy_evaluator: DummyEvaluator,
 ) -> None:
@@ -107,11 +106,10 @@ def test_evaluate_dataset_returns_generic_statistics(
         evaluation_run_overview.evaluation_overview.run_overview.dataset_name
         == dataset.name
     )
-    assert evaluation_run_overview.evaluation_overview.failed_evaluation_count == 2
-    assert evaluation_run_overview.evaluation_overview.successful_evaluation_count == 1
+    assert evaluation_run_overview.succesful_count == 1
+    assert evaluation_run_overview.failed_count == 2
 
 
-@mark.skip
 def test_evaluate_dataset_uses_passed_tracer(
     dummy_evaluator: DummyEvaluator,
 ) -> None:
@@ -145,8 +143,7 @@ def test_evaluate_dataset_saves_overview(
     )
 
 
-@mark.skip
-def test_evaluate_dataset_stores_example_results(
+def test_evaluate_dataset_stores_example_evaluations(
     dummy_evaluator: DummyEvaluator,
 ) -> None:
     evaluation_repository = dummy_evaluator._repository
@@ -173,15 +170,12 @@ def test_evaluate_dataset_stores_example_results(
     )
 
     assert success_result and isinstance(success_result.result, DummyEvaluation)
-    assert failure_result_task and isinstance(
-        failure_result_task.result, EvaluationException
-    )
+    assert failure_result_task is None
     assert failure_result_eval and isinstance(
         failure_result_eval.result, EvaluationException
     )
 
 
-@mark.skip
 def test_evaluate_dataset_stores_example_traces(
     dummy_evaluator: DummyEvaluator,
 ) -> None:
@@ -199,13 +193,13 @@ def test_evaluate_dataset_stores_example_traces(
 
     evaluation_run_overview = dummy_evaluator.evaluate_dataset(dataset)
     success_result = evaluation_repository.evaluation_example_trace(
-        evaluation_run_overview.id, examples[0].id
+        evaluation_run_overview.run_id, examples[0].id
     )
     failure_result_task = evaluation_repository.evaluation_example_trace(
-        evaluation_run_overview.id, examples[1].id
+        evaluation_run_overview.run_id, examples[1].id
     )
     failure_result_eval = evaluation_repository.evaluation_example_trace(
-        evaluation_run_overview.id, examples[2].id
+        evaluation_run_overview.run_id, examples[2].id
     )
 
     assert success_result

@@ -9,6 +9,7 @@ from intelligence_layer.core.chunk import Chunk
 from intelligence_layer.core.evaluation.domain import Dataset, Example, SequenceDataset
 from intelligence_layer.core.evaluation.repository import InMemoryEvaluationRepository
 from intelligence_layer.core.task import Task
+from intelligence_layer.core.tracer import NoOpTracer
 from intelligence_layer.use_cases.classify.classify import (
     ClassifyInput,
     MultiLabelClassifyEvaluation,
@@ -118,9 +119,12 @@ def classify_evaluator(
 def test_multi_label_classify_evaluator_single_example(
     embedding_based_classify_example: Example[ClassifyInput, Sequence[str]],
     classify_evaluator: MultiLabelClassifyEvaluator,
+    no_op_tracer: NoOpTracer,
 ) -> None:
-    evaluation = classify_evaluator._evaluate_example(
-        "1", embedding_based_classify_example
+    evaluation = classify_evaluator.evaluate(
+        embedding_based_classify_example.input,
+        embedding_based_classify_example.expected_output,
+        no_op_tracer,
     )
 
     assert isinstance(evaluation, MultiLabelClassifyEvaluation)
