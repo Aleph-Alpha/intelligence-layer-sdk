@@ -216,7 +216,6 @@ class EvaluationRunOverview(BaseModel, Generic[AggregatedEvaluation]):
 
     Attributes:
         id: Identifier of the run.
-        dataset_name: The name of the evaluated :class:`Dataset`, i.e. :attr:`Dataset.name`
         failed_evaluation_count: The number of examples where an exception was raised when running the task or
             evaluating the output
         successful_evaluation_count: The number of examples that where successfully evaluated
@@ -226,7 +225,7 @@ class EvaluationRunOverview(BaseModel, Generic[AggregatedEvaluation]):
     """
 
     id: str
-    dataset_name: str
+    evaluation_overview: EvaluationOverview
     failed_evaluation_count: int
     successful_evaluation_count: int
     start: Optional[datetime]
@@ -273,7 +272,7 @@ class Dataset(Protocol[Input, ExpectedOutput]):
         ...
 
 
-class SequenceDataset(BaseModel, Dataset[Input, ExpectedOutput]):
+class SequenceDataset(BaseModel, Generic[Input, ExpectedOutput]):
     """A :class:`Dataset` that contains all examples in a sequence.
 
     We recommend using this when it is certain that all examples

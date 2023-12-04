@@ -13,8 +13,13 @@ from intelligence_layer.core import (
     InMemoryTaskSpan,
     TaskSpanTrace,
 )
-from intelligence_layer.core.evaluation.domain import EvaluationRunOverview
-from intelligence_layer.core.evaluation.repository import _parse_log
+from intelligence_layer.core.evaluation.domain import (
+    EvaluationOverview,
+    EvaluationRunOverview,
+    ExampleOutput,
+    RunOverview,
+)
+from intelligence_layer.core.tracer import CompositeTracer, InMemoryTracer
 
 
 class DummyEvaluation(BaseModel):
@@ -75,20 +80,16 @@ def test_can_store_example_evaluation_traces_in_file(
     now = datetime.now()
 
     tracer = file_evaluation_repository.example_tracer(run_id, example_id)
-    tracer.task_span("task", DummyTaskInput(input="input"), now)
-    in_memory_tracer = _parse_log(
-        (
-            file_evaluation_repository._root_directory / run_id / f"{example_id}_trace"
-        ).with_suffix(".jsonl")
+    expected = InMemoryTracer()
+    CompositeTracer([tracer, expected]).task_span(
+        "task", DummyTaskInput(input="input"), now
     )
 
     assert file_evaluation_repository.evaluation_example_trace(
         run_id, example_id
     ) == ExampleTrace(
         example_id=example_id,
-        trace=TaskSpanTrace.from_task_span(
-            cast(InMemoryTaskSpan, in_memory_tracer.entries[0])
-        ),
+        trace=TaskSpanTrace.from_task_span(cast(InMemoryTaskSpan, expected.entries[0])),
     )
 
 
@@ -216,7 +217,17 @@ def test_file_repository_stores_overview(
     now = datetime.now()
     overview = EvaluationRunOverview(
         id="id",
-        dataset_name="name",
+        evaluation_overview=EvaluationOverview(
+            eval_id="eval-id",
+            run_overview=RunOverview(
+                dataset_name="dataset",
+                run_id="run-id",
+                start=now,
+                end=now,
+                failed_example_count=0,
+                successful_example_count=0,
+            ),
+        ),
         failed_evaluation_count=3,
         successful_evaluation_count=5,
         start=now,
@@ -243,3 +254,15 @@ def test_file_repository_returns_none_for_nonexisting_overview(
         )
         is None
     )
+
+
+def test_file_repository_run_id_returns_run_ids(
+    file_evaluation_repository: FileEvaluationRepository,
+) -> None:
+    run_id = "id"
+
+    file_evaluation_repository.store_example_output(
+        run_id, ExampleOutput(example_id="exmaple_id", output=None)
+    )
+
+    assert file_evaluation_repository.run_ids() == [run_id]

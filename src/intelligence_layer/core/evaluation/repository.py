@@ -78,8 +78,13 @@ class FileEvaluationRepository(EvaluationRepository):
         root_directory.mkdir(parents=True, exist_ok=True)
         self._root_directory = root_directory
 
+    def _run_root_directory(self) -> Path:
+        path = self._root_directory / "run"
+        path.mkdir(exist_ok=True)
+        return path
+
     def _run_directory(self, run_id: str) -> Path:
-        path = self._root_directory / "run" / run_id
+        path = self._run_root_directory() / run_id
         path.mkdir(exist_ok=True)
         return path
 
@@ -93,8 +98,13 @@ class FileEvaluationRepository(EvaluationRepository):
         path.mkdir(exist_ok=True)
         return path
 
+    def _eval_root_directory(self) -> Path:
+        path = self._root_directory / "eval"
+        path.mkdir(exist_ok=True)
+        return path
+
     def _eval_directory(self, eval_id: str) -> Path:
-        path = self._root_directory / "eval" / eval_id
+        path = self._eval_root_directory() / eval_id
         path.mkdir(exist_ok=True)
         return path
 
@@ -102,18 +112,13 @@ class FileEvaluationRepository(EvaluationRepository):
         return (self._output_directory(run_id) / example_id).with_suffix(".json")
 
     def _example_trace_path(self, run_id: str, example_id: str) -> Path:
-        return (self._trace_directory(run_id) / run_id / example_id).with_suffix(
-            ".jsonl"
-        )
+        return (self._trace_directory(run_id) / example_id).with_suffix(".jsonl")
 
-    def _example_result_path(self, run_id: str, example_id: str) -> Path:
-        return (self._eval_directory(run_id) / "eval" / example_id).with_suffix(".json")
+    def _example_result_path(self, eval_id: str, example_id: str) -> Path:
+        return (self._eval_directory(eval_id) / example_id).with_suffix(".json")
 
-    def _eval_overview_path(self, run_id: str) -> Path:
-        return self._eval_directory(run_id).with_suffix(".json")
-
-    def _evaluation_run_overview_path(self, run_id: str) -> Path:
-        return self._eval_directory(run_id).with_suffix(".json")
+    def _evaluation_run_overview_path(self, eval_id: str) -> Path:
+        return self._eval_directory(eval_id).with_suffix(".json")
 
     def store_example_output(
         self, run_id: str, example_output: ExampleOutput[Output]
@@ -208,9 +213,9 @@ class FileEvaluationRepository(EvaluationRepository):
         return FileTracer(file_path)
 
     def evaluation_run_overview(
-        self, run_id: str, aggregation_type: type[AggregatedEvaluation]
+        self, eval_id: str, aggregation_type: type[AggregatedEvaluation]
     ) -> Optional[EvaluationRunOverview[AggregatedEvaluation]]:
-        file_path = self._evaluation_run_overview_path(run_id)
+        file_path = self._evaluation_run_overview_path(eval_id)
         if not file_path.exists():
             return None
         content = file_path.read_text()
@@ -226,8 +231,11 @@ class FileEvaluationRepository(EvaluationRepository):
 
     def run_ids(self) -> Sequence[str]:
         return [
-            path.with_suffix("").name for path in self._root_directory.glob("*.json")
+            path.parent.name for path in self._run_root_directory().glob("*/output")
         ]
+
+    def eval_ids(self) -> Sequence[str]:
+        return [path.stem for path in self._eval_root_directory().glob("*.json")]
 
 
 def _parse_log(log_path: Path) -> InMemoryTracer:
@@ -392,4 +400,7 @@ class InMemoryEvaluationRepository(EvaluationRepository):
         )
 
     def run_ids(self) -> Sequence[str]:
+        return list(self._example_outputs.keys())
+
+    def eval_ids(self) -> Sequence[str]:
         return list(self._run_overviews.keys())

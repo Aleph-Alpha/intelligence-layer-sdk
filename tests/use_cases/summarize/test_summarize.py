@@ -19,6 +19,7 @@ from intelligence_layer.use_cases.summarize.summarize import (
     LongContextSummarizeInput,
     SingleChunkSummarizeEvaluator,
     SingleChunkSummarizeInput,
+    SummarizeEvaluation,
 )
 
 
@@ -46,28 +47,39 @@ def test_single_chunk_summarize_evaluator(
     no_op_tracer: NoOpTracer,
 ) -> None:
     input = SingleChunkSummarizeInput(chunk=chunk, language=Language("en"))
-    bad_expected_output = "Heute ist das Wetter schön."
-    good_expected_output = (
-        "The brown bear is a large mammal that lives in Eurasia and North America."
+    bad_example = Example(
+        input=input, expected_output="Heute ist das Wetter schön.", id="bad"
     )
-    outputs = [bad_expected_output, good_expected_output]
+    good_example = Example(
+        input=input,
+        expected_output="The brown bear is a large mammal that lives in Eurasia and North America.",
+        id="good",
+    )
     dataset = SequenceDataset(
         name="summarize_eval_test",
-        examples=[Example(input=input, expected_output=output) for output in outputs],
+        examples=[good_example, bad_example],
     )
     evaluation_overview = single_chunk_summarize_evaluator.evaluate_dataset(
         dataset, no_op_tracer
     )
 
-    assert len(evaluation_overview.statistics.evaluations) == len(outputs)
-    assert (
-        evaluation_overview.statistics.evaluations[0].bleu
-        < evaluation_overview.statistics.evaluations[1].bleu
+    assert len(evaluation_overview.statistics.evaluations) == len(dataset.examples)
+    good_result = (
+        single_chunk_summarize_evaluator._repository.evaluation_example_result(
+            evaluation_overview.id,
+            "good",
+            SummarizeEvaluation,
+        )
     )
-    assert (
-        evaluation_overview.statistics.evaluations[0].rouge
-        < evaluation_overview.statistics.evaluations[1].rouge
+    bad_result = single_chunk_summarize_evaluator._repository.evaluation_example_result(
+        evaluation_overview.id,
+        "bad",
+        SummarizeEvaluation,
     )
+    assert bad_result and isinstance(bad_result.result, SummarizeEvaluation)
+    assert good_result and isinstance(good_result.result, SummarizeEvaluation)
+    assert bad_result.result.bleu < good_result.result.bleu
+    assert bad_result.result.rouge < good_result.result.rouge
 
 
 def test_long_context_summarize_evaluator(
@@ -76,25 +88,36 @@ def test_long_context_summarize_evaluator(
     no_op_tracer: NoOpTracer,
 ) -> None:
     input = LongContextSummarizeInput(text=long_text, language=Language("en"))
-    bad_expected_output = "Heute ist das Wetter schön."
-    good_expected_output = (
-        "The brown bear is a large mammal that lives in Eurasia and North America."
+    bad_example = Example(
+        input=input, expected_output="Heute ist das Wetter schön.", id="bad"
     )
-    outputs = [bad_expected_output, good_expected_output]
+    good_example = Example(
+        input=input,
+        expected_output="The brown bear is a large mammal that lives in Eurasia and North America.",
+        id="good",
+    )
     dataset = SequenceDataset(
         name="summarize_eval_test",
-        examples=[Example(input=input, expected_output=output) for output in outputs],
+        examples=[good_example, bad_example],
     )
     evaluation_overview = long_context_summarize_evaluator.evaluate_dataset(
         dataset, no_op_tracer
     )
 
-    assert len(evaluation_overview.statistics.evaluations) == len(outputs)
-    assert (
-        evaluation_overview.statistics.evaluations[0].bleu
-        < evaluation_overview.statistics.evaluations[1].bleu
+    assert len(evaluation_overview.statistics.evaluations) == len(dataset.examples)
+    good_result = (
+        long_context_summarize_evaluator._repository.evaluation_example_result(
+            evaluation_overview.id,
+            "good",
+            SummarizeEvaluation,
+        )
     )
-    assert (
-        evaluation_overview.statistics.evaluations[0].rouge
-        < evaluation_overview.statistics.evaluations[1].rouge
+    bad_result = long_context_summarize_evaluator._repository.evaluation_example_result(
+        evaluation_overview.id,
+        "bad",
+        SummarizeEvaluation,
     )
+    assert bad_result and isinstance(bad_result.result, SummarizeEvaluation)
+    assert good_result and isinstance(good_result.result, SummarizeEvaluation)
+    assert bad_result.result.bleu < good_result.result.bleu
+    assert bad_result.result.rouge < good_result.result.rouge

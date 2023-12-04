@@ -46,11 +46,23 @@ class EvaluationRepository(ABC):
     def run_ids(self) -> Sequence[str]:
         """Returns the ids of all stored runs.
 
-        Having the id of a run its details can be retrieved with
-        :meth:`EvaluationRepository.evaluation_run_overview`.
+        Having the id of a run its outputs can be retrieved with
+        :meth:`EvaluationRepository.example_outputs`.
 
         Returns:
             The ids of all stored runs.
+        """
+        ...
+
+    @abstractmethod
+    def eval_ids(self) -> Sequence[str]:
+        """Returns the ids of all stored evaluation runs.
+
+        Having the id of an evaluation run its overview can be retrieved with
+        :meth:`EvaluationRepository.evaluation_run_overview`.
+
+        Returns:
+            The ids of all stored evaluation runs.
         """
         ...
 
@@ -100,12 +112,12 @@ class EvaluationRepository(ABC):
 
     @abstractmethod
     def evaluation_example_result(
-        self, run_id: str, example_id: str, evaluation_type: type[Evaluation]
+        self, eval_id: str, example_id: str, evaluation_type: type[Evaluation]
     ) -> Optional[ExampleResult[Evaluation]]:
         """Returns an :class:`ExampleResult` of a given run by its id.
 
         Args:
-            run_id: Identifier of the run to obtain the results for.
+            eval_id: Identifier of the run to obtain the results for.
             example_id: Identifier of the :class:`ExampleResult` to be retrieved.
             evaluation_type: Type of evaluations that the `Evaluator` returned
                 in :func:`Evaluator.do_evaluate`
@@ -354,7 +366,7 @@ class Evaluator(
             evaluation_overview.eval_id, self.evaluation_type()
         )
         successful_evaluations = CountingFilterIterable(
-            example_results,
+            (example_result.result for example_result in example_results),
             lambda evaluation: not isinstance(evaluation, EvaluationException),
         )
 
@@ -362,10 +374,10 @@ class Evaluator(
 
         run_overview = EvaluationRunOverview(
             id=evaluation_overview.eval_id,
+            evaluation_overview=evaluation_overview,
             statistics=statistics,
             start=None,
             end=None,
-            dataset_name=evaluation_overview.run_overview.dataset_name,
             successful_evaluation_count=successful_evaluations.included_count(),
             failed_evaluation_count=successful_evaluations.excluded_count(),
         )

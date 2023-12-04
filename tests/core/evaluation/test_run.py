@@ -59,6 +59,12 @@ class DummyEvaluator(Evaluator[None, None, None, DummyEvaluation, DummyAggregati
         list(evaluations)
         return DummyAggregation(correct_rate=1.0)
 
+    def evaluation_type(self) -> type[DummyEvaluation]:
+        return DummyEvaluation
+
+    def output_type(self) -> type[None]:
+        return type(None)
+
 
 def test_run_evaluation(tmp_path: Path) -> None:
     main(
@@ -75,9 +81,9 @@ def test_run_evaluation(tmp_path: Path) -> None:
         ]
     )
     repository = FileEvaluationRepository(tmp_path)
-    run_ids = repository.run_ids()
-    assert len(run_ids) == 1
-    overview = repository.evaluation_run_overview(run_ids[0], DummyAggregation)
+    eval_ids = repository.eval_ids()
+    assert len(eval_ids) == 1
+    overview = repository.evaluation_run_overview(eval_ids[0], DummyAggregation)
     assert overview
     assert overview.successful_evaluation_count == 1
 
