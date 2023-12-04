@@ -63,6 +63,7 @@ from .tracer import InMemoryTaskSpan as InMemoryTaskSpan
 from .tracer import InMemoryTracer as InMemoryTracer
 from .tracer import LogEntry as LogEntry
 from .tracer import NoOpTracer as NoOpTracer
+from .tracer import CompositeTracer as CompositeTracer
 from .tracer import Span, TaskSpan
 from .tracer import Tracer as Tracer
 

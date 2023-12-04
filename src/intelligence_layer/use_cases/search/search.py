@@ -58,8 +58,6 @@ class Search(Task[SearchInput, SearchOutput]):
         >>> input = SearchInput(query="When did East and West Germany reunite?")
         >>> tracer = InMemoryTracer()
         >>> output = task.run(input, tracer)
-        >>> print(output.results[0].document.text[-5:])
-         1990
     """
 
     def __init__(self, retriever: BaseRetriever):

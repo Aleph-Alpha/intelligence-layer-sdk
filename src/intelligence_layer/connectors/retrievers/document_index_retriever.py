@@ -26,10 +26,12 @@ class DocumentIndexRetriever(BaseRetriever):
         threshold: The mimumum value of cosine similarity between the query vector and the document vector.
 
     Example:
-        >>> document_index = DocumentIndex(os.getenv("AA_TOKEN"))
-        >>> retriever = DocumentIndexRetriever(document_index, "my_namespace", "airplane_facts_collection", 3)
-        >>> query = "Who invented the airplane?"
-        >>> documents = retriever.get_relevant_documents_with_scores(query)
+    >>> import os
+    >>> from intelligence_layer.connectors import DocumentIndexClient, DocumentIndexRetriever
+
+    >>> document_index = DocumentIndexClient(os.getenv("AA_TOKEN"))
+    >>> retriever = DocumentIndexRetriever(document_index, "aleph-alpha", "wikipedia-de", 3)
+    >>> documents = retriever.get_relevant_documents_with_scores("Who invented the airplane?")
     """
 
     def __init__(

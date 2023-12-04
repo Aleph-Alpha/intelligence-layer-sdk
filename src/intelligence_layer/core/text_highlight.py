@@ -77,18 +77,28 @@ class TextHighlight(Task[TextHighlightInput, TextHighlightOutput]):
         client: Aleph Alpha client instance for running model related API calls.
 
     Example:
-        >>> from intelligence_layer import TextHighlight
-        >>> from intelligence_layer.connectors.limited_concurrency_client import LimitedConcurrencyClient
+        >>> import os
+
+        >>> from intelligence_layer.connectors import LimitedConcurrencyClient
+        >>> from intelligence_layer.core import (
+        ... 	InMemoryTracer,
+        ... 	PromptTemplate,
+        ... 	TextHighlight,
+        ... 	TextHighlightInput,
+        ... )
+
         >>> client = LimitedConcurrencyClient.from_token(os.getenv("AA_TOKEN"))
         >>> text_highlight = TextHighlight(client=client)
-        >>> prompt_template_str = "{% promptrange r1 %}Question: What is 2 + 2?{% endpromptrange %}\\nAnswer:"
+        >>> prompt_template_str = (
+        ...		"{% promptrange r1 %}Question: What is 2 + 2?{% endpromptrange %}\\nAnswer:"
+        ...	)
         >>> template = PromptTemplate(prompt_template_str)
         >>> prompt_with_metadata = template.to_prompt_with_metadata()
         >>> completion = " 4."
         >>> model = "luminous-base"
         >>> input = TextHighlightInput(
-                prompt_with_metadata=prompt_with_metadata, target=completion, model=model
-            )
+        ...	    prompt_with_metadata=prompt_with_metadata, target=completion, model=model
+        ... )
         >>> output = text_highlight.run(input, InMemoryTracer())
     """
 

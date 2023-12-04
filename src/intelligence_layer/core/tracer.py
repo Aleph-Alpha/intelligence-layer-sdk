@@ -187,11 +187,17 @@ class CompositeTracer(Tracer, Generic[TracerVar]):
         tracers: tracers that will be forwarded all subsequent log and span calls.
 
     Example:
-        >>> sub_tracer1 = InMemoryTracer()
-        >>> sub_tracer2 = FileTracer("./log.log")
-        >>> tracer = CompositeTracer([tracer1, tracer2])
-        >>>
-        >>> SomeTask.run(input, tracer)
+        >>> import os
+        >>> from aleph_alpha_client import Client
+        >>> from intelligence_layer.core import InMemoryTracer, FileTracer, CompositeTracer, Chunk
+        >>> from intelligence_layer.use_cases import PromptBasedClassify, ClassifyInput
+
+        >>> tracer_1 = InMemoryTracer()
+        >>> tracer_2 = InMemoryTracer()
+        >>> tracer = CompositeTracer([tracer_1, tracer_2])
+        >>> aa_client = Client(os.getenv("AA_TOKEN"))
+        >>> task = PromptBasedClassify(aa_client)
+        >>> task.run(ClassifyInput(chunk=Chunk("Cool"), labels=frozenset({"label", "other label"})), tracer)
     """
 
     def __init__(self, tracers: Sequence[TracerVar]) -> None:

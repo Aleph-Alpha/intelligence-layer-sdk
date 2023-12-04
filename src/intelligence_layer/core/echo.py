@@ -58,17 +58,20 @@ class EchoTask(Task[EchoInput, EchoOutput]):
         client: Aleph Alpha client instance for running model related API calls.
 
     Example:
-        >>> client = LimitedConcurrencyClient.from_token(token="AA_TOKEN")
+        >>> import os
+        >>> from aleph_alpha_client import Prompt
+        >>> from intelligence_layer.connectors import LimitedConcurrencyClient
+        >>> from intelligence_layer.core import EchoTask,EchoInput, InMemoryTracer
+
+        >>> client = LimitedConcurrencyClient.from_token(token=os.getenv("AA_TOKEN"))
         >>> task = EchoTask(client)
-        >>> input = EchoTaskInput(
-                prompt="This is a ",
-                expected_completion="happy text",
-                model="luminous-base",
-            )
+        >>> input = EchoInput(
+        ...     prompt=Prompt.from_text("This is a "),
+        ...     expected_completion="happy text",
+        ...     model="luminous-base",
+        ... )
         >>> tracer = InMemoryTracer()
         >>> output = task.run(input, tracer)
-        >>> print(output.tokens_with_log_probs[0].prob)
-        0.6
     """
 
     PROMPT_TEMPLATE_STR: str = "{{prompt}}{{expected_completion}}"
