@@ -45,7 +45,6 @@ class TextCursor:
     Example:
     >>> from aleph_alpha_client import Prompt
     >>> from intelligence_layer.core import TextCursor
-
     >>> prompt = Prompt.from_text("This is a text")
     >>> # This denotes the "i" in "is" in the text-item of the `Prompt` above
     >>> cursor = TextCursor(item=0, position=5)
