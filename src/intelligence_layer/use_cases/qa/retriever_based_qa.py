@@ -46,16 +46,22 @@ class RetrieverBasedQa(Task[RetrieverBasedQaInput, MultipleChunkQaOutput]):
         fallback_language: The default language of the output.
 
     Example:
+        >>> import os
+        >>> from intelligence_layer.connectors import DocumentIndexClient
+        >>> from intelligence_layer.connectors import LimitedConcurrencyClient
+        >>> from intelligence_layer.connectors import DocumentIndexRetriever
+        >>> from intelligence_layer.core import InMemoryTracer
+        >>> from intelligence_layer.use_cases import RetrieverBasedQa, RetrieverBasedQaInput
+
+
         >>> token = os.getenv("AA_TOKEN")
         >>> client = LimitedConcurrencyClient.from_token(token)
-        >>> document_index = DocumentIndex(token)
-        >>> retriever = DocumentIndexRetriever(document_index, "my_namespace", "ancient_facts_collection", 3)
+        >>> document_index = DocumentIndexClient(token)
+        >>> retriever = DocumentIndexRetriever(document_index, "aleph-alpha", "wikipedia-de", 3)
         >>> task = RetrieverBasedQa(client, retriever)
         >>> input_data = RetrieverBasedQaInput(question="When was Rome founded?")
         >>> tracer = InMemoryTracer()
         >>> output = task.run(input_data, tracer)
-        >>> print(output.answer)
-        Rome was founded in 753 BC.
     """
 
     def __init__(
