@@ -17,7 +17,7 @@ class InvalidTaskError(TypeError):
 
 
 class IntelligenceApp:
-    """The Intelligence App is the easiest way to turn your tasks into an application.
+    """The Intelligence App is an easy way to turn your tasks into an application.
 
     This app is used to quickly setup a FastAPI server with any registered tasks that you would like.
     By registering your tasks you can expose them as endpoints ready for usage.
@@ -25,7 +25,6 @@ class IntelligenceApp:
     Args:
         fast_api_app: This is the FastAPI app the IntelligenceApp relies on for routing.
     """
-
     def __init__(self, fast_api_app: FastAPI) -> None:
         self._fast_api_app = fast_api_app
 
@@ -38,6 +37,10 @@ class IntelligenceApp:
         Args:
             task: The task you would like exposed.
             path: The path your exposed endpoint will have.
+
+        Example:
+        >>> app = IntelligenceApp()
+        >>> app.register_task(Complete())
         """
         annotations = get_annotations(task.do_run)
         if len(annotations) < 3:
@@ -72,4 +75,10 @@ class IntelligenceApp:
             return task.run(input, NoOpTracer())
 
     def serve(self, host: str = "127.0.0.1", port: int = 8000) -> None:
+        """This starts the application.
+        
+        Args:
+            host: The base url where the application will be served on.
+            port: The port the application will listen to.
+        """
         run(self._fast_api_app, host=host, port=port)

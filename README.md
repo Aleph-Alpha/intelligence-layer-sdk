@@ -147,6 +147,8 @@ Now your app is running and you can start sending requests!
 curl localhost:8000/openapi.json
 ```
 
+To learn more about this, have a look at the [`IntelligenceLayerApp`](https://aleph-alpha-intelligence-layer.readthedocs-hosted.com/en/latest/intelligence_layer.core.html#intelligence_layer.core.IntelligenceApp).
+
 ## How to make your own use case
 
 Note that we do not expect the above use cases to solve all of your issues.
