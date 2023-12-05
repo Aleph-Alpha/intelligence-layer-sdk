@@ -3,6 +3,7 @@ import os
 from aleph_alpha_client import Client
 from dotenv import load_dotenv
 from fastapi import FastAPI
+from intelligence_layer.connectors.limited_concurrency_client import LimitedConcurrencyClient
 
 from intelligence_layer.core import IntelligenceApp
 from intelligence_layer.use_cases.classify.prompt_based_classify import (
@@ -31,7 +32,7 @@ def main() -> None:
     load_dotenv()
     aa_token = os.getenv("AA_TOKEN")
     assert aa_token
-    client = Client(aa_token)
+    client = LimitedConcurrencyClient(aa_token)
     fast_api = FastAPI()
     app = intelligence_starter_app(fast_api, client)
     app.serve()
