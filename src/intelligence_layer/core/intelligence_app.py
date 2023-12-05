@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from inspect import get_annotations
-from typing import Annotated
+from typing import Annotated, Type, TypeVar
 
 from fastapi import Body, Depends, FastAPI, HTTPException, status
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
@@ -23,7 +23,7 @@ class AuthService(ABC):
     @abstractmethod
     def get_permissions(
         self,
-        credentials: Annotated[BaseModel, Depends(SecurityBase)],
+        credentials: Annotated[HTTPBasicCredentials, Depends(SecurityBase)],
     ) -> frozenset[str]:
         ...
 
@@ -31,7 +31,7 @@ class AuthService(ABC):
 class NoAuthService(AuthService):
     def get_permissions(
         self,
-        _: Annotated[None, Depends(HTTPBasic(auto_error=False))],
+        _: Annotated[HTTPBasicCredentials, Depends(HTTPBasic(auto_error=False))],
     ) -> frozenset[str]:
         return frozenset({})
 
@@ -76,8 +76,12 @@ class IntelligenceApp:
             >>> aa_client = Client(os.getenv("AA_TOKEN"))
             >>> app.register_task(Complete(aa_client), "/complete")
         """
-        if required_permissions != frozenset() and isinstance(self._auth_service, NoAuthService):
-            raise RegisterTaskError("Can't register task with required permissions without authentication registered.\nDon't forget that the order of registering tasks and authentication matters.")
+        if required_permissions != frozenset() and isinstance(
+            self._auth_service, NoAuthService
+        ):
+            raise RegisterTaskError(
+                "Can't register task with required permissions without authentication registered.\nDon't forget that the order of registering tasks and authentication matters."
+            )
 
         annotations = get_annotations(task.do_run)
         if len(annotations) < 3:
@@ -127,4 +131,11 @@ class IntelligenceApp:
         run(self._fast_api_app, host=host, port=port)
 
     def register_auth(self, auth_service: AuthService) -> None:
+        """Registers authentication for the application.
+
+        All tasks registered after registering this :class:`AuthService` will have authentication based on the most recently registered AuthService.
+
+        Args:
+            auth_service: The service used for authentication.
+        """
         self._auth_service = auth_service
