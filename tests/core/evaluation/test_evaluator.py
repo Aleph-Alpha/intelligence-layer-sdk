@@ -121,7 +121,7 @@ def test_evaluate_dataset_saves_overview(
     dummy_evaluator = DummyEvaluator(DummyTask(), in_memory_evaluation_repository)
     overview = dummy_evaluator.evaluate_dataset(sequence_dataset)
 
-    assert overview == in_memory_evaluation_repository.evaluation_run_overview(
+    assert overview == in_memory_evaluation_repository.evaluation_overview(
         overview.id, DummyAggregatedEvaluationWithResultList
     )
 
@@ -188,7 +188,7 @@ def test_evaluate_dataset_stores_aggregated_results(
     )
 
     evaluation_run_overview = dummy_evaluator.evaluate_dataset(dataset, NoOpTracer())
-    loaded_evaluation_run_overview = evaluation_repository.evaluation_run_overview(
+    loaded_evaluation_run_overview = evaluation_repository.evaluation_overview(
         evaluation_run_overview.id, DummyAggregatedEvaluationWithResultList
     )
 

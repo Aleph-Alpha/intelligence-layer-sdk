@@ -14,6 +14,7 @@ from intelligence_layer.core.evaluation.domain import (
     ExampleOutput,
     ExampleTrace,
     FailedExampleEvaluation,
+    PartialEvaluationOverview,
     TaskSpanTrace,
 )
 from intelligence_layer.core.evaluation.evaluator import EvaluationRepository
@@ -218,7 +219,7 @@ class FileEvaluationRepository(EvaluationRepository):
             serialized_result.model_dump_json(indent=2)
         )
 
-    def evaluation_run_overview(
+    def evaluation_overview(
         self, eval_id: str, aggregation_type: type[AggregatedEvaluation]
     ) -> Optional[EvaluationOverview[AggregatedEvaluation]]:
         file_path = self._evaluation_run_overview_path(eval_id)
@@ -228,9 +229,7 @@ class FileEvaluationRepository(EvaluationRepository):
         # Mypy does not accept dynamic types
         return EvaluationOverview[aggregation_type].model_validate_json(content)  # type: ignore
 
-    def store_evaluation_run_overview(
-        self, overview: EvaluationOverview[AggregatedEvaluation]
-    ) -> None:
+    def store_evaluation_overview(self, overview: PartialEvaluationOverview) -> None:
         self._evaluation_run_overview_path(overview.id).write_text(
             overview.model_dump_json(indent=2)
         )
@@ -324,7 +323,7 @@ class InMemoryEvaluationRepository(EvaluationRepository):
         list
     )
     _example_traces: dict[str, InMemoryTracer] = dict()
-    _run_overviews: dict[str, EvaluationOverview[BaseModel]] = dict()
+    _run_overviews: dict[str, PartialEvaluationOverview] = dict()
 
     def run_ids(self) -> Sequence[str]:
         return list(self._example_outputs.keys())
@@ -395,14 +394,12 @@ class InMemoryEvaluationRepository(EvaluationRepository):
         results = self.example_evaluations(eval_id, evaluation_type)
         return [r for r in results if isinstance(r.result, FailedExampleEvaluation)]
 
-    def evaluation_run_overview(
+    def evaluation_overview(
         self, eval_id: str, aggregation_type: type[AggregatedEvaluation]
     ) -> EvaluationOverview[AggregatedEvaluation] | None:
         return cast(
             EvaluationOverview[AggregatedEvaluation], self._run_overviews[eval_id]
         )
 
-    def store_evaluation_run_overview(
-        self, overview: EvaluationOverview[AggregatedEvaluation]
-    ) -> None:
+    def store_evaluation_overview(self, overview: PartialEvaluationOverview) -> None:
         self._run_overviews[overview.id] = overview

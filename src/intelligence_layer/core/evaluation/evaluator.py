@@ -178,7 +178,7 @@ class EvaluationRepository(ABC):
         ...
 
     @abstractmethod
-    def evaluation_run_overview(
+    def evaluation_overview(
         self, eval_id: str, aggregation_type: type[AggregatedEvaluation]
     ) -> Optional[EvaluationOverview[AggregatedEvaluation]]:
         """Returns an :class:`EvaluationRunOverview` of a given run by its id.
@@ -194,9 +194,7 @@ class EvaluationRepository(ABC):
         ...
 
     @abstractmethod
-    def store_evaluation_run_overview(
-        self, overview: EvaluationOverview[AggregatedEvaluation]
-    ) -> None:
+    def store_evaluation_overview(self, overview: PartialEvaluationOverview) -> None:
         """Stores an :class:`EvaluationRunOverview` in the repository.
 
         Args:
@@ -431,9 +429,12 @@ class BaseEvaluator(
             self._repository.store_example_evaluation(
                 eval_id, ExampleEvaluation(example_id=example.id, result=result)
             )
-        return PartialEvaluationOverview(
+        partial_overview = PartialEvaluationOverview(
             run_overview=run_overview, id=eval_id, start=start
         )
+        self._repository.store_evaluation_overview(partial_overview)
+
+        return partial_overview
 
     def aggregate_evaluation(
         self, evaluation_overview: PartialEvaluationOverview
@@ -465,7 +466,7 @@ class BaseEvaluator(
             failed_evaluation_count=successful_evaluations.excluded_count(),
             **(evaluation_overview.model_dump()),
         )
-        self._repository.store_evaluation_run_overview(run_overview)
+        self._repository.store_evaluation_overview(run_overview)
         return run_overview
 
 

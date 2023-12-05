@@ -183,9 +183,9 @@ def test_file_repository_stores_overview(
     file_evaluation_repository: FileEvaluationRepository,
     evaluation_run_overview: EvaluationOverview[DummyAggregatedEvaluation],
 ) -> None:
-    file_evaluation_repository.store_evaluation_run_overview(evaluation_run_overview)
+    file_evaluation_repository.store_evaluation_overview(evaluation_run_overview)
     assert (
-        file_evaluation_repository.evaluation_run_overview(
+        file_evaluation_repository.evaluation_overview(
             evaluation_run_overview.id, DummyAggregatedEvaluation
         )
         == evaluation_run_overview
@@ -196,7 +196,7 @@ def test_file_repository_returns_none_for_nonexisting_overview(
     file_evaluation_repository: FileEvaluationRepository,
 ) -> None:
     assert (
-        file_evaluation_repository.evaluation_run_overview(
+        file_evaluation_repository.evaluation_overview(
             "does-not-exist", DummyAggregatedEvaluation
         )
         is None

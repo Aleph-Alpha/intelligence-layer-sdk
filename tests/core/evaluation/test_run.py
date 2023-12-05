@@ -86,7 +86,7 @@ def test_run_evaluation(tmp_path: Path) -> None:
     repository = FileEvaluationRepository(tmp_path)
     eval_ids = repository.eval_ids()
     assert len(eval_ids) == 1
-    overview = repository.evaluation_run_overview(eval_ids[0], DummyAggregation)
+    overview = repository.evaluation_overview(eval_ids[0], DummyAggregation)
     assert overview
     assert overview.successful_count == 1
 
