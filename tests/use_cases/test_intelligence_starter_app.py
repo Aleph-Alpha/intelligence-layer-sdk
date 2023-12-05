@@ -8,7 +8,7 @@ from pytest import fixture
 from intelligence_layer.core import Chunk, IntelligenceApp
 from intelligence_layer.use_cases.classify.classify import ClassifyInput
 from intelligence_layer.use_cases.intelligence_starter_app import (
-    intelligence_starter_app,
+    IntelligenceStarterApp,
 )
 from intelligence_layer.use_cases.qa.long_context_qa import LongContextQaInput
 from intelligence_layer.use_cases.summarize.summarize import LongContextSummarizeInput
@@ -20,7 +20,7 @@ def starter_app() -> IntelligenceApp:
     aa_token = os.getenv("AA_TOKEN")
     assert aa_token
     aa_client = Client(aa_token)
-    return intelligence_starter_app(FastAPI(), aa_client)
+    return IntelligenceStarterApp(FastAPI(), aa_client)
 
 
 def test_intelligence_starter_app_classify_works(starter_app: IntelligenceApp) -> None:
