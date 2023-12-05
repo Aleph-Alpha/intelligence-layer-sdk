@@ -250,6 +250,7 @@ class DocumentIndexClient:
         ...         query="What is the capital of Germany", max_results=4, min_score=0.5
         ...     ),
         ... )
+        >>> assert False
     """
 
     def __init__(

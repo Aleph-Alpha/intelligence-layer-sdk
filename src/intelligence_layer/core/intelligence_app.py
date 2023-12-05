@@ -39,9 +39,9 @@ class IntelligenceApp:
             task: The task you would like exposed.
             path: The path your exposed endpoint will have.
 
+            from aleph_alpha_client import Client
         Example:
             >>> import os
-            >>> from aleph_alpha_client import Client
             >>> from fastapi import FastAPI
             >>> from intelligence_layer.core import Complete, IntelligenceApp
 
