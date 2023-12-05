@@ -1,6 +1,5 @@
 from datetime import datetime
 
-from pydantic import BaseModel
 from pytest import raises
 
 from intelligence_layer.core import (
