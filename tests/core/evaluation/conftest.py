@@ -6,7 +6,6 @@ from pytest import fixture
 
 from intelligence_layer.core.evaluation.domain import (
     EvaluationOverview,
-    EvaluationRunOverview,
     ExampleEvaluation,
     FailedExampleEvaluation,
     RunOverview,
@@ -49,21 +48,19 @@ def dummy_aggregated_evaluation() -> DummyAggregatedEvaluation:
 @fixture
 def evaluation_run_overview(
     dummy_aggregated_evaluation: DummyAggregatedEvaluation,
-) -> EvaluationRunOverview[DummyAggregatedEvaluation]:
+) -> EvaluationOverview[DummyAggregatedEvaluation]:
     now = datetime.now()
-    return EvaluationRunOverview(
-        evaluation_overview=EvaluationOverview(
-            id="eval-id",
-            run_overview=RunOverview(
-                dataset_name="dataset",
-                id="run-id",
-                start=now,
-                end=now,
-                failed_example_count=0,
-                successful_example_count=0,
-            ),
+    return EvaluationOverview(
+        id="eval-id",
+        run_overview=RunOverview(
+            dataset_name="dataset",
+            id="run-id",
             start=now,
+            end=now,
+            failed_example_count=0,
+            successful_example_count=0,
         ),
+        start=now,
         end=now,
         failed_evaluation_count=3,
         successful_count=5,

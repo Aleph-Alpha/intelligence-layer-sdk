@@ -17,7 +17,7 @@ from .detect_language import DetectLanguage, DetectLanguageInput, DetectLanguage
 from .detect_language import Language as Language
 from .echo import EchoInput, EchoOutput, EchoTask
 from .evaluation.domain import Dataset as Dataset
-from .evaluation.domain import EvaluationRunOverview as EvaluationRunOverview
+from .evaluation.domain import EvaluationOverview as EvaluationOverview
 from .evaluation.domain import Example as Example
 from .evaluation.domain import ExampleEvaluation as ExampleEvaluation
 from .evaluation.domain import ExampleTrace as ExampleTrace

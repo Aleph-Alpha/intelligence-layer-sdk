@@ -13,10 +13,7 @@ from intelligence_layer.core import (
     InMemoryTaskSpan,
     TaskSpanTrace,
 )
-from intelligence_layer.core.evaluation.domain import (
-    EvaluationRunOverview,
-    ExampleOutput,
-)
+from intelligence_layer.core.evaluation.domain import EvaluationOverview, ExampleOutput
 from intelligence_layer.core.tracer import CompositeTracer, InMemoryTracer
 from tests.core.evaluation.conftest import DummyAggregatedEvaluation, DummyEvaluation
 
@@ -184,7 +181,7 @@ def test_file_repository_returns_empty_sequence_for_non_existing_run_id(
 
 def test_file_repository_stores_overview(
     file_evaluation_repository: FileEvaluationRepository,
-    evaluation_run_overview: EvaluationRunOverview[DummyAggregatedEvaluation],
+    evaluation_run_overview: EvaluationOverview[DummyAggregatedEvaluation],
 ) -> None:
     file_evaluation_repository.store_evaluation_run_overview(evaluation_run_overview)
     assert (

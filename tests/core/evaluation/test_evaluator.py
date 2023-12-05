@@ -97,10 +97,7 @@ def test_evaluate_dataset_returns_generic_statistics(
 ) -> None:
     evaluation_run_overview = dummy_evaluator.evaluate_dataset(sequence_dataset)
 
-    assert (
-        evaluation_run_overview.evaluation_overview.run_overview.dataset_name
-        == sequence_dataset.name
-    )
+    assert evaluation_run_overview.run_overview.dataset_name == sequence_dataset.name
     assert evaluation_run_overview.successful_count == 1
     assert evaluation_run_overview.failed_count == 2
 

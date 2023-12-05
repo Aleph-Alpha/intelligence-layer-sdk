@@ -12,7 +12,7 @@ from intelligence_layer.core import (
 )
 from intelligence_layer.core.evaluation.domain import (
     EvaluationFailed,
-    EvaluationRunOverview,
+    EvaluationOverview,
     _to_trace_entry,
 )
 from tests.core.evaluation.conftest import DummyAggregatedEvaluation
@@ -60,7 +60,7 @@ def test_deserialize_task_trace() -> None:
 
 
 def test_raise_on_exception_for_evaluation_run_overview(
-    evaluation_run_overview: EvaluationRunOverview[DummyAggregatedEvaluation],
+    evaluation_run_overview: EvaluationOverview[DummyAggregatedEvaluation],
 ) -> None:
     with raises(EvaluationFailed):
         evaluation_run_overview.raise_on_evaluation_failure()

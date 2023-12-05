@@ -243,7 +243,7 @@ class ExampleEvaluation(BaseModel, Generic[Evaluation]):
     result: SerializeAsAny[Evaluation | FailedExampleEvaluation]
 
 
-class EvaluationOverview(BaseModel):
+class PartialEvaluationOverview(BaseModel):
     """Overview of the unaggregated results of evaluating a :class:`Task` on a :class:`Dataset`.
 
     Attributes:
@@ -267,7 +267,7 @@ class EvaluationFailed(Exception):
         )
 
 
-class EvaluationRunOverview(BaseModel, Generic[AggregatedEvaluation]):
+class EvaluationOverview(PartialEvaluationOverview, Generic[AggregatedEvaluation]):
     """Complete overview of the results of evaluating a :class:`Task` on a :class:`Dataset`.
 
     Created when running :meth:`Evaluator.evaluate_dataset`. Contains high-level information and statistics.
@@ -277,26 +277,18 @@ class EvaluationRunOverview(BaseModel, Generic[AggregatedEvaluation]):
         statistics: Aggregated statistics of the run. Whatever is returned by :meth:`Evaluator.aggregate`
     """
 
-    evaluation_overview: EvaluationOverview
     statistics: SerializeAsAny[AggregatedEvaluation]
     end: Optional[datetime]
     failed_evaluation_count: int
     successful_count: int
 
     @property
-    def id(self) -> str:
-        return self.evaluation_overview.id
-
-    @property
     def run_id(self) -> str:
-        return self.evaluation_overview.run_overview.id
+        return self.run_overview.id
 
     @property
     def failed_count(self) -> int:
-        return (
-            self.failed_evaluation_count
-            + self.evaluation_overview.run_overview.failed_example_count
-        )
+        return self.failed_evaluation_count + self.run_overview.failed_example_count
 
     def raise_on_evaluation_failure(self) -> None:
         if self.failed_count > 0:

@@ -22,7 +22,6 @@ from intelligence_layer.core.evaluation.domain import (
     Dataset,
     Evaluation,
     EvaluationOverview,
-    EvaluationRunOverview,
     Example,
     ExampleEvaluation,
     ExampleOutput,
@@ -30,6 +29,7 @@ from intelligence_layer.core.evaluation.domain import (
     ExpectedOutput,
     FailedExampleEvaluation,
     FailedExampleRun,
+    PartialEvaluationOverview,
     RunOverview,
 )
 from intelligence_layer.core.task import Input, Output, Task
@@ -180,7 +180,7 @@ class EvaluationRepository(ABC):
     @abstractmethod
     def evaluation_run_overview(
         self, eval_id: str, aggregation_type: type[AggregatedEvaluation]
-    ) -> Optional[EvaluationRunOverview[AggregatedEvaluation]]:
+    ) -> Optional[EvaluationOverview[AggregatedEvaluation]]:
         """Returns an :class:`EvaluationRunOverview` of a given run by its id.
 
         Args:
@@ -195,7 +195,7 @@ class EvaluationRepository(ABC):
 
     @abstractmethod
     def store_evaluation_run_overview(
-        self, overview: EvaluationRunOverview[AggregatedEvaluation]
+        self, overview: EvaluationOverview[AggregatedEvaluation]
     ) -> None:
         """Stores an :class:`EvaluationRunOverview` in the repository.
 
@@ -385,7 +385,7 @@ class BaseEvaluator(
 
     def evaluate_run(
         self, dataset: Dataset[Input, ExpectedOutput], run_overview: RunOverview
-    ) -> EvaluationOverview:
+    ) -> PartialEvaluationOverview:
         """Evaluates all generated outputs in the run.
 
         For each example in the dataset & its corresponding (generated) output,
@@ -431,11 +431,13 @@ class BaseEvaluator(
             self._repository.store_example_evaluation(
                 eval_id, ExampleEvaluation(example_id=example.id, result=result)
             )
-        return EvaluationOverview(run_overview=run_overview, id=eval_id, start=start)
+        return PartialEvaluationOverview(
+            run_overview=run_overview, id=eval_id, start=start
+        )
 
     def aggregate_evaluation(
-        self, evaluation_overview: EvaluationOverview
-    ) -> EvaluationRunOverview[AggregatedEvaluation]:
+        self, evaluation_overview: PartialEvaluationOverview
+    ) -> EvaluationOverview[AggregatedEvaluation]:
         """Aggregates all evaluations into an overview that includes high-level statistics.
 
         Aggregates :class:`Evaluation`s according to the implementation of :func:`BaseEvaluator.aggregate`.
@@ -456,12 +458,12 @@ class BaseEvaluator(
             lambda evaluation: not isinstance(evaluation, FailedExampleEvaluation),
         )
         statistics = self.aggregate(cast(Iterable[Evaluation], successful_evaluations))
-        run_overview = EvaluationRunOverview(
+        run_overview = EvaluationOverview(
             statistics=statistics,
-            evaluation_overview=evaluation_overview,
             end=datetime.utcnow(),
             successful_count=successful_evaluations.included_count(),
             failed_evaluation_count=successful_evaluations.excluded_count(),
+            **(evaluation_overview.model_dump()),
         )
         self._repository.store_evaluation_run_overview(run_overview)
         return run_overview
@@ -522,7 +524,7 @@ class Evaluator(
         self,
         dataset: Dataset[Input, ExpectedOutput],
         tracer: Optional[Tracer] = None,
-    ) -> EvaluationRunOverview[AggregatedEvaluation]:
+    ) -> EvaluationOverview[AggregatedEvaluation]:
         """Evaluates an entire :class:`Dataset` in a threaded manner and aggregates the results into an `AggregatedEvaluation`.
 
         This will call the `run` method for each example in the :class:`Dataset`.
