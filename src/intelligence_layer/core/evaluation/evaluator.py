@@ -37,7 +37,7 @@ class EvaluationRepository(ABC):
     def run_ids(self) -> Sequence[str]:
         """Returns the ids of all stored runs.
 
-        Having the id of a run its outputs can be retrieved with
+        Having the id of a run, its outputs can be retrieved with
         :meth:`EvaluationRepository.example_outputs`.
 
         Returns:
@@ -49,7 +49,7 @@ class EvaluationRepository(ABC):
     def eval_ids(self) -> Sequence[str]:
         """Returns the ids of all stored evaluation runs.
 
-        Having the id of an evaluation run its overview can be retrieved with
+        Having the id of an evaluation run, its overview can be retrieved with
         :meth:`EvaluationRepository.evaluation_run_overview`.
 
         Returns:
@@ -87,10 +87,23 @@ class EvaluationRepository(ABC):
 
     @abstractmethod
     def example_trace(self, run_id: str, example_id: str) -> Optional[ExampleTrace]:
+        """Returns an :class:`ExampleTrace` for an example in a run.
+
+        Args:
+            run_id: The unique identifier of the run.
+            example_id: Example identifier, will match :class:`ExampleEvaluation` identifier.
+            example_output: The actual output.
+        """
         ...
 
     @abstractmethod
     def example_tracer(self, run_id: str, example_id: str) -> Tracer:
+        """Returns a :class:`Tracer` to trace an individual example run.
+
+        Args:
+            run_id: The unique identifier of the run.
+            example_id: Example identifier, will match :class:`ExampleEvaluation` identifier.
+        """
         ...
 
     @abstractmethod
@@ -101,7 +114,7 @@ class EvaluationRepository(ABC):
 
         Args:
             eval_id: Identifier of the run to obtain the results for.
-            example_id: Identifier of the :class:`ExampleEvaluation` to be retrieved.
+            example_id: Example identifier, will match :class:`ExampleEvaluation` identifier.
             evaluation_type: Type of evaluations that the `Evaluator` returned
                 in :func:`Evaluator.do_evaluate`
 
@@ -251,13 +264,12 @@ class BaseEvaluator(
     ) -> Evaluation:
         """Executes the evaluation for this use-case.
 
-        The implementation of this method is responsible for running a :class:`Task` (usually
-        supplied by the __init__ method) and making any comparisons relevant to the evaluation.
-        Based on the results, it should create an `Evaluation` class with all the metrics and return it.
+        Responsible for comparing the input & expected output of a task to the
+        actually generated output.
 
         Args:
-            input: The input that was passed to the :class:`Task` to produce the output
-            output: Output of the :class:`Task` that shall be evaluated
+            input: The input that was passed to the :class:`Task` to produce the output.
+            output: Output of the :class:`Task` that shall be evaluated.
             expected_output: Output that is compared to the generated output.
 
         Returns:
@@ -265,9 +277,38 @@ class BaseEvaluator(
         """
         pass
 
+    @abstractmethod
+    def aggregate(self, evaluations: Iterable[Evaluation]) -> AggregatedEvaluation:
+        """`Evaluator`-specific method for aggregating individual `Evaluations` into report-like `Aggregated Evaluation`.
+
+        This method is responsible for taking the results of an evaluation run and aggregating all the results.
+        It should create an `AggregatedEvaluation` class and return it at the end.
+
+        Args:
+            evalautions: The results from running `evaluate_dataset` with a :class:`Task`.
+
+        Returns:
+            The aggregated results of an evaluation run with a :class:`Dataset`.
+        """
+        pass
+
     def run_dataset(
         self, dataset: Dataset[Input, ExpectedOutput], tracer: Optional[Tracer] = None
     ) -> RunOverview:
+        """Generates all outputs for the provided dataset.
+
+        Will run each :class:`Example` provided in the dataset through the :class:`Task`.
+
+        Args:
+            dataset: The :class:`Dataset` to generate output for. Consists of examples, each
+                with an :class:`Input` and an :class:`ExpectedOutput` (can be None).
+            output: Output of the :class:`Task` that shall be evaluated
+
+        Returns:
+            An overview of the run. Outputs will not be returned but instead stored in the
+            :class:`EvaluationRepository` provided in the __init__.
+        """
+
         def run(example: Example[Input, ExpectedOutput]) -> Output | FailedExampleRun:
             evaluate_tracer = self._repository.example_tracer(run_id, example.id)
             if tracer:
@@ -305,6 +346,25 @@ class BaseEvaluator(
     def evaluate_run(
         self, dataset: Dataset[Input, ExpectedOutput], run_overview: RunOverview
     ) -> EvaluationOverview:
+        """Evaluates all generated outputs in the run.
+
+        For each example in the dataset & its corresponding (generated) output,
+        :func:`BaseEvaluator.do_evaluate` is called and eval metrics are produced &
+        stored in the provided :class:`EvaluationRepository`.
+
+        Args:
+            dataset: The :class:`Dataset` the outputs were generated for. Consists of
+                examples, each with an :class:`Input` and an :class:`ExpectedOutput`
+                (can be None).
+            run_overview: An overview of the run to be evaluated. Does not include
+                outputs as these will be retrieved from the repository.
+
+        Returns:
+            An overview of the evaluation. Individual :class:`Evaluation`s will not be
+            returned but instead stored in the :class:`EvaluationRepository` provided in the
+            __init__.
+        """
+
         eval_id = str(uuid4())
         start = datetime.utcnow()
         successful_count = 0
@@ -320,9 +380,11 @@ class BaseEvaluator(
             example = dataset.example(example_output.example_id)
             assert example
             assert not isinstance(example_output.output, FailedExampleRun)
-            # TODO this will eventually produce a side-effect as in case of human eval
-            # the result will not be available (but maybe next step)
             try:
+                # TODO this will eventually produce a side-effect as in case of human eval
+                # the result will not be available (but maybe next step)
+                # here, the do_evaluate would have to do the storing
+                # potentially use wrapper as before
                 result: Evaluation | FailedExampleEvaluation = self.do_evaluate(
                     example.input, example_output.output, example.expected_output
                 )
@@ -345,6 +407,18 @@ class BaseEvaluator(
     def aggregate_evaluation(
         self, evaluation_overview: EvaluationOverview
     ) -> EvaluationRunOverview[AggregatedEvaluation]:
+        """Aggregates all evaluations into an overview that includes high-level statistics.
+
+        Aggregates :class:`Evaluation`s according to the implementation of :func:`BaseEvaluator.aggregate`.
+
+        Args:
+            evaluation_overview: An overview of the evaluation to be aggregated. Does not include
+                actual evaluations as these will be retrieved from the repository.
+
+        Returns:
+            An overview of the aggregated evaluation.
+        """
+
         example_results = self._repository.example_evaluations(
             evaluation_overview.id, self.evaluation_type()
         )
@@ -363,20 +437,6 @@ class BaseEvaluator(
         )
         self._repository.store_evaluation_run_overview(run_overview)
         return run_overview
-
-    @abstractmethod
-    def aggregate(self, evaluations: Iterable[Evaluation]) -> AggregatedEvaluation:
-        """`Evaluator`-specific method for aggregating individual `Evaluations` into report-like `Aggregated Evaluation`.
-
-        This method is responsible for taking the results of an evaluation run and aggregating all the results.
-        It should create an `AggregatedEvaluation` class and return it at the end.
-
-        Args:
-            evalautions: The results from running `evaluate_dataset` with a :class:`Task`.
-        Returns:
-            The aggregated results of an evaluation run with a :class:`Dataset`.
-        """
-        pass
 
 
 class Evaluator(
