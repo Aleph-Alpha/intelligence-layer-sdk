@@ -1,6 +1,6 @@
 from intelligence_layer.core.intelligence_app import IntelligenceApp as IntelligenceApp
 from intelligence_layer.core.intelligence_app import (
-    InvalidTaskError as InvalidTaskError,
+    RegisterTaskError as RegisterTaskError,
 )
 
 from .chunk import Chunk as Chunk
