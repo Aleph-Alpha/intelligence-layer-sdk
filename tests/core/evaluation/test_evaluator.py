@@ -1,7 +1,7 @@
 from typing import Iterable, Literal, Sequence, TypeAlias
 
 from pydantic import BaseModel
-from pytest import fixture
+from pytest import fixture, raises
 
 from intelligence_layer.core import (
     Evaluator,
@@ -61,10 +61,24 @@ class DummyEvaluator(
         return AggregatedDummyEvaluation(results=list(evaluations))
 
 
+class DummyEvaluatorWithoutTypeHints(DummyEvaluator):
+    # type hint for return value missing on purpose for testing
+    def do_evaluate(  # type: ignore
+        self, input: DummyTaskInput, output: DummyTaskOutput, expected_output: None
+    ):
+        return super().do_evaluate(input, output, expected_output)
+
+
 class DummyTask(Task[DummyTaskInput, DummyTaskOutput]):
     def do_run(self, input: DummyTaskInput, tracer: Tracer) -> DummyTaskOutput:
         if input == "fail in task":
             raise RuntimeError(input)
+        return input
+
+
+class DummyTaskWithoutTypeHints(Task[DummyTaskInput, DummyTaskOutput]):
+    # type hint for return value missing on purpose for testing
+    def do_run(self, input: DummyTaskInput, tracer: Tracer):  # type: ignore
         return input
 
 
@@ -220,3 +234,21 @@ def test_evaluate_dataset_stores_aggregated_results(
     )
 
     assert evaluation_run_overview == loaded_evaluation_run_overview
+
+
+def test_output_type_raises_if_do_run_does_not_have_type_hints(
+    evaluation_repository: InMemoryEvaluationRepository,
+) -> None:
+    dummy_evaluator = DummyEvaluator(DummyTaskWithoutTypeHints(), evaluation_repository)
+
+    with raises(TypeError):
+        dummy_evaluator.output_type()
+
+
+def test_evaluation_type_raises_if_do_evaluate_does_not_have_type_hints(
+    evaluation_repository: InMemoryEvaluationRepository,
+) -> None:
+    dummy_evaluator = DummyEvaluatorWithoutTypeHints(DummyTask(), evaluation_repository)
+
+    with raises(TypeError):
+        dummy_evaluator.evaluation_type()
