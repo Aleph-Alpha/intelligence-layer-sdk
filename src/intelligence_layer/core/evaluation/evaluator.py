@@ -209,6 +209,14 @@ class BaseEvaluator(
         self._repository = repository
 
     def output_type(self) -> type[Output]:
+        """Returns the type of the evaluated task's output.
+
+        This can be used to retrieve properly typed outputs of an evaluation run
+        from a :class:`EvaluationRepository`
+
+        Returns:
+            the type of the evaluated task's output.
+        """
         output_type = get_annotations(self._task.do_run).get("return", None)
         if not output_type:
             raise TypeError(
@@ -218,6 +226,14 @@ class BaseEvaluator(
         return cast(type[Output], output_type)
 
     def evaluation_type(self) -> type[Evaluation]:
+        """Returns the type of the evaluation result of an example.
+
+        This can be used to retrieve properly typed evaluations of an evaluation run
+        from a :class:`EvaluationRepository`
+
+        Returns:
+            Returns the type of the evaluation result of an example.
+        """
         evaluation_type = get_annotations(self.do_evaluate).get("return", None)
         if not evaluation_type:
             raise TypeError(
