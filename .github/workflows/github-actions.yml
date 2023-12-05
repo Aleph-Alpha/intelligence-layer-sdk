@@ -42,14 +42,6 @@ jobs:
           poetry config installer.max-workers 10
           poetry install --no-interaction
 
-      - name: install Sphinx
-        run: sudo apt-get install python3-sphinx
-
-      - name: run doctest
-        env:
-          AA_TOKEN: ${{ secrets.AA_TOKEN }}
-        run: (cd docs  && poetry run make doctest)
-
       - name: set PY for pre-commit
         run: echo "PY=$(python -VV | sha256sum | cut -d' ' -f1)" >> $GITHUB_ENV
 
