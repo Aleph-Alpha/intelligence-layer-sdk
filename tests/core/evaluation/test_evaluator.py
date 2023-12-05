@@ -1,6 +1,5 @@
-from typing import Iterable, Literal, Sequence, TypeAlias
+from typing import Iterable, Literal, TypeAlias
 
-from pydantic import BaseModel
 from pytest import fixture, raises
 
 from intelligence_layer.core import (
