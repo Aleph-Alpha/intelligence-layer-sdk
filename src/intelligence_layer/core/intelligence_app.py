@@ -1,15 +1,13 @@
-from abc import ABC
+from abc import ABC, abstractmethod
 from inspect import get_annotations
-from typing import Annotated, Sequence
+from typing import Annotated
 
-from fastapi import Body, FastAPI
+from fastapi import Body, Depends, FastAPI, HTTPException, status
+from fastapi.security import HTTPBasic, HTTPBasicCredentials
 from uvicorn import run
 
 from intelligence_layer.core.task import Input, Output, Task
 from intelligence_layer.core.tracer import NoOpTracer, TaskSpan
-
-from fastapi.openapi.models import SecurityBase as SecurityBaseModel
-from fastapi import Depends
 
 
 class InvalidTaskError(TypeError):
@@ -20,12 +18,25 @@ class InvalidTaskError(TypeError):
         self.message = message
 
 
-class UnauthenticatedException(RuntimeError):
-    """Error raised for unauthenticated requests."""
+class AuthService(ABC):
+    @abstractmethod
+    def get_permissions(
+        self,
+        credentials: Annotated[
+            HTTPBasicCredentials, Depends(HTTPBasic(auto_error=False))
+        ],
+    ) -> frozenset[str]:
+        ...
 
-    def __init__(self, message: str) -> None:
-        super().__init__(message)
-        self.message = message
+
+class NoAuthService(AuthService):
+    def get_permissions(
+        self,
+        credentials: Annotated[
+            HTTPBasicCredentials, Depends(HTTPBasic(auto_error=False))
+        ],
+    ) -> frozenset[str]:
+        return frozenset({})
 
 
 class IntelligenceApp:
@@ -40,13 +51,13 @@ class IntelligenceApp:
 
     def __init__(self, fast_api_app: FastAPI) -> None:
         self._fast_api_app = fast_api_app
-        self._auth: list[SecurityBaseModel] = []
+        self._auth_service: AuthService = NoAuthService()
 
     def register_task(
         self,
         task: Task[Input, Output],
         path: str,
-        required_permissions: Sequence[str] = [],
+        required_permissions: frozenset[str] = frozenset(),
     ) -> None:
         """Registers a task to your application.
 
@@ -97,8 +108,14 @@ class IntelligenceApp:
         assert input_type
 
         @self._fast_api_app.post(path)
-        def task_route(input: Annotated[input_type, Body()], scopes: Depends(str, self.auth())) -> Output:  # type: ignore
-            return task.run(input, NoOpTracer())
+        def task_route(input: Annotated[input_type, Body()], permissions: Annotated[frozenset[str], Depends(self._auth_service.get_permissions)]) -> Output:  # type: ignore
+            if required_permissions <= permissions:
+                return task.run(input, NoOpTracer())
+            else:
+                raise HTTPException(
+                    status_code=status.HTTP_401_UNAUTHORIZED,
+                    detail="No permission rights",
+                )
 
     def serve(self, host: str = "127.0.0.1", port: int = 8000) -> None:
         """This starts the application.
@@ -109,5 +126,5 @@ class IntelligenceApp:
         """
         run(self._fast_api_app, host=host, port=port)
 
-    def register_auth(self, auth: SecurityBaseModel) -> None:
-        self._auth.append(auth)
+    def register_auth(self, auth_service: AuthService) -> None:
+        self._auth_service = auth_service
