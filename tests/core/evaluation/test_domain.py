@@ -13,11 +13,10 @@ from intelligence_layer.core import (
 )
 from intelligence_layer.core.evaluation.domain import (
     EvaluationFailed,
-    EvaluationOverview,
     EvaluationRunOverview,
-    RunOverview,
     _to_trace_entry,
 )
+from tests.core.evaluation.conftest import DummyAggregatedEvaluation
 
 
 def test_to_trace_entry() -> None:
@@ -61,30 +60,8 @@ def test_deserialize_task_trace() -> None:
     assert trace.model_validate_json(trace.model_dump_json()) == trace
 
 
-class StatisticsDummy(BaseModel):
-    result: str
-
-
-def test_raise_on_exception_for_evaluation_run_overview() -> None:
-    now = datetime.now()
-    overview = EvaluationRunOverview(
-        evaluation_overview=EvaluationOverview(
-            id="eval-id",
-            run_overview=RunOverview(
-                dataset_name="dataset",
-                id="run-id",
-                start=now,
-                end=now,
-                failed_example_count=0,
-                successful_example_count=0,
-            ),
-            failed_evaluation_count=1,
-            successful_evaluation_count=0,
-            start=now,
-            end=now,
-        ),
-        statistics=StatisticsDummy(result="result"),
-    )
-
+def test_raise_on_exception_for_evaluation_run_overview(
+    evaluation_run_overview: EvaluationRunOverview[DummyAggregatedEvaluation],
+) -> None:
     with raises(EvaluationFailed):
-        overview.raise_on_evaluation_failure()
+        evaluation_run_overview.raise_on_evaluation_failure()
