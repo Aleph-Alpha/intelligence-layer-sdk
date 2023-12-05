@@ -1,0 +1,71 @@
+from datetime import datetime
+from typing import Sequence
+
+from pydantic import BaseModel
+from pytest import fixture
+
+from intelligence_layer.core.evaluation.domain import (
+    EvaluationOverview,
+    EvaluationRunOverview,
+    ExampleEvaluation,
+    FailedExampleEvaluation,
+    RunOverview,
+)
+
+
+class DummyEvaluation(BaseModel):
+    result: str
+
+
+class DummyAggregatedEvaluation(BaseModel):
+    score: float
+
+
+class DummyAggregatedEvaluationWithResultList(BaseModel):
+    results: Sequence[DummyEvaluation]
+
+
+@fixture
+def failed_example_result() -> ExampleEvaluation[DummyEvaluation]:
+    return ExampleEvaluation(
+        example_id="other",
+        result=FailedExampleEvaluation(error_message="error"),
+    )
+
+
+@fixture
+def successful_example_result() -> ExampleEvaluation[DummyEvaluation]:
+    return ExampleEvaluation(
+        example_id="example_id",
+        result=DummyEvaluation(result="result"),
+    )
+
+
+@fixture
+def dummy_aggregated_evaluation() -> DummyAggregatedEvaluation:
+    return DummyAggregatedEvaluation(score=0.5)
+
+
+@fixture
+def evaluation_run_overview(
+    dummy_aggregated_evaluation: DummyAggregatedEvaluation,
+) -> EvaluationRunOverview[DummyAggregatedEvaluation]:
+    now = datetime.now()
+    return EvaluationRunOverview(
+        evaluation_overview=EvaluationOverview(
+            id="eval-id",
+            run_overview=RunOverview(
+                dataset_name="dataset",
+                id="run-id",
+                start=now,
+                end=now,
+                failed_example_count=0,
+                successful_example_count=0,
+            ),
+            failed_evaluation_count=3,
+            successful_evaluation_count=5,
+            start=now,
+            end=now,
+        ),
+        statistics=DummyAggregatedEvaluation(score=0.5),
+    )

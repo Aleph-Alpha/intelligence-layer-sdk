@@ -14,20 +14,11 @@ from intelligence_layer.core import (
     TaskSpanTrace,
 )
 from intelligence_layer.core.evaluation.domain import (
-    EvaluationOverview,
     EvaluationRunOverview,
     ExampleOutput,
-    RunOverview,
 )
 from intelligence_layer.core.tracer import CompositeTracer, InMemoryTracer
-
-
-class DummyEvaluation(BaseModel):
-    result: str
-
-
-class DummyAggregatedEvaluation(BaseModel):
-    score: float
+from tests.core.evaluation.conftest import DummyAggregatedEvaluation, DummyEvaluation
 
 
 class DummyEvaluationWithExceptionStructure(BaseModel):
@@ -47,28 +38,12 @@ def task_span_trace() -> TaskSpanTrace:
 
 
 @fixture
-def successful_example_result() -> ExampleEvaluation[DummyEvaluation]:
-    return ExampleEvaluation(
-        example_id="example_id",
-        result=DummyEvaluation(result="result"),
-    )
-
-
-@fixture
 def example_trace(
     task_span_trace: TaskSpanTrace,
 ) -> ExampleTrace:
     return ExampleTrace(
         example_id="example_id",
         trace=task_span_trace,
-    )
-
-
-@fixture
-def failed_example_result() -> ExampleEvaluation[DummyEvaluation]:
-    return ExampleEvaluation(
-        example_id="other",
-        result=FailedExampleEvaluation(error_message="error"),
     )
 
 
@@ -209,34 +184,14 @@ def test_file_repository_returns_empty_sequence_for_non_existing_run_id(
 
 def test_file_repository_stores_overview(
     file_evaluation_repository: FileEvaluationRepository,
+    evaluation_run_overview: EvaluationRunOverview[DummyAggregatedEvaluation],
 ) -> None:
-    now = datetime.now()
-    overview = EvaluationRunOverview(
-        evaluation_overview=EvaluationOverview(
-            id="eval-id",
-            run_overview=RunOverview(
-                dataset_name="dataset",
-                id="run-id",
-                start=now,
-                end=now,
-                failed_example_count=0,
-                successful_example_count=0,
-            ),
-            failed_evaluation_count=3,
-            successful_evaluation_count=5,
-            start=now,
-            end=now,
-        ),
-        statistics=DummyAggregatedEvaluation(score=0.5),
-    )
-
-    file_evaluation_repository.store_evaluation_run_overview(overview)
-
+    file_evaluation_repository.store_evaluation_run_overview(evaluation_run_overview)
     assert (
         file_evaluation_repository.evaluation_run_overview(
-            overview.id, DummyAggregatedEvaluation
+            evaluation_run_overview.id, DummyAggregatedEvaluation
         )
-        == overview
+        == evaluation_run_overview
     )
 
 
