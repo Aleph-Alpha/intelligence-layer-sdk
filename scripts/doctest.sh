@@ -4,7 +4,4 @@ ProjectRoot="$(cd $(dirname "$0")/.. && pwd -P)"
 
 cd "$ProjectRoot"
 
-./scripts/lint.sh
-./scripts/doctest.sh
-./scripts/notebook_runner.sh
-./scripts/test.sh
+(cd docs && poetry run make doctest)
