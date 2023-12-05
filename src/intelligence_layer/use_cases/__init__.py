@@ -25,7 +25,7 @@ from .classify.keyword_extract import (
 )
 from .classify.prompt_based_classify import PromptBasedClassify as PromptBasedClassify
 from .intelligence_starter_app import (
-    intelligence_starter_app as intelligence_starter_app,
+    IntelligenceStarterApp as IntelligenceStarterApp,
 )
 from .qa.long_context_qa import LongContextQa as LongContextQa
 from .qa.long_context_qa import LongContextQaInput as LongContextQaInput

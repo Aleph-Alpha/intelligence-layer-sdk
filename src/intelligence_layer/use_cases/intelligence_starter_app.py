@@ -15,17 +15,16 @@ from intelligence_layer.use_cases.summarize.long_context_high_compression_summar
 )
 
 
-def intelligence_starter_app(
-    fast_api: FastAPI, aleph_alpha_client: Client
-) -> IntelligenceApp:
-    app = IntelligenceApp(fast_api)
-    prompt_based_classify = PromptBasedClassify(aleph_alpha_client)
-    app.register_task(prompt_based_classify, "/classify")
-    long_chunk_qa = LongContextQa(aleph_alpha_client)
-    app.register_task(long_chunk_qa, "/qa")
-    summarize = LongContextHighCompressionSummarize(aleph_alpha_client)
-    app.register_task(summarize, "/summarize")
-    return app
+class IntelligenceStarterApp(IntelligenceApp):
+    def __init__(self, fast_api_app: FastAPI, client: Client) -> None:
+        super().__init__(fast_api_app)
+        prompt_based_classify = PromptBasedClassify(client)
+        self.register_task(prompt_based_classify, "/classify")
+        long_chunk_qa = LongContextQa(client)
+        self.register_task(long_chunk_qa, "/qa")
+        summarize = LongContextHighCompressionSummarize(client)
+        self.register_task(summarize, "/summarize")
+
 
 
 def main() -> None:
@@ -34,7 +33,7 @@ def main() -> None:
     assert aa_token
     client = LimitedConcurrencyClient(aa_token)
     fast_api = FastAPI()
-    app = intelligence_starter_app(fast_api, client)
+    app = IntelligenceStarterApp(fast_api, client)
     app.serve()
 
 
