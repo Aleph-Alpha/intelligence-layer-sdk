@@ -258,9 +258,6 @@ class EvaluationOverview(BaseModel):
     run_overview: RunOverview
     id: str
     start: Optional[datetime]
-    end: Optional[datetime]
-    failed_evaluation_count: int
-    successful_evaluation_count: int
 
 
 class EvaluationFailed(Exception):
@@ -282,6 +279,9 @@ class EvaluationRunOverview(BaseModel, Generic[AggregatedEvaluation]):
 
     evaluation_overview: EvaluationOverview
     statistics: SerializeAsAny[AggregatedEvaluation]
+    end: Optional[datetime]
+    failed_evaluation_count: int
+    successful_count: int
 
     @property
     def id(self) -> str:
@@ -294,13 +294,9 @@ class EvaluationRunOverview(BaseModel, Generic[AggregatedEvaluation]):
     @property
     def failed_count(self) -> int:
         return (
-            self.evaluation_overview.failed_evaluation_count
+            self.failed_evaluation_count
             + self.evaluation_overview.run_overview.failed_example_count
         )
-
-    @property
-    def successful_count(self) -> int:
-        return self.evaluation_overview.successful_evaluation_count
 
     def raise_on_evaluation_failure(self) -> None:
         if self.failed_count > 0:

@@ -2,7 +2,17 @@ from abc import ABC, abstractmethod
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime
 from inspect import get_annotations
-from typing import Generic, Iterable, Optional, Sequence, cast, final
+from typing import (
+    Callable,
+    Generic,
+    Iterable,
+    Iterator,
+    Optional,
+    Sequence,
+    TypeVar,
+    cast,
+    final,
+)
 from uuid import uuid4
 
 from tqdm import tqdm
@@ -195,6 +205,36 @@ class EvaluationRepository(ABC):
         ...
 
 
+T = TypeVar("T")
+
+
+class CountingFilterIterable(Iterable[T]):
+    def __init__(
+        self, wrapped_iterable: Iterable[T], filter: Callable[[T], bool]
+    ) -> None:
+        self._wrapped_iterator = iter(wrapped_iterable)
+        self._filter = filter
+        self._included_count = 0
+        self._excluded_count = 0
+
+    def __next__(self) -> T:
+        e = next(self._wrapped_iterator)
+        while not self._filter(e):
+            self._excluded_count += 1
+            e = next(self._wrapped_iterator)
+        self._included_count += 1
+        return e
+
+    def __iter__(self) -> Iterator[T]:
+        return self
+
+    def included_count(self) -> int:
+        return self._included_count
+
+    def excluded_count(self) -> int:
+        return self._excluded_count
+
+
 class BaseEvaluator(
     ABC, Generic[Input, Output, ExpectedOutput, Evaluation, AggregatedEvaluation]
 ):
@@ -367,8 +407,6 @@ class BaseEvaluator(
 
         eval_id = str(uuid4())
         start = datetime.utcnow()
-        successful_count = 0
-        failed_count = 0
         successful_output_iter = (
             output
             for output in self._repository.example_outputs(
@@ -388,21 +426,12 @@ class BaseEvaluator(
                 result: Evaluation | FailedExampleEvaluation = self.do_evaluate(
                     example.input, example_output.output, example.expected_output
                 )
-                successful_count += 1
             except Exception as e:
                 result = FailedExampleEvaluation.from_exception(e)
-                failed_count += 1
             self._repository.store_example_evaluation(
                 eval_id, ExampleEvaluation(example_id=example.id, result=result)
             )
-        return EvaluationOverview(
-            run_overview=run_overview,
-            id=eval_id,
-            start=start,
-            end=datetime.utcnow(),
-            failed_evaluation_count=failed_count,
-            successful_evaluation_count=successful_count,
-        )
+        return EvaluationOverview(run_overview=run_overview, id=eval_id, start=start)
 
     def aggregate_evaluation(
         self, evaluation_overview: EvaluationOverview
@@ -419,21 +448,20 @@ class BaseEvaluator(
             An overview of the aggregated evaluation.
         """
 
-        example_results = self._repository.example_evaluations(
+        example_evaluations = self._repository.example_evaluations(
             evaluation_overview.id, self.evaluation_type()
         )
-
-        statistics = self.aggregate(
-            (
-                example_result.result
-                for example_result in example_results
-                if not isinstance(example_result.result, FailedExampleEvaluation)
-            )
+        successful_evaluations = CountingFilterIterable(
+            (example_eval.result for example_eval in example_evaluations),
+            lambda evaluation: not isinstance(evaluation, FailedExampleEvaluation),
         )
-
+        statistics = self.aggregate(cast(Iterable[Evaluation], successful_evaluations))
         run_overview = EvaluationRunOverview(
-            evaluation_overview=evaluation_overview,
             statistics=statistics,
+            evaluation_overview=evaluation_overview,
+            end=datetime.utcnow(),
+            successful_count=successful_evaluations.included_count(),
+            failed_evaluation_count=successful_evaluations.excluded_count(),
         )
         self._repository.store_evaluation_run_overview(run_overview)
         return run_overview

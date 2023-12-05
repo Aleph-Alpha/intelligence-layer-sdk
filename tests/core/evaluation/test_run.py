@@ -88,7 +88,7 @@ def test_run_evaluation(tmp_path: Path) -> None:
     assert len(eval_ids) == 1
     overview = repository.evaluation_run_overview(eval_ids[0], DummyAggregation)
     assert overview
-    assert overview.evaluation_overview.successful_evaluation_count == 1
+    assert overview.successful_count == 1
 
 
 def test_run_evaluation_with_task_with_client(tmp_path: Path) -> None:

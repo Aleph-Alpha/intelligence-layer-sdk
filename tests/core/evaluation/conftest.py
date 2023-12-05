@@ -62,10 +62,10 @@ def evaluation_run_overview(
                 failed_example_count=0,
                 successful_example_count=0,
             ),
-            failed_evaluation_count=3,
-            successful_evaluation_count=5,
             start=now,
-            end=now,
         ),
+        end=now,
+        failed_evaluation_count=3,
+        successful_count=5,
         statistics=DummyAggregatedEvaluation(score=0.5),
     )
