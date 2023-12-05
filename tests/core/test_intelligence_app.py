@@ -9,7 +9,7 @@ from requests.auth import HTTPBasicAuth
 
 from intelligence_layer.core import (
     IntelligenceApp,
-    InvalidTaskError,
+    RegisterTaskError,
     Task,
 )
 from intelligence_layer.core.intelligence_app import AuthService
@@ -60,11 +60,8 @@ class DummyTask2(Task[int, DummyOutput2]):
 class FakeUserService(AuthService):
     def get_permissions(
         self,
-        credentials: Annotated[
-            HTTPBasicCredentials, Depends(HTTPBasic(auto_error=False))
-        ],
+        credentials: Annotated[HTTPBasicCredentials, Depends(HTTPBasic())],
     ) -> frozenset[str]:
-        print("hello")
         if credentials.password == "password":
             return frozenset({"admin"})
         else:
@@ -145,13 +142,30 @@ def test_serve_task_if_not_enough_permissions(
     assert output.status_code == status.HTTP_401_UNAUTHORIZED
 
 
-def test_serve_task_throws_error_if_task_untyped(
+def test_serve_task_if_register_different_authentication(
     intelligence_app: IntelligenceApp,
 ) -> None:
     path = "/path"
+    intelligence_app.register_task(
+        DummyTask(), path, required_permissions=frozenset({"admin"})
+    )
+    client = TestClient(intelligence_app._fast_api_app)
+    task_input = DummyInput(text="something")
+    auth = HTTPBasicAuth("username", "password")
 
-    with raises(InvalidTaskError) as error:
-        intelligence_app.register_task(UntypedTask(), path)
+    output1 = client.post(path, json=task_input.model_dump(mode="json"), auth=auth)
+    intelligence_app.register_auth(FakeUserService())
+    output2 = client.post(path, json=task_input.model_dump(mode="json"), auth=auth)
+
+    assert output1.status_code == status.HTTP_401_UNAUTHORIZED
+    assert output2.status_code == status.HTTP_401_UNAUTHORIZED
+
+
+def test_serve_task_throws_error_if_task_untyped(
+    intelligence_app: IntelligenceApp,
+) -> None:
+    with raises(RegisterTaskError) as error:
+        intelligence_app.register_task(UntypedTask(), "/path")
 
     assert (
         error.value.message
@@ -162,10 +176,8 @@ def test_serve_task_throws_error_if_task_untyped(
 def test_serve_task_throws_error_if_no_task_span_type(
     intelligence_app: IntelligenceApp,
 ) -> None:
-    path = "/path"
-
-    with raises(InvalidTaskError) as error:
-        intelligence_app.register_task(TaskWithoutTaskSpanType(), path)
+    with raises(RegisterTaskError) as error:
+        intelligence_app.register_task(TaskWithoutTaskSpanType(), "/path")
 
     assert (
         error.value.message
@@ -176,11 +188,20 @@ def test_serve_task_throws_error_if_no_task_span_type(
 def test_serve_task_throws_error_if_input_is_taskspan(
     intelligence_app: IntelligenceApp,
 ) -> None:
-    path = "/path"
-
-    with raises(InvalidTaskError) as error:
-        intelligence_app.register_task(TaskWithTaskSpanAsInput(), path)  # type: ignore
+    with raises(RegisterTaskError) as error:
+        intelligence_app.register_task(TaskWithTaskSpanAsInput(), "/path")  # type: ignore
     assert (
         error.value.message
         == "The task `do_run` method cannot have a `TaskSpan` type as input."
+    )
+
+
+def test_register_with_required_permissions_without_auth_throws_error(
+    intelligence_app: IntelligenceApp,
+) -> None:
+    with raises(RegisterTaskError) as error:
+        intelligence_app.register_task(DummyTask(), "/path", frozenset({"admin"}))
+    assert (
+        error.value.message
+        == "Can't register task with required permissions without authentication registered.\nDon't forget that the order of registering tasks and authentication matters."
     )

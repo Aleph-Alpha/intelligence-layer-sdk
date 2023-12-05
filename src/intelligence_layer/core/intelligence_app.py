@@ -4,13 +4,14 @@ from typing import Annotated
 
 from fastapi import Body, Depends, FastAPI, HTTPException, status
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
+from fastapi.security.base import SecurityBase
+from pydantic import BaseModel
 from uvicorn import run
-
 from intelligence_layer.core.task import Input, Output, Task
 from intelligence_layer.core.tracer import NoOpTracer, TaskSpan
 
 
-class InvalidTaskError(TypeError):
+class RegisterTaskError(TypeError):
     """Error raised when incorrectly initialising a task for an IntelligenceApp."""
 
     def __init__(self, message: str) -> None:
@@ -22,9 +23,7 @@ class AuthService(ABC):
     @abstractmethod
     def get_permissions(
         self,
-        credentials: Annotated[
-            HTTPBasicCredentials, Depends(HTTPBasic(auto_error=False))
-        ],
+        credentials: Annotated[BaseModel, Depends(SecurityBase)],
     ) -> frozenset[str]:
         ...
 
@@ -32,9 +31,7 @@ class AuthService(ABC):
 class NoAuthService(AuthService):
     def get_permissions(
         self,
-        credentials: Annotated[
-            HTTPBasicCredentials, Depends(HTTPBasic(auto_error=False))
-        ],
+        _: Annotated[None, Depends(HTTPBasic(auto_error=False))],
     ) -> frozenset[str]:
         return frozenset({})
 
@@ -79,22 +76,25 @@ class IntelligenceApp:
             >>> aa_client = Client(os.getenv("AA_TOKEN"))
             >>> app.register_task(Complete(aa_client), "/complete")
         """
+        if required_permissions != frozenset() and isinstance(self._auth_service, NoAuthService):
+            raise RegisterTaskError("Can't register task with required permissions without authentication registered.\nDon't forget that the order of registering tasks and authentication matters.")
+
         annotations = get_annotations(task.do_run)
         if len(annotations) < 3:
-            raise InvalidTaskError(
+            raise RegisterTaskError(
                 "The task `do_run` method needs a type for its input, task_span and return value."
             )
         if not annotations.pop("return", None):
-            raise InvalidTaskError(
+            raise RegisterTaskError(
                 "The task `do_run` method needs a type for it's return value."
             )
         task_span_arguments = [ty for ty in annotations.values() if ty is TaskSpan]
         if len(task_span_arguments) >= 2:
-            raise InvalidTaskError(
+            raise RegisterTaskError(
                 "The task `do_run` method cannot have a `TaskSpan` type as input."
             )
         elif len(task_span_arguments) == 0:
-            raise InvalidTaskError(
+            raise RegisterTaskError(
                 "The task `do_run` method needs a `TaskSpan` type as its second argument."
             )
         input_type = next(
