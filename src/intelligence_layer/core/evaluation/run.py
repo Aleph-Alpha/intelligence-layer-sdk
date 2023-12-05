@@ -18,15 +18,6 @@ def function_from_string(fully_qualified_function_name: str) -> Any:
     return getattr(mod, func_name)
 
 
-def main(cli_args: Sequence[str]) -> None:
-    args = parse_args(cli_args)
-    repository = FileEvaluationRepository(args.target_dir)
-    task = create_task(args.task)
-    evaluator = args.evaluator(task, repository)
-    dataset = args.dataset()
-    evaluator.evaluate_dataset(dataset)
-
-
 def create_task(factory: Any) -> Any:
     try:
         return factory()
@@ -72,6 +63,15 @@ def parse_args(cli_args: Sequence[str]) -> Namespace:
     )
     args = parser.parse_args(cli_args[1:])
     return args
+
+
+def main(cli_args: Sequence[str]) -> None:
+    args = parse_args(cli_args)
+    repository = FileEvaluationRepository(args.target_dir)
+    task = create_task(args.task)
+    evaluator = args.evaluator(task, repository)
+    dataset = args.dataset()
+    evaluator.evaluate_dataset(dataset)
 
 
 if __name__ == "__main__":

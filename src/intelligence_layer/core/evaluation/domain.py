@@ -19,8 +19,8 @@ from intelligence_layer.core.tracer import (
 )
 
 ExpectedOutput = TypeVar("ExpectedOutput", bound=PydanticSerializable)
-Evaluation = TypeVar("Evaluation", bound=BaseModel)
-AggregatedEvaluation = TypeVar("AggregatedEvaluation", bound=BaseModel)
+Evaluation = TypeVar("Evaluation", bound=BaseModel, covariant=True)
+AggregatedEvaluation = TypeVar("AggregatedEvaluation", bound=BaseModel, covariant=True)
 
 
 class FailedExampleRun(BaseModel):

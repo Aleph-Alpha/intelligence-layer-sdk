@@ -36,7 +36,15 @@ from intelligence_layer.core.tracer import (
 )
 
 
-class SerializedExampleResult(BaseModel):
+class SerializedExampleEvaluation(BaseModel):
+    """A json-serialized evaluation of a single example in a dataset.
+
+    Attributes:
+        example_id: Unique identifier of the example this evaluation was created for.
+        is_exception: qill be `True` if an exception occurred during evaluation.
+        json_result: The actrual serialized evaluation result.
+    """
+
     example_id: str
     is_exception: bool
     json_result: str
@@ -44,7 +52,7 @@ class SerializedExampleResult(BaseModel):
     @classmethod
     def from_example_result(
         cls, result: ExampleEvaluation[Evaluation]
-    ) -> "SerializedExampleResult":
+    ) -> "SerializedExampleEvaluation":
         return cls(
             json_result=JsonSerializer(root=result.result).model_dump_json(),
             is_exception=isinstance(result.result, FailedExampleEvaluation),
@@ -185,7 +193,7 @@ class FileEvaluationRepository(EvaluationRepository):
         if not file_path.exists():
             return None
         content = file_path.read_text()
-        serialized_example = SerializedExampleResult.model_validate_json(content)
+        serialized_example = SerializedExampleEvaluation.model_validate_json(content)
         return serialized_example.to_example_result(evaluation_type)
 
     def example_trace(self, run_id: str, example_id: str) -> Optional[ExampleTrace]:
@@ -205,7 +213,7 @@ class FileEvaluationRepository(EvaluationRepository):
     def store_example_evaluation(
         self, eval_id: str, result: ExampleEvaluation[Evaluation]
     ) -> None:
-        serialized_result = SerializedExampleResult.from_example_result(result)
+        serialized_result = SerializedExampleEvaluation.from_example_result(result)
         self._example_result_path(eval_id, result.example_id).write_text(
             serialized_result.model_dump_json(indent=2)
         )
@@ -304,13 +312,25 @@ class TreeBuilder(BaseModel):
 
 
 class InMemoryEvaluationRepository(EvaluationRepository):
+    """An :class:`EvaluationRepository` that stores evaluation results in memory.
+
+    Preferred for quick testing or notebook use.
+    """
+
     _example_outputs: dict[
         str, list[ExampleOutput[PydanticSerializable]]
     ] = defaultdict(list)
-    _example_results: dict[str, list[str]] = defaultdict(list)
+    _example_evaluations: dict[str, list[ExampleEvaluation[BaseModel]]] = defaultdict(
+        list
+    )
     _example_traces: dict[str, InMemoryTracer] = dict()
+    _run_overviews: dict[str, EvaluationRunOverview[BaseModel]] = dict()
 
-    _run_overviews: dict[str, str] = dict()
+    def run_ids(self) -> Sequence[str]:
+        return list(self._example_outputs.keys())
+
+    def eval_ids(self) -> Sequence[str]:
+        return list(self._run_overviews.keys())
 
     def store_example_output(
         self, run_id: str, example_output: ExampleOutput[Output]
@@ -325,35 +345,6 @@ class InMemoryEvaluationRepository(EvaluationRepository):
         return (
             cast(ExampleOutput[Output], example_output)
             for example_output in self._example_outputs[run_id]
-        )
-
-    def example_evaluations(
-        self, eval_id: str, evaluation_type: type[Evaluation]
-    ) -> Sequence[ExampleEvaluation[Evaluation]]:
-        result_jsons = self._example_results.get(eval_id, [])
-        return [
-            SerializedExampleResult.model_validate_json(json_str).to_example_result(
-                evaluation_type
-            )
-            for json_str in result_jsons
-        ]
-
-    def failed_example_evaluations(
-        self, eval_id: str, evaluation_type: type[Evaluation]
-    ) -> Sequence[ExampleEvaluation[Evaluation]]:
-        results = self.example_evaluations(eval_id, evaluation_type)
-        return [r for r in results if isinstance(r.result, FailedExampleEvaluation)]
-
-    def example_evaluation(
-        self, eval_id: str, example_id: str, evaluation_type: type[Evaluation]
-    ) -> ExampleEvaluation[Evaluation] | None:
-        return next(
-            (
-                result
-                for result in self.example_evaluations(eval_id, evaluation_type)
-                if result.example_id == example_id
-            ),
-            None,
         )
 
     def example_trace(self, run_id: str, example_id: str) -> Optional[ExampleTrace]:
@@ -373,30 +364,45 @@ class InMemoryEvaluationRepository(EvaluationRepository):
         self._example_traces[f"{run_id}/{example_id}"] = tracer
         return tracer
 
-    def store_example_evaluation(
-        self, eval_id: str, result: ExampleEvaluation[Evaluation]
-    ) -> None:
-        json_result = SerializedExampleResult.from_example_result(result)
-        self._example_results[eval_id].append(json_result.model_dump_json())
+    def example_evaluation(
+        self, eval_id: str, example_id: str, evaluation_type: type[Evaluation]
+    ) -> ExampleEvaluation[Evaluation] | None:
+        return next(
+            (
+                result
+                for result in self.example_evaluations(eval_id, evaluation_type)
+                if result.example_id == example_id
+            ),
+            None,
+        )
 
-    def store_evaluation_run_overview(
-        self, overview: EvaluationRunOverview[AggregatedEvaluation]
+    def store_example_evaluation(
+        self, eval_id: str, evaluation: ExampleEvaluation[Evaluation]
     ) -> None:
-        self._run_overviews[overview.id] = overview.model_dump_json()
+        self._example_evaluations[eval_id].append(evaluation)
+
+    def example_evaluations(
+        self, eval_id: str, evaluation_type: type[Evaluation]
+    ) -> Sequence[ExampleEvaluation[Evaluation]]:
+        return [
+            cast(ExampleEvaluation[Evaluation], example_evaluation)
+            for example_evaluation in self._example_evaluations[eval_id]
+        ]
+
+    def failed_example_evaluations(
+        self, eval_id: str, evaluation_type: type[Evaluation]
+    ) -> Sequence[ExampleEvaluation[Evaluation]]:
+        results = self.example_evaluations(eval_id, evaluation_type)
+        return [r for r in results if isinstance(r.result, FailedExampleEvaluation)]
 
     def evaluation_run_overview(
         self, eval_id: str, aggregation_type: type[AggregatedEvaluation]
     ) -> EvaluationRunOverview[AggregatedEvaluation] | None:
-        loaded_json = self._run_overviews.get(eval_id)
-        # mypy doesn't accept dynamic types as type parameter
-        return (
-            EvaluationRunOverview[aggregation_type].model_validate_json(loaded_json)  # type: ignore
-            if loaded_json
-            else None
+        return cast(
+            EvaluationRunOverview[AggregatedEvaluation], self._run_overviews[eval_id]
         )
 
-    def run_ids(self) -> Sequence[str]:
-        return list(self._example_outputs.keys())
-
-    def eval_ids(self) -> Sequence[str]:
-        return list(self._run_overviews.keys())
+    def store_evaluation_run_overview(
+        self, overview: EvaluationRunOverview[AggregatedEvaluation]
+    ) -> None:
+        self._run_overviews[overview.id] = overview
