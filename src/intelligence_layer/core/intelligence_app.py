@@ -134,26 +134,6 @@ class AuthenticatedIntelligenceApp(IntelligenceApp, Generic[T]):
         path: str,
         required_permissions: frozenset[str] = frozenset(),
     ) -> None:
-        """Registers a task to your application.
-
-        Registering a task will make it available as an endpoint.
-        For technical reasons, your endpoint cannot have a `TaskSpan` as input.
-
-        Args:
-            task: The task you would like exposed.
-            path: The path your exposed endpoint will have.
-
-        Example:
-            >>> import os
-            >>> from aleph_alpha_client import Client
-            >>> from fastapi import FastAPI
-            >>> from intelligence_layer.core import Complete, IntelligenceApp
-
-            >>> fast_api = FastAPI()
-            >>> app = IntelligenceApp(fast_api)
-            >>> aa_client = Client(os.getenv("AA_TOKEN"))
-            >>> app.register_task(Complete(aa_client), "/complete", required_permissions=frozenset({"admin"}))
-        """
         input_type = self._verify_annotations(get_annotations(task.do_run))
 
         @self._fast_api_app.post(path)
