@@ -7,9 +7,7 @@ from uuid import UUID
 from pydantic import BaseModel, Field
 
 from intelligence_layer.core.evaluation.domain import (
-    AggregatedEvaluation,
     Evaluation,
-    EvaluationOverview,
     ExampleEvaluation,
     ExampleOutput,
     ExampleTrace,
@@ -17,7 +15,10 @@ from intelligence_layer.core.evaluation.domain import (
     PartialEvaluationOverview,
     TaskSpanTrace,
 )
-from intelligence_layer.core.evaluation.evaluator import EvaluationRepository
+from intelligence_layer.core.evaluation.evaluator import (
+    EvaluationOverviewType,
+    EvaluationRepository,
+)
 from intelligence_layer.core.task import Output
 from intelligence_layer.core.tracer import (
     EndSpan,
@@ -220,14 +221,13 @@ class FileEvaluationRepository(EvaluationRepository):
         )
 
     def evaluation_overview(
-        self, eval_id: str, aggregation_type: type[AggregatedEvaluation]
-    ) -> Optional[EvaluationOverview[AggregatedEvaluation]]:
+        self, eval_id: str, overview_type: type[EvaluationOverviewType]
+    ) -> EvaluationOverviewType | None:
         file_path = self._evaluation_run_overview_path(eval_id)
         if not file_path.exists():
             return None
         content = file_path.read_text()
-        # Mypy does not accept dynamic types
-        return EvaluationOverview[aggregation_type].model_validate_json(content)  # type: ignore
+        return overview_type.model_validate_json(content)
 
     def store_evaluation_overview(self, overview: PartialEvaluationOverview) -> None:
         self._evaluation_run_overview_path(overview.id).write_text(
@@ -395,11 +395,9 @@ class InMemoryEvaluationRepository(EvaluationRepository):
         return [r for r in results if isinstance(r.result, FailedExampleEvaluation)]
 
     def evaluation_overview(
-        self, eval_id: str, aggregation_type: type[AggregatedEvaluation]
-    ) -> EvaluationOverview[AggregatedEvaluation] | None:
-        return cast(
-            EvaluationOverview[AggregatedEvaluation], self._run_overviews[eval_id]
-        )
+        self, eval_id: str, overview_type: type[EvaluationOverviewType]
+    ) -> EvaluationOverviewType | None:
+        return cast(EvaluationOverviewType, self._run_overviews[eval_id])
 
     def store_evaluation_overview(self, overview: PartialEvaluationOverview) -> None:
         self._run_overviews[overview.id] = overview

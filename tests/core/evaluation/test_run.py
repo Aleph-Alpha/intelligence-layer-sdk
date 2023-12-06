@@ -14,6 +14,7 @@ from intelligence_layer.core import (
     SequenceDataset,
     Task,
 )
+from intelligence_layer.core.evaluation.domain import EvaluationOverview
 from intelligence_layer.core.evaluation.run import main
 from intelligence_layer.core.tracer import TaskSpan
 
@@ -86,7 +87,9 @@ def test_run_evaluation(tmp_path: Path) -> None:
     repository = FileEvaluationRepository(tmp_path)
     eval_ids = repository.eval_ids()
     assert len(eval_ids) == 1
-    overview = repository.evaluation_overview(eval_ids[0], DummyAggregation)
+    overview = repository.evaluation_overview(
+        eval_ids[0], EvaluationOverview[DummyAggregation]
+    )
     assert overview
     assert overview.successful_count == 1
 

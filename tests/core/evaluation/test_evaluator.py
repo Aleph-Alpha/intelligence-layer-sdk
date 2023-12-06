@@ -13,6 +13,7 @@ from intelligence_layer.core import (
     SequenceDataset,
     Tracer,
 )
+from intelligence_layer.core.evaluation.domain import EvaluationOverview
 from intelligence_layer.core.task import Task
 from tests.core.evaluation.conftest import (
     DummyAggregatedEvaluationWithResultList,
@@ -122,7 +123,7 @@ def test_evaluate_dataset_saves_overview(
     overview = dummy_evaluator.evaluate_dataset(sequence_dataset)
 
     assert overview == in_memory_evaluation_repository.evaluation_overview(
-        overview.id, DummyAggregatedEvaluationWithResultList
+        overview.id, EvaluationOverview[DummyAggregatedEvaluationWithResultList]
     )
 
 
@@ -183,13 +184,13 @@ def test_evaluate_dataset_stores_aggregated_results(
     evaluation_repository = dummy_evaluator._repository
 
     dataset: SequenceDataset[DummyTaskInput, None] = SequenceDataset(
-        name="test",
-        examples=[],
+        name="test", examples=[]
     )
 
     evaluation_run_overview = dummy_evaluator.evaluate_dataset(dataset, NoOpTracer())
     loaded_evaluation_run_overview = evaluation_repository.evaluation_overview(
-        evaluation_run_overview.id, DummyAggregatedEvaluationWithResultList
+        evaluation_run_overview.id,
+        EvaluationOverview[DummyAggregatedEvaluationWithResultList],
     )
 
     assert evaluation_run_overview == loaded_evaluation_run_overview

@@ -35,6 +35,10 @@ from intelligence_layer.core.evaluation.domain import (
 from intelligence_layer.core.task import Input, Output, Task
 from intelligence_layer.core.tracer import CompositeTracer, Tracer
 
+EvaluationOverviewType = TypeVar(
+    "EvaluationOverviewType", bound=PartialEvaluationOverview
+)
+
 
 class EvaluationRepository(ABC):
     """Base evaluation repository interface.
@@ -179,8 +183,8 @@ class EvaluationRepository(ABC):
 
     @abstractmethod
     def evaluation_overview(
-        self, eval_id: str, aggregation_type: type[AggregatedEvaluation]
-    ) -> Optional[EvaluationOverview[AggregatedEvaluation]]:
+        self, eval_id: str, overview_type: type[EvaluationOverviewType]
+    ) -> EvaluationOverviewType | None:
         """Returns an :class:`EvaluationRunOverview` of a given run by its id.
 
         Args:
@@ -437,7 +441,7 @@ class BaseEvaluator(
         return partial_overview
 
     def aggregate_evaluation(
-        self, evaluation_overview: PartialEvaluationOverview
+        self, eval_id: str
     ) -> EvaluationOverview[AggregatedEvaluation]:
         """Aggregates all evaluations into an overview that includes high-level statistics.
 
@@ -451,6 +455,13 @@ class BaseEvaluator(
             An overview of the aggregated evaluation.
         """
 
+        evaluation_overview = self._repository.evaluation_overview(
+            eval_id, PartialEvaluationOverview
+        )
+        if not evaluation_overview:
+            raise ValueError(
+                f"No PartialEvaluationOverview found for eval-id: {eval_id}"
+            )
         example_evaluations = self._repository.example_evaluations(
             evaluation_overview.id, self.evaluation_type()
         )
@@ -540,5 +551,5 @@ class Evaluator(
             The aggregated results of an evaluation run with a dataset.
         """
         run_id = self.run_dataset(dataset, tracer)
-        eval_id = self.evaluate_run(dataset, run_id)
-        return self.aggregate_evaluation(eval_id)
+        partial_evaluation_overview = self.evaluate_run(dataset, run_id)
+        return self.aggregate_evaluation(partial_evaluation_overview.id)
