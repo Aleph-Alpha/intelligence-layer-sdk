@@ -7,9 +7,7 @@ from pytest import fixture
 
 from intelligence_layer.core import Chunk, IntelligenceApp
 from intelligence_layer.use_cases.classify.classify import ClassifyInput
-from intelligence_layer.use_cases.intelligence_starter_app import (
-    IntelligenceStarterApp,
-)
+from intelligence_layer.use_cases.intelligence_starter_app import IntelligenceStarterApp
 from intelligence_layer.use_cases.qa.long_context_qa import LongContextQaInput
 from intelligence_layer.use_cases.summarize.summarize import LongContextSummarizeInput
 
