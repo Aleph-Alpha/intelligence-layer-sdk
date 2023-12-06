@@ -44,7 +44,10 @@ class ExpectTextAndTokenItemPromptCompletion(Task[CompleteInput, CompleteOutput]
         ]
         return CompleteOutput(
             response=CompletionResponse(
-                "version", completions=[CompletionResult(log_probs=log_probs)]
+                "version",
+                completions=[CompletionResult(log_probs=log_probs)],
+                num_tokens_generated=0,
+                num_tokens_prompt_total=0,
             )
         )
 

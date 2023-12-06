@@ -29,7 +29,11 @@ class ConcurrencyCountingClient:
         with self.lock:
             self.concurrency_counter -= 1
         return CompletionResponse(
-            model_version="model-version", completions=[], optimized_prompt=None
+            model_version="model-version",
+            completions=[],
+            optimized_prompt=None,
+            num_tokens_generated=0,
+            num_tokens_prompt_total=0,
         )
 
 
