@@ -128,7 +128,7 @@ def test_can_evaluate_classify(
         labels=frozenset({"positive", "negative"}),
     )
 
-    evaluation = classify_evaluator.evaluate(
+    evaluation = classify_evaluator.run_and_evaluate(
         input=classify_input,
         tracer=NoOpTracer(),
         expected_output=["positive"],

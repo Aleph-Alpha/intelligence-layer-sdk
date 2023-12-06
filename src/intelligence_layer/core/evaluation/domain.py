@@ -1,3 +1,4 @@
+from abc import ABC
 from datetime import datetime
 from json import dumps
 from typing import Generic, Iterable, Optional, Protocol, Sequence, TypeVar, Union

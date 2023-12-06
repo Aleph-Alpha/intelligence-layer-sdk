@@ -298,29 +298,7 @@ class BaseEvaluator(
         return cast(type[Evaluation], evaluation_type)
 
     @abstractmethod
-    def do_evaluate(
-        self,
-        input: Input,
-        output: Output,
-        expected_output: ExpectedOutput,
-    ) -> Evaluation:
-        """Executes the evaluation for this use-case.
-
-        Responsible for comparing the input & expected output of a task to the
-        actually generated output.
-
-        Args:
-            input: The input that was passed to the :class:`Task` to produce the output.
-            output: Output of the :class:`Task` that shall be evaluated.
-            expected_output: Output that is compared to the generated output.
-
-        Returns:
-            The metrics that come from the evaluated :class:`Task`.
-        """
-        pass
-
-    @abstractmethod
-    def evaluate_example(
+    def evaluate(
         self, example: Example[Input, ExpectedOutput], eval_id: str, output: Output
     ) -> None:
         ...
@@ -428,7 +406,7 @@ class BaseEvaluator(
             example = dataset.example(example_output.example_id)
             assert example
             assert not isinstance(example_output.output, FailedExampleRun)
-            self.evaluate_example(example, eval_id, example_output.output)
+            self.evaluate(example, eval_id, example_output.output)
 
         partial_overview = PartialEvaluationOverview(
             run_overview=run_overview, id=eval_id, start=start
@@ -507,7 +485,30 @@ class Evaluator(
     ) -> None:
         super().__init__(task, repository)
 
-    def evaluate_example(
+    @abstractmethod
+    def do_evaluate(
+        self,
+        input: Input,
+        output: Output,
+        expected_output: ExpectedOutput,
+    ) -> Evaluation:
+        """Executes the evaluation for this use-case.
+
+        Responsible for comparing the input & expected output of a task to the
+        actually generated output.
+
+        Args:
+            input: The input that was passed to the :class:`Task` to produce the output.
+            output: Output of the :class:`Task` that shall be evaluated.
+            expected_output: Output that is compared to the generated output.
+
+        Returns:
+            The metrics that come from the evaluated :class:`Task`.
+        """
+        pass
+
+    @final
+    def evaluate(
         self, example: Example[Input, ExpectedOutput], eval_id: str, output: Output
     ) -> None:
         try:
@@ -521,7 +522,7 @@ class Evaluator(
         )
 
     @final
-    def evaluate(
+    def run_and_evaluate(
         self, input: Input, expected_output: ExpectedOutput, tracer: Tracer
     ) -> Evaluation | FailedExampleEvaluation:
         """Evaluates a single example and returns an `Evaluation` or `EvaluationException`.
