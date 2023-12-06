@@ -121,7 +121,7 @@ def test_multi_label_classify_evaluator_single_example(
     classify_evaluator: MultiLabelClassifyEvaluator,
     no_op_tracer: NoOpTracer,
 ) -> None:
-    evaluation = classify_evaluator.evaluate(
+    evaluation = classify_evaluator.run_and_evaluate(
         embedding_based_classify_example.input,
         embedding_based_classify_example.expected_output,
         no_op_tracer,
