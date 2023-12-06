@@ -8,12 +8,13 @@ from pytest import fixture, raises
 from requests.auth import HTTPBasicAuth
 
 from intelligence_layer.core import (
+    AuthenticatedIntelligenceApp,
+    AuthService,
     IntelligenceApp,
     RegisterTaskError,
     Task,
+    TaskSpan,
 )
-from intelligence_layer.core.intelligence_app import AuthService
-from intelligence_layer.core.tracer import TaskSpan
 
 
 class DummyInput(BaseModel):
@@ -57,26 +58,28 @@ class DummyTask2(Task[int, DummyOutput2]):
         return DummyOutput2(number=zzz + 1)
 
 
-class StubPasswordAuthService(AuthService):
+class StubPasswordAuthService(AuthService[HTTPBasicCredentials]):
     def __init__(self, expected_password: str = "password") -> None:
         self.expected_password = expected_password
 
     def get_permissions(
         self,
+        _: frozenset[str],
         credentials: Annotated[HTTPBasicCredentials, Depends(HTTPBasic())],
-    ) -> frozenset[str]:
+    ) -> bool:
         if credentials.password == self.expected_password:
-            return frozenset({"admin"})
+            return True
         else:
-            return frozenset({})
+            return False
 
 
 @fixture
 def intelligence_app() -> IntelligenceApp:
     return IntelligenceApp(FastAPI())
 
+
 @fixture
-def password_auth_service() -> AuthService:
+def password_auth_service() -> StubPasswordAuthService:
     return StubPasswordAuthService()
 
 
@@ -99,16 +102,19 @@ def test_serve_task_can_serve_multiple_tasks(intelligence_app: IntelligenceApp) 
 
 
 def test_serve_task_refuses_if_incorrect_password(
-    intelligence_app: IntelligenceApp, password_auth_service: StubPasswordAuthService,
+    password_auth_service: StubPasswordAuthService,
 ) -> None:
     path = "/path"
-    intelligence_app.register_auth(password_auth_service)
+    intelligence_app = AuthenticatedIntelligenceApp(FastAPI(), password_auth_service)
     intelligence_app.register_task(
         DummyTask(), path, required_permissions=frozenset({"admin"})
     )
     client = TestClient(intelligence_app._fast_api_app)
     task_input = DummyInput(text="something")
-    auth = HTTPBasicAuth("username", password_auth_service.expected_password + "incorrect")
+    # We know this auth service has an expected password
+    auth = HTTPBasicAuth(
+        "username", intelligence_app._auth_service.expected_password + "incorrect"  # type: ignore
+    )
 
     output = client.post(path, json=task_input.model_dump(mode="json"), auth=auth)
 
@@ -116,10 +122,10 @@ def test_serve_task_refuses_if_incorrect_password(
 
 
 def test_serve_task_if_correct_password(
-    intelligence_app: IntelligenceApp, password_auth_service: StubPasswordAuthService,
+    password_auth_service: StubPasswordAuthService,
 ) -> None:
     path = "/path"
-    intelligence_app.register_auth(password_auth_service)
+    intelligence_app = AuthenticatedIntelligenceApp(FastAPI(), password_auth_service)
     intelligence_app.register_task(
         DummyTask(), path, required_permissions=frozenset({"admin"})
     )
@@ -130,45 +136,6 @@ def test_serve_task_if_correct_password(
     output = client.post(path, json=task_input.model_dump(mode="json"), auth=auth)
 
     assert output.status_code == status.HTTP_200_OK
-
-
-def test_serve_task_if_not_enough_permissions(
-    intelligence_app: IntelligenceApp, password_auth_service: StubPasswordAuthService,
-) -> None:
-    path = "/path"
-    intelligence_app.register_auth(password_auth_service)
-    intelligence_app.register_task(
-        DummyTask(), path, required_permissions=frozenset({"admin", "super"})
-    )
-    client = TestClient(intelligence_app._fast_api_app)
-    task_input = DummyInput(text="something")
-    auth = HTTPBasicAuth("username", password_auth_service.expected_password)
-
-    output = client.post(path, json=task_input.model_dump(mode="json"), auth=auth)
-
-    assert output.status_code == status.HTTP_401_UNAUTHORIZED
-
-
-def test_serve_task_if_register_different_authentication(
-    intelligence_app: IntelligenceApp, password_auth_service: StubPasswordAuthService,
-) -> None:
-    path = "/path"
-    client = TestClient(intelligence_app._fast_api_app)
-    task_input = DummyInput(text="something")
-    auth_service2 = StubPasswordAuthService("otherpassword")
-    auth = HTTPBasicAuth("username", password_auth_service.expected_password)
-
-    intelligence_app.register_auth(password_auth_service)
-    intelligence_app.register_task(
-        DummyTask(), path, required_permissions=frozenset({"admin"})
-    )
-
-    output1 = client.post(path, json=task_input.model_dump(mode="json"), auth=auth)
-    intelligence_app.register_auth(auth_service2)
-    output2 = client.post(path, json=task_input.model_dump(mode="json"), auth=auth)
-
-    assert output1.status_code == status.HTTP_200_OK
-    assert output2.status_code == status.HTTP_200_OK
 
 
 def test_serve_task_throws_error_if_task_untyped(
@@ -203,15 +170,4 @@ def test_serve_task_throws_error_if_input_is_taskspan(
     assert (
         error.value.message
         == "The task `do_run` method cannot have a `TaskSpan` type as input."
-    )
-
-
-def test_register_with_required_permissions_without_auth_throws_error(
-    intelligence_app: IntelligenceApp,
-) -> None:
-    with raises(RegisterTaskError) as error:
-        intelligence_app.register_task(DummyTask(), "/path", frozenset({"admin"}))
-    assert (
-        error.value.message
-        == "Can't register task with required permissions without authentication registered.\nDon't forget that the order of registering tasks and authentication matters."
     )
