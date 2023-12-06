@@ -1,3 +1,7 @@
+from intelligence_layer.core.intelligence_app import (
+    AuthenticatedIntelligenceApp as AuthenticatedIntelligenceApp,
+)
+from intelligence_layer.core.intelligence_app import AuthService as AuthService
 from intelligence_layer.core.intelligence_app import IntelligenceApp as IntelligenceApp
 from intelligence_layer.core.intelligence_app import (
     RegisterTaskError as RegisterTaskError,
@@ -58,7 +62,8 @@ from .tracer import InMemoryTaskSpan as InMemoryTaskSpan
 from .tracer import InMemoryTracer as InMemoryTracer
 from .tracer import LogEntry as LogEntry
 from .tracer import NoOpTracer as NoOpTracer
-from .tracer import Span, TaskSpan
+from .tracer import Span as Span
+from .tracer import TaskSpan as TaskSpan
 from .tracer import Tracer as Tracer
 
 __all__ = [symbol for symbol in dir()]

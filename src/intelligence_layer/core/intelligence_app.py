@@ -1,12 +1,11 @@
 from abc import ABC, abstractmethod
+from functools import partial
 from inspect import get_annotations
-from typing import Annotated, Type, TypeVar
+from typing import Annotated, Any, Generic, TypeVar
 
 from fastapi import Body, Depends, FastAPI, HTTPException, status
-from fastapi.security import HTTPBasic, HTTPBasicCredentials
-from fastapi.security.base import SecurityBase
-from pydantic import BaseModel
 from uvicorn import run
+
 from intelligence_layer.core.task import Input, Output, Task
 from intelligence_layer.core.tracer import NoOpTracer, TaskSpan
 
@@ -19,21 +18,26 @@ class RegisterTaskError(TypeError):
         self.message = message
 
 
-class AuthService(ABC):
+T = TypeVar("T")
+
+
+class AuthService(ABC, Generic[T]):
     @abstractmethod
     def get_permissions(
         self,
-        credentials: Annotated[HTTPBasicCredentials, Depends(SecurityBase)],
-    ) -> frozenset[str]:
+        required_permissions: frozenset[str],
+        credentials: Annotated[T, None],
+    ) -> bool:
         ...
 
 
-class NoAuthService(AuthService):
+class NoAuthService(AuthService[None]):
     def get_permissions(
         self,
-        _: Annotated[HTTPBasicCredentials, Depends(HTTPBasic(auto_error=False))],
-    ) -> frozenset[str]:
-        return frozenset({})
+        _: frozenset[str],
+        __: Annotated[None, Depends(lambda: None)],
+    ) -> bool:
+        return True
 
 
 class IntelligenceApp:
@@ -48,13 +52,11 @@ class IntelligenceApp:
 
     def __init__(self, fast_api_app: FastAPI) -> None:
         self._fast_api_app = fast_api_app
-        self._auth_service: AuthService = NoAuthService()
 
     def register_task(
         self,
         task: Task[Input, Output],
         path: str,
-        required_permissions: frozenset[str] = frozenset(),
     ) -> None:
         """Registers a task to your application.
 
@@ -76,14 +78,13 @@ class IntelligenceApp:
             >>> aa_client = Client(os.getenv("AA_TOKEN"))
             >>> app.register_task(Complete(aa_client), "/complete")
         """
-        if required_permissions != frozenset() and isinstance(
-            self._auth_service, NoAuthService
-        ):
-            raise RegisterTaskError(
-                "Can't register task with required permissions without authentication registered.\nDon't forget that the order of registering tasks and authentication matters."
-            )
+        input_type = self._verify_annotations(get_annotations(task.do_run))
 
-        annotations = get_annotations(task.do_run)
+        @self._fast_api_app.post(path)
+        def task_route(input: Annotated[input_type, Body()]) -> Output:  # type: ignore
+            return task.run(input, NoOpTracer())
+
+    def _verify_annotations(self, annotations: dict[str, Any]) -> Any:
         if len(annotations) < 3:
             raise RegisterTaskError(
                 "The task `do_run` method needs a type for its input, task_span and return value."
@@ -110,16 +111,7 @@ class IntelligenceApp:
             None,
         )
         assert input_type
-
-        @self._fast_api_app.post(path)
-        def task_route(input: Annotated[input_type, Body()], permissions: Annotated[frozenset[str], Depends(self._auth_service.get_permissions)]) -> Output:  # type: ignore
-            if required_permissions <= permissions:
-                return task.run(input, NoOpTracer())
-            else:
-                raise HTTPException(
-                    status_code=status.HTTP_401_UNAUTHORIZED,
-                    detail="No permission rights",
-                )
+        return input_type
 
     def serve(self, host: str = "127.0.0.1", port: int = 8000) -> None:
         """This starts the application.
@@ -130,12 +122,46 @@ class IntelligenceApp:
         """
         run(self._fast_api_app, host=host, port=port)
 
-    def register_auth(self, auth_service: AuthService) -> None:
-        """Registers authentication for the application.
 
-        All tasks registered after registering this :class:`AuthService` will have authentication based on the most recently registered AuthService.
+class AuthenticatedIntelligenceApp(IntelligenceApp, Generic[T]):
+    def __init__(self, fast_api_app: FastAPI, auth_service: AuthService[T]) -> None:
+        super().__init__(fast_api_app)
+        self._auth_service = auth_service
+
+    def register_task(
+        self,
+        task: Task[Input, Output],
+        path: str,
+        required_permissions: frozenset[str] = frozenset(),
+    ) -> None:
+        """Registers a task to your application.
+
+        Registering a task will make it available as an endpoint.
+        For technical reasons, your endpoint cannot have a `TaskSpan` as input.
 
         Args:
-            auth_service: The service used for authentication.
+            task: The task you would like exposed.
+            path: The path your exposed endpoint will have.
+
+        Example:
+            >>> import os
+            >>> from aleph_alpha_client import Client
+            >>> from fastapi import FastAPI
+            >>> from intelligence_layer.core import Complete, IntelligenceApp
+
+            >>> fast_api = FastAPI()
+            >>> app = IntelligenceApp(fast_api)
+            >>> aa_client = Client(os.getenv("AA_TOKEN"))
+            >>> app.register_task(Complete(aa_client), "/complete", required_permissions=frozenset({"admin"}))
         """
-        self._auth_service = auth_service
+        input_type = self._verify_annotations(get_annotations(task.do_run))
+
+        @self._fast_api_app.post(path)
+        def task_route(input: Annotated[input_type, Body()], allowed: Annotated[bool, Depends(partial(self._auth_service.get_permissions, required_permissions))]) -> Output:  # type: ignore
+            if allowed:
+                return task.run(input, NoOpTracer())
+            else:
+                raise HTTPException(
+                    status_code=status.HTTP_401_UNAUTHORIZED,
+                    detail="No permission rights",
+                )
