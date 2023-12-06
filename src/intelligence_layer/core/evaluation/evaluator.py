@@ -289,7 +289,7 @@ class BaseEvaluator(
         Returns:
             Returns the type of the evaluation result of an example.
         """
-        evaluation_type = get_annotations(self.do_evaluate).get("return", None)
+        evaluation_type = get_annotations(self.evaluate).get("return", None)
         if not evaluation_type:
             raise TypeError(
                 f"Evaluator of type {type(self)} must have a type-hint for the return value of do_evaluate to detect evaluation_tyoe. "

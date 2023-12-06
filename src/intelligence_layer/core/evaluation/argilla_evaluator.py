@@ -1,18 +1,24 @@
 import os
 from typing import Iterable, Optional
 
-import argilla as rg
 from pydantic import BaseModel
 
-from intelligence_layer.core.evaluation.domain import AggregatedEvaluation, Dataset, Evaluation, Example, ExpectedOutput, RemoteEvaluationClient
-from intelligence_layer.core.evaluation.evaluator import BaseEvaluator, EvaluationRepository
+from intelligence_layer.core.evaluation.domain import (
+    AggregatedEvaluation,
+    Dataset,
+    Evaluation,
+    Example,
+    ExpectedOutput,
+)
+from intelligence_layer.core.evaluation.evaluator import (
+    BaseEvaluator,
+    EvaluationRepository,
+)
 from intelligence_layer.core.task import Input, Output, Task
-
 from intelligence_layer.core.tracer import Tracer
 
 
 class ArgillaEvaluationDataset(BaseModel):
-    feedback_dataset: rg.FeedbackDataset
     name: str
     workspace: str
 
@@ -21,13 +27,9 @@ class ArgillaClient:
     def __init__(self, api_url: Optional[str], api_key: Optional[str]) -> None:
         self.api_url = api_url or os.environ["ARGILLA_API_URL"]
         self.api_key = api_key or os.environ["ARGILLA_API_KEY"]
-        rg.init(api_url=self.api_url, api_key=self.api_key)
 
-    def upload(
-        self,
-        evaluation_dataset: ArgillaEvaluationDataset
-    ) -> None:
-        evaluation_dataset.feedback_dataset.push_to_argilla(name=evaluation_dataset.name, workspace=evaluation_dataset.workspace)
+    def upload(self, evaluation_dataset: ArgillaEvaluationDataset) -> None:
+        pass
 
 
 class ArgillaEvaluator(
@@ -50,13 +52,12 @@ class ArgillaEvaluator(
         ...
 
     def aggregate(self, evaluations: Iterable[Evaluation]) -> AggregatedEvaluation:
-        # wdon't worry about this now
-        ...
+        # don't worry about this now
+        return None  # type: ignore
 
     def run_dataset_and_upload(
         dataset: Dataset[Input, ExpectedOutput],
         tracer: Optional[Tracer] = None,
         # providing feedback dataset & mapping here would be preferred (as it is stateful)
-    ):
-        
-        ...
+    ) -> str:  # should return eval_id
+        return None  # type: ignore
