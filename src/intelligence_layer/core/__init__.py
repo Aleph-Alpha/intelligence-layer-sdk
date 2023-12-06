@@ -30,9 +30,12 @@ from .evaluation.domain import LogTrace as LogTrace
 from .evaluation.domain import SequenceDataset as SequenceDataset
 from .evaluation.domain import SpanTrace as SpanTrace
 from .evaluation.domain import TaskSpanTrace as TaskSpanTrace
+from .evaluation.evaluator import BaseEvaluator as BaseEvaluator
 from .evaluation.evaluator import EvaluationRepository as EvaluationRepository
 from .evaluation.evaluator import Evaluator as Evaluator
-from .evaluation.graders import BleuGrader, RougeScores
+from .evaluation.graders import BleuGrader as BleuGrader
+from .evaluation.graders import RougeGrader as RougeGrader
+from .evaluation.graders import RougeScores as RougeScores
 from .evaluation.repository import FileEvaluationRepository as FileEvaluationRepository
 from .evaluation.repository import (
     InMemoryEvaluationRepository as InMemoryEvaluationRepository,
