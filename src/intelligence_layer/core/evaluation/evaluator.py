@@ -320,6 +320,12 @@ class BaseEvaluator(
         pass
 
     @abstractmethod
+    def evaluate_example(
+        self, example: Example[Input, ExpectedOutput], eval_id: str, output: Output
+    ) -> None:
+        ...
+
+    @abstractmethod
     def aggregate(self, evaluations: Iterable[Evaluation]) -> AggregatedEvaluation:
         """`Evaluator`-specific method for aggregating individual `Evaluations` into report-like `Aggregated Evaluation`.
 
@@ -422,19 +428,8 @@ class BaseEvaluator(
             example = dataset.example(example_output.example_id)
             assert example
             assert not isinstance(example_output.output, FailedExampleRun)
-            try:
-                # TODO this will eventually produce a side-effect as in case of human eval
-                # the result will not be available (but maybe next step)
-                # here, the do_evaluate would have to do the storing
-                # potentially use wrapper as before
-                result: Evaluation | FailedExampleEvaluation = self.do_evaluate(
-                    example.input, example_output.output, example.expected_output
-                )
-            except Exception as e:
-                result = FailedExampleEvaluation.from_exception(e)
-            self._repository.store_example_evaluation(
-                eval_id, ExampleEvaluation(example_id=example.id, result=result)
-            )
+            self.evaluate_example(example, eval_id, example_output.output)
+
         partial_overview = PartialEvaluationOverview(
             run_overview=run_overview, id=eval_id, start=start
         )
@@ -489,6 +484,9 @@ class Evaluator(
 ):
     """Evaluator that can handle automatic evaluation scenarios.
 
+    This evaluator should be used for automatic eval. A user still has to implement
+    :func:`BaseEvaluator.do_evaluate` and :func:`BaseEvaluator.aggregate`.
+
     Arguments:
         task: The task that will be evaluated.
         repository: The repository that will be used to store evaluation results.
@@ -508,6 +506,19 @@ class Evaluator(
         repository: EvaluationRepository,
     ) -> None:
         super().__init__(task, repository)
+
+    def evaluate_example(
+        self, example: Example[Input, ExpectedOutput], eval_id: str, output: Output
+    ) -> None:
+        try:
+            result: Evaluation | FailedExampleEvaluation = self.do_evaluate(
+                example.input, output, example.expected_output
+            )
+        except Exception as e:
+            result = FailedExampleEvaluation.from_exception(e)
+        self._repository.store_example_evaluation(
+            eval_id, ExampleEvaluation(example_id=example.id, result=result)
+        )
 
     @final
     def evaluate(
@@ -553,6 +564,6 @@ class Evaluator(
         Returns:
             The aggregated results of an evaluation run with a dataset.
         """
-        run_id = self.run_dataset(dataset, tracer)
-        partial_evaluation_overview = self.evaluate_run(dataset, run_id)
+        run_overview = self.run_dataset(dataset, tracer)
+        partial_evaluation_overview = self.evaluate_run(dataset, run_overview)
         return self.aggregate_evaluation(partial_evaluation_overview.id)
