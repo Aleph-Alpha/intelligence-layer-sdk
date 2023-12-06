@@ -1,4 +1,6 @@
 import os
+import re
+import requests
 from typing import Iterable, Optional, Sequence
 
 from intelligence_layer.core.evaluation.domain import (
@@ -15,23 +17,46 @@ from intelligence_layer.core.evaluation.evaluator import (
 from intelligence_layer.core.task import Input, Output, Task
 from intelligence_layer.core.tracer import Tracer
 
-# class ArgillaEvaluationDataset(BaseModel):
-#     name: str
-#     workspace: str
-
 
 class ArgillaClient:
     def __init__(
         self, api_url: Optional[str] = None, api_key: Optional[str] = None
     ) -> None:
-        self.api_url = api_url or os.environ["ARGILLA_API_URL"]
-        self.api_key = api_key or os.environ["ARGILLA_API_KEY"]
+        self.api_url: str = api_url or os.environ["ARGILLA_API_URL"]
+        self.api_key: str = api_key or os.environ["ARGILLA_API_KEY"]
+        self.headers = {
+            "accept": "application/json",
+            "X-Argilla-Api-Key": self.api_key,
+            "Content-Type": "application/json"
+        }
+
+    def _create_dataset(self, name: str, workspace_id: str, guidelines: str = "No guidelines.") -> str:
+        url = self.api_url + "api/v1/datasets"
+        data = {
+            "name": name,
+            "guidelines": guidelines,
+            "workspace_id": workspace_id,
+            "allow_extra_metadata": True
+        }
+        response = requests.post(url, json=data, headers=self.headers)
+        if response.status_code // 100 == 2:
+            return response.json()["id"]
+        elif response.status_code == 409:
+            detail = response.json()["detail"]
+            pattern = r'`([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})`'
+            return re.search(pattern, detail).group(1)
+        response.raise_for_status()
+
 
     def upload(
         self, examples: Sequence[tuple[Example[Input, ExpectedOutput], Output]]
     ) -> None:
-        pass
-
+        name = "name_test_dataset"
+        workspace_id = "15657307-9780-44e5-87ba-4ad024a49a88"
+        dataset_id = self._create_dataset(name, workspace_id)
+        fields = [
+            
+        ]
 
 class ArgillaEvaluator(
     BaseEvaluator[Input, Output, ExpectedOutput, Evaluation, AggregatedEvaluation]
