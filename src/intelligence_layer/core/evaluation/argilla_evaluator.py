@@ -1,7 +1,5 @@
 import os
-from typing import Iterable, Optional
-
-from pydantic import BaseModel
+from typing import Iterable, Optional, Sequence
 
 from intelligence_layer.core.evaluation.domain import (
     AggregatedEvaluation,
@@ -17,18 +15,21 @@ from intelligence_layer.core.evaluation.evaluator import (
 from intelligence_layer.core.task import Input, Output, Task
 from intelligence_layer.core.tracer import Tracer
 
-
-class ArgillaEvaluationDataset(BaseModel):
-    name: str
-    workspace: str
+# class ArgillaEvaluationDataset(BaseModel):
+#     name: str
+#     workspace: str
 
 
 class ArgillaClient:
-    def __init__(self, api_url: Optional[str], api_key: Optional[str]) -> None:
+    def __init__(
+        self, api_url: Optional[str] = None, api_key: Optional[str] = None
+    ) -> None:
         self.api_url = api_url or os.environ["ARGILLA_API_URL"]
         self.api_key = api_key or os.environ["ARGILLA_API_KEY"]
 
-    def upload(self, evaluation_dataset: ArgillaEvaluationDataset) -> None:
+    def upload(
+        self, examples: Sequence[tuple[Example[Input, ExpectedOutput], Output]]
+    ) -> None:
         pass
 
 
