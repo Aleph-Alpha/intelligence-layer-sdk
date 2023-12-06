@@ -334,6 +334,7 @@ class BaseEvaluator(
         """
         pass
 
+    @final
     def run_dataset(
         self, dataset: Dataset[Input, ExpectedOutput], tracer: Optional[Tracer] = None
     ) -> RunOverview:
@@ -385,6 +386,7 @@ class BaseEvaluator(
             successful_example_count=successful_count,
         )
 
+    @final
     def evaluate_run(
         self, dataset: Dataset[Input, ExpectedOutput], run_overview: RunOverview
     ) -> PartialEvaluationOverview:
@@ -440,6 +442,7 @@ class BaseEvaluator(
 
         return partial_overview
 
+    @final
     def aggregate_evaluation(
         self, eval_id: str
     ) -> EvaluationOverview[AggregatedEvaluation]:
