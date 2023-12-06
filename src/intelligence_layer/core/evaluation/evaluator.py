@@ -275,11 +275,12 @@ class BaseEvaluator(
         output_type = get_annotations(self._task.do_run).get("return", None)
         if not output_type:
             raise TypeError(
-                f"Task of type {type(self._task)} must have a type-hint for the return value of do_run to detect the output type. "
+                f"Task of type {type(self._task)} must have a type-hint for the return value of do_run to detect the output_type. "
                 f"Alternatively overwrite output_type() in {type(self)}"
             )
         return cast(type[Output], output_type)
 
+    @abstractmethod
     def evaluation_type(self) -> type[Evaluation]:
         """Returns the type of the evaluation result of an example.
 
@@ -289,13 +290,7 @@ class BaseEvaluator(
         Returns:
             Returns the type of the evaluation result of an example.
         """
-        evaluation_type = get_annotations(self.evaluate).get("return", None)
-        if not evaluation_type:
-            raise TypeError(
-                f"Evaluator of type {type(self)} must have a type-hint for the return value of do_evaluate to detect evaluation_tyoe. "
-                f"Alternatively overwrite its evaluation_type()"
-            )
-        return cast(type[Evaluation], evaluation_type)
+        ...
 
     @abstractmethod
     def evaluate(
@@ -484,6 +479,15 @@ class Evaluator(
         repository: EvaluationRepository,
     ) -> None:
         super().__init__(task, repository)
+
+    def evaluation_type(self) -> type[Evaluation]:
+        evaluation_type = get_annotations(self.do_evaluate).get("return", None)
+        if not evaluation_type:
+            raise TypeError(
+                f"Evaluator of type {type(self)} must have a type-hint for the return value of do_evaluate to detect evaluation_type. "
+                f"Alternatively overwrite its evaluation_type()"
+            )
+        return cast(type[Evaluation], evaluation_type)
 
     @abstractmethod
     def do_evaluate(
