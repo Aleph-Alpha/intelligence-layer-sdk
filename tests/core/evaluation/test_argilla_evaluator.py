@@ -1,4 +1,5 @@
 from typing import Sequence
+
 from pydantic import BaseModel
 from pytest import fixture
 
@@ -26,11 +27,11 @@ def test_argilla_client_allows_dataset_creation(argilla_client: ArgillaClient) -
     upload: Sequence[tuple[Example[DummyInput, ExpectedOutput], DummyOutput]] = [
         (
             Example(input=DummyInput(query="Was ist 1+1?"), expected_output="2"),
-            DummyOutput(answer="3")
+            DummyOutput(answer="3"),
         ),
         (
             Example(input=DummyInput(query="Wirklich?"), expected_output="nein"),
-            DummyOutput(answer="ja")
-        )
+            DummyOutput(answer="ja"),
+        ),
     ]
     argilla_client.upload(upload)
