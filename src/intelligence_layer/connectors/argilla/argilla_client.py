@@ -9,6 +9,9 @@ from requests import HTTPError, Session
 from requests.adapters import HTTPAdapter
 from requests.structures import CaseInsensitiveDict
 from urllib3 import Retry
+from typing import Iterable, Mapping, Optional, Sequence, Union
+
+from pydantic import BaseModel
 
 
 class Field(BaseModel):

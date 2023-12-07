@@ -1,3 +1,7 @@
+from .argilla.argilla_client import ArgillaClient as ArgillaClient
+from .argilla.argilla_client import ArgillaEvaluation as ArgillaEvaluation
+from .argilla.argilla_client import Field as Field
+from .argilla.argilla_client import Record as Record
 from .base.json_serializable import JsonSerializable as JsonSerializable
 from .document_index.document_index import CollectionPath as CollectionPath
 from .document_index.document_index import ConstraintViolation as ConstraintViolation
@@ -20,10 +24,6 @@ from .limited_concurrency_client import (
 from .limited_concurrency_client import (
     LimitedConcurrencyClient as LimitedConcurrencyClient,
 )
-from .argilla.argilla_client import ArgillaClient as ArgillaClient
-from .argilla.argilla_client import ArgillaEvaluation as ArgillaEvaluation 
-from .argilla.argilla_client import Field as Field
-from .argilla.argilla_client import Record as Record 
 from .retrievers.base_retriever import BaseRetriever, Document, SearchResult
 from .retrievers.document_index_retriever import (
     DocumentIndexRetriever as DocumentIndexRetriever,
