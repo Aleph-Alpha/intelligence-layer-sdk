@@ -13,6 +13,7 @@ from typing import (
     cast,
     final,
 )
+from intelligence_layer.connectors import ArgillaClient
 from uuid import uuid4
 
 from tqdm import tqdm
@@ -311,7 +312,7 @@ class BaseEvaluator(
         Returns:
             The aggregated results of an evaluation run with a :class:`Dataset`.
         """
-        pass
+        ... 
 
     @final
     def run_dataset(
@@ -485,7 +486,7 @@ class Evaluator(
         if not evaluation_type:
             raise TypeError(
                 f"Evaluator of type {type(self)} must have a type-hint for the return value of do_evaluate to detect evaluation_type. "
-                f"Alternatively overwrite its evaluation_type()"
+                f"Alternatively overwrite its `evaluation_type()`"
             )
         return cast(type[Evaluation], evaluation_type)
 
@@ -572,3 +573,21 @@ class Evaluator(
         run_overview = self.run_dataset(dataset, tracer)
         partial_evaluation_overview = self.evaluate_run(dataset, run_overview)
         return self.aggregate_evaluation(partial_evaluation_overview.id)
+
+class ArgillaEvaluator(
+    BaseEvaluator[Input, Output, ExpectedOutput, Evaluation, AggregatedEvaluation]
+):
+    def __init__(self, task: Task[Input, Output], repository: EvaluationRepository, client: ArgillaClient) -> None:
+        super().__init__(task, repository)
+        self._client = client
+
+    def evaluation_type(self) -> type[Evaluation]:
+        ...
+
+    def evaluate(
+        self, example: Example[Input, ExpectedOutput], eval_id: str, output: Output
+    ) -> None:
+        ...
+
+    def aggregate(self, evaluations: Iterable[Evaluation]) -> AggregatedEvaluation:
+        ...
