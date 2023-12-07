@@ -13,11 +13,11 @@ from typing import (
     cast,
     final,
 )
-from intelligence_layer.connectors import ArgillaClient
 from uuid import uuid4
 
 from tqdm import tqdm
 
+from intelligence_layer.connectors import ArgillaClient
 from intelligence_layer.core.evaluation.domain import (
     AggregatedEvaluation,
     Dataset,
@@ -312,7 +312,7 @@ class BaseEvaluator(
         Returns:
             The aggregated results of an evaluation run with a :class:`Dataset`.
         """
-        ... 
+        ...
 
     @final
     def run_dataset(
@@ -574,20 +574,18 @@ class Evaluator(
         partial_evaluation_overview = self.evaluate_run(dataset, run_overview)
         return self.aggregate_evaluation(partial_evaluation_overview.id)
 
+
 class ArgillaEvaluator(
     BaseEvaluator[Input, Output, ExpectedOutput, Evaluation, AggregatedEvaluation]
 ):
-    def __init__(self, task: Task[Input, Output], repository: EvaluationRepository, client: ArgillaClient) -> None:
+    def __init__(
+        self,
+        task: Task[Input, Output],
+        repository: EvaluationRepository,
+        argilla_client: ArgillaClient,
+    ) -> None:
         super().__init__(task, repository)
-        self._client = client
+        self._client = argilla_client
 
     def evaluation_type(self) -> type[Evaluation]:
-        ...
-
-    def evaluate(
-        self, example: Example[Input, ExpectedOutput], eval_id: str, output: Output
-    ) -> None:
-        ...
-
-    def aggregate(self, evaluations: Iterable[Evaluation]) -> AggregatedEvaluation:
         ...
