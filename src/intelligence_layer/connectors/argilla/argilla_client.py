@@ -1,8 +1,12 @@
-from abc import ABC, abstractmethod
 import os
-from typing import Iterable, Mapping, Optional, Sequence, Union
-from pydantic import BaseModel
+from abc import ABC, abstractmethod
+from http import HTTPStatus
+from typing import Any, Callable, Iterable, Mapping, Optional, Sequence, Union, cast
+
 import requests
+from pydantic import BaseModel
+from pydantic import Field as PydanticField
+from requests import HTTPError
 
 
 class Field(BaseModel):
@@ -10,14 +14,31 @@ class Field(BaseModel):
     title: str
 
 
-Record = Mapping[str, str]
+class Question(BaseModel):
+    name: str
+    title: str
+    description: str
+    options: Sequence[int]  # range: 1-10
+
+
+class Record(BaseModel):
+    content: Mapping[str, str]
+    example_id: str
+    metadata: Mapping[str, str] = PydanticField(default_factory=dict)
+
+
 ArgillaEvaluation = Mapping[str, Union[str, int, float, bool]]
 
 
 class ArgillaClient(ABC):
-
     @abstractmethod
-    def create_dataset(self, workspace_id: str, dataset_name: str, fields: Sequence[Field]) -> str:
+    def create_dataset(
+        self,
+        workspace_id: str,
+        dataset_name: str,
+        fields: Sequence[Field],
+        questions: Sequence[Question],
+    ) -> str:
         ...
 
     @abstractmethod
@@ -29,70 +50,204 @@ class ArgillaClient(ABC):
         ...
 
 
-# class ArgillaClient:
-#     def __init__(
-#         self, api_url: Optional[str] = None, api_key: Optional[str] = None
-#     ) -> None:
-#         self.api_url: str = api_url or os.environ["ARGILLA_API_URL"]
-#         self.api_key: str = api_key or os.environ["ARGILLA_API_KEY"]
-#         self.headers = {
-#             "accept": "application/json",
-#             "X-Argilla-Api-Key": self.api_key,
-#             "Content-Type": "application/json",
-#         }
+class DefaultArgillaClient(ArgillaClient):
+    def __init__(
+        self, api_url: Optional[str] = None, api_key: Optional[str] = None
+    ) -> None:
+        self.api_url: str = api_url or os.environ["ARGILLA_API_URL"]
+        self.api_key: str = api_key or os.environ["ARGILLA_API_KEY"]
+        self.headers = {
+            "accept": "application/json",
+            "X-Argilla-Api-Key": self.api_key,
+            "Content-Type": "application/json",
+        }
 
-#     def upload(
-#         self,
-#         fields: Sequence[Field],
-#         examples: Sequence[tuple[Example[Input, ExpectedOutput], Output]],
-#     ) -> None:
-#         name = "name_test_dataset"
-#         workspace_id = "15657307-9780-44e5-87ba-4ad024a49a88"
+    def create_workspace(self, workspace_name: str) -> str:
+        try:
+            return cast(str, self._create_workspace(workspace_name)["id"])
+        except HTTPError as e:
+            if e.response.status_code == HTTPStatus.CONFLICT:
+                workspaces = self._list_workspaces()
+                return next(
+                    cast(str, item["id"])
+                    for item in workspaces
+                    if item["name"] == workspace_name
+                )
+            raise e
 
-#         datasets = self._list_datasets(workspace_id)
-#         dataset_id = next(
-#             (item["id"] for item in datasets["items"] if item["name"] == name), None
-#         )
-#         if not dataset_id:
-#             dataset_id = self._create_dataset(name, workspace_id)["id"]
-#         field_names = [field.name for field in fields]
+    def create_dataset(
+        self,
+        workspace_id: str,
+        dataset_name: str,
+        fields: Sequence[Field],
+        questions: Sequence[Question],
+    ) -> str:
+        try:
+            dataset_id: str = self._create_dataset(dataset_name, workspace_id)["id"]
+            self._publish_dataset(dataset_id)
 
-#     def _list_datasets(self, workspace_id: str) -> Sequence[Any]:
-#         url = self.api_url + f"api/v1/me/datasets?workspace_id={workspace_id}"
-#         response = requests.get(url, headers=self.headers)
-#         response.raise_for_status()
-#         return response.json()
+        except HTTPError as e:
+            if e.response.status_code == HTTPStatus.CONFLICT:
+                datasets = self._list_datasets(workspace_id)
+                dataset_id = next(
+                    cast(str, item["id"])
+                    for item in datasets["items"]
+                    if item["name"] == dataset_name
+                )
+            else:
+                raise e
 
-#     def _create_dataset(
-#         self, name: str, workspace_id: str, guidelines: str = "No guidelines."
-#     ) -> Mapping[str, Any]:
-#         url = self.api_url + "api/v1/datasets"
-#         data = {
-#             "name": name,
-#             "guidelines": guidelines,
-#             "workspace_id": workspace_id,
-#             "allow_extra_metadata": True,
-#         }
-#         response = requests.post(url, json=data, headers=self.headers)
-#         response.raise_for_status()
-#         return response.json()
+        for field in fields:
+            self._ignore_conflict(
+                lambda: self._create_field(field.name, field.title, dataset_id)
+            )
 
-#     def _list_fields(self, dataset_id: str) -> Sequence[Any]:
-#         url = self.api_url + f"api/v1/datasets/{dataset_id}/fields"
-#         response = requests.get(url, headers=self.headers)
-#         response.raise_for_status()
-#         return response.json()
+        for question in questions:
+            self._ignore_conflict(
+                lambda: self._create_question(
+                    question.name,
+                    question.title,
+                    question.description,
+                    question.options,
+                    dataset_id,
+                )
+            )
 
-#     def _create_field(
-#         self, name: str, title: str, dataset_id: str
-#     ) -> Mapping[str, Any]:
-#         url = self.api_url + f"api/v1/datasets/{dataset_id}/fields"
-#         data = {
-#             "name": name,
-#             "title": title,
-#             "required": True,
-#             "settings": {"type": "text", "use_markdown": False},
-#         }
-#         response = requests.post(url, json=data, headers=self.headers)
-#         response.raise_for_status()
-#         return response.json()
+        return dataset_id
+
+    def _ignore_conflict(self, f: Callable[[], None]) -> None:
+        try:
+            f()
+        except HTTPError as e:
+            if not e.response.status_code == HTTPStatus.CONFLICT:
+                raise e
+
+    def add_record(self, dataset_id: str, record: Record) -> None:
+        try:
+            self._create_record(
+                record.content, record.metadata, record.example_id, dataset_id
+            )
+        except HTTPError as e:
+            if e.response.status_code == HTTPStatus.INTERNAL_SERVER_ERROR:
+                records = self._list_records(dataset_id)
+                if not any(
+                    True
+                    for item in records["items"]
+                    if item["external_id"] == record.example_id
+                ):
+                    raise e
+
+    def evaluations(self, dataset_id: str) -> Iterable[ArgillaEvaluation]:
+        return []
+
+    def records(self, dataset_id: str) -> Iterable[Record]:
+        json_records = self._list_records(dataset_id)
+        return [
+            Record(
+                content=json_record["fields"],
+                example_id=json_record["external_id"],
+                metadata=json_record["metadata"],
+            )
+            for json_record in json_records["items"]
+        ]
+
+    def _list_workspaces(self) -> Sequence[Any]:
+        url = self.api_url + "api/workspaces"
+        response = requests.get(url, headers=self.headers)
+        response.raise_for_status()
+        return cast(Sequence[Any], response.json())
+
+    def _create_workspace(self, workspace_name: str) -> Mapping[str, Any]:
+        url = self.api_url + "api/workspaces"
+        data = {
+            "name": workspace_name,
+        }
+        response = requests.post(url, json=data, headers=self.headers)
+        response.raise_for_status()
+        return cast(Mapping[str, Any], response.json())
+
+    def _list_datasets(self, workspace_id: str) -> Mapping[str, Any]:
+        url = self.api_url + f"api/v1/me/datasets?workspace_id={workspace_id}"
+        response = requests.get(url, headers=self.headers)
+        response.raise_for_status()
+        return cast(Mapping[str, Any], response.json())
+
+    def _publish_dataset(self, dataset_id: str) -> None:
+        url = self.api_url + f"api/v1/datasets/{dataset_id}/publish"
+        response = requests.put(url, headers=self.headers)
+        response.raise_for_status()
+
+    def _create_dataset(
+        self, name: str, workspace_id: str, guidelines: str = "No guidelines."
+    ) -> Mapping[str, Any]:
+        url = self.api_url + "api/v1/datasets"
+        data = {
+            "name": name,
+            "guidelines": guidelines,
+            "workspace_id": workspace_id,
+            "allow_extra_metadata": True,
+        }
+        response = requests.post(url, json=data, headers=self.headers)
+        response.raise_for_status()
+        return cast(Mapping[str, Any], response.json())
+
+    def _list_fields(self, dataset_id: str) -> Sequence[Any]:
+        url = self.api_url + f"api/v1/datasets/{dataset_id}/fields"
+        response = requests.get(url, headers=self.headers)
+        response.raise_for_status()
+        return cast(Sequence[Any], response.json())
+
+    def _create_field(self, name: str, title: str, dataset_id: str) -> None:
+        url = self.api_url + f"api/v1/datasets/{dataset_id}/fields"
+        data = {
+            "name": name,
+            "title": title,
+            "required": True,
+            "settings": {"type": "text", "use_markdown": False},
+        }
+        response = requests.post(url, json=data, headers=self.headers)
+        response.raise_for_status()
+
+    def _create_question(
+        self,
+        name: str,
+        title: str,
+        description: str,
+        options: Sequence[int],
+        dataset_id: str,
+    ) -> None:
+        url = self.api_url + f"api/v1/datasets/{dataset_id}/questions"
+        data = {
+            "name": name,
+            "title": title,
+            "description": description,
+            "required": True,
+            "settings": {
+                "type": "rating",
+                "options": [{"value": option} for option in options],
+            },
+        }
+        response = requests.post(url, json=data, headers=self.headers)
+        response.raise_for_status()
+
+    def _list_records(self, dataset_id: str) -> Mapping[str, Any]:
+        url = self.api_url + f"api/v1/datasets/{dataset_id}/records"
+        response = requests.get(url, headers=self.headers)
+        response.raise_for_status()
+        return cast(Mapping[str, Any], response.json())
+
+    def _create_record(
+        self,
+        content: Mapping[str, str],
+        metadata: Mapping[str, str],
+        example_id: str,
+        dataset_id: str,
+    ) -> None:
+        url = self.api_url + f"api/v1/datasets/{dataset_id}/records"
+        data = {
+            "items": [
+                {"fields": content, "metadata": metadata, "external_id": example_id}
+            ]
+        }
+        response = requests.post(url, json=data, headers=self.headers)
+        response.raise_for_status()
