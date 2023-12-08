@@ -314,6 +314,19 @@ class BaseEvaluator(
         """
         ...
 
+    def _create_dataset(self) -> str:
+        """Generates an ID for the dataset and creates it if necessary.
+        
+        If no extra logic is required to create the dataset for the run,
+        this function just returns a UUID as string.
+        In other cases (like when the dataset has to be created in an external repository),
+        this method is responsible for implementing this logic and returning the ID.
+
+        Returns:
+            The ID of the dataset for reference.
+        """
+        return str(uuid4())
+
     @final
     def run_dataset(
         self, dataset: Dataset[Input, ExpectedOutput], tracer: Optional[Tracer] = None
@@ -341,7 +354,7 @@ class BaseEvaluator(
             except Exception as e:
                 return FailedExampleRun.from_exception(e)
 
-        run_id = str(uuid4())
+        run_id = self._create_dataset()
         start = datetime.utcnow()
         with ThreadPoolExecutor(max_workers=10) as executor:
             outputs = tqdm(executor.map(run, dataset.examples), desc="Evaluating")
@@ -583,9 +596,15 @@ class ArgillaEvaluator(
         task: Task[Input, Output],
         repository: EvaluationRepository,
         argilla_client: ArgillaClient,
+        workspace_id: str
     ) -> None:
         super().__init__(task, repository)
         self._client = argilla_client
+        self._workspace_id = workspace_id
 
     def evaluation_type(self) -> type[Evaluation]:
         ...
+    
+    def _create_dataset(self) -> str:
+        self._client.create_dataset(self._workspace_id, str(uuid4()), [])
+        return str(uuid4())

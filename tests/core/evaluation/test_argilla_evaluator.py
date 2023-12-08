@@ -1,4 +1,4 @@
-from typing import Iterable, Sequence
+from typing import Iterable, Sequence, cast
 
 from faker import Faker
 from pydantic import BaseModel
@@ -22,13 +22,15 @@ from tests.conftest import in_memory_evaluation_repository  # type: ignore
 
 
 class StubArgillaClient(ArgillaClient):
+    _datasets: dict[str, list[Record]] = Field(default_factory=dict)
+
     def create_dataset(
         self, workspace_id: str, dataset_name: str, fields: Sequence[Field]
     ) -> str:
         ...
 
     def add_record(self, dataset_id: str, record: Record) -> None:
-        ...
+        self._datasets.get(dataset_id).append(record)
 
     def evaluations(self, dataset_id: str) -> Iterable[ArgillaEvaluation]:
         ...
@@ -96,29 +98,40 @@ class DummyStringTaskAgrillaEvaluator(
 
 
 @fixture
+def stub_argilla_client() -> StubArgillaClient:
+    return StubArgillaClient()
+
+
+@fixture
 def dummy_string_task() -> DummyStringTask:
     return DummyStringTask()
 
 
 @fixture
-def argilla_evaluator(
+def string_argilla_evaluator(
     dummy_string_task: DummyStringTask,
     in_memory_evaluation_repository: InMemoryEvaluationRepository,
-) -> ArgillaEvaluator:
-    client = StubArgillaClient()
-    return ArgillaEvaluator(dummy_string_task, in_memory_evaluation_repository, client)
+    stub_argilla_client: StubArgillaClient
+) -> DummyStringTaskAgrillaEvaluator:
+    return DummyStringTaskAgrillaEvaluator(dummy_string_task, in_memory_evaluation_repository, stub_argilla_client)
 
 
 def test_argilla_evaluator_can_do_sync_evaluation(
-    argilla_evaluator: ArgillaEvaluator,
+    string_argilla_evaluator: DummyStringTaskAgrillaEvaluator,
 ) -> None:
+    example = Example(DummyStringInput.any(), expected_output=DummyStringOutput.any())
     dataset = SequenceDataset(
         name="dataset",
         examples=[
-            Example(DummyStringInput.any(), expected_output=DummyStringOutput.any())
+            example
         ],
     )
+    argilla_client = cast(StubArgillaClient, string_argilla_evaluator._client)
+    
 
-    overview = argilla_evaluator.run_dataset(dataset)
-    partial_overview = argilla_evaluator.evaluate_run(dataset, overview)
-    full_overview = argilla_evaluator.aggregate_evaluation(partial_overview.id)
+    overview = string_argilla_evaluator.run_dataset(dataset)
+    _ =  string_argilla_evaluator.evaluate_run(dataset, overview)
+
+    for dataset in argilla_client._datasets.values():
+        assert any(i == {"input": example.input.input, "completion": example.expected_output.output} for i in dataset)
+
