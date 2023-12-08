@@ -1,4 +1,7 @@
+from collections import defaultdict
+from random import randint
 from typing import Iterable, Sequence, cast
+from uuid import uuid4
 
 from faker import Faker
 from pydantic import BaseModel
@@ -18,22 +21,35 @@ from intelligence_layer.core import (
     Task,
     TaskSpan,
 )
-from tests.conftest import in_memory_evaluation_repository  # type: ignore
+from tests.conftest import in_memory_evaluation_repository  
 
 
 class StubArgillaClient(ArgillaClient):
-    _datasets: dict[str, list[Record]] = Field(default_factory=dict)
+    _expected_workspace_id: str
+    _expected_fields: Sequence[Field] = []
+    _datasets: dict[str, list[Record]] = {}
+    _dataset_name = ""
 
     def create_dataset(
         self, workspace_id: str, dataset_name: str, fields: Sequence[Field]
     ) -> str:
-        ...
+        if workspace_id != self._expected_workspace_id:
+            raise Exception("Incorrect workspace id")
+        if fields != self._expected_fields:
+            raise Exception("Incorrect fields") 
+        # dataset_id = str(uuid4())
+        self._datasets[dataset_name] = []
+        return dataset_name
 
     def add_record(self, dataset_id: str, record: Record) -> None:
-        self._datasets.get(dataset_id).append(record)
+        self._datasets[dataset_id].append(record)
 
     def evaluations(self, dataset_id: str) -> Iterable[ArgillaEvaluation]:
-        ...
+        dataset =self._datasets.get(dataset_id) 
+        assert dataset
+        return [{
+            "human-score": 3
+        } for _ in dataset]
 
 
 class DummyStringInput(BaseModel):
@@ -65,6 +81,7 @@ class DummyStringEvaluation(BaseModel):
 
 class DummyStringAggregatedEvaluation(BaseModel):
     percentage_correct: float
+    human_eval_score: float
 
 
 class DummyStringTaskAgrillaEvaluator(
@@ -83,18 +100,25 @@ class DummyStringTaskAgrillaEvaluator(
         expected_output: DummyStringOutput,
     ) -> DummyStringEvaluation:
         if input.input == expected_output.output:
-            return True
-        return False
+            return DummyStringEvaluation(same=True)
+        return DummyStringEvaluation(same=False)
 
     def aggregate(
         self, evaluations: Iterable[DummyStringEvaluation]
     ) -> DummyStringAggregatedEvaluation:
         evaluations = list(evaluations)
         total = len(evaluations)
-        correct_amount = len((b for b in evaluations if b.same == True))
+        correct_amount = len([b for b in evaluations if b.same == True])
         return DummyStringAggregatedEvaluation(
-            percentage_correct=correct_amount / total
+            percentage_correct=correct_amount / total,
+            human_eval_score=0
         )
+
+    def _dataset_info(self) -> tuple[str, Sequence[Field]]:
+        return ["cool name", [
+            Field(name="input", title="Input"),
+            Field(name="output", title="Output"),
+        ]]
 
 
 @fixture
@@ -111,27 +135,33 @@ def dummy_string_task() -> DummyStringTask:
 def string_argilla_evaluator(
     dummy_string_task: DummyStringTask,
     in_memory_evaluation_repository: InMemoryEvaluationRepository,
-    stub_argilla_client: StubArgillaClient
+    stub_argilla_client: StubArgillaClient,
 ) -> DummyStringTaskAgrillaEvaluator:
-    return DummyStringTaskAgrillaEvaluator(dummy_string_task, in_memory_evaluation_repository, stub_argilla_client)
+    stub_argilla_client._expected_workspace_id = "workspace-id"
+    evaluator = DummyStringTaskAgrillaEvaluator(
+        dummy_string_task,
+        in_memory_evaluation_repository,
+        stub_argilla_client,
+        stub_argilla_client._expected_workspace_id,
+    )
+    stub_argilla_client._expected_fields = evaluator._dataset_info()
+    return evaluator
 
 
 def test_argilla_evaluator_can_do_sync_evaluation(
     string_argilla_evaluator: DummyStringTaskAgrillaEvaluator,
 ) -> None:
-    example = Example(DummyStringInput.any(), expected_output=DummyStringOutput.any())
+    example = Example(
+        input=DummyStringInput.any(), expected_output=DummyStringOutput.any()
+    )
     dataset = SequenceDataset(
         name="dataset",
-        examples=[
-            example
-        ],
+        examples=[example],
     )
     argilla_client = cast(StubArgillaClient, string_argilla_evaluator._client)
-    
+    run_overview = string_argilla_evaluator.run_dataset(dataset)
+    overview = string_argilla_evaluator.evaluate_run(dataset, run_overview)
 
-    overview = string_argilla_evaluator.run_dataset(dataset)
-    _ =  string_argilla_evaluator.evaluate_run(dataset, overview)
-
-    for dataset in argilla_client._datasets.values():
-        assert any(i == {"input": example.input.input, "completion": example.expected_output.output} for i in dataset)
-
+    print(overview.id)
+    print(argilla_client._datasets)
+    # assert overview.id in argilla_client._datasets

@@ -17,7 +17,7 @@ from uuid import uuid4
 
 from tqdm import tqdm
 
-from intelligence_layer.connectors import ArgillaClient
+from intelligence_layer.connectors import ArgillaClient, Field
 from intelligence_layer.core.evaluation.domain import (
     AggregatedEvaluation,
     Dataset,
@@ -316,7 +316,7 @@ class BaseEvaluator(
 
     def _create_dataset(self) -> str:
         """Generates an ID for the dataset and creates it if necessary.
-        
+
         If no extra logic is required to create the dataset for the run,
         this function just returns a UUID as string.
         In other cases (like when the dataset has to be created in an external repository),
@@ -354,7 +354,7 @@ class BaseEvaluator(
             except Exception as e:
                 return FailedExampleRun.from_exception(e)
 
-        run_id = self._create_dataset()
+        run_id = str(uuid4())
         start = datetime.utcnow()
         with ThreadPoolExecutor(max_workers=10) as executor:
             outputs = tqdm(executor.map(run, dataset.examples), desc="Evaluating")
@@ -402,7 +402,7 @@ class BaseEvaluator(
             __init__.
         """
 
-        eval_id = str(uuid4())
+        eval_id = self._create_dataset()
         start = datetime.utcnow()
         successful_output_iter = (
             output
@@ -589,22 +589,70 @@ class Evaluator(
 
 
 class ArgillaEvaluator(
-    BaseEvaluator[Input, Output, ExpectedOutput, Evaluation, AggregatedEvaluation]
+    BaseEvaluator[Input, Output, ExpectedOutput, Evaluation, AggregatedEvaluation], ABC
 ):
     def __init__(
         self,
         task: Task[Input, Output],
         repository: EvaluationRepository,
         argilla_client: ArgillaClient,
-        workspace_id: str
+        workspace_id: str,
     ) -> None:
         super().__init__(task, repository)
         self._client = argilla_client
         self._workspace_id = workspace_id
 
     def evaluation_type(self) -> type[Evaluation]:
-        ...
-    
+        evaluation_type = get_annotations(self.do_evaluate).get("return", None)
+        if not evaluation_type:
+            raise TypeError(
+                f"Evaluator of type {type(self)} must have a type-hint for the return value of do_evaluate to detect evaluation_type. "
+                f"Alternatively overwrite its `evaluation_type()`"
+            )
+        return cast(type[Evaluation], evaluation_type)
+
+    @final
     def _create_dataset(self) -> str:
-        self._client.create_dataset(self._workspace_id, str(uuid4()), [])
-        return str(uuid4())
+        return self._client.create_dataset(
+            self._workspace_id, str(uuid4()), self._dataset_info()
+        )
+
+    @abstractmethod
+    def _dataset_info(self) -> Sequence[Field]:
+        ...
+
+    @abstractmethod
+    def do_evaluate(
+        self,
+        input: Input,
+        output: Output,
+        expected_output: ExpectedOutput,
+    ) -> Evaluation:
+        """Executes the evaluation for this use-case.
+
+        Responsible for comparing the input & expected output of a task to the
+        actually generated output.
+
+        Args:
+            input: The input that was passed to the :class:`Task` to produce the output.
+            output: Output of the :class:`Task` that shall be evaluated.
+            expected_output: Output that is compared to the generated output.
+
+        Returns:
+            The metrics that come from the evaluated :class:`Task`.
+        """
+        pass
+
+    @final
+    def evaluate(
+        self, example: Example[Input, ExpectedOutput], eval_id: str, output: Output
+    ) -> None:
+        try:
+            result: Evaluation | FailedExampleEvaluation = self.do_evaluate(
+                example.input, output, example.expected_output
+            )
+        except Exception as e:
+            result = FailedExampleEvaluation.from_exception(e)
+        self._repository.store_example_evaluation(
+            eval_id, ExampleEvaluation(example_id=example.id, result=result)
+        )
