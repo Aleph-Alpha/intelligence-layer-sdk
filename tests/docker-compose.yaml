@@ -1,0 +1,14 @@
+version: "3"
+services:
+  argilla-elastic-search:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.5.3
+    environment:
+      ES_JAVA_OPTS: "-Xms512m -Xmx512m"
+      discovery.type: "single-node"
+      xpack.security.enabled: "false"
+  argilla:
+    image: argilla/argilla-server
+    ports:
+      - "6900:6900"
+    environment:
+      ARGILLA_ELASTICSEARCH: "http://argilla-elastic-search:9200"
