@@ -31,7 +31,6 @@ class Record(BaseModel):
     example_id: str
     metadata: Mapping[str, str] = PydanticField(default_factory=dict)
 
-
 ArgillaEvaluation = Mapping[str, Union[str, int, float, bool]]
 
 
