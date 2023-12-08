@@ -12,6 +12,7 @@ from urllib3 import Retry
 from typing import Iterable, Mapping, Optional, Sequence, Union
 
 from pydantic import BaseModel
+from pydantic import Field as PydanticField
 
 
 class Field(BaseModel):
@@ -30,6 +31,7 @@ class Record(BaseModel):
     content: Mapping[str, str]
     example_id: str
     metadata: Mapping[str, str] = PydanticField(default_factory=dict)
+
 
 ArgillaEvaluation = Mapping[str, Union[str, int, float, bool]]
 
