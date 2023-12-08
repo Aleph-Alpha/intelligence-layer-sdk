@@ -149,6 +149,7 @@ wandb/
 *index_cache*
 
 #environment
+.DS_STORE
 envs*
 scratch
 pyrightconfig.json
