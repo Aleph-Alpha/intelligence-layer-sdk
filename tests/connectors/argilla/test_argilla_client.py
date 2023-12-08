@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-from pytest import fixture, mark
+from pytest import fixture
 
 from intelligence_layer.connectors.argilla.argilla_client import (
     DefaultArgillaClient,
@@ -22,7 +22,7 @@ ExpectedOutput = str
 
 @fixture
 def argilla_client() -> DefaultArgillaClient:
-    return DefaultArgillaClient()
+    return DefaultArgillaClient(total_retries=8)
 
 
 def test_argilla_client_works(argilla_client: DefaultArgillaClient) -> None:

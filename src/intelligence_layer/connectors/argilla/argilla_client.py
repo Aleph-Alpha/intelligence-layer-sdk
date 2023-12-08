@@ -3,10 +3,12 @@ from abc import ABC, abstractmethod
 from http import HTTPStatus
 from typing import Any, Callable, Iterable, Mapping, Optional, Sequence, Union, cast
 
-import requests
 from pydantic import BaseModel
 from pydantic import Field as PydanticField
-from requests import HTTPError
+from requests import HTTPError, Session
+from requests.adapters import HTTPAdapter
+from requests.structures import CaseInsensitiveDict
+from urllib3 import Retry
 
 
 class Field(BaseModel):
@@ -52,20 +54,35 @@ class ArgillaClient(ABC):
 
 class DefaultArgillaClient(ArgillaClient):
     def __init__(
-        self, api_url: Optional[str] = None, api_key: Optional[str] = None
+        self,
+        api_url: Optional[str] = None,
+        api_key: Optional[str] = None,
+        total_retries: int = 5,
     ) -> None:
-        self.api_url = api_url or os.environ.get("ARGILLA_API_URL")
-        self.api_key = api_key or os.environ.get("ARGILLA_API_KEY")
-        if not (self.api_key and self.api_url):
+        url = api_url or os.environ.get("ARGILLA_API_URL")
+        key = api_key or os.environ.get("ARGILLA_API_KEY")
+        if not (key and url):
             raise RuntimeError(
                 "Environment variables ARGILLA_API_URL and ARGILLA_API_KEY must be defined to connect to an argilla instance"
             )
-        assert self.api_url
+        self.api_url = url
+        self.api_key = key
         self.headers = {
             "accept": "application/json",
             "X-Argilla-Api-Key": self.api_key,
             "Content-Type": "application/json",
         }
+        retry_strategy = Retry(
+            total=total_retries,
+            backoff_factor=0.25,
+            allowed_methods=["POST", "GET", "PUT"],
+            raise_on_status=False,
+        )
+        adapter = HTTPAdapter(max_retries=retry_strategy)
+        self.session = Session()
+        self.session.headers = CaseInsensitiveDict({"X-Argilla-Api-Key": self.api_key})
+        self.session.mount("https://", adapter)
+        self.session.mount("http://", adapter)
 
     def create_workspace(self, workspace_name: str) -> str:
         try:
@@ -163,7 +180,7 @@ class DefaultArgillaClient(ArgillaClient):
 
     def _list_workspaces(self) -> Sequence[Any]:
         url = self.api_url + "api/workspaces"
-        response = requests.get(url, headers=self.headers)
+        response = self.session.get(url, headers=self.headers)
         response.raise_for_status()
         return cast(Sequence[Any], response.json())
 
@@ -172,19 +189,19 @@ class DefaultArgillaClient(ArgillaClient):
         data = {
             "name": workspace_name,
         }
-        response = requests.post(url, json=data, headers=self.headers)
+        response = self.session.post(url, json=data, headers=self.headers)
         response.raise_for_status()
         return cast(Mapping[str, Any], response.json())
 
     def _list_datasets(self, workspace_id: str) -> Mapping[str, Any]:
         url = self.api_url + f"api/v1/me/datasets?workspace_id={workspace_id}"
-        response = requests.get(url, headers=self.headers)
+        response = self.session.get(url, headers=self.headers)
         response.raise_for_status()
         return cast(Mapping[str, Any], response.json())
 
     def _publish_dataset(self, dataset_id: str) -> None:
         url = self.api_url + f"api/v1/datasets/{dataset_id}/publish"
-        response = requests.put(url, headers=self.headers)
+        response = self.session.put(url, headers=self.headers)
         response.raise_for_status()
 
     def _create_dataset(
@@ -197,13 +214,13 @@ class DefaultArgillaClient(ArgillaClient):
             "workspace_id": workspace_id,
             "allow_extra_metadata": True,
         }
-        response = requests.post(url, json=data, headers=self.headers)
+        response = self.session.post(url, json=data, headers=self.headers)
         response.raise_for_status()
         return cast(Mapping[str, Any], response.json())
 
     def _list_fields(self, dataset_id: str) -> Sequence[Any]:
         url = self.api_url + f"api/v1/datasets/{dataset_id}/fields"
-        response = requests.get(url, headers=self.headers)
+        response = self.session.get(url, headers=self.headers)
         response.raise_for_status()
         return cast(Sequence[Any], response.json())
 
@@ -215,7 +232,7 @@ class DefaultArgillaClient(ArgillaClient):
             "required": True,
             "settings": {"type": "text", "use_markdown": False},
         }
-        response = requests.post(url, json=data, headers=self.headers)
+        response = self.session.post(url, json=data, headers=self.headers)
         response.raise_for_status()
 
     def _create_question(
@@ -237,12 +254,12 @@ class DefaultArgillaClient(ArgillaClient):
                 "options": [{"value": option} for option in options],
             },
         }
-        response = requests.post(url, json=data, headers=self.headers)
+        response = self.session.post(url, json=data, headers=self.headers)
         response.raise_for_status()
 
     def _list_records(self, dataset_id: str) -> Mapping[str, Any]:
         url = self.api_url + f"api/v1/datasets/{dataset_id}/records"
-        response = requests.get(url, headers=self.headers)
+        response = self.session.get(url, headers=self.headers)
         response.raise_for_status()
         return cast(Mapping[str, Any], response.json())
 
@@ -259,5 +276,5 @@ class DefaultArgillaClient(ArgillaClient):
                 {"fields": content, "metadata": metadata, "external_id": example_id}
             ]
         }
-        response = requests.post(url, json=data, headers=self.headers)
+        response = self.session.post(url, json=data, headers=self.headers)
         response.raise_for_status()

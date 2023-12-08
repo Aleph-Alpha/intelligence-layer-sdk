@@ -96,6 +96,20 @@ jobs:
   test:
     runs-on: ubuntu-latest
 
+    services:
+      argilla-elastic-search:
+        image: docker.elastic.co/elasticsearch/elasticsearch:8.5.3
+        env:
+          ES_JAVA_OPTS: "-Xms512m -Xmx512m"
+          discovery.type: "single-node"
+          xpack.security.enabled: "false"
+      argilla:
+        image: argilla/argilla-server
+        ports:
+          - "6900:6900"
+        env:
+          ARGILLA_ELASTICSEARCH: "http://argilla-elastic-search:9200"
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -127,6 +141,8 @@ jobs:
       - name: Run pytest
         env:
           AA_TOKEN: ${{ secrets.AA_TOKEN }}
+          ARGILLA_API_URL: "http://localhost:6900/"
+          ARGILLA_API_KEY: "argilla.apikey"
         run: |
           ./scripts/test.sh
 
