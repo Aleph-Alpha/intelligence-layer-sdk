@@ -54,8 +54,13 @@ class DefaultArgillaClient(ArgillaClient):
     def __init__(
         self, api_url: Optional[str] = None, api_key: Optional[str] = None
     ) -> None:
-        self.api_url: str = api_url or os.environ["ARGILLA_API_URL"]
-        self.api_key: str = api_key or os.environ["ARGILLA_API_KEY"]
+        self.api_url = api_url or os.environ.get("ARGILLA_API_URL")
+        self.api_key = api_key or os.environ.get("ARGILLA_API_KEY")
+        if not (self.api_key and self.api_url):
+            raise RuntimeError(
+                "Environment variables ARGILLA_API_URL and ARGILLA_API_KEY must be defined to connect to an argilla instance"
+            )
+        assert self.api_url
         self.headers = {
             "accept": "application/json",
             "X-Argilla-Api-Key": self.api_key,
@@ -84,8 +89,6 @@ class DefaultArgillaClient(ArgillaClient):
     ) -> str:
         try:
             dataset_id: str = self._create_dataset(dataset_name, workspace_id)["id"]
-            self._publish_dataset(dataset_id)
-
         except HTTPError as e:
             if e.response.status_code == HTTPStatus.CONFLICT:
                 datasets = self._list_datasets(workspace_id)
@@ -98,28 +101,35 @@ class DefaultArgillaClient(ArgillaClient):
                 raise e
 
         for field in fields:
-            self._ignore_conflict(
-                lambda: self._create_field(field.name, field.title, dataset_id)
+            self._ignore_failure_status(
+                frozenset([HTTPStatus.CONFLICT]),
+                lambda: self._create_field(field.name, field.title, dataset_id),
             )
 
         for question in questions:
-            self._ignore_conflict(
+            self._ignore_failure_status(
+                frozenset([HTTPStatus.CONFLICT]),
                 lambda: self._create_question(
                     question.name,
                     question.title,
                     question.description,
                     question.options,
                     dataset_id,
-                )
+                ),
             )
-
+        self._ignore_failure_status(
+            frozenset([HTTPStatus.UNPROCESSABLE_ENTITY]),
+            lambda: self._publish_dataset(dataset_id),
+        )
         return dataset_id
 
-    def _ignore_conflict(self, f: Callable[[], None]) -> None:
+    def _ignore_failure_status(
+        self, expected_failure: frozenset[HTTPStatus], f: Callable[[], None]
+    ) -> None:
         try:
             f()
         except HTTPError as e:
-            if not e.response.status_code == HTTPStatus.CONFLICT:
+            if e.response.status_code not in expected_failure:
                 raise e
 
     def add_record(self, dataset_id: str, record: Record) -> None:

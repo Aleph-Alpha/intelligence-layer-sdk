@@ -25,7 +25,6 @@ def argilla_client() -> DefaultArgillaClient:
     return DefaultArgillaClient()
 
 
-@mark.skip
 def test_argilla_client_works(argilla_client: DefaultArgillaClient) -> None:
     workspace_name = "test-workspace"
     workspace_id = argilla_client.create_workspace(workspace_name)
