@@ -67,11 +67,6 @@ class DefaultArgillaClient(ArgillaClient):
             )
         self.api_url = url
         self.api_key = key
-        self.headers = {
-            "accept": "application/json",
-            "X-Argilla-Api-Key": self.api_key,
-            "Content-Type": "application/json",
-        }
         retry_strategy = Retry(
             total=total_retries,
             backoff_factor=0.25,
@@ -180,7 +175,7 @@ class DefaultArgillaClient(ArgillaClient):
 
     def _list_workspaces(self) -> Sequence[Any]:
         url = self.api_url + "api/workspaces"
-        response = self.session.get(url, headers=self.headers)
+        response = self.session.get(url)
         response.raise_for_status()
         return cast(Sequence[Any], response.json())
 
@@ -189,19 +184,19 @@ class DefaultArgillaClient(ArgillaClient):
         data = {
             "name": workspace_name,
         }
-        response = self.session.post(url, json=data, headers=self.headers)
+        response = self.session.post(url, json=data)
         response.raise_for_status()
         return cast(Mapping[str, Any], response.json())
 
     def _list_datasets(self, workspace_id: str) -> Mapping[str, Any]:
         url = self.api_url + f"api/v1/me/datasets?workspace_id={workspace_id}"
-        response = self.session.get(url, headers=self.headers)
+        response = self.session.get(url)
         response.raise_for_status()
         return cast(Mapping[str, Any], response.json())
 
     def _publish_dataset(self, dataset_id: str) -> None:
         url = self.api_url + f"api/v1/datasets/{dataset_id}/publish"
-        response = self.session.put(url, headers=self.headers)
+        response = self.session.put(url)
         response.raise_for_status()
 
     def _create_dataset(
@@ -214,13 +209,13 @@ class DefaultArgillaClient(ArgillaClient):
             "workspace_id": workspace_id,
             "allow_extra_metadata": True,
         }
-        response = self.session.post(url, json=data, headers=self.headers)
+        response = self.session.post(url, json=data)
         response.raise_for_status()
         return cast(Mapping[str, Any], response.json())
 
     def _list_fields(self, dataset_id: str) -> Sequence[Any]:
         url = self.api_url + f"api/v1/datasets/{dataset_id}/fields"
-        response = self.session.get(url, headers=self.headers)
+        response = self.session.get(url)
         response.raise_for_status()
         return cast(Sequence[Any], response.json())
 
@@ -232,7 +227,7 @@ class DefaultArgillaClient(ArgillaClient):
             "required": True,
             "settings": {"type": "text", "use_markdown": False},
         }
-        response = self.session.post(url, json=data, headers=self.headers)
+        response = self.session.post(url, json=data)
         response.raise_for_status()
 
     def _create_question(
@@ -254,12 +249,12 @@ class DefaultArgillaClient(ArgillaClient):
                 "options": [{"value": option} for option in options],
             },
         }
-        response = self.session.post(url, json=data, headers=self.headers)
+        response = self.session.post(url, json=data)
         response.raise_for_status()
 
     def _list_records(self, dataset_id: str) -> Mapping[str, Any]:
         url = self.api_url + f"api/v1/datasets/{dataset_id}/records"
-        response = self.session.get(url, headers=self.headers)
+        response = self.session.get(url)
         response.raise_for_status()
         return cast(Mapping[str, Any], response.json())
 
@@ -276,5 +271,5 @@ class DefaultArgillaClient(ArgillaClient):
                 {"fields": content, "metadata": metadata, "external_id": example_id}
             ]
         }
-        response = self.session.post(url, json=data, headers=self.headers)
+        response = self.session.post(url, json=data)
         response.raise_for_status()

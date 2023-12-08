@@ -1,3 +1,4 @@
+from dotenv import load_dotenv
 from pydantic import BaseModel
 from pytest import fixture
 
@@ -22,6 +23,7 @@ ExpectedOutput = str
 
 @fixture
 def argilla_client() -> DefaultArgillaClient:
+    load_dotenv()
     return DefaultArgillaClient(total_retries=8)
 
 
