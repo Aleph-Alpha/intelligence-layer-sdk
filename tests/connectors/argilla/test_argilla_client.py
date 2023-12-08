@@ -1,3 +1,6 @@
+from typing import Iterable
+from uuid import uuid4
+
 from dotenv import load_dotenv
 from pydantic import BaseModel
 from pytest import fixture
@@ -27,10 +30,18 @@ def argilla_client() -> DefaultArgillaClient:
     return DefaultArgillaClient(total_retries=8)
 
 
-def test_argilla_client_works(argilla_client: DefaultArgillaClient) -> None:
-    workspace_name = "test-workspace"
-    workspace_id = argilla_client.create_workspace(workspace_name)
+@fixture
+def workspace_id(argilla_client: DefaultArgillaClient) -> Iterable[str]:
+    try:
+        workspace_id = argilla_client.create_workspace(str(uuid4()))
+        yield workspace_id
+    finally:
+        argilla_client.delete_workspace(workspace_id)
 
+
+def test_argilla_client_works(
+    argilla_client: DefaultArgillaClient, workspace_id: str
+) -> None:
     dataset_name = "test-dataset"
     fields = [
         Field(name="question", title="Question"),

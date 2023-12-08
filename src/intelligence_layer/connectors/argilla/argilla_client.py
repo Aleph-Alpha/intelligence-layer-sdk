@@ -273,3 +273,18 @@ class DefaultArgillaClient(ArgillaClient):
         }
         response = self.session.post(url, json=data)
         response.raise_for_status()
+
+    def delete_workspace(self, workspace_id: str) -> None:
+        for dataset in self._list_datasets(workspace_id)["items"]:
+            self._delete_dataset(dataset["id"])
+        self._delete_workspace(workspace_id)
+
+    def _delete_workspace(self, workspace_id: str) -> None:
+        url = self.api_url + f"api/v1/workspaces/{workspace_id}"
+        response = self.session.delete(url)
+        response.raise_for_status()
+
+    def _delete_dataset(self, dataset_id: str) -> None:
+        url = self.api_url + f"api/v1/datasets/{dataset_id}"
+        response = self.session.delete(url)
+        response.raise_for_status()
