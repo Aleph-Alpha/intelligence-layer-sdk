@@ -3,6 +3,7 @@ from .argilla.argilla_client import ArgillaEvaluation as ArgillaEvaluation
 from .argilla.argilla_client import Field as Field
 from .argilla.argilla_client import Question as Question
 from .argilla.argilla_client import Record as Record
+from .argilla.argilla_client import RecordData as RecordData
 from .base.json_serializable import JsonSerializable as JsonSerializable
 from .document_index.document_index import CollectionPath as CollectionPath
 from .document_index.document_index import ConstraintViolation as ConstraintViolation

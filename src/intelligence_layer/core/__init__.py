@@ -31,6 +31,9 @@ from .evaluation.domain import SequenceDataset as SequenceDataset
 from .evaluation.domain import SpanTrace as SpanTrace
 from .evaluation.domain import TaskSpanTrace as TaskSpanTrace
 from .evaluation.evaluator import ArgillaDataset as ArgillaDataset
+from .evaluation.evaluator import (
+    ArgillaEvaluationRepository as ArgillaEvaluationRepository,
+)
 from .evaluation.evaluator import ArgillaEvaluator as ArgillaEvaluator
 from .evaluation.evaluator import BaseEvaluator as BaseEvaluator
 from .evaluation.evaluator import EvaluationRepository as EvaluationRepository

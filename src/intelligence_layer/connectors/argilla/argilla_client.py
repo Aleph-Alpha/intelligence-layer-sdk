@@ -49,6 +49,7 @@ class ArgillaEvaluation(BaseModel):
         responses: Maps question-names (:attr:`Question.name` ) to response values.
     """
 
+    example_id: str
     record_id: str
     responses: Mapping[str, Union[str, int, float, bool]]
 
@@ -249,6 +250,7 @@ class DefaultArgillaClient(ArgillaClient):
 
         return [
             ArgillaEvaluation(
+                example_id=json_evaluation["external_id"],
                 record_id=json_evaluation["id"],
                 responses=to_responses(json_evaluation["responses"]),
             )

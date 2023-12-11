@@ -10,11 +10,10 @@ from intelligence_layer.connectors import (
     ArgillaEvaluation,
     Field,
     Question,
-    Record,
+    RecordData,
 )
-from intelligence_layer.connectors.argilla.argilla_client import RecordData
 from intelligence_layer.core import (
-    ArgillaDataset,
+    ArgillaEvaluationRepository,
     ArgillaEvaluator,
     Example,
     InMemoryEvaluationRepository,
@@ -27,8 +26,9 @@ from tests.conftest import in_memory_evaluation_repository  # noqa: W0611
 
 class StubArgillaClient(ArgillaClient):
     _expected_workspace_id: str
-    _expected_dataset: ArgillaDataset
-    _datasets: dict[str, list[Record]] = {}
+    _expected_fields: Sequence[Field]
+    _expected_questions: Sequence[Question]
+    _datasets: dict[str, list[RecordData]] = {}
     _score = 3.0
 
     def create_dataset(
@@ -40,9 +40,9 @@ class StubArgillaClient(ArgillaClient):
     ) -> str:
         if workspace_id != self._expected_workspace_id:
             raise Exception("Incorrect workspace id")
-        elif fields != self._expected_dataset.fields:
+        elif fields != self._expected_fields:
             raise Exception("Incorrect fields")
-        elif questions != self._expected_dataset.questions:
+        elif questions != self._expected_questions:
             raise Exception("Incorrect questions")
         id = str(uuid4())
         self._datasets[id] = []
@@ -58,7 +58,9 @@ class StubArgillaClient(ArgillaClient):
         assert dataset
         return [
             ArgillaEvaluation(
-                record_id="ignored", responses={"human-score": self._score}
+                example_id="something",
+                record_id="ignored",
+                responses={"human-score": self._score},
             )
             for _ in dataset
         ]
@@ -93,7 +95,6 @@ class DummyStringEvaluation(BaseModel):
 
 class DummyStringAggregatedEvaluation(BaseModel):
     average_human_eval_score: float
-    percentage_correct: float
 
 
 class DummyStringTaskAgrillaEvaluator(
@@ -101,51 +102,19 @@ class DummyStringTaskAgrillaEvaluator(
         DummyStringInput,
         DummyStringOutput,
         DummyStringOutput,
-        DummyStringEvaluation,
         DummyStringAggregatedEvaluation,
     ]
 ):
-    def do_evaluate(
-        self,
-        input: DummyStringInput,
-        _: DummyStringOutput,
-        expected_output: DummyStringOutput,
-    ) -> DummyStringEvaluation:
-        if input.input == expected_output.output:
-            return DummyStringEvaluation(same=True)
-        return DummyStringEvaluation(same=False)
-
     def aggregate(
         self,
-        evaluations: Iterable[DummyStringEvaluation],
-        argilla_evaluations: Iterable[ArgillaEvaluation] = iter([]),
+        evaluations: Iterable[ArgillaEvaluation],
     ) -> DummyStringAggregatedEvaluation:
         evaluations = list(evaluations)
-        total = len(evaluations)
-        correct_amount = len([b for b in evaluations if b.same is True])
-        argilla_evaluations = list(argilla_evaluations)
         total_human_score = sum(
-            cast(float, a.responses["human-score"]) for a in argilla_evaluations
+            cast(float, a.responses["human-score"]) for a in evaluations
         )
         return DummyStringAggregatedEvaluation(
-            percentage_correct=correct_amount / total,
-            average_human_eval_score=total_human_score / len(argilla_evaluations),
-        )
-
-    def _dataset_setup(self) -> ArgillaDataset:
-        return ArgillaDataset(
-            fields=[
-                Field(name="output", title="Output"),
-                Field(name="input", title="Input"),
-            ],
-            questions=[
-                Question(
-                    name="question",
-                    title="title",
-                    description="description",
-                    options=[1],
-                )
-            ],
+            average_human_eval_score=total_human_score / len(evaluations),
         )
 
     def _to_record(
@@ -177,13 +146,30 @@ def string_argilla_evaluator(
     stub_argilla_client: StubArgillaClient,
 ) -> DummyStringTaskAgrillaEvaluator:
     stub_argilla_client._expected_workspace_id = "workspace-id"
+    questions = [
+        Question(
+            name="question",
+            title="title",
+            description="description",
+            options=[1],
+        )
+    ]
+    fields = [
+        Field(name="output", title="Output"),
+        Field(name="input", title="Input"),
+    ]
     evaluator = DummyStringTaskAgrillaEvaluator(
         dummy_string_task,
-        in_memory_evaluation_repository,
+        ArgillaEvaluationRepository(
+            in_memory_evaluation_repository, stub_argilla_client
+        ),
         stub_argilla_client,
         stub_argilla_client._expected_workspace_id,
+        fields,
+        questions,
     )
-    stub_argilla_client._expected_dataset = evaluator._dataset_setup()
+    stub_argilla_client._expected_questions = questions
+    stub_argilla_client._expected_fields = fields
     return evaluator
 
 
@@ -228,4 +214,3 @@ def test_argilla_evaluator_can_aggregate_evaluation(
         aggregated_eval_overview.statistics.average_human_eval_score
         == argilla_client._score
     )
-    assert aggregated_eval_overview.statistics.percentage_correct == 0.0

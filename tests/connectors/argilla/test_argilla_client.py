@@ -116,7 +116,11 @@ def test_evaluations_returns_evaluation_results(
     qa_records: Sequence[RecordData],
 ) -> None:
     evaluations = [
-        ArgillaEvaluation(record_id=record.id, responses={"rate-answer": 1})
+        ArgillaEvaluation(
+            example_id=record.example_id,
+            record_id=record.id,
+            responses={"rate-answer": 1},
+        )
         for record in argilla_client.records(qa_dataset_id)
     ]
     for evaluation in evaluations:
