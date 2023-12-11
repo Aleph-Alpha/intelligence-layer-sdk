@@ -1,4 +1,5 @@
 from pydantic import BaseModel
+
 from intelligence_layer.core.detect_language import Language
 from intelligence_layer.core.task import Task
 from intelligence_layer.core.tracer import TaskSpan
