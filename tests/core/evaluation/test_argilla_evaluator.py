@@ -1,4 +1,5 @@
 from typing import Iterable, Sequence, cast
+from uuid import uuid4
 
 from faker import Faker
 from pydantic import BaseModel
@@ -9,9 +10,11 @@ from intelligence_layer.connectors import (
     ArgillaEvaluation,
     Field,
     Question,
+    Record,
 )
 from intelligence_layer.connectors.argilla.argilla_client import RecordData
 from intelligence_layer.core import (
+    ArgillaDataset,
     ArgillaEvaluator,
     Example,
     InMemoryEvaluationRepository,
@@ -24,27 +27,26 @@ from tests.conftest import in_memory_evaluation_repository  # noqa: W0611
 
 class StubArgillaClient(ArgillaClient):
     _expected_workspace_id: str
-    _expected_fields: Sequence[Field] = []
-    _expected_questions: Sequence[Question] = []
-    _datasets: dict[str, list[RecordData]] = {}
-    _dataset_name = ""
+    _expected_dataset: ArgillaDataset
+    _datasets: dict[str, list[Record]] = {}
     _score = 3.0
 
     def create_dataset(
         self,
         workspace_id: str,
-        dataset_name: str,
+        _: str,
         fields: Sequence[Field],
         questions: Sequence[Question],
     ) -> str:
         if workspace_id != self._expected_workspace_id:
             raise Exception("Incorrect workspace id")
-        elif fields != self._expected_fields:
+        elif fields != self._expected_dataset.fields:
             raise Exception("Incorrect fields")
-        elif questions != self._expected_questions:
+        elif questions != self._expected_dataset.questions:
             raise Exception("Incorrect questions")
-        self._datasets[dataset_name] = []
-        return dataset_name
+        id = str(uuid4())
+        self._datasets[id] = []
+        return id
 
     def add_record(self, dataset_id: str, record: RecordData) -> None:
         if dataset_id not in self._datasets:
@@ -130,18 +132,21 @@ class DummyStringTaskAgrillaEvaluator(
             average_human_eval_score=total_human_score / len(argilla_evaluations),
         )
 
-    def _dataset_fields(self) -> Sequence[Field]:
-        return [
-            Field(name="input", title="Input"),
-            Field(name="output", title="Output"),
-        ]
-
-    def _dataset_questions(self) -> Sequence[Question]:
-        return [
-            Question(
-                name="question", title="title", description="description", options=[1]
-            )
-        ]
+    def _dataset_setup(self) -> ArgillaDataset:
+        return ArgillaDataset(
+            fields=[
+                Field(name="output", title="Output"),
+                Field(name="input", title="Input"),
+            ],
+            questions=[
+                Question(
+                    name="question",
+                    title="title",
+                    description="description",
+                    options=[1],
+                )
+            ],
+        )
 
     def _to_record(
         self, example_id: str, input: DummyStringInput, output: DummyStringOutput
@@ -178,8 +183,7 @@ def string_argilla_evaluator(
         stub_argilla_client,
         stub_argilla_client._expected_workspace_id,
     )
-    stub_argilla_client._expected_fields = evaluator._dataset_fields()
-    stub_argilla_client._expected_questions = evaluator._dataset_questions()
+    stub_argilla_client._expected_dataset = evaluator._dataset_setup()
     return evaluator
 
 
