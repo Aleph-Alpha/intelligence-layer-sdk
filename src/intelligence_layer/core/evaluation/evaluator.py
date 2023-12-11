@@ -623,6 +623,28 @@ class ArgillaEvaluator(
             self._dataset_questions(),
         )
 
+    @final
+    def partial_evaluate_dataset(
+        self,
+        dataset: Dataset[Input, ExpectedOutput],
+        tracer: Optional[Tracer] = None,
+    ) -> PartialEvaluationOverview:
+        """Evaluates an entire :class:`Dataset` in a threaded manner and aggregates the results into an `AggregatedEvaluation`.
+
+        This will call the `run` method for each example in the :class:`Dataset`.
+        Finally, it will call the `aggregate` method and return the aggregated results.
+
+        Args:
+            dataset: Dataset that will be used to evaluate a :class:`Task`.
+            tracer: Optional tracer used for extra tracing.
+                Traces are always saved in the evaluation repository.
+
+        Returns:
+            The aggregated results of an evaluation run with a dataset.
+        """
+        run_overview = self.run_dataset(dataset, tracer)
+        return self.evaluate_run(dataset, run_overview)
+
     @abstractmethod
     def _dataset_fields(self) -> Sequence[Field]:
         ...
