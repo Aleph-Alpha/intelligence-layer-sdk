@@ -1,4 +1,5 @@
-from typing import Iterable, Sequence
+from time import sleep
+from typing import Callable, Iterable, Sequence, TypeVar
 from uuid import uuid4
 
 from dotenv import load_dotenv
@@ -7,10 +8,11 @@ from pytest import fixture
 
 from intelligence_layer.connectors.argilla.argilla_client import (
     ArgillaClient,
+    ArgillaEvaluation,
     DefaultArgillaClient,
     Field,
     Question,
-    Record,
+    RecordData,
 )
 
 
@@ -23,6 +25,20 @@ class DummyOutput(BaseModel):
 
 
 ExpectedOutput = str
+
+
+ReturnValue = TypeVar("ReturnValue")
+
+
+def retry(
+    f: Callable[[], ReturnValue], until: Callable[[ReturnValue], bool]
+) -> ReturnValue:
+    for i in range(10):
+        r = f()
+        if until(r):
+            return r
+        sleep(0.1)
+    assert False, f"Condition not met after {i} retries"
 
 
 @fixture
@@ -59,33 +75,58 @@ def qa_dataset_id(argilla_client: ArgillaClient, workspace_id: str) -> str:
 
 
 @fixture
-def qa_records() -> Sequence[Record]:
-    return [
-        Record(
+def qa_records(
+    argilla_client: ArgillaClient, qa_dataset_id: str
+) -> Sequence[RecordData]:
+    records = [
+        RecordData(
             content={"question": "What is 1+1?", "answer": "2"},
             example_id="1000",
         ),
-        Record(
+        RecordData(
             content={"question": "Wirklich?", "answer": "Ja!"},
             example_id="1001",
         ),
-        Record(
+        RecordData(
             content={"question": "Wie ist das Wetter?", "answer": "Gut."},
             example_id="1002",
         ),
     ]
+    for record in records:
+        argilla_client.add_record(qa_dataset_id, record)
+    return records
 
 
-def test_records_loads_records_previously_added(
+def test_records_returns_records_previously_added(
     argilla_client: DefaultArgillaClient,
     qa_dataset_id: str,
-    qa_records: Sequence[Record],
+    qa_records: Sequence[RecordData],
 ) -> None:
-    for record in qa_records:
-        argilla_client.add_record(qa_dataset_id, record)
-
-    loaded_records = argilla_client.records(qa_dataset_id)
+    actual_records = argilla_client.records(qa_dataset_id)
 
     assert sorted(qa_records, key=lambda r: r.example_id) == sorted(
-        loaded_records, key=lambda r: r.example_id
+        [RecordData(**record.model_dump()) for record in actual_records],
+        key=lambda r: r.example_id,
+    )
+
+
+def test_evaluations_returns_evaluation_results(
+    argilla_client: DefaultArgillaClient,
+    qa_dataset_id: str,
+    qa_records: Sequence[RecordData],
+) -> None:
+    evaluations = [
+        ArgillaEvaluation(record_id=record.id, responses={"rate-answer": 1})
+        for record in argilla_client.records(qa_dataset_id)
+    ]
+    for evaluation in evaluations:
+        argilla_client.create_evaluation(evaluation)
+
+    actual_evaluations = retry(
+        lambda: argilla_client.evaluations(qa_dataset_id),
+        lambda evals: len(list(evals)) == len(evaluations),
+    )
+
+    assert sorted(actual_evaluations, key=lambda e: e.record_id) == sorted(
+        evaluations, key=lambda e: e.record_id
     )

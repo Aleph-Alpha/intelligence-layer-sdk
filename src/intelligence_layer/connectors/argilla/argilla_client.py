@@ -23,13 +23,20 @@ class Question(BaseModel):
     options: Sequence[int]  # range: 1-10
 
 
-class Record(BaseModel):
+class ArgillaEvaluation(BaseModel):
+    record_id: str
+    # maps question-names to response values
+    responses: Mapping[str, Union[str, int, float, bool]]
+
+
+class RecordData(BaseModel):
     content: Mapping[str, str]
     example_id: str
     metadata: Mapping[str, str] = PydanticField(default_factory=dict)
 
 
-ArgillaEvaluation = Mapping[str, Union[str, int, float, bool]]
+class Record(RecordData):
+    id: str
 
 
 class ArgillaClient(ABC):
@@ -44,7 +51,7 @@ class ArgillaClient(ABC):
         ...
 
     @abstractmethod
-    def add_record(self, dataset_id: str, record: Record) -> None:
+    def add_record(self, dataset_id: str, record: RecordData) -> None:
         ...
 
     @abstractmethod
@@ -144,7 +151,7 @@ class DefaultArgillaClient(ArgillaClient):
             if e.response.status_code not in expected_failure:
                 raise e
 
-    def add_record(self, dataset_id: str, record: Record) -> None:
+    def add_record(self, dataset_id: str, record: RecordData) -> None:
         try:
             self._create_record(
                 record.content, record.metadata, record.example_id, dataset_id
@@ -160,18 +167,55 @@ class DefaultArgillaClient(ArgillaClient):
                     raise e
 
     def evaluations(self, dataset_id: str) -> Iterable[ArgillaEvaluation]:
-        return []
+        def to_responses(
+            json_responses: Sequence[Mapping[str, Any]]
+        ) -> Mapping[str, int | float | bool | str]:
+            return {
+                question_name: json_response["value"]
+                for json_response in json_responses
+                for question_name, json_response in json_response["values"].items()
+            }
+
+        return [
+            ArgillaEvaluation(
+                record_id=json_evaluation["id"],
+                responses=to_responses(json_evaluation["responses"]),
+            )
+            for json_evaluation in self._evaluations(dataset_id)["items"]
+        ]
+
+    def _evaluations(self, dataset_id: str) -> Mapping[str, Any]:
+        response = self.session.get(
+            self.api_url + f"api/v1/datasets/{dataset_id}/records",
+            params={"response_status": "submitted", "include": "responses"},
+        )
+        response.raise_for_status()
+        return cast(Mapping[str, Any], response.json())
 
     def records(self, dataset_id: str) -> Iterable[Record]:
         json_records = self._list_records(dataset_id)
         return [
             Record(
+                id=json_record["id"],
                 content=json_record["fields"],
                 example_id=json_record["external_id"],
                 metadata=json_record["metadata"],
             )
             for json_record in json_records["items"]
         ]
+
+    def create_evaluation(self, evaluation: ArgillaEvaluation) -> None:
+        response = self.session.post(
+            self.api_url + f"api/v1/records/{evaluation.record_id}/responses",
+            json={
+                "status": "submitted",
+                "values": {
+                    question_name: {"value": response_value}
+                    for question_name, response_value in evaluation.responses.items()
+                },
+            },
+        )
+        response.raise_for_status()
 
     def _list_workspaces(self) -> Sequence[Any]:
         url = self.api_url + "api/workspaces"
