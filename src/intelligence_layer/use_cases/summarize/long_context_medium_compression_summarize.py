@@ -142,11 +142,13 @@ class LongContextMediumCompressionSummarize(LongContextFewShotSummarize):
         >>> output = task.run(input, tracer)
     """
 
-    def __init__(self, client: AlephAlphaClientProtocol) -> None:
+    def __init__(
+        self, client: AlephAlphaClientProtocol, model: str = "luminous-extended"
+    ) -> None:
         super().__init__(
             client,
             FEW_SHOT_CONFIGS,
-            model="luminous-extended",
+            model=model,
             max_generated_tokens=128,
             max_tokens_per_chunk=400,
         )

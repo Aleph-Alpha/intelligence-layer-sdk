@@ -15,7 +15,7 @@ from intelligence_layer.core.task import Task
 from intelligence_layer.core.tracer import TaskSpan
 from intelligence_layer.use_cases.summarize.summarize import (
     SingleChunkSummarizeInput,
-    SingleChunkSummarizeOutput,
+    SummarizeOutput,
 )
 
 FEW_SHOT_CONFIGS = {
@@ -117,9 +117,7 @@ FEW_SHOT_CONFIGS = {
 }
 
 
-class SingleChunkFewShotSummarize(
-    Task[SingleChunkSummarizeInput, SingleChunkSummarizeOutput]
-):
+class SingleChunkFewShotSummarize(Task[SingleChunkSummarizeInput, SummarizeOutput]):
     """Summarises a section into a text of medium length.
 
     Generate a summary given a few-shot setup.
@@ -146,9 +144,9 @@ class SingleChunkFewShotSummarize(
 
     def do_run(
         self, input: SingleChunkSummarizeInput, task_span: TaskSpan
-    ) -> SingleChunkSummarizeOutput:
+    ) -> SummarizeOutput:
         prompt_output = self._get_prompt_and_complete(input, task_span)
-        return SingleChunkSummarizeOutput(summary=prompt_output.response.strip())
+        return SummarizeOutput(summary=prompt_output.response.strip())
 
     def _get_prompt_and_complete(
         self, input: SingleChunkSummarizeInput, task_span: TaskSpan

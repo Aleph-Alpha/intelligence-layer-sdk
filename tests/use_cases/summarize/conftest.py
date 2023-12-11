@@ -30,7 +30,7 @@ def chunk() -> Chunk:
 def long_context_high_compression_summarize(
     client: AlephAlphaClientProtocol,
 ) -> LongContextHighCompressionSummarize:
-    return LongContextHighCompressionSummarize(client)
+    return LongContextHighCompressionSummarize(client, model="luminous-base")
 
 
 @fixture
