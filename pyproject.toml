@@ -28,7 +28,7 @@ requests = "^2.31.0"
 pytest-xdist = "^3.5.0"
 langdetect = "^1.0.9"
 nltk = "^3.8.1"
-pycountry = "22.1.10" #22.3.5 crushes the readthedocs
+pycountry = "23.12.7" #22.3.5 crushes the readthedocs
 rouge = "^1.0.1"
 
 [tool.poetry.group.dev.dependencies]
