@@ -430,6 +430,7 @@ class BaseEvaluator(
 
         return partial_overview
 
+    @final
     def aggregate_evaluation(
         self, eval_id: str
     ) -> EvaluationOverview[AggregatedEvaluation]:
@@ -592,42 +593,105 @@ class Evaluator(
         return self.aggregate_evaluation(partial_evaluation_overview.id)
 
 
-class ArgillaDataset(NamedTuple):
-    fields: Sequence[Field]
-    questions: Sequence[Question]
+
+class ArgillaEvaluationRepository(EvaluationRepository):
+    def __init__(
+        self, evaluation_repository: EvaluationRepository, argilla_client: ArgillaClient
+    ) -> None:
+        super().__init__()
+        self._evaluation_repository = evaluation_repository
+        self._client = argilla_client
+
+    def run_ids(self) -> Sequence[str]:
+        return self._evaluation_repository.run_ids()
+
+    def eval_ids(self) -> Sequence[str]:
+        return self._evaluation_repository.eval_ids()
+
+    def example_outputs(
+        self, run_id: str, output_type: type[Output]
+    ) -> Iterable[ExampleOutput[Output]]:
+        return self._evaluation_repository.example_outputs(run_id, output_type)
+
+    def store_example_output(
+        self, run_id: str, example_output: ExampleOutput[Output]
+    ) -> None:
+        return self._evaluation_repository.store_example_output(run_id, example_output)
+
+    def example_trace(self, run_id: str, example_id: str) -> Optional[ExampleTrace]:
+        return self._evaluation_repository.example_trace(run_id, example_id)
+
+    def example_tracer(self, run_id: str, example_id: str) -> Tracer:
+        return self._evaluation_repository.example_tracer(run_id, example_id)
+
+    def example_evaluation(
+        self, eval_id: str, example_id: str, evaluation_type: type[Evaluation]
+    ) -> Optional[ExampleEvaluation[Evaluation]]:
+        return self._evaluation_repository.example_evaluation(
+            eval_id, example_id, evaluation_type
+        )
+
+    def store_example_evaluation(
+        self, _: str, __: ExampleEvaluation[Evaluation]
+    ) -> None:
+        raise TypeError(
+            "ArgillaEvaluationRepository does not support storing evaluations."
+        )
+
+    def example_evaluations(
+        self, eval_id: str, eval_type: type[Evaluation]
+    ) -> Sequence[ExampleEvaluation[Evaluation]]:
+        assert eval_type == ArgillaEvaluation
+        # Mypy does not derive that the return type is always ExampleEvaluation with ArgillaEvaluation
+        return [ExampleEvaluation(example_id=e.example_id, result=e) for e in self._client.evaluations(eval_id)]  # type: ignore
+
+    def failed_example_evaluations(
+        self, eval_id: str, evaluation_type: type[Evaluation]
+    ) -> Sequence[ExampleEvaluation[Evaluation]]:
+        return self._evaluation_repository.failed_example_evaluations(
+            eval_id, evaluation_type
+        )
+
+    def evaluation_overview(
+        self, eval_id: str, overview_type: type[EvaluationOverviewType]
+    ) -> EvaluationOverviewType | None:
+        return self._evaluation_repository.evaluation_overview(eval_id, overview_type)
+
+    def store_evaluation_overview(self, overview: PartialEvaluationOverview) -> None:
+        return self._evaluation_repository.store_evaluation_overview(overview)
 
 
 class ArgillaEvaluator(
-    BaseEvaluator[Input, Output, ExpectedOutput, Evaluation, AggregatedEvaluation], ABC
+    BaseEvaluator[
+        Input, Output, ExpectedOutput, ArgillaEvaluation, AggregatedEvaluation
+    ],
+    ABC,
 ):
     def __init__(
         self,
         task: Task[Input, Output],
-        repository: EvaluationRepository,
+        repository: ArgillaEvaluationRepository,
         argilla_client: ArgillaClient,
         workspace_id: str,
+        fields: Sequence[Field],
+        questions: Sequence[Question],
     ) -> None:
         super().__init__(task, repository)
         self._client = argilla_client
         self._workspace_id = workspace_id
+        self._fields = fields
+        self._questions = questions
 
-    def evaluation_type(self) -> type[Evaluation]:
-        evaluation_type = get_annotations(self.do_evaluate).get("return", None)
-        if not evaluation_type:
-            raise TypeError(
-                f"Evaluator of type {type(self)} must have a type-hint for the return value of do_evaluate to detect evaluation_type. "
-                f"Alternatively overwrite its `evaluation_type()`"
-            )
-        return cast(type[Evaluation], evaluation_type)
+    def evaluation_type(self) -> type[ArgillaEvaluation]:
+        return ArgillaEvaluation
 
     @final
     def _create_dataset(self) -> str:
-        argilla_dataset = self._dataset_setup()
         return self._client.create_dataset(
             self._workspace_id,
             str(uuid4()),
-            argilla_dataset.fields,
-            argilla_dataset.questions,
+            self._fields,
+            self._questions,
         )
 
     @final
@@ -653,109 +717,12 @@ class ArgillaEvaluator(
         return self.evaluate_run(dataset, run_overview)
 
     @abstractmethod
-    def _dataset_setup(self) -> ArgillaDataset:
-        ...
-
-    @abstractmethod
     def _to_record(self, example_id: str, input: Input, output: Output) -> RecordData:
         ...
-
-    @abstractmethod
-    def aggregate(
-        self,
-        evaluations: Iterable[Evaluation],
-        argilla_evaluations: Iterable[ArgillaEvaluation] = iter([]),
-    ) -> AggregatedEvaluation:
-        """`Evaluator`-specific method for aggregating individual `Evaluations` into report-like `Aggregated Evaluation`.
-
-        This method is responsible for taking the results of an evaluation run and aggregating all the results.
-        It should create an `AggregatedEvaluation` class and return it at the end.
-
-        Args:
-            evalautions: The results from running `evaluate_dataset` with a :class:`Task`.
-
-        Returns:
-            The aggregated results of an evaluation run with a :class:`Dataset`.
-        """
-        ...
-
-    @abstractmethod
-    def do_evaluate(
-        self,
-        input: Input,
-        output: Output,
-        expected_output: ExpectedOutput,
-    ) -> Evaluation:
-        """Executes the evaluation for this use-case.
-
-        Responsible for comparing the input & expected output of a task to the
-        actually generated output.
-
-        Args:
-            input: The input that was passed to the :class:`Task` to produce the output.
-            output: Output of the :class:`Task` that shall be evaluated.
-            expected_output: Output that is compared to the generated output.
-
-        Returns:
-            The metrics that come from the evaluated :class:`Task`.
-        """
-        pass
-
-    def aggregate_evaluation(
-        self, eval_id: str
-    ) -> EvaluationOverview[AggregatedEvaluation]:
-        """Aggregates all evaluations into an overview that includes high-level statistics.
-
-        Aggregates :class:`Evaluation`s according to the implementation of :func:`BaseEvaluator.aggregate`.
-
-        Args:
-            evaluation_overview: An overview of the evaluation to be aggregated. Does not include
-                actual evaluations as these will be retrieved from the repository.
-
-        Returns:
-            An overview of the aggregated evaluation.
-        """
-        evaluation_overview = self._repository.evaluation_overview(
-            eval_id, PartialEvaluationOverview
-        )
-        if not evaluation_overview:
-            raise ValueError(
-                f"No PartialEvaluationOverview found for eval-id: {eval_id}"
-            )
-        example_evaluations = self._repository.example_evaluations(
-            evaluation_overview.id, self.evaluation_type()
-        )
-        successful_evaluations = CountingFilterIterable(
-            (example_eval.result for example_eval in example_evaluations),
-            lambda evaluation: not isinstance(evaluation, FailedExampleEvaluation),
-        )
-        argilla_evaluations = self._client.evaluations(eval_id)
-        statistics = self.aggregate(
-            cast(Iterable[Evaluation], successful_evaluations), argilla_evaluations
-        )
-        run_overview = EvaluationOverview(
-            statistics=statistics,
-            end=datetime.utcnow(),
-            successful_count=successful_evaluations.included_count(),
-            failed_evaluation_count=successful_evaluations.excluded_count(),
-            **(evaluation_overview.model_dump()),
-        )
-        self._repository.store_evaluation_overview(run_overview)
-        return run_overview
 
     @final
     def evaluate(
         self, example: Example[Input, ExpectedOutput], eval_id: str, output: Output
     ) -> None:
-        self._client.add_record(
-            eval_id, self._to_record(example.id, example.input, output)
-        )
-        try:
-            result: Evaluation | FailedExampleEvaluation = self.do_evaluate(
-                example.input, output, example.expected_output
-            )
-        except Exception as e:
-            result = FailedExampleEvaluation.from_exception(e)
-        self._repository.store_example_evaluation(
-            eval_id, ExampleEvaluation(example_id=example.id, result=result)
-        )
+        record = self._to_record(example.id, example.input, output)
+        self._client.add_record(eval_id, record)
