@@ -18,6 +18,7 @@ from uuid import uuid4
 from tqdm import tqdm
 
 from intelligence_layer.connectors import ArgillaClient, Field
+from intelligence_layer.connectors.argilla.argilla_client import Record
 from intelligence_layer.core.evaluation.domain import (
     AggregatedEvaluation,
     Dataset,
@@ -477,7 +478,6 @@ class Evaluator(
     Arguments:
         task: The task that will be evaluated.
         repository: The repository that will be used to store evaluation results.
-        directory: If specified, evaluation traces will be stored here to be used by the trace-viewer.
 
     Generics:
         Input: Interface to be passed to the :class:`Task` that shall be evaluated.
@@ -622,31 +622,16 @@ class ArgillaEvaluator(
         ...
 
     @abstractmethod
-    def do_evaluate(
-        self,
-        input: Input,
-        output: Output,
-        expected_output: ExpectedOutput,
-    ) -> Evaluation:
-        """Executes the evaluation for this use-case.
-
-        Responsible for comparing the input & expected output of a task to the
-        actually generated output.
-
-        Args:
-            input: The input that was passed to the :class:`Task` to produce the output.
-            output: Output of the :class:`Task` that shall be evaluated.
-            expected_output: Output that is compared to the generated output.
-
-        Returns:
-            The metrics that come from the evaluated :class:`Task`.
-        """
-        pass
+    def _to_record(self, example_id: str, input: Input, output: Output) -> Record:
+        ...
 
     @final
     def evaluate(
         self, example: Example[Input, ExpectedOutput], eval_id: str, output: Output
     ) -> None:
+        self._client.add_record(
+            eval_id, self._to_record(example.id, example.input, output)
+        )
         try:
             result: Evaluation | FailedExampleEvaluation = self.do_evaluate(
                 example.input, output, example.expected_output
