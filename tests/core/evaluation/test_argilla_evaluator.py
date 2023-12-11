@@ -9,8 +9,8 @@ from intelligence_layer.connectors import (
     ArgillaEvaluation,
     Field,
     Question,
-    Record,
 )
+from intelligence_layer.connectors.argilla.argilla_client import RecordData
 from intelligence_layer.core import (
     ArgillaEvaluator,
     Example,
@@ -26,7 +26,7 @@ class StubArgillaClient(ArgillaClient):
     _expected_workspace_id: str
     _expected_fields: Sequence[Field] = []
     _expected_questions: Sequence[Question] = []
-    _datasets: dict[str, list[Record]] = {}
+    _datasets: dict[str, list[RecordData]] = {}
     _dataset_name = ""
     _score = 3.0
 
@@ -46,7 +46,7 @@ class StubArgillaClient(ArgillaClient):
         self._datasets[dataset_name] = []
         return dataset_name
 
-    def add_record(self, dataset_id: str, record: Record) -> None:
+    def add_record(self, dataset_id: str, record: RecordData) -> None:
         if dataset_id not in self._datasets:
             raise Exception("Add record: dataset not found")
         self._datasets[dataset_id].append(record)
@@ -54,7 +54,12 @@ class StubArgillaClient(ArgillaClient):
     def evaluations(self, dataset_id: str) -> Iterable[ArgillaEvaluation]:
         dataset = self._datasets.get(dataset_id)
         assert dataset
-        return [{"human-score": self._score} for _ in dataset]
+        return [
+            ArgillaEvaluation(
+                record_id="ignored", responses={"human-score": self._score}
+            )
+            for _ in dataset
+        ]
 
 
 class DummyStringInput(BaseModel):
@@ -118,7 +123,7 @@ class DummyStringTaskAgrillaEvaluator(
         correct_amount = len([b for b in evaluations if b.same is True])
         argilla_evaluations = list(argilla_evaluations)
         total_human_score = sum(
-            cast(float, a["human-score"]) for a in argilla_evaluations
+            cast(float, a.responses["human-score"]) for a in argilla_evaluations
         )
         return DummyStringAggregatedEvaluation(
             percentage_correct=correct_amount / total,
@@ -140,8 +145,8 @@ class DummyStringTaskAgrillaEvaluator(
 
     def _to_record(
         self, example_id: str, input: DummyStringInput, output: DummyStringOutput
-    ) -> Record:
-        return Record(
+    ) -> RecordData:
+        return RecordData(
             content={
                 "input": input.input,
                 "output": output.output,

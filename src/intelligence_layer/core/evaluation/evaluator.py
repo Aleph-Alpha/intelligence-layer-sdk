@@ -21,7 +21,7 @@ from intelligence_layer.connectors import ArgillaClient, Field
 from intelligence_layer.connectors.argilla.argilla_client import (
     ArgillaEvaluation,
     Question,
-    Record,
+    RecordData,
 )
 from intelligence_layer.core.evaluation.domain import (
     AggregatedEvaluation,
@@ -632,7 +632,7 @@ class ArgillaEvaluator(
         ...
 
     @abstractmethod
-    def _to_record(self, example_id: str, input: Input, output: Output) -> Record:
+    def _to_record(self, example_id: str, input: Input, output: Output) -> RecordData:
         ...
 
     @abstractmethod
