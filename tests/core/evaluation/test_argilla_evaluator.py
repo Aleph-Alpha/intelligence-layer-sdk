@@ -194,8 +194,9 @@ def test_argilla_evaluator_can_do_sync_evaluation(
         examples=[example],
     )
     argilla_client = cast(StubArgillaClient, string_argilla_evaluator._client)
-    run_overview = string_argilla_evaluator.run_dataset(dataset)
-    overview = string_argilla_evaluator.evaluate_run(dataset, run_overview)
+
+    overview = string_argilla_evaluator.partial_evaluate_dataset(dataset)
+
     assert overview.id in argilla_client._datasets
     saved_dataset = argilla_client._datasets[overview.id]
     assert len(saved_dataset) == len(dataset.examples)
@@ -214,8 +215,7 @@ def test_argilla_evaluator_can_aggregate_evaluation(
         examples=[example],
     )
     argilla_client = cast(StubArgillaClient, string_argilla_evaluator._client)
-    run_overview = string_argilla_evaluator.run_dataset(dataset)
-    eval_overview = string_argilla_evaluator.evaluate_run(dataset, run_overview)
+    eval_overview = string_argilla_evaluator.partial_evaluate_dataset(dataset)
     aggregated_eval_overview = string_argilla_evaluator.aggregate_evaluation(
         eval_overview.id
     )
