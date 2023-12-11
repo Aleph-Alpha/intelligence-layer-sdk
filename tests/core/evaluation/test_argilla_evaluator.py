@@ -97,7 +97,7 @@ class DummyStringAggregatedEvaluation(BaseModel):
     average_human_eval_score: float
 
 
-class DummyStringTaskAgrillaEvaluator(
+class DummyStringTaskArgillaEvaluator(
     ArgillaEvaluator[
         DummyStringInput,
         DummyStringOutput,
@@ -118,14 +118,16 @@ class DummyStringTaskAgrillaEvaluator(
         )
 
     def _to_record(
-        self, example_id: str, input: DummyStringInput, output: DummyStringOutput
+        self,
+        example: Example[DummyStringInput, DummyStringOutput],
+        output: DummyStringOutput,
     ) -> RecordData:
         return RecordData(
             content={
-                "input": input.input,
+                "input": example.input.input,
                 "output": output.output,
             },
-            example_id=example_id,
+            example_id=example.id,
         )
 
 
@@ -144,7 +146,7 @@ def string_argilla_evaluator(
     dummy_string_task: DummyStringTask,
     in_memory_evaluation_repository: InMemoryEvaluationRepository,  # noqa: w0404
     stub_argilla_client: StubArgillaClient,
-) -> DummyStringTaskAgrillaEvaluator:
+) -> DummyStringTaskArgillaEvaluator:
     stub_argilla_client._expected_workspace_id = "workspace-id"
     questions = [
         Question(
@@ -158,12 +160,11 @@ def string_argilla_evaluator(
         Field(name="output", title="Output"),
         Field(name="input", title="Input"),
     ]
-    evaluator = DummyStringTaskAgrillaEvaluator(
+    evaluator = DummyStringTaskArgillaEvaluator(
         dummy_string_task,
         ArgillaEvaluationRepository(
             in_memory_evaluation_repository, stub_argilla_client
         ),
-        stub_argilla_client,
         stub_argilla_client._expected_workspace_id,
         fields,
         questions,
@@ -174,7 +175,7 @@ def string_argilla_evaluator(
 
 
 def test_argilla_evaluator_can_do_sync_evaluation(
-    string_argilla_evaluator: DummyStringTaskAgrillaEvaluator,
+    string_argilla_evaluator: DummyStringTaskArgillaEvaluator,
 ) -> None:
     example = Example(
         input=DummyStringInput.any(), expected_output=DummyStringOutput.any()
@@ -195,7 +196,7 @@ def test_argilla_evaluator_can_do_sync_evaluation(
 
 
 def test_argilla_evaluator_can_aggregate_evaluation(
-    string_argilla_evaluator: DummyStringTaskAgrillaEvaluator,
+    string_argilla_evaluator: DummyStringTaskArgillaEvaluator,
 ) -> None:
     example = Example(
         input=DummyStringInput.any(), expected_output=DummyStringOutput.any()

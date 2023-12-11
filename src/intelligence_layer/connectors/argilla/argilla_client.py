@@ -45,6 +45,7 @@ class ArgillaEvaluation(BaseModel):
     """The evaluation result for a single records in an Argilla feedback-dataset.
 
     Attributes:
+        example_id: the id of the example that was evaluated.
         record_id: the id of the record that is evaluated.
         responses: Maps question-names (:attr:`Question.name` ) to response values.
     """

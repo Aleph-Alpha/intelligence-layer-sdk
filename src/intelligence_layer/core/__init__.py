@@ -30,7 +30,6 @@ from .evaluation.domain import LogTrace as LogTrace
 from .evaluation.domain import SequenceDataset as SequenceDataset
 from .evaluation.domain import SpanTrace as SpanTrace
 from .evaluation.domain import TaskSpanTrace as TaskSpanTrace
-from .evaluation.evaluator import ArgillaDataset as ArgillaDataset
 from .evaluation.evaluator import (
     ArgillaEvaluationRepository as ArgillaEvaluationRepository,
 )

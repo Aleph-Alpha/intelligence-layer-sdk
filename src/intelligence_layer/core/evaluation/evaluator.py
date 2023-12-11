@@ -7,7 +7,6 @@ from typing import (
     Generic,
     Iterable,
     Iterator,
-    NamedTuple,
     Optional,
     Sequence,
     TypeVar,
@@ -593,8 +592,17 @@ class Evaluator(
         return self.aggregate_evaluation(partial_evaluation_overview.id)
 
 
-
 class ArgillaEvaluationRepository(EvaluationRepository):
+    """Evaluation repository used for the :class:`ArgillaEvaluator`.
+
+    Wraps an :class:`Evaluator`.
+    Does not support storing evaluations, since the ArgillaEvaluator does not do automated evaluations.
+
+    Args:
+        evaluation_repository: repository to wrap.
+        argilla_client: client used to connect to Argilla.
+    """
+
     def __init__(
         self, evaluation_repository: EvaluationRepository, argilla_client: ArgillaClient
     ) -> None:
@@ -667,20 +675,33 @@ class ArgillaEvaluator(
     ],
     ABC,
 ):
+    """Evaluator used to integrate with Argilla (https://github.com/argilla-io/argilla).
+
+    Use this evaluator if you would like to easily do human eval.
+    This evaluator runs a dataset and sends the input and output to Argilla to be evaluated.
+    After they have been evaluated, you can fetch the results by using the `aggregate_evaluation` method.
+
+    Args:
+        task: The task that will be evaluated.
+        repository: The repository that will be used to store evaluation results.
+        workspace_id: The workspace id to save the datasets in. Has to be created before in Argilla.
+        fields: The Argilla fields of the dataset.
+        questions: The questions that will be presented to the human evaluators.
+    """
+
     def __init__(
         self,
         task: Task[Input, Output],
         repository: ArgillaEvaluationRepository,
-        argilla_client: ArgillaClient,
         workspace_id: str,
         fields: Sequence[Field],
         questions: Sequence[Question],
     ) -> None:
         super().__init__(task, repository)
-        self._client = argilla_client
         self._workspace_id = workspace_id
         self._fields = fields
         self._questions = questions
+        self._client = repository._client
 
     def evaluation_type(self) -> type[ArgillaEvaluation]:
         return ArgillaEvaluation
@@ -700,10 +721,7 @@ class ArgillaEvaluator(
         dataset: Dataset[Input, ExpectedOutput],
         tracer: Optional[Tracer] = None,
     ) -> PartialEvaluationOverview:
-        """Evaluates an entire :class:`Dataset` in a threaded manner and aggregates the results into an `AggregatedEvaluation`.
-
-        This will call the `run` method for each example in the :class:`Dataset`.
-        Finally, it will call the `aggregate` method and return the aggregated results.
+        """Evaluates an entire :class:`Dataset` in a threaded manner and pushes the results to Argilla.
 
         Args:
             dataset: Dataset that will be used to evaluate a :class:`Task`.
@@ -711,18 +729,26 @@ class ArgillaEvaluator(
                 Traces are always saved in the evaluation repository.
 
         Returns:
-            The aggregated results of an evaluation run with a dataset.
+            An overview of how the run went (e.g. how many examples failed).
         """
         run_overview = self.run_dataset(dataset, tracer)
         return self.evaluate_run(dataset, run_overview)
 
     @abstractmethod
-    def _to_record(self, example_id: str, input: Input, output: Output) -> RecordData:
+    def _to_record(
+        self, example: Example[Input, ExpectedOutput], output: Output
+    ) -> RecordData:
+        """This method is responsible for translating the `Example` and `Output` of the task to :class:`RecordData`
+
+        Args:
+            example: The example to be translated.
+            output: The output of the example that was run.
+        """
         ...
 
     @final
     def evaluate(
         self, example: Example[Input, ExpectedOutput], eval_id: str, output: Output
     ) -> None:
-        record = self._to_record(example.id, example.input, output)
+        record = self._to_record(example, output)
         self._client.add_record(eval_id, record)
