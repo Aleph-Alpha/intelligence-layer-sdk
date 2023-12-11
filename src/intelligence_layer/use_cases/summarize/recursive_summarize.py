@@ -56,7 +56,7 @@ class RecursiveSummarize(Task[RecursiveSummarizeInput, SummarizeOutput]):
 
             if len(summarize_output.partial_summaries) == 1:
                 task_span.log(
-                    message=f"Stopped recursion after {n} iterations as the text can't be summarized any further."
+                    message="Stopped recursion.", value=f"condensed {n}-times"
                 )
                 break
 
