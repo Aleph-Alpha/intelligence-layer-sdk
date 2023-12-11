@@ -54,8 +54,6 @@ from .summarize.summarize import (
     LongContextSummarizeOutput as LongContextSummarizeOutput,
 )
 from .summarize.summarize import SingleChunkSummarizeInput as SingleChunkSummarizeInput
-from .summarize.summarize import (
-    SingleChunkSummarizeOutput as SingleChunkSummarizeOutput,
-)
+from .summarize.summarize import SummarizeOutput as SummarizeOutput
 
 __all__ = [symbol for symbol in dir() if symbol and symbol[0].isupper()]
