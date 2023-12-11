@@ -1,7 +1,4 @@
-from collections import defaultdict
-from random import randint
 from typing import Iterable, Sequence, cast
-from uuid import uuid4
 
 from faker import Faker
 from pydantic import BaseModel
@@ -11,6 +8,7 @@ from intelligence_layer.connectors import (
     ArgillaClient,
     ArgillaEvaluation,
     Field,
+    Question,
     Record,
 )
 from intelligence_layer.core import (
@@ -21,29 +19,36 @@ from intelligence_layer.core import (
     Task,
     TaskSpan,
 )
-from tests.conftest import in_memory_evaluation_repository
+from tests.conftest import in_memory_evaluation_repository  # noqa: W0611
 
 
 class StubArgillaClient(ArgillaClient):
     _expected_workspace_id: str
     _expected_fields: Sequence[Field] = []
+    _expected_questions: Sequence[Question] = []
     _datasets: dict[str, list[Record]] = {}
     _dataset_name = ""
     _score = 3.0
 
     def create_dataset(
-        self, workspace_id: str, dataset_name: str, fields: Sequence[Field]
+        self,
+        workspace_id: str,
+        dataset_name: str,
+        fields: Sequence[Field],
+        questions: Sequence[Question],
     ) -> str:
         if workspace_id != self._expected_workspace_id:
             raise Exception("Incorrect workspace id")
-        if fields != self._expected_fields:
+        elif fields != self._expected_fields:
             raise Exception("Incorrect fields")
+        elif questions != self._expected_questions:
+            raise Exception("Incorrect questions")
         self._datasets[dataset_name] = []
         return dataset_name
 
     def add_record(self, dataset_id: str, record: Record) -> None:
         if dataset_id not in self._datasets:
-            raise Exception("Add record: dataset not found") 
+            raise Exception("Add record: dataset not found")
         self._datasets[dataset_id].append(record)
 
     def evaluations(self, dataset_id: str) -> Iterable[ArgillaEvaluation]:
@@ -80,8 +85,8 @@ class DummyStringEvaluation(BaseModel):
 
 
 class DummyStringAggregatedEvaluation(BaseModel):
+    average_human_eval_score: float
     percentage_correct: float
-    human_eval_score: float
 
 
 class DummyStringTaskAgrillaEvaluator(
@@ -104,22 +109,33 @@ class DummyStringTaskAgrillaEvaluator(
         return DummyStringEvaluation(same=False)
 
     def aggregate(
-        self, evaluations: Iterable[DummyStringEvaluation]
+        self,
+        evaluations: Iterable[DummyStringEvaluation],
+        argilla_evaluations: Iterable[ArgillaEvaluation] = iter([]),
     ) -> DummyStringAggregatedEvaluation:
         evaluations = list(evaluations)
         total = len(evaluations)
-        correct_amount = len([b for b in evaluations if b.same == True])
+        correct_amount = len([b for b in evaluations if b.same is True])
+        argilla_evaluations = list(argilla_evaluations)
+        total_human_score = sum(
+            cast(float, a["human-score"]) for a in argilla_evaluations
+        )
         return DummyStringAggregatedEvaluation(
-            percentage_correct=correct_amount / total, human_eval_score=0
+            percentage_correct=correct_amount / total,
+            average_human_eval_score=total_human_score / len(argilla_evaluations),
         )
 
-    def _dataset_info(self) -> tuple[str, Sequence[Field]]:
+    def _dataset_fields(self) -> Sequence[Field]:
         return [
-            "Dummy string evaluator dataset name",
-            [
-                Field(name="input", title="Input"),
-                Field(name="output", title="Output"),
-            ],
+            Field(name="input", title="Input"),
+            Field(name="output", title="Output"),
+        ]
+
+    def _dataset_questions(self) -> Sequence[Question]:
+        return [
+            Question(
+                name="question", title="title", description="description", options=[1]
+            )
         ]
 
     def _to_record(
@@ -147,7 +163,7 @@ def dummy_string_task() -> DummyStringTask:
 @fixture
 def string_argilla_evaluator(
     dummy_string_task: DummyStringTask,
-    in_memory_evaluation_repository: InMemoryEvaluationRepository,
+    in_memory_evaluation_repository: InMemoryEvaluationRepository,  # noqa: w0404
     stub_argilla_client: StubArgillaClient,
 ) -> DummyStringTaskAgrillaEvaluator:
     stub_argilla_client._expected_workspace_id = "workspace-id"
@@ -157,7 +173,8 @@ def string_argilla_evaluator(
         stub_argilla_client,
         stub_argilla_client._expected_workspace_id,
     )
-    stub_argilla_client._expected_fields = evaluator._dataset_info()
+    stub_argilla_client._expected_fields = evaluator._dataset_fields()
+    stub_argilla_client._expected_questions = evaluator._dataset_questions()
     return evaluator
 
 
@@ -198,5 +215,8 @@ def test_argilla_evaluator_can_aggregate_evaluation(
         eval_overview.id
     )
 
-    assert aggregated_eval_overview.statistics.human_eval_score == argilla_client._score
-    assert aggregated_eval_overview.statistics.percentage_correct == 1.0
+    assert (
+        aggregated_eval_overview.statistics.average_human_eval_score
+        == argilla_client._score
+    )
+    assert aggregated_eval_overview.statistics.percentage_correct == 0.0

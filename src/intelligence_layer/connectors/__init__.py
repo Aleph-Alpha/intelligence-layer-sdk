@@ -1,6 +1,7 @@
 from .argilla.argilla_client import ArgillaClient as ArgillaClient
 from .argilla.argilla_client import ArgillaEvaluation as ArgillaEvaluation
 from .argilla.argilla_client import Field as Field
+from .argilla.argilla_client import Question as Question
 from .argilla.argilla_client import Record as Record
 from .base.json_serializable import JsonSerializable as JsonSerializable
 from .document_index.document_index import CollectionPath as CollectionPath
