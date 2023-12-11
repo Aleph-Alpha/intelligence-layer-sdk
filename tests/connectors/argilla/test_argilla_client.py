@@ -1,4 +1,4 @@
-from typing import Iterable
+from typing import Iterable, Sequence
 from uuid import uuid4
 
 from dotenv import load_dotenv
@@ -6,6 +6,7 @@ from pydantic import BaseModel
 from pytest import fixture
 
 from intelligence_layer.connectors.argilla.argilla_client import (
+    ArgillaClient,
     DefaultArgillaClient,
     Field,
     Question,
@@ -39,9 +40,8 @@ def workspace_id(argilla_client: DefaultArgillaClient) -> Iterable[str]:
         argilla_client.delete_workspace(workspace_id)
 
 
-def test_argilla_client_works(
-    argilla_client: DefaultArgillaClient, workspace_id: str
-) -> None:
+@fixture
+def qa_dataset_id(argilla_client: ArgillaClient, workspace_id: str) -> str:
     dataset_name = "test-dataset"
     fields = [
         Field(name="question", title="Question"),
@@ -55,11 +55,12 @@ def test_argilla_client_works(
             options=list(range(1, 4)),
         )
     ]
-    dataset_id = argilla_client.create_dataset(
-        workspace_id, dataset_name, fields, questions
-    )
+    return argilla_client.create_dataset(workspace_id, dataset_name, fields, questions)
 
-    records = [
+
+@fixture
+def qa_records() -> Sequence[Record]:
+    return [
         Record(
             content={"question": "What is 1+1?", "answer": "2"},
             example_id="1000",
@@ -73,10 +74,18 @@ def test_argilla_client_works(
             example_id="1002",
         ),
     ]
-    for record in records:
-        argilla_client.add_record(dataset_id, record)
 
-    loaded_records = argilla_client.records(dataset_id)
-    assert sorted(records, key=lambda r: r.example_id) == sorted(
+
+def test_records_loads_records_previously_added(
+    argilla_client: DefaultArgillaClient,
+    qa_dataset_id: str,
+    qa_records: Sequence[Record],
+) -> None:
+    for record in qa_records:
+        argilla_client.add_record(qa_dataset_id, record)
+
+    loaded_records = argilla_client.records(qa_dataset_id)
+
+    assert sorted(qa_records, key=lambda r: r.example_id) == sorted(
         loaded_records, key=lambda r: r.example_id
     )
