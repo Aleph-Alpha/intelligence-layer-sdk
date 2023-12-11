@@ -503,7 +503,7 @@ According to a study by the National Academy of Engineering and the National Res
 Demographics
 Historical population
 Year	Pop.	±%
-1769	3,190	—    
+1769	3,190	—
 1778	3,060	−4.1%
 1791	5,497	+79.6%
 1810	17,242	+213.7%
@@ -711,7 +711,7 @@ Club	Sport	League	Venue (capacity)	Founded	Titles	Record attendance
 New Orleans Saints	American football	NFL	Caesars Superdome (73,208)	1967	1	73,373
 New Orleans Pelicans	Basketball	NBA	Smoothie King Center (16,867)	2002	0	18,444
 New Orleans Jesters	Soccer	NPSL	Pan American Stadium (5,000)	2003	0	5,000
-NOLA Gold	Rugby Union	MLR	Goldmine on Airline (10,000)	2017	0	
+NOLA Gold	Rugby Union	MLR	Goldmine on Airline (10,000)	2017	0
 
 The fleur-de-lis is often a symbol of New Orleans and its sports teams.
 New Orleans' professional sports teams include the 2009 Super Bowl XLIV champion New Orleans Saints (NFL) and the New Orleans Pelicans (NBA).[222][223][224] It is also home to the Big Easy Rollergirls, an all-female flat track roller derby team, and the New Orleans Blaze, a women's football team.[225][226] New Orleans is also home to two NCAA Division I athletic programs, the Tulane Green Wave of the American Athletic Conference and the UNO Privateers of the Southland Conference.
@@ -729,7 +729,7 @@ New Orleans Jazz National Historical Park
 Vieux Carre Historic District
 Government
 See also: List of mayors of New Orleans
-United States presidential election results for Orleans Parish, Louisiana[229] 
+United States presidential election results for Orleans Parish, Louisiana[229]
 Year	Republican	Democratic	Third party
 No. 	%	No. 	%	No. 	%
 2020	26,664	15.00%	147,854	83.15%	3,301	1.86%

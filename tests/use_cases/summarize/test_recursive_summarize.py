@@ -1,5 +1,7 @@
 from pathlib import Path
+
 from pytest import fixture
+
 from intelligence_layer.core.tracer import NoOpTracer
 from intelligence_layer.use_cases.summarize.long_context_high_compression_summarize import (
     LongContextHighCompressionSummarize,
