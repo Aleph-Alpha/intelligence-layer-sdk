@@ -12,11 +12,29 @@ from urllib3 import Retry
 
 
 class Field(BaseModel):
+    """Definition of an Argilla feedback-dataset field.
+
+    Attributes:
+        name: The name of the field. This is used to reference the field in json-documents
+        title: The title of the field. This is displayed in the Argilla UI to users that perform the manual evaluations.
+
+    """
+
     name: str
     title: str
 
 
 class Question(BaseModel):
+    """ "Definition of an evaluation-question for an Argilla feedback dataset.
+
+    Attributes:
+        name: The name of the questionm. This is used to reference the questions in json-documents
+        title: The title of the field. This is displayed in the Argilla UI to users that perform the manual evaluations.
+        description: A more verbose description of the question.
+            This is displayed in the Argilla UI to users that perform the manual evaluations.
+        options: All integer options to answer this question
+    """
+
     name: str
     title: str
     description: str
@@ -24,22 +42,53 @@ class Question(BaseModel):
 
 
 class ArgillaEvaluation(BaseModel):
+    """The evaluation result for a single records in an Argilla feedback-dataset.
+
+    Attributes:
+        record_id: the id of the record that is evaluated.
+        responses: Maps question-names (:attr:`Question.name` ) to response values.
+    """
+
     record_id: str
-    # maps question-names to response values
     responses: Mapping[str, Union[str, int, float, bool]]
 
 
 class RecordData(BaseModel):
+    """Input-data for a Argilla evaluation record.
+
+    This can be used to add a new record to an existing Argilla feedback-dataset.
+    Once it is added it gets an Argilla provided id and can be retrieved as :class:`Record`
+
+    Attributes:
+        content: Maps field-names (:attr:`Field.name` ) to string values that can be displayed to the user.
+        example_id: the id of the corresponding :class:`Example` from a :class:`Dataset`.
+        metadata: Arbitrary metadata in form of key/value strings that can be attached to a record.
+    """
+
     content: Mapping[str, str]
     example_id: str
     metadata: Mapping[str, str] = PydanticField(default_factory=dict)
 
 
 class Record(RecordData):
+    """Represents an Argilla record of an feedback-dataset.
+
+    Just adds the id to a :class:`RecordData`
+
+    Attributes:
+        id: the Argilla generated id of the record.
+    """
+
     id: str
 
 
 class ArgillaClient(ABC):
+    """Client interface for accessing an Argilla server.
+
+    Argilla supports human in the loop evaluation. This class defines the API used by
+    the intelligence layer to create feedback datasets or retrieve evaluation results.
+    """
+
     @abstractmethod
     def create_dataset(
         self,
@@ -48,14 +97,36 @@ class ArgillaClient(ABC):
         fields: Sequence[Field],
         questions: Sequence[Question],
     ) -> str:
+        """Creates and publishes a new feedback dataset in Argilla.
+
+        Args:
+            workspace_id: the id of the workspace the feedback-dataset should be created in.
+                The user executing this request must have corresponding permissions for this workspace.
+            dataset_name: the name of the feedback-dataset to be created.
+            fields: all fields of this dataset
+            questions: all questions for this dataset
+        """
         ...
 
     @abstractmethod
     def add_record(self, dataset_id: str, record: RecordData) -> None:
+        """Adds a new record to be evalated to the given dataset.
+
+        Args:
+            dataset_id: id of the dataset the record is added to
+            record: contains the actual record data (i.e. content for the dataset's fields)
+        """
         ...
 
     @abstractmethod
     def evaluations(self, dataset_id: str) -> Iterable[ArgillaEvaluation]:
+        """Returns all submitted evaluations for the given dataset.
+
+        Args:
+            dataset_id: the id of the dataset
+        Returns:
+            An `Iterable` over all submitted evaluations for the given dataset.
+        """
         ...
 
 
