@@ -7,6 +7,7 @@ from typing import (
     Generic,
     Iterable,
     Iterator,
+    NamedTuple,
     Optional,
     Sequence,
     TypeVar,
@@ -591,6 +592,11 @@ class Evaluator(
         return self.aggregate_evaluation(partial_evaluation_overview.id)
 
 
+class ArgillaDataset(NamedTuple):
+    fields: Sequence[Field]
+    questions: Sequence[Question]
+
+
 class ArgillaEvaluator(
     BaseEvaluator[Input, Output, ExpectedOutput, Evaluation, AggregatedEvaluation], ABC
 ):
@@ -616,11 +622,12 @@ class ArgillaEvaluator(
 
     @final
     def _create_dataset(self) -> str:
+        argilla_dataset = self._dataset_setup()
         return self._client.create_dataset(
             self._workspace_id,
             str(uuid4()),
-            self._dataset_fields(),
-            self._dataset_questions(),
+            argilla_dataset.fields,
+            argilla_dataset.questions,
         )
 
     @final
@@ -646,11 +653,7 @@ class ArgillaEvaluator(
         return self.evaluate_run(dataset, run_overview)
 
     @abstractmethod
-    def _dataset_fields(self) -> Sequence[Field]:
-        ...
-
-    @abstractmethod
-    def _dataset_questions(self) -> Sequence[Question]:
+    def _dataset_setup(self) -> ArgillaDataset:
         ...
 
     @abstractmethod
