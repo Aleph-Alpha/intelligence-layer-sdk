@@ -4,12 +4,19 @@ from typing import Sequence
 from pydantic import BaseModel
 from pytest import fixture
 
-from intelligence_layer.core.evaluation.domain import (
+from intelligence_layer.core import (
     EvaluationOverview,
+    Example,
     ExampleEvaluation,
     FailedExampleEvaluation,
     RunOverview,
+    SequenceDataset,
 )
+from tests.conftest import DummyStringInput, DummyStringOutput
+
+
+class DummyStringEvaluation(BaseModel):
+    same: bool
 
 
 class DummyEvaluation(BaseModel):
@@ -67,4 +74,21 @@ def evaluation_run_overview(
         failed_evaluation_count=3,
         successful_count=5,
         statistics=dummy_aggregated_evaluation,
+    )
+
+
+@fixture
+def dummy_string_example() -> Example[DummyStringInput, DummyStringOutput]:
+    return Example(
+        input=DummyStringInput.any(), expected_output=DummyStringOutput.any()
+    )
+
+
+@fixture
+def dummy_string_dataset(
+    dummy_string_example: Example[DummyStringInput, DummyStringOutput]
+) -> SequenceDataset[DummyStringInput, DummyStringOutput]:
+    return SequenceDataset(
+        name="dataset",
+        examples=[dummy_string_example],
     )

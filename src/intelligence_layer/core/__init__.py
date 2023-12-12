@@ -1,3 +1,6 @@
+from intelligence_layer.core.evaluation.dataset_repository import (
+    InMemoryDatasetRepository as InMemoryDatasetRepository,
+)
 from intelligence_layer.core.intelligence_app import (
     AuthenticatedIntelligenceApp as AuthenticatedIntelligenceApp,
 )
@@ -27,9 +30,16 @@ from .evaluation.domain import ExampleEvaluation as ExampleEvaluation
 from .evaluation.domain import ExampleTrace as ExampleTrace
 from .evaluation.domain import FailedExampleEvaluation as FailedExampleEvaluation
 from .evaluation.domain import LogTrace as LogTrace
+from .evaluation.domain import RunOverview as RunOverview
 from .evaluation.domain import SequenceDataset as SequenceDataset
 from .evaluation.domain import SpanTrace as SpanTrace
 from .evaluation.domain import TaskSpanTrace as TaskSpanTrace
+from .evaluation.evaluation_repository import (
+    FileEvaluationRepository as FileEvaluationRepository,
+)
+from .evaluation.evaluation_repository import (
+    InMemoryEvaluationRepository as InMemoryEvaluationRepository,
+)
 from .evaluation.evaluator import (
     ArgillaEvaluationRepository as ArgillaEvaluationRepository,
 )
@@ -40,10 +50,6 @@ from .evaluation.evaluator import Evaluator as Evaluator
 from .evaluation.graders import BleuGrader as BleuGrader
 from .evaluation.graders import RougeGrader as RougeGrader
 from .evaluation.graders import RougeScores as RougeScores
-from .evaluation.repository import FileEvaluationRepository as FileEvaluationRepository
-from .evaluation.repository import (
-    InMemoryEvaluationRepository as InMemoryEvaluationRepository,
-)
 from .explain import Explain, ExplainInput, ExplainOutput
 from .prompt_template import Cursor as Cursor
 from .prompt_template import PromptItemCursor as PromptItemCursor
@@ -69,6 +75,7 @@ from .tracer import InMemoryTaskSpan as InMemoryTaskSpan
 from .tracer import InMemoryTracer as InMemoryTracer
 from .tracer import LogEntry as LogEntry
 from .tracer import NoOpTracer as NoOpTracer
+from .tracer import PydanticSerializable as PydanticSerializable
 from .tracer import Span as Span
 from .tracer import TaskSpan as TaskSpan
 from .tracer import Tracer as Tracer

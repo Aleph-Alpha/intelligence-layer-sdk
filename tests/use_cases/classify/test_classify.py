@@ -7,7 +7,9 @@ from intelligence_layer.connectors.limited_concurrency_client import (
 )
 from intelligence_layer.core.chunk import Chunk
 from intelligence_layer.core.evaluation.domain import Dataset, Example, SequenceDataset
-from intelligence_layer.core.evaluation.repository import InMemoryEvaluationRepository
+from intelligence_layer.core.evaluation.evaluation_repository import (
+    InMemoryEvaluationRepository,
+)
 from intelligence_layer.core.task import Task
 from intelligence_layer.core.tracer import NoOpTracer
 from intelligence_layer.use_cases.classify.classify import (

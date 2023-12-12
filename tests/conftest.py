@@ -4,6 +4,8 @@ from typing import Sequence, cast
 
 from aleph_alpha_client import Image
 from dotenv import load_dotenv
+from faker import Faker
+from pydantic import BaseModel
 from pytest import fixture
 
 from intelligence_layer.connectors.document_index.document_index import (
@@ -25,6 +27,8 @@ from intelligence_layer.core import (
     FileEvaluationRepository,
     InMemoryEvaluationRepository,
     NoOpTracer,
+    Task,
+    TaskSpan,
 )
 
 
@@ -99,3 +103,31 @@ def document_index_retriever(
     return DocumentIndexRetriever(
         document_index, namespace="aleph-alpha", collection="wikipedia-de", k=2
     )
+
+
+class DummyStringInput(BaseModel):
+    input: str
+
+    @classmethod
+    def any(cls) -> "DummyStringInput":
+        fake = Faker()
+        return cls(input=fake.text())
+
+
+class DummyStringOutput(BaseModel):
+    output: str
+
+    @classmethod
+    def any(cls) -> "DummyStringOutput":
+        fake = Faker()
+        return cls(output=fake.text())
+
+
+class DummyStringTask(Task[DummyStringInput, DummyStringOutput]):
+    def do_run(self, input: DummyStringInput, task_span: TaskSpan) -> DummyStringOutput:
+        return DummyStringOutput.any()
+
+
+@fixture
+def dummy_string_task() -> DummyStringTask:
+    return DummyStringTask()
