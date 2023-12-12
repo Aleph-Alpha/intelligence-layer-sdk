@@ -33,7 +33,7 @@ def test_instruct_without_input(instruct: Instruct, no_op_tracer: NoOpTracer) ->
     )
     output = instruct.run(input, no_op_tracer)
 
-    assert "Berlin" in output.response
+    assert "Berlin" in output.completion
     prompt_text_item = output.prompt_with_metadata.prompt.items[0]
     assert isinstance(prompt_text_item, Text)
     assert "Input" not in prompt_text_item.text
@@ -57,4 +57,4 @@ def test_few_shot(few_shot: FewShot, no_op_tracer: NoOpTracer) -> None:
     )
     output = few_shot.run(input, no_op_tracer)
 
-    assert "Berlin" in output.response
+    assert "Berlin" in output.completion

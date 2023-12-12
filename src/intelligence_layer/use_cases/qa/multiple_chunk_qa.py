@@ -236,7 +236,7 @@ Condense multiple answers into a single answer. Rely only on the provided answer
 {joined_answers}""",
             instruction_config,
             task_span,
-        ).response
+        ).completion
 
     def _instruct(
         self,

@@ -171,5 +171,5 @@ class KeywordExtract(Task[KeywordExtractInput, KeywordExtractOutput]):
             task_span,
         )
         return KeywordExtractOutput(
-            keywords=frozenset(s.strip() for s in result.response.split(","))
+            keywords=frozenset(s.strip() for s in result.completion.split(","))
         )

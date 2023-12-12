@@ -146,7 +146,10 @@ class SingleChunkFewShotSummarize(Task[SingleChunkSummarizeInput, SummarizeOutpu
         self, input: SingleChunkSummarizeInput, task_span: TaskSpan
     ) -> SummarizeOutput:
         prompt_output = self._get_prompt_and_complete(input, task_span)
-        return SummarizeOutput(summary=prompt_output.response.strip())
+        return SummarizeOutput(
+            summary=prompt_output.completion.strip(),
+            generated_tokens=prompt_output.generated_tokens,
+        )
 
     def _get_prompt_and_complete(
         self, input: SingleChunkSummarizeInput, task_span: TaskSpan

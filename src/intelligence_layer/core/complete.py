@@ -38,6 +38,10 @@ class CompleteOutput(BaseModel):
     def completion(self) -> str:
         return self.response.completions[0].completion or ""
 
+    @property
+    def generated_tokens(self) -> int:
+        return self.response.num_tokens_generated
+
 
 class Complete(Task[CompleteInput, CompleteOutput]):
     """Performs a completion request with access to all possible request parameters.
@@ -85,7 +89,7 @@ class InstructInput(BaseModel):
     maximum_response_tokens: int = 64
 
 
-class PromptOutput(BaseModel):
+class PromptOutput(CompleteOutput):
     """The output of an `Instruct` or `FewShot` task.
 
     Attributes:
@@ -97,7 +101,6 @@ class PromptOutput(BaseModel):
             These can for example be used for downstream `TextHighlight` tasks.
     """
 
-    response: str
     prompt_with_metadata: PromptWithMetadata
 
 
@@ -152,24 +155,24 @@ class Instruct(Task[InstructInput, PromptOutput]):
             instruction=input.instruction,
             response_prefix=input.response_prefix,
         )
-        completion = self._complete(
+        response = self._complete(
             prompt_with_metadata.prompt,
             input.maximum_response_tokens,
             input.model,
             task_span,
         )
         return PromptOutput(
-            response=completion, prompt_with_metadata=prompt_with_metadata
+            response=response, prompt_with_metadata=prompt_with_metadata
         )
 
     def _complete(
         self, prompt: Prompt, maximum_tokens: int, model: str, task_span: TaskSpan
-    ) -> str:
+    ) -> CompletionResponse:
         request = CompletionRequest(prompt, maximum_tokens=maximum_tokens)
         return self._completion.run(
             CompleteInput(request=request, model=model),
             task_span,
-        ).completion
+        ).response
 
 
 class FewShotExample(BaseModel):
@@ -283,7 +286,7 @@ class FewShot(Task[FewShotInput, PromptOutput]):
             input_prefix=input.few_shot_config.input_prefix,
             response_prefix=input.few_shot_config.response_prefix,
         )
-        completion = self._complete(
+        response = self._complete(
             prompt_with_metadata.prompt,
             input.maximum_response_tokens,
             input.few_shot_config.additional_stop_sequences,
@@ -291,7 +294,7 @@ class FewShot(Task[FewShotInput, PromptOutput]):
             task_span,
         )
         return PromptOutput(
-            response=completion, prompt_with_metadata=prompt_with_metadata
+            response=response, prompt_with_metadata=prompt_with_metadata
         )
 
     def _complete(
@@ -301,7 +304,7 @@ class FewShot(Task[FewShotInput, PromptOutput]):
         additional_stop_sequences: Sequence[str],
         model: str,
         task_span: TaskSpan,
-    ) -> str:
+    ) -> CompletionResponse:
         request = CompletionRequest(
             prompt,
             maximum_tokens=maximum_tokens,
@@ -310,4 +313,4 @@ class FewShot(Task[FewShotInput, PromptOutput]):
         return self._completion.run(
             CompleteInput(request=request, model=model),
             task_span,
-        ).completion
+        ).response

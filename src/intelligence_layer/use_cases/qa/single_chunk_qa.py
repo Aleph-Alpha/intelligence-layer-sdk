@@ -127,11 +127,11 @@ class SingleChunkQa(Task[SingleChunkQaInput, SingleChunkQaOutput]):
             input.chunk,
             task_span,
         )
-        answer = self._no_answer_to_none(output.response.strip())
+        answer = self._no_answer_to_none(output.completion.strip())
         highlights = (
             self._get_highlights(
                 output.prompt_with_metadata,
-                output.response,
+                output.completion,
                 task_span,
             )
             if answer
