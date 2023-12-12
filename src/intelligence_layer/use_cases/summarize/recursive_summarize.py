@@ -1,3 +1,5 @@
+from typing import Optional
+
 from pydantic import BaseModel
 
 from intelligence_layer.core.detect_language import Language
@@ -16,12 +18,13 @@ class RecursiveSummarizeInput(BaseModel):
     Attributes:
         text: A text of any length.
         language: The desired language of the summary. ISO 619 str with language e.g. en, fr, etc.
-        n_loops: The number of times to recursively summarize.
+        max_loops: The number of times to recursively summarize.
     """
 
     text: str
     language: Language = Language("en")
-    n_loops: int = 2
+    max_tokens: Optional[int] = None
+    max_loops: Optional[int] = None
 
 
 class RecursiveSummarize(Task[RecursiveSummarizeInput, SummarizeOutput]):
@@ -45,19 +48,29 @@ class RecursiveSummarize(Task[RecursiveSummarizeInput, SummarizeOutput]):
         self, input: RecursiveSummarizeInput, task_span: TaskSpan
     ) -> SummarizeOutput:
         text = input.text
-        for n in range(input.n_loops):
+        continue_loop = True
+        loop_count = 0
+        while continue_loop:
             summarize_output = self.long_context_summarize_task.run(
                 LongContextSummarizeInput(text=text, language=input.language), task_span
             )
-            text = "\n".join(
-                partial_summary.summary
-                for partial_summary in summarize_output.partial_summaries
-            )
+            num_generated_tokens = 0
+            text = ""
+            for partial_summary in summarize_output.partial_summaries:
+                num_generated_tokens += partial_summary.generated_tokens
+                text += partial_summary.summary + "\n"
+
+            loop_count += 1
 
             if len(summarize_output.partial_summaries) == 1:
-                task_span.log(
-                    message="Stopped recursion.", value=f"condensed {n}-times"
-                )
-                break
+                continue_loop = False
 
-        return SummarizeOutput(summary=text)
+            elif input.max_tokens and num_generated_tokens < input.max_tokens:
+                continue_loop = False
+
+            elif input.max_loops and loop_count <= input.max_loops:
+                continue_loop = False
+
+        return SummarizeOutput(
+            summary=text.strip(), generated_tokens=num_generated_tokens
+        )

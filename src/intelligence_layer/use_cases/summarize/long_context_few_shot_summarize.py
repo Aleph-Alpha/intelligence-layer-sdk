@@ -67,7 +67,11 @@ class LongContextFewShotSummarize(
         )
         return LongContextSummarizeOutput(
             partial_summaries=[
-                PartialSummary(summary=summary_output.summary, chunk=chunk)
+                PartialSummary(
+                    summary=summary_output.summary,
+                    chunk=chunk,
+                    generated_tokens=summary_output.generated_tokens,
+                )
                 for summary_output, chunk in zip(summary_outputs, chunk_output.chunks)
             ]
         )
