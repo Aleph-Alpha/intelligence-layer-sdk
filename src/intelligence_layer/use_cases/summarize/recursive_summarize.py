@@ -18,7 +18,8 @@ class RecursiveSummarizeInput(BaseModel):
     Attributes:
         text: A text of any length.
         language: The desired language of the summary. ISO 619 str with language e.g. en, fr, etc.
-        max_loops: The number of times to recursively summarize.
+        max_tokens: The max number of tokens to be in the final summary.
+        max_loops: The max number of times to recursively summarize.
     """
 
     text: str
