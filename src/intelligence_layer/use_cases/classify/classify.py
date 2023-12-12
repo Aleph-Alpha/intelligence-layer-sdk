@@ -85,11 +85,11 @@ class SingleLabelClassifyEvaluator(
         super().__init__(task, repository)
 
     # mypy expects *args where this method only uses one output
-    def do_evaluate( # type: ignore
+    def do_evaluate(  # type: ignore
         self,
         input: ClassifyInput,
-        output: SingleLabelClassifyOutput,
         expected_output: Sequence[str],
+        output: SingleLabelClassifyOutput,
     ) -> SingleLabelClassifyEvaluation:
         sorted_classes = sorted(
             output.scores.items(), key=lambda item: item[1], reverse=True
@@ -179,11 +179,11 @@ class MultiLabelClassifyEvaluator(
         self.threshold = threshold
 
     # mypy expects *args where this method only uses one output
-    def do_evaluate( # type: ignore
+    def do_evaluate(  # type: ignore
         self,
         input: ClassifyInput,
-        output: MultiLabelClassifyOutput,
         expected_output: Sequence[str],
+        output: MultiLabelClassifyOutput,
     ) -> MultiLabelClassifyEvaluation:
         predicted_classes = frozenset(
             label for label, score in output.scores.items() if score > self.threshold

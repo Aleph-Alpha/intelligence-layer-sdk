@@ -47,8 +47,11 @@ class DummyEvaluator(
     ]
 ):
     # mypy expects *args where this method only uses one output
-    def do_evaluate( # type: ignore
-        self, input: DummyTaskInput, expected_output: None, output: DummyTaskOutput,
+    def do_evaluate(  # type: ignore
+        self,
+        input: DummyTaskInput,
+        expected_output: None,
+        output: DummyTaskOutput,
     ) -> DummyEvaluation:
         if output == "fail in eval":
             raise RuntimeError(output)
@@ -99,7 +102,9 @@ def test_evaluate_dataset_returns_generic_statistics(
 ) -> None:
     evaluation_run_overview = dummy_evaluator.evaluate_dataset(sequence_dataset)
 
-    assert evaluation_run_overview.run_overviews[0].dataset_name == sequence_dataset.name
+    assert (
+        evaluation_run_overview.run_overviews[0].dataset_name == sequence_dataset.name
+    )
     assert evaluation_run_overview.successful_count == 1
     assert evaluation_run_overview.failed_count == 2
 

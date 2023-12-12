@@ -287,7 +287,9 @@ class EvaluationOverview(PartialEvaluationOverview, Generic[AggregatedEvaluation
 
     @property
     def failed_count(self) -> int:
-        return self.failed_evaluation_count + sum(run_overview.failed_example_count for run_overview in self.run_overviews)
+        return self.failed_evaluation_count + sum(
+            run_overview.failed_example_count for run_overview in self.run_overviews
+        )
 
     def raise_on_evaluation_failure(self) -> None:
         if self.failed_count > 0:

@@ -52,14 +52,16 @@ def evaluation_run_overview(
     now = datetime.now()
     return EvaluationOverview(
         id="eval-id",
-        run_overviews=[RunOverview(
-            dataset_name="dataset",
-            id="run-id",
-            start=now,
-            end=now,
-            failed_example_count=0,
-            successful_example_count=0,
-        )],
+        run_overviews=[
+            RunOverview(
+                dataset_name="dataset",
+                id="run-id",
+                start=now,
+                end=now,
+                failed_example_count=0,
+                successful_example_count=0,
+            )
+        ],
         start=now,
         end=now,
         failed_evaluation_count=3,

@@ -118,18 +118,20 @@ class DummyStringTaskArgillaEvaluator(
         )
 
     # mypy expects *args where this method only uses one output
-    def _to_record( # type: ignore
+    def _to_record(  # type: ignore
         self,
         example: Example[DummyStringInput, DummyStringOutput],
         output: DummyStringOutput,
-    ) -> RecordData:
-        return RecordData(
-            content={
-                "input": example.input.input,
-                "output": output.output,
-            },
-            example_id=example.id,
-        )
+    ) -> Sequence[RecordData]:
+        return [
+            RecordData(
+                content={
+                    "input": example.input.input,
+                    "output": output.output,
+                },
+                example_id=example.id,
+            )
+        ]
 
 
 @fixture

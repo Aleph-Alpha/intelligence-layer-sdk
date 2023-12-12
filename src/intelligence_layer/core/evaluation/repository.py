@@ -238,9 +238,7 @@ class FileEvaluationRepository(EvaluationRepository):
             overview.model_dump_json(indent=2)
         )
 
-    def run_overview(
-        self, run_id: str
-    ) -> RunOverview | None:
+    def run_overview(self, run_id: str) -> RunOverview | None:
         file_path = self._run_overview_path(run_id)
         if not file_path.exists():
             return None
@@ -421,9 +419,7 @@ class InMemoryEvaluationRepository(EvaluationRepository):
     def store_evaluation_overview(self, overview: PartialEvaluationOverview) -> None:
         self._evaluation_run_overviews[overview.id] = overview
 
-    def run_overview(
-        self, run_id: str
-    ) -> RunOverview | None:
+    def run_overview(self, run_id: str) -> RunOverview | None:
         return self._run_overviews.get(run_id)
 
     def store_run_overview(self, overview: RunOverview) -> None:

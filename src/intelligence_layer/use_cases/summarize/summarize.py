@@ -116,11 +116,11 @@ class SingleChunkSummarizeEvaluator(
         self.rouge_grader = RougeGrader()
 
     # mypy expects *args where this method only uses one output
-    def do_evaluate( # type: ignore
+    def do_evaluate(  # type: ignore
         self,
         input: SingleChunkSummarizeInput,
         expected_output: str,
-        output: SummarizeOutput, 
+        output: SummarizeOutput,
     ) -> SummarizeEvaluation:
         bleu_score = self.bleu_grader.calculate_bleu(output.summary, expected_output)
         rouge_score = self.rouge_grader.calculate_rouge(output.summary, expected_output)
@@ -165,7 +165,7 @@ class LongContextSummarizeEvaluator(
         self.rouge_grader = RougeGrader()
 
     # mypy expects *args where this method only uses one output
-    def do_evaluate( # type: ignore
+    def do_evaluate(  # type: ignore
         self,
         input: LongContextSummarizeInput,
         expected_output: str,
