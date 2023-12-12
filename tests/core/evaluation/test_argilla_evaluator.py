@@ -1,8 +1,6 @@
 from typing import Iterable, Sequence, cast
 from uuid import uuid4
 
-from faker import Faker
-from pydantic import BaseModel
 from pytest import fixture
 
 from intelligence_layer.connectors import (
@@ -18,10 +16,9 @@ from intelligence_layer.core import (
     Example,
     InMemoryEvaluationRepository,
     SequenceDataset,
-    Task,
-    TaskSpan,
 )
-from tests.conftest import in_memory_evaluation_repository  # noqa: W0611
+from tests.conftest import DummyStringInput, DummyStringOutput, DummyStringTask
+from tests.core.evaluation.conftest import DummyAggregatedEvaluation
 
 
 class StubArgillaClient(ArgillaClient):
@@ -66,55 +63,24 @@ class StubArgillaClient(ArgillaClient):
         ]
 
 
-class DummyStringInput(BaseModel):
-    input: str
-
-    @classmethod
-    def any(cls) -> "DummyStringInput":
-        fake = Faker()
-        return cls(input=fake.text())
-
-
-class DummyStringOutput(BaseModel):
-    output: str
-
-    @classmethod
-    def any(cls) -> "DummyStringOutput":
-        fake = Faker()
-        return cls(output=fake.text())
-
-
-class DummyStringTask(Task[DummyStringInput, DummyStringOutput]):
-    def do_run(self, input: DummyStringInput, task_span: TaskSpan) -> DummyStringOutput:
-        return DummyStringOutput.any()
-
-
-class DummyStringEvaluation(BaseModel):
-    same: bool
-
-
-class DummyStringAggregatedEvaluation(BaseModel):
-    average_human_eval_score: float
-
-
 class DummyStringTaskArgillaEvaluator(
     ArgillaEvaluator[
         DummyStringInput,
         DummyStringOutput,
         DummyStringOutput,
-        DummyStringAggregatedEvaluation,
+        DummyAggregatedEvaluation,
     ]
 ):
     def aggregate(
         self,
         evaluations: Iterable[ArgillaEvaluation],
-    ) -> DummyStringAggregatedEvaluation:
+    ) -> DummyAggregatedEvaluation:
         evaluations = list(evaluations)
         total_human_score = sum(
             cast(float, a.responses["human-score"]) for a in evaluations
         )
-        return DummyStringAggregatedEvaluation(
-            average_human_eval_score=total_human_score / len(evaluations),
+        return DummyAggregatedEvaluation(
+            score=total_human_score / len(evaluations),
         )
 
     # mypy expects *args where this method only uses one output
@@ -137,11 +103,6 @@ class DummyStringTaskArgillaEvaluator(
 @fixture
 def stub_argilla_client() -> StubArgillaClient:
     return StubArgillaClient()
-
-
-@fixture
-def dummy_string_task() -> DummyStringTask:
-    return DummyStringTask()
 
 
 @fixture
@@ -179,42 +140,32 @@ def string_argilla_evaluator(
 
 def test_argilla_evaluator_can_do_sync_evaluation(
     string_argilla_evaluator: DummyStringTaskArgillaEvaluator,
+    dummy_string_dataset: SequenceDataset[DummyStringInput, DummyStringOutput],
 ) -> None:
-    example = Example(
-        input=DummyStringInput.any(), expected_output=DummyStringOutput.any()
-    )
-    dataset = SequenceDataset(
-        name="dataset",
-        examples=[example],
-    )
     argilla_client = cast(StubArgillaClient, string_argilla_evaluator._client)
 
-    overview = string_argilla_evaluator.partial_evaluate_dataset(dataset)
+    overview = string_argilla_evaluator.partial_evaluate_dataset(dummy_string_dataset)
 
     assert overview.id in argilla_client._datasets
     saved_dataset = argilla_client._datasets[overview.id]
-    assert len(saved_dataset) == len(dataset.examples)
-    assert saved_dataset[0].example_id == example.id
-    assert saved_dataset[0].content["input"] == example.input.input
+    assert len(saved_dataset) == len(dummy_string_dataset.examples)
+    assert saved_dataset[0].example_id == dummy_string_dataset.examples[0].id
+    assert (
+        saved_dataset[0].content["input"]
+        == dummy_string_dataset.examples[0].input.input
+    )
 
 
 def test_argilla_evaluator_can_aggregate_evaluation(
     string_argilla_evaluator: DummyStringTaskArgillaEvaluator,
+    dummy_string_dataset: SequenceDataset[DummyStringInput, DummyStringOutput],
 ) -> None:
-    example = Example(
-        input=DummyStringInput.any(), expected_output=DummyStringOutput.any()
-    )
-    dataset = SequenceDataset(
-        name="dataset",
-        examples=[example],
-    )
     argilla_client = cast(StubArgillaClient, string_argilla_evaluator._client)
-    eval_overview = string_argilla_evaluator.partial_evaluate_dataset(dataset)
+    eval_overview = string_argilla_evaluator.partial_evaluate_dataset(
+        dummy_string_dataset
+    )
     aggregated_eval_overview = string_argilla_evaluator.aggregate_evaluation(
         eval_overview.id
     )
 
-    assert (
-        aggregated_eval_overview.statistics.average_human_eval_score
-        == argilla_client._score
-    )
+    assert aggregated_eval_overview.statistics.score == argilla_client._score
