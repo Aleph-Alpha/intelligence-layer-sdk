@@ -111,13 +111,23 @@ class LimitedConcurrencyClient:
         self._concurrency_limit_semaphore = Semaphore(max_concurrency)
 
     @classmethod
-    def from_token(cls, token: Optional[str] = None) -> "LimitedConcurrencyClient":
+    def from_token(
+        cls, token: Optional[str] = None, host: str = "https://api.aleph-alpha.com"
+    ) -> "LimitedConcurrencyClient":
+        """This is a helper method to construct your client with default settings from a token and host
+
+        Args:
+            token: An Aleph Alpha token to instantiate the client. If no token is provided,
+                this method tries to fetch it from the environment under the name of "AA_TOKEN".
+            host: The host that is used for requests. Defaults to the Aleph Alpha Api.
+                If you have an on premise setup, change this to your host URL.
+        """
         if not token:
             token = getenv("AA_TOKEN")
             assert (
                 token
             ), "Define environment variable AA_TOKEN with a valid token for the Aleph Alpha API"
-        return cls(Client(token))
+        return cls(Client(token, host=host))
 
     def complete(
         self,
