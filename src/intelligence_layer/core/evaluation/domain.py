@@ -250,12 +250,9 @@ class PartialEvaluationOverview(BaseModel):
         run_overview: Overview of the run that was evaluated.
         id: The unique identifier of this evaluation.
         start: The time when the evaluation run was started
-        end: The time when the evaluation run ended
-        failed_evaluation_count: The number of examples where an exception was raised when evaluating the output.
-        successful_evaluation_count: The number of examples that where successfully evaluated.
     """
 
-    run_overview: RunOverview
+    run_overviews: Sequence[RunOverview]
     id: str
     start: Optional[datetime]
 
@@ -273,8 +270,10 @@ class EvaluationOverview(PartialEvaluationOverview, Generic[AggregatedEvaluation
     Created when running :meth:`Evaluator.evaluate_dataset`. Contains high-level information and statistics.
 
     Attributes:
-        evaluation_overview: Overview of the evaluation of one run, includes evaluation id.
         statistics: Aggregated statistics of the run. Whatever is returned by :meth:`Evaluator.aggregate`
+        end: The time when the evaluation run ended
+        failed_evaluation_count: The number of examples where an exception was raised when evaluating the output.
+        successful_evaluation_count: The number of examples that where successfully evaluated.
     """
 
     statistics: SerializeAsAny[AggregatedEvaluation]
@@ -283,12 +282,12 @@ class EvaluationOverview(PartialEvaluationOverview, Generic[AggregatedEvaluation
     successful_count: int
 
     @property
-    def run_id(self) -> str:
-        return self.run_overview.id
+    def run_ids(self) -> Sequence[str]:
+        return [run_overview.id for run_overview in self.run_overviews]
 
     @property
     def failed_count(self) -> int:
-        return self.failed_evaluation_count + self.run_overview.failed_example_count
+        return self.failed_evaluation_count + sum(run_overview.failed_example_count for run_overview in self.run_overviews)
 
     def raise_on_evaluation_failure(self) -> None:
         if self.failed_count > 0:

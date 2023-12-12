@@ -117,7 +117,8 @@ class DummyStringTaskArgillaEvaluator(
             average_human_eval_score=total_human_score / len(evaluations),
         )
 
-    def _to_record(
+    # mypy expects *args where this method only uses one output
+    def _to_record( # type: ignore
         self,
         example: Example[DummyStringInput, DummyStringOutput],
         output: DummyStringOutput,

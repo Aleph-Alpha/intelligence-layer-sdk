@@ -84,7 +84,8 @@ class SingleLabelClassifyEvaluator(
     ):
         super().__init__(task, repository)
 
-    def do_evaluate(
+    # mypy expects *args where this method only uses one output
+    def do_evaluate( # type: ignore
         self,
         input: ClassifyInput,
         output: SingleLabelClassifyOutput,
@@ -177,7 +178,8 @@ class MultiLabelClassifyEvaluator(
         super().__init__(task, repository)
         self.threshold = threshold
 
-    def do_evaluate(
+    # mypy expects *args where this method only uses one output
+    def do_evaluate( # type: ignore
         self,
         input: ClassifyInput,
         output: MultiLabelClassifyOutput,

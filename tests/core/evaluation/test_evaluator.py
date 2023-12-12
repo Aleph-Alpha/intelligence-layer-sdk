@@ -46,8 +46,9 @@ class DummyEvaluator(
         DummyAggregatedEvaluationWithResultList,
     ]
 ):
-    def do_evaluate(
-        self, input: DummyTaskInput, output: DummyTaskOutput, expected_output: None
+    # mypy expects *args where this method only uses one output
+    def do_evaluate( # type: ignore
+        self, input: DummyTaskInput, expected_output: None, output: DummyTaskOutput,
     ) -> DummyEvaluation:
         if output == "fail in eval":
             raise RuntimeError(output)
@@ -64,7 +65,7 @@ class DummyEvaluatorWithoutTypeHints(DummyEvaluator):
     def do_evaluate(  # type: ignore
         self, input: DummyTaskInput, output: DummyTaskOutput, expected_output: None
     ):
-        return super().do_evaluate(input, output, expected_output)
+        return super().do_evaluate(input, expected_output, output)
 
 
 class DummyTask(Task[DummyTaskInput, DummyTaskOutput]):
@@ -98,7 +99,7 @@ def test_evaluate_dataset_returns_generic_statistics(
 ) -> None:
     evaluation_run_overview = dummy_evaluator.evaluate_dataset(sequence_dataset)
 
-    assert evaluation_run_overview.run_overview.dataset_name == sequence_dataset.name
+    assert evaluation_run_overview.run_overviews[0].dataset_name == sequence_dataset.name
     assert evaluation_run_overview.successful_count == 1
     assert evaluation_run_overview.failed_count == 2
 
@@ -161,13 +162,13 @@ def test_evaluate_dataset_stores_example_traces(
 
     evaluation_run_overview = dummy_evaluator.evaluate_dataset(sequence_dataset)
     success_result = evaluation_repository.example_trace(
-        evaluation_run_overview.run_id, sequence_dataset.examples[0].id
+        evaluation_run_overview.run_ids[0], sequence_dataset.examples[0].id
     )
     failure_result_task = evaluation_repository.example_trace(
-        evaluation_run_overview.run_id, sequence_dataset.examples[1].id
+        evaluation_run_overview.run_ids[0], sequence_dataset.examples[1].id
     )
     failure_result_eval = evaluation_repository.example_trace(
-        evaluation_run_overview.run_id, sequence_dataset.examples[2].id
+        evaluation_run_overview.run_ids[0], sequence_dataset.examples[2].id
     )
 
     assert success_result

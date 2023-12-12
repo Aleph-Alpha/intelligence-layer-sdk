@@ -213,9 +213,7 @@ class EvaluationRepository(ABC):
         ...
 
     @abstractmethod
-    def run_overview(
-        self, run_id: str
-    ) -> RunOverview | None:
+    def run_overview(self, run_id: str) -> RunOverview | None:
         """Returns an :class:`RunOverview` of a given run by its id.
 
         Args:
@@ -323,7 +321,7 @@ class BaseEvaluator(
 
     @abstractmethod
     def evaluate(
-        self, example: Example[Input, ExpectedOutput], eval_id: str, output: Output
+        self, example: Example[Input, ExpectedOutput], eval_id: str, *output: Output
     ) -> None:
         ...
 
@@ -411,7 +409,7 @@ class BaseEvaluator(
 
     @final
     def evaluate_run(
-        self, dataset: Dataset[Input, ExpectedOutput], run_id: str
+        self, dataset: Dataset[Input, ExpectedOutput], *run_ids: str
     ) -> PartialEvaluationOverview:
         """Evaluates all generated outputs in the run.
 
@@ -434,24 +432,44 @@ class BaseEvaluator(
 
         eval_id = self._create_dataset()
         start = datetime.utcnow()
-        run_overview = self._repository.run_overview(run_id)
-        if not run_overview:
-            raise ValueError(f"No RunOverview found for run-id: {run_id}")
-        successful_output_iter = (
-            output
-            for output in self._repository.example_outputs(
-                run_overview.id, self.output_type()
-            )
-            if not isinstance(output.output, FailedExampleRun)
+        run_overviews: list[RunOverview] = []
+        for run_id in run_ids:
+            run_overview = self._repository.run_overview(run_id)
+            if not run_overview:
+                raise ValueError(f"No RunOverview found for run-id: {run_id}")
+            run_overviews.append(run_overview)
+
+        examples_zipped: Iterable[tuple[ExampleOutput[Output], ...]] = zip(
+            *(
+                self._repository.example_outputs(run_overview.id, self.output_type())
+                for run_overview in run_overviews
+            ),
+            strict=True,
         )
-        for example_output in successful_output_iter:
-            example = dataset.example(example_output.example_id)
-            assert example
-            assert not isinstance(example_output.output, FailedExampleRun)
-            self.evaluate(example, eval_id, example_output.output)
+        for example_outputs in examples_zipped:
+            if not any(
+                isinstance(output.output, FailedExampleRun)
+                for output in example_outputs
+            ):
+                example_id = example_outputs[0].example_id
+                assert all(
+                    example_output.example_id == example_id
+                    for example_output in example_outputs
+                )
+                example = dataset.example(example_id)
+                assert example
+                self.evaluate(
+                    example,
+                    eval_id,
+                    *[
+                        example_output.output
+                        for example_output in example_outputs
+                        if not isinstance(example_output.output, FailedExampleRun)
+                    ],
+                )
 
         partial_overview = PartialEvaluationOverview(
-            run_overview=run_overview, id=eval_id, start=start
+            run_overviews=run_overviews, id=eval_id, start=start
         )
         self._repository.store_evaluation_overview(partial_overview)
 
@@ -539,8 +557,8 @@ class Evaluator(
     def do_evaluate(
         self,
         input: Input,
-        output: Output,
         expected_output: ExpectedOutput,
+        *output: Output,
     ) -> Evaluation:
         """Executes the evaluation for this use-case.
 
@@ -549,8 +567,8 @@ class Evaluator(
 
         Args:
             input: The input that was passed to the :class:`Task` to produce the output.
-            output: Output of the :class:`Task` that shall be evaluated.
             expected_output: Output that is compared to the generated output.
+            output: Output of the :class:`Task` that shall be evaluated.
 
         Returns:
             The metrics that come from the evaluated :class:`Task`.
@@ -559,11 +577,13 @@ class Evaluator(
 
     @final
     def evaluate(
-        self, example: Example[Input, ExpectedOutput], eval_id: str, output: Output
+        self, example: Example[Input, ExpectedOutput], eval_id: str, *output: Output
     ) -> None:
         try:
             result: Evaluation | FailedExampleEvaluation = self.do_evaluate(
-                example.input, output, example.expected_output
+                example.input,
+                example.expected_output,
+                *output,
             )
         except Exception as e:
             result = FailedExampleEvaluation.from_exception(e)
@@ -592,7 +612,7 @@ class Evaluator(
 
         try:
             output = self._task.run(input, tracer)
-            return self.do_evaluate(input, output, expected_output)
+            return self.do_evaluate(input, expected_output, output)
         except Exception as e:
             return FailedExampleEvaluation.from_exception(e)
 
@@ -696,9 +716,7 @@ class ArgillaEvaluationRepository(EvaluationRepository):
     def store_evaluation_overview(self, overview: PartialEvaluationOverview) -> None:
         return self._evaluation_repository.store_evaluation_overview(overview)
 
-    def run_overview(
-        self, run_id: str
-    ) -> RunOverview | None:
+    def run_overview(self, run_id: str) -> RunOverview | None:
         return self._evaluation_repository.run_overview(run_id)
 
     def store_run_overview(self, overview: RunOverview) -> None:
@@ -772,8 +790,8 @@ class ArgillaEvaluator(
 
     @abstractmethod
     def _to_record(
-        self, example: Example[Input, ExpectedOutput], output: Output
-    ) -> RecordData:
+        self, example: Example[Input, ExpectedOutput], *output: Output
+    ) -> Sequence[RecordData]:
         """This method is responsible for translating the `Example` and `Output` of the task to :class:`RecordData`
 
         Args:
@@ -784,7 +802,8 @@ class ArgillaEvaluator(
 
     @final
     def evaluate(
-        self, example: Example[Input, ExpectedOutput], eval_id: str, output: Output
+        self, example: Example[Input, ExpectedOutput], eval_id: str, *output: Output
     ) -> None:
-        record = self._to_record(example, output)
-        self._client.add_record(eval_id, record)
+        records = self._to_record(example, *output)
+        for record in records:
+            self._client.add_record(eval_id, record)

@@ -54,7 +54,8 @@ class DummyEvaluator(Evaluator[None, None, None, DummyEvaluation, DummyAggregati
     ) -> None:
         super().__init__(task, repository)
 
-    def do_evaluate(
+    # mypy expects *args where this method only uses one output
+    def do_evaluate( # type: ignore
         self, input: None, output: None, expected_output: None
     ) -> DummyEvaluation:
         return DummyEvaluation(correct=True)
