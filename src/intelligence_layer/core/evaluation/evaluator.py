@@ -212,6 +212,29 @@ class EvaluationRepository(ABC):
         """
         ...
 
+    @abstractmethod
+    def run_overview(
+        self, run_id: str
+    ) -> RunOverview | None:
+        """Returns an :class:`RunOverview` of a given run by its id.
+
+        Args:
+            run_id: Identifier of the eval run to obtain the overview for.
+
+        Returns:
+            :class:`RunOverview` if one was found, `None` otherwise.
+        """
+        ...
+
+    @abstractmethod
+    def store_run_overview(self, overview: RunOverview) -> None:
+        """Stores an :class:`RunOverview` in the repository.
+
+        Args:
+            overview: The overview to be persisted.
+        """
+        ...
+
 
 T = TypeVar("T")
 
@@ -375,7 +398,7 @@ class BaseEvaluator(
                 run_id, ExampleOutput[Output](example_id=example.id, output=output)
             )
 
-        return RunOverview(
+        run_overview = RunOverview(
             dataset_name=dataset.name,
             id=run_id,
             start=start,
@@ -383,10 +406,12 @@ class BaseEvaluator(
             failed_example_count=failed_count,
             successful_example_count=successful_count,
         )
+        self._repository.store_run_overview(run_overview)
+        return run_overview
 
     @final
     def evaluate_run(
-        self, dataset: Dataset[Input, ExpectedOutput], run_overview: RunOverview
+        self, dataset: Dataset[Input, ExpectedOutput], run_id: str
     ) -> PartialEvaluationOverview:
         """Evaluates all generated outputs in the run.
 
@@ -409,6 +434,9 @@ class BaseEvaluator(
 
         eval_id = self._create_dataset()
         start = datetime.utcnow()
+        run_overview = self._repository.run_overview(run_id)
+        if not run_overview:
+            raise ValueError(f"No RunOverview found for run-id: {run_id}")
         successful_output_iter = (
             output
             for output in self._repository.example_outputs(
@@ -588,7 +616,7 @@ class Evaluator(
             The aggregated results of an evaluation run with a dataset.
         """
         run_overview = self.run_dataset(dataset, tracer)
-        partial_evaluation_overview = self.evaluate_run(dataset, run_overview)
+        partial_evaluation_overview = self.evaluate_run(dataset, run_overview.id)
         return self.aggregate_evaluation(partial_evaluation_overview.id)
 
 
@@ -668,6 +696,14 @@ class ArgillaEvaluationRepository(EvaluationRepository):
     def store_evaluation_overview(self, overview: PartialEvaluationOverview) -> None:
         return self._evaluation_repository.store_evaluation_overview(overview)
 
+    def run_overview(
+        self, run_id: str
+    ) -> RunOverview | None:
+        return self._evaluation_repository.run_overview(run_id)
+
+    def store_run_overview(self, overview: RunOverview) -> None:
+        return self._evaluation_repository.store_run_overview(overview)
+
 
 class ArgillaEvaluator(
     BaseEvaluator[
@@ -732,7 +768,7 @@ class ArgillaEvaluator(
             An overview of how the run went (e.g. how many examples failed).
         """
         run_overview = self.run_dataset(dataset, tracer)
-        return self.evaluate_run(dataset, run_overview)
+        return self.evaluate_run(dataset, run_overview.id)
 
     @abstractmethod
     def _to_record(

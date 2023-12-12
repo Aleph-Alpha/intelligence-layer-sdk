@@ -13,6 +13,7 @@ from intelligence_layer.core.evaluation.domain import (
     ExampleTrace,
     FailedExampleEvaluation,
     PartialEvaluationOverview,
+    RunOverview,
     TaskSpanTrace,
 )
 from intelligence_layer.core.evaluation.evaluator import (
@@ -130,6 +131,9 @@ class FileEvaluationRepository(EvaluationRepository):
     def _evaluation_run_overview_path(self, eval_id: str) -> Path:
         return self._eval_directory(eval_id).with_suffix(".json")
 
+    def _run_overview_path(self, run_id: str) -> Path:
+        return self._run_directory(run_id).with_suffix(".json")
+
     def store_example_output(
         self, run_id: str, example_output: ExampleOutput[Output]
     ) -> None:
@@ -234,6 +238,20 @@ class FileEvaluationRepository(EvaluationRepository):
             overview.model_dump_json(indent=2)
         )
 
+    def run_overview(
+        self, run_id: str
+    ) -> RunOverview | None:
+        file_path = self._run_overview_path(run_id)
+        if not file_path.exists():
+            return None
+        content = file_path.read_text()
+        return RunOverview.model_validate_json(content)
+
+    def store_run_overview(self, overview: RunOverview) -> None:
+        self._run_overview_path(overview.id).write_text(
+            overview.model_dump_json(indent=2)
+        )
+
     def run_ids(self) -> Sequence[str]:
         return [
             path.parent.name for path in self._run_root_directory().glob("*/output")
@@ -323,13 +341,14 @@ class InMemoryEvaluationRepository(EvaluationRepository):
         list
     )
     _example_traces: dict[str, InMemoryTracer] = dict()
-    _run_overviews: dict[str, PartialEvaluationOverview] = dict()
+    _evaluation_run_overviews: dict[str, PartialEvaluationOverview] = dict()
+    _run_overviews: dict[str, RunOverview] = dict()
 
     def run_ids(self) -> Sequence[str]:
         return list(self._example_outputs.keys())
 
     def eval_ids(self) -> Sequence[str]:
-        return list(self._run_overviews.keys())
+        return list(self._evaluation_run_overviews.keys())
 
     def store_example_output(
         self, run_id: str, example_output: ExampleOutput[Output]
@@ -397,7 +416,15 @@ class InMemoryEvaluationRepository(EvaluationRepository):
     def evaluation_overview(
         self, eval_id: str, overview_type: type[EvaluationOverviewType]
     ) -> EvaluationOverviewType | None:
-        return cast(EvaluationOverviewType, self._run_overviews[eval_id])
+        return cast(EvaluationOverviewType, self._evaluation_run_overviews[eval_id])
 
     def store_evaluation_overview(self, overview: PartialEvaluationOverview) -> None:
+        self._evaluation_run_overviews[overview.id] = overview
+
+    def run_overview(
+        self, run_id: str
+    ) -> RunOverview | None:
+        return self._run_overviews.get(run_id)
+
+    def store_run_overview(self, overview: RunOverview) -> None:
         self._run_overviews[overview.id] = overview
