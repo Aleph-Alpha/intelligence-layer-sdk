@@ -23,6 +23,7 @@ from intelligence_layer.connectors.argilla.argilla_client import (
     Question,
     RecordData,
 )
+from intelligence_layer.core.evaluation.dataset_repository import DatasetRepository
 from intelligence_layer.core.evaluation.domain import (
     AggregatedEvaluation,
     Dataset,
@@ -271,8 +272,7 @@ class BaseEvaluator(
 
     Arguments:
         task: The task that will be evaluated.
-        repository: The repository that will be used to store evaluation results.
-        directory: If specified, evaluation traces will be stored here to be used by the trace-viewer.
+        evaluation_repository: The repository that will be used to store evaluation results.
 
     Generics:
         Input: Interface to be passed to the :class:`Task` that shall be evaluated.
@@ -285,10 +285,12 @@ class BaseEvaluator(
     def __init__(
         self,
         task: Task[Input, Output],
-        repository: EvaluationRepository,
+        evaluation_repository: EvaluationRepository,
+        dataset_repository: DatasetRepository,
     ) -> None:
         self._task = task
-        self._repository = repository
+        self._evaluation_repository = evaluation_repository
+        self._dataset_repository = dataset_repository
 
     def output_type(self) -> type[Output]:
         """Returns the type of the evaluated task's output.
@@ -306,6 +308,15 @@ class BaseEvaluator(
                 f"Alternatively overwrite output_type() in {type(self)}"
             )
         return cast(type[Output], output_type)
+
+    def input_type(self) -> type[Input]:
+        input_type = get_annotations(self._task.do_run).get("input", None)
+        if not input_type:
+            raise TypeError(
+                f"Task of type {type(self._task)} must have a type-hint for the input value of do_run to detect the input_type. "
+                f"Alternatively overwrite input_type() in {type(self)}"
+            )
+        return cast(type[Input], input_type)
 
     @abstractmethod
     def evaluation_type(self) -> type[Evaluation]:
@@ -340,7 +351,7 @@ class BaseEvaluator(
         """
         ...
 
-    def _create_dataset(self) -> str:
+    def _create_evaluation_dataset(self) -> str:
         """Generates an ID for the dataset and creates it if necessary.
 
         If no extra logic is required to create the dataset for the run,
@@ -349,13 +360,13 @@ class BaseEvaluator(
         this method is responsible for implementing this logic and returning the ID.
 
         Returns:
-            The ID of the dataset for reference.
+            The ID of the dataset used for retrieval.
         """
         return str(uuid4())
 
     @final
     def run_dataset(
-        self, dataset: Dataset[Input, ExpectedOutput], tracer: Optional[Tracer] = None
+        self, dataset_id: str, tracer: Optional[Tracer] = None
     ) -> RunOverview:
         """Generates all outputs for the provided dataset.
 
@@ -372,7 +383,9 @@ class BaseEvaluator(
         """
 
         def run(example: Example[Input, ExpectedOutput]) -> Output | FailedExampleRun:
-            evaluate_tracer = self._repository.example_tracer(run_id, example.id)
+            evaluate_tracer = self._evaluation_repository.example_tracer(
+                run_id, example.id
+            )
             if tracer:
                 evaluate_tracer = CompositeTracer([evaluate_tracer, tracer])
             try:
@@ -380,6 +393,11 @@ class BaseEvaluator(
             except Exception as e:
                 return FailedExampleRun.from_exception(e)
 
+        dataset = self._dataset_repository.dataset(
+            dataset_id, self.input_type(), self.output_type()
+        )
+        if not dataset:
+            raise ValueError("Dataset not found")
         run_id = str(uuid4())
         start = datetime.utcnow()
         with ThreadPoolExecutor(max_workers=10) as executor:
@@ -392,7 +410,7 @@ class BaseEvaluator(
                 failed_count += 1
             else:
                 successful_count += 1
-            self._repository.store_example_output(
+            self._evaluation_repository.store_example_output(
                 run_id, ExampleOutput[Output](example_id=example.id, output=output)
             )
 
@@ -404,13 +422,11 @@ class BaseEvaluator(
             failed_example_count=failed_count,
             successful_example_count=successful_count,
         )
-        self._repository.store_run_overview(run_overview)
+        self._evaluation_repository.store_run_overview(run_overview)
         return run_overview
 
     @final
-    def evaluate_run(
-        self, dataset: Dataset[Input, ExpectedOutput], *run_ids: str
-    ) -> PartialEvaluationOverview:
+    def evaluate_run(self, *run_ids: str) -> PartialEvaluationOverview:
         """Evaluates all generated outputs in the run.
 
         For each example in the dataset & its corresponding (generated) output,
@@ -430,18 +446,35 @@ class BaseEvaluator(
             __init__.
         """
 
-        eval_id = self._create_dataset()
-        start = datetime.utcnow()
-        run_overviews: list[RunOverview] = []
-        for run_id in run_ids:
-            run_overview = self._repository.run_overview(run_id)
+        def load_overview(run_id: str) -> RunOverview:
+            run_overview = self._evaluation_repository.run_overview(run_id)
             if not run_overview:
                 raise ValueError(f"No RunOverview found for run-id: {run_id}")
-            run_overviews.append(run_overview)
+            return run_overview
+
+        if not run_ids:
+            raise ValueError("At least one run-id needs to be provided")
+        run_overviews = [load_overview(run_id) for run_id in run_ids]
+        if all(
+            run_overviews[0].dataset_name == run_overview.dataset_name
+            for run_overview in run_overviews
+        ):
+            raise ValueError(
+                f"All run-overviews must reference the same dataset: {run_overviews}"
+            )
+        eval_id = self._create_evaluation_dataset()
+        dataset = self._dataset_repository.dataset(
+            run_overviews[0].dataset_name, Input, ExpectedOutput
+        )
+        if not dataset:
+            raise ValueError(f"Dataset: {run_overviews[0].dataset_name} not found")
+        start = datetime.utcnow()
 
         examples_zipped: Iterable[tuple[ExampleOutput[Output], ...]] = zip(
             *(
-                self._repository.example_outputs(run_overview.id, self.output_type())
+                self._evaluation_repository.example_outputs(
+                    run_overview.id, self.output_type()
+                )
                 for run_overview in run_overviews
             ),
             strict=True,
@@ -471,7 +504,7 @@ class BaseEvaluator(
         partial_overview = PartialEvaluationOverview(
             run_overviews=run_overviews, id=eval_id, start=start
         )
-        self._repository.store_evaluation_overview(partial_overview)
+        self._evaluation_repository.store_evaluation_overview(partial_overview)
 
         return partial_overview
 
@@ -491,14 +524,14 @@ class BaseEvaluator(
             An overview of the aggregated evaluation.
         """
 
-        evaluation_overview = self._repository.evaluation_overview(
+        evaluation_overview = self._evaluation_repository.evaluation_overview(
             eval_id, PartialEvaluationOverview
         )
         if not evaluation_overview:
             raise ValueError(
                 f"No PartialEvaluationOverview found for eval-id: {eval_id}"
             )
-        example_evaluations = self._repository.example_evaluations(
+        example_evaluations = self._evaluation_repository.example_evaluations(
             evaluation_overview.id, self.evaluation_type()
         )
         successful_evaluations = CountingFilterIterable(
@@ -513,7 +546,7 @@ class BaseEvaluator(
             failed_evaluation_count=successful_evaluations.excluded_count(),
             **(evaluation_overview.model_dump()),
         )
-        self._repository.store_evaluation_overview(run_overview)
+        self._evaluation_repository.store_evaluation_overview(run_overview)
         return run_overview
 
 
@@ -540,9 +573,10 @@ class Evaluator(
     def __init__(
         self,
         task: Task[Input, Output],
-        repository: EvaluationRepository,
+        evaluation_repository: EvaluationRepository,
+        dataset_repository: DatasetRepository,
     ) -> None:
-        super().__init__(task, repository)
+        super().__init__(task, evaluation_repository, dataset_repository)
 
     def evaluation_type(self) -> type[Evaluation]:
         evaluation_type = get_annotations(self.do_evaluate).get("return", None)
@@ -587,7 +621,7 @@ class Evaluator(
             )
         except Exception as e:
             result = FailedExampleEvaluation.from_exception(e)
-        self._repository.store_example_evaluation(
+        self._evaluation_repository.store_example_evaluation(
             eval_id, ExampleEvaluation(example_id=example.id, result=result)
         )
 
@@ -619,7 +653,7 @@ class Evaluator(
     @final
     def evaluate_dataset(
         self,
-        dataset: Dataset[Input, ExpectedOutput],
+        dataset_id: str,
         tracer: Optional[Tracer] = None,
     ) -> EvaluationOverview[AggregatedEvaluation]:
         """Evaluates an entire :class:`Dataset` in a threaded manner and aggregates the results into an `AggregatedEvaluation`.
@@ -635,8 +669,8 @@ class Evaluator(
         Returns:
             The aggregated results of an evaluation run with a dataset.
         """
-        run_overview = self.run_dataset(dataset, tracer)
-        partial_evaluation_overview = self.evaluate_run(dataset, run_overview.id)
+        run_overview = self.run_dataset(dataset_id, tracer)
+        partial_evaluation_overview = self.evaluate_run(run_overview.id)
         return self.aggregate_evaluation(partial_evaluation_overview.id)
 
 
@@ -746,22 +780,23 @@ class ArgillaEvaluator(
     def __init__(
         self,
         task: Task[Input, Output],
-        repository: ArgillaEvaluationRepository,
+        evaluation_repository: ArgillaEvaluationRepository,
+        dataset_repository: DatasetRepository,
         workspace_id: str,
         fields: Sequence[Field],
         questions: Sequence[Question],
     ) -> None:
-        super().__init__(task, repository)
+        super().__init__(task, evaluation_repository, dataset_repository)
         self._workspace_id = workspace_id
         self._fields = fields
         self._questions = questions
-        self._client = repository._client
+        self._client = evaluation_repository._client
 
     def evaluation_type(self) -> type[ArgillaEvaluation]:
         return ArgillaEvaluation
 
     @final
-    def _create_dataset(self) -> str:
+    def _create_evaluation_dataset(self) -> str:
         return self._client.create_dataset(
             self._workspace_id,
             str(uuid4()),
@@ -772,7 +807,7 @@ class ArgillaEvaluator(
     @final
     def partial_evaluate_dataset(
         self,
-        dataset: Dataset[Input, ExpectedOutput],
+        dataset_id: str,
         tracer: Optional[Tracer] = None,
     ) -> PartialEvaluationOverview:
         """Evaluates an entire :class:`Dataset` in a threaded manner and pushes the results to Argilla.
@@ -785,8 +820,8 @@ class ArgillaEvaluator(
         Returns:
             An overview of how the run went (e.g. how many examples failed).
         """
-        run_overview = self.run_dataset(dataset, tracer)
-        return self.evaluate_run(dataset, run_overview.id)
+        run_overview = self.run_dataset(dataset_id, tracer)
+        return self.evaluate_run(run_overview.id)
 
     @abstractmethod
     def _to_record(

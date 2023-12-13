@@ -18,7 +18,7 @@ class DatasetRepository(ABC):
         self,
         name: str,
         examples: Iterable[tuple[PydanticSerializable, PydanticSerializable]],
-    ) -> str:
+    ) -> None:
         ...
 
     @abstractmethod
@@ -35,20 +35,25 @@ class DatasetRepository(ABC):
         ...
 
     @abstractmethod
-    def list_datasets(self) -> Sequence[tuple[str, str]]:
+    def list_datasets(self) -> Sequence[str]:
         ...
 
 
 class InMemoryDatasetRepository(DatasetRepository):
     """A repository to store datasets for evaluation."""
 
-    _datasets: dict[str, Dataset[PydanticSerializable, PydanticSerializable]] = {}
+    def __init__(self) -> None:
+        self._datasets: dict[
+            str, Dataset[PydanticSerializable, PydanticSerializable]
+        ] = {}
 
     def create_dataset(
         self,
         name: str,
         examples: Iterable[tuple[PydanticSerializable, PydanticSerializable]],
-    ) -> str:
+    ) -> None:
+        if name in self._datasets:
+            raise ValueError("Dataset name already taken")
         in_memory_examples = [
             cast(
                 Example[PydanticSerializable, PydanticSerializable],
@@ -56,9 +61,7 @@ class InMemoryDatasetRepository(DatasetRepository):
             )
             for (example_input, example_output) in examples
         ]
-        id = str(uuid4())
-        self._datasets[id] = SequenceDataset(name=name, examples=in_memory_examples)
-        return id
+        self._datasets[name] = SequenceDataset(name=name, examples=in_memory_examples)
 
     def dataset(
         self,
@@ -71,5 +74,5 @@ class InMemoryDatasetRepository(DatasetRepository):
     def delete_dataset(self, id: str) -> None:
         self._datasets.pop(id, None)
 
-    def list_datasets(self) -> Sequence[tuple[str, str]]:
-        return [(dataset.name, id) for id, dataset in self._datasets.items()]
+    def list_datasets(self) -> Sequence[str]:
+        return list(self._datasets.keys())
