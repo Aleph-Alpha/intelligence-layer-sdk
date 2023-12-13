@@ -1,5 +1,6 @@
 from typing import Iterable, Literal, TypeAlias
 
+from pydantic import BaseModel
 from pytest import fixture, raises
 
 from intelligence_layer.core import (
@@ -63,6 +64,37 @@ class DummyEvaluator(
         return DummyAggregatedEvaluationWithResultList(results=list(evaluations))
 
 
+class ComparisonEvaluation(BaseModel):
+    is_equal: bool
+
+
+class ComparisonAggregation(BaseModel):
+    equal_ratio: float
+
+
+class ComparingEvaluator(
+    Evaluator[
+        DummyTaskInput,
+        DummyTaskOutput,
+        None,
+        ComparisonEvaluation,
+        ComparisonAggregation,
+    ]
+):
+    def do_evaluate(
+        self, input: DummyTaskInput, expected_output: None, *output: DummyTaskOutput
+    ) -> ComparisonEvaluation:
+        return ComparisonEvaluation(is_equal=output[1:] == output[:-1])
+
+    def aggregate(
+        self, evaluations: Iterable[ComparisonEvaluation]
+    ) -> ComparisonAggregation:
+        evals = list(evaluations)
+        return ComparisonAggregation(
+            equal_ratio=evals.count(ComparisonEvaluation(is_equal=True)) / len(evals)
+        )
+
+
 class DummyEvaluatorWithoutTypeHints(DummyEvaluator):
     # type hint for return value missing on purpose for testing
     def do_evaluate(  # type: ignore
@@ -94,6 +126,13 @@ def dummy_evaluator(
     evaluation_repository: InMemoryEvaluationRepository,
 ) -> DummyEvaluator:
     return DummyEvaluator(DummyTask(), evaluation_repository)
+
+
+@fixture
+def comparing_evaluator(
+    evaluation_repository: InMemoryEvaluationRepository,
+) -> ComparingEvaluator:
+    return ComparingEvaluator(DummyTask(), evaluation_repository)
 
 
 def test_evaluate_dataset_returns_generic_statistics(
@@ -200,6 +239,22 @@ def test_evaluate_dataset_stores_aggregated_results(
     )
 
     assert evaluation_run_overview == loaded_evaluation_run_overview
+
+
+def test_evaluate_can_evaluate_multiple_runs(
+    dummy_evaluator: DummyEvaluator,
+    comparing_evaluator: ComparingEvaluator,
+    sequence_dataset: SequenceDataset[DummyTaskInput, None],
+) -> None:
+    run_overview1 = dummy_evaluator.run_dataset(sequence_dataset)
+    run_overview2 = dummy_evaluator.run_dataset(sequence_dataset)
+
+    partial_overview = comparing_evaluator.evaluate_run(
+        sequence_dataset, run_overview1.id, run_overview2.id
+    )
+
+    eval_overview = comparing_evaluator.aggregate_evaluation(partial_overview.id)
+    assert eval_overview.statistics.equal_ratio == 1
 
 
 def test_output_type_raises_if_do_run_does_not_have_type_hints(
