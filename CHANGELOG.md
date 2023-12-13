@@ -1,5 +1,26 @@
 # Changelog
 
+## 0.4.0
+
+### Breaking Changes
+
+- `Evaluator` methods changed to support asynchronous processing for human eval. To run everything at once, change `evaluator.evaluate()` calls to `evaluator.run_and_evaluate`
+    - An evaluation also now returns a `EvaluationOverview`, with much more information about the output of the evaluation.
+- `EmbeddingBasedClassify`: init arguments swapped places, from `labels_with_examples, client` to `client, label_with_examples`
+- `PromptOutput` for `Instruct` tasks now inherits from `CompleteOutput` to make it easier to use more information about the raw completion response.
+
+### New Features
+
+- New `IntelligenceApp` builder to quickly spin up a FastAPI server with your `Task`s
+- Integration with [Argilla](https://docs.argilla.io/en/latest/index.html) for human evaluation
+- `CompleteOutput` and `PromptOutput` now support getting the `generated_tokens` in the completion for downstream calculations.
+- Summarization use cases now allow for overriding the default model
+- New `RecursiveSummarizer` allows for recursively calling one of the `LongContextSummarize` tasks until certain thresholds are reached
+
+### Fixes
+
+- `LimitedConcurrencyClient`'s `from_token` method now supports a custom API host
+
 ## 0.3.0:
 
 ### Breaking Changes
