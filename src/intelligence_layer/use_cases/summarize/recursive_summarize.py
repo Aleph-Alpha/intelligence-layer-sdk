@@ -49,9 +49,8 @@ class RecursiveSummarize(Task[RecursiveSummarizeInput, SummarizeOutput]):
         self, input: RecursiveSummarizeInput, task_span: TaskSpan
     ) -> SummarizeOutput:
         text = input.text
-        continue_loop = True
         loop_count = 0
-        while continue_loop:
+        while True:
             summarize_output = self.long_context_summarize_task.run(
                 LongContextSummarizeInput(text=text, language=input.language), task_span
             )
@@ -64,13 +63,13 @@ class RecursiveSummarize(Task[RecursiveSummarizeInput, SummarizeOutput]):
             loop_count += 1
 
             if len(summarize_output.partial_summaries) == 1:
-                continue_loop = False
+                break
 
             elif input.max_tokens and num_generated_tokens < input.max_tokens:
-                continue_loop = False
+                break
 
             elif input.max_loops and loop_count <= input.max_loops:
-                continue_loop = False
+                break
 
         return SummarizeOutput(
             summary=text.strip(), generated_tokens=num_generated_tokens
