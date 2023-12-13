@@ -64,15 +64,19 @@ def test_single_chunk_summarize_evaluator(
     )
 
     assert len(evaluation_overview.statistics.evaluations) == len(dataset.examples)
-    good_result = single_chunk_summarize_evaluator._repository.example_evaluation(
-        evaluation_overview.id,
-        "good",
-        SummarizeEvaluation,
+    good_result = (
+        single_chunk_summarize_evaluator._evaluation_repository.example_evaluation(
+            evaluation_overview.id,
+            "good",
+            SummarizeEvaluation,
+        )
     )
-    bad_result = single_chunk_summarize_evaluator._repository.example_evaluation(
-        evaluation_overview.id,
-        "bad",
-        SummarizeEvaluation,
+    bad_result = (
+        single_chunk_summarize_evaluator._evaluation_repository.example_evaluation(
+            evaluation_overview.id,
+            "bad",
+            SummarizeEvaluation,
+        )
     )
     assert bad_result and isinstance(bad_result.result, SummarizeEvaluation)
     assert good_result and isinstance(good_result.result, SummarizeEvaluation)
@@ -103,15 +107,19 @@ def test_long_context_summarize_evaluator(
     )
 
     assert len(evaluation_overview.statistics.evaluations) == len(dataset.examples)
-    good_result = long_context_summarize_evaluator._repository.example_evaluation(
-        evaluation_overview.id,
-        "good",
-        SummarizeEvaluation,
+    good_result = (
+        long_context_summarize_evaluator._evaluation_repository.example_evaluation(
+            evaluation_overview.id,
+            "good",
+            SummarizeEvaluation,
+        )
     )
-    bad_result = long_context_summarize_evaluator._repository.example_evaluation(
-        evaluation_overview.id,
-        "bad",
-        SummarizeEvaluation,
+    bad_result = (
+        long_context_summarize_evaluator._evaluation_repository.example_evaluation(
+            evaluation_overview.id,
+            "bad",
+            SummarizeEvaluation,
+        )
     )
     assert bad_result and isinstance(bad_result.result, SummarizeEvaluation)
     assert good_result and isinstance(good_result.result, SummarizeEvaluation)

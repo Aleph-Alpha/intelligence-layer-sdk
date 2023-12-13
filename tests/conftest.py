@@ -8,24 +8,16 @@ from faker import Faker
 from pydantic import BaseModel
 from pytest import fixture
 
-from intelligence_layer.connectors.document_index.document_index import (
-    DocumentIndexClient,
-)
-from intelligence_layer.connectors.limited_concurrency_client import (
+from intelligence_layer.connectors import (
     AlephAlphaClientProtocol,
-    LimitedConcurrencyClient,
-)
-from intelligence_layer.connectors.retrievers.base_retriever import Document
-from intelligence_layer.connectors.retrievers.document_index_retriever import (
+    Document,
+    DocumentIndexClient,
     DocumentIndexRetriever,
-)
-from intelligence_layer.connectors.retrievers.qdrant_in_memory_retriever import (
+    LimitedConcurrencyClient,
     QdrantInMemoryRetriever,
     RetrieverType,
 )
 from intelligence_layer.core import (
-    FileEvaluationRepository,
-    InMemoryEvaluationRepository,
     NoOpTracer,
     Task,
     TaskSpan,
@@ -55,16 +47,6 @@ def no_op_tracer() -> NoOpTracer:
 def prompt_image() -> Image:
     image_source_path = Path(__file__).parent / "dog-and-cat-cover.jpg"
     return cast(Image, Image.from_file(image_source_path))  # from_file lacks type-hint
-
-
-@fixture
-def file_evaluation_repository(tmp_path: Path) -> FileEvaluationRepository:
-    return FileEvaluationRepository(tmp_path)
-
-
-@fixture
-def in_memory_evaluation_repository() -> InMemoryEvaluationRepository:
-    return InMemoryEvaluationRepository()
 
 
 @fixture

@@ -15,15 +15,13 @@ from intelligence_layer.core import (
 )
 from intelligence_layer.core.evaluation.domain import EvaluationOverview, ExampleOutput
 from intelligence_layer.core.tracer import CompositeTracer, InMemoryTracer
+from tests.conftest import DummyStringInput
 from tests.core.evaluation.conftest import DummyAggregatedEvaluation, DummyEvaluation
 
 
 class DummyEvaluationWithExceptionStructure(BaseModel):
     error_message: str
 
-
-class DummyTaskInput(BaseModel):
-    input: str
 
 
 @fixture
@@ -54,7 +52,7 @@ def test_can_store_example_evaluation_traces_in_file(
     tracer = file_evaluation_repository.example_tracer(run_id, example_id)
     expected = InMemoryTracer()
     CompositeTracer([tracer, expected]).task_span(
-        "task", DummyTaskInput(input="input"), now
+        "task", DummyStringInput(input="input"), now
     )
 
     assert file_evaluation_repository.example_trace(run_id, example_id) == ExampleTrace(

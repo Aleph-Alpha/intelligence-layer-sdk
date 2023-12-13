@@ -5,8 +5,9 @@ from pytest import fixture, raises
 
 from intelligence_layer.core import (
     Evaluator,
-    Example,
     FailedExampleEvaluation,
+    Example,
+    InMemoryDatasetRepository,
     InMemoryEvaluationRepository,
     InMemoryTaskSpan,
     InMemoryTracer,
@@ -23,19 +24,6 @@ from tests.core.evaluation.conftest import (
 
 DummyTaskInput: TypeAlias = Literal["success", "fail in task", "fail in eval"]
 DummyTaskOutput: TypeAlias = DummyTaskInput
-
-
-@fixture
-def sequence_dataset() -> SequenceDataset[DummyTaskInput, None]:
-    examples = [
-        Example(input="success", expected_output=None),
-        Example(input="fail in task", expected_output=None),
-        Example(input="fail in eval", expected_output=None),
-    ]
-    return SequenceDataset(
-        name="test",
-        examples=examples,  # type: ignore
-    )
 
 
 class DummyEvaluator(
@@ -117,15 +105,40 @@ class DummyTaskWithoutTypeHints(Task[DummyTaskInput, DummyTaskOutput]):
 
 
 @fixture
-def evaluation_repository() -> InMemoryEvaluationRepository:
-    return InMemoryEvaluationRepository()
+def sequence_dataset() -> SequenceDataset[DummyTaskInput, None]:
+    examples = [
+        Example(input="success", expected_output=None),
+        Example(input="fail in task", expected_output=None),
+        Example(input="fail in eval", expected_output=None),
+    ]
+    return SequenceDataset(
+        name="test",
+        examples=examples,  # type: ignore
+    )
 
 
 @fixture
 def dummy_evaluator(
-    evaluation_repository: InMemoryEvaluationRepository,
+    in_memory_evaluation_repository: InMemoryEvaluationRepository,
+    in_memory_dataset_repository: InMemoryDatasetRepository,
 ) -> DummyEvaluator:
-    return DummyEvaluator(DummyTask(), evaluation_repository)
+    return DummyEvaluator(
+        DummyTask(),
+        in_memory_evaluation_repository,
+        in_memory_dataset_repository,
+    )
+
+
+@fixture
+def dataset_name(
+    sequence_dataset: SequenceDataset[DummyTaskInput, None],
+    in_memory_dataset_repository: InMemoryDatasetRepository,
+) -> str:
+    dataset_name = "name"
+    in_memory_dataset_repository.create_dataset(
+        dataset_name, [(e.input, None) for e in sequence_dataset.examples]
+    )
+    return dataset_name
 
 
 @fixture
@@ -136,24 +149,20 @@ def comparing_evaluator(
 
 
 def test_evaluate_dataset_returns_generic_statistics(
-    dummy_evaluator: DummyEvaluator,
-    sequence_dataset: SequenceDataset[DummyTaskInput, None],
+    dummy_evaluator: DummyEvaluator, dataset_name: str
 ) -> None:
-    evaluation_run_overview = dummy_evaluator.evaluate_dataset(sequence_dataset)
+    evaluation_run_overview = dummy_evaluator.evaluate_dataset(dataset_name)
 
-    assert (
-        evaluation_run_overview.run_overviews[0].dataset_name == sequence_dataset.name
-    )
+    assert evaluation_run_overview.run_overviews[0].dataset_name == dataset_name
     assert evaluation_run_overview.successful_count == 1
     assert evaluation_run_overview.failed_count == 2
 
 
 def test_evaluate_dataset_uses_passed_tracer(
-    dummy_evaluator: DummyEvaluator,
-    sequence_dataset: SequenceDataset[DummyTaskInput, None],
+    dummy_evaluator: DummyEvaluator, dataset_name: str
 ) -> None:
     in_memory_tracer = InMemoryTracer()
-    dummy_evaluator.evaluate_dataset(sequence_dataset, in_memory_tracer)
+    dummy_evaluator.evaluate_dataset(dataset_name, in_memory_tracer)
 
     entries = in_memory_tracer.entries
     assert len(entries) == 3
@@ -162,10 +171,18 @@ def test_evaluate_dataset_uses_passed_tracer(
 
 def test_evaluate_dataset_saves_overview(
     in_memory_evaluation_repository: InMemoryEvaluationRepository,
+    dataset_name: str,
     sequence_dataset: SequenceDataset[DummyTaskInput, None],
 ) -> None:
-    dummy_evaluator = DummyEvaluator(DummyTask(), in_memory_evaluation_repository)
-    overview = dummy_evaluator.evaluate_dataset(sequence_dataset)
+    dataset_name = "datset"
+    dataset_repository = InMemoryDatasetRepository()
+    dataset_repository.create_dataset(
+        dataset_name, [(e.input, None) for e in sequence_dataset.examples]
+    )
+    dummy_evaluator = DummyEvaluator(
+        DummyTask(), in_memory_evaluation_repository, dataset_repository
+    )
+    overview = dummy_evaluator.evaluate_dataset(dataset_name)
 
     assert overview == in_memory_evaluation_repository.evaluation_overview(
         overview.id, EvaluationOverview[DummyAggregatedEvaluationWithResultList]
@@ -174,21 +191,25 @@ def test_evaluate_dataset_saves_overview(
 
 def test_evaluate_dataset_stores_example_evaluations(
     dummy_evaluator: DummyEvaluator,
-    sequence_dataset: SequenceDataset[DummyTaskInput, None],
+    dataset_name: str,
 ) -> None:
-    evaluation_repository = dummy_evaluator._repository
+    evaluation_repository = dummy_evaluator._evaluation_repository
+    dataset_repository = dummy_evaluator._dataset_repository
+    dataset_name = dataset_repository.list_datasets()[0]
+    dataset = dataset_repository.dataset(dataset_name, DummyTaskInput, None)
+    assert dataset
 
     evaluation_run_overview = dummy_evaluator.evaluate_dataset(
-        sequence_dataset, NoOpTracer()
+        dataset_name, NoOpTracer()
     )
     success_result = evaluation_repository.example_evaluation(
-        evaluation_run_overview.id, sequence_dataset.examples[0].id, DummyEvaluation
+        evaluation_run_overview.id, dataset.examples[0].id, DummyEvaluation
     )
     failure_result_task = evaluation_repository.example_evaluation(
-        evaluation_run_overview.id, sequence_dataset.examples[1].id, DummyEvaluation
+        evaluation_run_overview.id, dataset.examples[1].id, DummyEvaluation
     )
     failure_result_eval = evaluation_repository.example_evaluation(
-        evaluation_run_overview.id, sequence_dataset.examples[2].id, DummyEvaluation
+        evaluation_run_overview.id, dataset.examples[2].id, DummyEvaluation
     )
 
     assert success_result and isinstance(success_result.result, DummyEvaluation)
@@ -200,19 +221,22 @@ def test_evaluate_dataset_stores_example_evaluations(
 
 def test_evaluate_dataset_stores_example_traces(
     dummy_evaluator: DummyEvaluator,
-    sequence_dataset: SequenceDataset[DummyTaskInput, None],
+    dataset_name: str,
 ) -> None:
-    evaluation_repository = dummy_evaluator._repository
+    evaluation_repository = dummy_evaluator._evaluation_repository
+    dataset_repository = dummy_evaluator._dataset_repository
+    dataset = dataset_repository.dataset(dataset_name, DummyTaskInput, None)
+    assert dataset
 
-    evaluation_run_overview = dummy_evaluator.evaluate_dataset(sequence_dataset)
+    evaluation_run_overview = dummy_evaluator.evaluate_dataset(dataset_name)
     success_result = evaluation_repository.example_trace(
-        evaluation_run_overview.run_ids[0], sequence_dataset.examples[0].id
+        evaluation_run_overview.run_ids[0], dataset.examples[0].id
     )
     failure_result_task = evaluation_repository.example_trace(
-        evaluation_run_overview.run_ids[0], sequence_dataset.examples[1].id
+        evaluation_run_overview.run_ids[0], dataset.examples[1].id
     )
     failure_result_eval = evaluation_repository.example_trace(
-        evaluation_run_overview.run_ids[0], sequence_dataset.examples[2].id
+        evaluation_run_overview.run_ids[0], dataset.examples[2].id
     )
 
     assert success_result
@@ -225,14 +249,14 @@ def test_evaluate_dataset_stores_example_traces(
 
 def test_evaluate_dataset_stores_aggregated_results(
     dummy_evaluator: DummyEvaluator,
+    dataset_name: str,
 ) -> None:
-    evaluation_repository = dummy_evaluator._repository
+    evaluation_repository = dummy_evaluator._evaluation_repository
+    dataset_repository = dummy_evaluator._dataset_repository
 
-    dataset: SequenceDataset[DummyTaskInput, None] = SequenceDataset(
-        name="test", examples=[]
+    evaluation_run_overview = dummy_evaluator.evaluate_dataset(
+        dataset_name, NoOpTracer()
     )
-
-    evaluation_run_overview = dummy_evaluator.evaluate_dataset(dataset, NoOpTracer())
     loaded_evaluation_run_overview = evaluation_repository.evaluation_overview(
         evaluation_run_overview.id,
         EvaluationOverview[DummyAggregatedEvaluationWithResultList],
@@ -257,19 +281,21 @@ def test_evaluate_can_evaluate_multiple_runs(
     assert eval_overview.statistics.equal_ratio == 1
 
 
-def test_output_type_raises_if_do_run_does_not_have_type_hints(
-    evaluation_repository: InMemoryEvaluationRepository,
-) -> None:
-    dummy_evaluator = DummyEvaluator(DummyTaskWithoutTypeHints(), evaluation_repository)
+def test_output_type_raises_if_do_run_does_not_have_type_hints() -> None:
+    dummy_evaluator = DummyEvaluator(
+        DummyTaskWithoutTypeHints(),
+        InMemoryEvaluationRepository(),
+        InMemoryDatasetRepository(),
+    )
 
     with raises(TypeError):
         dummy_evaluator.output_type()
 
 
-def test_evaluation_type_raises_if_do_evaluate_does_not_have_type_hints(
-    evaluation_repository: InMemoryEvaluationRepository,
-) -> None:
-    dummy_evaluator = DummyEvaluatorWithoutTypeHints(DummyTask(), evaluation_repository)
+def test_evaluation_type_raises_if_do_evaluate_does_not_have_type_hints() -> None:
+    dummy_evaluator = DummyEvaluatorWithoutTypeHints(
+        DummyTask(), InMemoryEvaluationRepository(), InMemoryDatasetRepository()
+    )
 
     with raises(TypeError):
         dummy_evaluator.evaluation_type()
