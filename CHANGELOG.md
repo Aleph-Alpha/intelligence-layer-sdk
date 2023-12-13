@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.4.1
+
+Fix missing version bump in the packages
+
 ## 0.4.0
 
 ### Breaking Changes

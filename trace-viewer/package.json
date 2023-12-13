@@ -67,7 +67,7 @@
 		"test:unit.run": "vitest run"
 	},
 	"type": "module",
-	"version": "0.3.0",
+	"version": "0.4.1",
 	"volta": {
 		"node": "20.10.0",
 		"pnpm": "8.11.0"
