@@ -123,31 +123,33 @@ def sequence_dataset() -> SequenceDataset[str, None]:
 @fixture
 def dummy_evaluator(
     in_memory_evaluation_repository: InMemoryEvaluationRepository,
-    dataset_repository: InMemoryDatasetRepository,
+    in_memory_dataset_repository: InMemoryDatasetRepository,
 ) -> DummyEvaluator:
     return DummyEvaluator(
         DummyTask(),
         in_memory_evaluation_repository,
-        dataset_repository,
+        in_memory_dataset_repository,
     )
 
 
 @fixture
 def dataset_name(
     sequence_dataset: SequenceDataset[str, None],
-    dataset_repository: InMemoryDatasetRepository,
+    in_memory_dataset_repository: InMemoryDatasetRepository,
 ) -> str:
-    dataset_repository.create_dataset(sequence_dataset.name, sequence_dataset.examples)
+    in_memory_dataset_repository.create_dataset(
+        sequence_dataset.name, sequence_dataset.examples
+    )
     return sequence_dataset.name
 
 
 @fixture
 def comparing_evaluator(
     in_memory_evaluation_repository: InMemoryEvaluationRepository,
-    dataset_repository: InMemoryDatasetRepository,
+    in_memory_dataset_repository: InMemoryDatasetRepository,
 ) -> ComparingEvaluator:
     return ComparingEvaluator(
-        DummyTask(), in_memory_evaluation_repository, dataset_repository
+        DummyTask(), in_memory_evaluation_repository, in_memory_dataset_repository
     )
 
 
@@ -190,7 +192,7 @@ def test_evaluate_dataset_stores_example_evaluations(
 ) -> None:
     evaluation_repository = dummy_evaluator._evaluation_repository
     dataset_repository = dummy_evaluator._dataset_repository
-    dataset_name = dataset_repository.list_datasets()[0]
+    dataset_name = list(dataset_repository.list_datasets())[0]
     dataset: Optional[Dataset[str, None]] = dataset_repository.dataset(
         dataset_name, str, type(None)
     )

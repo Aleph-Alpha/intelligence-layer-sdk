@@ -112,7 +112,7 @@ def stub_argilla_client() -> StubArgillaClient:
 def string_argilla_evaluator(
     dummy_string_task: DummyStringTask,
     in_memory_evaluation_repository: InMemoryEvaluationRepository,  # noqa: w0404
-    dataset_repository: InMemoryDatasetRepository,
+    in_memory_dataset_repository: InMemoryDatasetRepository,
     stub_argilla_client: StubArgillaClient,
 ) -> DummyStringTaskArgillaEvaluator:
     stub_argilla_client._expected_workspace_id = "workspace-id"
@@ -133,7 +133,7 @@ def string_argilla_evaluator(
         ArgillaEvaluationRepository(
             in_memory_evaluation_repository, stub_argilla_client
         ),
-        dataset_repository,
+        in_memory_dataset_repository,
         stub_argilla_client._expected_workspace_id,
         fields,
         questions,

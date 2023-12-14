@@ -14,6 +14,7 @@ from intelligence_layer.core import (
     TaskSpanTrace,
 )
 from intelligence_layer.core.evaluation.domain import EvaluationOverview, ExampleOutput
+from intelligence_layer.core.evaluation.evaluator import EvaluationRepository
 from intelligence_layer.core.tracer import CompositeTracer, InMemoryTracer
 from tests.conftest import DummyStringInput
 from tests.core.evaluation.conftest import DummyAggregatedEvaluation, DummyEvaluation
@@ -206,7 +207,45 @@ def test_file_repository_run_id_returns_run_ids(
     run_id = "id"
 
     file_evaluation_repository.store_example_output(
-        run_id, ExampleOutput(example_id="exmaple_id", output=None)
+        run_id, ExampleOutput(example_id="example_id", output=None)
     )
 
     assert file_evaluation_repository.run_ids() == [run_id]
+
+
+def evaluation_repository_returns_examples_in_same_order_for_two_runs(
+    evaluation_repository: EvaluationRepository,
+) -> None:
+    run_id_1 = "id_1"
+    run_id_2 = "id_2"
+    num_examples = 20
+
+    for example_id in range(num_examples):
+        evaluation_repository.store_example_output(
+            run_id_1, ExampleOutput(example_id=str(example_id), output=None)
+        )
+
+    for example_id in reversed(range(num_examples)):
+        evaluation_repository.store_example_output(
+            run_id_2, ExampleOutput(example_id=str(example_id), output=None)
+        )
+
+    assert list(evaluation_repository.example_outputs(run_id_1, type(None))) == list(
+        evaluation_repository.example_outputs(run_id_2, type(None))
+    )
+
+
+def test_in_memory_evaluation_repository_returns_examples_in_same_order_for_two_runs(
+    in_memory_evaluation_repository: InMemoryEvaluationRepository,
+) -> None:
+    evaluation_repository_returns_examples_in_same_order_for_two_runs(
+        in_memory_evaluation_repository
+    )
+
+
+def test_file_evaluation_repository_returns_examples_in_same_order_for_two_runs(
+    file_evaluation_repository: FileEvaluationRepository,
+) -> None:
+    evaluation_repository_returns_examples_in_same_order_for_two_runs(
+        file_evaluation_repository
+    )

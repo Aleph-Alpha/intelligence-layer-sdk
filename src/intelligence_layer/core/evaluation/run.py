@@ -10,6 +10,7 @@ from intelligence_layer.connectors.limited_concurrency_client import (
     LimitedConcurrencyClient,
 )
 from intelligence_layer.core import FileEvaluationRepository
+from intelligence_layer.core.evaluation.dataset_repository import FileDatasetRepository
 
 
 def function_from_string(fully_qualified_function_name: str) -> Any:
@@ -47,11 +48,16 @@ def parse_args(cli_args: Sequence[str]) -> Namespace:
         "the class-type can actually be provided as argument.",
     )
     parser.add_argument(
-        "--dataset",
+        "--dataset-repository-path",
         required=True,
-        type=function_from_string,
-        help="A factory function for the dataset that is used for evaluation. "
-        "This function must not take any arguments.",
+        type=Path,
+        help="Path to a file dataset repository.",
+    )
+    parser.add_argument(
+        "--dataset-id",
+        required=True,
+        type=str,
+        help="ID of a dataset that exists in the file dataset repository provided.",
     )
     parser.add_argument(
         "--target-dir",
@@ -67,11 +73,12 @@ def parse_args(cli_args: Sequence[str]) -> Namespace:
 
 def main(cli_args: Sequence[str]) -> None:
     args = parse_args(cli_args)
-    repository = FileEvaluationRepository(args.target_dir)
+    evaluation_repository = FileEvaluationRepository(args.target_dir)
+    dataset_repository = FileDatasetRepository(args.dataset_repository_path)
     task = create_task(args.task)
-    evaluator = args.evaluator(task, repository)
-    dataset = args.dataset()
-    evaluator.evaluate_dataset(dataset)
+    evaluator = args.evaluator(task, evaluation_repository, dataset_repository)
+    dataset_id = args.dataset_id
+    evaluator.evaluate_dataset(dataset_id)
 
 
 if __name__ == "__main__":

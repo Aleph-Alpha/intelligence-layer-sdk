@@ -23,7 +23,12 @@ from .complete import (
 from .detect_language import DetectLanguage, DetectLanguageInput, DetectLanguageOutput
 from .detect_language import Language as Language
 from .echo import EchoInput, EchoOutput, EchoTask
-from .evaluation.dataset_repository import DatasetRepository as DatasetRepository
+from .evaluation.dataset_repository import (
+    FileDatasetRepository as FileDatasetRepository,
+)
+from .evaluation.dataset_repository import (
+    InMemoryDatasetRepository as InMemoryDatasetRepository,
+)
 from .evaluation.domain import Dataset as Dataset
 from .evaluation.domain import EvaluationOverview as EvaluationOverview
 from .evaluation.domain import Example as Example
@@ -46,6 +51,7 @@ from .evaluation.evaluator import (
 )
 from .evaluation.evaluator import ArgillaEvaluator as ArgillaEvaluator
 from .evaluation.evaluator import BaseEvaluator as BaseEvaluator
+from .evaluation.evaluator import DatasetRepository as DatasetRepository
 from .evaluation.evaluator import EvaluationRepository as EvaluationRepository
 from .evaluation.evaluator import Evaluator as Evaluator
 from .evaluation.graders import BleuGrader as BleuGrader

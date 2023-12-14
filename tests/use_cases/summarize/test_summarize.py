@@ -27,24 +27,24 @@ from intelligence_layer.use_cases.summarize.summarize import (
 @fixture
 def single_chunk_summarize_evaluator(
     single_chunk_few_shot_summarize: SingleChunkFewShotSummarize,
-    dataset_repository: InMemoryDatasetRepository,
+    in_memory_dataset_repository: InMemoryDatasetRepository,
 ) -> SingleChunkSummarizeEvaluator:
     return SingleChunkSummarizeEvaluator(
         single_chunk_few_shot_summarize,
         InMemoryEvaluationRepository(),
-        dataset_repository,
+        in_memory_dataset_repository,
     )
 
 
 @fixture
 def long_context_summarize_evaluator(
     long_context_high_compression_summarize: LongContextHighCompressionSummarize,
-    dataset_repository: DatasetRepository,
+    in_memory_dataset_repository: DatasetRepository,
 ) -> LongContextSummarizeEvaluator:
     return LongContextSummarizeEvaluator(
         long_context_high_compression_summarize,
         InMemoryEvaluationRepository(),
-        dataset_repository,
+        in_memory_dataset_repository,
     )
 
 
@@ -52,7 +52,7 @@ def test_single_chunk_summarize_evaluator(
     single_chunk_summarize_evaluator: SingleChunkSummarizeEvaluator,
     chunk: Chunk,
     no_op_tracer: NoOpTracer,
-    dataset_repository: InMemoryDatasetRepository,
+    in_memory_dataset_repository: InMemoryDatasetRepository,
 ) -> None:
     input = SingleChunkSummarizeInput(chunk=chunk, language=Language("en"))
     bad_example = Example(
@@ -64,7 +64,9 @@ def test_single_chunk_summarize_evaluator(
         id="good",
     )
     dataset_name = "summarize_eval_test"
-    dataset_repository.create_dataset(dataset_name, [good_example, bad_example])
+    in_memory_dataset_repository.create_dataset(
+        dataset_name, [good_example, bad_example]
+    )
     evaluation_overview = single_chunk_summarize_evaluator.evaluate_dataset(
         dataset_name
     )
@@ -92,7 +94,7 @@ def test_single_chunk_summarize_evaluator(
 
 def test_long_context_summarize_evaluator(
     long_context_summarize_evaluator: LongContextSummarizeEvaluator,
-    dataset_repository: InMemoryDatasetRepository,
+    in_memory_dataset_repository: InMemoryDatasetRepository,
     long_text: str,
     no_op_tracer: NoOpTracer,
 ) -> None:
@@ -106,7 +108,9 @@ def test_long_context_summarize_evaluator(
         id="good",
     )
     dataset_name = "summarize_eval_test"
-    dataset_repository.create_dataset(dataset_name, [good_example, bad_example])
+    in_memory_dataset_repository.create_dataset(
+        dataset_name, [good_example, bad_example]
+    )
     evaluation_overview = long_context_summarize_evaluator.evaluate_dataset(
         dataset_name
     )
