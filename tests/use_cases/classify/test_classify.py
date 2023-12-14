@@ -111,6 +111,7 @@ def embedding_based_classify_dataset(
     )
 
 
+@fixture
 def embedding_based_classify_dataset_name(
     dataset_repository: InMemoryDatasetRepository,
     embedding_based_classify_dataset: Dataset[ClassifyInput, Sequence[str]],

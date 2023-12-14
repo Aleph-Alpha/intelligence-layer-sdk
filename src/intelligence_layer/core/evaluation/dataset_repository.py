@@ -56,9 +56,9 @@ class InMemoryDatasetRepository(DatasetRepository):
         in_memory_examples = [
             cast(
                 Example[PydanticSerializable, PydanticSerializable],
-                Example(input=example_input, expected_output=example_output),
+                example,
             )
-            for (example_input, example_output) in examples
+            for example in examples
         ]
         self._datasets[name] = SequenceDataset(name=name, examples=in_memory_examples)
 

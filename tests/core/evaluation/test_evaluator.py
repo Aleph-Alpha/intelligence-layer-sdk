@@ -143,10 +143,12 @@ def dataset_name(
 
 @fixture
 def comparing_evaluator(
-    evaluation_repository: InMemoryEvaluationRepository,
+    in_memory_evaluation_repository: InMemoryEvaluationRepository,
     dataset_repository: InMemoryDatasetRepository,
 ) -> ComparingEvaluator:
-    return ComparingEvaluator(DummyTask(), evaluation_repository, dataset_repository)
+    return ComparingEvaluator(
+        DummyTask(), in_memory_evaluation_repository, dataset_repository
+    )
 
 
 def test_evaluate_dataset_returns_generic_statistics(
@@ -264,10 +266,10 @@ def test_evaluate_dataset_stores_aggregated_results(
 def test_evaluate_can_evaluate_multiple_runs(
     dummy_evaluator: DummyEvaluator,
     comparing_evaluator: ComparingEvaluator,
-    dataset_name: str,
+    string_dataset_name: str,
 ) -> None:
-    run_overview1 = dummy_evaluator.run_dataset(dataset_name)
-    run_overview2 = dummy_evaluator.run_dataset(dataset_name)
+    run_overview1 = dummy_evaluator.run_dataset(string_dataset_name)
+    run_overview2 = dummy_evaluator.run_dataset(string_dataset_name)
 
     partial_overview = comparing_evaluator.evaluate_run(
         run_overview1.id, run_overview2.id

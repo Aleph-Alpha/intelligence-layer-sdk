@@ -58,6 +58,9 @@ class DummyEvaluator(Evaluator[None, None, None, DummyEvaluation, DummyAggregati
     ) -> None:
         super().__init__(task, evaluation_repository, dataset_repository)
 
+    def expected_output_type(self) -> type[None]:
+        return type(None)
+
     # mypy expects *args where this method only uses one output
     def do_evaluate(  # type: ignore
         self, input: None, expected_output: None, output: None
