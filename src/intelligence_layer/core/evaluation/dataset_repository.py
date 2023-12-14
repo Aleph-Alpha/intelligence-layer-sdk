@@ -64,11 +64,11 @@ class InMemoryDatasetRepository(DatasetRepository):
 
     def dataset(
         self,
-        id: str,
+        name: str,
         input_type: type[Input],
         expected_output_type: Optional[type[ExpectedOutput]] = None,
     ) -> Optional[Dataset[Input, ExpectedOutput]]:
-        return cast(Dataset[Input, ExpectedOutput], self._datasets.get(id))
+        return cast(Dataset[Input, ExpectedOutput], self._datasets.get(name))
 
     def delete_dataset(self, id: str) -> None:
         self._datasets.pop(id, None)
