@@ -15,8 +15,7 @@ def test_in_memory_dataset_repository_can_store_dataset(
 ) -> None:
     dataset_name = "dummy dataset"
     in_memory_dataset_repository.create_dataset(
-        name=dataset_name,
-        examples=[(dummy_string_example.input, dummy_string_example.expected_output)],
+        name=dataset_name, examples=[dummy_string_example]
     )
     assert dataset_name in in_memory_dataset_repository._datasets
     dataset = in_memory_dataset_repository.dataset(
@@ -34,20 +33,10 @@ def test_in_memory_dataset_repository_can_store_dataset(
 
 def test_in_memory_dataset_repository_throws_error_if_dataset_name_already_taken(
     in_memory_dataset_repository: InMemoryDatasetRepository,
-    dummy_string_example: Example[DummyStringInput, DummyStringOutput],
+    dataset_name: str,
 ) -> None:
-    dataset_name = "dummy dataset"
-    in_memory_dataset_repository.create_dataset(
-        name=dataset_name,
-        examples=[(dummy_string_example.input, dummy_string_example.expected_output)],
-    )
     with raises(ValueError) as e:
-        in_memory_dataset_repository.create_dataset(
-            name=dataset_name,
-            examples=[
-                (dummy_string_example.input, dummy_string_example.expected_output)
-            ],
-        )
+        in_memory_dataset_repository.create_dataset(name=dataset_name, examples=[])
     assert "Dataset name already taken" in str(e)
 
 
@@ -58,17 +47,8 @@ def test_in_memory_dataset_repository_returns_none_for_nonexisting_dataset(
 
 
 def test_in_memory_dataset_repository_can_delete_dataset(
-    in_memory_dataset_repository: InMemoryDatasetRepository,
-    dummy_string_example: Example[DummyStringInput, DummyStringOutput],
+    in_memory_dataset_repository: InMemoryDatasetRepository, dataset_name: str
 ) -> None:
-    dataset_name = "dummy dataset"
-    in_memory_dataset_repository.create_dataset(
-        name=dataset_name,
-        examples=[(dummy_string_example.input, dummy_string_example.expected_output)],
-    )
-    assert in_memory_dataset_repository.dataset(
-        dataset_name, DummyStringInput, DummyStringOutput
-    )
     in_memory_dataset_repository.delete_dataset(dataset_name)
     assert (
         in_memory_dataset_repository.dataset(
@@ -87,13 +67,8 @@ def test_in_memory_dataset_repository_can_list_datasets(
 ) -> None:
     dataset_name_1 = "dummy_dataset_1"
     dataset_name_2 = "dummy_dataset_2"
-    in_memory_dataset_repository.create_dataset(
-        name=dataset_name_1,
-        examples=[(dummy_string_example.input, dummy_string_example.expected_output)],
-    )
-    in_memory_dataset_repository.create_dataset(
-        name=dataset_name_2,
-        examples=[(dummy_string_example.input, dummy_string_example.expected_output)],
-    )
+    examples = [dummy_string_example]
+    in_memory_dataset_repository.create_dataset(name=dataset_name_1, examples=examples)
+    in_memory_dataset_repository.create_dataset(name=dataset_name_2, examples=examples)
     dataset_names = in_memory_dataset_repository.list_datasets()
     assert sorted(dataset_names) == sorted([dataset_name_1, dataset_name_2])

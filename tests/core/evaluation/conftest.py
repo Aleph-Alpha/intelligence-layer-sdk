@@ -58,21 +58,19 @@ def in_memory_dataset_repository_with_dataset(
     dummy_string_dataset: SequenceDataset[DummyStringInput, DummyStringOutput],
 ) -> InMemoryDatasetRepository:
     dataset_repository = InMemoryDatasetRepository()
-    dataset_repository.create_dataset(dummy_string_dataset.name, [(e.input, e.expected_output) for e in dummy_string_dataset.examples])
+    dataset_repository.create_dataset(
+        dummy_string_dataset.name, dummy_string_dataset.examples
+    )
     return dataset_repository
-
-@fixture
-def in_memory_dataset_repository() -> InMemoryDatasetRepository:
-    return InMemoryDatasetRepository()
 
 
 @fixture
 def string_dataset_name(
     dummy_string_dataset: SequenceDataset[DummyStringInput, DummyStringOutput],
-    in_memory_dataset_repository: InMemoryDatasetRepository
+    dataset_repository: InMemoryDatasetRepository,
 ) -> str:
     dataset_name = "name"
-    in_memory_dataset_repository.create_dataset(dataset_name, [(e.input, None) for e in dummy_string_dataset.examples])
+    dataset_repository.create_dataset(dataset_name, dummy_string_dataset.examples)
     return dataset_name
 
 

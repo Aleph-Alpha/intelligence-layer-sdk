@@ -1,6 +1,5 @@
 from abc import ABC, abstractmethod
 from typing import Iterable, Optional, Sequence, cast
-from uuid import uuid4
 
 from intelligence_layer.core.evaluation.domain import (
     Dataset,
@@ -17,7 +16,7 @@ class DatasetRepository(ABC):
     def create_dataset(
         self,
         name: str,
-        examples: Iterable[tuple[PydanticSerializable, PydanticSerializable]],
+        examples: Iterable[Example[Input, ExpectedOutput]],
     ) -> None:
         ...
 
@@ -50,7 +49,7 @@ class InMemoryDatasetRepository(DatasetRepository):
     def create_dataset(
         self,
         name: str,
-        examples: Iterable[tuple[PydanticSerializable, PydanticSerializable]],
+        examples: Iterable[Example[Input, ExpectedOutput]],
     ) -> None:
         if name in self._datasets:
             raise ValueError("Dataset name already taken")

@@ -18,6 +18,7 @@ from intelligence_layer.connectors import (
     RetrieverType,
 )
 from intelligence_layer.core import (
+    InMemoryDatasetRepository,
     NoOpTracer,
     Task,
     TaskSpan,
@@ -113,3 +114,8 @@ class DummyStringTask(Task[DummyStringInput, DummyStringOutput]):
 @fixture
 def dummy_string_task() -> DummyStringTask:
     return DummyStringTask()
+
+
+@fixture
+def dataset_repository() -> InMemoryDatasetRepository:
+    return InMemoryDatasetRepository()

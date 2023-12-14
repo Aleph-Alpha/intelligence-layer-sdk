@@ -2,16 +2,18 @@ from typing import Sequence
 
 from pytest import fixture
 
-from intelligence_layer.connectors.limited_concurrency_client import (
-    AlephAlphaClientProtocol,
-)
-from intelligence_layer.core.chunk import Chunk
-from intelligence_layer.core.evaluation.domain import Dataset, Example, SequenceDataset
-from intelligence_layer.core.evaluation.evaluation_repository import (
+from intelligence_layer.connectors import AlephAlphaClientProtocol
+from intelligence_layer.core import (
+    Chunk,
+    Dataset,
+    DatasetRepository,
+    Example,
+    InMemoryDatasetRepository,
     InMemoryEvaluationRepository,
+    NoOpTracer,
+    SequenceDataset,
+    Task,
 )
-from intelligence_layer.core.task import Task
-from intelligence_layer.core.tracer import NoOpTracer
 from intelligence_layer.use_cases.classify.classify import (
     ClassifyInput,
     MultiLabelClassifyEvaluation,
@@ -109,12 +111,23 @@ def embedding_based_classify_dataset(
     )
 
 
+def embedding_based_classify_dataset_name(
+    dataset_repository: InMemoryDatasetRepository,
+    embedding_based_classify_dataset: Dataset[ClassifyInput, Sequence[str]],
+) -> str:
+    dataset_repository.create_dataset(
+        embedding_based_classify_dataset.name, embedding_based_classify_dataset.examples
+    )
+    return embedding_based_classify_dataset.name
+
+
 @fixture
 def classify_evaluator(
     embedding_based_classify: Task[ClassifyInput, MultiLabelClassifyOutput],
+    dataset_repository: DatasetRepository,
 ) -> MultiLabelClassifyEvaluator:
     return MultiLabelClassifyEvaluator(
-        embedding_based_classify, InMemoryEvaluationRepository()
+        embedding_based_classify, InMemoryEvaluationRepository(), dataset_repository
     )
 
 
@@ -137,10 +150,12 @@ def test_multi_label_classify_evaluator_single_example(
 
 
 def test_multi_label_classify_evaluator_full_dataset(
-    embedding_based_classify_dataset: Dataset[ClassifyInput, Sequence[str]],
+    embedding_based_classify_dataset_name: str,
     classify_evaluator: MultiLabelClassifyEvaluator,
 ) -> None:
-    evaluation = classify_evaluator.evaluate_dataset(embedding_based_classify_dataset)
+    evaluation = classify_evaluator.evaluate_dataset(
+        embedding_based_classify_dataset_name
+    )
 
     assert set(["positive", "negative", "finance", "school"]) == set(
         evaluation.statistics.class_metrics.keys()

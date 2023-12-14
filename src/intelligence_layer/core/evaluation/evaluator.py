@@ -26,7 +26,6 @@ from intelligence_layer.connectors.argilla.argilla_client import (
 from intelligence_layer.core.evaluation.dataset_repository import DatasetRepository
 from intelligence_layer.core.evaluation.domain import (
     AggregatedEvaluation,
-    Dataset,
     Evaluation,
     EvaluationOverview,
     Example,
@@ -331,6 +330,10 @@ class BaseEvaluator(
         ...
 
     @abstractmethod
+    def expected_output_type(self) -> type[ExpectedOutput]:
+        ...
+
+    @abstractmethod
     def evaluate(
         self, example: Example[Input, ExpectedOutput], eval_id: str, *output: Output
     ) -> None:
@@ -464,7 +467,9 @@ class BaseEvaluator(
             )
         eval_id = self._create_evaluation_dataset()
         dataset = self._dataset_repository.dataset(
-            run_overviews[0].dataset_name, Input, ExpectedOutput
+            run_overviews[0].dataset_name,
+            self.input_type(),
+            self.expected_output_type(),
         )
         if not dataset:
             raise ValueError(f"Dataset: {run_overviews[0].dataset_name} not found")
