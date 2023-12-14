@@ -458,7 +458,7 @@ class BaseEvaluator(
         if not run_ids:
             raise ValueError("At least one run-id needs to be provided")
         run_overviews = [load_overview(run_id) for run_id in run_ids]
-        if all(
+        if not all(
             run_overviews[0].dataset_name == run_overview.dataset_name
             for run_overview in run_overviews
         ):
