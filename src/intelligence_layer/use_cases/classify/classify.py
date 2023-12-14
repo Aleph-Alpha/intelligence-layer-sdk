@@ -3,9 +3,13 @@ from typing import Iterable, Mapping, NewType, Sequence
 
 from pydantic import BaseModel
 
-from intelligence_layer.core import EvaluationRepository, Evaluator
-from intelligence_layer.core.chunk import Chunk
-from intelligence_layer.core.task import Task
+from intelligence_layer.core import (
+    Chunk,
+    DatasetRepository,
+    EvaluationRepository,
+    Evaluator,
+    Task,
+)
 
 Probability = NewType("Probability", float)
 
@@ -80,9 +84,13 @@ class SingleLabelClassifyEvaluator(
     def __init__(
         self,
         task: Task[ClassifyInput, SingleLabelClassifyOutput],
-        repository: EvaluationRepository,
+        evaluation_repository: EvaluationRepository,
+        dataset_respository: DatasetRepository,
     ):
-        super().__init__(task, repository)
+        super().__init__(task, evaluation_repository, dataset_respository)
+
+    def expected_output_type(self) -> type[Sequence[str]]:
+        return Sequence[str]
 
     # mypy expects *args where this method only uses one output
     def do_evaluate(  # type: ignore
@@ -172,11 +180,15 @@ class MultiLabelClassifyEvaluator(
     def __init__(
         self,
         task: Task[ClassifyInput, MultiLabelClassifyOutput],
-        repository: EvaluationRepository,
+        evaluation_repository: EvaluationRepository,
+        dataset_repository: DatasetRepository,
         threshold: float = 0.55,
     ):
-        super().__init__(task, repository)
+        super().__init__(task, evaluation_repository, dataset_repository)
         self.threshold = threshold
+
+    def expected_output_type(self) -> type[Sequence[str]]:
+        return Sequence[str]
 
     # mypy expects *args where this method only uses one output
     def do_evaluate(  # type: ignore

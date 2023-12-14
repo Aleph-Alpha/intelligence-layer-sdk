@@ -23,7 +23,6 @@ class DummyEvaluationWithExceptionStructure(BaseModel):
     error_message: str
 
 
-
 @fixture
 def task_span_trace() -> TaskSpanTrace:
     now = datetime.now()

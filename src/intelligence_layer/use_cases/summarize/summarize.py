@@ -3,10 +3,15 @@ from typing import Iterable, Sequence, Union
 
 from pydantic import BaseModel
 
-from intelligence_layer.core import EvaluationRepository, Evaluator
-from intelligence_layer.core.chunk import Chunk
-from intelligence_layer.core.detect_language import Language
-from intelligence_layer.core.evaluation.graders import BleuGrader, RougeGrader
+from intelligence_layer.core import (
+    BleuGrader,
+    Chunk,
+    DatasetRepository,
+    EvaluationRepository,
+    Evaluator,
+    Language,
+    RougeGrader,
+)
 from intelligence_layer.core.task import Task
 
 
@@ -110,10 +115,14 @@ class SingleChunkSummarizeEvaluator(
         self,
         task: Task[SingleChunkSummarizeInput, SummarizeOutput],
         repository: EvaluationRepository,
+        dataset_repository: DatasetRepository,
     ) -> None:
-        super().__init__(task, repository)
+        super().__init__(task, repository, dataset_repository)
         self.bleu_grader = BleuGrader()
         self.rouge_grader = RougeGrader()
+
+    def expected_output_type(self) -> type[str]:
+        return str
 
     # mypy expects *args where this method only uses one output
     def do_evaluate(  # type: ignore
@@ -158,11 +167,15 @@ class LongContextSummarizeEvaluator(
     def __init__(
         self,
         task: Task[LongContextSummarizeInput, LongContextSummarizeOutput],
-        repository: EvaluationRepository,
+        evaluation_repository: EvaluationRepository,
+        dataset_repository: DatasetRepository,
     ) -> None:
-        super().__init__(task, repository)
+        super().__init__(task, evaluation_repository, dataset_repository)
         self.bleu_grader = BleuGrader()
         self.rouge_grader = RougeGrader()
+
+    def expected_output_type(self) -> type[str]:
+        return str
 
     # mypy expects *args where this method only uses one output
     def do_evaluate(  # type: ignore

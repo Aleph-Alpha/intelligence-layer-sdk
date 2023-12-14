@@ -14,6 +14,7 @@ from intelligence_layer.core import (
     SequenceDataset,
     Task,
 )
+from intelligence_layer.core.evaluation.dataset_repository import DatasetRepository
 from intelligence_layer.core.evaluation.domain import EvaluationOverview
 from intelligence_layer.core.evaluation.run import main
 from intelligence_layer.core.tracer import TaskSpan
@@ -50,9 +51,12 @@ class DummyTaskWithClient(DummyTask):
 
 class DummyEvaluator(Evaluator[None, None, None, DummyEvaluation, DummyAggregation]):
     def __init__(
-        self, task: Task[None, None], repository: EvaluationRepository
+        self,
+        task: Task[None, None],
+        evaluation_repository: EvaluationRepository,
+        dataset_repository: DatasetRepository,
     ) -> None:
-        super().__init__(task, repository)
+        super().__init__(task, evaluation_repository, dataset_repository)
 
     # mypy expects *args where this method only uses one output
     def do_evaluate(  # type: ignore

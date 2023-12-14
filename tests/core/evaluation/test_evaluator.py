@@ -1,12 +1,12 @@
-from typing import Iterable, Literal, TypeAlias
+from typing import Iterable, Optional
 
 from pydantic import BaseModel
 from pytest import fixture, raises
 
 from intelligence_layer.core import (
     Evaluator,
-    FailedExampleEvaluation,
     Example,
+    FailedExampleEvaluation,
     InMemoryDatasetRepository,
     InMemoryEvaluationRepository,
     InMemoryTaskSpan,
@@ -15,34 +15,37 @@ from intelligence_layer.core import (
     SequenceDataset,
     Tracer,
 )
-from intelligence_layer.core.evaluation.domain import EvaluationOverview
+from intelligence_layer.core.evaluation.domain import Dataset, EvaluationOverview
 from intelligence_layer.core.task import Task
 from tests.core.evaluation.conftest import (
     DummyAggregatedEvaluationWithResultList,
     DummyEvaluation,
 )
 
-DummyTaskInput: TypeAlias = Literal["success", "fail in task", "fail in eval"]
-DummyTaskOutput: TypeAlias = DummyTaskInput
+FAIL_IN_EVAL_INPUT = "fail in eval"
+FAIL_IN_TASK_INPUT = "fail in task"
 
 
 class DummyEvaluator(
     Evaluator[
-        DummyTaskInput,
-        DummyTaskOutput,
+        str,
+        str,
         None,
         DummyEvaluation,
         DummyAggregatedEvaluationWithResultList,
     ]
 ):
+    def expected_output_type(self) -> type[None]:
+        return type(None)
+
     # mypy expects *args where this method only uses one output
     def do_evaluate(  # type: ignore
         self,
-        input: DummyTaskInput,
+        input: str,
         expected_output: None,
-        output: DummyTaskOutput,
+        output: str,
     ) -> DummyEvaluation:
-        if output == "fail in eval":
+        if output == FAIL_IN_EVAL_INPUT:
             raise RuntimeError(output)
         return DummyEvaluation(result="pass")
 
@@ -62,15 +65,18 @@ class ComparisonAggregation(BaseModel):
 
 class ComparingEvaluator(
     Evaluator[
-        DummyTaskInput,
-        DummyTaskOutput,
+        str,
+        str,
         None,
         ComparisonEvaluation,
         ComparisonAggregation,
     ]
 ):
+    def expected_output_type(self) -> type[None]:
+        return type(None)
+
     def do_evaluate(
-        self, input: DummyTaskInput, expected_output: None, *output: DummyTaskOutput
+        self, input: str, expected_output: None, *output: str
     ) -> ComparisonEvaluation:
         return ComparisonEvaluation(is_equal=output[1:] == output[:-1])
 
@@ -86,66 +92,61 @@ class ComparingEvaluator(
 class DummyEvaluatorWithoutTypeHints(DummyEvaluator):
     # type hint for return value missing on purpose for testing
     def do_evaluate(  # type: ignore
-        self, input: DummyTaskInput, output: DummyTaskOutput, expected_output: None
+        self, input: str, output: str, expected_output: None
     ):
         return super().do_evaluate(input, expected_output, output)
 
 
-class DummyTask(Task[DummyTaskInput, DummyTaskOutput]):
-    def do_run(self, input: DummyTaskInput, tracer: Tracer) -> DummyTaskOutput:
-        if input == "fail in task":
+class DummyTask(Task[str, str]):
+    def do_run(self, input: str, tracer: Tracer) -> str:
+        if input == FAIL_IN_TASK_INPUT:
             raise RuntimeError(input)
         return input
 
 
-class DummyTaskWithoutTypeHints(Task[DummyTaskInput, DummyTaskOutput]):
+class DummyTaskWithoutTypeHints(Task[str, str]):
     # type hint for return value missing on purpose for testing
-    def do_run(self, input: DummyTaskInput, tracer: Tracer):  # type: ignore
+    def do_run(self, input: str, tracer: Tracer):  # type: ignore
         return input
 
 
 @fixture
-def sequence_dataset() -> SequenceDataset[DummyTaskInput, None]:
+def sequence_dataset() -> SequenceDataset[str, None]:
     examples = [
         Example(input="success", expected_output=None),
-        Example(input="fail in task", expected_output=None),
-        Example(input="fail in eval", expected_output=None),
+        Example(input=FAIL_IN_TASK_INPUT, expected_output=None),
+        Example(input=FAIL_IN_EVAL_INPUT, expected_output=None),
     ]
-    return SequenceDataset(
-        name="test",
-        examples=examples,  # type: ignore
-    )
+    return SequenceDataset(name="test", examples=examples)
 
 
 @fixture
 def dummy_evaluator(
     in_memory_evaluation_repository: InMemoryEvaluationRepository,
-    in_memory_dataset_repository: InMemoryDatasetRepository,
+    dataset_repository: InMemoryDatasetRepository,
 ) -> DummyEvaluator:
     return DummyEvaluator(
         DummyTask(),
         in_memory_evaluation_repository,
-        in_memory_dataset_repository,
+        dataset_repository,
     )
 
 
 @fixture
 def dataset_name(
-    sequence_dataset: SequenceDataset[DummyTaskInput, None],
-    in_memory_dataset_repository: InMemoryDatasetRepository,
+    sequence_dataset: SequenceDataset[str, None],
+    dataset_repository: InMemoryDatasetRepository,
 ) -> str:
-    dataset_name = "name"
-    in_memory_dataset_repository.create_dataset(
-        dataset_name, [(e.input, None) for e in sequence_dataset.examples]
-    )
-    return dataset_name
+    dataset_repository.create_dataset(sequence_dataset.name, sequence_dataset.examples)
+    return sequence_dataset.name
 
 
 @fixture
 def comparing_evaluator(
     evaluation_repository: InMemoryEvaluationRepository,
+    dataset_repository: InMemoryDatasetRepository,
 ) -> ComparingEvaluator:
-    return ComparingEvaluator(DummyTask(), evaluation_repository)
+    return ComparingEvaluator(DummyTask(), evaluation_repository, dataset_repository)
 
 
 def test_evaluate_dataset_returns_generic_statistics(
@@ -170,18 +171,10 @@ def test_evaluate_dataset_uses_passed_tracer(
 
 
 def test_evaluate_dataset_saves_overview(
+    dummy_evaluator: DummyEvaluator,
     in_memory_evaluation_repository: InMemoryEvaluationRepository,
     dataset_name: str,
-    sequence_dataset: SequenceDataset[DummyTaskInput, None],
 ) -> None:
-    dataset_name = "datset"
-    dataset_repository = InMemoryDatasetRepository()
-    dataset_repository.create_dataset(
-        dataset_name, [(e.input, None) for e in sequence_dataset.examples]
-    )
-    dummy_evaluator = DummyEvaluator(
-        DummyTask(), in_memory_evaluation_repository, dataset_repository
-    )
     overview = dummy_evaluator.evaluate_dataset(dataset_name)
 
     assert overview == in_memory_evaluation_repository.evaluation_overview(
@@ -196,20 +189,23 @@ def test_evaluate_dataset_stores_example_evaluations(
     evaluation_repository = dummy_evaluator._evaluation_repository
     dataset_repository = dummy_evaluator._dataset_repository
     dataset_name = dataset_repository.list_datasets()[0]
-    dataset = dataset_repository.dataset(dataset_name, DummyTaskInput, None)
+    dataset: Optional[Dataset[str, None]] = dataset_repository.dataset(
+        dataset_name, str, type(None)
+    )
     assert dataset
 
     evaluation_run_overview = dummy_evaluator.evaluate_dataset(
         dataset_name, NoOpTracer()
     )
+    examples = list(dataset.examples)
     success_result = evaluation_repository.example_evaluation(
-        evaluation_run_overview.id, dataset.examples[0].id, DummyEvaluation
+        evaluation_run_overview.id, examples[0].id, DummyEvaluation
     )
     failure_result_task = evaluation_repository.example_evaluation(
-        evaluation_run_overview.id, dataset.examples[1].id, DummyEvaluation
+        evaluation_run_overview.id, examples[1].id, DummyEvaluation
     )
     failure_result_eval = evaluation_repository.example_evaluation(
-        evaluation_run_overview.id, dataset.examples[2].id, DummyEvaluation
+        evaluation_run_overview.id, examples[2].id, DummyEvaluation
     )
 
     assert success_result and isinstance(success_result.result, DummyEvaluation)
@@ -225,26 +221,29 @@ def test_evaluate_dataset_stores_example_traces(
 ) -> None:
     evaluation_repository = dummy_evaluator._evaluation_repository
     dataset_repository = dummy_evaluator._dataset_repository
-    dataset = dataset_repository.dataset(dataset_name, DummyTaskInput, None)
+    dataset: Optional[Dataset[str, None]] = dataset_repository.dataset(
+        dataset_name, str, type(None)
+    )
     assert dataset
 
     evaluation_run_overview = dummy_evaluator.evaluate_dataset(dataset_name)
+    examples = list(dataset.examples)
     success_result = evaluation_repository.example_trace(
-        evaluation_run_overview.run_ids[0], dataset.examples[0].id
+        evaluation_run_overview.run_ids[0], examples[0].id
     )
     failure_result_task = evaluation_repository.example_trace(
-        evaluation_run_overview.run_ids[0], dataset.examples[1].id
+        evaluation_run_overview.run_ids[0], examples[1].id
     )
     failure_result_eval = evaluation_repository.example_trace(
-        evaluation_run_overview.run_ids[0], dataset.examples[2].id
+        evaluation_run_overview.run_ids[0], examples[2].id
     )
 
     assert success_result
     assert failure_result_task
     assert failure_result_eval
     assert success_result.trace.input == "success"
-    assert failure_result_task.trace.input == "fail in task"
-    assert failure_result_eval.trace.input == "fail in eval"
+    assert failure_result_task.trace.input == FAIL_IN_TASK_INPUT
+    assert failure_result_eval.trace.input == FAIL_IN_EVAL_INPUT
 
 
 def test_evaluate_dataset_stores_aggregated_results(
@@ -252,11 +251,8 @@ def test_evaluate_dataset_stores_aggregated_results(
     dataset_name: str,
 ) -> None:
     evaluation_repository = dummy_evaluator._evaluation_repository
-    dataset_repository = dummy_evaluator._dataset_repository
 
-    evaluation_run_overview = dummy_evaluator.evaluate_dataset(
-        dataset_name, NoOpTracer()
-    )
+    evaluation_run_overview = dummy_evaluator.evaluate_dataset(dataset_name)
     loaded_evaluation_run_overview = evaluation_repository.evaluation_overview(
         evaluation_run_overview.id,
         EvaluationOverview[DummyAggregatedEvaluationWithResultList],
@@ -268,13 +264,13 @@ def test_evaluate_dataset_stores_aggregated_results(
 def test_evaluate_can_evaluate_multiple_runs(
     dummy_evaluator: DummyEvaluator,
     comparing_evaluator: ComparingEvaluator,
-    sequence_dataset: SequenceDataset[DummyTaskInput, None],
+    dataset_name: str,
 ) -> None:
-    run_overview1 = dummy_evaluator.run_dataset(sequence_dataset)
-    run_overview2 = dummy_evaluator.run_dataset(sequence_dataset)
+    run_overview1 = dummy_evaluator.run_dataset(dataset_name)
+    run_overview2 = dummy_evaluator.run_dataset(dataset_name)
 
     partial_overview = comparing_evaluator.evaluate_run(
-        sequence_dataset, run_overview1.id, run_overview2.id
+        run_overview1.id, run_overview2.id
     )
 
     eval_overview = comparing_evaluator.aggregate_evaluation(partial_overview.id)

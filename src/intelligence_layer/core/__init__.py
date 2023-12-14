@@ -23,6 +23,7 @@ from .complete import (
 from .detect_language import DetectLanguage, DetectLanguageInput, DetectLanguageOutput
 from .detect_language import Language as Language
 from .echo import EchoInput, EchoOutput, EchoTask
+from .evaluation.dataset_repository import DatasetRepository as DatasetRepository
 from .evaluation.domain import Dataset as Dataset
 from .evaluation.domain import EvaluationOverview as EvaluationOverview
 from .evaluation.domain import Example as Example

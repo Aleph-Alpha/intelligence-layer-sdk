@@ -6,12 +6,14 @@ from intelligence_layer.connectors.limited_concurrency_client import (
     AlephAlphaClientProtocol,
 )
 from intelligence_layer.core import (
+    Chunk,
+    DatasetRepository,
     Example,
+    InMemoryDatasetRepository,
     InMemoryEvaluationRepository,
-    SequenceDataset,
+    InMemoryTracer,
+    NoOpTracer,
 )
-from intelligence_layer.core.chunk import Chunk
-from intelligence_layer.core.tracer import InMemoryTracer, NoOpTracer
 from intelligence_layer.use_cases.classify.classify import (
     ClassifyInput,
     SingleLabelClassifyEvaluation,
@@ -30,10 +32,10 @@ def prompt_based_classify(client: AlephAlphaClientProtocol) -> PromptBasedClassi
 
 @fixture
 def classify_evaluator(
-    prompt_based_classify: PromptBasedClassify,
+    prompt_based_classify: PromptBasedClassify, dataset_repository: DatasetRepository
 ) -> SingleLabelClassifyEvaluator:
     return SingleLabelClassifyEvaluator(
-        prompt_based_classify, InMemoryEvaluationRepository()
+        prompt_based_classify, InMemoryEvaluationRepository(), dataset_repository
     )
 
 
@@ -140,6 +142,7 @@ def test_can_evaluate_classify(
 
 def test_can_aggregate_evaluations(
     classify_evaluator: SingleLabelClassifyEvaluator,
+    dataset_repository: InMemoryDatasetRepository,
 ) -> None:
     positive_lst: Sequence[str] = ["positive"]
     correct_example = Example(
@@ -156,23 +159,22 @@ def test_can_aggregate_evaluations(
         ),
         expected_output=positive_lst,
     )
-
-    dataset = SequenceDataset(
-        name="classify_test", examples=[correct_example, incorrect_example]
+    dataset_name = "classify_test"
+    dataset_repository.create_dataset(
+        dataset_name, [correct_example, incorrect_example]
     )
 
-    evaluation_overview = classify_evaluator.evaluate_dataset(
-        dataset, tracer=NoOpTracer()
-    )
+    evaluation_overview = classify_evaluator.evaluate_dataset(dataset_name)
 
     assert evaluation_overview.statistics.percentage_correct == 0.5
 
 
 def test_aggregating_evaluations_works_with_empty_list(
     classify_evaluator: SingleLabelClassifyEvaluator,
+    dataset_repository: DatasetRepository,
 ) -> None:
-    evaluation_overview = classify_evaluator.evaluate_dataset(
-        SequenceDataset(name="empty_dataset", examples=[]), tracer=NoOpTracer()
-    )
+    name = "empty_dataset"
+    dataset_repository.create_dataset(name, [])
+    evaluation_overview = classify_evaluator.evaluate_dataset(name)
 
     assert evaluation_overview.statistics.percentage_correct == 0

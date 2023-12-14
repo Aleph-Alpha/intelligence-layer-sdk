@@ -1,13 +1,14 @@
 from pytest import fixture
 
 from intelligence_layer.core import (
+    Chunk,
+    DatasetRepository,
     Example,
+    InMemoryDatasetRepository,
     InMemoryEvaluationRepository,
-    SequenceDataset,
+    Language,
+    NoOpTracer,
 )
-from intelligence_layer.core.chunk import Chunk
-from intelligence_layer.core.detect_language import Language
-from intelligence_layer.core.tracer import NoOpTracer
 from intelligence_layer.use_cases.summarize.long_context_high_compression_summarize import (
     LongContextHighCompressionSummarize,
 )
@@ -26,18 +27,24 @@ from intelligence_layer.use_cases.summarize.summarize import (
 @fixture
 def single_chunk_summarize_evaluator(
     single_chunk_few_shot_summarize: SingleChunkFewShotSummarize,
+    dataset_repository: InMemoryDatasetRepository,
 ) -> SingleChunkSummarizeEvaluator:
     return SingleChunkSummarizeEvaluator(
-        single_chunk_few_shot_summarize, InMemoryEvaluationRepository()
+        single_chunk_few_shot_summarize,
+        InMemoryEvaluationRepository(),
+        dataset_repository,
     )
 
 
 @fixture
 def long_context_summarize_evaluator(
     long_context_high_compression_summarize: LongContextHighCompressionSummarize,
+    dataset_repository: DatasetRepository,
 ) -> LongContextSummarizeEvaluator:
     return LongContextSummarizeEvaluator(
-        long_context_high_compression_summarize, InMemoryEvaluationRepository()
+        long_context_high_compression_summarize,
+        InMemoryEvaluationRepository(),
+        dataset_repository,
     )
 
 
@@ -45,6 +52,7 @@ def test_single_chunk_summarize_evaluator(
     single_chunk_summarize_evaluator: SingleChunkSummarizeEvaluator,
     chunk: Chunk,
     no_op_tracer: NoOpTracer,
+    dataset_repository: InMemoryDatasetRepository,
 ) -> None:
     input = SingleChunkSummarizeInput(chunk=chunk, language=Language("en"))
     bad_example = Example(
@@ -55,15 +63,13 @@ def test_single_chunk_summarize_evaluator(
         expected_output="The brown bear is a large mammal that lives in Eurasia and North America.",
         id="good",
     )
-    dataset = SequenceDataset(
-        name="summarize_eval_test",
-        examples=[good_example, bad_example],
-    )
+    dataset_name = "summarize_eval_test"
+    dataset_repository.create_dataset(dataset_name, [good_example, bad_example])
     evaluation_overview = single_chunk_summarize_evaluator.evaluate_dataset(
-        dataset, no_op_tracer
+        dataset_name
     )
 
-    assert len(evaluation_overview.statistics.evaluations) == len(dataset.examples)
+    assert len(evaluation_overview.statistics.evaluations) == 2
     good_result = (
         single_chunk_summarize_evaluator._evaluation_repository.example_evaluation(
             evaluation_overview.id,
@@ -86,6 +92,7 @@ def test_single_chunk_summarize_evaluator(
 
 def test_long_context_summarize_evaluator(
     long_context_summarize_evaluator: LongContextSummarizeEvaluator,
+    dataset_repository: InMemoryDatasetRepository,
     long_text: str,
     no_op_tracer: NoOpTracer,
 ) -> None:
@@ -98,15 +105,13 @@ def test_long_context_summarize_evaluator(
         expected_output="The brown bear is a large mammal that lives in Eurasia and North America.",
         id="good",
     )
-    dataset = SequenceDataset(
-        name="summarize_eval_test",
-        examples=[good_example, bad_example],
-    )
+    dataset_name = "summarize_eval_test"
+    dataset_repository.create_dataset(dataset_name, [good_example, bad_example])
     evaluation_overview = long_context_summarize_evaluator.evaluate_dataset(
-        dataset, no_op_tracer
+        dataset_name
     )
 
-    assert len(evaluation_overview.statistics.evaluations) == len(dataset.examples)
+    assert len(evaluation_overview.statistics.evaluations) == 2
     good_result = (
         long_context_summarize_evaluator._evaluation_repository.example_evaluation(
             evaluation_overview.id,
