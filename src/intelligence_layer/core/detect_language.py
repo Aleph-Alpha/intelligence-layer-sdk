@@ -2,7 +2,7 @@ from dataclasses import dataclass
 from typing import Mapping, Optional, Sequence, TypeVar
 
 from langdetect import detect_langs  # type: ignore
-from pycountry import languages  # type: ignore
+from pycountry import languages
 from pydantic import BaseModel
 
 from intelligence_layer.core.task import Task
