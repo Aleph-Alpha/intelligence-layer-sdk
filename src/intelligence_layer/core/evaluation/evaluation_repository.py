@@ -162,10 +162,15 @@ class FileEvaluationRepository(EvaluationRepository):
             return self.example_output(run_id, id, output_type)
 
         path = self._output_directory(run_id)
-        logs = path.glob("*.json")
+        output_files = path.glob("*.json")
         return (
             example_output
-            for example_output in (load_example_output(file) for file in logs)
+            for example_output in sorted(
+                (load_example_output(file) for file in output_files),
+                key=lambda example_output: example_output.example_id
+                if example_output
+                else "",
+            )
             if example_output
         )
 
@@ -360,7 +365,10 @@ class InMemoryEvaluationRepository(EvaluationRepository):
     ) -> Iterable[ExampleOutput[Output]]:
         return (
             cast(ExampleOutput[Output], example_output)
-            for example_output in self._example_outputs[run_id]
+            for example_output in sorted(
+                self._example_outputs[run_id],
+                key=lambda example_output: example_output.example_id,
+            )
         )
 
     def example_trace(self, run_id: str, example_id: str) -> Optional[ExampleTrace]:

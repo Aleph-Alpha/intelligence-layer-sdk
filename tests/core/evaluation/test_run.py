@@ -1,31 +1,30 @@
 from pathlib import Path
-from typing import Iterable
+from typing import Iterable, Sequence
 
 from dotenv import load_dotenv
 from pydantic import BaseModel
+from pytest import fixture
 
 from intelligence_layer.connectors import AlephAlphaClientProtocol
 from intelligence_layer.core import (
-    Dataset,
+    DatasetRepository,
+    EvaluationOverview,
     EvaluationRepository,
     Evaluator,
     Example,
+    FileDatasetRepository,
     FileEvaluationRepository,
-    SequenceDataset,
     Task,
+    TaskSpan,
 )
-from intelligence_layer.core.evaluation.dataset_repository import DatasetRepository
-from intelligence_layer.core.evaluation.domain import EvaluationOverview
 from intelligence_layer.core.evaluation.run import main
-from intelligence_layer.core.tracer import TaskSpan
 
 load_dotenv()
 
 
-def dataset() -> Dataset[None, None]:
-    return SequenceDataset(
-        name="dummy_dataset", examples=[Example(input=None, expected_output=None)]
-    )
+@fixture
+def examples() -> Sequence[Example[None, None]]:
+    return [Example(input=None, expected_output=None)]
 
 
 class DummyEvaluation(BaseModel):
@@ -78,7 +77,17 @@ class DummyEvaluator(Evaluator[None, None, None, DummyEvaluation, DummyAggregati
         return type(None)
 
 
-def test_run_evaluation(tmp_path: Path) -> None:
+def test_run_evaluation(
+    tmp_path: Path, examples: Sequence[Example[None, None]]
+) -> None:
+    dataset_path = tmp_path / "dataset"
+    dataset_id = "some-dataset"
+    dataset_repository = FileDatasetRepository(dataset_path)
+    dataset_repository.create_dataset(dataset_id, examples)
+
+    eval_path = tmp_path / "eval"
+    eval_repository = FileEvaluationRepository(eval_path)
+
     main(
         [
             "",
@@ -86,23 +95,34 @@ def test_run_evaluation(tmp_path: Path) -> None:
             "tests.core.evaluation.test_run.DummyEvaluator",
             "--task",
             "tests.core.evaluation.test_run.DummyTask",
-            "--dataset",
-            "tests.core.evaluation.test_run.dataset",
+            "--dataset-repository-path",
+            str(dataset_path),
+            "--dataset-id",
+            dataset_id,
             "--target-dir",
-            str(tmp_path),
+            str(eval_path),
         ]
     )
-    repository = FileEvaluationRepository(tmp_path)
-    eval_ids = repository.eval_ids()
+
+    eval_ids = eval_repository.eval_ids()
     assert len(eval_ids) == 1
-    overview = repository.evaluation_overview(
+    overview = eval_repository.evaluation_overview(
         eval_ids[0], EvaluationOverview[DummyAggregation]
     )
     assert overview
     assert overview.successful_count == 1
 
 
-def test_run_evaluation_with_task_with_client(tmp_path: Path) -> None:
+def test_run_evaluation_with_task_with_client(
+    tmp_path: Path, examples: Sequence[Example[None, None]]
+) -> None:
+    dataset_path = tmp_path / "dataset"
+    dataset_id = "some-dataset"
+    dataset_repository = FileDatasetRepository(dataset_path)
+    dataset_repository.create_dataset(dataset_id, examples)
+
+    eval_path = tmp_path / "eval"
+
     main(
         [
             "",
@@ -110,9 +130,11 @@ def test_run_evaluation_with_task_with_client(tmp_path: Path) -> None:
             "tests.core.evaluation.test_run.DummyEvaluator",
             "--task",
             "tests.core.evaluation.test_run.DummyTaskWithClient",
-            "--dataset",
-            "tests.core.evaluation.test_run.dataset",
+            "--dataset-repository-path",
+            str(dataset_path),
+            "--dataset-id",
+            dataset_id,
             "--target-dir",
-            str(tmp_path),
+            str(eval_path),
         ]
     )

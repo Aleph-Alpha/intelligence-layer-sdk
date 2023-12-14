@@ -117,5 +117,5 @@ def dummy_string_task() -> DummyStringTask:
 
 
 @fixture
-def dataset_repository() -> InMemoryDatasetRepository:
+def in_memory_dataset_repository() -> InMemoryDatasetRepository:
     return InMemoryDatasetRepository()

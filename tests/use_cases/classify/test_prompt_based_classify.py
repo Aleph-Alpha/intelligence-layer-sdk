@@ -32,10 +32,13 @@ def prompt_based_classify(client: AlephAlphaClientProtocol) -> PromptBasedClassi
 
 @fixture
 def classify_evaluator(
-    prompt_based_classify: PromptBasedClassify, dataset_repository: DatasetRepository
+    prompt_based_classify: PromptBasedClassify,
+    in_memory_dataset_repository: DatasetRepository,
 ) -> SingleLabelClassifyEvaluator:
     return SingleLabelClassifyEvaluator(
-        prompt_based_classify, InMemoryEvaluationRepository(), dataset_repository
+        prompt_based_classify,
+        InMemoryEvaluationRepository(),
+        in_memory_dataset_repository,
     )
 
 
@@ -142,7 +145,7 @@ def test_can_evaluate_classify(
 
 def test_can_aggregate_evaluations(
     classify_evaluator: SingleLabelClassifyEvaluator,
-    dataset_repository: InMemoryDatasetRepository,
+    in_memory_dataset_repository: InMemoryDatasetRepository,
 ) -> None:
     positive_lst: Sequence[str] = ["positive"]
     correct_example = Example(
@@ -160,7 +163,7 @@ def test_can_aggregate_evaluations(
         expected_output=positive_lst,
     )
     dataset_name = "classify_test"
-    dataset_repository.create_dataset(
+    in_memory_dataset_repository.create_dataset(
         dataset_name, [correct_example, incorrect_example]
     )
 
@@ -171,10 +174,10 @@ def test_can_aggregate_evaluations(
 
 def test_aggregating_evaluations_works_with_empty_list(
     classify_evaluator: SingleLabelClassifyEvaluator,
-    dataset_repository: DatasetRepository,
+    in_memory_dataset_repository: DatasetRepository,
 ) -> None:
     name = "empty_dataset"
-    dataset_repository.create_dataset(name, [])
+    in_memory_dataset_repository.create_dataset(name, [])
     evaluation_overview = classify_evaluator.evaluate_dataset(name)
 
     assert evaluation_overview.statistics.percentage_correct == 0

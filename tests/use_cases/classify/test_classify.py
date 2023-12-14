@@ -113,10 +113,10 @@ def embedding_based_classify_dataset(
 
 @fixture
 def embedding_based_classify_dataset_name(
-    dataset_repository: InMemoryDatasetRepository,
+    in_memory_dataset_repository: InMemoryDatasetRepository,
     embedding_based_classify_dataset: Dataset[ClassifyInput, Sequence[str]],
 ) -> str:
-    dataset_repository.create_dataset(
+    in_memory_dataset_repository.create_dataset(
         embedding_based_classify_dataset.name, embedding_based_classify_dataset.examples
     )
     return embedding_based_classify_dataset.name
@@ -125,10 +125,12 @@ def embedding_based_classify_dataset_name(
 @fixture
 def classify_evaluator(
     embedding_based_classify: Task[ClassifyInput, MultiLabelClassifyOutput],
-    dataset_repository: DatasetRepository,
+    in_memory_dataset_repository: DatasetRepository,
 ) -> MultiLabelClassifyEvaluator:
     return MultiLabelClassifyEvaluator(
-        embedding_based_classify, InMemoryEvaluationRepository(), dataset_repository
+        embedding_based_classify,
+        InMemoryEvaluationRepository(),
+        in_memory_dataset_repository,
     )
 
 

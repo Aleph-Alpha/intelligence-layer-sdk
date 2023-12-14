@@ -23,9 +23,9 @@ from intelligence_layer.connectors.argilla.argilla_client import (
     Question,
     RecordData,
 )
-from intelligence_layer.core.evaluation.dataset_repository import DatasetRepository
 from intelligence_layer.core.evaluation.domain import (
     AggregatedEvaluation,
+    Dataset,
     Evaluation,
     EvaluationOverview,
     Example,
@@ -234,6 +234,33 @@ class EvaluationRepository(ABC):
         ...
 
 
+class DatasetRepository(ABC):
+    @abstractmethod
+    def create_dataset(
+        self,
+        name: str,
+        examples: Iterable[Example[Input, ExpectedOutput]],
+    ) -> None:
+        ...
+
+    @abstractmethod
+    def dataset(
+        self,
+        id: str,
+        input_type: type[Input],
+        expected_output_type: type[ExpectedOutput],
+    ) -> Optional[Dataset[Input, ExpectedOutput]]:
+        ...
+
+    @abstractmethod
+    def delete_dataset(self, id: str) -> None:
+        ...
+
+    @abstractmethod
+    def list_datasets(self) -> Iterable[str]:
+        ...
+
+
 T = TypeVar("T")
 
 
@@ -300,8 +327,9 @@ class BaseEvaluator(
         Returns:
             the type of the evaluated task's output.
         """
-        output_type = get_annotations(self._task.do_run).get("return", None)
-        if not output_type:
+        try:
+            output_type = get_annotations(self._task.do_run)["return"]
+        except KeyError:
             raise TypeError(
                 f"Task of type {type(self._task)} must have a type-hint for the return value of do_run to detect the output_type. "
                 f"Alternatively overwrite output_type() in {type(self)}"
@@ -309,8 +337,9 @@ class BaseEvaluator(
         return cast(type[Output], output_type)
 
     def input_type(self) -> type[Input]:
-        input_type = get_annotations(self._task.do_run).get("input", None)
-        if not input_type:
+        try:
+            input_type = get_annotations(self._task.do_run)["input"]
+        except KeyError:
             raise TypeError(
                 f"Task of type {type(self._task)} must have a type-hint for the input value of do_run to detect the input_type. "
                 f"Alternatively overwrite input_type() in {type(self)}"
@@ -584,8 +613,9 @@ class Evaluator(
         super().__init__(task, evaluation_repository, dataset_repository)
 
     def evaluation_type(self) -> type[Evaluation]:
-        evaluation_type = get_annotations(self.do_evaluate).get("return", None)
-        if not evaluation_type:
+        try:
+            evaluation_type = get_annotations(self.do_evaluate)["return"]
+        except KeyError:
             raise TypeError(
                 f"Evaluator of type {type(self)} must have a type-hint for the return value of do_evaluate to detect evaluation_type. "
                 f"Alternatively overwrite its `evaluation_type()`"

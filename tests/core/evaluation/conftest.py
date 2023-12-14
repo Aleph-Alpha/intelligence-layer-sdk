@@ -11,11 +11,11 @@ from intelligence_layer.core import (
     ExampleEvaluation,
     FailedExampleEvaluation,
     FileEvaluationRepository,
-    InMemoryDatasetRepository,
     InMemoryEvaluationRepository,
     RunOverview,
     SequenceDataset,
 )
+from intelligence_layer.core.evaluation.evaluator import DatasetRepository
 from tests.conftest import DummyStringInput, DummyStringOutput
 
 
@@ -54,24 +54,14 @@ def in_memory_evaluation_repository() -> InMemoryEvaluationRepository:
 
 
 @fixture
-def in_memory_dataset_repository_with_dataset(
-    dummy_string_dataset: SequenceDataset[DummyStringInput, DummyStringOutput],
-) -> InMemoryDatasetRepository:
-    dataset_repository = InMemoryDatasetRepository()
-    dataset_repository.create_dataset(
-        dummy_string_dataset.name, dummy_string_dataset.examples
-    )
-    return dataset_repository
-
-
-@fixture
 def string_dataset_name(
     dummy_string_dataset: SequenceDataset[DummyStringInput, DummyStringOutput],
-    dataset_repository: InMemoryDatasetRepository,
+    in_memory_dataset_repository: DatasetRepository,
 ) -> str:
-    dataset_name = "name"
-    dataset_repository.create_dataset(dataset_name, dummy_string_dataset.examples)
-    return dataset_name
+    in_memory_dataset_repository.create_dataset(
+        dummy_string_dataset.name, dummy_string_dataset.examples
+    )
+    return dummy_string_dataset.name
 
 
 @fixture
