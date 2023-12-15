@@ -333,6 +333,15 @@ class BaseEvaluator(
                 parent, BaseEvaluator
             )
 
+        def get_replacement_index(current_index: int, num_types_set: int) -> int:
+            type_var_count = num_types_set - 1
+            for element_index, element in enumerate(type_list):
+                if not is_not_type_var(element):
+                    type_var_count += 1
+                if type_var_count == current_index:
+                    break
+            return element_index
+
         type_list: list[type | TypeVar] = types_of_base(BaseEvaluator.__orig_bases__[1])  # type: ignore
         for parent in (
             p for p in reversed(type(self).__mro__) if is_eligible_subclass(p)
@@ -342,17 +351,14 @@ class BaseEvaluator(
                 if origin is None or not issubclass(origin, BaseEvaluator):
                     continue
                 current_types = types_of_base(base)
-                types_set = 0
+                num_types_set = 0
                 for current_index, current_type in enumerate(current_types):
                     if is_not_type_var(current_type):
-                        type_var_count = types_set - 1
-                        for element_index, element in enumerate(type_list):
-                            if not is_not_type_var(element):
-                                type_var_count += 1
-                            if type_var_count == current_index:
-                                break
-                        type_list[element_index] = current_type
-                        types_set += 1
+                        replacement_index = get_replacement_index(
+                            current_index, num_types_set
+                        )
+                        type_list[replacement_index] = current_type
+                        num_types_set += 1
         assert all(is_not_type_var(t) for t in type_list)
         return cast(Sequence[type], type_list)
 

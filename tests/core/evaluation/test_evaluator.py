@@ -1,7 +1,7 @@
 from typing import Generic, Iterable, Optional, TypeVar
 
 from pydantic import BaseModel
-from pytest import fixture, raises
+from pytest import fixture
 
 from intelligence_layer.core import (
     Evaluator,
