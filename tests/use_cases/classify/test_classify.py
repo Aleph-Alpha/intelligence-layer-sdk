@@ -1,17 +1,15 @@
-from typing import Sequence
+from typing import Iterable, Sequence
 
 from pytest import fixture
 
 from intelligence_layer.connectors import AlephAlphaClientProtocol
 from intelligence_layer.core import (
     Chunk,
-    Dataset,
     DatasetRepository,
     Example,
     InMemoryDatasetRepository,
     InMemoryEvaluationRepository,
     NoOpTracer,
-    SequenceDataset,
     Task,
 )
 from intelligence_layer.use_cases.classify.classify import (
@@ -79,47 +77,43 @@ def embedding_based_classify_example() -> Example[ClassifyInput, Sequence[str]]:
 
 
 @fixture
-def embedding_based_classify_dataset(
+def embedding_based_classify_examples(
     embedding_based_classify_example: Example[ClassifyInput, Sequence[str]],
-) -> Dataset[ClassifyInput, Sequence[str]]:
-    return SequenceDataset(
-        name="summarize_eval_test",
-        examples=[
-            embedding_based_classify_example,
-            Example(
-                input=ClassifyInput(
-                    chunk=Chunk("My university banking class really sucks."),
-                    labels=frozenset(["positive", "negative", "finance", "school"]),
-                ),
-                expected_output=["negative", "finance", "school"],
+) -> Iterable[Example[ClassifyInput, Sequence[str]]]:
+    return [
+        embedding_based_classify_example,
+        Example(
+            input=ClassifyInput(
+                chunk=Chunk("My university banking class really sucks."),
+                labels=frozenset(["positive", "negative", "finance", "school"]),
             ),
-            Example(
-                input=ClassifyInput(
-                    chunk=Chunk("I did great on the recent exam."),
-                    labels=frozenset(["positive", "negative", "finance", "school"]),
-                ),
-                expected_output=["positive", "school"],
+            expected_output=["negative", "finance", "school"],
+        ),
+        Example(
+            input=ClassifyInput(
+                chunk=Chunk("I did great on the recent exam."),
+                labels=frozenset(["positive", "negative", "finance", "school"]),
             ),
-            Example(
-                input=ClassifyInput(
-                    chunk=Chunk("Dogs are animals"),
-                    labels=frozenset(["positive", "negative", "finance", "school"]),
-                ),
-                expected_output=[],
+            expected_output=["positive", "school"],
+        ),
+        Example(
+            input=ClassifyInput(
+                chunk=Chunk("Dogs are animals"),
+                labels=frozenset(["positive", "negative", "finance", "school"]),
             ),
-        ],
-    )
+            expected_output=[],
+        ),
+    ]
 
 
 @fixture
 def embedding_based_classify_dataset_name(
     in_memory_dataset_repository: InMemoryDatasetRepository,
-    embedding_based_classify_dataset: Dataset[ClassifyInput, Sequence[str]],
+    embedding_based_classify_examples: Iterable[Example[ClassifyInput, Sequence[str]]],
 ) -> str:
-    in_memory_dataset_repository.create_dataset(
-        embedding_based_classify_dataset.name, embedding_based_classify_dataset.examples
+    return in_memory_dataset_repository.create_dataset(
+        embedding_based_classify_examples
     )
-    return embedding_based_classify_dataset.name
 
 
 @fixture

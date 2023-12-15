@@ -1,6 +1,6 @@
 from datetime import datetime
 from pathlib import Path
-from typing import Sequence
+from typing import Iterable, Sequence
 
 from pydantic import BaseModel
 from pytest import fixture
@@ -13,7 +13,6 @@ from intelligence_layer.core import (
     FileEvaluationRepository,
     InMemoryEvaluationRepository,
     RunOverview,
-    SequenceDataset,
 )
 from intelligence_layer.core.evaluation.evaluator import DatasetRepository
 from tests.conftest import DummyStringInput, DummyStringOutput
@@ -55,13 +54,10 @@ def in_memory_evaluation_repository() -> InMemoryEvaluationRepository:
 
 @fixture
 def string_dataset_name(
-    dummy_string_dataset: SequenceDataset[DummyStringInput, DummyStringOutput],
+    dummy_string_examples: Iterable[Example[DummyStringInput, DummyStringOutput]],
     in_memory_dataset_repository: DatasetRepository,
 ) -> str:
-    in_memory_dataset_repository.create_dataset(
-        dummy_string_dataset.name, dummy_string_dataset.examples
-    )
-    return dummy_string_dataset.name
+    return in_memory_dataset_repository.create_dataset(dummy_string_examples)
 
 
 @fixture
@@ -110,10 +106,7 @@ def dummy_string_example() -> Example[DummyStringInput, DummyStringOutput]:
 
 
 @fixture
-def dummy_string_dataset(
+def dummy_string_examples(
     dummy_string_example: Example[DummyStringInput, DummyStringOutput]
-) -> SequenceDataset[DummyStringInput, DummyStringOutput]:
-    return SequenceDataset(
-        name="dataset",
-        examples=[dummy_string_example],
-    )
+) -> Iterable[Example[DummyStringInput, DummyStringOutput]]:
+    return [dummy_string_example]

@@ -162,9 +162,8 @@ def test_can_aggregate_evaluations(
         ),
         expected_output=positive_lst,
     )
-    dataset_name = "classify_test"
-    in_memory_dataset_repository.create_dataset(
-        dataset_name, [correct_example, incorrect_example]
+    dataset_name = in_memory_dataset_repository.create_dataset(
+        [correct_example, incorrect_example]
     )
 
     evaluation_overview = classify_evaluator.evaluate_dataset(dataset_name)
@@ -176,8 +175,7 @@ def test_aggregating_evaluations_works_with_empty_list(
     classify_evaluator: SingleLabelClassifyEvaluator,
     in_memory_dataset_repository: DatasetRepository,
 ) -> None:
-    name = "empty_dataset"
-    in_memory_dataset_repository.create_dataset(name, [])
+    name = in_memory_dataset_repository.create_dataset([])
     evaluation_overview = classify_evaluator.evaluate_dataset(name)
 
     assert evaluation_overview.statistics.percentage_correct == 0

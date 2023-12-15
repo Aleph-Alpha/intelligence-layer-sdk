@@ -30,7 +30,6 @@ from intelligence_layer.connectors.argilla.argilla_client import (
 )
 from intelligence_layer.core.evaluation.domain import (
     AggregatedEvaluation,
-    Dataset,
     Evaluation,
     EvaluationOverview,
     Example,
@@ -239,43 +238,35 @@ class EvaluationRepository(ABC):
         ...
 
 
-# TODO
-# replace usage of Dataset by DatasetRepository:
-# - Dataset.examples -> DatasetRespository.examples(...)
-# - Dataset.example -> DatasetRepository.example(...)
-# in tests.
-# - replace fixtures for Dataset by fixtures for Sequence[Example]
-
-
 class DatasetRepository(ABC):
-    # TODO
-    # - remove name-parameter
-    # - return str-id (str(uuid4()))
     @abstractmethod
     def create_dataset(
         self,
-        name: str,
         examples: Iterable[Example[Input, ExpectedOutput]],
-    ) -> None:
+    ) -> str:
         ...
 
-    # TODO
-    # - rename to examples()
-    # - return Iterable[Example[Input, ExpectedOutput]]
     @abstractmethod
-    def dataset(
+    def examples_by_id(
         self,
-        id: str,
+        dataset_id: str,
         input_type: type[Input],
         expected_output_type: type[ExpectedOutput],
-    ) -> Optional[Dataset[Input, ExpectedOutput]]:
+    ) -> Optional[Iterable[Example[Input, ExpectedOutput]]]:
         ...
 
-    # TODO
-    # - add example(dataset_id: str, example_id: str, input_type: type[Input], expected_output_type: type[ExpectedOutput]) -> Example[Input, ExpectedOutput]
+    @abstractmethod
+    def example(
+        self,
+        dataset_id: str,
+        example_id: str,
+        input_type: type[Input],
+        expected_output_type: type[ExpectedOutput],
+    ) -> Optional[Example[Input, ExpectedOutput]]:
+        ...
 
     @abstractmethod
-    def delete_dataset(self, id: str) -> None:
+    def delete_dataset(self, dataset_id: str) -> None:
         ...
 
     @abstractmethod
@@ -500,19 +491,24 @@ class BaseEvaluator(
             except Exception as e:
                 return FailedExampleRun.from_exception(e)
 
-        dataset = self._dataset_repository.dataset(
+        dataset = self._dataset_repository.examples_by_id(
             dataset_id, self.input_type(), self.output_type()
         )
-        if not dataset:
+        if dataset is None:
             raise ValueError("Dataset not found")
         run_id = str(uuid4())
         start = datetime.utcnow()
         with ThreadPoolExecutor(max_workers=10) as executor:
-            outputs = tqdm(executor.map(run, dataset.examples), desc="Evaluating")
+            outputs = tqdm(executor.map(run, dataset), desc="Evaluating")
 
         failed_count = 0
         successful_count = 0
-        for output, example in zip(outputs, dataset.examples):
+        # get the examples again since they are consumed by the statement above
+        dataset = self._dataset_repository.examples_by_id(
+            dataset_id, self.input_type(), self.output_type()
+        )
+        assert dataset is not None
+        for output, example in zip(outputs, dataset):
             if isinstance(output, FailedExampleRun):
                 failed_count += 1
             else:
@@ -522,7 +518,7 @@ class BaseEvaluator(
             )
 
         run_overview = RunOverview(
-            dataset_name=dataset.name,
+            dataset_name=dataset_id,
             id=run_id,
             start=start,
             end=datetime.utcnow(),
@@ -570,13 +566,14 @@ class BaseEvaluator(
                 f"All run-overviews must reference the same dataset: {run_overviews}"
             )
         eval_id = self._create_evaluation_dataset()
-        dataset = self._dataset_repository.dataset(
-            run_overviews[0].dataset_name,
+        dataset_name = run_overviews[0].dataset_name
+        examples = self._dataset_repository.examples_by_id(
+            dataset_name,
             self.input_type(),
             self.expected_output_type(),
         )
-        if not dataset:
-            raise ValueError(f"Dataset: {run_overviews[0].dataset_name} not found")
+        if examples is None:
+            raise ValueError(f"Dataset: {dataset_name} not found")
         start = datetime.utcnow()
 
         examples_zipped: Iterable[tuple[ExampleOutput[Output], ...]] = zip(
@@ -598,8 +595,13 @@ class BaseEvaluator(
                     example_output.example_id == example_id
                     for example_output in example_outputs
                 )
-                example = dataset.example(example_id)
-                assert example
+                example = self._dataset_repository.example(
+                    dataset_name,
+                    example_id,
+                    self.input_type(),
+                    self.expected_output_type(),
+                )
+                assert example is not None
                 self.evaluate(
                     example,
                     eval_id,

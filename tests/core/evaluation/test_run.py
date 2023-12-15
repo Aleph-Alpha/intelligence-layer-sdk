@@ -72,9 +72,8 @@ def test_run_evaluation(
     tmp_path: Path, examples: Sequence[Example[None, None]]
 ) -> None:
     dataset_path = tmp_path / "dataset"
-    dataset_id = "some-dataset"
     dataset_repository = FileDatasetRepository(dataset_path)
-    dataset_repository.create_dataset(dataset_id, examples)
+    dataset_id = dataset_repository.create_dataset(examples)
 
     eval_path = tmp_path / "eval"
     eval_repository = FileEvaluationRepository(eval_path)
@@ -108,9 +107,8 @@ def test_run_evaluation_with_task_with_client(
     tmp_path: Path, examples: Sequence[Example[None, None]]
 ) -> None:
     dataset_path = tmp_path / "dataset"
-    dataset_id = "some-dataset"
     dataset_repository = FileDatasetRepository(dataset_path)
-    dataset_repository.create_dataset(dataset_id, examples)
+    dataset_id = dataset_repository.create_dataset(examples)
 
     eval_path = tmp_path / "eval"
 

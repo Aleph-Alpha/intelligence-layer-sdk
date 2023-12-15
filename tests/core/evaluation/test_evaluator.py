@@ -12,11 +12,9 @@ from intelligence_layer.core import (
     InMemoryTaskSpan,
     InMemoryTracer,
     NoOpTracer,
-    SequenceDataset,
     Tracer,
 )
 from intelligence_layer.core.evaluation.domain import (
-    Dataset,
     Evaluation,
     EvaluationOverview,
     ExpectedOutput,
@@ -105,13 +103,12 @@ class DummyTask(Task[str, str]):
 
 
 @fixture
-def sequence_dataset() -> SequenceDataset[str, None]:
-    examples = [
+def sequence_examples() -> Iterable[Example[str, None]]:
+    return [
         Example(input="success", expected_output=None),
         Example(input=FAIL_IN_TASK_INPUT, expected_output=None),
         Example(input=FAIL_IN_EVAL_INPUT, expected_output=None),
     ]
-    return SequenceDataset(name="test", examples=examples)
 
 
 @fixture
@@ -128,13 +125,10 @@ def dummy_evaluator(
 
 @fixture
 def dataset_name(
-    sequence_dataset: SequenceDataset[str, None],
+    sequence_examples: Iterable[Example[str, None]],
     in_memory_dataset_repository: InMemoryDatasetRepository,
 ) -> str:
-    in_memory_dataset_repository.create_dataset(
-        sequence_dataset.name, sequence_dataset.examples
-    )
-    return sequence_dataset.name
+    return in_memory_dataset_repository.create_dataset(sequence_examples)
 
 
 @fixture
@@ -187,15 +181,15 @@ def test_evaluate_dataset_stores_example_evaluations(
     evaluation_repository = dummy_evaluator._evaluation_repository
     dataset_repository = dummy_evaluator._dataset_repository
     dataset_name = list(dataset_repository.list_datasets())[0]
-    dataset: Optional[Dataset[str, None]] = dataset_repository.dataset(
+    dataset: Optional[Iterable[Example[str, None]]] = dataset_repository.examples_by_id(
         dataset_name, str, type(None)
     )
-    assert dataset
+    assert dataset is not None
 
     evaluation_run_overview = dummy_evaluator.evaluate_dataset(
         dataset_name, NoOpTracer()
     )
-    examples = list(dataset.examples)
+    examples = list(dataset)
     success_result = evaluation_repository.example_evaluation(
         evaluation_run_overview.id, examples[0].id, DummyEvaluation
     )
@@ -219,13 +213,13 @@ def test_evaluate_dataset_stores_example_traces(
 ) -> None:
     evaluation_repository = dummy_evaluator._evaluation_repository
     dataset_repository = dummy_evaluator._dataset_repository
-    dataset: Optional[Dataset[str, None]] = dataset_repository.dataset(
+    dataset: Optional[Iterable[Example[str, None]]] = dataset_repository.examples_by_id(
         dataset_name, str, type(None)
     )
-    assert dataset
+    assert dataset is not None
 
     evaluation_run_overview = dummy_evaluator.evaluate_dataset(dataset_name)
-    examples = list(dataset.examples)
+    examples = list(dataset)
     success_result = evaluation_repository.example_trace(
         evaluation_run_overview.run_ids[0], examples[0].id
     )
