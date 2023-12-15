@@ -89,9 +89,6 @@ class SingleLabelClassifyEvaluator(
     ):
         super().__init__(task, evaluation_repository, dataset_respository)
 
-    def expected_output_type(self) -> type[Sequence[str]]:
-        return Sequence[str]
-
     # mypy expects *args where this method only uses one output
     def do_evaluate(  # type: ignore
         self,
@@ -186,9 +183,6 @@ class MultiLabelClassifyEvaluator(
     ):
         super().__init__(task, evaluation_repository, dataset_repository)
         self.threshold = threshold
-
-    def expected_output_type(self) -> type[Sequence[str]]:
-        return Sequence[str]
 
     # mypy expects *args where this method only uses one output
     def do_evaluate(  # type: ignore

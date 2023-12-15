@@ -1,7 +1,6 @@
 from abc import ABC, abstractmethod
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime
-from inspect import get_annotations
 from typing import (
     Any,
     Callable,
@@ -654,16 +653,6 @@ class Evaluator(
         dataset_repository: DatasetRepository,
     ) -> None:
         super().__init__(task, evaluation_repository, dataset_repository)
-
-    def evaluation_type(self) -> type[Evaluation]:
-        try:
-            evaluation_type = get_annotations(self.do_evaluate)["return"]
-        except KeyError:
-            raise TypeError(
-                f"Evaluator of type {type(self)} must have a type-hint for the return value of do_evaluate to detect evaluation_type. "
-                f"Alternatively overwrite its `evaluation_type()`"
-            )
-        return cast(type[Evaluation], evaluation_type)
 
     @abstractmethod
     def do_evaluate(
