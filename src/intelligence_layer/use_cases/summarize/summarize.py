@@ -121,9 +121,6 @@ class SingleChunkSummarizeEvaluator(
         self.bleu_grader = BleuGrader()
         self.rouge_grader = RougeGrader()
 
-    def expected_output_type(self) -> type[str]:
-        return str
-
     # mypy expects *args where this method only uses one output
     def do_evaluate(  # type: ignore
         self,
@@ -173,9 +170,6 @@ class LongContextSummarizeEvaluator(
         super().__init__(task, evaluation_repository, dataset_repository)
         self.bleu_grader = BleuGrader()
         self.rouge_grader = RougeGrader()
-
-    def expected_output_type(self) -> type[str]:
-        return str
 
     # mypy expects *args where this method only uses one output
     def do_evaluate(  # type: ignore

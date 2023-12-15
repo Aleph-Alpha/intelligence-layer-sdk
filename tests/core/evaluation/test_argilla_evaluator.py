@@ -71,9 +71,6 @@ class DummyStringTaskArgillaEvaluator(
         DummyAggregatedEvaluation,
     ]
 ):
-    def expected_output_type(self) -> type[DummyStringOutput]:
-        return DummyStringOutput
-
     def aggregate(
         self,
         evaluations: Iterable[ArgillaEvaluation],

@@ -41,9 +41,6 @@ class DummyEvaluator(
         DummyAggregatedEvaluationWithResultList,
     ]
 ):
-    def expected_output_type(self) -> type[None]:
-        return type(None)
-
     # mypy expects *args where this method only uses one output
     def do_evaluate(  # type: ignore
         self,
@@ -78,9 +75,6 @@ class ComparingEvaluator(
         ComparisonAggregation,
     ]
 ):
-    def expected_output_type(self) -> type[None]:
-        return type(None)
-
     def do_evaluate(
         self, input: str, expected_output: None, *output: str
     ) -> ComparisonEvaluation:
@@ -279,15 +273,6 @@ def test_evaluate_can_evaluate_multiple_runs(
 
     eval_overview = comparing_evaluator.aggregate_evaluation(partial_overview.id)
     assert eval_overview.statistics.equal_ratio == 1
-
-
-def test_evaluation_type_raises_if_do_evaluate_does_not_have_type_hints() -> None:
-    dummy_evaluator = DummyEvaluatorWithoutTypeHints(
-        DummyTask(), InMemoryEvaluationRepository(), InMemoryDatasetRepository()
-    )
-
-    with raises(TypeError):
-        dummy_evaluator.evaluation_type()
 
 
 def test_base_evaluator_type_magic_works(
