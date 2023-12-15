@@ -1,8 +1,8 @@
 from pathlib import Path
 
-from pytest import fixture, raises
+from pytest import FixtureRequest, fixture, mark, raises
 
-from intelligence_layer.core import Example, FileDatasetRepository
+from intelligence_layer.core import DatasetRepository, Example, FileDatasetRepository
 from intelligence_layer.core.evaluation.domain import SequenceDataset
 from tests.conftest import DummyStringInput, DummyStringOutput
 
@@ -12,15 +12,27 @@ def file_dataset_repository(tmp_path: Path) -> FileDatasetRepository:
     return FileDatasetRepository(tmp_path)
 
 
+test_repository_fixtures = [
+    "file_dataset_repository",
+    "in_memory_dataset_repository",
+]
+
+
+@mark.parametrize(
+    "repository_fixture",
+    test_repository_fixtures,
+)
 def test_file_dataset_repository_can_store_dataset(
-    file_dataset_repository: FileDatasetRepository,
+    repository_fixture: str,
     dummy_string_example: Example[DummyStringInput, DummyStringOutput],
+    request: FixtureRequest,
 ) -> None:
+    dataset_repository: DatasetRepository = request.getfixturevalue(repository_fixture)
     dataset_name = "dummy_dataset"
-    file_dataset_repository.create_dataset(
+    dataset_repository.create_dataset(
         name=dataset_name, examples=[dummy_string_example]
     )
-    dataset = file_dataset_repository.dataset(
+    dataset = dataset_repository.dataset(
         dataset_name,
         input_type=DummyStringInput,
         expected_output_type=DummyStringOutput,
@@ -33,54 +45,74 @@ def test_file_dataset_repository_can_store_dataset(
     )
 
 
+@mark.parametrize(
+    "repository_fixture",
+    test_repository_fixtures,
+)
 def test_file_dataset_repository_throws_error_if_dataset_name_already_taken(
-    file_dataset_repository: FileDatasetRepository,
+    repository_fixture: str,
     dummy_string_dataset: SequenceDataset[DummyStringInput, DummyStringOutput],
+    request: FixtureRequest,
 ) -> None:
-    file_dataset_repository.create_dataset(
+    dataset_repository: DatasetRepository = request.getfixturevalue(repository_fixture)
+    dataset_repository.create_dataset(
         dummy_string_dataset.name, dummy_string_dataset.examples
     )
     with raises(ValueError) as e:
-        file_dataset_repository.create_dataset(dummy_string_dataset.name, examples=[])
+        dataset_repository.create_dataset(dummy_string_dataset.name, examples=[])
     assert dummy_string_dataset.name in str(e)
 
 
+@mark.parametrize(
+    "repository_fixture",
+    test_repository_fixtures,
+)
 def test_file_dataset_repository_returns_none_for_nonexisting_dataset(
-    file_dataset_repository: FileDatasetRepository,
+    repository_fixture: str, request: FixtureRequest
 ) -> None:
-    assert (
-        file_dataset_repository.dataset("some_name", DummyStringInput, type(None))
-        is None
-    )
+    dataset_repository: DatasetRepository = request.getfixturevalue(repository_fixture)
+    assert dataset_repository.dataset("some_name", DummyStringInput, type(None)) is None
 
 
+@mark.parametrize(
+    "repository_fixture",
+    test_repository_fixtures,
+)
 def test_file_dataset_repository_can_delete_dataset(
-    file_dataset_repository: FileDatasetRepository,
+    repository_fixture: str,
     dummy_string_dataset: SequenceDataset[DummyStringInput, DummyStringOutput],
+    request: FixtureRequest,
 ) -> None:
-    file_dataset_repository.create_dataset(
+    dataset_repository: DatasetRepository = request.getfixturevalue(repository_fixture)
+    dataset_repository.create_dataset(
         dummy_string_dataset.name, dummy_string_dataset.examples
     )
-    file_dataset_repository.delete_dataset(dummy_string_dataset.name)
+    dataset_repository.delete_dataset(dummy_string_dataset.name)
     assert (
-        file_dataset_repository.dataset(
+        dataset_repository.dataset(
             dummy_string_dataset.name, DummyStringInput, DummyStringOutput
         )
         is None
     )
-    file_dataset_repository.delete_dataset(
+    dataset_repository.delete_dataset(
         dummy_string_dataset.name
     )  # tests whether function is idempotent
 
 
+@mark.parametrize(
+    "repository_fixture",
+    test_repository_fixtures,
+)
 def test_file_dataset_repository_can_list_datasets(
-    file_dataset_repository: FileDatasetRepository,
+    repository_fixture: str,
     dummy_string_example: Example[DummyStringInput, DummyStringOutput],
+    request: FixtureRequest,
 ) -> None:
+    dataset_repository: DatasetRepository = request.getfixturevalue(repository_fixture)
     dataset_name_1 = "dummy_dataset_1"
     dataset_name_2 = "dummy_dataset_2"
     examples = [dummy_string_example]
-    file_dataset_repository.create_dataset(name=dataset_name_1, examples=examples)
-    file_dataset_repository.create_dataset(name=dataset_name_2, examples=examples)
-    dataset_names = file_dataset_repository.list_datasets()
+    dataset_repository.create_dataset(name=dataset_name_1, examples=examples)
+    dataset_repository.create_dataset(name=dataset_name_2, examples=examples)
+    dataset_names = dataset_repository.list_datasets()
     assert sorted(dataset_names) == sorted([dataset_name_1, dataset_name_2])
