@@ -3,6 +3,7 @@ from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime
 from inspect import get_annotations
 from typing import (
+    Any,
     Callable,
     Generic,
     Iterable,
@@ -10,8 +11,11 @@ from typing import (
     Optional,
     Sequence,
     TypeVar,
+    Union,
     cast,
     final,
+    get_args,
+    get_origin,
 )
 from uuid import uuid4
 
@@ -318,6 +322,55 @@ class BaseEvaluator(
         self._evaluation_repository = evaluation_repository
         self._dataset_repository = dataset_repository
 
+    def _get_types(self) -> Sequence[type]:
+        def is_not_type_var(object: Any) -> bool:
+            return type(object) is not TypeVar
+
+        def types_of_base(orig_bases: Any) -> list[Union[type, TypeVar]]:
+            return list(get_args(orig_bases))
+
+        def is_eligible_subclass(parent: type) -> bool:
+            return hasattr(parent, "__orig_bases__") and issubclass(
+                parent, BaseEvaluator
+            )
+
+        type_list: list[type | TypeVar] = types_of_base(BaseEvaluator.__orig_bases__[1])  # type: ignore
+        for parent in (
+            p for p in reversed(type(self).__mro__) if is_eligible_subclass(p)
+        ):
+            for base in parent.__orig_bases__:  # type: ignore
+                origin = get_origin(base)
+                if origin is None:
+                    continue
+                current_types = types_of_base(base)
+                # types_set = 0
+                for current_index, current_type in enumerate(current_types):
+                    if is_not_type_var(current_type):
+                        type_var_count = -1
+                        for element_index, element in enumerate(type_list):
+                            if not is_not_type_var(element):
+                                type_var_count += 1
+                            if type_var_count == current_index:
+                                break
+                        
+                        # offset = sum(
+                        #     is_not_type_var(t) for t in type_list[: current_index + 1]
+                        # )
+                        # type_index = current_index + offset - types_set
+                        type_list[element_index] = current_type
+                        # types_set += 1
+        assert all(is_not_type_var(t) for t in type_list)
+        return cast(Sequence[type], type_list)
+
+    def input_type(self) -> type[Input]:
+        try:
+            input_type = self._get_types()[0]
+        except KeyError:
+            raise TypeError(
+                f"Alternatively overwrite input_type() in {type(self)}"
+            )
+        return cast(type[Input], input_type)
+
     def output_type(self) -> type[Output]:
         """Returns the type of the evaluated task's output.
 
@@ -328,25 +381,22 @@ class BaseEvaluator(
             the type of the evaluated task's output.
         """
         try:
-            output_type = get_annotations(self._task.do_run)["return"]
+            output_type = self._get_types()[1]
         except KeyError:
             raise TypeError(
-                f"Task of type {type(self._task)} must have a type-hint for the return value of do_run to detect the output_type. "
                 f"Alternatively overwrite output_type() in {type(self)}"
             )
         return cast(type[Output], output_type)
 
-    def input_type(self) -> type[Input]:
+    def expected_output_type(self) -> type[ExpectedOutput]:
         try:
-            input_type = get_annotations(self._task.do_run)["input"]
+            expected_output_type = self._get_types()[2]
         except KeyError:
             raise TypeError(
-                f"Task of type {type(self._task)} must have a type-hint for the input value of do_run to detect the input_type. "
-                f"Alternatively overwrite input_type() in {type(self)}"
+                f"Alternatively overwrite expected_output_type() in {type(self)}"
             )
-        return cast(type[Input], input_type)
+        return cast(type[Output], expected_output_type)
 
-    @abstractmethod
     def evaluation_type(self) -> type[Evaluation]:
         """Returns the type of the evaluation result of an example.
 
@@ -356,11 +406,13 @@ class BaseEvaluator(
         Returns:
             Returns the type of the evaluation result of an example.
         """
-        ...
-
-    @abstractmethod
-    def expected_output_type(self) -> type[ExpectedOutput]:
-        ...
+        try:
+            evaluation_type = self._get_types()[3]
+        except KeyError:
+            raise TypeError(
+                f"Alternatively overwrite evaluation_type() in {type(self)}"
+            )
+        return cast(type[Output], evaluation_type)
 
     @abstractmethod
     def evaluate(
