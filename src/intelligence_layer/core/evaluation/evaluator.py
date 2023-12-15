@@ -239,7 +239,18 @@ class EvaluationRepository(ABC):
         ...
 
 
+# TODO
+# replace usage of Dataset by DatasetRepository:
+# - Dataset.examples -> DatasetRespository.examples(...)
+# - Dataset.example -> DatasetRepository.example(...)
+# in tests.
+# - replace fixtures for Dataset by fixtures for Sequence[Example]
+
+
 class DatasetRepository(ABC):
+    # TODO
+    # - remove name-parameter
+    # - return str-id (str(uuid4()))
     @abstractmethod
     def create_dataset(
         self,
@@ -248,6 +259,9 @@ class DatasetRepository(ABC):
     ) -> None:
         ...
 
+    # TODO
+    # - rename to examples()
+    # - return Iterable[Example[Input, ExpectedOutput]]
     @abstractmethod
     def dataset(
         self,
@@ -256,6 +270,9 @@ class DatasetRepository(ABC):
         expected_output_type: type[ExpectedOutput],
     ) -> Optional[Dataset[Input, ExpectedOutput]]:
         ...
+
+    # TODO
+    # - add example(dataset_id: str, example_id: str, input_type: type[Input], expected_output_type: type[ExpectedOutput]) -> Example[Input, ExpectedOutput]
 
     @abstractmethod
     def delete_dataset(self, id: str) -> None:
