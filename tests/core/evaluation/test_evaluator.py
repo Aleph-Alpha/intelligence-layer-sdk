@@ -15,9 +15,14 @@ from intelligence_layer.core import (
     SequenceDataset,
     Tracer,
 )
-from intelligence_layer.core.evaluation.domain import Dataset, Evaluation, EvaluationOverview, Example, ExpectedOutput
+from intelligence_layer.core.evaluation.domain import (
+    Dataset,
+    Evaluation,
+    EvaluationOverview,
+    ExpectedOutput,
+)
 from intelligence_layer.core.evaluation.evaluator import BaseEvaluator
-from intelligence_layer.core.task import Output, Task
+from intelligence_layer.core.task import Input, Output, Task
 from tests.core.evaluation.conftest import (
     DummyAggregatedEvaluationWithResultList,
     DummyEvaluation,
@@ -102,12 +107,6 @@ class DummyTask(Task[str, str]):
     def do_run(self, input: str, tracer: Tracer) -> str:
         if input == FAIL_IN_TASK_INPUT:
             raise RuntimeError(input)
-        return input
-
-
-class DummyTaskWithoutTypeHints(Task[str, str]):
-    # type hint for return value missing on purpose for testing
-    def do_run(self, input: str, tracer: Tracer):  # type: ignore
         return input
 
 
@@ -282,17 +281,6 @@ def test_evaluate_can_evaluate_multiple_runs(
     assert eval_overview.statistics.equal_ratio == 1
 
 
-def test_output_type_raises_if_do_run_does_not_have_type_hints() -> None:
-    dummy_evaluator = DummyEvaluator(
-        DummyTaskWithoutTypeHints(),
-        InMemoryEvaluationRepository(),
-        InMemoryDatasetRepository(),
-    )
-
-    with raises(TypeError):
-        dummy_evaluator.output_type()
-
-
 def test_evaluation_type_raises_if_do_evaluate_does_not_have_type_hints() -> None:
     dummy_evaluator = DummyEvaluatorWithoutTypeHints(
         DummyTask(), InMemoryEvaluationRepository(), InMemoryDatasetRepository()
@@ -304,34 +292,51 @@ def test_evaluation_type_raises_if_do_evaluate_does_not_have_type_hints() -> Non
 
 def test_base_evaluator_type_magic_works(
     in_memory_evaluation_repository: InMemoryEvaluationRepository,
-    in_memory_dataset_repository: InMemoryDatasetRepository
+    in_memory_dataset_repository: InMemoryDatasetRepository,
 ) -> None:
-    input_type = str
-    output_type = list
-    expected_output_type = float
-    evaluation_type = dict
-    aggregated_evaluation_type = int
-    types = [input_type, output_type, expected_output_type, evaluation_type, aggregated_evaluation_type]
-
-    class ChildEvaluator(BaseEvaluator[input_type, Output, ExpectedOutput, Evaluation, aggregated_evaluation_type]):
-        def evaluate(self, example: Example[str, ExpectedOutput], eval_id: str, *output: Output) -> None:
-            return super().evaluate(example, eval_id, *output)
-
-        def aggregate(self, evaluations: Iterable[Evaluation]) -> int:
-            return super().aggregate(evaluations)
-
-    class GrandChildEvaluator(ChildEvaluator[output_type, ExpectedOutput, Evaluation]):
+    class EvaluationType(BaseModel):
         pass
 
-    Post = TypeVar("Post")
-
-    class Mailman(Generic[Post]):
+    class AggregatedEvaluationType(BaseModel):
         pass
 
-    class GreatGrandChildEvaluator(Mailman, GrandChildEvaluator[expected_output_type, evaluation_type]):
+    types = [
+        str,
+        str,
+        type(None),
+        EvaluationType,
+        AggregatedEvaluationType,
+    ]
+
+    class ChildEvaluator(
+        BaseEvaluator[Input, Output, None, Evaluation, AggregatedEvaluationType]
+    ):
+        def evaluate(
+            self, example: Example[Input, ExpectedOutput], eval_id: str, *output: Output
+        ) -> None:
+            pass
+
+        def aggregate(
+            self, evaluations: Iterable[Evaluation]
+        ) -> AggregatedEvaluationType:
+            return AggregatedEvaluationType()
+
+    A = TypeVar("A", bound=BaseModel)
+
+    class GrandChildEvaluator(ChildEvaluator[Input, str, A]):
         pass
 
-    timmy = GreatGrandChildEvaluator(DummyTask(), in_memory_evaluation_repository, in_memory_dataset_repository)
+    class Mailman(Generic[A]):
+        pass
+
+    class GreatGrandChildEvaluator(
+        Mailman[EvaluationType], GrandChildEvaluator[str, EvaluationType]
+    ):
+        pass
+
+    timmy = GreatGrandChildEvaluator(
+        DummyTask(), in_memory_evaluation_repository, in_memory_dataset_repository
+    )
     who_is_timmy = timmy._get_types()
 
     assert who_is_timmy == types

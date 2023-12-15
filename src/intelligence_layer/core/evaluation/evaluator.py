@@ -322,7 +322,7 @@ class BaseEvaluator(
         self._evaluation_repository = evaluation_repository
         self._dataset_repository = dataset_repository
 
-    def _get_types(self) -> Sequence[type]:
+    def _get_types(self) -> Sequence[type]:  # noqa
         def is_not_type_var(object: Any) -> bool:
             return type(object) is not TypeVar
 
@@ -340,25 +340,20 @@ class BaseEvaluator(
         ):
             for base in parent.__orig_bases__:  # type: ignore
                 origin = get_origin(base)
-                if origin is None:
+                if origin is None or not issubclass(origin, BaseEvaluator):
                     continue
                 current_types = types_of_base(base)
-                # types_set = 0
+                types_set = 0
                 for current_index, current_type in enumerate(current_types):
                     if is_not_type_var(current_type):
-                        type_var_count = -1
+                        type_var_count = types_set - 1
                         for element_index, element in enumerate(type_list):
                             if not is_not_type_var(element):
                                 type_var_count += 1
                             if type_var_count == current_index:
                                 break
-                        
-                        # offset = sum(
-                        #     is_not_type_var(t) for t in type_list[: current_index + 1]
-                        # )
-                        # type_index = current_index + offset - types_set
                         type_list[element_index] = current_type
-                        # types_set += 1
+                        types_set += 1
         assert all(is_not_type_var(t) for t in type_list)
         return cast(Sequence[type], type_list)
 
@@ -366,9 +361,7 @@ class BaseEvaluator(
         try:
             input_type = self._get_types()[0]
         except KeyError:
-            raise TypeError(
-                f"Alternatively overwrite input_type() in {type(self)}"
-            )
+            raise TypeError(f"Alternatively overwrite input_type() in {type(self)}")
         return cast(type[Input], input_type)
 
     def output_type(self) -> type[Output]:
@@ -383,9 +376,7 @@ class BaseEvaluator(
         try:
             output_type = self._get_types()[1]
         except KeyError:
-            raise TypeError(
-                f"Alternatively overwrite output_type() in {type(self)}"
-            )
+            raise TypeError(f"Alternatively overwrite output_type() in {type(self)}")
         return cast(type[Output], output_type)
 
     def expected_output_type(self) -> type[ExpectedOutput]:
@@ -395,7 +386,7 @@ class BaseEvaluator(
             raise TypeError(
                 f"Alternatively overwrite expected_output_type() in {type(self)}"
             )
-        return cast(type[Output], expected_output_type)
+        return cast(type[ExpectedOutput], expected_output_type)
 
     def evaluation_type(self) -> type[Evaluation]:
         """Returns the type of the evaluation result of an example.
@@ -412,7 +403,7 @@ class BaseEvaluator(
             raise TypeError(
                 f"Alternatively overwrite evaluation_type() in {type(self)}"
             )
-        return cast(type[Output], evaluation_type)
+        return cast(type[Evaluation], evaluation_type)
 
     @abstractmethod
     def evaluate(
