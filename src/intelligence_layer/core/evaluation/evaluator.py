@@ -480,16 +480,18 @@ class BaseEvaluator(
             :class:`EvaluationRepository` provided in the __init__.
         """
 
-        def run(example: Example[Input, ExpectedOutput]) -> Output | FailedExampleRun:
+        def run(
+            example: Example[Input, ExpectedOutput]
+        ) -> tuple[str, Output | FailedExampleRun]:
             evaluate_tracer = self._evaluation_repository.example_tracer(
                 run_id, example.id
             )
             if tracer:
                 evaluate_tracer = CompositeTracer([evaluate_tracer, tracer])
             try:
-                return self._task.run(example.input, evaluate_tracer)
+                return example.id, self._task.run(example.input, evaluate_tracer)
             except Exception as e:
-                return FailedExampleRun.from_exception(e)
+                return example.id, FailedExampleRun.from_exception(e)
 
         dataset = self._dataset_repository.examples_by_id(
             dataset_id, self.input_type(), self.output_type()
@@ -499,22 +501,17 @@ class BaseEvaluator(
         run_id = str(uuid4())
         start = datetime.utcnow()
         with ThreadPoolExecutor(max_workers=10) as executor:
-            outputs = tqdm(executor.map(run, dataset), desc="Evaluating")
+            ids_and_outputs = tqdm(executor.map(run, dataset), desc="Evaluating")
 
         failed_count = 0
         successful_count = 0
-        # get the examples again since they are consumed by the statement above
-        dataset = self._dataset_repository.examples_by_id(
-            dataset_id, self.input_type(), self.output_type()
-        )
-        assert dataset is not None
-        for output, example in zip(outputs, dataset):
+        for example_id, output in ids_and_outputs:
             if isinstance(output, FailedExampleRun):
                 failed_count += 1
             else:
                 successful_count += 1
             self._evaluation_repository.store_example_output(
-                run_id, ExampleOutput[Output](example_id=example.id, output=output)
+                run_id, ExampleOutput[Output](example_id=example_id, output=output)
             )
 
         run_overview = RunOverview(
