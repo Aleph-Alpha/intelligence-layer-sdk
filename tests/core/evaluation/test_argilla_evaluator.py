@@ -142,13 +142,13 @@ def string_argilla_evaluator(
 
 def test_argilla_evaluator_can_do_sync_evaluation(
     string_argilla_evaluator: DummyStringTaskArgillaEvaluator,
-    string_dataset_name: str,
+    string_dataset_id: str,
 ) -> None:
     argilla_client = cast(StubArgillaClient, string_argilla_evaluator._client)
 
-    overview = string_argilla_evaluator.partial_evaluate_dataset(string_dataset_name)
+    overview = string_argilla_evaluator.partial_evaluate_dataset(string_dataset_id)
     dummy_string_dataset = string_argilla_evaluator._dataset_repository.examples_by_id(
-        string_dataset_name, DummyStringInput, DummyStringOutput
+        string_dataset_id, DummyStringInput, DummyStringOutput
     )
     assert dummy_string_dataset is not None
 
@@ -162,12 +162,10 @@ def test_argilla_evaluator_can_do_sync_evaluation(
 
 def test_argilla_evaluator_can_aggregate_evaluation(
     string_argilla_evaluator: DummyStringTaskArgillaEvaluator,
-    string_dataset_name: str,
+    string_dataset_id: str,
 ) -> None:
     argilla_client = cast(StubArgillaClient, string_argilla_evaluator._client)
-    eval_overview = string_argilla_evaluator.partial_evaluate_dataset(
-        string_dataset_name
-    )
+    eval_overview = string_argilla_evaluator.partial_evaluate_dataset(string_dataset_id)
     aggregated_eval_overview = string_argilla_evaluator.aggregate_evaluation(
         eval_overview.id
     )

@@ -1,6 +1,6 @@
 from datetime import datetime
 from json import dumps
-from typing import Generic, Iterable, Optional, Protocol, Sequence, TypeVar, Union
+from typing import Generic, Optional, Sequence, TypeVar, Union
 from uuid import uuid4
 
 from pydantic import BaseModel, ConfigDict, Field, SerializeAsAny
@@ -205,10 +205,10 @@ class ExampleTrace(BaseModel):
 
 
 class RunOverview(BaseModel):
-    """Overview of the run of a :class:`Task` on a :class:`Dataset`.
+    """Overview of the run of a :class:`Task` on a dataset.
 
     Attributes:
-        dataset_name: Identifier of the dataset run.
+        dataset_id: Identifier of the dataset run.
         id: The unique identifier of this run.
         start: The time when the run was started
         end: The time when the run ended
@@ -216,7 +216,7 @@ class RunOverview(BaseModel):
         successful_example_count: The number of examples that where successfully run.
     """
 
-    dataset_name: str
+    dataset_id: str
     id: str
     start: datetime
     end: datetime
@@ -244,7 +244,7 @@ class ExampleEvaluation(BaseModel, Generic[Evaluation]):
 
 
 class PartialEvaluationOverview(BaseModel):
-    """Overview of the unaggregated results of evaluating a :class:`Task` on a :class:`Dataset`.
+    """Overview of the unaggregated results of evaluating a :class:`Task` on a dataset.
 
     Attributes:
         run_overview: Overview of the run that was evaluated.
@@ -265,7 +265,7 @@ class EvaluationFailed(Exception):
 
 
 class EvaluationOverview(PartialEvaluationOverview, Generic[AggregatedEvaluation]):
-    """Complete overview of the results of evaluating a :class:`Task` on a :class:`Dataset`.
+    """Complete overview of the results of evaluating a :class:`Task` on a dataset.
 
     Created when running :meth:`Evaluator.evaluate_dataset`. Contains high-level information and statistics.
 
@@ -313,51 +313,3 @@ class Example(BaseModel, Generic[Input, ExpectedOutput]):
     input: Input
     expected_output: ExpectedOutput
     id: str = Field(default_factory=lambda: str(uuid4()))
-
-
-class Dataset(Protocol[Input, ExpectedOutput]):
-    """A dataset of examples used for evaluation of a :class:`Task`.
-
-    Attributes:
-        name: This a human readable identifier for a dataset.
-        examples: The actual examples that a :class:`Task` will be evaluated on.
-
-    Generics:
-        Input: Interface to be passed to the :class:`Task` that shall be evaluated.
-        ExpectedOutput: Output that is expected from the run with the supplied input.
-    """
-
-    @property
-    def name(self) -> str:
-        ...
-
-    @property
-    def examples(self) -> Iterable[Example[Input, ExpectedOutput]]:
-        ...
-
-    def example(self, example_id: str) -> Optional[Example[Input, ExpectedOutput]]:
-        ...
-
-
-class SequenceDataset(BaseModel, Generic[Input, ExpectedOutput]):
-    """A :class:`Dataset` that contains all examples in a sequence.
-
-    We recommend using this when it is certain that all examples
-    fit in memory.
-
-    Attributes:
-        name: This a human readable identifier for a :class:`Dataset`.
-        examples: The actual examples that a :class:`Task` will be evaluated on.
-
-    Generics:
-        Input: Interface to be passed to the :class:`Task` that shall be evaluated.
-        ExpectedOutput: Output that is expected from the run with the supplied input.
-    """
-
-    name: str
-    examples: Sequence[Example[Input, ExpectedOutput]]
-
-    def example(self, example_id: str) -> Optional[Example[Input, ExpectedOutput]]:
-        return next(
-            (example for example in self.examples if example.id == example_id), None
-        )

@@ -53,7 +53,7 @@ def in_memory_evaluation_repository() -> InMemoryEvaluationRepository:
 
 
 @fixture
-def string_dataset_name(
+def string_dataset_id(
     dummy_string_examples: Iterable[Example[DummyStringInput, DummyStringOutput]],
     in_memory_dataset_repository: DatasetRepository,
 ) -> str:
@@ -82,7 +82,7 @@ def evaluation_run_overview(
         id="eval-id",
         run_overviews=[
             RunOverview(
-                dataset_name="dataset",
+                dataset_id="dataset",
                 id="run-id",
                 start=now,
                 end=now,

@@ -28,9 +28,9 @@ def test_file_dataset_repository_can_store_dataset(
     request: FixtureRequest,
 ) -> None:
     dataset_repository: DatasetRepository = request.getfixturevalue(repository_fixture)
-    dataset_name = dataset_repository.create_dataset(examples=[dummy_string_example])
+    dataset_id = dataset_repository.create_dataset(examples=[dummy_string_example])
     examples = dataset_repository.examples_by_id(
-        dataset_name,
+        dataset_id,
         input_type=DummyStringInput,
         expected_output_type=DummyStringOutput,
     )
@@ -64,16 +64,16 @@ def test_file_dataset_repository_can_delete_dataset(
     request: FixtureRequest,
 ) -> None:
     dataset_repository: DatasetRepository = request.getfixturevalue(repository_fixture)
-    database_id = dataset_repository.create_dataset(dummy_string_examples)
-    dataset_repository.delete_dataset(database_id)
+    dataset_id = dataset_repository.create_dataset(dummy_string_examples)
+    dataset_repository.delete_dataset(dataset_id)
     assert (
         dataset_repository.examples_by_id(
-            database_id, DummyStringInput, DummyStringOutput
+            dataset_id, DummyStringInput, DummyStringOutput
         )
         is None
     )
     dataset_repository.delete_dataset(
-        database_id
+        dataset_id
     )  # tests whether function is idempotent
 
 
@@ -87,10 +87,8 @@ def test_file_dataset_repository_can_list_datasets(
     request: FixtureRequest,
 ) -> None:
     dataset_repository: DatasetRepository = request.getfixturevalue(repository_fixture)
-    dataset_name_1 = "dummy_dataset_1"
-    dataset_name_2 = "dummy_dataset_2"
     examples = [dummy_string_example]
-    dataset_name_1 = dataset_repository.create_dataset(examples=examples)
-    dataset_name_2 = dataset_repository.create_dataset(examples=examples)
+    dataset_id_1 = dataset_repository.create_dataset(examples=examples)
+    dataset_id_2 = dataset_repository.create_dataset(examples=examples)
     dataset_names = dataset_repository.list_datasets()
-    assert sorted(dataset_names) == sorted([dataset_name_1, dataset_name_2])
+    assert sorted(dataset_names) == sorted([dataset_id_1, dataset_id_2])

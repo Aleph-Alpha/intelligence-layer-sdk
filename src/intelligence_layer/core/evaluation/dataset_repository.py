@@ -71,21 +71,21 @@ class FileDatasetRepository(DatasetRepository):
         root_directory.mkdir(parents=True, exist_ok=True)
         self._root_directory = root_directory
 
-    def _dataset_directory(self, dataset_name: str) -> Path:
-        path = self._root_directory / dataset_name
+    def _dataset_directory(self, dataset_id: str) -> Path:
+        path = self._root_directory / dataset_id
         return path
 
-    def _example_path(self, dataset_name: str, example_id: str) -> Path:
-        return (self._dataset_directory(dataset_name) / example_id).with_suffix(".json")
+    def _example_path(self, dataset_id: str, example_id: str) -> Path:
+        return (self._dataset_directory(dataset_id) / example_id).with_suffix(".json")
 
     def example(
         self,
-        dataset_name: str,
+        dataset_id: str,
         example_id: str,
         input_type: type[Input],
         expected_output_type: type[ExpectedOutput],
     ) -> Optional[Example[Input, ExpectedOutput]]:
-        example_path = self._example_path(dataset_name, example_id)
+        example_path = self._example_path(dataset_id, example_id)
         if not example_path.exists():
             return None
         content = example_path.read_text()
@@ -93,17 +93,17 @@ class FileDatasetRepository(DatasetRepository):
         return Example[input_type, expected_output_type].model_validate_json(json_data=content)  # type: ignore
 
     def create_dataset(self, examples: Iterable[Example[Input, ExpectedOutput]]) -> str:
-        name = str(uuid4())
-        dataset_dir = self._dataset_directory(name)
+        dataset_id = str(uuid4())
+        dataset_dir = self._dataset_directory(dataset_id)
         if dataset_dir.exists():
-            raise ValueError(f"Dataset name {name} already taken")
+            raise ValueError(f"Dataset name {dataset_id} already taken")
         dataset_dir.mkdir()
         for example in examples:
             serialized_result = JsonSerializer(root=example)
-            self._example_path(name, example.id).write_text(
+            self._example_path(dataset_id, example.id).write_text(
                 serialized_result.model_dump_json(indent=2)
             )
-        return name
+        return dataset_id
 
     def examples_by_id(
         self,
@@ -132,8 +132,8 @@ class FileDatasetRepository(DatasetRepository):
             if example
         )
 
-    def delete_dataset(self, name: str) -> None:
-        dataset_path = self._dataset_directory(name)
+    def delete_dataset(self, dataset_id: str) -> None:
+        dataset_path = self._dataset_directory(dataset_id)
         try:
             rmtree(dataset_path)
         except FileNotFoundError:

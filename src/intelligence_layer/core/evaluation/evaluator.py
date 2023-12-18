@@ -318,7 +318,7 @@ class BaseEvaluator(
         Output: Type of the output of the :class:`Task` to be evaluated.
         ExpectedOutput: Output that is expected from the run with the supplied input.
         Evaluation: Interface of the metrics that come from the evaluated :class:`Task`.
-        AggregatedEvaluation: The aggregated results of an evaluation run with a :class:`Dataset`.
+        AggregatedEvaluation: The aggregated results of an evaluation run with a dataset.
     """
 
     def __init__(
@@ -471,7 +471,7 @@ class BaseEvaluator(
         Will run each :class:`Example` provided in the dataset through the :class:`Task`.
 
         Args:
-            dataset: The :class:`Dataset` to generate output for. Consists of examples, each
+            dataset_id: The id of the dataset to generate output for. Consists of examples, each
                 with an :class:`Input` and an :class:`ExpectedOutput` (can be None).
             output: Output of the :class:`Task` that shall be evaluated
 
@@ -493,15 +493,15 @@ class BaseEvaluator(
             except Exception as e:
                 return example.id, FailedExampleRun.from_exception(e)
 
-        dataset = self._dataset_repository.examples_by_id(
+        examples = self._dataset_repository.examples_by_id(
             dataset_id, self.input_type(), self.output_type()
         )
-        if dataset is None:
-            raise ValueError("Dataset not found")
+        if examples is None:
+            raise ValueError(f"Dataset with id {dataset_id} not found")
         run_id = str(uuid4())
         start = datetime.utcnow()
         with ThreadPoolExecutor(max_workers=10) as executor:
-            ids_and_outputs = tqdm(executor.map(run, dataset), desc="Evaluating")
+            ids_and_outputs = tqdm(executor.map(run, examples), desc="Evaluating")
 
         failed_count = 0
         successful_count = 0
@@ -515,7 +515,7 @@ class BaseEvaluator(
             )
 
         run_overview = RunOverview(
-            dataset_name=dataset_id,
+            dataset_id=dataset_id,
             id=run_id,
             start=start,
             end=datetime.utcnow(),
@@ -529,16 +529,20 @@ class BaseEvaluator(
     def evaluate_run(self, *run_ids: str) -> PartialEvaluationOverview:
         """Evaluates all generated outputs in the run.
 
-        For each example in the dataset & its corresponding (generated) output,
+        For each set of successful outputs in the referenced runs,
         :func:`BaseEvaluator.do_evaluate` is called and eval metrics are produced &
         stored in the provided :class:`EvaluationRepository`.
 
         Args:
-            dataset: The :class:`Dataset` the outputs were generated for. Consists of
-                examples, each with an :class:`Input` and an :class:`ExpectedOutput`
-                (can be None).
-            run_overview: An overview of the run to be evaluated. Does not include
-                outputs as these will be retrieved from the repository.
+            run_ids: The runs to be evaluated. Each run is expected to have the same
+                dataset as input (which implies their tasks have the same input-type)
+                and their tasks have the same output-type. For each example in the
+                dataset referenced by the runs the outputs of all runs are collected
+                and if all of them were successful they are passed on to the implementation
+                specific evaluation. For a simple evaluation only a single run_id is provided.
+                If the output of multiple runs are to be compated (for example to compare
+                the performance of different model on the same task), multiple run_ids are
+                passed accordingly.
 
         Returns:
             An overview of the evaluation. Individual :class:`Evaluation`s will not be
@@ -556,21 +560,21 @@ class BaseEvaluator(
             raise ValueError("At least one run-id needs to be provided")
         run_overviews = [load_overview(run_id) for run_id in run_ids]
         if not all(
-            run_overviews[0].dataset_name == run_overview.dataset_name
+            run_overviews[0].dataset_id == run_overview.dataset_id
             for run_overview in run_overviews
         ):
             raise ValueError(
                 f"All run-overviews must reference the same dataset: {run_overviews}"
             )
         eval_id = self._create_evaluation_dataset()
-        dataset_name = run_overviews[0].dataset_name
+        dataset_id = run_overviews[0].dataset_id
         examples = self._dataset_repository.examples_by_id(
-            dataset_name,
+            dataset_id,
             self.input_type(),
             self.expected_output_type(),
         )
         if examples is None:
-            raise ValueError(f"Dataset: {dataset_name} not found")
+            raise ValueError(f"Dataset: {dataset_id} not found")
         start = datetime.utcnow()
 
         examples_zipped: Iterable[tuple[ExampleOutput[Output], ...]] = zip(
@@ -593,7 +597,7 @@ class BaseEvaluator(
                     for example_output in example_outputs
                 )
                 example = self._dataset_repository.example(
-                    dataset_name,
+                    dataset_id,
                     example_id,
                     self.input_type(),
                     self.expected_output_type(),
@@ -755,13 +759,14 @@ class Evaluator(
         dataset_id: str,
         tracer: Optional[Tracer] = None,
     ) -> EvaluationOverview[AggregatedEvaluation]:
-        """Evaluates an entire :class:`Dataset` in a threaded manner and aggregates the results into an `AggregatedEvaluation`.
+        """Evaluates an entire dataset in a threaded manner and aggregates the results into an `AggregatedEvaluation`.
 
-        This will call the `run` method for each example in the :class:`Dataset`.
+        This will call the `run` method for each example in the dataset.
         Finally, it will call the `aggregate` method and return the aggregated results.
 
         Args:
-            dataset: Dataset that will be used to evaluate a :class:`Task`.
+            dataset_id: id of the dataset that will be used to evaluate a :class:`Task`.
+                The actual data is loaded from the :class:`DatasetRepository` passed to `__init__`
             tracer: Optional tracer used for extra tracing.
                 Traces are always saved in the evaluation repository.
 
