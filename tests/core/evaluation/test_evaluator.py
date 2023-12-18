@@ -21,6 +21,9 @@ from intelligence_layer.core.evaluation.domain import (
 )
 from intelligence_layer.core.evaluation.evaluator import BaseEvaluator
 from intelligence_layer.core.task import Input, Output, Task
+from intelligence_layer.core.evaluation.domain import EvaluationOverview
+from intelligence_layer.core.evaluation.runner import Runner
+from intelligence_layer.core.task import Task
 from tests.core.evaluation.conftest import (
     FAIL_IN_EVAL_INPUT,
     FAIL_IN_TASK_INPUT,
@@ -141,20 +144,22 @@ def comparing_evaluator(
 
 
 def test_evaluate_dataset_returns_generic_statistics(
-    dummy_evaluator: DummyEvaluator, dataset_id: str
+    dummy_evaluator: DummyEvaluator, dummy_runner: Runner[str, str], dataset_id: str
 ) -> None:
-    evaluation_run_overview = dummy_evaluator.evaluate_dataset(dataset_id)
+    run_overview = dummy_runner.run_dataset(dataset_id)
+    evaluation_overview = dummy_evaluator.evaluate_dataset(run_overview.id)
 
-    assert evaluation_run_overview.run_overviews[0].dataset_id == dataset_id
-    assert evaluation_run_overview.successful_count == 1
-    assert evaluation_run_overview.failed_count == 2
+    assert evaluation_overview.run_overviews[0].dataset_id == dataset_id
+    assert evaluation_overview.successful_count == 1
+    assert evaluation_overview.failed_count == 2
 
 
 def test_evaluate_dataset_uses_passed_tracer(
-    dummy_evaluator: DummyEvaluator, dataset_id: str
+    dummy_evaluator: DummyEvaluator, dataset_id: str, dummy_runner: Runner[str, str]
 ) -> None:
     in_memory_tracer = InMemoryTracer()
-    dummy_evaluator.evaluate_dataset(dataset_id, in_memory_tracer)
+    run_overview = dummy_runner.run_dataset(dataset_id, in_memory_tracer)
+    dummy_evaluator.evaluate_dataset(run_overview.id)
 
     entries = in_memory_tracer.entries
     assert len(entries) == 3
@@ -163,19 +168,21 @@ def test_evaluate_dataset_uses_passed_tracer(
 
 def test_evaluate_dataset_saves_overview(
     dummy_evaluator: DummyEvaluator,
+    dummy_runner: Runner[str, str],
     in_memory_evaluation_repository: InMemoryEvaluationRepository,
     dataset_id: str,
 ) -> None:
-    overview = dummy_evaluator.evaluate_dataset(dataset_id)
+    run_overview = dummy_runner.run_dataset(dataset_id)
+    evaluation_overview = dummy_evaluator.evaluate_dataset(run_overview.id)
 
-    assert overview == in_memory_evaluation_repository.evaluation_overview(
-        overview.id, EvaluationOverview[DummyAggregatedEvaluationWithResultList]
+    assert evaluation_overview == in_memory_evaluation_repository.evaluation_overview(
+        evaluation_overview.id,
+        EvaluationOverview[DummyAggregatedEvaluationWithResultList],
     )
 
 
 def test_evaluate_dataset_stores_example_evaluations(
-    dummy_evaluator: DummyEvaluator,
-    dataset_id: str,
+    dummy_evaluator: DummyEvaluator, dataset_id: str, dummy_runner: Runner[str, str]
 ) -> None:
     evaluation_repository = dummy_evaluator._evaluation_repository
     dataset_repository = dummy_evaluator._dataset_repository
@@ -185,16 +192,17 @@ def test_evaluate_dataset_stores_example_evaluations(
     )
     assert dataset is not None
 
-    evaluation_run_overview = dummy_evaluator.evaluate_dataset(dataset_id, NoOpTracer())
+    run_overview = dummy_runner.run_dataset(dataset_id, NoOpTracer())
+    eval_overview = dummy_evaluator.evaluate_dataset(run_overview.id)
     examples = list(dataset)
     success_result = evaluation_repository.example_evaluation(
-        evaluation_run_overview.id, examples[0].id, DummyEvaluation
+        eval_overview.id, examples[0].id, DummyEvaluation
     )
     failure_result_task = evaluation_repository.example_evaluation(
-        evaluation_run_overview.id, examples[1].id, DummyEvaluation
+        eval_overview.id, examples[1].id, DummyEvaluation
     )
     failure_result_eval = evaluation_repository.example_evaluation(
-        evaluation_run_overview.id, examples[2].id, DummyEvaluation
+        eval_overview.id, examples[2].id, DummyEvaluation
     )
 
     assert success_result and isinstance(success_result.result, DummyEvaluation)
@@ -207,6 +215,7 @@ def test_evaluate_dataset_stores_example_evaluations(
 def test_evaluate_dataset_stores_example_traces(
     dummy_evaluator: DummyEvaluator,
     dataset_id: str,
+    dummy_runner: Runner[str, str],
 ) -> None:
     evaluation_repository = dummy_evaluator._evaluation_repository
     dataset_repository = dummy_evaluator._dataset_repository
@@ -215,7 +224,8 @@ def test_evaluate_dataset_stores_example_traces(
     )
     assert dataset is not None
 
-    evaluation_run_overview = dummy_evaluator.evaluate_dataset(dataset_id)
+    run_overview = dummy_runner.run_dataset(dataset_id)
+    evaluation_run_overview = dummy_evaluator.evaluate_dataset(run_overview.id)
     examples = list(dataset)
     success_result = evaluation_repository.example_trace(
         evaluation_run_overview.run_ids[0], examples[0].id
@@ -237,11 +247,13 @@ def test_evaluate_dataset_stores_example_traces(
 
 def test_evaluate_dataset_stores_aggregated_results(
     dummy_evaluator: DummyEvaluator,
+    dummy_runner: Runner[str, str],
     dataset_id: str,
 ) -> None:
     evaluation_repository = dummy_evaluator._evaluation_repository
 
-    evaluation_run_overview = dummy_evaluator.evaluate_dataset(dataset_id)
+    run_overview = dummy_runner.run_dataset(dataset_id)
+    evaluation_run_overview = dummy_evaluator.evaluate_dataset(run_overview.id)
     loaded_evaluation_run_overview = evaluation_repository.evaluation_overview(
         evaluation_run_overview.id,
         EvaluationOverview[DummyAggregatedEvaluationWithResultList],
@@ -251,14 +263,14 @@ def test_evaluate_dataset_stores_aggregated_results(
 
 
 def test_evaluate_can_evaluate_multiple_runs(
-    dummy_evaluator: DummyEvaluator,
     comparing_evaluator: ComparingEvaluator,
     string_dataset_id: str,
+    dummy_runner: Runner[str, str],
 ) -> None:
-    run_overview1 = dummy_evaluator.run_dataset(string_dataset_id)
-    run_overview2 = dummy_evaluator.run_dataset(string_dataset_id)
+    run_overview1 = dummy_runner.run_dataset(string_dataset_id)
+    run_overview2 = dummy_runner.run_dataset(string_dataset_id)
 
-    partial_overview = comparing_evaluator.evaluate_run(
+    partial_overview = comparing_evaluator.evaluate_runs(
         run_overview1.id, run_overview2.id
     )
 

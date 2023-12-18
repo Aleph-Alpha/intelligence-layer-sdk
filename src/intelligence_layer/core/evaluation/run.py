@@ -11,6 +11,7 @@ from intelligence_layer.connectors.limited_concurrency_client import (
 )
 from intelligence_layer.core import FileEvaluationRepository
 from intelligence_layer.core.evaluation.dataset_repository import FileDatasetRepository
+from intelligence_layer.core.evaluation.runner import Runner
 
 
 def function_from_string(fully_qualified_function_name: str) -> Any:
@@ -76,9 +77,11 @@ def main(cli_args: Sequence[str]) -> None:
     evaluation_repository = FileEvaluationRepository(args.target_dir)
     dataset_repository = FileDatasetRepository(args.dataset_repository_path)
     task = create_task(args.task)
-    evaluator = args.evaluator(task, evaluation_repository, dataset_repository)
+    runner = Runner(task, evaluation_repository, dataset_repository, args.task.__name__)
     dataset_id = args.dataset_id
-    evaluator.evaluate_dataset(dataset_id)
+    run_overview = runner.run_dataset(dataset_id)
+    evaluator = args.evaluator(task, evaluation_repository, dataset_repository)
+    evaluator.evaluate_dataset(run_overview.id)
 
 
 if __name__ == "__main__":

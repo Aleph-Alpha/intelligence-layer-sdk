@@ -14,6 +14,7 @@ from intelligence_layer.core import (
     InMemoryTracer,
     NoOpTracer,
 )
+from intelligence_layer.core.evaluation.runner import Runner
 from intelligence_layer.use_cases.classify.classify import (
     ClassifyInput,
     SingleLabelClassifyEvaluation,
@@ -39,6 +40,19 @@ def classify_evaluator(
         prompt_based_classify,
         InMemoryEvaluationRepository(),
         in_memory_dataset_repository,
+    )
+
+
+@fixture
+def classify_runner(
+    prompt_based_classify: PromptBasedClassify,
+    in_memory_dataset_repository: DatasetRepository,
+) -> Runner[ClassifyInput, SingleLabelClassifyOutput]:
+    return Runner(
+        prompt_based_classify,
+        InMemoryEvaluationRepository(),
+        in_memory_dataset_repository,
+        "prompt-based-classify",
     )
 
 
@@ -127,6 +141,7 @@ def test_prompt_based_classify_handles_labels_starting_with_same_token(
 
 def test_can_evaluate_classify(
     classify_evaluator: SingleLabelClassifyEvaluator,
+    prompt_based_classify: PromptBasedClassify,
 ) -> None:
     classify_input = ClassifyInput(
         chunk=Chunk("This is good"),
@@ -134,6 +149,7 @@ def test_can_evaluate_classify(
     )
 
     evaluation = classify_evaluator.run_and_evaluate(
+        task=prompt_based_classify,
         input=classify_input,
         tracer=NoOpTracer(),
         expected_output=["positive"],
@@ -146,6 +162,7 @@ def test_can_evaluate_classify(
 def test_can_aggregate_evaluations(
     classify_evaluator: SingleLabelClassifyEvaluator,
     in_memory_dataset_repository: InMemoryDatasetRepository,
+    classify_runner: Runner[ClassifyInput, SingleLabelClassifyOutput],
 ) -> None:
     positive_lst: Sequence[str] = ["positive"]
     correct_example = Example(
@@ -166,16 +183,19 @@ def test_can_aggregate_evaluations(
         [correct_example, incorrect_example]
     )
 
-    evaluation_overview = classify_evaluator.evaluate_dataset(dataset_name)
+    run_overview = classify_runner.run_dataset(dataset_name)
+    evaluation_overview = classify_evaluator.evaluate_dataset(run_overview.id)
 
     assert evaluation_overview.statistics.percentage_correct == 0.5
 
 
 def test_aggregating_evaluations_works_with_empty_list(
     classify_evaluator: SingleLabelClassifyEvaluator,
+    classify_runner: Runner[ClassifyInput, SingleLabelClassifyOutput],
     in_memory_dataset_repository: DatasetRepository,
 ) -> None:
-    name = in_memory_dataset_repository.create_dataset([])
-    evaluation_overview = classify_evaluator.evaluate_dataset(name)
+    dataset_id = in_memory_dataset_repository.create_dataset([])
+    run_overview = classify_runner.run_dataset(dataset_id)
+    evaluation_overview = classify_evaluator.evaluate_dataset(run_overview.id)
 
     assert evaluation_overview.statistics.percentage_correct == 0

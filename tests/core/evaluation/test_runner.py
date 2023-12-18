@@ -1,9 +1,8 @@
-from pytest import fixture
 from intelligence_layer.core import (
+    Example,
+    InMemoryDatasetRepository,
     InMemoryEvaluationRepository,
     Runner,
-    InMemoryDatasetRepository,
-    Example,
 )
 from tests.core.evaluation.conftest import (
     FAIL_IN_EVAL_INPUT,
@@ -15,7 +14,7 @@ from tests.core.evaluation.conftest import (
 def test_runner_runs_dataset(
     in_memory_evaluation_repository: InMemoryEvaluationRepository,
     in_memory_dataset_repository: InMemoryDatasetRepository,
-):
+) -> None:
     task = DummyTask()
     runner = Runner(
         task,
