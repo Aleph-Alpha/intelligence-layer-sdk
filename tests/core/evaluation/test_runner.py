@@ -22,15 +22,14 @@ def test_runner_runs_dataset(
         in_memory_dataset_repository,
         "dummy-runner",
     )
-    name = "dummy-dataset"
     examples = [
         Example(input="success", expected_output=None),
         Example(input=FAIL_IN_TASK_INPUT, expected_output=None),
         Example(input=FAIL_IN_EVAL_INPUT, expected_output=None),
     ]
 
-    in_memory_dataset_repository.create_dataset(name=name, examples=examples)
-    overview = runner.run_dataset(name)
+    dataset_id = in_memory_dataset_repository.create_dataset(examples=examples)
+    overview = runner.run_dataset(dataset_id)
     outputs = list(
         in_memory_evaluation_repository.example_outputs(
             overview.id, output_type=runner.output_type()

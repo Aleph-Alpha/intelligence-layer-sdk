@@ -162,14 +162,14 @@ def test_argilla_evaluator_can_do_sync_evaluation(
 
     run_overview = string_argilla_runner.run_dataset(string_dataset_id)
     eval_overview = string_argilla_evaluator.partial_evaluate_dataset(run_overview.id)
-    dummy_string_dataset = string_argilla_evaluator._dataset_repository.dataset(
+    examples_iter = string_argilla_evaluator._dataset_repository.examples_by_id(
         string_dataset_id, DummyStringInput, DummyStringOutput
     )
-    assert dummy_string_dataset is not None
+    assert examples_iter is not None
 
     assert eval_overview.id in argilla_client._datasets
     saved_dataset = argilla_client._datasets[eval_overview.id]
-    examples = list(dummy_string_dataset)
+    examples = list(examples_iter)
     assert len(saved_dataset) == len(examples)
     assert saved_dataset[0].example_id == examples[0].id
     assert saved_dataset[0].content["input"] == examples[0].input.input

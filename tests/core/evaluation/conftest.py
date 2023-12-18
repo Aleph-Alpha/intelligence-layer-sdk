@@ -51,17 +51,6 @@ class DummyAggregatedEvaluationWithResultList(BaseModel):
 
 
 @fixture
-def dataset_name(
-    sequence_dataset: SequenceDataset[str, None],
-    in_memory_dataset_repository: InMemoryDatasetRepository,
-) -> str:
-    in_memory_dataset_repository.create_dataset(
-        sequence_dataset.name, sequence_dataset.examples
-    )
-    return sequence_dataset.name
-
-
-@fixture
 def failed_example_result() -> ExampleEvaluation[DummyEvaluation]:
     return ExampleEvaluation(
         example_id="other",
