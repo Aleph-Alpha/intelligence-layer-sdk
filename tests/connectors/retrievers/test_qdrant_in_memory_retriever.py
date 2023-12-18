@@ -23,7 +23,8 @@ def test_asymmetric_in_memory_retriever(
 ) -> None:
     query = "Do you like summer?"
     documents = asymmetric_in_memory_retriever.get_relevant_documents_with_scores(query)
-    assert in_memory_retriever_documents[1] == documents[0].document
+    assert in_memory_retriever_documents[1][1] == documents[0].document
+    assert in_memory_retriever_documents[1][0] == documents[0].document_id
     assert len(documents) <= 2
 
 
@@ -33,5 +34,6 @@ def test_symmetric_in_memory_retriever(
 ) -> None:
     query = "I hate drizzle"
     documents = symmetric_in_memory_retriever.get_relevant_documents_with_scores(query)
-    assert in_memory_retriever_documents[0] == documents[0].document
+    assert in_memory_retriever_documents[0][1] == documents[0].document
+    assert in_memory_retriever_documents[0][0] == documents[0].document_id
     assert len(documents) <= 2

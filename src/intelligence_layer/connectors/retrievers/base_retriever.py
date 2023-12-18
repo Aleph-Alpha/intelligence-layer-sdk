@@ -3,8 +3,6 @@ from typing import Any, Sequence
 
 from pydantic import BaseModel
 
-from intelligence_layer.connectors.document_index.document_index import DocumentPath
-
 
 class Document(BaseModel):
     """Document abstraction, specifically for retrieval use cases.
@@ -26,7 +24,7 @@ class SearchResult(BaseModel):
         document: The document found by search.
     """
 
-    id: str 
+    document_id: str
     score: float
     document: Document
 

@@ -11,11 +11,11 @@ from intelligence_layer.use_cases.search.search import Search, SearchInput
 
 
 @fixture
-def in_memory_retriever_documents() -> Sequence[Document]:
+def in_memory_retriever_documents() -> Sequence[tuple[str, Document]]:
     return [
-        Document(text="I do not like rain"),
-        Document(text="Summer is warm"),
-        Document(text="We are so back"),
+        ("", Document(text="I do not like rain")),
+        ("", Document(text="Summer is warm")),
+        ("", Document(text="We are so back")),
     ]
 
 
@@ -27,8 +27,8 @@ def search(asymmetric_in_memory_retriever: QdrantInMemoryRetriever) -> Search:
 def test_search(
     search: Search,
     no_op_tracer: NoOpTracer,
-    in_memory_retriever_documents: Sequence[Document],
+    in_memory_retriever_documents: Sequence[tuple[str, Document]],
 ) -> None:
     search_input = SearchInput(query="Are we so back?")
     result = search.run(search_input, no_op_tracer)
-    assert [r.document for r in result.results] == [in_memory_retriever_documents[2]]
+    assert [r.document for r in result.results] == [in_memory_retriever_documents[2][1]]
