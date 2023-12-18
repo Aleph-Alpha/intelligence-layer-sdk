@@ -29,17 +29,14 @@ def in_memory_retriever_documents() -> Sequence[Document]:
     return [
         Document(
             text="Germany reunited. I kind of fit and am of the correct type.",
-            id="",
             metadata={"type": "doc"},
         ),
         Document(
             text="Cats are small animals. Well, I do not fit at all and I am of the correct type.",
-            id="",
             metadata={"type": "no doc"},
         ),
         Document(
             text="Germany reunited in 1990. This document fits perfectly but it is of the wrong type.",
-            id="",
             metadata={"type": "no doc"},
         ),
     ]

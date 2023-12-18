@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import Any, Sequence
+from typing import Any, Optional, Sequence
 
 from pydantic import BaseModel
 
@@ -13,7 +13,7 @@ class Document(BaseModel):
     """
 
     text: str
-    id: str
+    id: Optional[str] = None
     metadata: Any = None
 
 
