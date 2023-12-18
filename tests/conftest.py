@@ -53,7 +53,7 @@ def prompt_image() -> Image:
 @fixture
 def asymmetric_in_memory_retriever(
     client: AlephAlphaClientProtocol,
-    in_memory_retriever_documents: Sequence[tuple[str, Document]],
+    in_memory_retriever_documents: Sequence[Document],
 ) -> QdrantInMemoryRetriever:
     return QdrantInMemoryRetriever(
         client,
@@ -66,7 +66,7 @@ def asymmetric_in_memory_retriever(
 @fixture
 def symmetric_in_memory_retriever(
     client: AlephAlphaClientProtocol,
-    in_memory_retriever_documents: Sequence[tuple[str, Document]],
+    in_memory_retriever_documents: Sequence[Document],
 ) -> QdrantInMemoryRetriever:
     return QdrantInMemoryRetriever(
         client,

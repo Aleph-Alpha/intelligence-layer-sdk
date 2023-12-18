@@ -89,6 +89,18 @@ class DocumentPath(BaseModel):
     def to_slash_separated_str(self) -> str:
         return f"{self.collection_path.namespace}/{self.collection_path.collection}/{self.document_name}"
 
+    @classmethod
+    def from_slash_separated_str(cls, path: str) -> "DocumentPath":
+        split = path.split("/")
+        assert len(split) == 3
+        return cls(
+            collection_path=CollectionPath(
+                namespace=split[0],
+                collection=split[1],
+            ),
+            document_name=split[2],
+        )
+
 
 class DocumentInfo(BaseModel):
     """Presents an overview of a document.

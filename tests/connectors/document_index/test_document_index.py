@@ -113,3 +113,12 @@ def test_document_index_raises_on_getting_non_existing_document(
     assert (
         non_existing_document.collection_path.namespace in exception_info.value.message
     )
+
+
+def test_document_path_from_string() -> None:
+    abc = DocumentPath.from_slash_separated_str("a/b/c")
+    assert abc == DocumentPath(
+        collection_path=CollectionPath(namespace="a", collection="b"), document_name="c"
+    )
+    with raises(AssertionError):
+        DocumentPath.from_slash_separated_str("a/c")

@@ -25,28 +25,22 @@ from intelligence_layer.use_cases.classify.embedding_based_classify import (
 
 
 @fixture
-def in_memory_retriever_documents() -> Sequence[tuple[str, Document]]:
+def in_memory_retriever_documents() -> Sequence[Document]:
     return [
-        (
-            "",
-            Document(
-                text="Germany reunited. I kind of fit and am of the correct type.",
-                metadata={"type": "doc"},
-            ),
+        Document(
+            text="Germany reunited. I kind of fit and am of the correct type.",
+            id="",
+            metadata={"type": "doc"},
         ),
-        (
-            "",
-            Document(
-                text="Cats are small animals. Well, I do not fit at all and I am of the correct type.",
-                metadata={"type": "no doc"},
-            ),
+        Document(
+            text="Cats are small animals. Well, I do not fit at all and I am of the correct type.",
+            id="",
+            metadata={"type": "no doc"},
         ),
-        (
-            "",
-            Document(
-                text="Germany reunited in 1990. This document fits perfectly but it is of the wrong type.",
-                metadata={"type": "no doc"},
-            ),
+        Document(
+            text="Germany reunited in 1990. This document fits perfectly but it is of the wrong type.",
+            id="",
+            metadata={"type": "no doc"},
         ),
     ]
 
@@ -86,21 +80,21 @@ def embedding_based_classify(
 def test_qdrant_search(
     qdrant_search: QdrantSearch,
     no_op_tracer: NoOpTracer,
-    in_memory_retriever_documents: Sequence[tuple[str, Document]],
+    in_memory_retriever_documents: Sequence[Document],
 ) -> None:
     search_input = QdrantSearchInput(
         query="When did Germany reunite?",
         filter=models.Filter(
             must=[
                 models.FieldCondition(
-                    key="document.metadata.type",
+                    key="metadata.type",
                     match=models.MatchValue(value="doc"),
                 ),
             ]
         ),
     )
     result = qdrant_search.run(search_input, no_op_tracer)
-    assert [r.document for r in result.results] == [in_memory_retriever_documents[0][1]]
+    assert [r.document for r in result.results] == [in_memory_retriever_documents[0]]
 
 
 def test_embedding_based_classify_returns_score_for_all_labels(

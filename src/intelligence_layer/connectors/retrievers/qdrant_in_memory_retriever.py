@@ -59,7 +59,7 @@ class QdrantInMemoryRetriever(BaseRetriever):
     def __init__(
         self,
         client: AlephAlphaClientProtocol,
-        documents: Sequence[tuple[str, Document]],
+        documents: Sequence[Document],
         k: int,
         threshold: float = 0.5,
         retriever_type: RetrieverType = RetrieverType.ASYMMETRIC,
@@ -101,20 +101,17 @@ class QdrantInMemoryRetriever(BaseRetriever):
     @staticmethod
     def _point_to_search_result(point: ScoredPoint) -> SearchResult:
         assert point.payload
-        assert "document" in point.payload
-        assert "document_id" in point.payload
 
         return SearchResult(
-            document_id=point.payload["document_id"],
             score=point.score,
-            document=Document(**point.payload["document"]),
+            document=Document(**point.payload),
         )
 
-    def _add_texts_to_memory(self, documents: Sequence[tuple[str, Document]]) -> None:
+    def _add_texts_to_memory(self, documents: Sequence[Document]) -> None:
         with ThreadPoolExecutor(max_workers=self.MAX_WORKERS) as executor:
             embeddings = list(
                 executor.map(
-                    lambda c: self._embed(c[1].text, self._document_representation),
+                    lambda c: self._embed(c.text, self._document_representation),
                     documents,
                 )
             )
@@ -125,12 +122,9 @@ class QdrantInMemoryRetriever(BaseRetriever):
                 PointStruct(
                     id=idx,
                     vector=text_embedding,
-                    payload={
-                        "document_id": document_id,
-                        "document": document.model_dump(),
-                    },
+                    payload=document.model_dump(),
                 )
-                for idx, (text_embedding, (document_id, document)) in enumerate(
+                for idx, (text_embedding, document) in enumerate(
                     zip(embeddings, documents)
                 )
             ],
