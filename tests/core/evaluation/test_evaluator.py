@@ -285,13 +285,13 @@ def test_base_evaluator_type_magic_works(
     class AggregatedEvaluationType(BaseModel):
         pass
 
-    types = [
-        str,
-        str,
-        type(None),
-        EvaluationType,
-        AggregatedEvaluationType,
-    ]
+    types = {
+        "Input": str,
+        "Output": str,
+        "ExpectedOutput": type(None),
+        "Evaluation": EvaluationType,
+        "AggregatedEvaluation": AggregatedEvaluationType,
+    }
 
     class ChildEvaluator(
         BaseEvaluator[Input, Output, None, Evaluation, AggregatedEvaluationType]
