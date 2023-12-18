@@ -73,7 +73,7 @@ class QdrantSearch(Task[QdrantSearchInput, SearchOutput]):
         ...     filter=models.Filter(
         ...         must=[
         ...             models.FieldCondition(
-        ...                 key="document.metadata.title",
+        ...                 key="metadata.title",
         ...                 match=models.MatchValue(value="Germany"),
         ...             ),
         ...         ]
@@ -174,7 +174,7 @@ class EmbeddingBasedClassify(Task[ClassifyInput, MultiLabelClassifyOutput]):
         self._scoring = top_k_per_label
         retriever = QdrantInMemoryRetriever(
             client,
-            documents=[("", d) for d in documents],
+            documents=documents,
             k=top_k_per_label,
             retriever_type=RetrieverType.SYMMETRIC,
         )
@@ -197,7 +197,9 @@ class EmbeddingBasedClassify(Task[ClassifyInput, MultiLabelClassifyOutput]):
     ) -> Sequence[Document]:
         return [
             Document(
-                text=e, metadata={self.METADATA_LABEL_NAME: class_with_examples.name}
+                text=e,
+                metadata={self.METADATA_LABEL_NAME: class_with_examples.name},
+                id="",
             )
             for class_with_examples in classes_with_examples
             for e in class_with_examples.examples
@@ -220,7 +222,7 @@ class EmbeddingBasedClassify(Task[ClassifyInput, MultiLabelClassifyOutput]):
             filter=models.Filter(
                 must=[
                     models.FieldCondition(
-                        key=f"document.metadata.{self.METADATA_LABEL_NAME}",
+                        key=f"metadata.{self.METADATA_LABEL_NAME}",
                         match=models.MatchValue(value=label),
                     ),
                 ]
