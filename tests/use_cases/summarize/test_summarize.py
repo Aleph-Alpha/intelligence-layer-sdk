@@ -29,11 +29,9 @@ from intelligence_layer.use_cases.summarize.summarize import (
 
 @fixture
 def single_chunk_summarize_evaluator(
-    single_chunk_few_shot_summarize: SingleChunkFewShotSummarize,
     in_memory_dataset_repository: InMemoryDatasetRepository,
 ) -> SingleChunkSummarizeEvaluator:
     return SingleChunkSummarizeEvaluator(
-        single_chunk_few_shot_summarize,
         InMemoryEvaluationRepository(),
         in_memory_dataset_repository,
     )
@@ -54,11 +52,9 @@ def single_chunk_summarize_runner(
 
 @fixture
 def long_context_summarize_evaluator(
-    long_context_high_compression_summarize: LongContextHighCompressionSummarize,
     in_memory_dataset_repository: DatasetRepository,
 ) -> LongContextSummarizeEvaluator:
     return LongContextSummarizeEvaluator(
-        long_context_high_compression_summarize,
         InMemoryEvaluationRepository(),
         in_memory_dataset_repository,
     )

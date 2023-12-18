@@ -119,7 +119,6 @@ def dummy_evaluator(
     in_memory_dataset_repository: InMemoryDatasetRepository,
 ) -> DummyEvaluator:
     return DummyEvaluator(
-        DummyTask(),
         in_memory_evaluation_repository,
         in_memory_dataset_repository,
     )
@@ -139,7 +138,7 @@ def comparing_evaluator(
     in_memory_dataset_repository: InMemoryDatasetRepository,
 ) -> ComparingEvaluator:
     return ComparingEvaluator(
-        DummyTask(), in_memory_evaluation_repository, in_memory_dataset_repository
+        in_memory_evaluation_repository, in_memory_dataset_repository
     )
 
 
@@ -323,7 +322,7 @@ def test_base_evaluator_type_magic_works(
         pass
 
     timmy = GreatGrandChildEvaluator(
-        DummyTask(), in_memory_evaluation_repository, in_memory_dataset_repository
+        in_memory_evaluation_repository, in_memory_dataset_repository
     )
     who_is_timmy = timmy._get_types()
 

@@ -33,11 +33,9 @@ def prompt_based_classify(client: AlephAlphaClientProtocol) -> PromptBasedClassi
 
 @fixture
 def classify_evaluator(
-    prompt_based_classify: PromptBasedClassify,
     in_memory_dataset_repository: DatasetRepository,
 ) -> SingleLabelClassifyEvaluator:
     return SingleLabelClassifyEvaluator(
-        prompt_based_classify,
         InMemoryEvaluationRepository(),
         in_memory_dataset_repository,
     )

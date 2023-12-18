@@ -108,7 +108,6 @@ def stub_argilla_client() -> StubArgillaClient:
 
 @fixture
 def string_argilla_evaluator(
-    dummy_string_task: DummyStringTask,
     in_memory_evaluation_repository: InMemoryEvaluationRepository,  # noqa: w0404
     in_memory_dataset_repository: InMemoryDatasetRepository,
     stub_argilla_client: StubArgillaClient,
@@ -127,7 +126,6 @@ def string_argilla_evaluator(
         Field(name="input", title="Input"),
     ]
     evaluator = DummyStringTaskArgillaEvaluator(
-        dummy_string_task,
         ArgillaEvaluationRepository(
             in_memory_evaluation_repository, stub_argilla_client
         ),

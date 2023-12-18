@@ -51,11 +51,10 @@ class DummyTaskWithClient(DummyTask):
 class DummyEvaluator(Evaluator[None, None, None, DummyEvaluation, DummyAggregation]):
     def __init__(
         self,
-        task: Task[None, None],
         evaluation_repository: EvaluationRepository,
         dataset_repository: DatasetRepository,
     ) -> None:
-        super().__init__(task, evaluation_repository, dataset_repository)
+        super().__init__(evaluation_repository, dataset_repository)
 
     # mypy expects *args where this method only uses one output
     def do_evaluate(  # type: ignore

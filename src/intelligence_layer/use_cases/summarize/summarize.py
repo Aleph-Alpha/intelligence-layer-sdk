@@ -113,11 +113,10 @@ class SingleChunkSummarizeEvaluator(
 ):
     def __init__(
         self,
-        task: Task[SingleChunkSummarizeInput, SummarizeOutput],
         repository: EvaluationRepository,
         dataset_repository: DatasetRepository,
     ) -> None:
-        super().__init__(task, repository, dataset_repository)
+        super().__init__(repository, dataset_repository)
         self.bleu_grader = BleuGrader()
         self.rouge_grader = RougeGrader()
 
@@ -163,11 +162,10 @@ class LongContextSummarizeEvaluator(
 ):
     def __init__(
         self,
-        task: Task[LongContextSummarizeInput, LongContextSummarizeOutput],
         evaluation_repository: EvaluationRepository,
         dataset_repository: DatasetRepository,
     ) -> None:
-        super().__init__(task, evaluation_repository, dataset_repository)
+        super().__init__(evaluation_repository, dataset_repository)
         self.bleu_grader = BleuGrader()
         self.rouge_grader = RougeGrader()
 

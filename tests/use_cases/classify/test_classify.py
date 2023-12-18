@@ -119,11 +119,9 @@ def embedding_based_classify_dataset_name(
 
 @fixture
 def classify_evaluator(
-    embedding_based_classify: Task[ClassifyInput, MultiLabelClassifyOutput],
     in_memory_dataset_repository: DatasetRepository,
 ) -> MultiLabelClassifyEvaluator:
     return MultiLabelClassifyEvaluator(
-        embedding_based_classify,
         InMemoryEvaluationRepository(),
         in_memory_dataset_repository,
     )

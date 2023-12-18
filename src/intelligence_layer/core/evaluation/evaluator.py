@@ -320,11 +320,9 @@ class BaseEvaluator(
 
     def __init__(
         self,
-        task: Task[Input, Output],
         evaluation_repository: EvaluationRepository,
         dataset_repository: DatasetRepository,
     ) -> None:
-        self._task = task
         self._evaluation_repository = evaluation_repository
         self._dataset_repository = dataset_repository
 
@@ -618,11 +616,10 @@ class Evaluator(
 
     def __init__(
         self,
-        task: Task[Input, Output],
         evaluation_repository: EvaluationRepository,
         dataset_repository: DatasetRepository,
     ) -> None:
-        super().__init__(task, evaluation_repository, dataset_repository)
+        super().__init__(evaluation_repository, dataset_repository)
 
     @abstractmethod
     def do_evaluate(
@@ -818,14 +815,13 @@ class ArgillaEvaluator(
 
     def __init__(
         self,
-        task: Task[Input, Output],
         evaluation_repository: ArgillaEvaluationRepository,
         dataset_repository: DatasetRepository,
         workspace_id: str,
         fields: Sequence[Field],
         questions: Sequence[Question],
     ) -> None:
-        super().__init__(task, evaluation_repository, dataset_repository)
+        super().__init__(evaluation_repository, dataset_repository)
         self._workspace_id = workspace_id
         self._fields = fields
         self._questions = questions

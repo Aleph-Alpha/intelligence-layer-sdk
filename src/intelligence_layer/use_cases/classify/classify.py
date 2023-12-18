@@ -83,11 +83,10 @@ class SingleLabelClassifyEvaluator(
 ):
     def __init__(
         self,
-        task: Task[ClassifyInput, SingleLabelClassifyOutput],
         evaluation_repository: EvaluationRepository,
         dataset_respository: DatasetRepository,
     ):
-        super().__init__(task, evaluation_repository, dataset_respository)
+        super().__init__(evaluation_repository, dataset_respository)
 
     # mypy expects *args where this method only uses one output
     def do_evaluate(  # type: ignore
@@ -176,12 +175,11 @@ class MultiLabelClassifyEvaluator(
 ):
     def __init__(
         self,
-        task: Task[ClassifyInput, MultiLabelClassifyOutput],
         evaluation_repository: EvaluationRepository,
         dataset_repository: DatasetRepository,
         threshold: float = 0.55,
     ):
-        super().__init__(task, evaluation_repository, dataset_repository)
+        super().__init__(evaluation_repository, dataset_repository)
         self.threshold = threshold
 
     # mypy expects *args where this method only uses one output
