@@ -17,6 +17,7 @@ from intelligence_layer.core import (
     InMemoryDatasetRepository,
     InMemoryEvaluationRepository,
 )
+from intelligence_layer.core.evaluation.runner import Runner
 from tests.conftest import DummyStringInput, DummyStringOutput, DummyStringTask
 from tests.core.evaluation.conftest import DummyAggregatedEvaluation
 
@@ -107,7 +108,6 @@ def stub_argilla_client() -> StubArgillaClient:
 
 @fixture
 def string_argilla_evaluator(
-    dummy_string_task: DummyStringTask,
     in_memory_evaluation_repository: InMemoryEvaluationRepository,  # noqa: w0404
     in_memory_dataset_repository: InMemoryDatasetRepository,
     stub_argilla_client: StubArgillaClient,
@@ -126,7 +126,6 @@ def string_argilla_evaluator(
         Field(name="input", title="Input"),
     ]
     evaluator = DummyStringTaskArgillaEvaluator(
-        dummy_string_task,
         ArgillaEvaluationRepository(
             in_memory_evaluation_repository, stub_argilla_client
         ),
@@ -140,21 +139,37 @@ def string_argilla_evaluator(
     return evaluator
 
 
+@fixture
+def string_argilla_runner(
+    dummy_string_task: DummyStringTask,
+    in_memory_evaluation_repository: InMemoryEvaluationRepository,  # noqa: w0404
+    in_memory_dataset_repository: InMemoryDatasetRepository,
+) -> Runner[DummyStringInput, DummyStringOutput]:
+    return Runner(
+        dummy_string_task,
+        in_memory_evaluation_repository,
+        in_memory_dataset_repository,
+        "dummy-task",
+    )
+
+
 def test_argilla_evaluator_can_do_sync_evaluation(
     string_argilla_evaluator: DummyStringTaskArgillaEvaluator,
+    string_argilla_runner: Runner[DummyStringInput, DummyStringOutput],
     string_dataset_id: str,
 ) -> None:
     argilla_client = cast(StubArgillaClient, string_argilla_evaluator._client)
 
-    overview = string_argilla_evaluator.partial_evaluate_dataset(string_dataset_id)
-    dummy_string_dataset = string_argilla_evaluator._dataset_repository.examples_by_id(
+    run_overview = string_argilla_runner.run_dataset(string_dataset_id)
+    eval_overview = string_argilla_evaluator.partial_evaluate_dataset(run_overview.id)
+    examples_iter = string_argilla_evaluator._dataset_repository.examples_by_id(
         string_dataset_id, DummyStringInput, DummyStringOutput
     )
-    assert dummy_string_dataset is not None
+    assert examples_iter is not None
 
-    assert overview.id in argilla_client._datasets
-    saved_dataset = argilla_client._datasets[overview.id]
-    examples = list(dummy_string_dataset)
+    assert eval_overview.id in argilla_client._datasets
+    saved_dataset = argilla_client._datasets[eval_overview.id]
+    examples = list(examples_iter)
     assert len(saved_dataset) == len(examples)
     assert saved_dataset[0].example_id == examples[0].id
     assert saved_dataset[0].content["input"] == examples[0].input.input
@@ -162,10 +177,12 @@ def test_argilla_evaluator_can_do_sync_evaluation(
 
 def test_argilla_evaluator_can_aggregate_evaluation(
     string_argilla_evaluator: DummyStringTaskArgillaEvaluator,
+    string_argilla_runner: Runner[DummyStringInput, DummyStringOutput],
     string_dataset_id: str,
 ) -> None:
     argilla_client = cast(StubArgillaClient, string_argilla_evaluator._client)
-    eval_overview = string_argilla_evaluator.partial_evaluate_dataset(string_dataset_id)
+    run_overview = string_argilla_runner.run_dataset(string_dataset_id)
+    eval_overview = string_argilla_evaluator.partial_evaluate_dataset(run_overview.id)
     aggregated_eval_overview = string_argilla_evaluator.aggregate_evaluation(
         eval_overview.id
     )

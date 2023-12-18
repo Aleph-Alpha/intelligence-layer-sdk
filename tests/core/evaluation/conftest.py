@@ -14,8 +14,24 @@ from intelligence_layer.core import (
     InMemoryEvaluationRepository,
     RunOverview,
 )
+from intelligence_layer.core.evaluation.dataset_repository import (
+    InMemoryDatasetRepository,
+)
 from intelligence_layer.core.evaluation.evaluator import DatasetRepository
+from intelligence_layer.core.evaluation.runner import Runner
+from intelligence_layer.core.task import Task
+from intelligence_layer.core.tracer import Tracer
 from tests.conftest import DummyStringInput, DummyStringOutput
+
+FAIL_IN_EVAL_INPUT = "fail in eval"
+FAIL_IN_TASK_INPUT = "fail in task"
+
+
+class DummyTask(Task[str, str]):
+    def do_run(self, input: str, tracer: Tracer) -> str:
+        if input == FAIL_IN_TASK_INPUT:
+            raise RuntimeError(input)
+        return input
 
 
 class DummyStringEvaluation(BaseModel):
@@ -88,6 +104,7 @@ def evaluation_run_overview(
                 end=now,
                 failed_example_count=0,
                 successful_example_count=0,
+                runner_id="dummy-run-id",
             )
         ],
         start=now,
@@ -110,3 +127,16 @@ def dummy_string_examples(
     dummy_string_example: Example[DummyStringInput, DummyStringOutput]
 ) -> Iterable[Example[DummyStringInput, DummyStringOutput]]:
     return [dummy_string_example]
+
+
+@fixture
+def dummy_runner(
+    in_memory_evaluation_repository: InMemoryEvaluationRepository,
+    in_memory_dataset_repository: InMemoryDatasetRepository,
+) -> Runner[str, str]:
+    return Runner(
+        DummyTask(),
+        in_memory_evaluation_repository,
+        in_memory_dataset_repository,
+        "dummy-runner",
+    )

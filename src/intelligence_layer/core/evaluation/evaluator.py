@@ -1,5 +1,4 @@
 from abc import ABC, abstractmethod
-from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime
 from functools import lru_cache
 from typing import (
@@ -19,8 +18,6 @@ from typing import (
     get_origin,
 )
 from uuid import uuid4
-
-from tqdm import tqdm
 
 from intelligence_layer.connectors import ArgillaClient, Field
 from intelligence_layer.connectors.argilla.argilla_client import (
@@ -43,7 +40,7 @@ from intelligence_layer.core.evaluation.domain import (
     RunOverview,
 )
 from intelligence_layer.core.task import Input, Output, Task
-from intelligence_layer.core.tracer import CompositeTracer, Tracer
+from intelligence_layer.core.tracer import Tracer
 
 EvaluationOverviewType = TypeVar(
     "EvaluationOverviewType", bound=PartialEvaluationOverview
@@ -323,11 +320,9 @@ class BaseEvaluator(
 
     def __init__(
         self,
-        task: Task[Input, Output],
         evaluation_repository: EvaluationRepository,
         dataset_repository: DatasetRepository,
     ) -> None:
-        self._task = task
         self._evaluation_repository = evaluation_repository
         self._dataset_repository = dataset_repository
 
@@ -463,70 +458,7 @@ class BaseEvaluator(
         return str(uuid4())
 
     @final
-    def run_dataset(
-        self, dataset_id: str, tracer: Optional[Tracer] = None
-    ) -> RunOverview:
-        """Generates all outputs for the provided dataset.
-
-        Will run each :class:`Example` provided in the dataset through the :class:`Task`.
-
-        Args:
-            dataset_id: The id of the dataset to generate output for. Consists of examples, each
-                with an :class:`Input` and an :class:`ExpectedOutput` (can be None).
-            output: Output of the :class:`Task` that shall be evaluated
-
-        Returns:
-            An overview of the run. Outputs will not be returned but instead stored in the
-            :class:`EvaluationRepository` provided in the __init__.
-        """
-
-        def run(
-            example: Example[Input, ExpectedOutput]
-        ) -> tuple[str, Output | FailedExampleRun]:
-            evaluate_tracer = self._evaluation_repository.example_tracer(
-                run_id, example.id
-            )
-            if tracer:
-                evaluate_tracer = CompositeTracer([evaluate_tracer, tracer])
-            try:
-                return example.id, self._task.run(example.input, evaluate_tracer)
-            except Exception as e:
-                return example.id, FailedExampleRun.from_exception(e)
-
-        examples = self._dataset_repository.examples_by_id(
-            dataset_id, self.input_type(), self.output_type()
-        )
-        if examples is None:
-            raise ValueError(f"Dataset with id {dataset_id} not found")
-        run_id = str(uuid4())
-        start = datetime.utcnow()
-        with ThreadPoolExecutor(max_workers=10) as executor:
-            ids_and_outputs = tqdm(executor.map(run, examples), desc="Evaluating")
-
-        failed_count = 0
-        successful_count = 0
-        for example_id, output in ids_and_outputs:
-            if isinstance(output, FailedExampleRun):
-                failed_count += 1
-            else:
-                successful_count += 1
-            self._evaluation_repository.store_example_output(
-                run_id, ExampleOutput[Output](example_id=example_id, output=output)
-            )
-
-        run_overview = RunOverview(
-            dataset_id=dataset_id,
-            id=run_id,
-            start=start,
-            end=datetime.utcnow(),
-            failed_example_count=failed_count,
-            successful_example_count=successful_count,
-        )
-        self._evaluation_repository.store_run_overview(run_overview)
-        return run_overview
-
-    @final
-    def evaluate_run(self, *run_ids: str) -> PartialEvaluationOverview:
+    def evaluate_runs(self, *run_ids: str) -> PartialEvaluationOverview:
         """Evaluates all generated outputs in the run.
 
         For each set of successful outputs in the referenced runs,
@@ -684,11 +616,10 @@ class Evaluator(
 
     def __init__(
         self,
-        task: Task[Input, Output],
         evaluation_repository: EvaluationRepository,
         dataset_repository: DatasetRepository,
     ) -> None:
-        super().__init__(task, evaluation_repository, dataset_repository)
+        super().__init__(evaluation_repository, dataset_repository)
 
     @abstractmethod
     def do_evaluate(
@@ -730,7 +661,11 @@ class Evaluator(
 
     @final
     def run_and_evaluate(
-        self, input: Input, expected_output: ExpectedOutput, tracer: Tracer
+        self,
+        task: Task[Input, Output],
+        input: Input,
+        expected_output: ExpectedOutput,
+        tracer: Tracer,
     ) -> Evaluation | FailedExampleEvaluation:
         """Evaluates a single example and returns an `Evaluation` or `EvaluationException`.
 
@@ -748,16 +683,14 @@ class Evaluator(
         """
 
         try:
-            output = self._task.run(input, tracer)
+            output = task.run(input, tracer)
             return self.do_evaluate(input, expected_output, output)
         except Exception as e:
             return FailedExampleEvaluation.from_exception(e)
 
     @final
     def evaluate_dataset(
-        self,
-        dataset_id: str,
-        tracer: Optional[Tracer] = None,
+        self, *run_ids: str
     ) -> EvaluationOverview[AggregatedEvaluation]:
         """Evaluates an entire dataset in a threaded manner and aggregates the results into an `AggregatedEvaluation`.
 
@@ -773,8 +706,7 @@ class Evaluator(
         Returns:
             The aggregated results of an evaluation run with a dataset.
         """
-        run_overview = self.run_dataset(dataset_id, tracer)
-        partial_evaluation_overview = self.evaluate_run(run_overview.id)
+        partial_evaluation_overview = self.evaluate_runs(*run_ids)
         return self.aggregate_evaluation(partial_evaluation_overview.id)
 
 
@@ -883,14 +815,13 @@ class ArgillaEvaluator(
 
     def __init__(
         self,
-        task: Task[Input, Output],
         evaluation_repository: ArgillaEvaluationRepository,
         dataset_repository: DatasetRepository,
         workspace_id: str,
         fields: Sequence[Field],
         questions: Sequence[Question],
     ) -> None:
-        super().__init__(task, evaluation_repository, dataset_repository)
+        super().__init__(evaluation_repository, dataset_repository)
         self._workspace_id = workspace_id
         self._fields = fields
         self._questions = questions
@@ -909,11 +840,7 @@ class ArgillaEvaluator(
         )
 
     @final
-    def partial_evaluate_dataset(
-        self,
-        dataset_id: str,
-        tracer: Optional[Tracer] = None,
-    ) -> PartialEvaluationOverview:
+    def partial_evaluate_dataset(self, *run_ids: str) -> PartialEvaluationOverview:
         """Evaluates an entire :class:`Dataset` in a threaded manner and pushes the results to Argilla.
 
         Args:
@@ -924,8 +851,7 @@ class ArgillaEvaluator(
         Returns:
             An overview of how the run went (e.g. how many examples failed).
         """
-        run_overview = self.run_dataset(dataset_id, tracer)
-        return self.evaluate_run(run_overview.id)
+        return self.evaluate_runs(*run_ids)
 
     @abstractmethod
     def _to_record(

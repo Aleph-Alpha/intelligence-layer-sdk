@@ -12,6 +12,7 @@ from intelligence_layer.core import (
     NoOpTracer,
     Task,
 )
+from intelligence_layer.core.evaluation.runner import Runner
 from intelligence_layer.use_cases.classify.classify import (
     ClassifyInput,
     MultiLabelClassifyEvaluation,
@@ -118,13 +119,24 @@ def embedding_based_classify_dataset_name(
 
 @fixture
 def classify_evaluator(
-    embedding_based_classify: Task[ClassifyInput, MultiLabelClassifyOutput],
     in_memory_dataset_repository: DatasetRepository,
 ) -> MultiLabelClassifyEvaluator:
     return MultiLabelClassifyEvaluator(
+        InMemoryEvaluationRepository(),
+        in_memory_dataset_repository,
+    )
+
+
+@fixture
+def classify_runner(
+    embedding_based_classify: Task[ClassifyInput, MultiLabelClassifyOutput],
+    in_memory_dataset_repository: DatasetRepository,
+) -> Runner[ClassifyInput, MultiLabelClassifyOutput]:
+    return Runner(
         embedding_based_classify,
         InMemoryEvaluationRepository(),
         in_memory_dataset_repository,
+        "multi-label-classify",
     )
 
 
@@ -132,8 +144,10 @@ def test_multi_label_classify_evaluator_single_example(
     embedding_based_classify_example: Example[ClassifyInput, Sequence[str]],
     classify_evaluator: MultiLabelClassifyEvaluator,
     no_op_tracer: NoOpTracer,
+    embedding_based_classify: EmbeddingBasedClassify,
 ) -> None:
     evaluation = classify_evaluator.run_and_evaluate(
+        embedding_based_classify,
         embedding_based_classify_example.input,
         embedding_based_classify_example.expected_output,
         no_op_tracer,
@@ -149,10 +163,11 @@ def test_multi_label_classify_evaluator_single_example(
 def test_multi_label_classify_evaluator_full_dataset(
     embedding_based_classify_dataset_name: str,
     classify_evaluator: MultiLabelClassifyEvaluator,
+    classify_runner: Runner[ClassifyInput, MultiLabelClassifyOutput],
 ) -> None:
-    evaluation = classify_evaluator.evaluate_dataset(
-        embedding_based_classify_dataset_name
-    )
+    run_overview = classify_runner.run_dataset(embedding_based_classify_dataset_name)
+
+    evaluation = classify_evaluator.evaluate_dataset(run_overview.id)
 
     assert set(["positive", "negative", "finance", "school"]) == set(
         evaluation.statistics.class_metrics.keys()
