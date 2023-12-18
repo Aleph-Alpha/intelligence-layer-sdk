@@ -86,6 +86,9 @@ class DocumentPath(BaseModel):
             document_name=document_path_json["name"],
         )
 
+    def to_slash_separated_str(self) -> str:
+        return f"{self.collection_path.namespace}/{self.collection_path.collection}/{self.document_name}"
+
 
 class DocumentInfo(BaseModel):
     """Presents an overview of a document.

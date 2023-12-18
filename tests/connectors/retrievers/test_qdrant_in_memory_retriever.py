@@ -9,17 +9,17 @@ from intelligence_layer.connectors.retrievers.qdrant_in_memory_retriever import 
 
 
 @fixture
-def in_memory_retriever_documents() -> Sequence[Document]:
+def in_memory_retriever_documents() -> Sequence[tuple[str, Document]]:
     return [
-        Document(text="I do not like rain"),
-        Document(text="Summer is warm"),
-        Document(text="We are so back"),
+        ("", Document(text="I do not like rain")),
+        ("", Document(text="Summer is warm")),
+        ("", Document(text="We are so back")),
     ]
 
 
 def test_asymmetric_in_memory_retriever(
     asymmetric_in_memory_retriever: QdrantInMemoryRetriever,
-    in_memory_retriever_documents: Sequence[Document],
+    in_memory_retriever_documents: Sequence[tuple[str, Document]],
 ) -> None:
     query = "Do you like summer?"
     documents = asymmetric_in_memory_retriever.get_relevant_documents_with_scores(query)
@@ -29,7 +29,7 @@ def test_asymmetric_in_memory_retriever(
 
 def test_symmetric_in_memory_retriever(
     symmetric_in_memory_retriever: QdrantInMemoryRetriever,
-    in_memory_retriever_documents: Sequence[Document],
+    in_memory_retriever_documents: Sequence[tuple[str, Document]],
 ) -> None:
     query = "I hate drizzle"
     documents = symmetric_in_memory_retriever.get_relevant_documents_with_scores(query)

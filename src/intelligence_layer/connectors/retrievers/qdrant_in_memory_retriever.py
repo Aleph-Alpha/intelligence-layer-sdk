@@ -6,6 +6,7 @@ from aleph_alpha_client import Prompt, SemanticEmbeddingRequest, SemanticReprese
 from qdrant_client import QdrantClient
 from qdrant_client.conversions.common_types import ScoredPoint
 from qdrant_client.http.models import Distance, PointStruct, VectorParams, models
+from intelligence_layer.connectors.document_index.document_index import DocumentPath
 
 from intelligence_layer.connectors.limited_concurrency_client import (
     AlephAlphaClientProtocol,
@@ -59,7 +60,7 @@ class QdrantInMemoryRetriever(BaseRetriever):
     def __init__(
         self,
         client: AlephAlphaClientProtocol,
-        documents: Sequence[Document],
+        documents: Sequence[tuple[str, Document]],
         k: int,
         threshold: float = 0.5,
         retriever_type: RetrieverType = RetrieverType.ASYMMETRIC,
@@ -101,9 +102,11 @@ class QdrantInMemoryRetriever(BaseRetriever):
     @staticmethod
     def _point_to_search_result(point: ScoredPoint) -> SearchResult:
         assert point.payload
-        return SearchResult(score=point.score, document=Document(**point.payload))
+        print(point.payload)
 
-    def _add_texts_to_memory(self, documents: Sequence[Document]) -> None:
+        return SearchResult(id=point.payload.path, score=point.score, document=Document(**point.payload.document))
+
+    def _add_texts_to_memory(self, documents: Sequence[tuple[str, Document]]) -> None:
         with ThreadPoolExecutor(max_workers=self.MAX_WORKERS) as executor:
             embeddings = list(
                 executor.map(
@@ -116,9 +119,9 @@ class QdrantInMemoryRetriever(BaseRetriever):
             wait=True,
             points=[
                 PointStruct(
-                    id=idx, vector=text_embedding, payload=document.model_dump()
+                    id=idx, vector=text_embedding, payload={path: path, document: document.model_dump()}
                 )
-                for idx, (text_embedding, document) in enumerate(
+                for idx, (text_embedding, (path, document)) in enumerate(
                     zip(embeddings, documents)
                 )
             ],
