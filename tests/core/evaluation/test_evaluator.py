@@ -23,7 +23,7 @@ from intelligence_layer.core.evaluation.evaluator import BaseEvaluator
 from intelligence_layer.core.task import Input, Output, Task
 from intelligence_layer.core.evaluation.domain import EvaluationOverview
 from intelligence_layer.core.evaluation.runner import Runner
-from intelligence_layer.core.task import Task
+from intelligence_layer.core.task import Input, Output, Task
 from tests.core.evaluation.conftest import (
     FAIL_IN_EVAL_INPUT,
     FAIL_IN_TASK_INPUT,
