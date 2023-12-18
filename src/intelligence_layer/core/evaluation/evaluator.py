@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime
+from functools import lru_cache
 from typing import (
     Any,
     Callable,
@@ -322,6 +323,7 @@ class BaseEvaluator(
         self._evaluation_repository = evaluation_repository
         self._dataset_repository = dataset_repository
 
+    @lru_cache(maxsize=1)
     def _get_types(self) -> Mapping[str, type]:  # noqa
         def is_not_type_var(object: Any) -> bool:
             return type(object) is not TypeVar
@@ -334,7 +336,7 @@ class BaseEvaluator(
                 parent, BaseEvaluator
             )
 
-        def set_types() -> None:
+        def update_types() -> None:
             num_types_set = 0
             for current_index, current_type in enumerate(current_types):
                 if is_not_type_var(current_type):
@@ -344,26 +346,29 @@ class BaseEvaluator(
                             type_var_count += 1
                         if type_var_count == current_index:
                             break
+                    assert type_var_count == current_index
                     type_list[element_index] = current_type
                     num_types_set += 1
 
+        # mypy does not know __orig_bases__
         base_evaluator_bases = BaseEvaluator.__orig_bases__[1]  # type: ignore
         type_list: list[type | TypeVar] = types_of_base(base_evaluator_bases)
-        type_var_name_iter = (a.__name__ for a in get_args(base_evaluator_bases))
         for parent in (
             p for p in reversed(type(self).__mro__) if is_eligible_subclass(p)
         ):
+            # mypy does not know __orig_bases__
             for base in parent.__orig_bases__:  # type: ignore
                 origin = get_origin(base)
                 if origin is None or not issubclass(origin, BaseEvaluator):
                     continue
                 current_types = types_of_base(base)
-                set_types()
+                update_types()
         assert all(is_not_type_var(t) for t in type_list)
         return {
             name: param_type
             for name, param_type in zip(
-                type_var_name_iter, cast(Sequence[type], type_list)
+                (a.__name__ for a in get_args(base_evaluator_bases)),
+                cast(Sequence[type], type_list)
             )
         }
 
