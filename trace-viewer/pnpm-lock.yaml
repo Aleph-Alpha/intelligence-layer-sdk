@@ -27,8 +27,8 @@ devDependencies:
     specifier: ^7.6.4
     version: 7.6.4(react-dom@18.2.0)(react@18.2.0)
   '@storybook/addon-interactions':
-    specifier: ^7.6.4
-    version: 7.6.4
+    specifier: ^7.6.5
+    version: 7.6.5
   '@storybook/addon-links':
     specifier: ^7.6.5
     version: 7.6.5(react@18.2.0)
@@ -2799,11 +2799,11 @@ packages:
       '@storybook/global': 5.0.0
     dev: true
 
-  /@storybook/addon-interactions@7.6.4:
-    resolution: {integrity: sha512-LjK9uhkgnbGyDwwa7pQhLptDEHeTIFmy+KurfJs9T08DpvRFfuuzyW4mj/hA63R1W5yjFSAhRiZj26+D7kBIyw==}
+  /@storybook/addon-interactions@7.6.5:
+    resolution: {integrity: sha512-8Hzt9u1DQzFvtGER/hCGIvGpCoVwzVoqpM98f2KAIVx/NMFmRW7UyKihXzw1j2t4q2ZaF2jZDYWCBqlP+iwILA==}
     dependencies:
       '@storybook/global': 5.0.0
-      '@storybook/types': 7.6.4
+      '@storybook/types': 7.6.5
       jest-mock: 27.5.1
       polished: 4.2.2
       ts-dedent: 2.2.0
