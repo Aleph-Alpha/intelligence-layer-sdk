@@ -368,7 +368,7 @@ class BaseEvaluator(
             name: param_type
             for name, param_type in zip(
                 (a.__name__ for a in get_args(base_evaluator_bases)),
-                cast(Sequence[type], type_list)
+                cast(Sequence[type], type_list),
             )
         }
 
