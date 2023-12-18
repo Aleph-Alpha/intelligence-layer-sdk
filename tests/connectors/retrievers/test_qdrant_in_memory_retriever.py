@@ -11,9 +11,9 @@ from intelligence_layer.connectors.retrievers.qdrant_in_memory_retriever import 
 @fixture
 def in_memory_retriever_documents() -> Sequence[Document]:
     return [
-        Document(text="I do not like rain", id=""),
-        Document(text="Summer is warm", id=""),
-        Document(text="We are so back", id=""),
+        Document(text="I do not like rain"),
+        Document(text="Summer is warm"),
+        Document(text="We are so back"),
     ]
 
 

@@ -199,7 +199,6 @@ class EmbeddingBasedClassify(Task[ClassifyInput, MultiLabelClassifyOutput]):
             Document(
                 text=e,
                 metadata={self.METADATA_LABEL_NAME: class_with_examples.name},
-                id="",
             )
             for class_with_examples in classes_with_examples
             for e in class_with_examples.examples
