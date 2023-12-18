@@ -29,7 +29,6 @@ from tests.core.evaluation.conftest import (
     FAIL_IN_TASK_INPUT,
     DummyAggregatedEvaluationWithResultList,
     DummyEvaluation,
-    DummyTask,
 )
 
 

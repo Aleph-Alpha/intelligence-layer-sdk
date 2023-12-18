@@ -80,7 +80,7 @@ def main(cli_args: Sequence[str]) -> None:
     runner = Runner(task, evaluation_repository, dataset_repository, args.task.__name__)
     dataset_id = args.dataset_id
     run_overview = runner.run_dataset(dataset_id)
-    evaluator = args.evaluator(task, evaluation_repository, dataset_repository)
+    evaluator = args.evaluator(evaluation_repository, dataset_repository)
     evaluator.evaluate_dataset(run_overview.id)
 
 

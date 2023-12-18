@@ -8,7 +8,6 @@ from intelligence_layer.core import (
     DatasetRepository,
     EvaluationRepository,
     Evaluator,
-    Task,
 )
 
 Probability = NewType("Probability", float)

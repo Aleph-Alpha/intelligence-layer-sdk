@@ -12,7 +12,6 @@ from intelligence_layer.core import (
     Language,
     RougeGrader,
 )
-from intelligence_layer.core.task import Task
 
 
 class LongContextSummarizeInput(BaseModel):
