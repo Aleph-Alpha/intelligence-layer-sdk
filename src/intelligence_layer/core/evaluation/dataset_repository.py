@@ -34,23 +34,16 @@ class InMemoryDatasetRepository(DatasetRepository):
         self._datasets[name] = in_memory_examples
         return name
 
-    def _examples(
-        self,
-        name: str,
-        input_type: type[Input],
-        expected_output_type: Optional[type[ExpectedOutput]] = None,
-    ) -> Optional[Sequence[Example[Input, ExpectedOutput]]]:
-        return cast(
-            Optional[Sequence[Example[Input, ExpectedOutput]]], self._datasets.get(name)
-        )
-
     def examples_by_id(
         self,
         dataset_id: str,
         input_type: type[Input],
         expected_output_type: type[ExpectedOutput],
     ) -> Optional[Iterable[Example[Input, ExpectedOutput]]]:
-        return self._examples(dataset_id, input_type, expected_output_type)
+        return cast(
+            Optional[Iterable[Example[Input, ExpectedOutput]]],
+            self._datasets.get(dataset_id),
+        )
 
     def example(
         self,
@@ -59,7 +52,7 @@ class InMemoryDatasetRepository(DatasetRepository):
         input_type: type[Input],
         expected_output_type: type[ExpectedOutput],
     ) -> Example[Input, ExpectedOutput] | None:
-        examples = self._examples(dataset_id, input_type, expected_output_type)
+        examples = self.examples_by_id(dataset_id, input_type, expected_output_type)
         if examples is None:
             return None
         filtered = (e for e in examples if e.id == example_id)
@@ -104,7 +97,7 @@ class FileDatasetRepository(DatasetRepository):
         dataset_dir = self._dataset_directory(name)
         if dataset_dir.exists():
             raise ValueError(f"Dataset name {name} already taken")
-        dataset_dir.mkdir(exist_ok=True)
+        dataset_dir.mkdir()
         for example in examples:
             serialized_result = JsonSerializer(root=example)
             self._example_path(name, example.id).write_text(
