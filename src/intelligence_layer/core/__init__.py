@@ -1,3 +1,4 @@
+from intelligence_layer.core.evaluation.runner import Runner as Runner
 from intelligence_layer.core.evaluation.dataset_repository import (
     InMemoryDatasetRepository as InMemoryDatasetRepository,
 )

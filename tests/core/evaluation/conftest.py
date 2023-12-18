@@ -14,8 +14,24 @@ from intelligence_layer.core import (
     InMemoryEvaluationRepository,
     RunOverview,
 )
+from intelligence_layer.core.evaluation.dataset_repository import (
+    InMemoryDatasetRepository,
+)
 from intelligence_layer.core.evaluation.evaluator import DatasetRepository
+from intelligence_layer.core.task import Task
+from intelligence_layer.core.tracer import Tracer
 from tests.conftest import DummyStringInput, DummyStringOutput
+
+
+FAIL_IN_EVAL_INPUT = "fail in eval"
+FAIL_IN_TASK_INPUT = "fail in task"
+
+
+class DummyTask(Task[str, str]):
+    def do_run(self, input: str, tracer: Tracer) -> str:
+        if input == FAIL_IN_TASK_INPUT:
+            raise RuntimeError(input)
+        return input
 
 
 class DummyStringEvaluation(BaseModel):
@@ -32,6 +48,17 @@ class DummyAggregatedEvaluation(BaseModel):
 
 class DummyAggregatedEvaluationWithResultList(BaseModel):
     results: Sequence[DummyEvaluation]
+
+
+@fixture
+def dataset_name(
+    sequence_dataset: SequenceDataset[str, None],
+    in_memory_dataset_repository: InMemoryDatasetRepository,
+) -> str:
+    in_memory_dataset_repository.create_dataset(
+        sequence_dataset.name, sequence_dataset.examples
+    )
+    return sequence_dataset.name
 
 
 @fixture

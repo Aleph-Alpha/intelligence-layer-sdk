@@ -22,12 +22,12 @@ from intelligence_layer.core.evaluation.domain import (
 from intelligence_layer.core.evaluation.evaluator import BaseEvaluator
 from intelligence_layer.core.task import Input, Output, Task
 from tests.core.evaluation.conftest import (
+    FAIL_IN_EVAL_INPUT,
+    FAIL_IN_TASK_INPUT,
     DummyAggregatedEvaluationWithResultList,
     DummyEvaluation,
+    DummyTask,
 )
-
-FAIL_IN_EVAL_INPUT = "fail in eval"
-FAIL_IN_TASK_INPUT = "fail in task"
 
 
 class DummyEvaluator(
@@ -95,10 +95,9 @@ class DummyEvaluatorWithoutTypeHints(DummyEvaluator):
         return super().do_evaluate(input, expected_output, output)
 
 
-class DummyTask(Task[str, str]):
-    def do_run(self, input: str, tracer: Tracer) -> str:
-        if input == FAIL_IN_TASK_INPUT:
-            raise RuntimeError(input)
+class DummyTaskWithoutTypeHints(Task[str, str]):
+    # type hint for return value missing on purpose for testing
+    def do_run(self, input: str, tracer: Tracer):  # type: ignore
         return input
 
 
