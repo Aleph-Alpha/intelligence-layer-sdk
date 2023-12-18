@@ -6,7 +6,6 @@ from aleph_alpha_client import Prompt, SemanticEmbeddingRequest, SemanticReprese
 from qdrant_client import QdrantClient
 from qdrant_client.conversions.common_types import ScoredPoint
 from qdrant_client.http.models import Distance, PointStruct, VectorParams, models
-from intelligence_layer.connectors.document_index.document_index import DocumentPath
 
 from intelligence_layer.connectors.limited_concurrency_client import (
     AlephAlphaClientProtocol,
@@ -102,15 +101,20 @@ class QdrantInMemoryRetriever(BaseRetriever):
     @staticmethod
     def _point_to_search_result(point: ScoredPoint) -> SearchResult:
         assert point.payload
-        print(point.payload)
+        assert "document" in point.payload
+        assert "document_id" in point.payload
 
-        return SearchResult(id=point.payload.path, score=point.score, document=Document(**point.payload.document))
+        return SearchResult(
+            document_id=point.payload["document_id"],
+            score=point.score,
+            document=Document(**point.payload["document"]),
+        )
 
     def _add_texts_to_memory(self, documents: Sequence[tuple[str, Document]]) -> None:
         with ThreadPoolExecutor(max_workers=self.MAX_WORKERS) as executor:
             embeddings = list(
                 executor.map(
-                    lambda c: self._embed(c.text, self._document_representation),
+                    lambda c: self._embed(c[1].text, self._document_representation),
                     documents,
                 )
             )
@@ -119,9 +123,14 @@ class QdrantInMemoryRetriever(BaseRetriever):
             wait=True,
             points=[
                 PointStruct(
-                    id=idx, vector=text_embedding, payload={path: path, document: document.model_dump()}
+                    id=idx,
+                    vector=text_embedding,
+                    payload={
+                        "document_id": document_id,
+                        "document": document.model_dump(),
+                    },
                 )
-                for idx, (text_embedding, (path, document)) in enumerate(
+                for idx, (text_embedding, (document_id, document)) in enumerate(
                     zip(embeddings, documents)
                 )
             ],

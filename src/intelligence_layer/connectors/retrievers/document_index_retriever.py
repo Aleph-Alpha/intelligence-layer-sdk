@@ -57,7 +57,7 @@ class DocumentIndexRetriever(BaseRetriever):
         )
         relevant_chunks = [
             SearchResult(
-                id = result.document_path.to_slash_separated_str(),
+                document_id=result.document_path.to_slash_separated_str(),
                 score=result.score,
                 document=Document(text=result.section),
             )
