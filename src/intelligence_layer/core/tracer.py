@@ -6,6 +6,8 @@ from types import TracebackType
 from typing import TYPE_CHECKING, Generic, Mapping, Optional, Sequence, TypeVar, Union
 from uuid import UUID, uuid4
 
+from opentelemetry.trace import Span as OpenTSpan
+from opentelemetry.trace import Tracer as OpenTTracer
 from pydantic import BaseModel, Field, RootModel, SerializeAsAny
 from rich.panel import Panel
 from rich.syntax import Syntax
@@ -644,3 +646,73 @@ class FileTaskSpan(TaskSpan, FileSpan):
             self._log_entry(
                 EndTask(uuid=self.uuid, end=self.end_timestamp, output=self.output)
             )
+
+
+def _serialize(s: SerializeAsAny[PydanticSerializable]) -> str:
+    value = s if isinstance(s, BaseModel) else JsonSerializer(root=s)
+    return value.model_dump_json()
+
+
+class OpenTelemetryTracer(Tracer):
+    """A `Tracer` that uses open telemetry."""
+
+    def __init__(self, tracer: OpenTTracer) -> None:
+        self._tracer = tracer
+
+    def span(
+        self, name: str, timestamp: Optional[datetime] = None
+    ) -> "OpenTelemetrySpan":
+        tracer_span = self._tracer.start_span(
+            name, start_time=None if not timestamp else int(timestamp.timestamp())
+        )
+        return OpenTelemetrySpan(tracer_span, self._tracer)
+
+    def task_span(
+        self,
+        task_name: str,
+        input: PydanticSerializable,
+        timestamp: Optional[datetime] = None,
+    ) -> "OpenTelemetryTaskSpan":
+        tracer_span = self._tracer.start_span(
+            task_name,
+            attributes={"input": _serialize(input)},
+            start_time=None if not timestamp else int(timestamp.timestamp()),
+        )
+        return OpenTelemetryTaskSpan(tracer_span, self._tracer)
+
+
+class OpenTelemetrySpan(Span, OpenTelemetryTracer):
+    """A `Span` created by `OpenTelemetryTracer.span`."""
+
+    end_timestamp: Optional[datetime] = None
+
+    def __init__(self, span: OpenTSpan, tracer: OpenTTracer) -> None:
+        super().__init__(tracer)
+        self.open_ts_span = span
+
+    def log(
+        self,
+        message: str,
+        value: PydanticSerializable,
+        timestamp: Optional[datetime] = None,
+    ) -> None:
+        self.open_ts_span.add_event(
+            message,
+            {"value": _serialize(value)},
+            None if not timestamp else int(timestamp.timestamp()),
+        )
+
+    def end(self, timestamp: Optional[datetime] = None) -> None:
+        self.open_ts_span.end(int(timestamp.timestamp()) if timestamp is not None else None)
+
+
+class OpenTelemetryTaskSpan(TaskSpan, OpenTelemetrySpan):
+    """A `TaskSpan` created by `OpenTelemetryTracer.task_span`."""
+
+    output: Optional[PydanticSerializable] = None
+
+    def __init__(self, span: OpenTSpan, tracer: OpenTTracer) -> None:
+        super().__init__(span, tracer)
+
+    def record_output(self, output: PydanticSerializable) -> None:
+        self.open_ts_span.set_attribute("output", _serialize(output))
