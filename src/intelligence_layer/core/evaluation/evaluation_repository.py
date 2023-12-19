@@ -134,13 +134,11 @@ class FileEvaluationRepository(EvaluationRepository):
     def _run_overview_path(self, run_id: str) -> Path:
         return self._run_directory(run_id).with_suffix(".json")
 
-    def store_example_output(
-        self, run_id: str, example_output: ExampleOutput[Output]
-    ) -> None:
+    def store_example_output(self, example_output: ExampleOutput[Output]) -> None:
         serialized_result = JsonSerializer(root=example_output)
-        self._example_output_path(run_id, example_output.example_id).write_text(
-            serialized_result.model_dump_json(indent=2)
-        )
+        self._example_output_path(
+            example_output.run_id, example_output.example_id
+        ).write_text(serialized_result.model_dump_json(indent=2))
 
     def example_output(
         self, run_id: str, example_id: str, output_type: type[Output]
@@ -353,10 +351,8 @@ class InMemoryEvaluationRepository(EvaluationRepository):
     def eval_ids(self) -> Sequence[str]:
         return list(self._evaluation_run_overviews.keys())
 
-    def store_example_output(
-        self, run_id: str, example_output: ExampleOutput[Output]
-    ) -> None:
-        self._example_outputs[run_id].append(
+    def store_example_output(self, example_output: ExampleOutput[Output]) -> None:
+        self._example_outputs[example_output.run_id].append(
             cast(ExampleOutput[PydanticSerializable], example_output)
         )
 
