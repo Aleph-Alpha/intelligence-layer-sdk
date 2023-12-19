@@ -588,7 +588,9 @@ class BaseEvaluator(
             end=datetime.utcnow(),
             successful_count=successful_evaluations.included_count(),
             failed_evaluation_count=successful_evaluations.excluded_count(),
-            **(evaluation_overview.model_dump()),
+            id=evaluation_overview.id,
+            run_overviews=evaluation_overview.run_overviews,
+            start=evaluation_overview.start,
         )
         self._evaluation_repository.store_evaluation_overview(run_overview)
         return run_overview
@@ -858,6 +860,7 @@ class ArgillaEvaluator(
         self, example: Example[Input, ExpectedOutput], *output: Output
     ) -> Sequence[RecordData]:
         """This method is responsible for translating the `Example` and `Output` of the task to :class:`RecordData`
+
 
         Args:
             example: The example to be translated.
