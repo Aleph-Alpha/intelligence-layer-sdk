@@ -5,6 +5,10 @@ from uuid import UUID
 
 from aleph_alpha_client import Prompt
 from aleph_alpha_client.completion import CompletionRequest
+from opentelemetry import trace
+from opentelemetry.sdk.trace import TracerProvider
+from opentelemetry.sdk.trace.export import BatchSpanProcessor, ConsoleSpanExporter
+from opentelemetry.trace import get_tracer
 from pydantic import BaseModel, Field
 from pytest import fixture
 
@@ -23,6 +27,7 @@ from intelligence_layer.core.tracer import (
     InMemoryTracer,
     LogEntry,
     LogLine,
+    OpenTelemetryTracer,
     PlainEntry,
     StartSpan,
     StartTask,
@@ -222,3 +227,17 @@ class TreeBuilder(BaseModel):
             timestamp=plain_entry.timestamp,
         )
         self.tracers[plain_entry.parent].entries.append(entry)
+
+
+def test_open_telemetry_tracer() -> None:
+    provider = TracerProvider()
+    processor = BatchSpanProcessor(ConsoleSpanExporter())
+    provider.add_span_processor(processor)
+
+    # Sets the global default tracer provider
+    trace.set_tracer_provider(provider)
+
+    input = "input"
+    openTracer = get_tracer("intelligence-layer")
+    TestTask().run(input, CompositeTracer([OpenTelemetryTracer(openTracer)]))
+    provider.force_flush()

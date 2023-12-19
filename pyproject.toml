@@ -30,6 +30,8 @@ langdetect = "^1.0.9"
 nltk = "^3.8.1"
 pycountry = "23.12.11" #22.3.5 crushes the readthedocs
 rouge = "^1.0.1"
+opentelemetry-api = "^1.22.0"
+opentelemetry-sdk = "^1.22.0"
 
 [tool.poetry.group.dev.dependencies]
 mypy = "^1.7.1"
