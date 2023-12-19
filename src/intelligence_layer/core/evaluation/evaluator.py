@@ -2,7 +2,6 @@ from abc import ABC, abstractmethod
 from datetime import datetime
 from functools import lru_cache
 from typing import (
-    Any,
     Callable,
     Generic,
     Iterable,
@@ -11,7 +10,6 @@ from typing import (
     Optional,
     Sequence,
     TypeVar,
-    Union,
     cast,
     final,
     get_args,
@@ -327,12 +325,14 @@ class BaseEvaluator(
         self._dataset_repository = dataset_repository
 
     @lru_cache(maxsize=1)
-    def _get_types(self) -> Mapping[str, type]:  # noqa
-        def is_not_type_var(object: Any) -> bool:
-            return type(object) is not TypeVar
+    def _get_types(self) -> Mapping[str, type]:
+        """Type magic function that gets the actual types of the generic parameters.
 
-        def types_of_base(orig_bases: Any) -> list[Union[type, TypeVar]]:
-            return list(get_args(orig_bases))
+        Traverses the inheritance history of `BaseEvaluator`-subclass to find an actual type every time a TypeVar is replaced.
+
+        Returns:
+            Name of generic parameter to the type found.
+        """
 
         def is_eligible_subclass(parent: type) -> bool:
             return hasattr(parent, "__orig_bases__") and issubclass(
@@ -342,10 +342,10 @@ class BaseEvaluator(
         def update_types() -> None:
             num_types_set = 0
             for current_index, current_type in enumerate(current_types):
-                if is_not_type_var(current_type):
+                if type(current_type) is not TypeVar:
                     type_var_count = num_types_set - 1
                     for element_index, element in enumerate(type_list):
-                        if not is_not_type_var(element):
+                        if type(element) is TypeVar:
                             type_var_count += 1
                         if type_var_count == current_index:
                             break
@@ -355,7 +355,7 @@ class BaseEvaluator(
 
         # mypy does not know __orig_bases__
         base_evaluator_bases = BaseEvaluator.__orig_bases__[1]  # type: ignore
-        type_list: list[type | TypeVar] = types_of_base(base_evaluator_bases)
+        type_list: list[type | TypeVar] = list(get_args(base_evaluator_bases))
         for parent in (
             p for p in reversed(type(self).__mro__) if is_eligible_subclass(p)
         ):
@@ -364,15 +364,14 @@ class BaseEvaluator(
                 origin = get_origin(base)
                 if origin is None or not issubclass(origin, BaseEvaluator):
                     continue
-                current_types = types_of_base(base)
+                current_types = list(get_args(base))
                 update_types()
-        assert all(is_not_type_var(t) for t in type_list)
         return {
             name: param_type
             for name, param_type in zip(
-                (a.__name__ for a in get_args(base_evaluator_bases)),
-                cast(Sequence[type], type_list),
+                (a.__name__ for a in get_args(base_evaluator_bases)), type_list
             )
+            if type(param_type) is not TypeVar
         }
 
     def input_type(self) -> type[Input]:
