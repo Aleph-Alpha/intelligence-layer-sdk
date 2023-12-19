@@ -180,5 +180,7 @@ jobs:
       - name: Configure Poetry for notebooks and run
         env:
           AA_TOKEN: ${{ secrets.AA_TOKEN }}
+          ARGILLA_API_URL: "http://localhost:6900/"
+          ARGILLA_API_KEY: "argilla.apikey"
         run: |
           ./scripts/notebook_runner.sh
