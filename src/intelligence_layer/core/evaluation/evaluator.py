@@ -540,6 +540,7 @@ class BaseEvaluator(
                     eval_id,
                     *[
                         SuccessfulExampleOutput(
+                            run_id=example_output.run_id,
                             example_id=example_output.example_id,
                             output=example_output.output,
                         )
