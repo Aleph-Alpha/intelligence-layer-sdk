@@ -123,11 +123,10 @@ class Instruct(Task[InstructInput, PromptOutput]):
         >>> from intelligence_layer.core import InMemoryTracer, Instruct, InstructInput
 
         >>> client = LimitedConcurrencyClient.from_token(os.getenv("AA_TOKEN"))
-        >>> task = Instruct(client)
+        >>> task = Instruct(client, model="luminous-base-control")
         >>> input = InstructInput(
         ... instruction="Translate the following to text to German.",
         ... input="An apple a day keeps the doctor away.",
-        ... model="luminous-base-control"
         ... )
         >>> tracer = InMemoryTracer()
         >>> output = task.run(input, tracer)
