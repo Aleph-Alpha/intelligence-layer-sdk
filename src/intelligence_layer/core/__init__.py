@@ -30,14 +30,18 @@ from .evaluation.dataset_repository import (
 from .evaluation.dataset_repository import (
     InMemoryDatasetRepository as InMemoryDatasetRepository,
 )
+from .evaluation.domain import Evaluation as Evaluation
 from .evaluation.domain import EvaluationOverview as EvaluationOverview
 from .evaluation.domain import Example as Example
 from .evaluation.domain import ExampleEvaluation as ExampleEvaluation
+from .evaluation.domain import ExampleOutput as ExampleOutput
 from .evaluation.domain import ExampleTrace as ExampleTrace
+from .evaluation.domain import ExpectedOutput as ExpectedOutput
 from .evaluation.domain import FailedExampleEvaluation as FailedExampleEvaluation
 from .evaluation.domain import LogTrace as LogTrace
 from .evaluation.domain import RunOverview as RunOverview
 from .evaluation.domain import SpanTrace as SpanTrace
+from .evaluation.domain import SuccessfulExampleOutput as SuccessfulExampleOutput
 from .evaluation.domain import TaskSpanTrace as TaskSpanTrace
 from .evaluation.evaluation_repository import (
     FileEvaluationRepository as FileEvaluationRepository,

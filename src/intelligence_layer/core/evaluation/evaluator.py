@@ -36,6 +36,7 @@ from intelligence_layer.core.evaluation.domain import (
     FailedExampleRun,
     PartialEvaluationOverview,
     RunOverview,
+    SuccessfulExampleOutput,
 )
 from intelligence_layer.core.task import Input, Output, Task
 from intelligence_layer.core.tracer import Tracer
@@ -424,7 +425,10 @@ class BaseEvaluator(
 
     @abstractmethod
     def evaluate(
-        self, example: Example[Input, ExpectedOutput], eval_id: str, *output: Output
+        self,
+        example: Example[Input, ExpectedOutput],
+        eval_id: str,
+        *example_output: SuccessfulExampleOutput[Output],
     ) -> None:
         ...
 
@@ -538,7 +542,10 @@ class BaseEvaluator(
                     example,
                     eval_id,
                     *[
-                        example_output.output
+                        SuccessfulExampleOutput(
+                            example_id=example_output.example_id,
+                            output=example_output.output,
+                        )
                         for example_output in example_outputs
                         if not isinstance(example_output.output, FailedExampleRun)
                     ],
@@ -646,13 +653,16 @@ class Evaluator(
 
     @final
     def evaluate(
-        self, example: Example[Input, ExpectedOutput], eval_id: str, *output: Output
+        self,
+        example: Example[Input, ExpectedOutput],
+        eval_id: str,
+        *example_outputs: SuccessfulExampleOutput[Output],
     ) -> None:
         try:
             result: Evaluation | FailedExampleEvaluation = self.do_evaluate(
                 example.input,
                 example.expected_output,
-                *output,
+                *(example_output.output for example_output in example_outputs),
             )
         except Exception as e:
             result = FailedExampleEvaluation.from_exception(e)
@@ -856,7 +866,9 @@ class ArgillaEvaluator(
 
     @abstractmethod
     def _to_record(
-        self, example: Example[Input, ExpectedOutput], *output: Output
+        self,
+        example: Example[Input, ExpectedOutput],
+        *example_outputs: SuccessfulExampleOutput[Output],
     ) -> Sequence[RecordData]:
         """This method is responsible for translating the `Example` and `Output` of the task to :class:`RecordData`
 
@@ -869,8 +881,11 @@ class ArgillaEvaluator(
 
     @final
     def evaluate(
-        self, example: Example[Input, ExpectedOutput], eval_id: str, *output: Output
+        self,
+        example: Example[Input, ExpectedOutput],
+        eval_id: str,
+        *example_outputs: SuccessfulExampleOutput[Output],
     ) -> None:
-        records = self._to_record(example, *output)
+        records = self._to_record(example, *example_outputs)
         for record in records:
             self._client.add_record(eval_id, record)
