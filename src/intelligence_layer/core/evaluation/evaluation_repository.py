@@ -43,11 +43,13 @@ class SerializedExampleEvaluation(BaseModel):
     """A json-serialized evaluation of a single example in a dataset.
 
     Attributes:
+        eval_id: Identifier of the run the evaluated example belongs to.
         example_id: Unique identifier of the example this evaluation was created for.
         is_exception: qill be `True` if an exception occurred during evaluation.
         json_result: The actrual serialized evaluation result.
     """
 
+    eval_id: str
     example_id: str
     is_exception: bool
     json_result: str
@@ -57,6 +59,7 @@ class SerializedExampleEvaluation(BaseModel):
         cls, result: ExampleEvaluation[Evaluation]
     ) -> "SerializedExampleEvaluation":
         return cls(
+            eval_id=result.eval_id,
             json_result=JsonSerializer(root=result.result).model_dump_json(),
             is_exception=isinstance(result.result, FailedExampleEvaluation),
             example_id=result.example_id,
@@ -67,11 +70,13 @@ class SerializedExampleEvaluation(BaseModel):
     ) -> ExampleEvaluation[Evaluation]:
         if self.is_exception:
             return ExampleEvaluation(
+                eval_id=self.eval_id,
                 example_id=self.example_id,
                 result=FailedExampleEvaluation.model_validate_json(self.json_result),
             )
         else:
             return ExampleEvaluation(
+                eval_id=self.eval_id,
                 example_id=self.example_id,
                 result=evaluation_type.model_validate_json(self.json_result),
             )
@@ -213,17 +218,15 @@ class FileEvaluationRepository(EvaluationRepository):
         trace = TaskSpanTrace.from_task_span(
             cast(InMemoryTaskSpan, in_memory_tracer.entries[0])
         )
-        return ExampleTrace(example_id=example_id, trace=trace)
+        return ExampleTrace(run_id=run_id, example_id=example_id, trace=trace)
 
     def example_tracer(self, run_id: str, example_id: str) -> Tracer:
         file_path = self._example_trace_path(run_id, example_id)
         return FileTracer(file_path)
 
-    def store_example_evaluation(
-        self, eval_id: str, result: ExampleEvaluation[Evaluation]
-    ) -> None:
+    def store_example_evaluation(self, result: ExampleEvaluation[Evaluation]) -> None:
         serialized_result = SerializedExampleEvaluation.from_example_result(result)
-        self._example_result_path(eval_id, result.example_id).write_text(
+        self._example_result_path(result.eval_id, result.example_id).write_text(
             serialized_result.model_dump_json(indent=2)
         )
 
@@ -373,6 +376,7 @@ class InMemoryEvaluationRepository(EvaluationRepository):
             return None
         assert tracer
         return ExampleTrace(
+            run_id=run_id,
             example_id=example_id,
             trace=TaskSpanTrace.from_task_span(
                 cast(InMemoryTaskSpan, tracer.entries[0])
@@ -397,9 +401,9 @@ class InMemoryEvaluationRepository(EvaluationRepository):
         )
 
     def store_example_evaluation(
-        self, eval_id: str, evaluation: ExampleEvaluation[Evaluation]
+        self, evaluation: ExampleEvaluation[Evaluation]
     ) -> None:
-        self._example_evaluations[eval_id].append(evaluation)
+        self._example_evaluations[evaluation.eval_id].append(evaluation)
 
     def example_evaluations(
         self, eval_id: str, evaluation_type: type[Evaluation]
