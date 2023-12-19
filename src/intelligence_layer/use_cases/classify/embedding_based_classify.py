@@ -35,7 +35,7 @@ class QdrantSearchInput(BaseModel):
     filter: models.Filter
 
 
-class QdrantSearch(Task[QdrantSearchInput, SearchOutput]):
+class QdrantSearch(Task[QdrantSearchInput, SearchOutput[int]]):
     """Performs search to find documents using QDrant filtering methods.
 
     Given a query, this task will utilize a retriever to fetch relevant text search results.
@@ -87,7 +87,9 @@ class QdrantSearch(Task[QdrantSearchInput, SearchOutput]):
         super().__init__()
         self._in_memory_retriever = in_memory_retriever
 
-    def do_run(self, input: QdrantSearchInput, task_span: TaskSpan) -> SearchOutput:
+    def do_run(
+        self, input: QdrantSearchInput, task_span: TaskSpan
+    ) -> SearchOutput[int]:
         results = self._in_memory_retriever.get_filtered_documents_with_scores(
             input.query, input.filter
         )
@@ -215,7 +217,7 @@ class EmbeddingBasedClassify(Task[ClassifyInput, MultiLabelClassifyOutput]):
 
     def _label_search(
         self, chunk: Chunk, label: str, task_span: TaskSpan
-    ) -> SearchOutput:
+    ) -> SearchOutput[int]:
         search_input = QdrantSearchInput(
             query=chunk,
             filter=models.Filter(
@@ -230,7 +232,7 @@ class EmbeddingBasedClassify(Task[ClassifyInput, MultiLabelClassifyOutput]):
         return self._qdrant_search.run(search_input, task_span)
 
     def _calculate_scores(
-        self, results_per_label: Sequence[SearchOutput]
+        self, results_per_label: Sequence[SearchOutput[int]]
     ) -> Sequence[float]:
         return [
             (statistics.mean(r.score for r in r_per_l.results) + 1) / 2

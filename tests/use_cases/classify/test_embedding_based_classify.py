@@ -22,6 +22,7 @@ from intelligence_layer.use_cases.classify.embedding_based_classify import (
     QdrantSearch,
     QdrantSearchInput,
 )
+from tests.conftest import to_document
 
 
 @fixture
@@ -91,7 +92,9 @@ def test_qdrant_search(
         ),
     )
     result = qdrant_search.run(search_input, no_op_tracer)
-    assert [r.document for r in result.results] == [in_memory_retriever_documents[0]]
+    assert [to_document(r.document_chunk) for r in result.results] == [
+        in_memory_retriever_documents[0]
+    ]
 
 
 def test_embedding_based_classify_returns_score_for_all_labels(

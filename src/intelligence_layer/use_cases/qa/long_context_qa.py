@@ -105,7 +105,9 @@ class LongContextQa(Task[LongContextQaInput, MultipleChunkQaOutput]):
         )
 
         multi_chunk_qa_input = MultipleChunkQaInput(
-            chunks=[Chunk(result.document.text) for result in search_output.results],
+            chunks=[
+                Chunk(result.document_chunk.text) for result in search_output.results
+            ],
             question=input.question,
             language=input.language,
         )
