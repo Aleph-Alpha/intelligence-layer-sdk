@@ -98,7 +98,7 @@ def test_single_chunk_summarize_evaluator(
         run_overview.id
     )
 
-    assert len(evaluation_overview.statistics.evaluations) == 2
+    assert evaluation_overview.successful_count == 2
     good_result = (
         single_chunk_summarize_evaluator._evaluation_repository.example_evaluation(
             evaluation_overview.id,
@@ -144,7 +144,7 @@ def test_long_context_summarize_evaluator(
         run_overview.id
     )
 
-    assert len(evaluation_overview.statistics.evaluations) == 2
+    assert evaluation_overview.successful_count == 2
     good_result = (
         long_context_summarize_evaluator._evaluation_repository.example_evaluation(
             evaluation_overview.id,

@@ -9,6 +9,7 @@ from intelligence_layer.core import (
     EvaluationRepository,
     Evaluator,
 )
+from intelligence_layer.core.evaluation.accumulator import MeanAccumulator
 
 Probability = NewType("Probability", float)
 
@@ -106,16 +107,10 @@ class SingleLabelClassifyEvaluator(
     def aggregate(
         self, evaluations: Iterable[SingleLabelClassifyEvaluation]
     ) -> AggregatedSingleLabelClassifyEvaluation:
-        evaluations_list = list(evaluations)
-        if len(evaluations_list) != 0:
-            correct_answers = len(
-                [eval.correct for eval in evaluations_list if eval.correct is True]
-            ) / len(evaluations_list)
-        else:
-            correct_answers = 0
-        return AggregatedSingleLabelClassifyEvaluation(
-            percentage_correct=correct_answers
-        )
+        acc = MeanAccumulator()
+        for evaluation in evaluations:
+            acc.add(1.0 if evaluation.correct else 0.0)
+        return AggregatedSingleLabelClassifyEvaluation(percentage_correct=acc.extract())
 
 
 class MultiLabelClassifyEvaluation(BaseModel):

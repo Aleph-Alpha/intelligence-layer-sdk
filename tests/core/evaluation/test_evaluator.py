@@ -14,6 +14,7 @@ from intelligence_layer.core import (
     NoOpTracer,
     Tracer,
 )
+from intelligence_layer.core.evaluation.accumulator import MeanAccumulator
 from intelligence_layer.core.evaluation.domain import (
     Evaluation,
     EvaluationOverview,
@@ -81,10 +82,10 @@ class ComparingEvaluator(
     def aggregate(
         self, evaluations: Iterable[ComparisonEvaluation]
     ) -> ComparisonAggregation:
-        evals = list(evaluations)
-        return ComparisonAggregation(
-            equal_ratio=evals.count(ComparisonEvaluation(is_equal=True)) / len(evals)
-        )
+        acc = MeanAccumulator()
+        for evaluation in evaluations:
+            acc.add(1.0 if evaluation.is_equal else 0.0)
+        return ComparisonAggregation(equal_ratio=acc.extract())
 
 
 class DummyEvaluatorWithoutTypeHints(DummyEvaluator):

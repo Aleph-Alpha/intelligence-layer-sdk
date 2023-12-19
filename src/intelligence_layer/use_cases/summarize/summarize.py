@@ -1,4 +1,3 @@
-from statistics import mean
 from typing import Iterable, Sequence, Union
 
 from pydantic import BaseModel
@@ -12,6 +11,7 @@ from intelligence_layer.core import (
     Language,
     RougeGrader,
 )
+from intelligence_layer.core.evaluation.accumulator import MeanAccumulator
 
 
 class LongContextSummarizeInput(BaseModel):
@@ -98,7 +98,6 @@ class AggregatedSummarizeEvaluation(BaseModel):
 
     aggregate_bleu: float
     aggregate_rouge: float
-    evaluations: Sequence[SummarizeEvaluation]
 
 
 class SingleChunkSummarizeEvaluator(
@@ -136,18 +135,7 @@ class SingleChunkSummarizeEvaluator(
     def aggregate(
         self, evaluations: Iterable[SummarizeEvaluation]
     ) -> AggregatedSummarizeEvaluation:
-        evaluations_list = list(evaluations)
-        if len(evaluations_list) != 0:
-            bleu_avg = mean(eval.bleu for eval in evaluations_list)
-            rouge_avg = mean(eval.rouge for eval in evaluations_list)
-        else:
-            bleu_avg = 0.0
-            rouge_avg = 0.0
-        return AggregatedSummarizeEvaluation(
-            aggregate_bleu=bleu_avg,
-            aggregate_rouge=rouge_avg,
-            evaluations=evaluations_list,
-        )
+        return aggregate_summarize_evaluation(evaluations)
 
 
 class LongContextSummarizeEvaluator(
@@ -188,15 +176,18 @@ class LongContextSummarizeEvaluator(
     def aggregate(
         self, evaluations: Iterable[SummarizeEvaluation]
     ) -> AggregatedSummarizeEvaluation:
-        evaluations_list = list(evaluations)
-        if len(evaluations_list) != 0:
-            bleu_avg = mean(eval.bleu for eval in evaluations_list)
-            rouge_avg = mean(eval.rouge for eval in evaluations_list)
-        else:
-            bleu_avg = 0.0
-            rouge_avg = 0.0
-        return AggregatedSummarizeEvaluation(
-            aggregate_bleu=bleu_avg,
-            aggregate_rouge=rouge_avg,
-            evaluations=evaluations_list,
-        )
+        return aggregate_summarize_evaluation(evaluations)
+
+
+def aggregate_summarize_evaluation(
+    evaluations: Iterable[SummarizeEvaluation],
+) -> AggregatedSummarizeEvaluation:
+    acc_bleu = MeanAccumulator()
+    acc_rouge = MeanAccumulator()
+    for evaluation in evaluations:
+        acc_bleu.add(evaluation.bleu)
+        acc_rouge.add(evaluation.rouge)
+    return AggregatedSummarizeEvaluation(
+        aggregate_bleu=acc_bleu.extract(),
+        aggregate_rouge=acc_rouge.extract(),
+    )
