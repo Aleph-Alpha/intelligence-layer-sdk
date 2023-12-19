@@ -110,7 +110,7 @@ class SingleChunkQa(Task[SingleChunkQaInput, SingleChunkQaOutput]):
         super().__init__()
         self._client = client
         self._model = model
-        self._instruction = Instruct(client)
+        self._instruction = Instruct(client, model)
         self._text_highlight = TextHighlight(client)
         self._instruction_config = instruction_config
         self._maximum_tokens = maximum_tokens
@@ -149,7 +149,6 @@ class SingleChunkQa(Task[SingleChunkQaInput, SingleChunkQaOutput]):
             InstructInput(
                 instruction=instruction,
                 input=input,
-                model=self._model,
                 maximum_response_tokens=self._maximum_tokens,
             ),
             task_span,

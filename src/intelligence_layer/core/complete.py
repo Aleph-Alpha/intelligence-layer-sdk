@@ -73,9 +73,6 @@ class InstructInput(BaseModel):
         instruction: A textual instruction for the model.
             Could be a directive to answer a question or to translate something.
         input: The text input for the instruction, e.g. a text to be translated.
-        model: The name of the model that should handle the instruction.
-            Certain models are optimized for handling such instruction tasks.
-            Typically their name contains 'control', e.g. 'luminous-extended-control'.
         response_prefix: A string that is provided to the LLM as a prefix of the response.
             This can steer the model completion.
         maximum_response_tokens: The maximum number of tokens to be generated in the answer.
@@ -84,7 +81,6 @@ class InstructInput(BaseModel):
 
     instruction: str
     input: Optional[str]
-    model: str
     response_prefix: str = ""
     maximum_response_tokens: int = 64
 
@@ -112,6 +108,9 @@ class Instruct(Task[InstructInput, PromptOutput]):
 
     Args:
         client: Aleph Alpha client instance for running model related API calls.
+        model: The name of the model that should handle the instruction.
+            Certain models are optimized for handling such instruction tasks.
+            Typically their name contains 'control', e.g. 'luminous-extended-control'.
 
     Attributes:
         INSTRUCTION_PROMPT_TEMPLATE: The prompt-template used to build the actual `Prompt` sent
@@ -142,10 +141,11 @@ class Instruct(Task[InstructInput, PromptOutput]):
 {% endif %}
 ### Response:{{response_prefix}}"""
 
-    def __init__(self, client: AlephAlphaClientProtocol) -> None:
+    def __init__(self, client: AlephAlphaClientProtocol, model: str) -> None:
         super().__init__()
         self._client = client
         self._completion = Complete(client)
+        self._model = model
 
     def do_run(self, input: InstructInput, task_span: TaskSpan) -> PromptOutput:
         prompt_with_metadata = PromptTemplate(
@@ -158,7 +158,7 @@ class Instruct(Task[InstructInput, PromptOutput]):
         response = self._complete(
             prompt_with_metadata.prompt,
             input.maximum_response_tokens,
-            input.model,
+            self._model,
             task_span,
         )
         return PromptOutput(
@@ -204,16 +204,12 @@ class FewShotInput(BaseModel):
     Attributes:
         few_shot_config: The configuration to be used for generating a response.
         input: The text input for the prompt, e.g. a text to be translated.
-        model: The name of the model that should handle the prompt.
-            Vanilla models work best with few-shot promptung.
-            These include 'luminous-base', 'extended' & 'supreme'.
         maximum_response_tokens: The maximum number of tokens to be generated in the answer.
             The default corresponds to roughly one short paragraph.
     """
 
     few_shot_config: FewShotConfig
     input: str
-    model: str
     maximum_response_tokens: int = 64
 
 
@@ -225,6 +221,9 @@ class FewShot(Task[FewShotInput, PromptOutput]):
 
     Args:
         client: Aleph Alpha client instance for running model related API calls.
+        model: The name of the model that should handle the prompt.
+            Vanilla models work best with few-shot promptung.
+            These include 'luminous-base', 'extended' & 'supreme'.
 
     Attributes:
         FEW_SHOT_PROMPT_TEMPLATE: The prompt-template used to build the actual `Prompt` sent
@@ -269,10 +268,11 @@ class FewShot(Task[FewShotInput, PromptOutput]):
 {{input_prefix}}: {% promptrange input %}{{input}}{% endpromptrange %}
 {{response_prefix}}:"""
 
-    def __init__(self, client: AlephAlphaClientProtocol) -> None:
+    def __init__(self, client: AlephAlphaClientProtocol, model: str) -> None:
         super().__init__()
         self._client = client
         self._completion = Complete(client)
+        self._model = model
 
     def do_run(self, input: FewShotInput, task_span: TaskSpan) -> PromptOutput:
         prompt_with_metadata = PromptTemplate(
@@ -290,7 +290,7 @@ class FewShot(Task[FewShotInput, PromptOutput]):
             prompt_with_metadata.prompt,
             input.maximum_response_tokens,
             input.few_shot_config.additional_stop_sequences,
-            input.model,
+            self._model,
             task_span,
         )
         return PromptOutput(

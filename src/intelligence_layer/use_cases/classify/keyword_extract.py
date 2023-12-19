@@ -153,7 +153,7 @@ class KeywordExtract(Task[KeywordExtractInput, KeywordExtractOutput]):
         maximum_tokens: int = 32,
     ) -> None:
         self._few_shot_configs = few_shot_configs
-        self._few_shot = FewShot(client)
+        self._few_shot = FewShot(client, model)
         self._model = model
         self._maximum_tokens = maximum_tokens
 
@@ -165,7 +165,6 @@ class KeywordExtract(Task[KeywordExtractInput, KeywordExtractOutput]):
             FewShotInput(
                 few_shot_config=config,
                 input=input.chunk,
-                model=self._model,
                 maximum_response_tokens=self._maximum_tokens,
             ),
             task_span,

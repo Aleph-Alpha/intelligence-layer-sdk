@@ -175,7 +175,7 @@ Condense multiple answers into a single answer. Rely only on the provided answer
     ):
         super().__init__()
         self._client = client
-        self._instruction = Instruct(client)
+        self._instruction = Instruct(client, model)
         self._single_chunk_qa = SingleChunkQa(client, model)
         self._model = model
         self._merge_answers_instruct_configs = (
@@ -248,7 +248,6 @@ Condense multiple answers into a single answer. Rely only on the provided answer
             InstructInput(
                 instruction=instruction_config.instruction,
                 input=input,
-                model=self._model,
                 response_prefix=f"\n{instruction_config.final_answer_label}",
             ),
             task_span,
