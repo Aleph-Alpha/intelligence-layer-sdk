@@ -3,16 +3,19 @@ from typing import Sequence
 from intelligence_layer.connectors.document_index.document_index import (
     CollectionPath,
     DocumentIndexClient,
+    DocumentPath,
     SearchQuery,
 )
 from intelligence_layer.connectors.retrievers.base_retriever import (
     BaseRetriever,
     Document,
+    DocumentChunk,
     SearchResult,
 )
+from intelligence_layer.core.chunk import Chunk
 
 
-class DocumentIndexRetriever(BaseRetriever):
+class DocumentIndexRetriever(BaseRetriever[DocumentPath]):
     """Search through documents within collections in the `DocumentIndexClient`.
 
     We initialize this Retriever with a collection & namespace names, and we can find the documents in the collection
@@ -48,7 +51,9 @@ class DocumentIndexRetriever(BaseRetriever):
         self._k = k
         self._threshold = threshold
 
-    def get_relevant_documents_with_scores(self, query: str) -> Sequence[SearchResult]:
+    def get_relevant_documents_with_scores(
+        self, query: str
+    ) -> Sequence[SearchResult[DocumentPath]]:
         search_query = SearchQuery(
             query=query, max_results=self._k, min_score=self._threshold
         )
@@ -57,12 +62,16 @@ class DocumentIndexRetriever(BaseRetriever):
         )
         relevant_chunks = [
             SearchResult(
+                id=result.document_path,
                 score=result.score,
-                document=Document(
-                    text=result.section,
-                    id=result.document_path.to_slash_separated_str(),
+                document_chunk=DocumentChunk(
+                    text=Chunk(result.section),
                 ),
             )
             for result in response
         ]
         return relevant_chunks
+
+    def get_full_document(self, id: DocumentPath) -> Document:
+        contents = self._document_index.document(id)
+        return Document(text="\n".join(contents.contents), metadata=contents.metadata)

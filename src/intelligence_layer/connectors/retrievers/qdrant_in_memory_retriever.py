@@ -13,6 +13,7 @@ from intelligence_layer.connectors.limited_concurrency_client import (
 from intelligence_layer.connectors.retrievers.base_retriever import (
     BaseRetriever,
     Document,
+    DocumentChunk,
     SearchResult,
 )
 
@@ -29,7 +30,7 @@ class RetrieverType(Enum):
     SYMMETRIC = (SemanticRepresentation.Symmetric, SemanticRepresentation.Symmetric)
 
 
-class QdrantInMemoryRetriever(BaseRetriever):
+class QdrantInMemoryRetriever(BaseRetriever[int]):
     """Search through documents stored in memory using semantic search.
 
     This retriever uses a [Qdrant](https://github.com/qdrant/qdrant)-in-Memory vector store instance to store documents and their asymmetric embeddings.
@@ -77,7 +78,9 @@ class QdrantInMemoryRetriever(BaseRetriever):
         )
         self._add_texts_to_memory(documents)
 
-    def get_relevant_documents_with_scores(self, query: str) -> Sequence[SearchResult]:
+    def get_relevant_documents_with_scores(
+        self, query: str
+    ) -> Sequence[SearchResult[int]]:
         query_embedding = self._embed(query, self._query_representation)
         search_result = self._search_client.search(
             collection_name=self._collection_name,
@@ -99,12 +102,13 @@ class QdrantInMemoryRetriever(BaseRetriever):
         ).embedding
 
     @staticmethod
-    def _point_to_search_result(point: ScoredPoint) -> SearchResult:
+    def _point_to_search_result(point: ScoredPoint) -> SearchResult[int]:
         assert point.payload
-
+        assert isinstance(point.id, int)
         return SearchResult(
+            id=point.id,
             score=point.score,
-            document=Document(**point.payload),
+            document_chunk=DocumentChunk(**point.payload),
         )
 
     def _add_texts_to_memory(self, documents: Sequence[Document]) -> None:
@@ -132,7 +136,7 @@ class QdrantInMemoryRetriever(BaseRetriever):
 
     def get_filtered_documents_with_scores(
         self, query: str, filter: models.Filter
-    ) -> Sequence[SearchResult]:
+    ) -> Sequence[SearchResult[int]]:
         """Specific method for `InMemoryRetriever` to support filtering search results."""
         query_embedding = self._embed(query, self._query_representation)
         search_result = self._search_client.search(
@@ -142,3 +146,10 @@ class QdrantInMemoryRetriever(BaseRetriever):
             query_filter=filter,
         )
         return [self._point_to_search_result(point) for point in search_result]
+
+    def get_full_document(self, id: int) -> Document:
+        record = self._search_client.retrieve(
+            self._collection_name, [id], True, False
+        ).pop()
+        assert record.payload
+        return Document(**record.payload)

@@ -16,5 +16,8 @@ def test_document_index_retriever(
     document_index_retriever: DocumentIndexRetriever,
 ) -> None:
     documents = document_index_retriever.get_relevant_documents_with_scores(QUERY)
-    assert documents[0].document.text[0:30] in TEXTS[0]
-    assert documents[1].document.text[0:30] in TEXTS[1]
+    assert documents[0].document_chunk.text[0:30] in TEXTS[0]
+    assert documents[1].document_chunk.text[0:30] in TEXTS[1]
+    document_path = documents[0].id
+    assert document_path.collection_path == document_index_retriever._collection_path
+    assert document_path.document_name == "Pizza"

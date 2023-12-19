@@ -1,8 +1,9 @@
-from typing import Sequence
+from typing import Generic, Sequence
 
 from pydantic import BaseModel
 
 from intelligence_layer.connectors.retrievers.base_retriever import (
+    ID,
     BaseRetriever,
     SearchResult,
 )
@@ -20,17 +21,17 @@ class SearchInput(BaseModel):
     query: str
 
 
-class SearchOutput(BaseModel):
+class SearchOutput(BaseModel, Generic[ID]):
     """The output of a `Search` task.
 
     Attributes:
         results: Each result contains a text and corresponding score.
     """
 
-    results: Sequence[SearchResult]
+    results: Sequence[SearchResult[ID]]
 
 
-class Search(Task[SearchInput, SearchOutput]):
+class Search(Generic[ID], Task[SearchInput, SearchOutput[ID]]):
     """Performs search to find documents.
 
     Given a query, this task will utilize a retriever to fetch relevant text search results.
@@ -60,10 +61,10 @@ class Search(Task[SearchInput, SearchOutput]):
         >>> output = task.run(input, tracer)
     """
 
-    def __init__(self, retriever: BaseRetriever):
+    def __init__(self, retriever: BaseRetriever[ID]):
         super().__init__()
         self._retriever = retriever
 
-    def do_run(self, input: SearchInput, task_span: TaskSpan) -> SearchOutput:
+    def do_run(self, input: SearchInput, task_span: TaskSpan) -> SearchOutput[ID]:
         results = self._retriever.get_relevant_documents_with_scores(input.query)
         return SearchOutput(results=results)

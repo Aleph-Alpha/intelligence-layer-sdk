@@ -17,6 +17,7 @@ from intelligence_layer.connectors import (
     QdrantInMemoryRetriever,
     RetrieverType,
 )
+from intelligence_layer.connectors.retrievers.base_retriever import DocumentChunk
 from intelligence_layer.core import (
     InMemoryDatasetRepository,
     NoOpTracer,
@@ -88,6 +89,10 @@ def document_index_retriever(
     return DocumentIndexRetriever(
         document_index, namespace="aleph-alpha", collection="wikipedia-de", k=2
     )
+
+
+def to_document(document_chunk: DocumentChunk) -> Document:
+    return Document(text=document_chunk.text, metadata=document_chunk.metadata)
 
 
 class DummyStringInput(BaseModel):

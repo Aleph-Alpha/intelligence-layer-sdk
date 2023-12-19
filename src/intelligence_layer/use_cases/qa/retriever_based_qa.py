@@ -3,7 +3,7 @@ from pydantic import BaseModel
 from intelligence_layer.connectors.limited_concurrency_client import (
     AlephAlphaClientProtocol,
 )
-from intelligence_layer.connectors.retrievers.base_retriever import BaseRetriever
+from intelligence_layer.connectors.retrievers.base_retriever import ID, BaseRetriever
 from intelligence_layer.core.chunk import Chunk
 from intelligence_layer.core.detect_language import Language
 from intelligence_layer.core.task import Task
@@ -67,7 +67,7 @@ class RetrieverBasedQa(Task[RetrieverBasedQaInput, MultipleChunkQaOutput]):
     def __init__(
         self,
         client: AlephAlphaClientProtocol,
-        retriever: BaseRetriever,
+        retriever: BaseRetriever[ID],
         model: str = "luminous-supreme-control",
     ):
         super().__init__()
@@ -82,7 +82,9 @@ class RetrieverBasedQa(Task[RetrieverBasedQaInput, MultipleChunkQaOutput]):
         search_output = self._search.run(SearchInput(query=input.question), task_span)
 
         multi_chunk_qa_input = MultipleChunkQaInput(
-            chunks=[Chunk(result.document.text) for result in search_output.results],
+            chunks=[
+                Chunk(result.document_chunk.text) for result in search_output.results
+            ],
             question=input.question,
             language=input.language,
         )
