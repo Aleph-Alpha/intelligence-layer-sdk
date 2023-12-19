@@ -207,7 +207,7 @@ def test_file_repository_run_id_returns_run_ids(
     run_id = "id"
 
     file_evaluation_repository.store_example_output(
-        run_id, ExampleOutput(example_id="example_id", output=None)
+        run_id, ExampleOutput(run_id=run_id, example_id="example_id", output=None)
     )
 
     assert file_evaluation_repository.run_ids() == [run_id]
@@ -222,16 +222,22 @@ def evaluation_repository_returns_examples_in_same_order_for_two_runs(
 
     for example_id in range(num_examples):
         evaluation_repository.store_example_output(
-            run_id_1, ExampleOutput(example_id=str(example_id), output=None)
+            run_id_1,
+            ExampleOutput(run_id=run_id_1, example_id=str(example_id), output=None),
         )
 
     for example_id in reversed(range(num_examples)):
         evaluation_repository.store_example_output(
-            run_id_2, ExampleOutput(example_id=str(example_id), output=None)
+            run_id_2,
+            ExampleOutput(run_id=run_id_2, example_id=str(example_id), output=None),
         )
 
-    assert list(evaluation_repository.example_outputs(run_id_1, type(None))) == list(
-        evaluation_repository.example_outputs(run_id_2, type(None))
+    assert list(
+        (output.example_id, output.output)
+        for output in evaluation_repository.example_outputs(run_id_1, type(None))
+    ) == list(
+        (output.example_id, output.output)
+        for output in evaluation_repository.example_outputs(run_id_2, type(None))
     )
 
 

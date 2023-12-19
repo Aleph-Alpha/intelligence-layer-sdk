@@ -179,7 +179,8 @@ class ExampleOutput(BaseModel, Generic[Output]):
     Created to persist the output (including failures) of an individual example in the repository.
 
     Attributes:
-        example_id: Identifier of the :class:`Example`.
+        run_id: Identifier of the run that created the output.
+        example_id: Identifier of the :class:`Example` that provided the input for generating the output.
         output: Generated when running the :class:`Task`. When the running the task
             failed this is an :class:`FailedExampleRun`.
 
@@ -187,6 +188,7 @@ class ExampleOutput(BaseModel, Generic[Output]):
         Output: Interface of the output returned by the task.
     """
 
+    run_id: str
     example_id: str
     output: Output | FailedExampleRun
 
