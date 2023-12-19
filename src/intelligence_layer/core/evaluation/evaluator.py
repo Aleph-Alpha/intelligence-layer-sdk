@@ -141,9 +141,7 @@ class EvaluationRepository(ABC):
         ...
 
     @abstractmethod
-    def store_example_evaluation(
-        self, eval_id: str, result: ExampleEvaluation[Evaluation]
-    ) -> None:
+    def store_example_evaluation(self, result: ExampleEvaluation[Evaluation]) -> None:
         """Stores an :class:`ExampleEvaluation` for a run in the repository.
 
         Args:
@@ -665,7 +663,7 @@ class Evaluator(
         except Exception as e:
             result = FailedExampleEvaluation.from_exception(e)
         self._evaluation_repository.store_example_evaluation(
-            eval_id, ExampleEvaluation(example_id=example.id, result=result)
+            ExampleEvaluation(eval_id=eval_id, example_id=example.id, result=result)
         )
 
     @final
@@ -764,9 +762,7 @@ class ArgillaEvaluationRepository(EvaluationRepository):
             eval_id, example_id, evaluation_type
         )
 
-    def store_example_evaluation(
-        self, _: str, __: ExampleEvaluation[Evaluation]
-    ) -> None:
+    def store_example_evaluation(self, _: ExampleEvaluation[Evaluation]) -> None:
         raise TypeError(
             "ArgillaEvaluationRepository does not support storing evaluations."
         )
@@ -776,7 +772,7 @@ class ArgillaEvaluationRepository(EvaluationRepository):
     ) -> Sequence[ExampleEvaluation[Evaluation]]:
         assert eval_type == ArgillaEvaluation
         # Mypy does not derive that the return type is always ExampleEvaluation with ArgillaEvaluation
-        return [ExampleEvaluation(example_id=e.example_id, result=e) for e in self._client.evaluations(eval_id)]  # type: ignore
+        return [ExampleEvaluation(eval_id=eval_id, example_id=e.example_id, result=e) for e in self._client.evaluations(eval_id)]  # type: ignore
 
     def failed_example_evaluations(
         self, eval_id: str, evaluation_type: type[Evaluation]

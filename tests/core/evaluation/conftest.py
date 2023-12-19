@@ -51,10 +51,25 @@ class DummyAggregatedEvaluationWithResultList(BaseModel):
 
 
 @fixture
-def failed_example_result() -> ExampleEvaluation[DummyEvaluation]:
+def eval_id() -> str:
+    return "eval_id"
+
+
+@fixture
+def failed_example_result(eval_id: str) -> ExampleEvaluation[DummyEvaluation]:
     return ExampleEvaluation(
-        example_id="other",
+        eval_id=eval_id,
+        example_id="failed_example",
         result=FailedExampleEvaluation(error_message="error"),
+    )
+
+
+@fixture
+def successful_example_result(eval_id: str) -> ExampleEvaluation[DummyEvaluation]:
+    return ExampleEvaluation(
+        eval_id=eval_id,
+        example_id="successful_example",
+        result=DummyEvaluation(result="result"),
     )
 
 
@@ -77,25 +92,18 @@ def string_dataset_id(
 
 
 @fixture
-def successful_example_result() -> ExampleEvaluation[DummyEvaluation]:
-    return ExampleEvaluation(
-        example_id="example_id",
-        result=DummyEvaluation(result="result"),
-    )
-
-
-@fixture
 def dummy_aggregated_evaluation() -> DummyAggregatedEvaluation:
     return DummyAggregatedEvaluation(score=0.5)
 
 
 @fixture
 def evaluation_run_overview(
+    eval_id: str,
     dummy_aggregated_evaluation: DummyAggregatedEvaluation,
 ) -> EvaluationOverview[DummyAggregatedEvaluation]:
     now = datetime.now()
     return EvaluationOverview(
-        id="eval-id",
+        id=eval_id,
         run_overviews=[
             RunOverview(
                 dataset_id="dataset",
