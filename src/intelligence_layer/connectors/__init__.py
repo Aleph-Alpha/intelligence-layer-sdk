@@ -1,5 +1,6 @@
 from .argilla.argilla_client import ArgillaClient as ArgillaClient
 from .argilla.argilla_client import ArgillaEvaluation as ArgillaEvaluation
+from .argilla.argilla_client import DefaultArgillaClient as DefaultArgillaClient
 from .argilla.argilla_client import Field as Field
 from .argilla.argilla_client import Question as Question
 from .argilla.argilla_client import Record as Record
