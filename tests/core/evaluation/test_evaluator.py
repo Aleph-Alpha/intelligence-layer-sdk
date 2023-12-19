@@ -4,22 +4,21 @@ from pydantic import BaseModel
 from pytest import fixture
 
 from intelligence_layer.core import (
+    Evaluation,
+    EvaluationOverview,
     Evaluator,
     Example,
+    ExpectedOutput,
     FailedExampleEvaluation,
     InMemoryDatasetRepository,
     InMemoryEvaluationRepository,
     InMemoryTaskSpan,
     InMemoryTracer,
     NoOpTracer,
+    SuccessfulExampleOutput,
     Tracer,
 )
 from intelligence_layer.core.evaluation.accumulator import MeanAccumulator
-from intelligence_layer.core.evaluation.domain import (
-    Evaluation,
-    EvaluationOverview,
-    ExpectedOutput,
-)
 from intelligence_layer.core.evaluation.evaluator import BaseEvaluator
 from intelligence_layer.core.evaluation.runner import Runner
 from intelligence_layer.core.task import Input, Output, Task
@@ -297,7 +296,10 @@ def test_base_evaluator_type_magic_works(
         BaseEvaluator[Input, Output, None, Evaluation, AggregatedEvaluationType]
     ):
         def evaluate(
-            self, example: Example[Input, ExpectedOutput], eval_id: str, *output: Output
+            self,
+            example: Example[Input, ExpectedOutput],
+            eval_id: str,
+            *outputs: SuccessfulExampleOutput[Output]
         ) -> None:
             pass
 

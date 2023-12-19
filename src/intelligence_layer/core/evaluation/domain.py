@@ -176,11 +176,12 @@ def _to_trace_entry(entry: InMemoryTaskSpan | InMemorySpan | LogEntry) -> Trace:
 class ExampleOutput(BaseModel, Generic[Output]):
     """Output of a single evaluated :class:`Example`
 
-    Created to persist the output of an individual example in the repository.
+    Created to persist the output (including failures) of an individual example in the repository.
 
     Attributes:
         example_id: Identifier of the :class:`Example`.
-        output: Generated when running the :class:`Task`.
+        output: Generated when running the :class:`Task`. When the running the task
+            failed this is an :class:`FailedExampleRun`.
 
     Generics:
         Output: Interface of the output returned by the task.
@@ -188,6 +189,22 @@ class ExampleOutput(BaseModel, Generic[Output]):
 
     example_id: str
     output: Output | FailedExampleRun
+
+
+class SuccessfulExampleOutput(BaseModel, Generic[Output]):
+    """Successful output of a single evaluated :class:`Example`
+
+    Attributes:
+        example_id: Identifier of the :class:`Example`.
+        output: Generated when running the :class:`Task`. This represent only
+            the output of an successful run.
+
+    Generics:
+        Output: Interface of the output returned by the task.
+    """
+
+    example_id: str
+    output: Output
 
 
 class ExampleTrace(BaseModel):

@@ -16,8 +16,9 @@ from intelligence_layer.core import (
     Example,
     InMemoryDatasetRepository,
     InMemoryEvaluationRepository,
+    Runner,
+    SuccessfulExampleOutput,
 )
-from intelligence_layer.core.evaluation.runner import Runner
 from tests.conftest import DummyStringInput, DummyStringOutput, DummyStringTask
 from tests.core.evaluation.conftest import DummyAggregatedEvaluation
 
@@ -88,13 +89,13 @@ class DummyStringTaskArgillaEvaluator(
     def _to_record(  # type: ignore
         self,
         example: Example[DummyStringInput, DummyStringOutput],
-        output: DummyStringOutput,
+        output: SuccessfulExampleOutput[DummyStringOutput],
     ) -> Sequence[RecordData]:
         return [
             RecordData(
                 content={
                     "input": example.input.input,
-                    "output": output.output,
+                    "output": output.output.output,
                 },
                 example_id=example.id,
             )
