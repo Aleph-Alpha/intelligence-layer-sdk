@@ -110,7 +110,6 @@ class Runner(Generic[Input, Output]):
             else:
                 successful_count += 1
             self._evaluation_repository.store_example_output(
-                run_id,
                 ExampleOutput[Output](
                     run_id=run_id, example_id=example_id, output=output
                 ),

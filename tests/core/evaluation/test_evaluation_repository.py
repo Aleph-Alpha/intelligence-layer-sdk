@@ -207,7 +207,7 @@ def test_file_repository_run_id_returns_run_ids(
     run_id = "id"
 
     file_evaluation_repository.store_example_output(
-        run_id, ExampleOutput(run_id=run_id, example_id="example_id", output=None)
+        ExampleOutput(run_id=run_id, example_id="example_id", output=None)
     )
 
     assert file_evaluation_repository.run_ids() == [run_id]
@@ -222,13 +222,11 @@ def evaluation_repository_returns_examples_in_same_order_for_two_runs(
 
     for example_id in range(num_examples):
         evaluation_repository.store_example_output(
-            run_id_1,
             ExampleOutput(run_id=run_id_1, example_id=str(example_id), output=None),
         )
 
     for example_id in reversed(range(num_examples)):
         evaluation_repository.store_example_output(
-            run_id_2,
             ExampleOutput(run_id=run_id_2, example_id=str(example_id), output=None),
         )
 

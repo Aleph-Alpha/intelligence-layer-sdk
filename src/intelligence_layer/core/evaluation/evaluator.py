@@ -94,13 +94,10 @@ class EvaluationRepository(ABC):
         ...
 
     @abstractmethod
-    def store_example_output(
-        self, run_id: str, example_output: ExampleOutput[Output]
-    ) -> None:
-        """Stores an individual :class:`ExampleOutput` for a given run.
+    def store_example_output(self, example_output: ExampleOutput[Output]) -> None:
+        """Stores an individual :class:`ExampleOutput`.
 
         Args:
-            run_id: The unique identifier of the run.
             example_output: The actual output.
         """
         ...
@@ -750,10 +747,8 @@ class ArgillaEvaluationRepository(EvaluationRepository):
     ) -> Iterable[ExampleOutput[Output]]:
         return self._evaluation_repository.example_outputs(run_id, output_type)
 
-    def store_example_output(
-        self, run_id: str, example_output: ExampleOutput[Output]
-    ) -> None:
-        return self._evaluation_repository.store_example_output(run_id, example_output)
+    def store_example_output(self, example_output: ExampleOutput[Output]) -> None:
+        return self._evaluation_repository.store_example_output(example_output)
 
     def example_trace(self, run_id: str, example_id: str) -> Optional[ExampleTrace]:
         return self._evaluation_repository.example_trace(run_id, example_id)
