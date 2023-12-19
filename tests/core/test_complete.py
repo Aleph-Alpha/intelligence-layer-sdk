@@ -17,19 +17,18 @@ from intelligence_layer.core.tracer import NoOpTracer
 
 @fixture
 def instruct(client: AlephAlphaClientProtocol) -> Instruct:
-    return Instruct(client)
+    return Instruct(client, model="luminous-base-control")
 
 
 @fixture
 def few_shot(client: AlephAlphaClientProtocol) -> FewShot:
-    return FewShot(client)
+    return FewShot(client, model="luminous-base")
 
 
 def test_instruct_without_input(instruct: Instruct, no_op_tracer: NoOpTracer) -> None:
     input = InstructInput(
         instruction="What is the capital of Germany?",
         input=None,
-        model="luminous-base-control",
     )
     output = instruct.run(input, no_op_tracer)
 
@@ -53,7 +52,6 @@ def test_few_shot(few_shot: FewShot, no_op_tracer: NoOpTracer) -> None:
             input_prefix="Question",
             response_prefix="Answer",
         ),
-        model="luminous-base",
     )
     output = few_shot.run(input, no_op_tracer)
 
