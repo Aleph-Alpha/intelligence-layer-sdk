@@ -197,6 +197,7 @@ class SuccessfulExampleOutput(BaseModel, Generic[Output]):
     """Successful output of a single evaluated :class:`Example`
 
     Attributes:
+        run_id: Identifier of the run that created the output.
         example_id: Identifier of the :class:`Example`.
         output: Generated when running the :class:`Task`. This represent only
             the output of an successful run.
@@ -205,6 +206,7 @@ class SuccessfulExampleOutput(BaseModel, Generic[Output]):
         Output: Interface of the output returned by the task.
     """
 
+    run_id: str
     example_id: str
     output: Output
 
