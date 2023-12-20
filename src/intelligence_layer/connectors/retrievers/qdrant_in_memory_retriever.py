@@ -1,6 +1,6 @@
 from concurrent.futures import ThreadPoolExecutor
 from enum import Enum
-from typing import Sequence
+from typing import Optional, Sequence
 
 from aleph_alpha_client import Prompt, SemanticEmbeddingRequest, SemanticRepresentation
 from qdrant_client import QdrantClient
@@ -147,9 +147,10 @@ class QdrantInMemoryRetriever(BaseRetriever[int]):
         )
         return [self._point_to_search_result(point) for point in search_result]
 
-    def get_full_document(self, id: int) -> Document:
-        record = self._search_client.retrieve(
-            self._collection_name, [id], True, False
-        ).pop()
+    def get_full_document(self, id: int) -> Optional[Document]:
+        records = self._search_client.retrieve(self._collection_name, [id], True, False)
+        if not records:
+            return None
+        record = records.pop()
         assert record.payload
         return Document(**record.payload)
