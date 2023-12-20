@@ -1,15 +1,10 @@
 from typing import Mapping
 
-from intelligence_layer.connectors.limited_concurrency_client import (
-    AlephAlphaClientProtocol,
-)
-from intelligence_layer.core.chunk import ChunkInput, ChunkTask
-from intelligence_layer.core.complete import FewShotConfig
+from intelligence_layer.connectors import AlephAlphaClientProtocol
+from intelligence_layer.core import ChunkInput, ChunkTask, Task, TaskSpan
 from intelligence_layer.core.detect_language import Language
-from intelligence_layer.core.task import Task
-from intelligence_layer.core.tracer import TaskSpan
-from intelligence_layer.use_cases.summarize.single_chunk_few_shot_summarize import (
-    SingleChunkFewShotSummarize,
+from intelligence_layer.use_cases.summarize.steerable_single_shot_summarize import (
+    SteerableSingleChunkSummarize,
 )
 from intelligence_layer.use_cases.summarize.summarize import (
     LongContextSummarizeInput,
@@ -18,13 +13,18 @@ from intelligence_layer.use_cases.summarize.summarize import (
     SingleChunkSummarizeInput,
 )
 
+INSTRUCTION_CONFIGS = {
+    Language("en"): "Summarize the text in a single paragraph.",
+    Language("de"): "Fasse den Text in einem Paragraphen zusammen.",
+}
 
-class LongContextFewShotSummarize(
+
+class SteerableLongContextSummarize(
     Task[LongContextSummarizeInput, LongContextSummarizeOutput]
 ):
     """Condenses a long text into a summary.
 
-    Generate a summary given a few-shot setup.
+    Generate a summary given an instruction setup.
 
     Note:
         - `model` provided should be a vanilla model, such as "luminous-base".
@@ -44,21 +44,24 @@ class LongContextFewShotSummarize(
     def __init__(
         self,
         client: AlephAlphaClientProtocol,
-        few_shot_configs: Mapping[Language, FewShotConfig],
-        model: str,
         max_generated_tokens: int,
         max_tokens_per_chunk: int,
+        model: str = "luminous-base-control",
+        instruction_configs: Mapping[Language, str] = INSTRUCTION_CONFIGS,
     ) -> None:
-        self._single_chunk_summarize = SingleChunkFewShotSummarize(
-            client, model, max_generated_tokens, few_shot_configs
+        super().__init__()
+        self._summarize = SteerableSingleChunkSummarize(
+            client, model, max_generated_tokens, instruction_configs
         )
-        self._chunk = ChunkTask(client, model, max_tokens_per_chunk)
+        self._chunk_task = ChunkTask(
+            client, model=model, max_tokens_per_chunk=max_tokens_per_chunk
+        )
 
     def do_run(
         self, input: LongContextSummarizeInput, task_span: TaskSpan
     ) -> LongContextSummarizeOutput:
-        chunk_output = self._chunk.run(ChunkInput(text=input.text), task_span)
-        summary_outputs = self._single_chunk_summarize.run_concurrently(
+        chunk_output = self._chunk_task.run(ChunkInput(text=input.text), task_span)
+        summary_outputs = self._summarize.run_concurrently(
             [
                 SingleChunkSummarizeInput(chunk=chunk, language=input.language)
                 for chunk in chunk_output.chunks

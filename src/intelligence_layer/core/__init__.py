@@ -12,7 +12,9 @@ from intelligence_layer.core.intelligence_app import (
 )
 
 from .chunk import Chunk as Chunk
-from .chunk import ChunkInput, ChunkOutput, ChunkTask
+from .chunk import ChunkInput as ChunkInput
+from .chunk import ChunkOutput as ChunkOutput
+from .chunk import ChunkTask as ChunkTask
 from .complete import Complete as Complete
 from .complete import CompleteInput as CompleteInput
 from .complete import CompleteOutput as CompleteOutput
@@ -20,6 +22,7 @@ from .complete import Instruct, InstructInput, PromptOutput
 from .detect_language import DetectLanguage, DetectLanguageInput, DetectLanguageOutput
 from .detect_language import Language as Language
 from .echo import EchoInput, EchoOutput, EchoTask
+from .evaluation.accumulator import MeanAccumulator as MeanAccumulator
 from .evaluation.dataset_repository import (
     FileDatasetRepository as FileDatasetRepository,
 )
