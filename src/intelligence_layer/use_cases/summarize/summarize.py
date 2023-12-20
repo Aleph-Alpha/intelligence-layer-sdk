@@ -9,9 +9,9 @@ from intelligence_layer.core import (
     EvaluationRepository,
     Evaluator,
     Language,
+    MeanAccumulator,
     RougeGrader,
 )
-from intelligence_layer.core.evaluation.accumulator import MeanAccumulator
 
 
 class LongContextSummarizeInput(BaseModel):
