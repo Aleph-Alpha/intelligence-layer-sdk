@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from contextlib import AbstractContextManager
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from types import TracebackType
 from typing import TYPE_CHECKING, Generic, Mapping, Optional, Sequence, TypeVar, Union
@@ -43,6 +43,14 @@ else:
         | frozenset["PydanticSerializable"]
         | Mapping[str, "PydanticSerializable"],
     )
+
+
+def utc_now() -> datetime:
+    """return datetime object with utc timezone.
+
+    datetime.utcnow() returns a datetime object without timezone, so this function is preferred.
+    """
+    return datetime.now(timezone.utc)
 
 
 class Tracer(ABC):
@@ -208,7 +216,7 @@ class CompositeTracer(Tracer, Generic[TracerVar]):
     def span(
         self, name: str, timestamp: Optional[datetime] = None
     ) -> "CompositeSpan[Span]":
-        timestamp = timestamp or datetime.utcnow()
+        timestamp = timestamp or utc_now()
         return CompositeSpan([tracer.span(name, timestamp) for tracer in self.tracers])
 
     def task_span(
@@ -217,7 +225,7 @@ class CompositeTracer(Tracer, Generic[TracerVar]):
         input: PydanticSerializable,
         timestamp: Optional[datetime] = None,
     ) -> "CompositeTaskSpan":
-        timestamp = timestamp or datetime.utcnow()
+        timestamp = timestamp or utc_now()
         return CompositeTaskSpan(
             [tracer.task_span(task_name, input, timestamp) for tracer in self.tracers]
         )
@@ -241,12 +249,12 @@ class CompositeSpan(Generic[SpanVar], CompositeTracer[SpanVar], Span):
         value: PydanticSerializable,
         timestamp: Optional[datetime] = None,
     ) -> None:
-        timestamp = timestamp or datetime.utcnow()
+        timestamp = timestamp or utc_now()
         for tracer in self.tracers:
             tracer.log(message, value, timestamp)
 
     def end(self, timestamp: Optional[datetime] = None) -> None:
-        timestamp = timestamp or datetime.utcnow()
+        timestamp = timestamp or utc_now()
         for tracer in self.tracers:
             tracer.end(timestamp)
 
@@ -358,7 +366,7 @@ class InMemoryTracer(BaseModel, Tracer):
     entries: list[Union[LogEntry, "InMemoryTaskSpan", "InMemorySpan"]] = []
 
     def span(self, name: str, timestamp: Optional[datetime] = None) -> "InMemorySpan":
-        child = InMemorySpan(name=name, start_timestamp=timestamp or datetime.utcnow())
+        child = InMemorySpan(name=name, start_timestamp=timestamp or utc_now())
         self.entries.append(child)
         return child
 
@@ -369,7 +377,7 @@ class InMemoryTracer(BaseModel, Tracer):
         timestamp: Optional[datetime] = None,
     ) -> "InMemoryTaskSpan":
         child = InMemoryTaskSpan(
-            name=task_name, input=input, start_timestamp=timestamp or datetime.utcnow()
+            name=task_name, input=input, start_timestamp=timestamp or utc_now()
         )
         self.entries.append(child)
         return child
@@ -402,14 +410,12 @@ class InMemorySpan(InMemoryTracer, Span):
         timestamp: Optional[datetime] = None,
     ) -> None:
         self.entries.append(
-            LogEntry(
-                message=message, value=value, timestamp=timestamp or datetime.utcnow()
-            )
+            LogEntry(message=message, value=value, timestamp=timestamp or utc_now())
         )
 
     def end(self, timestamp: Optional[datetime] = None) -> None:
         if not self.end_timestamp:
-            self.end_timestamp = timestamp or datetime.utcnow()
+            self.end_timestamp = timestamp or utc_now()
 
     def _rich_render_(self) -> Tree:
         """Renders the trace via classes in the `rich` package"""
@@ -574,7 +580,7 @@ class FileTracer(Tracer):
                 uuid=span.uuid,
                 parent=self.uuid,
                 name=name,
-                start=timestamp or datetime.utcnow(),
+                start=timestamp or utc_now(),
             )
         )
         return span
@@ -591,7 +597,7 @@ class FileTracer(Tracer):
                 uuid=task.uuid,
                 parent=self.uuid,
                 name=task_name,
-                start=timestamp or datetime.utcnow(),
+                start=timestamp or utc_now(),
                 input=input,
             )
         )
@@ -616,14 +622,14 @@ class FileSpan(Span, FileTracer):
             PlainEntry(
                 message=message,
                 value=value,
-                timestamp=timestamp or datetime.utcnow(),
+                timestamp=timestamp or utc_now(),
                 parent=self.uuid,
             )
         )
 
     def end(self, timestamp: Optional[datetime] = None) -> None:
         if not self.end_timestamp:
-            self.end_timestamp = timestamp or datetime.utcnow()
+            self.end_timestamp = timestamp or utc_now()
             self._log_entry(EndSpan(uuid=self.uuid, end=self.end_timestamp))
 
 
@@ -642,7 +648,7 @@ class FileTaskSpan(TaskSpan, FileSpan):
 
     def end(self, timestamp: Optional[datetime] = None) -> None:
         if not self.end_timestamp:
-            self.end_timestamp = timestamp or datetime.utcnow()
+            self.end_timestamp = timestamp or utc_now()
             self._log_entry(
                 EndTask(uuid=self.uuid, end=self.end_timestamp, output=self.output)
             )
@@ -655,8 +661,8 @@ def _serialize(s: SerializeAsAny[PydanticSerializable]) -> str:
 
 def _open_telemetry_timestamp(t: datetime) -> int:
     # Open telemetry expects *nanoseconds* since epoch
-    t = t.timestamp() * 1e9
-    return int(t)
+    t_float = t.timestamp() * 1e9
+    return int(t_float)
 
 
 class OpenTelemetryTracer(Tracer):
@@ -669,7 +675,8 @@ class OpenTelemetryTracer(Tracer):
         self, name: str, timestamp: Optional[datetime] = None
     ) -> "OpenTelemetrySpan":
         tracer_span = self._tracer.start_span(
-            name, start_time=None if not timestamp else _open_telemetry_timestamp(timestamp)
+            name,
+            start_time=None if not timestamp else _open_telemetry_timestamp(timestamp),
         )
         return OpenTelemetrySpan(tracer_span, self._tracer)
 
@@ -709,7 +716,9 @@ class OpenTelemetrySpan(Span, OpenTelemetryTracer):
         )
 
     def end(self, timestamp: Optional[datetime] = None) -> None:
-        self.open_ts_span.end(_open_telemetry_timestamp(timestamp) if timestamp is not None else None)
+        self.open_ts_span.end(
+            _open_telemetry_timestamp(timestamp) if timestamp is not None else None
+        )
 
 
 class OpenTelemetryTaskSpan(TaskSpan, OpenTelemetrySpan):

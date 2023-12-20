@@ -1,5 +1,4 @@
 from abc import ABC, abstractmethod
-from datetime import datetime
 from functools import lru_cache
 from typing import (
     Any,
@@ -40,7 +39,7 @@ from intelligence_layer.core.evaluation.domain import (
     RunOverview,
 )
 from intelligence_layer.core.task import Input, Output, Task
-from intelligence_layer.core.tracer import Tracer
+from intelligence_layer.core.tracer import Tracer, utc_now
 
 EvaluationOverviewType = TypeVar(
     "EvaluationOverviewType", bound=PartialEvaluationOverview
@@ -507,7 +506,7 @@ class BaseEvaluator(
         )
         if examples is None:
             raise ValueError(f"Dataset: {dataset_id} not found")
-        start = datetime.utcnow()
+        start = utc_now()
 
         examples_zipped: Iterable[tuple[ExampleOutput[Output], ...]] = zip(
             *(
@@ -585,7 +584,7 @@ class BaseEvaluator(
         statistics = self.aggregate(cast(Iterable[Evaluation], successful_evaluations))
         run_overview = EvaluationOverview(
             statistics=statistics,
-            end=datetime.utcnow(),
+            end=utc_now(),
             successful_count=successful_evaluations.included_count(),
             failed_evaluation_count=successful_evaluations.excluded_count(),
             **(evaluation_overview.model_dump()),

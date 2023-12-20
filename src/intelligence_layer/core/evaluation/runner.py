@@ -1,5 +1,4 @@
 from concurrent.futures import ThreadPoolExecutor
-from datetime import datetime
 from inspect import get_annotations
 from typing import Generic, Optional, cast
 from uuid import uuid4
@@ -18,7 +17,7 @@ from intelligence_layer.core.evaluation.evaluator import (
     EvaluationRepository,
 )
 from intelligence_layer.core.task import Input, Output, Task
-from intelligence_layer.core.tracer import CompositeTracer, Tracer
+from intelligence_layer.core.tracer import CompositeTracer, Tracer, utc_now
 
 
 class Runner(Generic[Input, Output]):
@@ -98,7 +97,7 @@ class Runner(Generic[Input, Output]):
         if examples is None:
             raise ValueError(f"Dataset with id {dataset_id} not found")
         run_id = str(uuid4())
-        start = datetime.utcnow()
+        start = utc_now()
         with ThreadPoolExecutor(max_workers=10) as executor:
             ids_and_outputs = tqdm(executor.map(run, examples), desc="Evaluating")
 
@@ -117,7 +116,7 @@ class Runner(Generic[Input, Output]):
             dataset_id=dataset_id,
             id=run_id,
             start=start,
-            end=datetime.utcnow(),
+            end=utc_now(),
             failed_example_count=failed_count,
             successful_example_count=successful_count,
             runner_id=self.identifier,

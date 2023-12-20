@@ -1,4 +1,3 @@
-from datetime import datetime
 
 from pytest import raises
 
@@ -15,11 +14,12 @@ from intelligence_layer.core.evaluation.domain import (
     EvaluationOverview,
     _to_trace_entry,
 )
+from intelligence_layer.core.tracer import utc_now
 from tests.core.evaluation.conftest import DummyAggregatedEvaluation
 
 
 def test_to_trace_entry() -> None:
-    now = datetime.utcnow()
+    now = utc_now()
     entry = _to_trace_entry(
         InMemoryTaskSpan(
             name="task",
@@ -50,8 +50,8 @@ def test_to_trace_entry() -> None:
 def test_deserialize_task_trace() -> None:
     trace = TaskSpanTrace(
         name="task",
-        start=datetime.utcnow(),
-        end=datetime.utcnow(),
+        start=utc_now(),
+        end=utc_now(),
         traces=[],
         input=[{"a": "b"}],
         output=["c"],
