@@ -232,16 +232,14 @@ class TreeBuilder(BaseModel):
 @mark.skip("Requires running jaeger server.")
 def test_open_telemetry_tracer() -> None:
     from opentelemetry import trace
+    from opentelemetry.sdk.resources import SERVICE_NAME, Resource
     from opentelemetry.sdk.trace import TracerProvider
     from opentelemetry.sdk.trace.export import BatchSpanProcessor, ConsoleSpanExporter
-    from opentelemetry.sdk.resources import SERVICE_NAME, Resource
 
     # Service name is required for most backends,
     # and although it's not necessary for console export,
     # it's good to set service name anyways.
-    resource = Resource(attributes={
-       SERVICE_NAME: "your-service-name"
-    })
+    resource = Resource(attributes={SERVICE_NAME: "your-service-name"})
 
     provider = TracerProvider(resource=resource)
     processor = BatchSpanProcessor(ConsoleSpanExporter())
