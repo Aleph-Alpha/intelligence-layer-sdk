@@ -30,14 +30,15 @@ The key features of the Intelligence Layer are:
 
 Not sure where to start? Familiarize yourself with the Intelligence Layer using the below notebooks.
 
-| Order | Topic              | Description                               | Notebook 📓                                                   |
-| ----- | ------------------ | ----------------------------------------- | ------------------------------------------------------------- |
-| 1     | Summarization      | Summarize a document                      | [summarize.ipynb](./src/examples/summarize.ipynb)             |
-| 2     | Question Answering | Various approaches for QA                 | [qa.ipynb](./src/examples/qa.ipynb)                           |
-| 3     | Classification     | Learn about two methods of classification | [classification.ipynb](./src/examples/classification.ipynb)   |
-| 4     | Evaluation         | Evaluate LLM-based methodologies          | [evaluation.ipynb](./src/examples/evaluation.ipynb)           |
-| 5     | Quickstart task    | Build a custom task for your use case     | [quickstart_task.ipynb](./src/examples/quickstart_task.ipynb) |
-| 6     | Document Index     | Connect your proprietary knowledge base   | [document_index.ipynb](./src/examples/document_index.ipynb)   |
+| Order | Topic              | Description                               | Notebook 📓                                                     |
+| ----- | ------------------ | ----------------------------------------- | --------------------------------------------------------------- |
+| 1     | Summarization      | Summarize a document                      | [summarize.ipynb](./src/examples/summarize.ipynb)               |
+| 2     | Question Answering | Various approaches for QA                 | [qa.ipynb](./src/examples/qa.ipynb)                             |
+| 3     | Classification     | Learn about two methods of classification | [classification.ipynb](./src/examples/classification.ipynb)     |
+| 4     | Evaluation         | Evaluate LLM-based methodologies          | [evaluation.ipynb](./src/examples/evaluation.ipynb)             |
+| 5     | Quickstart Task    | Build a custom `Task` for your use case   | [quickstart_task.ipynb](./src/examples/quickstart_task.ipynb)   |
+| 6     | Document Index     | Connect your proprietary knowledge base   | [document_index.ipynb](./src/examples/document_index.ipynb)     |
+| 6     | Human Evaluation   | Connect to Argilla for manual evaluation  | [human_evaluation.ipynb](./src/examples/human_evaluation.ipynb) |
 
 ## Getting started with the Jupyter Notebooks
 
