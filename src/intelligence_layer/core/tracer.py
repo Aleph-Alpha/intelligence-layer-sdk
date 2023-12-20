@@ -653,6 +653,12 @@ def _serialize(s: SerializeAsAny[PydanticSerializable]) -> str:
     return value.model_dump_json()
 
 
+def _open_telemetry_timestamp(t: datetime) -> int:
+    # Open telemetry expects *nanoseconds* since epoch
+    t = t.timestamp() * 1e9
+    return int(t)
+
+
 class OpenTelemetryTracer(Tracer):
     """A `Tracer` that uses open telemetry."""
 
@@ -663,7 +669,7 @@ class OpenTelemetryTracer(Tracer):
         self, name: str, timestamp: Optional[datetime] = None
     ) -> "OpenTelemetrySpan":
         tracer_span = self._tracer.start_span(
-            name, start_time=None if not timestamp else int(timestamp.timestamp())
+            name, start_time=None if not timestamp else _open_telemetry_timestamp(timestamp)
         )
         return OpenTelemetrySpan(tracer_span, self._tracer)
 
@@ -676,7 +682,7 @@ class OpenTelemetryTracer(Tracer):
         tracer_span = self._tracer.start_span(
             task_name,
             attributes={"input": _serialize(input)},
-            start_time=None if not timestamp else int(timestamp.timestamp()),
+            start_time=None if not timestamp else _open_telemetry_timestamp(timestamp),
         )
         return OpenTelemetryTaskSpan(tracer_span, self._tracer)
 
@@ -699,11 +705,11 @@ class OpenTelemetrySpan(Span, OpenTelemetryTracer):
         self.open_ts_span.add_event(
             message,
             {"value": _serialize(value)},
-            None if not timestamp else int(timestamp.timestamp()),
+            None if not timestamp else _open_telemetry_timestamp(timestamp),
         )
 
     def end(self, timestamp: Optional[datetime] = None) -> None:
-        self.open_ts_span.end(int(timestamp.timestamp()) if timestamp is not None else None)
+        self.open_ts_span.end(_open_telemetry_timestamp(timestamp) if timestamp is not None else None)
 
 
 class OpenTelemetryTaskSpan(TaskSpan, OpenTelemetrySpan):
