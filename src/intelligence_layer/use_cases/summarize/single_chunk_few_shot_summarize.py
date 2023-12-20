@@ -118,9 +118,7 @@ FEW_SHOT_CONFIGS = {
 
 
 class SingleChunkFewShotSummarize(Task[SingleChunkSummarizeInput, SummarizeOutput]):
-    """Summarises a section into a text of medium length.
-
-    Generate a summary given a few-shot setup.
+    """Summarises a text using a few-shot setup.
 
     Args:
         client: Aleph Alpha client instance for running model related API calls.
