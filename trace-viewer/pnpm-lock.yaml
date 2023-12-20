@@ -45,8 +45,8 @@ devDependencies:
     specifier: ^7.6.6
     version: 7.6.6(svelte@4.2.8)
   '@storybook/sveltekit':
-    specifier: ^7.6.5
-    version: 7.6.5(@babel/core@7.23.3)(less@4.2.0)(postcss@8.4.32)(svelte@4.2.8)(typescript@5.3.3)(vite@4.5.1)
+    specifier: ^7.6.6
+    version: 7.6.6(@babel/core@7.23.3)(less@4.2.0)(postcss@8.4.32)(svelte@4.2.8)(typescript@5.3.3)(vite@4.5.1)
   '@storybook/testing-library':
     specifier: ^0.2.2
     version: 0.2.2
@@ -2696,10 +2696,10 @@ packages:
       uuid: 9.0.1
     dev: true
 
-  /@storybook/addon-actions@7.6.5:
-    resolution: {integrity: sha512-lW/m9YcaNfBZk+TZLxyzHdd563mBWpsUIveOKYjcPdl/q0FblWWZrRsFHqwLK1ldZ4AZXs8J/47G8CBr6Ew2uQ==}
+  /@storybook/addon-actions@7.6.6:
+    resolution: {integrity: sha512-mLJip9Evb2Chj7ymKbpaybe5NgDy3Du7oSWeURPy/0qXJ2cBqHWnhZ8CTK2DasrstsUhQSJaZVXHhaENT+fn+g==}
     dependencies:
-      '@storybook/core-events': 7.6.5
+      '@storybook/core-events': 7.6.6
       '@storybook/global': 5.0.0
       '@types/uuid': 9.0.7
       dequal: 2.0.3
@@ -3043,8 +3043,8 @@ packages:
       - supports-color
     dev: true
 
-  /@storybook/builder-vite@7.6.5(typescript@5.3.3)(vite@4.5.1):
-    resolution: {integrity: sha512-VbAYTGr92lgCWTwO2Z7NgSW3f5/K4Vr0Qxa2IlTgMCymWdDbWdIQiREcmCP0vjAGM2ftq1+vxngohVgx/r7pUw==}
+  /@storybook/builder-vite@7.6.6(typescript@5.3.3)(vite@4.5.1):
+    resolution: {integrity: sha512-vDBHjsswnVScVgGHeIZ22R/LoRt5T1F62p5czusydBSxKGzma5Va4JHQJp4/IKXwiCZbXcua/Cs7VKtBLO+50A==}
     peerDependencies:
       '@preact/preset-vite': '*'
       typescript: '>= 4.3.x'
@@ -3058,14 +3058,14 @@ packages:
       vite-plugin-glimmerx:
         optional: true
     dependencies:
-      '@storybook/channels': 7.6.5
-      '@storybook/client-logger': 7.6.5
-      '@storybook/core-common': 7.6.5
-      '@storybook/csf-plugin': 7.6.5
-      '@storybook/node-logger': 7.6.5
-      '@storybook/preview': 7.6.5
-      '@storybook/preview-api': 7.6.5
-      '@storybook/types': 7.6.5
+      '@storybook/channels': 7.6.6
+      '@storybook/client-logger': 7.6.6
+      '@storybook/core-common': 7.6.6
+      '@storybook/csf-plugin': 7.6.6
+      '@storybook/node-logger': 7.6.6
+      '@storybook/preview': 7.6.6
+      '@storybook/preview-api': 7.6.6
+      '@storybook/types': 7.6.6
       '@types/find-cache-dir': 3.2.1
       browser-assert: 1.2.1
       es-module-lexer: 0.9.3
@@ -3291,13 +3291,6 @@ packages:
       - '@types/react-dom'
     dev: true
 
-  /@storybook/core-client@7.6.5:
-    resolution: {integrity: sha512-6FtyJcz8MSl+JYwNJZ53FM6rkT27pFHWcJPdtw/9229Ec8as9RpkNeZ/NBZjRTeDkn9Ki0VOiVAefNie9tZ/8Q==}
-    dependencies:
-      '@storybook/client-logger': 7.6.5
-      '@storybook/preview-api': 7.6.5
-    dev: true
-
   /@storybook/core-client@7.6.6:
     resolution: {integrity: sha512-P100aNf+WpvzlfULZp1NPd60/nxsppLmft2DdIyAx1j4QPMZvUJyJB+hdBMzTFiPEhIUncIMoIVf2R3UXC5DfA==}
     dependencies:
@@ -3513,10 +3506,10 @@ packages:
       - supports-color
     dev: true
 
-  /@storybook/csf-plugin@7.6.5:
-    resolution: {integrity: sha512-iQ8Y/Qq1IUhHRddjDVicWJA2sM7OZA1FR97OvWUT2240WjCuQSCfy32JD8TQlYjqXgEolJeLPv3zW4qH5om4LQ==}
+  /@storybook/csf-plugin@7.6.6:
+    resolution: {integrity: sha512-SqdffT14+XNpf+7vA29Elur28VArXtFv4cXMlsCbswbRuY+a0A8vYNwVIfCUy9u4WHTcQX1/tUkDAMh80lrVRQ==}
     dependencies:
-      '@storybook/csf-tools': 7.6.5
+      '@storybook/csf-tools': 7.6.6
       unplugin: 1.5.1
     transitivePeerDependencies:
       - supports-color
@@ -3592,21 +3585,6 @@ packages:
       '@storybook/core-common': 7.6.4
       '@storybook/preview-api': 7.6.4
       '@storybook/types': 7.6.4
-      '@types/doctrine': 0.0.3
-      assert: 2.1.0
-      doctrine: 3.0.0
-      lodash: 4.17.21
-    transitivePeerDependencies:
-      - encoding
-      - supports-color
-    dev: true
-
-  /@storybook/docs-tools@7.6.5:
-    resolution: {integrity: sha512-UyHkHu5Af6jMpYsR4lZ69D32GQGeA0pLAn7jaBbQndgAjBdK1ykZcifiUC7Wz1hG7+YpuYspEGuDEddOh+X8FQ==}
-    dependencies:
-      '@storybook/core-common': 7.6.5
-      '@storybook/preview-api': 7.6.5
-      '@storybook/types': 7.6.5
       '@types/doctrine': 0.0.3
       assert: 2.1.0
       doctrine: 3.0.0
@@ -3808,8 +3786,8 @@ packages:
       util-deprecate: 1.0.2
     dev: true
 
-  /@storybook/preview@7.6.5:
-    resolution: {integrity: sha512-zmLa7C7yFGTYhgGZXoecdww9rx0Z5HpNi/GDBRWoNSK+FEdE8Jj2jF5NJ2ncldtYIyegz9ku29JFMKbhMj9K5Q==}
+  /@storybook/preview@7.6.6:
+    resolution: {integrity: sha512-Rl+Pom2bNwzc0MdlbFALmvxsbCkbIwlpTZlRZZTh5Ah8JViV9htQgP9e8uwo3NZA2BhjbDLkmnZeloWxQnI5Ig==}
     dev: true
 
   /@storybook/react-dom-shim@7.6.4(react-dom@18.2.0)(react@18.2.0):
@@ -3846,16 +3824,16 @@ packages:
       qs: 6.11.2
     dev: true
 
-  /@storybook/svelte-vite@7.6.5(@babel/core@7.23.3)(less@4.2.0)(postcss@8.4.32)(svelte@4.2.8)(typescript@5.3.3)(vite@4.5.1):
-    resolution: {integrity: sha512-53ZE9qdkMsXetHCfM6nbNSFHNCnYuMR2pgWBA+JVs1NsEUYfA3DyiNxP5mp3c8I88WcCSY2DRj+RLP6HePbeWw==}
+  /@storybook/svelte-vite@7.6.6(@babel/core@7.23.3)(less@4.2.0)(postcss@8.4.32)(svelte@4.2.8)(typescript@5.3.3)(vite@4.5.1):
+    resolution: {integrity: sha512-aAqYyR1hfmGbtd7TU9vGMoj1FFmTInC6p8gZVYEKCjEccOw1+cNNoTz6IRDoWOqhB7yd8B5IoEcCEg3irFOzHQ==}
     engines: {node: ^14.18 || >=16}
     peerDependencies:
       svelte: ^3.0.0 || ^4.0.0
       vite: ^3.0.0 || ^4.0.0 || ^5.0.0
     dependencies:
-      '@storybook/builder-vite': 7.6.5(typescript@5.3.3)(vite@4.5.1)
-      '@storybook/node-logger': 7.6.5
-      '@storybook/svelte': 7.6.5(svelte@4.2.8)
+      '@storybook/builder-vite': 7.6.6(typescript@5.3.3)(vite@4.5.1)
+      '@storybook/node-logger': 7.6.6
+      '@storybook/svelte': 7.6.6(svelte@4.2.8)
       '@sveltejs/vite-plugin-svelte': 2.5.3(svelte@4.2.8)(vite@4.5.1)
       magic-string: 0.30.5
       svelte: 4.2.8
@@ -3880,28 +3858,6 @@ packages:
       - vite-plugin-glimmerx
     dev: true
 
-  /@storybook/svelte@7.6.5(svelte@4.2.8):
-    resolution: {integrity: sha512-qXX0w2aATfPuMj7RYjSKTL5ZhZZI5isHU0HDqN/FXkB7Ojo9LZ1zSiON166T6+U8+jAOQM6EupRVo+HtY5/z0Q==}
-    engines: {node: '>=16.0.0'}
-    peerDependencies:
-      svelte: ^3.1.0 || ^4.0.0
-    dependencies:
-      '@storybook/client-logger': 7.6.5
-      '@storybook/core-client': 7.6.5
-      '@storybook/core-events': 7.6.5
-      '@storybook/docs-tools': 7.6.5
-      '@storybook/global': 5.0.0
-      '@storybook/preview-api': 7.6.5
-      '@storybook/types': 7.6.5
-      svelte: 4.2.8
-      sveltedoc-parser: 4.2.1
-      ts-dedent: 2.2.0
-      type-fest: 2.19.0
-    transitivePeerDependencies:
-      - encoding
-      - supports-color
-    dev: true
-
   /@storybook/svelte@7.6.6(svelte@4.2.8):
     resolution: {integrity: sha512-QZWF/0djw+tic3nF3IlVgonEvtuF7xRDlNFIQaYqLKUnruSsp+t/vttI2rivbg54pZ4HoqrwPLYPx2t08KVOBg==}
     engines: {node: '>=16.0.0'}
@@ -3924,17 +3880,17 @@ packages:
       - supports-color
     dev: true
 
-  /@storybook/sveltekit@7.6.5(@babel/core@7.23.3)(less@4.2.0)(postcss@8.4.32)(svelte@4.2.8)(typescript@5.3.3)(vite@4.5.1):
-    resolution: {integrity: sha512-1XXXlzOr2nQT6VKm/d4UwczZH76vplCGIpA3P7Y3MtUKZn9GqMCII/wQDSeGNTlyFNqLx0W1hz3PYyeZ5aufNA==}
+  /@storybook/sveltekit@7.6.6(@babel/core@7.23.3)(less@4.2.0)(postcss@8.4.32)(svelte@4.2.8)(typescript@5.3.3)(vite@4.5.1):
+    resolution: {integrity: sha512-/GcNyDaAwy4AQxF8aDcMqp9L/aYwMaE00t7NzZvHLYWPBXxUIi53nD4cbpwSPVERaLF9C8dMJod29nj9X7f9Hw==}
     engines: {node: ^14.18 || >=16}
     peerDependencies:
       svelte: ^3.0.0 || ^4.0.0
-      vite: ^4.0.0
+      vite: ^4.0.0 || ^5.0.0
     dependencies:
-      '@storybook/addon-actions': 7.6.5
-      '@storybook/builder-vite': 7.6.5(typescript@5.3.3)(vite@4.5.1)
-      '@storybook/svelte': 7.6.5(svelte@4.2.8)
-      '@storybook/svelte-vite': 7.6.5(@babel/core@7.23.3)(less@4.2.0)(postcss@8.4.32)(svelte@4.2.8)(typescript@5.3.3)(vite@4.5.1)
+      '@storybook/addon-actions': 7.6.6
+      '@storybook/builder-vite': 7.6.6(typescript@5.3.3)(vite@4.5.1)
+      '@storybook/svelte': 7.6.6(svelte@4.2.8)
+      '@storybook/svelte-vite': 7.6.6(@babel/core@7.23.3)(less@4.2.0)(postcss@8.4.32)(svelte@4.2.8)(typescript@5.3.3)(vite@4.5.1)
       svelte: 4.2.8
       vite: 4.5.1(@types/node@20.10.0)(less@4.2.0)
     transitivePeerDependencies:
