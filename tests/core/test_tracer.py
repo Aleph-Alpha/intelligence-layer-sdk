@@ -229,7 +229,7 @@ class TreeBuilder(BaseModel):
         self.tracers[plain_entry.parent].entries.append(entry)
 
 
-@mark.skip("Requires running opentelemetry server.")
+@mark.skip("Requires running jaeger server.")
 def test_open_telemetry_tracer() -> None:
     from opentelemetry import trace
     from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import OTLPSpanExporter
