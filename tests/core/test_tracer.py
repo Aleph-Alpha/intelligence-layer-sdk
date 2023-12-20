@@ -1,37 +1,37 @@
-from datetime import datetime
 from json import loads
 from pathlib import Path
 from uuid import UUID
 
 from aleph_alpha_client import Prompt
 from aleph_alpha_client.completion import CompletionRequest
-from opentelemetry import trace
-from opentelemetry.sdk.trace import TracerProvider
-from opentelemetry.sdk.trace.export import BatchSpanProcessor, ConsoleSpanExporter
 from opentelemetry.trace import get_tracer
 from pydantic import BaseModel, Field
-from pytest import fixture
+from pytest import fixture, mark
 
 from intelligence_layer.connectors.limited_concurrency_client import (
     AlephAlphaClientProtocol,
 )
-from intelligence_layer.core.complete import Complete, CompleteInput
-from intelligence_layer.core.task import Task
-from intelligence_layer.core.tracer import (
+from intelligence_layer.core import (
+    Complete,
+    CompleteInput,
     CompositeTracer,
-    EndSpan,
-    EndTask,
     FileTracer,
     InMemorySpan,
     InMemoryTaskSpan,
     InMemoryTracer,
     LogEntry,
-    LogLine,
     OpenTelemetryTracer,
+    Task,
+    TaskSpan,
+    utc_now,
+)
+from intelligence_layer.core.tracer import (
+    EndSpan,
+    EndTask,
+    LogLine,
     PlainEntry,
     StartSpan,
     StartTask,
-    TaskSpan,
 )
 
 
@@ -78,7 +78,7 @@ def test_task_automatically_logs_input_and_output(
 
 def test_tracer_can_set_custom_start_time_for_log_entry() -> None:
     tracer = InMemoryTracer()
-    timestamp = datetime.utcnow()
+    timestamp = utc_now()
 
     with tracer.span("span") as span:
         span.log("log", "message", timestamp)
@@ -90,7 +90,7 @@ def test_tracer_can_set_custom_start_time_for_log_entry() -> None:
 
 def test_tracer_can_set_custom_start_time_for_span() -> None:
     tracer = InMemoryTracer()
-    start = datetime.utcnow()
+    start = utc_now()
 
     span = tracer.span("span", start)
 
@@ -99,7 +99,7 @@ def test_tracer_can_set_custom_start_time_for_span() -> None:
 
 def test_span_sets_end_timestamp() -> None:
     tracer = InMemoryTracer()
-    start = datetime.utcnow()
+    start = utc_now()
 
     span = tracer.span("span", start)
     span.end()
@@ -111,7 +111,7 @@ def test_span_only_updates_end_timestamp_once() -> None:
     tracer = InMemoryTracer()
 
     span = tracer.span("span")
-    end = datetime.utcnow()
+    end = utc_now()
     span.end(end)
     span.end()
 
@@ -229,10 +229,23 @@ class TreeBuilder(BaseModel):
         self.tracers[plain_entry.parent].entries.append(entry)
 
 
+@mark.skip("Requires running opentelemetry server.")
 def test_open_telemetry_tracer() -> None:
-    provider = TracerProvider()
-    processor = BatchSpanProcessor(ConsoleSpanExporter())
+    from opentelemetry import trace
+    from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import OTLPSpanExporter
+    from opentelemetry.sdk.resources import SERVICE_NAME, Resource
+    from opentelemetry.sdk.trace import TracerProvider
+    from opentelemetry.sdk.trace.export import BatchSpanProcessor
+
+    # Service name is required for most backends
+    resource = Resource(attributes={SERVICE_NAME: "your-service-name"})
+
+    provider = TracerProvider(resource=resource)
+    processor = BatchSpanProcessor(
+        OTLPSpanExporter(insecure=True, endpoint="localhost:4317")
+    )
     provider.add_span_processor(processor)
+    trace.set_tracer_provider(provider)
 
     # Sets the global default tracer provider
     trace.set_tracer_provider(provider)

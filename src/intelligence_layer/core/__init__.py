@@ -13,14 +13,10 @@ from intelligence_layer.core.intelligence_app import (
 
 from .chunk import Chunk as Chunk
 from .chunk import ChunkInput, ChunkOutput, ChunkTask
-from .complete import (
-    Complete,
-    CompleteInput,
-    CompleteOutput,
-    Instruct,
-    InstructInput,
-    PromptOutput,
-)
+from .complete import Complete as Complete
+from .complete import CompleteInput as CompleteInput
+from .complete import CompleteOutput as CompleteOutput
+from .complete import Instruct, InstructInput, PromptOutput
 from .detect_language import DetectLanguage, DetectLanguageInput, DetectLanguageOutput
 from .detect_language import Language as Language
 from .echo import EchoInput, EchoOutput, EchoTask
@@ -85,9 +81,11 @@ from .tracer import InMemoryTaskSpan as InMemoryTaskSpan
 from .tracer import InMemoryTracer as InMemoryTracer
 from .tracer import LogEntry as LogEntry
 from .tracer import NoOpTracer as NoOpTracer
+from .tracer import OpenTelemetryTracer as OpenTelemetryTracer
 from .tracer import PydanticSerializable as PydanticSerializable
 from .tracer import Span as Span
 from .tracer import TaskSpan as TaskSpan
 from .tracer import Tracer as Tracer
+from .tracer import utc_now as utc_now
 
 __all__ = [symbol for symbol in dir()]
