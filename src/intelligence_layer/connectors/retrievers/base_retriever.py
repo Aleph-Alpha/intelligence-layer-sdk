@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import Any, Generic, Sequence, TypeVar
+from typing import Any, Generic, Optional, Sequence, TypeVar
 
 from pydantic import BaseModel
 
@@ -62,5 +62,5 @@ class BaseRetriever(ABC, Generic[ID]):
         pass
 
     @abstractmethod
-    def get_full_document(self, id: ID) -> Document:
+    def get_full_document(self, id: ID) -> Optional[Document]:
         pass
