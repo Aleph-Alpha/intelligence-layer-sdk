@@ -63,7 +63,7 @@ class EloScoreArgillaEvaluator(
     def _to_record(
         self,
         example: Example[InstructInput, None],
-        *example_outputs: SuccessfulExampleOutput[PromptOutput]
+        *example_outputs: SuccessfulExampleOutput[PromptOutput],
     ) -> Sequence[RecordData]:
         pairs = combinations(example_outputs, 2)
         return [
@@ -75,17 +75,28 @@ class EloScoreArgillaEvaluator(
                     "response2": second.output.completion,
                 },
                 example_id=example.id,
-                metadata={"response1": first.run_id, "response2": second.run_id},
+                metadata={"first_run": first.run_id, "second_run": second.run_id},
             )
             for [first, second] in pairs
         ]
 
     def aggregate(self, evaluations: Iterable[ArgillaEvaluation]) -> EloScore:
-        scores = defaultdict(lambda: 1500)
-        for evaluation in evaluations:
-            first_run_id = evaluation.metadata["first_model"]
-            second_run_id = evaluation.metadata["second_model"]
-            winner: tuple[int, int] = evaluation.responses["winner"]
+        scores: defaultdict[str, int] = defaultdict(lambda: 1500)
 
-        run = self._evaluation_repository.run_overview()
-        return EloScore()
+        for evaluation in evaluations:
+            first_run_id = evaluation.metadata["first_run"]
+            second_run_id = evaluation.metadata["second_run"]
+            winner = evaluation.responses["winner"]
+            assert isinstance(winner, int) and 1 <= winner <= 3
+            match winner:
+                case 1:
+                    scores[first_run_id] += 1
+                    scores[second_run_id] -= 1
+                case 2:
+                    scores[first_run_id] -= 1
+                    scores[second_run_id] += 1
+                case 3:
+                    scores[first_run_id] += 0
+                    scores[second_run_id] += 0
+
+        return EloScore(scores=scores)

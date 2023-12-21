@@ -55,7 +55,7 @@ class ArgillaEvaluation(BaseModel):
     example_id: str
     record_id: str
     responses: Mapping[str, Union[str, int, float, bool]]
-    metadata: Mapping[str, str] 
+    metadata: Mapping[str, str]
 
 
 class RecordData(BaseModel):
@@ -257,7 +257,7 @@ class DefaultArgillaClient(ArgillaClient):
                 example_id=json_evaluation["external_id"],
                 record_id=json_evaluation["id"],
                 responses=to_responses(json_evaluation["responses"]),
-                metadata=json_evaluation["metadata"]
+                metadata=json_evaluation["metadata"],
             )
             for json_evaluation in self._evaluations(dataset_id)["items"]
         ]

@@ -60,6 +60,7 @@ class StubArgillaClient(ArgillaClient):
                 example_id="something",
                 record_id="ignored",
                 responses={"human-score": self._score},
+                metadata={},
             )
             for _ in dataset
         ]

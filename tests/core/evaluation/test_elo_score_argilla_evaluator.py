@@ -1,6 +1,7 @@
+import random
 from collections import defaultdict
 from itertools import combinations
-from random import choice 
+from random import choice
 from typing import Iterable, Sequence
 from uuid import uuid4
 
@@ -58,7 +59,12 @@ class ArgillaFake(ArgillaClient):
             ArgillaEvaluation(
                 example_id=r.example_id,
                 record_id=str(uuid4()),
-                responses={"best": r.metadata},
+                responses={
+                    "winner": 1
+                    if int(r.metadata["first_run"]) < int(r.metadata["second_run"])
+                    else 2
+                },
+                metadata=r.metadata,
             )
             for r in self.records[dataset_id]
         ]
@@ -108,7 +114,8 @@ def test_evaluate_run_submits_pairwise_comparison_records(
     argilla_fake: ArgillaFake,
 ) -> None:
     instruct_completion = any_instruct_output.completion
-    run_ids = [f"{i}" for i in range(3)]
+    run_count = 10
+    run_ids = [f"{i}" for i in range(run_count)]
     example_id = "example_id"
     instruction = "inst"
     instruction_input = "some text"
@@ -151,10 +158,13 @@ def test_evaluate_run_submits_pairwise_comparison_records(
                 "response2": instruct_completion,
             },
             example_id=example_id,
-            metadata={"response1": first, "response2": second},
+            metadata={"first_run": first, "second_run": second},
         )
         for [first, second] in pairs
     ]
 
     elo_score = evaluator.aggregate_evaluation(evaluation_overview.id)
-
+    scores = elo_score.statistics.scores
+    # lower id always wins, should be sorted
+    for i in range(run_count - 1):
+        assert scores[run_ids[i]] > scores[run_ids[i + 1]]

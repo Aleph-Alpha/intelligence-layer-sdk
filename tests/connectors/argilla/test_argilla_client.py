@@ -82,17 +82,17 @@ def qa_records(
         RecordData(
             content={"question": "What is 1+1?", "answer": "2"},
             example_id="1000",
-            metadata={"model_1": "luminous-base"}
+            metadata={"model_1": "luminous-base"},
         ),
         RecordData(
             content={"question": "Wirklich?", "answer": "Ja!"},
             example_id="1001",
-            metadata={"model_1": "luminous-base"}
+            metadata={"model_1": "luminous-base"},
         ),
         RecordData(
             content={"question": "Wie ist das Wetter?", "answer": "Gut."},
             example_id="1002",
-            metadata={"model_1": "luminous-base"}
+            metadata={"model_1": "luminous-base"},
         ),
     ]
     for record in records:
