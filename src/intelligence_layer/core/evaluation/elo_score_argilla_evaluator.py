@@ -2,7 +2,7 @@ import random
 from collections import defaultdict
 from enum import Enum
 from itertools import combinations
-from typing import Iterable, Mapping, Sequence, cast
+from typing import Iterable, Mapping, Optional, Sequence, cast
 
 from pydantic import BaseModel
 
@@ -124,6 +124,7 @@ class EloScoreArgillaEvaluator(
         evaluation_repository: ArgillaEvaluationRepository,
         dataset_repository: DatasetRepository,
         workspace_id: str,
+        high_priority_runs: Optional[frozenset[str]] = None,
     ) -> None:
         fields = [
             Field(name=self.KEY_INSTRUCTION, title="Instruction"),
@@ -147,6 +148,7 @@ class EloScoreArgillaEvaluator(
             fields,
             questions,
         )
+        self._high_priority_runs = high_priority_runs
 
     def _to_record(
         self,
@@ -169,6 +171,11 @@ class EloScoreArgillaEvaluator(
                 },
             )
             for [first, second] in pairs
+            if self._high_priority_runs is None
+            or any(
+                run_id in self._high_priority_runs
+                for run_id in [first.run_id, second.run_id]
+            )
         ]
 
     def aggregate(self, evaluations: Iterable[ArgillaEvaluation]) -> AggregatedElos:
@@ -194,12 +201,8 @@ class EloScoreArgillaEvaluator(
 
         tournaments, players = build_tournaments(evaluations)
 
-        # run rounds with different order of tournaments, accumulate mean
         accumulators = {p: MeanAccumulator() for p in players}
         tournaments_list = list(tournaments.items())
-        # TODO how many rounds?
-        #  * sampling for large inputs?
-        #  * is performance even a concern? This is probably allowed to take a few seconds
         for _ in range(100):
             elo = Elo(players)
             random.shuffle(tournaments_list)
