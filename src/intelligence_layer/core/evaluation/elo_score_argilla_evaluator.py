@@ -1,4 +1,6 @@
-from typing import Iterable, Sequence
+from collections import defaultdict
+from itertools import combinations
+from typing import Iterable, Mapping, Sequence
 
 from pydantic import BaseModel
 
@@ -18,7 +20,7 @@ from intelligence_layer.core.evaluation.evaluator import (
 
 
 class EloScore(BaseModel):
-    pass
+    scores: Mapping[str, int]
 
 
 class EloScoreArgillaEvaluator(
@@ -63,17 +65,27 @@ class EloScoreArgillaEvaluator(
         example: Example[InstructInput, None],
         *example_outputs: SuccessfulExampleOutput[PromptOutput]
     ) -> Sequence[RecordData]:
+        pairs = combinations(example_outputs, 2)
         return [
             RecordData(
                 content={
                     "instruction": example.input.instruction,
                     "input": example.input.input or "",
-                    "response1": example_outputs[0].output.completion,
-                    "response2": example_outputs[1].output.completion,
+                    "response1": first.output.completion,
+                    "response2": second.output.completion,
                 },
                 example_id=example.id,
+                metadata={"response1": first.run_id, "response2": second.run_id},
             )
+            for [first, second] in pairs
         ]
 
     def aggregate(self, evaluations: Iterable[ArgillaEvaluation]) -> EloScore:
+        scores = defaultdict(lambda: 1500)
+        for evaluation in evaluations:
+            first_run_id = evaluation.metadata["first_model"]
+            second_run_id = evaluation.metadata["second_model"]
+            winner: tuple[int, int] = evaluation.responses["winner"]
+
+        run = self._evaluation_repository.run_overview()
         return EloScore()
