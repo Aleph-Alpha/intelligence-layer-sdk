@@ -8,7 +8,7 @@
 		"@playwright/test": "^1.40.1",
 		"@storybook/addon-essentials": "^7.6.4",
 		"@storybook/addon-interactions": "^7.6.5",
-		"@storybook/addon-links": "^7.6.5",
+		"@storybook/addon-links": "^7.6.6",
 		"@storybook/addon-styling": "^1.3.7",
 		"@storybook/addon-svelte-csf": "^4.0.13",
 		"@storybook/blocks": "^7.6.6",

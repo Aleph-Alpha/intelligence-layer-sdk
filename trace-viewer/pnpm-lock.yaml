@@ -30,8 +30,8 @@ devDependencies:
     specifier: ^7.6.5
     version: 7.6.5
   '@storybook/addon-links':
-    specifier: ^7.6.5
-    version: 7.6.5(react@18.2.0)
+    specifier: ^7.6.6
+    version: 7.6.6(react@18.2.0)
   '@storybook/addon-styling':
     specifier: ^1.3.7
     version: 1.3.7(less@4.2.0)(postcss@8.4.32)(react-dom@18.2.0)(react@18.2.0)(typescript@5.3.3)(webpack@5.89.0)
@@ -2809,8 +2809,8 @@ packages:
       ts-dedent: 2.2.0
     dev: true
 
-  /@storybook/addon-links@7.6.5(react@18.2.0):
-    resolution: {integrity: sha512-Lx4Ng+iXt0YpIrKGr+nOZlpN9ypOoEDoP/7bZ6m7GXuVAkDm3JrRCBp7e2ZKSKcTxPdjPuO9HVKkIjtqjINlpw==}
+  /@storybook/addon-links@7.6.6(react@18.2.0):
+    resolution: {integrity: sha512-NEcqOz6zZ1dJnCcVmYdaQTAMAGIb8NFAZGnr9DU0q+t4B1fTaWUgqLtBM5V6YqIrXGSC/oKLpjWUkS5UpswlHA==}
     peerDependencies:
       react: ^16.8.0 || ^17.0.0 || ^18.0.0
     peerDependenciesMeta:
@@ -3360,37 +3360,6 @@ packages:
       - supports-color
     dev: true
 
-  /@storybook/core-common@7.6.5:
-    resolution: {integrity: sha512-z4EgzZSIVbID6Ib0jhh3jimKeaDWU8OOhoZYfn3galFmgQWowWOv1oMgipWiXfRLWw9DaLFQiCHIdLANH+VO2g==}
-    dependencies:
-      '@storybook/core-events': 7.6.5
-      '@storybook/node-logger': 7.6.5
-      '@storybook/types': 7.6.5
-      '@types/find-cache-dir': 3.2.1
-      '@types/node': 18.18.13
-      '@types/node-fetch': 2.6.9
-      '@types/pretty-hrtime': 1.0.3
-      chalk: 4.1.2
-      esbuild: 0.18.20
-      esbuild-register: 3.5.0(esbuild@0.18.20)
-      file-system-cache: 2.3.0
-      find-cache-dir: 3.3.2
-      find-up: 5.0.0
-      fs-extra: 11.2.0
-      glob: 10.3.10
-      handlebars: 4.7.8
-      lazy-universal-dotenv: 4.0.0
-      node-fetch: 2.7.0
-      picomatch: 2.3.1
-      pkg-dir: 5.0.0
-      pretty-hrtime: 1.0.3
-      resolve-from: 5.0.0
-      ts-dedent: 2.2.0
-    transitivePeerDependencies:
-      - encoding
-      - supports-color
-    dev: true
-
   /@storybook/core-common@7.6.6:
     resolution: {integrity: sha512-DpbFSYw8LHuwpeU2ec5uWryxrSqslFJnWTfNA7AvpzCviWXkz4kq+YYrDee9XExF6OozNwILmG6m52SnraysBA==}
     dependencies:
@@ -3524,22 +3493,6 @@ packages:
       '@babel/types': 7.23.4
       '@storybook/csf': 0.1.2
       '@storybook/types': 7.6.4
-      fs-extra: 11.2.0
-      recast: 0.23.4
-      ts-dedent: 2.2.0
-    transitivePeerDependencies:
-      - supports-color
-    dev: true
-
-  /@storybook/csf-tools@7.6.5:
-    resolution: {integrity: sha512-1iaCh7nt+WE7Q5UwRhLLc5flMNoAV/vBr0tvDSCKiHaO+D3dZzlZOe/U+S6wegdyN2QNcvT2xs179CcrX6Qp6w==}
-    dependencies:
-      '@babel/generator': 7.23.4
-      '@babel/parser': 7.23.4
-      '@babel/traverse': 7.23.4
-      '@babel/types': 7.23.4
-      '@storybook/csf': 0.1.2
-      '@storybook/types': 7.6.5
       fs-extra: 11.2.0
       recast: 0.23.4
       ts-dedent: 2.2.0
@@ -3698,10 +3651,6 @@ packages:
     resolution: {integrity: sha512-GDkEnnDj4Op+PExs8ZY/P6ox3wg453CdEIaR8PR9TxF/H/T2fBL6puzma3hN2CMam6yzfAL8U+VeIIDLQ5BZdQ==}
     dev: true
 
-  /@storybook/node-logger@7.6.5:
-    resolution: {integrity: sha512-xKw6IH1wLkIssekdBv3bd13xYKUF1t8EwqDR8BYcN8AVjZlqJMTifssqG4bYV+G/B7J3tz4ugJ5nmtWg6RQ0Qw==}
-    dev: true
-
   /@storybook/node-logger@7.6.6:
     resolution: {integrity: sha512-b2OF9GRNI01MlBlnDGS8S6/yOpBNl8eH/0ONafuMPzFEZs5PouHGsFflJvQwwcdVTknMjF5uVS2eSmnLZ8spvA==}
     dev: true
@@ -3738,25 +3687,6 @@ packages:
       '@storybook/csf': 0.1.2
       '@storybook/global': 5.0.0
       '@storybook/types': 7.6.4
-      '@types/qs': 6.9.10
-      dequal: 2.0.3
-      lodash: 4.17.21
-      memoizerific: 1.11.3
-      qs: 6.11.2
-      synchronous-promise: 2.0.17
-      ts-dedent: 2.2.0
-      util-deprecate: 1.0.2
-    dev: true
-
-  /@storybook/preview-api@7.6.5:
-    resolution: {integrity: sha512-9XzuDXXgNuA6dDZ3DXsUwEG6ElxeTbzLuYuzcjtS1FusSICZ2iYmxfS0GfSud9MjPPYOJYoSOvMdIHjorjgByA==}
-    dependencies:
-      '@storybook/channels': 7.6.5
-      '@storybook/client-logger': 7.6.5
-      '@storybook/core-events': 7.6.5
-      '@storybook/csf': 0.1.2
-      '@storybook/global': 5.0.0
-      '@storybook/types': 7.6.5
       '@types/qs': 6.9.10
       dequal: 2.0.3
       lodash: 4.17.21
