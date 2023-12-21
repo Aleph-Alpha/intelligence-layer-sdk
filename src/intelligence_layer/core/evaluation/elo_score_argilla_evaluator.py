@@ -1,3 +1,4 @@
+import random
 from collections import defaultdict
 from enum import Enum
 from itertools import combinations
@@ -11,6 +12,7 @@ from intelligence_layer.connectors.argilla.argilla_client import (
     Question,
     RecordData,
 )
+from intelligence_layer.core import MeanAccumulator
 from intelligence_layer.core.complete import InstructInput, PromptOutput
 from intelligence_layer.core.evaluation.domain import Example, SuccessfulExampleOutput
 from intelligence_layer.core.evaluation.evaluator import (
@@ -174,6 +176,7 @@ class EloScoreArgillaEvaluator(
             evaluations: Iterable[ArgillaEvaluation],
         ) -> tuple[Mapping[str, Sequence[Payoff]], set[str]]:
             players: set[str] = set()
+            # we group by example id to get a tournament round per example
             matches: dict[str, list[Payoff]] = defaultdict(list)
             for evaluation in evaluations:
                 response = evaluation.responses[self.KEY_QUESTION]
@@ -190,10 +193,21 @@ class EloScoreArgillaEvaluator(
             return cast(Mapping[str, Sequence[Payoff]], matches), players
 
         tournaments, players = build_tournaments(evaluations)
-        elo = Elo(players)
-        for _, tournament in tournaments.items():
-            elo.calculate_tournament(tournament)
+
+        # run rounds with different order of tournaments, accumulate mean
+        accumulators = {p: MeanAccumulator() for p in players}
+        tournaments_list = list(tournaments.items())
+        # TODO how many rounds?
+        #  * sampling for large inputs?
+        #  * is performance even a concern? This is probably allowed to take a few seconds
+        for _ in range(10):
+            elo = Elo(players)
+            random.shuffle(tournaments_list)
+            for _, tournament in tournaments_list:
+                elo.calculate_tournament(tournament)
+            for p in players:
+                accumulators[p].add(elo.ratings[p])
 
         return AggregatedElos(
-            elos=elo.ratings,
+            elos={p: acc.extract() for p, acc in accumulators.items()},
         )
