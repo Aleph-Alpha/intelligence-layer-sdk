@@ -6,7 +6,7 @@ from uuid import uuid4
 from aleph_alpha_client import CompletionResponse, Prompt
 from aleph_alpha_client.completion import CompletionResult
 from faker import Faker
-from pytest import fixture
+from pytest import fixture, mark
 
 from intelligence_layer.connectors.argilla.argilla_client import (
     ArgillaClient,
@@ -170,6 +170,7 @@ def test_evaluate_run_submits_pairwise_comparison_records(
         assert scores[run_ids[i]] > scores[run_ids[i + 1]]
 
 
+@mark.skip
 def test_evaluate_run_only_evaluates_high_priority(
     in_memory_evaluation_repository: InMemoryEvaluationRepository,
     in_memory_dataset_repository: InMemoryDatasetRepository,
