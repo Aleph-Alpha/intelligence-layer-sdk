@@ -80,20 +80,11 @@ def qa_records(
 ) -> Sequence[RecordData]:
     records = [
         RecordData(
-            content={"question": "What is 1+1?", "answer": "2"},
-            example_id="1000",
+            content={"question": "What is 1+1?", "answer": str(i)},
+            example_id=str(i),
             metadata={"model_1": "luminous-base"},
-        ),
-        RecordData(
-            content={"question": "Wirklich?", "answer": "Ja!"},
-            example_id="1001",
-            metadata={"model_1": "luminous-base"},
-        ),
-        RecordData(
-            content={"question": "Wie ist das Wetter?", "answer": "Gut."},
-            example_id="1002",
-            metadata={"model_1": "luminous-base"},
-        ),
+        )
+        for i in range(60)
     ]
     for record in records:
         argilla_client.add_record(qa_dataset_id, record)
@@ -131,8 +122,8 @@ def test_evaluations_returns_evaluation_results(
         argilla_client.create_evaluation(evaluation)
 
     actual_evaluations = retry(
-        lambda: argilla_client.evaluations(qa_dataset_id),
-        lambda evals: len(list(evals)) == len(evaluations),
+        lambda: list(argilla_client.evaluations(qa_dataset_id)),
+        lambda current: len(current) == len(evaluations),
     )
 
     assert sorted(actual_evaluations, key=lambda e: e.record_id) == sorted(

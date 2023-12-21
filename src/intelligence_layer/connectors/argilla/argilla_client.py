@@ -1,6 +1,7 @@
 import os
 from abc import ABC, abstractmethod
 from http import HTTPStatus
+from itertools import count
 from typing import Any, Callable, Iterable, Mapping, Optional, Sequence, Union, cast
 
 from pydantic import BaseModel
@@ -234,9 +235,7 @@ class DefaultArgillaClient(ArgillaClient):
             if e.response.status_code == HTTPStatus.INTERNAL_SERVER_ERROR:
                 records = self._list_records(dataset_id)
                 if not any(
-                    True
-                    for item in records["items"]
-                    if item["external_id"] == record.example_id
+                    True for item in records if item["external_id"] == record.example_id
                 ):
                     raise e
 
@@ -250,15 +249,21 @@ class DefaultArgillaClient(ArgillaClient):
                 for question_name, json_response in json_response["values"].items()
             }
 
-        return [
+        return (
             ArgillaEvaluation(
                 example_id=json_evaluation["external_id"],
                 record_id=json_evaluation["id"],
                 responses=to_responses(json_evaluation["responses"]),
                 metadata=json_evaluation["metadata"],
             )
-            for json_evaluation in self._evaluations(dataset_id)["items"]
-        ]
+            for json_evaluation in self._list_records(
+                dataset_id,
+                optional_params={
+                    "response_status": "submitted",
+                    "include": "responses",
+                },
+            )
+        )
 
     def _evaluations(self, dataset_id: str) -> Mapping[str, Any]:
         response = self.session.get(
@@ -270,15 +275,15 @@ class DefaultArgillaClient(ArgillaClient):
 
     def records(self, dataset_id: str) -> Iterable[Record]:
         json_records = self._list_records(dataset_id)
-        return [
+        return (
             Record(
                 id=json_record["id"],
                 content=json_record["fields"],
                 example_id=json_record["external_id"],
                 metadata=json_record["metadata"],
             )
-            for json_record in json_records["items"]
-        ]
+            for json_record in json_records
+        )
 
     def create_evaluation(self, evaluation: ArgillaEvaluation) -> None:
         response = self.session.post(
@@ -372,11 +377,25 @@ class DefaultArgillaClient(ArgillaClient):
         response = self.session.post(url, json=data)
         response.raise_for_status()
 
-    def _list_records(self, dataset_id: str) -> Mapping[str, Any]:
+    def _list_records(
+        self,
+        dataset_id: str,
+        optional_params: Optional[Mapping[str, str]] = None,
+        page_size: int = 50,
+    ) -> Iterable[Mapping[str, Any]]:
         url = self.api_url + f"api/v1/datasets/{dataset_id}/records"
-        response = self.session.get(url)
-        response.raise_for_status()
-        return cast(Mapping[str, Any], response.json())
+        for offset in count(0, page_size):
+            params: Mapping[str, str | int] = {
+                **(optional_params or {}),
+                "offset": offset,
+                "limit": page_size,
+            }
+            response = self.session.get(url, params=params)
+            response.raise_for_status()
+            records = response.json()["items"]
+            if not records:
+                break
+            yield from cast(Sequence[Mapping[str, Any]], records)
 
     def _create_record(
         self,
