@@ -10,8 +10,6 @@ from requests.adapters import HTTPAdapter
 from requests.structures import CaseInsensitiveDict
 from urllib3 import Retry
 
-from intelligence_layer.connectors.base.json_serializable import JsonSerializable
-
 
 class Field(BaseModel):
     """Definition of an Argilla feedback-dataset field.

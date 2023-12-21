@@ -1,7 +1,5 @@
-import random
 from collections import defaultdict
 from itertools import combinations
-from random import choice
 from typing import Iterable, Sequence
 from uuid import uuid4
 
@@ -15,7 +13,6 @@ from intelligence_layer.connectors.argilla.argilla_client import (
     ArgillaEvaluation,
     Field,
     Question,
-    Record,
     RecordData,
 )
 from intelligence_layer.core.complete import InstructInput, PromptOutput
@@ -28,7 +25,10 @@ from intelligence_layer.core.evaluation.domain import (
     RunOverview,
 )
 from intelligence_layer.core.evaluation.elo_score_argilla_evaluator import (
+    Elo,
     EloScoreArgillaEvaluator,
+    Payoff,
+    PayoffMatrix,
 )
 from intelligence_layer.core.evaluation.evaluation_repository import (
     InMemoryEvaluationRepository,
@@ -61,7 +61,7 @@ class ArgillaFake(ArgillaClient):
                 record_id=str(uuid4()),
                 responses={
                     "winner": 1
-                    if int(r.metadata["first_run"]) < int(r.metadata["second_run"])
+                    if int(r.metadata["first"]) < int(r.metadata["second"])
                     else 2
                 },
                 metadata=r.metadata,
@@ -154,17 +154,47 @@ def test_evaluate_run_submits_pairwise_comparison_records(
             content={
                 "instruction": instruction,
                 "input": instruction_input,
-                "response1": instruct_completion,
-                "response2": instruct_completion,
+                "first": instruct_completion,
+                "second": instruct_completion,
             },
             example_id=example_id,
-            metadata={"first_run": first, "second_run": second},
+            metadata={"first": first, "second": second},
         )
         for [first, second] in pairs
     ]
 
     elo_score = evaluator.aggregate_evaluation(evaluation_overview.id)
-    scores = elo_score.statistics.scores
+    scores = elo_score.statistics.elos
     # lower id always wins, should be sorted
     for i in range(run_count - 1):
         assert scores[run_ids[i]] > scores[run_ids[i + 1]]
+
+
+def test_elo_calculating_works_as_expected() -> None:
+    player1 = "player1"
+    player2 = "player2"
+    matches = [
+        Payoff(
+            player1=player1,
+            player2=player2,
+            matrix=PayoffMatrix.PLAYER_1_WINS,
+        )
+        for i in range(10)
+    ]
+    elo = Elo([player1, player2])
+    elo.calculate_tournament(matches)
+
+    assert elo.ratings[player1] == 1600
+    assert elo.ratings[player2] == 1400
+
+    comeback_matches = [
+        Payoff(
+            player1=player1,
+            player2=player2,
+            matrix=PayoffMatrix.PLAYER_2_WINS,
+        )
+        for i in range(10)
+    ]
+    elo.calculate_tournament(comeback_matches)
+
+    assert elo.ratings[player2] > elo.ratings[player1]
