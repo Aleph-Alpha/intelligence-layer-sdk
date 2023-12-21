@@ -2286,13 +2286,13 @@ test = ["flaky", "ipykernel (>=6.19.3)", "ipython", "ipywidgets", "nbconvert (>=
 
 [[package]]
 name = "nbconvert"
-version = "7.13.0"
+version = "7.13.1"
 description = "Converting Jupyter Notebooks"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "nbconvert-7.13.0-py3-none-any.whl", hash = "sha256:22521cfcc10ba5755e44acb6a70d2bd8a891ce7aed6746481e10cd548b169e19"},
-    {file = "nbconvert-7.13.0.tar.gz", hash = "sha256:c6f61c86fca5b28bd17f4f9a308248e59fa2b54919e1589f6cc3575c5dfec2bd"},
+    {file = "nbconvert-7.13.1-py3-none-any.whl", hash = "sha256:3c50eb2d326478cc90b8759cf2ab9dde3d892c6537cd6a5bc0991db8ef734bcc"},
+    {file = "nbconvert-7.13.1.tar.gz", hash = "sha256:2dc8267dbdfeedce2dcd34c9e3f1b51af18f43cb105549d1c5a18189ec23ba85"},
 ]
 
 [package.dependencies]
@@ -5239,4 +5239,4 @@ testing = ["big-O", "jaraco.functools", "jaraco.itertools", "more-itertools", "p
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.10,<3.12"
-content-hash = "f35bfb5611b6db7ac6b7b16f96ea0f4ab68113d91e7e39026acb770b8d92b98a"
+content-hash = "86f68a47cc97898b41b8a190da7e90f37bb1d70c52fc4dd8f095437ca3fbd53d"
