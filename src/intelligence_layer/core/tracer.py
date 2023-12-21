@@ -6,8 +6,9 @@ from types import TracebackType
 from typing import TYPE_CHECKING, Generic, Mapping, Optional, Sequence, TypeVar, Union
 from uuid import UUID, uuid4
 
-from opentelemetry.trace import Span as OpenTSpan
-from opentelemetry.trace import Tracer as OpenTTracer
+from opentelemetry.context import attach, detach
+from opentelemetry.trace import Span as OpenTSpan, get_current_span, set_span_in_context
+from opentelemetry.trace import Tracer as OpenTTracer, use_span
 from pydantic import BaseModel, Field, RootModel, SerializeAsAny
 from rich.panel import Panel
 from rich.syntax import Syntax
@@ -678,7 +679,8 @@ class OpenTelemetryTracer(Tracer):
             name,
             start_time=None if not timestamp else _open_telemetry_timestamp(timestamp),
         )
-        return OpenTelemetrySpan(tracer_span, self._tracer)
+        token = attach(set_span_in_context(tracer_span))
+        return OpenTelemetrySpan(tracer_span, self._tracer, token)
 
     def task_span(
         self,
@@ -691,7 +693,8 @@ class OpenTelemetryTracer(Tracer):
             attributes={"input": _serialize(input)},
             start_time=None if not timestamp else _open_telemetry_timestamp(timestamp),
         )
-        return OpenTelemetryTaskSpan(tracer_span, self._tracer)
+        token = attach(set_span_in_context(tracer_span))
+        return OpenTelemetryTaskSpan(tracer_span, self._tracer, token)
 
 
 class OpenTelemetrySpan(Span, OpenTelemetryTracer):
@@ -699,9 +702,10 @@ class OpenTelemetrySpan(Span, OpenTelemetryTracer):
 
     end_timestamp: Optional[datetime] = None
 
-    def __init__(self, span: OpenTSpan, tracer: OpenTTracer) -> None:
+    def __init__(self, span: OpenTSpan, tracer: OpenTTracer, token: object) -> None:
         super().__init__(tracer)
         self.open_ts_span = span
+        self._token = token
 
     def log(
         self,
@@ -716,6 +720,7 @@ class OpenTelemetrySpan(Span, OpenTelemetryTracer):
         )
 
     def end(self, timestamp: Optional[datetime] = None) -> None:
+        detach(self._token)
         self.open_ts_span.end(
             _open_telemetry_timestamp(timestamp) if timestamp is not None else None
         )
@@ -726,8 +731,8 @@ class OpenTelemetryTaskSpan(TaskSpan, OpenTelemetrySpan):
 
     output: Optional[PydanticSerializable] = None
 
-    def __init__(self, span: OpenTSpan, tracer: OpenTTracer) -> None:
-        super().__init__(span, tracer)
+    def __init__(self, span: OpenTSpan, tracer: OpenTTracer, token: object) -> None:
+        super().__init__(span, tracer, token)
 
     def record_output(self, output: PydanticSerializable) -> None:
         self.open_ts_span.set_attribute("output", _serialize(output))
