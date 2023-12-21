@@ -48,6 +48,7 @@ jobs:
       - name: run doctest
         env:
           AA_TOKEN: ${{ secrets.AA_TOKEN }}
+          HUGGING_FACE_TOKEN: ${{ secrets.HUGGING_FACE_TOKEN }}
         run: ./scripts/doctest.sh
 
   lint:
@@ -141,6 +142,7 @@ jobs:
       - name: Run pytest
         env:
           AA_TOKEN: ${{ secrets.AA_TOKEN }}
+          HUGGING_FACE_TOKEN: ${{ secrets.HUGGING_FACE_TOKEN }}
           ARGILLA_API_URL: "http://localhost:6900/"
           ARGILLA_API_KEY: "argilla.apikey"
         run: |
@@ -194,6 +196,7 @@ jobs:
       - name: Configure Poetry for notebooks and run
         env:
           AA_TOKEN: ${{ secrets.AA_TOKEN }}
+          HUGGING_FACE_TOKEN: ${{ secrets.HUGGING_FACE_TOKEN }}
           ARGILLA_API_URL: "http://localhost:6900/"
           ARGILLA_API_KEY: "argilla.apikey"
         run: |
