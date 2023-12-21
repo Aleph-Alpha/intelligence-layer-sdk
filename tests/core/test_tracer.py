@@ -229,7 +229,9 @@ class TreeBuilder(BaseModel):
         self.tracers[plain_entry.parent].entries.append(entry)
 
 
-@mark.skip("Does not assert anything, here to show how you can use the OpenTelemetry Tracer.")
+@mark.skip(
+    "Does not assert anything, here to show how you can use the OpenTelemetry Tracer."
+)
 def test_open_telemetry_tracer() -> None:
     from opentelemetry import trace
     from opentelemetry.sdk.resources import SERVICE_NAME, Resource
