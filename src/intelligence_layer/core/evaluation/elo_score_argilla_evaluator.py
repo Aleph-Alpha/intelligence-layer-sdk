@@ -200,7 +200,7 @@ class EloScoreArgillaEvaluator(
         # TODO how many rounds?
         #  * sampling for large inputs?
         #  * is performance even a concern? This is probably allowed to take a few seconds
-        for _ in range(10):
+        for _ in range(100):
             elo = Elo(players)
             random.shuffle(tournaments_list)
             for _, tournament in tournaments_list:
