@@ -7,8 +7,9 @@ from typing import TYPE_CHECKING, Generic, Mapping, Optional, Sequence, TypeVar,
 from uuid import UUID, uuid4
 
 from opentelemetry.context import attach, detach
-from opentelemetry.trace import Span as OpenTSpan, get_current_span, set_span_in_context
-from opentelemetry.trace import Tracer as OpenTTracer, use_span
+from opentelemetry.trace import Span as OpenTSpan
+from opentelemetry.trace import Tracer as OpenTTracer
+from opentelemetry.trace import set_span_in_context
 from pydantic import BaseModel, Field, RootModel, SerializeAsAny
 from rich.panel import Panel
 from rich.syntax import Syntax
