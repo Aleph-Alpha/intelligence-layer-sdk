@@ -170,6 +170,63 @@ def test_evaluate_run_submits_pairwise_comparison_records(
         assert scores[run_ids[i]] > scores[run_ids[i + 1]]
 
 
+def test_evaluate_run_only_evaluates_high_priority(
+    in_memory_evaluation_repository: InMemoryEvaluationRepository,
+    in_memory_dataset_repository: InMemoryDatasetRepository,
+    any_instruct_output: PromptOutput,
+    argilla_fake: ArgillaFake,
+) -> None:
+    eval_repository = ArgillaEvaluationRepository(
+        in_memory_evaluation_repository, argilla_fake
+    )
+    relevant_ids = frozenset({"1", "2"})
+    evaluator = EloScoreArgillaEvaluator(
+        eval_repository, in_memory_dataset_repository, "workspace", relevant_ids
+    )
+
+    run_count = 10
+    run_ids = [f"{i}" for i in range(run_count)]
+    example_id = "example_id"
+    instruction = "inst"
+    instruction_input = "some text"
+    dataset_id = in_memory_dataset_repository.create_dataset(
+        [
+            Example(
+                id=example_id,
+                input=InstructInput(instruction=instruction, input=instruction_input),
+                expected_output=None,
+            )
+        ]
+    )
+    for run_id in run_ids:
+        in_memory_evaluation_repository.store_example_output(
+            example_output=ExampleOutput(
+                run_id=run_id, example_id="example_id", output=any_instruct_output
+            )
+        )
+        in_memory_evaluation_repository.store_run_overview(
+            RunOverview(
+                dataset_id=dataset_id,
+                id=run_id,
+                start=utc_now(),
+                end=utc_now(),
+                failed_example_count=0,
+                successful_example_count=0,
+                runner_id="runner",
+            )
+        )
+
+    evaluation_overview = evaluator.evaluate_runs(*run_ids)
+
+    def relevant_ids_in_record(record: RecordData) -> bool:
+        players = [record.metadata["first"], record.metadata["second"]]
+        return any(id in players for id in relevant_ids)
+
+    records = argilla_fake.record_data(evaluation_overview.id)
+    assert all(relevant_ids_in_record(record) for record in records)
+    assert len(records) == sum(run_count - (i + 1) for i in range(len(relevant_ids)))
+
+
 def test_elo_calculating_works_as_expected() -> None:
     player1 = "player1"
     player2 = "player2"
