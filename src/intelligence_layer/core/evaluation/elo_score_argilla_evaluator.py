@@ -1,6 +1,7 @@
 from collections import defaultdict
+from enum import Enum
 from itertools import combinations
-from typing import Iterable, Mapping, Sequence
+from typing import Iterable, Mapping, Sequence, cast
 
 from pydantic import BaseModel
 
@@ -19,8 +20,86 @@ from intelligence_layer.core.evaluation.evaluator import (
 )
 
 
-class EloScore(BaseModel):
-    scores: Mapping[str, int]
+class PayoffMatrix(Enum):
+    PLAYER_1_WINS = (1, 0)
+    DRAW = (0.5, 0.5)
+    PLAYER_2_WINS = (0, 1)
+
+    @staticmethod
+    def from_rank_literal(rank: int) -> "PayoffMatrix":
+        match rank:
+            case 1:
+                return PayoffMatrix.PLAYER_1_WINS
+            case 2:
+                return PayoffMatrix.PLAYER_2_WINS
+            case 3:
+                return PayoffMatrix.DRAW
+            case _:
+                raise ValueError(f"Got unexpected rank {rank}")
+
+
+class Payoff(BaseModel):
+    player1: str
+    player2: str
+    matrix: PayoffMatrix
+
+
+class Elo:
+    def __init__(self, players: Iterable[str], k_factor: int = 20) -> None:
+        self.ratings: dict[str, float] = {p: 1500 for p in players}
+        self._k_factor = k_factor
+
+    @staticmethod
+    def _update_dict_keys(
+        to_be_updated: dict[str, float], update_with: Mapping[str, float]
+    ) -> None:
+        for key, val in update_with.items():
+            to_be_updated[key] += val
+
+    def calculate_tournament(self, preference_results: Sequence[Payoff]) -> None:
+        tournament_difs = {p: 0.0 for p in self.ratings.keys()}
+
+        for result in preference_results:
+            dif_map = self._get_difs(result)
+            self._update_dict_keys(tournament_difs, dif_map)
+
+        self._update_dict_keys(self.ratings, tournament_difs)
+
+    def _calc_expected_win_rates(
+        self, player_a: str, player_b: str
+    ) -> tuple[float, float]:
+        rating_a, rating_b = self.ratings[player_a], self.ratings[player_b]
+        expected_win_rate_a = 1 / (1 + 10 ** ((rating_b - rating_a) / 400))
+        return expected_win_rate_a, 1 - expected_win_rate_a
+
+    def _get_difs(self, preference_result: Payoff) -> Mapping[str, float]:
+        expected_win_rate_a, expected_win_rate_b = self._calc_expected_win_rates(
+            preference_result.player1, preference_result.player2
+        )
+        dif_a, dif_b = self._calc_difs(
+            preference_result.matrix,
+            expected_win_rate_a,
+            expected_win_rate_b,
+        )
+        return {preference_result.player1: dif_a, preference_result.player2: dif_b}
+
+    def _calc_difs(
+        self,
+        payoff: PayoffMatrix,
+        expected_win_rate_a: float,
+        expected_win_rate_b: float,
+    ) -> tuple[float, float]:
+        def calc_dif(actual: float, expected_win_rate: float) -> float:
+            return self._k_factor * (actual - expected_win_rate)
+
+        actual_a, actual_b = payoff.value
+        dif_a = calc_dif(actual_a, expected_win_rate_a)
+        dif_b = calc_dif(actual_b, expected_win_rate_b)
+        return dif_a, dif_b
+
+
+class AggregatedElos(BaseModel):
+    elos: Mapping[str, float]
 
 
 class EloScoreArgillaEvaluator(
@@ -28,9 +107,16 @@ class EloScoreArgillaEvaluator(
         InstructInput,
         PromptOutput,
         None,
-        EloScore,
+        AggregatedElos,
     ]
 ):
+    KEY_INSTRUCTION = "instruction"
+    KEY_INPUT = "input"
+    KEY_RESPONSE_1 = "first"
+    KEY_RESPONSE_2 = "second"
+    KEY_QUESTION = "winner"
+    OPTIONS = [1, 2, 3]
+
     def __init__(
         self,
         evaluation_repository: ArgillaEvaluationRepository,
@@ -38,17 +124,17 @@ class EloScoreArgillaEvaluator(
         workspace_id: str,
     ) -> None:
         fields = [
-            Field(name="instruction", title="Instruction"),
-            Field(name="input", title="Input"),
-            Field(name="response1", title="Response1"),
-            Field(name="response2", title="Response2"),
+            Field(name=self.KEY_INSTRUCTION, title="Instruction"),
+            Field(name=self.KEY_INPUT, title="Input"),
+            Field(name=self.KEY_RESPONSE_1, title="Response 1"),
+            Field(name=self.KEY_RESPONSE_2, title="Response 2"),
         ]
         questions = [
             Question(
-                name="winner",
-                title="which response is better",
-                description="3 means they are both equally good",
-                options=[1, 2, 3],
+                name=self.KEY_QUESTION,
+                title="Which response is better?",
+                description="1: The first completion is better.\n2: The second completion is better.\n3: They are both equally good.",
+                options=self.OPTIONS,
             )
         ]
 
@@ -69,34 +155,45 @@ class EloScoreArgillaEvaluator(
         return [
             RecordData(
                 content={
-                    "instruction": example.input.instruction,
-                    "input": example.input.input or "",
-                    "response1": first.output.completion,
-                    "response2": second.output.completion,
+                    self.KEY_INSTRUCTION: example.input.instruction,
+                    self.KEY_INPUT: example.input.input or "",
+                    self.KEY_RESPONSE_1: first.output.completion,
+                    self.KEY_RESPONSE_2: second.output.completion,
                 },
                 example_id=example.id,
-                metadata={"first_run": first.run_id, "second_run": second.run_id},
+                metadata={
+                    self.KEY_RESPONSE_1: first.run_id,
+                    self.KEY_RESPONSE_2: second.run_id,
+                },
             )
             for [first, second] in pairs
         ]
 
-    def aggregate(self, evaluations: Iterable[ArgillaEvaluation]) -> EloScore:
-        scores: defaultdict[str, int] = defaultdict(lambda: 1500)
+    def aggregate(self, evaluations: Iterable[ArgillaEvaluation]) -> AggregatedElos:
+        def build_tournaments(
+            evaluations: Iterable[ArgillaEvaluation],
+        ) -> tuple[Mapping[str, Sequence[Payoff]], set[str]]:
+            players: set[str] = set()
+            matches: dict[str, list[Payoff]] = defaultdict(list)
+            for evaluation in evaluations:
+                response = evaluation.responses[self.KEY_QUESTION]
+                assert isinstance(response, int)
+                matches[evaluation.example_id].append(
+                    Payoff(
+                        player1=evaluation.metadata[self.KEY_RESPONSE_1],
+                        player2=evaluation.metadata[self.KEY_RESPONSE_2],
+                        matrix=PayoffMatrix.from_rank_literal(response),
+                    )
+                )
+                players.add(evaluation.metadata[self.KEY_RESPONSE_1])
+                players.add(evaluation.metadata[self.KEY_RESPONSE_2])
+            return cast(Mapping[str, Sequence[Payoff]], matches), players
 
-        for evaluation in evaluations:
-            first_run_id = evaluation.metadata["first_run"]
-            second_run_id = evaluation.metadata["second_run"]
-            winner = evaluation.responses["winner"]
-            assert isinstance(winner, int) and 1 <= winner <= 3
-            match winner:
-                case 1:
-                    scores[first_run_id] += 1
-                    scores[second_run_id] -= 1
-                case 2:
-                    scores[first_run_id] -= 1
-                    scores[second_run_id] += 1
-                case 3:
-                    scores[first_run_id] += 0
-                    scores[second_run_id] += 0
+        tournaments, players = build_tournaments(evaluations)
+        elo = Elo(players)
+        for _, tournament in tournaments.items():
+            elo.calculate_tournament(tournament)
 
-        return EloScore(scores=scores)
+        return AggregatedElos(
+            elos=elo.ratings,
+        )
