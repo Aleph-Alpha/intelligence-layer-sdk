@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
 from contextlib import AbstractContextManager
 from datetime import datetime, timezone
+from pathlib import Path
 from types import TracebackType
 from typing import TYPE_CHECKING, Generic, Mapping, Optional, Sequence, TypeVar, Union
 from uuid import UUID, uuid4
@@ -13,7 +14,7 @@ from pydantic import BaseModel, Field, RootModel, SerializeAsAny
 from rich.panel import Panel
 from rich.syntax import Syntax
 from rich.tree import Tree
-from typing_extensions import Self, TextIO, TypeAliasType
+from typing_extensions import Self, TypeAliasType
 
 if TYPE_CHECKING:
     PydanticSerializable = (
@@ -556,25 +557,26 @@ class FileTracer(Tracer):
     the uuid of the parent.
 
     Args:
-        writer: Denotes the file to log to.
+        log_file_path: Denotes the file to log to.
 
     Attributes:
         uuid: a uuid for the tracer. If multiple :class:`FileTracer` instances log to the same file
             the child-elements for a tracer can be identified by referring to this id as parent.
     """
 
-    def __init__(self, writer: TextIO) -> None:
-        self._writer = writer
+    def __init__(self, log_file_path: Path) -> None:
+        self._log_file_path = log_file_path
         self.uuid = uuid4()
 
     def _log_entry(self, entry: BaseModel) -> None:
-        self._writer.write(
-            LogLine(entry_type=type(entry).__name__, entry=entry).model_dump_json()
-            + "\n"
-        )
+        with self._log_file_path.open("a") as f:
+            f.write(
+                LogLine(entry_type=type(entry).__name__, entry=entry).model_dump_json()
+                + "\n"
+            )
 
     def span(self, name: str, timestamp: Optional[datetime] = None) -> "FileSpan":
-        span = FileSpan(self._writer, name)
+        span = FileSpan(self._log_file_path, name)
         self._log_entry(
             StartSpan(
                 uuid=span.uuid,
@@ -591,7 +593,7 @@ class FileTracer(Tracer):
         input: PydanticSerializable,
         timestamp: Optional[datetime] = None,
     ) -> "FileTaskSpan":
-        task = FileTaskSpan(self._writer, task_name, input)
+        task = FileTaskSpan(self._log_file_path, task_name, input)
         self._log_entry(
             StartTask(
                 uuid=task.uuid,
@@ -603,18 +605,14 @@ class FileTracer(Tracer):
         )
         return task
 
-    def cleanup(self) -> None:
-        self._writer.flush()
-        self._writer.close()
-
 
 class FileSpan(Span, FileTracer):
     """A `Span` created by `FileTracer.span`."""
 
     end_timestamp: Optional[datetime] = None
 
-    def __init__(self, writer: TextIO, name: str) -> None:
-        super().__init__(writer)
+    def __init__(self, log_file_path: Path, name: str) -> None:
+        super().__init__(log_file_path)
 
     def log(
         self,
@@ -643,9 +641,9 @@ class FileTaskSpan(TaskSpan, FileSpan):
     output: Optional[PydanticSerializable] = None
 
     def __init__(
-        self, writer: TextIO, task_name: str, input: PydanticSerializable
+        self, log_file_path: Path, task_name: str, input: PydanticSerializable
     ) -> None:
-        super().__init__(writer, task_name)
+        super().__init__(log_file_path, task_name)
 
     def record_output(self, output: PydanticSerializable) -> None:
         self.output = output

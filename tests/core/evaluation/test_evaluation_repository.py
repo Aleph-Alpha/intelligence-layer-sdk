@@ -55,8 +55,6 @@ def test_can_store_example_evaluation_traces_in_file(
     CompositeTracer([tracer, expected]).task_span(
         "task", DummyStringInput(input="input"), now
     )
-    if hasattr(tracer, "cleanup"):
-        tracer.cleanup()
 
     assert file_evaluation_repository.example_trace(run_id, example_id) == ExampleTrace(
         run_id=run_id,

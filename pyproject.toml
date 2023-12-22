@@ -33,7 +33,6 @@ rouge = "^1.0.1"
 opentelemetry-api = "^1.22.0"
 opentelemetry-sdk = "^1.22.0"
 huggingface-hub = "^0.20.1"
-s3fs = "^2023.10.0"
 
 [tool.poetry.group.dev.dependencies]
 mypy = "^1.8.0"
