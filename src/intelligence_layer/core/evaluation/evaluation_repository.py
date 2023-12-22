@@ -95,7 +95,7 @@ class FileEvaluationRepository(EvaluationRepository):
         self._root_directory = root_directory
 
     def _run_root_directory(self) -> Path:
-        path = self._root_directory / "run"
+        path = self._root_directory / "runs"
         path.mkdir(exist_ok=True)
         return path
 
@@ -115,7 +115,7 @@ class FileEvaluationRepository(EvaluationRepository):
         return path
 
     def _eval_root_directory(self) -> Path:
-        path = self._root_directory / "eval"
+        path = self._root_directory / "evals"
         path.mkdir(exist_ok=True)
         return path
 
