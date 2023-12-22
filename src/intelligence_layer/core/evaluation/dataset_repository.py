@@ -156,5 +156,5 @@ class InMemoryDatasetRepository(DatasetRepository):
 
 class FileDatasetRepository(FileSystemDatasetRepository):
     def __init__(self, root_directory: Path) -> None:
-        root_directory.mkdir(parents=True, exist_ok=True)
         super().__init__(LocalFileSystem(), str(root_directory))
+        root_directory.mkdir(parents=True, exist_ok=True)

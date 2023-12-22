@@ -84,16 +84,12 @@ class Runner(Generic[Input, Output]):
             evaluate_tracer = self._evaluation_repository.example_tracer(
                 run_id, example.id
             )
+            if tracer:
+                evaluate_tracer = CompositeTracer([evaluate_tracer, tracer])
             try:
-                if tracer:
-                    evaluate_tracer = CompositeTracer([evaluate_tracer, tracer])
-                try:
-                    return example.id, self._task.run(example.input, evaluate_tracer)
-                except Exception as e:
-                    return example.id, FailedExampleRun.from_exception(e)
-            finally:
-                if hasattr(evaluate_tracer, "cleanup"):
-                    evaluate_tracer.cleanup()
+                return example.id, self._task.run(example.input, evaluate_tracer)
+            except Exception as e:
+                return example.id, FailedExampleRun.from_exception(e)
 
         examples = self._dataset_repository.examples_by_id(
             dataset_id, self.input_type(), self.output_type()
