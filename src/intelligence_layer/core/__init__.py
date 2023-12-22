@@ -1,8 +1,8 @@
 from intelligence_layer.core.evaluation.dataset_repository import (
     InMemoryDatasetRepository as InMemoryDatasetRepository,
 )
-from intelligence_layer.core.evaluation.elo_score_argilla_evaluator import (
-    EloScoreArgillaEvaluator as EloScoreArgillaEvaluator,
+from intelligence_layer.core.evaluation.instruct_comparison_argilla_evaluator import (
+    InstructComparisonArgillaEvaluator as InstructComparisonArgillaEvaluator,
 )
 from intelligence_layer.core.evaluation.runner import Runner as Runner
 from intelligence_layer.core.intelligence_app import (
