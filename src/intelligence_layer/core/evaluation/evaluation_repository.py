@@ -338,15 +338,16 @@ class InMemoryEvaluationRepository(EvaluationRepository):
     Preferred for quick testing or notebook use.
     """
 
-    _example_outputs: dict[
-        str, list[ExampleOutput[PydanticSerializable]]
-    ] = defaultdict(list)
-    _example_evaluations: dict[str, list[ExampleEvaluation[BaseModel]]] = defaultdict(
-        list
-    )
-    _example_traces: dict[str, InMemoryTracer] = dict()
-    _evaluation_run_overviews: dict[str, PartialEvaluationOverview] = dict()
-    _run_overviews: dict[str, RunOverview] = dict()
+    def __init__(self) -> None:
+        self._example_outputs: dict[
+            str, list[ExampleOutput[PydanticSerializable]]
+        ] = defaultdict(list)
+        self._example_evaluations: dict[
+            str, list[ExampleEvaluation[BaseModel]]
+        ] = defaultdict(list)
+        self._example_traces: dict[str, InMemoryTracer] = dict()
+        self._evaluation_run_overviews: dict[str, PartialEvaluationOverview] = dict()
+        self._run_overviews: dict[str, RunOverview] = dict()
 
     def run_ids(self) -> Sequence[str]:
         return list(self._example_outputs.keys())

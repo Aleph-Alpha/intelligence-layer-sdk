@@ -14,6 +14,7 @@ from intelligence_layer.core import (
     InMemoryTracer,
     NoOpTracer,
 )
+from intelligence_layer.core.evaluation.evaluator import EvaluationRepository
 from intelligence_layer.core.evaluation.runner import Runner
 from intelligence_layer.use_cases.classify.classify import (
     ClassifyInput,
@@ -33,10 +34,11 @@ def prompt_based_classify(client: AlephAlphaClientProtocol) -> PromptBasedClassi
 
 @fixture
 def classify_evaluator(
+    in_memory_evaluation_repository: InMemoryEvaluationRepository,
     in_memory_dataset_repository: DatasetRepository,
 ) -> SingleLabelClassifyEvaluator:
     return SingleLabelClassifyEvaluator(
-        InMemoryEvaluationRepository(),
+        in_memory_evaluation_repository,
         in_memory_dataset_repository,
     )
 
@@ -44,11 +46,12 @@ def classify_evaluator(
 @fixture
 def classify_runner(
     prompt_based_classify: PromptBasedClassify,
+    in_memory_evaluation_repository: EvaluationRepository,
     in_memory_dataset_repository: DatasetRepository,
 ) -> Runner[ClassifyInput, SingleLabelClassifyOutput]:
     return Runner(
         prompt_based_classify,
-        InMemoryEvaluationRepository(),
+        in_memory_evaluation_repository,
         in_memory_dataset_repository,
         "prompt-based-classify",
     )

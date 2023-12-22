@@ -9,6 +9,7 @@ from intelligence_layer.core import (
     Language,
     NoOpTracer,
 )
+from intelligence_layer.core.evaluation.evaluator import EvaluationRepository
 from intelligence_layer.core.evaluation.runner import Runner
 from intelligence_layer.use_cases.summarize.long_context_high_compression_summarize import (
     LongContextHighCompressionSummarize,
@@ -29,10 +30,11 @@ from intelligence_layer.use_cases.summarize.summarize import (
 
 @fixture
 def single_chunk_summarize_evaluator(
+    in_memory_evaluation_repository: InMemoryEvaluationRepository,
     in_memory_dataset_repository: InMemoryDatasetRepository,
 ) -> SingleChunkSummarizeEvaluator:
     return SingleChunkSummarizeEvaluator(
-        InMemoryEvaluationRepository(),
+        in_memory_evaluation_repository,
         in_memory_dataset_repository,
     )
 
@@ -40,11 +42,12 @@ def single_chunk_summarize_evaluator(
 @fixture
 def single_chunk_summarize_runner(
     single_chunk_few_shot_summarize: SingleChunkFewShotSummarize,
+    in_memory_evaluation_repository: InMemoryEvaluationRepository,
     in_memory_dataset_repository: InMemoryDatasetRepository,
 ) -> Runner[SingleChunkSummarizeInput, SummarizeOutput]:
     return Runner(
         single_chunk_few_shot_summarize,
-        InMemoryEvaluationRepository(),
+        in_memory_evaluation_repository,
         in_memory_dataset_repository,
         "single-chunk-summarize",
     )
@@ -52,10 +55,11 @@ def single_chunk_summarize_runner(
 
 @fixture
 def long_context_summarize_evaluator(
+    in_memory_evaluation_repository: EvaluationRepository,
     in_memory_dataset_repository: DatasetRepository,
 ) -> LongContextSummarizeEvaluator:
     return LongContextSummarizeEvaluator(
-        InMemoryEvaluationRepository(),
+        in_memory_evaluation_repository,
         in_memory_dataset_repository,
     )
 
@@ -63,11 +67,12 @@ def long_context_summarize_evaluator(
 @fixture
 def long_context_summarize_runner(
     long_context_high_compression_summarize: LongContextHighCompressionSummarize,
+    in_memory_evaluation_repository: InMemoryEvaluationRepository,
     in_memory_dataset_repository: DatasetRepository,
 ) -> Runner[LongContextSummarizeInput, LongContextSummarizeOutput]:
     return Runner(
         long_context_high_compression_summarize,
-        InMemoryEvaluationRepository(),
+        in_memory_evaluation_repository,
         in_memory_dataset_repository,
         "long-context-summarize",
     )

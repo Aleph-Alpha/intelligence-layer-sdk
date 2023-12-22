@@ -102,8 +102,6 @@ class TextHighlight(Task[TextHighlightInput, TextHighlightOutput]):
         >>> output = text_highlight.run(input, InMemoryTracer())
     """
 
-    _client: AlephAlphaClientProtocol
-
     def __init__(
         self,
         client: AlephAlphaClientProtocol,
