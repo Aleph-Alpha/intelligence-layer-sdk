@@ -12,8 +12,8 @@ from intelligence_layer.connectors.argilla.argilla_client import (
     Question,
     RecordData,
 )
-from intelligence_layer.core import MeanAccumulator
 from intelligence_layer.core.complete import InstructInput, PromptOutput
+from intelligence_layer.core.evaluation.accumulator import MeanAccumulator
 from intelligence_layer.core.evaluation.domain import Example, SuccessfulExampleOutput
 from intelligence_layer.core.evaluation.evaluator import (
     ArgillaEvaluationRepository,
