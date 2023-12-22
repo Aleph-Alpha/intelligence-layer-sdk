@@ -1,4 +1,5 @@
 from collections import defaultdict
+from copy import deepcopy
 from itertools import combinations
 from typing import Iterable, Sequence
 from uuid import uuid4
@@ -6,7 +7,7 @@ from uuid import uuid4
 from aleph_alpha_client import CompletionResponse, Prompt
 from aleph_alpha_client.completion import CompletionResult
 from faker import Faker
-from pytest import fixture, mark
+from pytest import fixture
 
 from intelligence_layer.connectors.argilla.argilla_client import (
     ArgillaClient,
@@ -108,11 +109,19 @@ def any_instruct_output() -> PromptOutput:
 
 def test_evaluate_run_submits_pairwise_comparison_records(
     evaluator: EloScoreArgillaEvaluator,
-    in_memory_evaluation_repository: InMemoryEvaluationRepository,
-    in_memory_dataset_repository: InMemoryDatasetRepository,
+    # in_memory_evaluation_repository: InMemoryEvaluationRepository,
+    # in_memory_dataset_repository: InMemoryDatasetRepository,
     any_instruct_output: PromptOutput,
-    argilla_fake: ArgillaFake,
+    # argilla_fake: ArgillaFake,
 ) -> None:
+    in_memory_evaluation_repository = InMemoryEvaluationRepository()
+    in_memory_dataset_repository = InMemoryDatasetRepository()
+    argilla_fake = ArgillaFake()
+    print("test_evaluate_run_submits_pairwise_comparison_records")
+    print(f"{in_memory_dataset_repository=}, {in_memory_evaluation_repository=}")
+    print(
+        f"{id(in_memory_dataset_repository)=}, {id(in_memory_evaluation_repository)=}"
+    )
     instruct_completion = any_instruct_output.completion
     run_count = 10
     run_ids = [f"{i}" for i in range(run_count)]
@@ -171,17 +180,25 @@ def test_evaluate_run_submits_pairwise_comparison_records(
 
 
 def test_evaluate_run_only_evaluates_high_priority(
-    in_memory_evaluation_repository: InMemoryEvaluationRepository,
-    in_memory_dataset_repository: InMemoryDatasetRepository,
+    # in_memory_evaluation_repository: InMemoryEvaluationRepository,
+    # in_memory_dataset_repository: InMemoryDatasetRepository,
     any_instruct_output: PromptOutput,
-    argilla_fake: ArgillaFake,
+    # argilla_fake: ArgillaFake,
 ) -> None:
+    in_memory_evaluation_repository_1 = InMemoryEvaluationRepository()
+    in_memory_dataset_repository_1 = InMemoryDatasetRepository()
+    argilla_fake_1 = ArgillaFake()
+    print("test_evaluate_run_only_evaluates_high_priority")
+    print(f"{in_memory_dataset_repository_1=}, {in_memory_evaluation_repository_1=}")
+    print(
+        f"{id(in_memory_dataset_repository_1)=}, {id(in_memory_evaluation_repository_1)=}"
+    )
     eval_repository = ArgillaEvaluationRepository(
-        in_memory_evaluation_repository, argilla_fake
+        in_memory_evaluation_repository_1, argilla_fake_1
     )
     relevant_ids = frozenset({"1", "2"})
     evaluator = EloScoreArgillaEvaluator(
-        eval_repository, in_memory_dataset_repository, "workspace", relevant_ids
+        eval_repository, in_memory_dataset_repository_1, "workspace", relevant_ids
     )
 
     run_count = 10
@@ -189,7 +206,7 @@ def test_evaluate_run_only_evaluates_high_priority(
     example_id = "example_id"
     instruction = "inst"
     instruction_input = "some text"
-    dataset_id = in_memory_dataset_repository.create_dataset(
+    dataset_id = in_memory_dataset_repository_1.create_dataset(
         [
             Example(
                 id=example_id,
@@ -199,12 +216,12 @@ def test_evaluate_run_only_evaluates_high_priority(
         ]
     )
     for run_id in run_ids:
-        in_memory_evaluation_repository.store_example_output(
+        in_memory_evaluation_repository_1.store_example_output(
             example_output=ExampleOutput(
                 run_id=run_id, example_id="example_id", output=any_instruct_output
             )
         )
-        in_memory_evaluation_repository.store_run_overview(
+        in_memory_evaluation_repository_1.store_run_overview(
             RunOverview(
                 dataset_id=dataset_id,
                 id=run_id,
@@ -222,7 +239,7 @@ def test_evaluate_run_only_evaluates_high_priority(
         players = [record.metadata["first"], record.metadata["second"]]
         return any(id in players for id in relevant_ids)
 
-    records = argilla_fake.record_data(evaluation_overview.id)
+    records = argilla_fake_1.record_data(evaluation_overview.id)
     assert all(relevant_ids_in_record(record) for record in records)
     assert len(records) == sum(run_count - (i + 1) for i in range(len(relevant_ids)))
 

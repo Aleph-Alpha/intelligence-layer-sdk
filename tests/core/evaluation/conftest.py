@@ -78,7 +78,7 @@ def file_evaluation_repository(tmp_path: Path) -> FileEvaluationRepository:
     return FileEvaluationRepository(tmp_path)
 
 
-@fixture(scope="function")
+@fixture()
 def in_memory_evaluation_repository() -> InMemoryEvaluationRepository:
     return InMemoryEvaluationRepository()
 
