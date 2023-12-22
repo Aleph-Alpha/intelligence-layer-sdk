@@ -1,5 +1,4 @@
 from collections import defaultdict
-from copy import deepcopy
 from itertools import combinations
 from typing import Iterable, Sequence
 from uuid import uuid4
