@@ -140,4 +140,4 @@ class FileDatasetRepository(DatasetRepository):
             pass
 
     def list_datasets(self) -> Iterable[str]:
-        return (dataset_dir.name for dataset_dir in self._root_directory.iterdir() if dataset_dir.is_dir())
+        return (dataset_dir.name for dataset_dir in self._root_directory.iterdir())
