@@ -1,4 +1,3 @@
-from json import loads
 from pathlib import Path
 from uuid import UUID
 
@@ -6,7 +5,7 @@ from aleph_alpha_client import Prompt
 from aleph_alpha_client.completion import CompletionRequest
 from opentelemetry.trace import get_tracer
 from pydantic import BaseModel, Field
-from pytest import fixture, mark
+from pytest import mark
 
 from intelligence_layer.connectors.limited_concurrency_client import (
     AlephAlphaClientProtocol,
@@ -25,6 +24,7 @@ from intelligence_layer.core import (
     TaskSpan,
     utc_now,
 )
+from intelligence_layer.core.evaluation.evaluation_repository import _parse_log
 from intelligence_layer.core.tracer import (
     EndSpan,
     EndTask,
@@ -147,41 +147,18 @@ class TestTask(Task[str, str]):
         return "output"
 
 
-@fixture
-def file_tracer(tmp_path: Path) -> FileTracer:
-    return FileTracer(tmp_path / "log.log")
-
-
-def test_file_tracer(file_tracer: FileTracer) -> None:
+def test_file_tracer(tmp_path: Path) -> None:
     input = "input"
     expected = InMemoryTracer()
 
+    log_path = tmp_path / "log.log"
+    file_tracer = FileTracer(log_path.open("a"))
     TestTask().run(input, CompositeTracer([expected, file_tracer]))
+    file_tracer.cleanup()
 
-    log_tree = parse_log(file_tracer._log_file_path)
+    with log_path.open("r") as r:
+        log_tree = _parse_log(r)
     assert log_tree == expected
-
-
-def parse_log(log_path: Path) -> InMemoryTracer:
-    tree_builder = TreeBuilder()
-    with log_path.open("r") as f:
-        for line in f:
-            json_line = loads(line)
-            log_line = LogLine.model_validate(json_line)
-            if log_line.entry_type == StartTask.__name__:
-                tree_builder.start_task(log_line)
-            elif log_line.entry_type == EndTask.__name__:
-                tree_builder.end_task(log_line)
-            elif log_line.entry_type == StartSpan.__name__:
-                tree_builder.start_span(log_line)
-            elif log_line.entry_type == EndSpan.__name__:
-                tree_builder.end_span(log_line)
-            elif log_line.entry_type == PlainEntry.__name__:
-                tree_builder.plain_entry(log_line)
-            else:
-                raise RuntimeError(f"Unexpected entry_type in {log_line}")
-    assert tree_builder.root
-    return tree_builder.root
 
 
 class TreeBuilder(BaseModel):
