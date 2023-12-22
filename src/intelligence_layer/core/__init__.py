@@ -24,9 +24,13 @@ from .complete import CompleteOutput as CompleteOutput
 from .complete import Instruct as Instruct
 from .complete import InstructInput as InstructInput
 from .complete import PromptOutput as PromptOutput
-from .detect_language import DetectLanguage, DetectLanguageInput, DetectLanguageOutput
+from .detect_language import DetectLanguage as DetectLanguage
+from .detect_language import DetectLanguageInput as DetectLanguageInput
+from .detect_language import DetectLanguageOutput as DetectLanguageOutput
 from .detect_language import Language as Language
-from .echo import EchoInput, EchoOutput, EchoTask
+from .echo import EchoInput as EchoInput
+from .echo import EchoOutput as EchoOutput
+from .echo import EchoTask as EchoTask
 from .evaluation.accumulator import MeanAccumulator as MeanAccumulator
 from .evaluation.dataset_repository import (
     FileDatasetRepository as FileDatasetRepository,
@@ -64,7 +68,9 @@ from .evaluation.evaluator import Evaluator as Evaluator
 from .evaluation.graders import BleuGrader as BleuGrader
 from .evaluation.graders import RougeGrader as RougeGrader
 from .evaluation.graders import RougeScores as RougeScores
-from .explain import Explain, ExplainInput, ExplainOutput
+from .explain import Explain as Explain
+from .explain import ExplainInput as ExplainInput
+from .explain import ExplainOutput as ExplainOutput
 from .prompt_template import Cursor as Cursor
 from .prompt_template import PromptItemCursor as PromptItemCursor
 from .prompt_template import PromptRange as PromptRange
@@ -74,12 +80,10 @@ from .prompt_template import TextCursor as TextCursor
 from .task import Input as Input
 from .task import Output as Output
 from .task import Task as Task
-from .text_highlight import (
-    ScoredTextHighlight,
-    TextHighlight,
-    TextHighlightInput,
-    TextHighlightOutput,
-)
+from .text_highlight import ScoredTextHighlight as ScoredTextHighlight
+from .text_highlight import TextHighlight as TextHighlight
+from .text_highlight import TextHighlightInput as TextHighlightInput
+from .text_highlight import TextHighlightOutput as TextHighlightOutput
 from .tracer import CompositeTracer as CompositeTracer
 from .tracer import FileSpan as FileSpan
 from .tracer import FileTaskSpan as FileTaskSpan
