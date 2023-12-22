@@ -68,6 +68,9 @@ from .evaluation.evaluator import Evaluator as Evaluator
 from .evaluation.graders import BleuGrader as BleuGrader
 from .evaluation.graders import RougeGrader as RougeGrader
 from .evaluation.graders import RougeScores as RougeScores
+from .evaluation.hugging_face import (
+    HuggingFaceDatasetRepository as HuggingFaceDatasetRepository,
+)
 from .explain import Explain as Explain
 from .explain import ExplainInput as ExplainInput
 from .explain import ExplainOutput as ExplainOutput

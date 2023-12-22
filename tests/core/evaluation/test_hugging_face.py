@@ -3,8 +3,7 @@ import os
 from dotenv import load_dotenv
 from pytest import fixture
 
-from intelligence_layer.core import Example
-from intelligence_layer.core.evaluation.hugging_face import HuggingFaceDatasetRepository
+from intelligence_layer.core import Example, HuggingFaceDatasetRepository
 
 
 @fixture(scope="session")
