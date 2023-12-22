@@ -46,7 +46,7 @@ class Payoff(BaseModel):
     matrix: PayoffMatrix
 
 
-class Elo:
+class EloCalculator:
     def __init__(self, players: Iterable[str], k_factor: int = 20) -> None:
         self.ratings: dict[str, float] = {p: 1500 for p in players}
         self._k_factor = k_factor
@@ -58,11 +58,11 @@ class Elo:
         for key, val in update_with.items():
             to_be_updated[key] += val
 
-    def calculate_tournament(self, preference_results: Sequence[Payoff]) -> None:
+    def calculate_tournament(self, payoffs: Sequence[Payoff]) -> None:
         tournament_difs = {p: 0.0 for p in self.ratings.keys()}
 
-        for result in preference_results:
-            dif_map = self._get_difs(result)
+        for payoff in payoffs:
+            dif_map = self._get_difs(payoff)
             self._update_dict_keys(tournament_difs, dif_map)
 
         self._update_dict_keys(self.ratings, tournament_difs)
@@ -100,16 +100,39 @@ class Elo:
         return dif_a, dif_b
 
 
-class AggregatedElos(BaseModel):
-    elos: Mapping[str, float]
+class WinRateCalculator:
+    def __init__(self, players: Iterable[str]) -> None:
+        self.match_count: dict[str, int] = {p: 0 for p in players}
+        self.win_count: dict[str, float] = {p: 0 for p in players}
+
+    def calculate(self, payoffs: Sequence[Payoff]) -> Mapping[str, float]:
+        for result in payoffs:
+            self.match_count[result.player1] += 1
+            self.match_count[result.player2] += 1
+            self.win_count[result.player1] += result.matrix.value[0]
+            self.win_count[result.player2] += result.matrix.value[1]
+
+        return {
+            player: self.win_count[player] / match_count
+            for player, match_count in self.match_count.items()
+        }
 
 
-class EloScoreArgillaEvaluator(
+class PlayerScore(BaseModel):
+    elo: float
+    win_rate: float
+
+
+class AggregatedInstructComparison(BaseModel):
+    scores: Mapping[str, PlayerScore]
+
+
+class InstructComparisonArgillaEvaluator(
     ArgillaEvaluator[
         InstructInput,
         PromptOutput,
         None,
-        AggregatedElos,
+        AggregatedInstructComparison,
     ]
 ):
     KEY_INSTRUCTION = "instruction"
@@ -178,7 +201,9 @@ class EloScoreArgillaEvaluator(
             )
         ]
 
-    def aggregate(self, evaluations: Iterable[ArgillaEvaluation]) -> AggregatedElos:
+    def aggregate(
+        self, evaluations: Iterable[ArgillaEvaluation]
+    ) -> AggregatedInstructComparison:
         def build_tournaments(
             evaluations: Iterable[ArgillaEvaluation],
         ) -> tuple[Mapping[str, Sequence[Payoff]], set[str]]:
@@ -204,13 +229,21 @@ class EloScoreArgillaEvaluator(
         accumulators = {p: MeanAccumulator() for p in players}
         tournaments_list = list(tournaments.items())
         for _ in range(100):
-            elo = Elo(players)
+            elo_calc = EloCalculator(players)
             random.shuffle(tournaments_list)
             for _, tournament in tournaments_list:
-                elo.calculate_tournament(tournament)
+                elo_calc.calculate_tournament(tournament)
             for p in players:
-                accumulators[p].add(elo.ratings[p])
+                accumulators[p].add(elo_calc.ratings[p])
 
-        return AggregatedElos(
-            elos={p: acc.extract() for p, acc in accumulators.items()},
+        win_rate_calc = WinRateCalculator(players)
+        win_rate = win_rate_calc.calculate(
+            [battle for tournament in tournaments.values() for battle in tournament]
+        )
+
+        return AggregatedInstructComparison(
+            scores={
+                p: PlayerScore(elo=acc.extract(), win_rate=win_rate[p])
+                for p, acc in accumulators.items()
+            },
         )
