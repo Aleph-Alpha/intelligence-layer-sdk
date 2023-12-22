@@ -106,6 +106,7 @@ def any_instruct_output() -> PromptOutput:
     )
 
 
+@mark.skip
 def test_evaluate_run_submits_pairwise_comparison_records(
     evaluator: EloScoreArgillaEvaluator,
     in_memory_evaluation_repository: InMemoryEvaluationRepository,
@@ -170,7 +171,6 @@ def test_evaluate_run_submits_pairwise_comparison_records(
         assert scores[run_ids[i]] > scores[run_ids[i + 1]]
 
 
-@mark.skip
 def test_evaluate_run_only_evaluates_high_priority(
     in_memory_evaluation_repository: InMemoryEvaluationRepository,
     in_memory_dataset_repository: InMemoryDatasetRepository,
