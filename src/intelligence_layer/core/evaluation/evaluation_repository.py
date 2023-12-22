@@ -1,9 +1,12 @@
 from collections import defaultdict
 from json import loads
 from pathlib import Path
-from typing import Iterable, Optional, Sequence, cast
+from typing import Iterable, Optional, Sequence, TextIO, cast
 from uuid import UUID
 
+from fsspec import AbstractFileSystem  # type: ignore
+from fsspec.implementations.local import LocalFileSystem  # type: ignore
+from huggingface_hub import HfFileSystem  # type: ignore
 from pydantic import BaseModel, Field
 
 from intelligence_layer.core.evaluation.domain import (
@@ -82,76 +85,73 @@ class SerializedExampleEvaluation(BaseModel):
             )
 
 
-class FileEvaluationRepository(EvaluationRepository):
-    """An :class:`EvaluationRepository` that stores evaluation results in json-files.
+class FileSystemEvaluationRepository(EvaluationRepository):
+    """An :class:`EvaluationRepository` that stores evaluation results in json-files on Hugging Face."""
 
-    Args:
-        root_directory: The folder where the json-files are stored. The folder (along with its parents)
-            will be created if it does not exist yet.
-    """
-
-    def __init__(self, root_directory: Path) -> None:
-        root_directory.mkdir(parents=True, exist_ok=True)
+    def __init__(self, fs: AbstractFileSystem, root_directory: str) -> None:
+        assert root_directory[-1] != "/"
+        self._fs: HfFileSystem = fs
         self._root_directory = root_directory
 
-    def _run_root_directory(self) -> Path:
-        path = self._root_directory / "runs"
-        path.mkdir(exist_ok=True)
+    def _run_root_directory(self) -> str:
+        path = self._root_directory + "/" + "runs"
+        self._fs.makedirs(path, exist_ok=True)
         return path
 
-    def _run_directory(self, run_id: str) -> Path:
-        path = self._run_root_directory() / run_id
-        path.mkdir(exist_ok=True)
+    def _run_directory(self, run_id: str) -> str:
+        path = self._run_root_directory() + "/" + run_id
+        self._fs.makedirs(path, exist_ok=True)
         return path
 
-    def _output_directory(self, run_id: str) -> Path:
-        path = self._run_directory(run_id) / "output"
-        path.mkdir(exist_ok=True)
+    def _output_directory(self, run_id: str) -> str:
+        path = self._run_directory(run_id) + "/" + "output"
+        self._fs.makedirs(path, exist_ok=True)
         return path
 
-    def _trace_directory(self, run_id: str) -> Path:
-        path = self._run_directory(run_id) / "trace"
-        path.mkdir(exist_ok=True)
+    def _trace_directory(self, run_id: str) -> str:
+        path = self._run_directory(run_id) + "/" + "trace"
+        self._fs.makedirs(path, exist_ok=True)
         return path
 
-    def _eval_root_directory(self) -> Path:
-        path = self._root_directory / "evals"
-        path.mkdir(exist_ok=True)
+    def _eval_root_directory(self) -> str:
+        path = self._root_directory + "/" + "evals"
+        self._fs.makedirs(path, exist_ok=True)
         return path
 
-    def _eval_directory(self, eval_id: str) -> Path:
-        path = self._eval_root_directory() / eval_id
-        path.mkdir(exist_ok=True)
+    def _eval_directory(self, eval_id: str) -> str:
+        path = self._eval_root_directory() + "/" + eval_id
+        self._fs.makedirs(path, exist_ok=True)
         return path
 
-    def _example_output_path(self, run_id: str, example_id: str) -> Path:
-        return (self._output_directory(run_id) / example_id).with_suffix(".json")
+    def _example_output_path(self, run_id: str, example_id: str) -> str:
+        return (self._output_directory(run_id) + "/" + example_id) + ".json"
 
-    def _example_trace_path(self, run_id: str, example_id: str) -> Path:
-        return (self._trace_directory(run_id) / example_id).with_suffix(".jsonl")
+    def _example_trace_path(self, run_id: str, example_id: str) -> str:
+        return (self._trace_directory(run_id) + "/" + example_id) + ".jsonl"
 
-    def _example_result_path(self, eval_id: str, example_id: str) -> Path:
-        return (self._eval_directory(eval_id) / example_id).with_suffix(".json")
+    def _example_result_path(self, eval_id: str, example_id: str) -> str:
+        return (self._eval_directory(eval_id) + "/" + example_id) + ".json"
 
-    def _evaluation_run_overview_path(self, eval_id: str) -> Path:
-        return self._eval_directory(eval_id).with_suffix(".json")
+    def _evaluation_run_overview_path(self, eval_id: str) -> str:
+        return self._eval_directory(eval_id) + ".json"
 
-    def _run_overview_path(self, run_id: str) -> Path:
-        return self._run_directory(run_id).with_suffix(".json")
+    def _run_overview_path(self, run_id: str) -> str:
+        return self._run_directory(run_id) + ".json"
 
     def store_example_output(self, example_output: ExampleOutput[Output]) -> None:
         serialized_result = JsonSerializer(root=example_output)
-        self._example_output_path(
-            example_output.run_id, example_output.example_id
-        ).write_text(serialized_result.model_dump_json(indent=2))
+        self._fs.write_text(
+            self._example_output_path(example_output.run_id, example_output.example_id),
+            serialized_result.model_dump_json(indent=2),
+        )
 
     def example_output(
         self, run_id: str, example_id: str, output_type: type[Output]
     ) -> Optional[ExampleOutput[Output]]:
         file_path = self._example_output_path(run_id, example_id)
-        if not file_path.exists():
+        if not self._fs.exists(file_path):
             return None
-        content = file_path.read_text()
+        content = self._fs.read_text(file_path)
         # Mypy does not accept dynamic types
         return ExampleOutput[output_type].model_validate_json(json_data=content)  # type: ignore
 
@@ -165,11 +165,11 @@ class FileEvaluationRepository(EvaluationRepository):
             return self.example_output(run_id, id, output_type)
 
         path = self._output_directory(run_id)
-        output_files = path.glob("*.json")
+        output_files = self._fs.glob(path + "/*.json")
         return (
             example_output
             for example_output in sorted(
-                (load_example_output(file) for file in output_files),
+                (load_example_output(Path(file)) for file in output_files),
                 key=lambda example_output: example_output.example_id
                 if example_output
                 else "",
@@ -187,10 +187,12 @@ class FileEvaluationRepository(EvaluationRepository):
             return self.example_evaluation(eval_id, id, evaluation_type)
 
         path = self._eval_directory(eval_id)
-        logs = path.glob("*.json")
+        logs = self._fs.glob(path + "/*.json")
         return [
             example_result
-            for example_result in (fetch_result_from_file_name(file) for file in logs)
+            for example_result in (
+                fetch_result_from_file_name(Path(file)) for file in logs
+            )
             if example_result
         ]
 
@@ -204,17 +206,18 @@ class FileEvaluationRepository(EvaluationRepository):
         self, eval_id: str, example_id: str, evaluation_type: type[Evaluation]
     ) -> Optional[ExampleEvaluation[Evaluation]]:
         file_path = self._example_result_path(eval_id, example_id)
-        if not file_path.exists():
+        if not self._fs.exists(file_path):
             return None
-        content = file_path.read_text()
+        content = self._fs.read_text(file_path)
         serialized_example = SerializedExampleEvaluation.model_validate_json(content)
         return serialized_example.to_example_result(evaluation_type)
 
     def example_trace(self, run_id: str, example_id: str) -> Optional[ExampleTrace]:
         file_path = self._example_trace_path(run_id, example_id)
-        if not file_path.exists():
+        if not self._fs.exists(file_path):
             return None
-        in_memory_tracer = _parse_log(file_path)
+        with self._fs.open(file_path, "r") as f:
+            in_memory_tracer = _parse_log(f)
         trace = TaskSpanTrace.from_task_span(
             cast(InMemoryTaskSpan, in_memory_tracer.entries[0])
         )
@@ -222,69 +225,88 @@ class FileEvaluationRepository(EvaluationRepository):
 
     def example_tracer(self, run_id: str, example_id: str) -> Tracer:
         file_path = self._example_trace_path(run_id, example_id)
-        return FileTracer(file_path)
+        # TODO handle closing the file, maybe Tracer interface should be context handler
+        return FileTracer(self._fs.open(file_path, "w"))
 
     def store_example_evaluation(self, result: ExampleEvaluation[Evaluation]) -> None:
         serialized_result = SerializedExampleEvaluation.from_example_result(result)
-        self._example_result_path(result.eval_id, result.example_id).write_text(
-            serialized_result.model_dump_json(indent=2)
+        self._fs.write_text(
+            self._example_result_path(result.eval_id, result.example_id),
+            serialized_result.model_dump_json(indent=2),
         )
 
     def evaluation_overview(
         self, eval_id: str, overview_type: type[EvaluationOverviewType]
     ) -> EvaluationOverviewType | None:
         file_path = self._evaluation_run_overview_path(eval_id)
-        if not file_path.exists():
+        if not self._fs.exists(file_path):
             return None
-        content = file_path.read_text()
+        content = self._fs.read_text(file_path)
         return overview_type.model_validate_json(content)
 
     def store_evaluation_overview(self, overview: PartialEvaluationOverview) -> None:
-        self._evaluation_run_overview_path(overview.id).write_text(
-            overview.model_dump_json(indent=2)
+        self._fs.write_text(
+            self._evaluation_run_overview_path(overview.id),
+            overview.model_dump_json(indent=2),
         )
 
     def run_overview(self, run_id: str) -> RunOverview | None:
         file_path = self._run_overview_path(run_id)
-        if not file_path.exists():
+        if not self._fs.exists(file_path):
             return None
-        content = file_path.read_text()
+        content = self._fs.read_text(file_path)
         return RunOverview.model_validate_json(content)
 
     def store_run_overview(self, overview: RunOverview) -> None:
-        self._run_overview_path(overview.id).write_text(
-            overview.model_dump_json(indent=2)
+        self._fs.write_text(
+            self._run_overview_path(overview.id), overview.model_dump_json(indent=2)
         )
 
     def run_ids(self) -> Sequence[str]:
         return [
-            path.parent.name for path in self._run_root_directory().glob("*/output")
+            Path(path).parent.name
+            for path in self._fs.glob(self._run_root_directory() + "/*/output")
         ]
 
     def eval_ids(self) -> Sequence[str]:
-        return [path.stem for path in self._eval_root_directory().glob("*.json")]
+        return [
+            path.stem for path in self._fs.glob(self._eval_root_directory() + "/*.json")
+        ]
 
 
-def _parse_log(log_path: Path) -> InMemoryTracer:
+def _parse_log(f: TextIO) -> InMemoryTracer:
     tree_builder = TreeBuilder()
-    with log_path.open("r") as f:
-        for line in f:
-            json_line = loads(line)
-            log_line = LogLine.model_validate(json_line)
-            if log_line.entry_type == StartTask.__name__:
-                tree_builder.start_task(log_line)
-            elif log_line.entry_type == EndTask.__name__:
-                tree_builder.end_task(log_line)
-            elif log_line.entry_type == StartSpan.__name__:
-                tree_builder.start_span(log_line)
-            elif log_line.entry_type == EndSpan.__name__:
-                tree_builder.end_span(log_line)
-            elif log_line.entry_type == PlainEntry.__name__:
-                tree_builder.plain_entry(log_line)
-            else:
-                raise RuntimeError(f"Unexpected entry_type in {log_line}")
+
+    for line in f:
+        json_line = loads(line)
+        log_line = LogLine.model_validate(json_line)
+        if log_line.entry_type == StartTask.__name__:
+            tree_builder.start_task(log_line)
+        elif log_line.entry_type == EndTask.__name__:
+            tree_builder.end_task(log_line)
+        elif log_line.entry_type == StartSpan.__name__:
+            tree_builder.start_span(log_line)
+        elif log_line.entry_type == EndSpan.__name__:
+            tree_builder.end_span(log_line)
+        elif log_line.entry_type == PlainEntry.__name__:
+            tree_builder.plain_entry(log_line)
+        else:
+            raise RuntimeError(f"Unexpected entry_type in {log_line}")
     assert tree_builder.root
     return tree_builder.root
+
+
+class FileEvaluationRepository(FileSystemEvaluationRepository):
+    """An :class:`EvaluationRepository` that stores evaluation results in json-files.
+
+    Args:
+        root_directory: The folder where the json-files are stored. The folder (along with its parents)
+            will be created if it does not exist yet.
+    """
+
+    def __init__(self, root_directory: Path) -> None:
+        root_directory.mkdir(parents=True, exist_ok=True)
+        super().__init__(LocalFileSystem(), str(root_directory))
 
 
 class TreeBuilder(BaseModel):
