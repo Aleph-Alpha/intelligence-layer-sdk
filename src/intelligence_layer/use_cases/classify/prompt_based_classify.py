@@ -72,7 +72,6 @@ Reply with only the class label.
 
 ### Response:"""
     MODEL: str = "luminous-base-control"
-    _client: AlephAlphaClientProtocol
 
     def __init__(self, client: AlephAlphaClientProtocol) -> None:
         super().__init__()

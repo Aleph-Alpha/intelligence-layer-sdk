@@ -1,6 +1,6 @@
 from os import getenv
 from pathlib import Path
-from typing import Iterable, Sequence, cast
+from typing import Sequence, cast
 
 from aleph_alpha_client import Image
 from dotenv import load_dotenv
@@ -23,6 +23,9 @@ from intelligence_layer.core import (
     NoOpTracer,
     Task,
     TaskSpan,
+)
+from intelligence_layer.core.evaluation.evaluation_repository import (
+    InMemoryEvaluationRepository,
 )
 
 
@@ -124,7 +127,10 @@ def dummy_string_task() -> DummyStringTask:
 
 
 @fixture
-def in_memory_dataset_repository() -> Iterable[InMemoryDatasetRepository]:
-    repository = InMemoryDatasetRepository()
-    yield repository
-    repository._datasets.clear()
+def in_memory_dataset_repository() -> InMemoryDatasetRepository:
+    return InMemoryDatasetRepository()
+
+
+@fixture
+def in_memory_evaluation_repository() -> InMemoryEvaluationRepository:
+    return InMemoryEvaluationRepository()

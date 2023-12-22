@@ -78,17 +78,6 @@ def file_evaluation_repository(tmp_path: Path) -> FileEvaluationRepository:
     return FileEvaluationRepository(tmp_path)
 
 
-@fixture(scope="function")
-def in_memory_evaluation_repository() -> Iterable[InMemoryEvaluationRepository]:
-    repository = InMemoryEvaluationRepository()
-    yield repository
-    repository._example_outputs.clear()
-    repository._example_evaluations.clear()
-    repository._example_traces.clear()
-    repository._evaluation_run_overviews.clear()
-    repository._run_overviews.clear()
-
-
 @fixture
 def string_dataset_id(
     dummy_string_examples: Iterable[Example[DummyStringInput, DummyStringOutput]],
