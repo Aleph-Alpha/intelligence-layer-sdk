@@ -8,6 +8,9 @@ from intelligence_layer.core.evaluation.evaluator import DatasetRepository
 from intelligence_layer.core.task import Input
 from intelligence_layer.core.tracer import JsonSerializer, PydanticSerializable
 
+from fsspec import AbstractFileSystem  # type: ignore
+from fsspec.implementations.local import LocalFileSystem
+
 
 class FileSystemDatasetRepository(DatasetRepository):
     def __init__(self, fs: AbstractFileSystem, root_directory: str) -> None:
