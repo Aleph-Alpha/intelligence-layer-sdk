@@ -263,7 +263,8 @@ class FileSystemEvaluationRepository(EvaluationRepository):
 
     def eval_ids(self) -> Sequence[str]:
         return [
-            Path(path).stem for path in self._fs.glob(self._eval_root_directory() + "/*.json")
+            Path(path).stem
+            for path in self._fs.glob(self._eval_root_directory() + "/*.json")
         ]
 
 
