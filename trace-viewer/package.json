@@ -26,7 +26,7 @@
 		"autoprefixer": "^10.4.16",
 		"class-variance-authority": "^0.7.0",
 		"codemirror": "^6.0.1",
-		"date-fns": "^3.0.5",
+		"date-fns": "^3.0.6",
 		"eslint": "^8.56.0",
 		"eslint-config-prettier": "^9.1.0",
 		"eslint-plugin-storybook": "^0.6.15",
