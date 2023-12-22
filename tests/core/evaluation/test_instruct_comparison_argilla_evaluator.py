@@ -24,16 +24,16 @@ from intelligence_layer.core.evaluation.domain import (
     ExampleOutput,
     RunOverview,
 )
-from intelligence_layer.core.evaluation.elo_score_argilla_evaluator import (
-    Elo,
-    EloScoreArgillaEvaluator,
-    Payoff,
-    PayoffMatrix,
-)
 from intelligence_layer.core.evaluation.evaluation_repository import (
     InMemoryEvaluationRepository,
 )
 from intelligence_layer.core.evaluation.evaluator import ArgillaEvaluationRepository
+from intelligence_layer.core.evaluation.instruct_comparison_argilla_evaluator import (
+    EloCalculator,
+    InstructComparisonArgillaEvaluator,
+    Payoff,
+    PayoffMatrix,
+)
 from intelligence_layer.core.prompt_template import PromptWithMetadata
 from intelligence_layer.core.tracer import utc_now
 
@@ -83,11 +83,11 @@ def evaluator(
     in_memory_dataset_repository: InMemoryDatasetRepository,
     in_memory_evaluation_repository: InMemoryEvaluationRepository,
     argilla_fake: ArgillaClient,
-) -> EloScoreArgillaEvaluator:
+) -> InstructComparisonArgillaEvaluator:
     eval_repository = ArgillaEvaluationRepository(
         in_memory_evaluation_repository, argilla_fake
     )
-    return EloScoreArgillaEvaluator(
+    return InstructComparisonArgillaEvaluator(
         eval_repository, in_memory_dataset_repository, "workspace"
     )
 
@@ -107,7 +107,7 @@ def any_instruct_output() -> PromptOutput:
 
 
 def test_evaluate_run_submits_pairwise_comparison_records(
-    evaluator: EloScoreArgillaEvaluator,
+    evaluator: InstructComparisonArgillaEvaluator,
     in_memory_evaluation_repository: InMemoryEvaluationRepository,
     in_memory_dataset_repository: InMemoryDatasetRepository,
     any_instruct_output: PromptOutput,
@@ -164,10 +164,11 @@ def test_evaluate_run_submits_pairwise_comparison_records(
     ]
 
     elo_score = evaluator.aggregate_evaluation(evaluation_overview.id)
-    scores = elo_score.statistics.elos
+    scores = elo_score.statistics.scores
     # lower id always wins, should be sorted
     for i in range(run_count - 1):
-        assert scores[run_ids[i]] > scores[run_ids[i + 1]]
+        assert scores[run_ids[i]].elo > scores[run_ids[i + 1]].elo
+        assert scores[run_ids[i]].win_rate > scores[run_ids[i + 1]].win_rate
 
 
 @mark.skip
@@ -193,7 +194,7 @@ def test_evaluate_run_only_evaluates_high_priority(
         in_memory_evaluation_repository_1, argilla_fake_1
     )
     relevant_ids = frozenset({"1", "2"})
-    evaluator = EloScoreArgillaEvaluator(
+    evaluator = InstructComparisonArgillaEvaluator(
         eval_repository, in_memory_dataset_repository_1, "workspace", relevant_ids
     )
 
@@ -254,7 +255,7 @@ def test_evaluate_run_only_evaluates_high_priority_2(
     run_count = 10
     run_ids = [str(uuid4()) for i in range(run_count)]
     relevant_ids = frozenset({run_ids[0], run_ids[1]})
-    evaluator = EloScoreArgillaEvaluator(
+    evaluator = InstructComparisonArgillaEvaluator(
         eval_repository, in_memory_dataset_repository, "workspace", relevant_ids
     )
 
@@ -310,7 +311,7 @@ def test_elo_calculating_works_as_expected() -> None:
         )
         for i in range(10)
     ]
-    elo = Elo([player1, player2])
+    elo = EloCalculator([player1, player2])
     elo.calculate_tournament(matches)
 
     assert elo.ratings[player1] == 1600
