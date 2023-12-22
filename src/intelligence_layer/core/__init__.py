@@ -10,7 +10,7 @@ from intelligence_layer.core.intelligence_app import IntelligenceApp as Intellig
 from intelligence_layer.core.intelligence_app import (
     RegisterTaskError as RegisterTaskError,
 )
-
+from intelligence_layer.core.evaluation.elo_score_argilla_evaluator import EloScoreArgillaEvaluator as EloScoreArgillaEvaluator
 from .chunk import Chunk as Chunk
 from .chunk import ChunkInput as ChunkInput
 from .chunk import ChunkOutput as ChunkOutput
