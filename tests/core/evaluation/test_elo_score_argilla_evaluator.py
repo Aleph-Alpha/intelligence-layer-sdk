@@ -106,7 +106,6 @@ def any_instruct_output() -> PromptOutput:
     )
 
 
-@mark.skip
 def test_evaluate_run_submits_pairwise_comparison_records(
     evaluator: EloScoreArgillaEvaluator,
     in_memory_evaluation_repository: InMemoryEvaluationRepository,
