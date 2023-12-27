@@ -28,7 +28,7 @@ def example() -> Example[str, str]:
 
 def test_hf_database_non_existing(hf_repository: HuggingFaceDatasetRepository) -> None:
     assert hf_repository.examples_by_id("lol", str, str) is None
-    assert hf_repository.example("lol", "abc", str, str) is None
+    assert hf_repository.example("lol", 0, str, str) is None
     hf_repository.delete_dataset("lol")
     # make sure random files are not actually datasets
     datasets = list(hf_repository.list_datasets())
@@ -45,8 +45,8 @@ def test_hf_database_operations(
         examples = hf_repository.examples_by_id(dataset_id, str, str)
         assert examples is not None
         assert [e for e in examples] == [example]
-        assert hf_repository.example(dataset_id, example.id, str, str) == example
-        assert hf_repository.example(dataset_id, "abc", str, str) is None
+        assert hf_repository.example(dataset_id, 0, str, str) == example
+        assert hf_repository.example(dataset_id, 1, str, str) is None
         hf_repository.delete_dataset(dataset_id)
         assert hf_repository.examples_by_id(dataset_id, str, str) is None
     finally:

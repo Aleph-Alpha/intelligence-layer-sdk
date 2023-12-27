@@ -51,7 +51,7 @@ class ArgillaEvaluation(BaseModel):
         responses: Maps question-names (:attr:`Question.name` ) to response values.
     """
 
-    example_id: str
+    example_id: int
     record_id: str
     responses: Mapping[str, Union[str, int, float, bool]]
     metadata: Mapping[str, str]
@@ -70,7 +70,7 @@ class RecordData(BaseModel):
     """
 
     content: Mapping[str, str]
-    example_id: str
+    example_id: int
     metadata: Mapping[str, str] = PydanticField(default_factory=dict)
 
 
@@ -401,7 +401,7 @@ class DefaultArgillaClient(ArgillaClient):
         self,
         content: Mapping[str, str],
         metadata: Mapping[str, str],
-        example_id: str,
+        example_id: int,
         dataset_id: str,
     ) -> None:
         url = self.api_url + f"api/v1/datasets/{dataset_id}/records"

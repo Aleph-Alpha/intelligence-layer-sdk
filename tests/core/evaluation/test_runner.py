@@ -36,6 +36,4 @@ def test_runner_runs_dataset(
         )
     )
 
-    assert set(output.example_id for output in outputs) == set(
-        example.id for example in examples
-    )
+    assert set(output.example_id for output in outputs) == {0, 1, 2}

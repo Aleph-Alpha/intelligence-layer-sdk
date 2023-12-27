@@ -22,13 +22,17 @@ class FileSystemDatasetRepository(DatasetRepository):
     def _dataset_directory(self, dataset_id: str) -> str:
         return self._root_directory + "/" + dataset_id
 
-    def _example_path(self, dataset_id: str, example_id: str) -> str:
-        return self._dataset_directory(dataset_id) + "/" + example_id + ".json"
+    def _example_path(self, dataset_id: str, example_id: int) -> str:
+        return self._dataset_directory(dataset_id) + "/" + str(example_id) + ".json"
+
+    def _serialize_example(self, example: Example[Input, ExpectedOutput]) -> str:
+        serialized_result = JsonSerializer(root=example)
+        return serialized_result.model_dump_json(indent=2)
 
     def example(
         self,
         dataset_id: str,
-        example_id: str,
+        example_id: int,
         input_type: type[Input],
         expected_output_type: type[ExpectedOutput],
     ) -> Optional[Example[Input, ExpectedOutput]]:
@@ -45,10 +49,9 @@ class FileSystemDatasetRepository(DatasetRepository):
         if self._fs.exists(dataset_dir):
             raise ValueError(f"Dataset name {dataset_id} already taken")
         self._fs.mkdir(dataset_dir)
-        for example in examples:
-            serialized_result = JsonSerializer(root=example)
-            example_path = self._example_path(dataset_id, example.id)
-            text = serialized_result.model_dump_json(indent=2)
+        for id, example in enumerate(examples):
+            example_path = self._example_path(dataset_id, id)
+            text = self._serialize_example(example)
             self._fs.write_text(example_path, text)
         return dataset_id
 
@@ -64,21 +67,17 @@ class FileSystemDatasetRepository(DatasetRepository):
             example_id = path[path.rfind("/") + 1 :]
             example_id = example_id[: example_id.rfind(".")]
             return self.example(
-                dataset_id, example_id, input_type, expected_output_type
+                dataset_id, int(example_id), input_type, expected_output_type
             )
 
         path = self._dataset_directory(dataset_id)
         if not self._fs.exists(path):
             return None
 
-        example_files = self._fs.glob(path + "/*.json")
-        files = list(load_example(file) for file in example_files)
+        example_files = sorted(self._fs.glob(path + "/*.json"))
         return (
             example
-            for example in sorted(
-                files,
-                key=lambda example: example.id if example else "",
-            )
+            for example in [load_example(file) for file in example_files]
             if example
         )
 
@@ -136,15 +135,14 @@ class InMemoryDatasetRepository(DatasetRepository):
     def example(
         self,
         dataset_id: str,
-        example_id: str,
+        example_id: int,
         input_type: type[Input],
         expected_output_type: type[ExpectedOutput],
     ) -> Example[Input, ExpectedOutput] | None:
         examples = self.examples_by_id(dataset_id, input_type, expected_output_type)
         if examples is None:
             return None
-        filtered = (e for e in examples if e.id == example_id)
-        return next(filtered, None)
+        return list(examples)[example_id]
 
     def delete_dataset(self, dataset_id: str) -> None:
         self._datasets.pop(dataset_id, None)

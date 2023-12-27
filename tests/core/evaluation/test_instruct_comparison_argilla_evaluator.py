@@ -116,13 +116,12 @@ def test_evaluate_run_submits_pairwise_comparison_records(
     instruct_completion = any_instruct_output.completion
     run_count = 10
     run_ids = [f"{i}" for i in range(run_count)]
-    example_id = "example_id"
+    example_id = 0
     instruction = "inst"
     instruction_input = "some text"
     dataset_id = in_memory_dataset_repository.create_dataset(
         [
             Example(
-                id=example_id,
                 input=InstructInput(instruction=instruction, input=instruction_input),
                 expected_output=None,
             )
@@ -131,7 +130,7 @@ def test_evaluate_run_submits_pairwise_comparison_records(
     for run_id in run_ids:
         in_memory_evaluation_repository.store_example_output(
             example_output=ExampleOutput(
-                run_id=run_id, example_id="example_id", output=any_instruct_output
+                run_id=run_id, example_id=0, output=any_instruct_output
             )
         )
         in_memory_evaluation_repository.store_run_overview(
@@ -187,13 +186,11 @@ def test_evaluate_run_only_evaluates_high_priority(
 
     run_count = 10
     run_ids = [f"{i}" for i in range(run_count)]
-    example_id = "example_id"
     instruction = "inst"
     instruction_input = "some text"
     dataset_id = in_memory_dataset_repository.create_dataset(
         [
             Example(
-                id=example_id,
                 input=InstructInput(instruction=instruction, input=instruction_input),
                 expected_output=None,
             )
@@ -202,7 +199,7 @@ def test_evaluate_run_only_evaluates_high_priority(
     for run_id in run_ids:
         in_memory_evaluation_repository.store_example_output(
             example_output=ExampleOutput(
-                run_id=run_id, example_id="example_id", output=any_instruct_output
+                run_id=run_id, example_id=0, output=any_instruct_output
             )
         )
         in_memory_evaluation_repository.store_run_overview(

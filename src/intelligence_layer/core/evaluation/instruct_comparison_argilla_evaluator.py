@@ -176,6 +176,7 @@ class InstructComparisonArgillaEvaluator(
     def _to_record(
         self,
         example: Example[InstructInput, None],
+        example_id: int,
         *example_outputs: SuccessfulExampleOutput[PromptOutput],
     ) -> Sequence[RecordData]:
         pairs = combinations(example_outputs, 2)
@@ -187,7 +188,7 @@ class InstructComparisonArgillaEvaluator(
                     self.KEY_RESPONSE_1: first.output.completion,
                     self.KEY_RESPONSE_2: second.output.completion,
                 },
-                example_id=example.id,
+                example_id=example_id,
                 metadata={
                     self.KEY_RESPONSE_1: first.run_id,
                     self.KEY_RESPONSE_2: second.run_id,
@@ -209,7 +210,7 @@ class InstructComparisonArgillaEvaluator(
         ) -> tuple[Mapping[str, Sequence[Payoff]], set[str]]:
             players: set[str] = set()
             # we group by example id to get a tournament round per example
-            matches: dict[str, list[Payoff]] = defaultdict(list)
+            matches: dict[int, list[Payoff]] = defaultdict(list)
             for evaluation in evaluations:
                 response = evaluation.responses[self.KEY_QUESTION]
                 assert isinstance(response, int)

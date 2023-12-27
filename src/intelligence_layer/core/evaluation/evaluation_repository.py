@@ -50,7 +50,7 @@ class SerializedExampleEvaluation(BaseModel):
     """
 
     eval_id: str
-    example_id: str
+    example_id: int
     is_exception: bool
     json_result: str
 
@@ -124,14 +124,14 @@ class FileSystemEvaluationRepository(EvaluationRepository):
         path.mkdir(exist_ok=True)
         return path
 
-    def _example_output_path(self, run_id: str, example_id: str) -> Path:
-        return (self._output_directory(run_id) / example_id).with_suffix(".json")
+    def _example_output_path(self, run_id: str, example_id: int) -> str:
+        return (self._output_directory(run_id) + "/" + str(example_id)) + ".json"
 
-    def _example_trace_path(self, run_id: str, example_id: str) -> Path:
-        return (self._trace_directory(run_id) / example_id).with_suffix(".jsonl")
+    def _example_trace_path(self, run_id: str, example_id: int) -> str:
+        return (self._trace_directory(run_id) + "/" + str(example_id)) + ".jsonl"
 
-    def _example_result_path(self, eval_id: str, example_id: str) -> Path:
-        return (self._eval_directory(eval_id) / example_id).with_suffix(".json")
+    def _example_result_path(self, eval_id: str, example_id: int) -> str:
+        return (self._eval_directory(eval_id) + "/" + str(example_id)) + ".json"
 
     def _evaluation_run_overview_path(self, eval_id: str) -> Path:
         return self._eval_directory(eval_id).with_suffix(".json")
@@ -146,7 +146,7 @@ class FileSystemEvaluationRepository(EvaluationRepository):
         ).write_text(serialized_result.model_dump_json(indent=2))
 
     def example_output(
-        self, run_id: str, example_id: str, output_type: type[Output]
+        self, run_id: str, example_id: int, output_type: type[Output]
     ) -> Optional[ExampleOutput[Output]]:
         file_path = self._example_output_path(run_id, example_id)
         if not file_path.exists():
@@ -162,7 +162,7 @@ class FileSystemEvaluationRepository(EvaluationRepository):
             path: Path,
         ) -> Optional[ExampleOutput[Output]]:
             id = path.with_suffix("").name
-            return self.example_output(run_id, id, output_type)
+            return self.example_output(run_id, int(id), output_type)
 
         path = self._output_directory(run_id)
         output_files = path.glob("*.json")
@@ -184,7 +184,7 @@ class FileSystemEvaluationRepository(EvaluationRepository):
             path: Path,
         ) -> Optional[ExampleEvaluation[Evaluation]]:
             id = path.with_suffix("").name
-            return self.example_evaluation(eval_id, id, evaluation_type)
+            return self.example_evaluation(eval_id, int(id), evaluation_type)
 
         path = self._eval_directory(eval_id)
         logs = path.glob("*.json")
@@ -201,7 +201,7 @@ class FileSystemEvaluationRepository(EvaluationRepository):
         return [r for r in results if isinstance(r.result, FailedExampleEvaluation)]
 
     def example_evaluation(
-        self, eval_id: str, example_id: str, evaluation_type: type[Evaluation]
+        self, eval_id: str, example_id: int, evaluation_type: type[Evaluation]
     ) -> Optional[ExampleEvaluation[Evaluation]]:
         file_path = self._example_result_path(eval_id, example_id)
         if not file_path.exists():
@@ -210,7 +210,7 @@ class FileSystemEvaluationRepository(EvaluationRepository):
         serialized_example = SerializedExampleEvaluation.model_validate_json(content)
         return serialized_example.to_example_result(evaluation_type)
 
-    def example_trace(self, run_id: str, example_id: str) -> Optional[ExampleTrace]:
+    def example_trace(self, run_id: str, example_id: int) -> Optional[ExampleTrace]:
         file_path = self._example_trace_path(run_id, example_id)
         if not file_path.exists():
             return None
@@ -220,7 +220,7 @@ class FileSystemEvaluationRepository(EvaluationRepository):
         )
         return ExampleTrace(run_id=run_id, example_id=example_id, trace=trace)
 
-    def example_tracer(self, run_id: str, example_id: str) -> Tracer:
+    def example_tracer(self, run_id: str, example_id: int) -> Tracer:
         file_path = self._example_trace_path(run_id, example_id)
         return FileTracer(self._fs.open(file_path, "w"))
 
@@ -374,7 +374,7 @@ class InMemoryEvaluationRepository(EvaluationRepository):
             )
         )
 
-    def example_trace(self, run_id: str, example_id: str) -> Optional[ExampleTrace]:
+    def example_trace(self, run_id: str, example_id: int) -> Optional[ExampleTrace]:
         tracer = self._example_traces.get(f"{run_id}/{example_id}")
         if tracer is None:
             return None
@@ -387,13 +387,13 @@ class InMemoryEvaluationRepository(EvaluationRepository):
             ),
         )
 
-    def example_tracer(self, run_id: str, example_id: str) -> Tracer:
+    def example_tracer(self, run_id: str, example_id: int) -> Tracer:
         tracer = InMemoryTracer()
         self._example_traces[f"{run_id}/{example_id}"] = tracer
         return tracer
 
     def example_evaluation(
-        self, eval_id: str, example_id: str, evaluation_type: type[Evaluation]
+        self, eval_id: str, example_id: int, evaluation_type: type[Evaluation]
     ) -> ExampleEvaluation[Evaluation] | None:
         return next(
             (

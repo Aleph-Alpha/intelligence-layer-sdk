@@ -57,7 +57,7 @@ class StubArgillaClient(ArgillaClient):
         assert dataset
         return [
             ArgillaEvaluation(
-                example_id="something",
+                example_id=0,
                 record_id="ignored",
                 responses={"human-score": self._score},
                 metadata=dict(),
@@ -90,6 +90,7 @@ class DummyStringTaskArgillaEvaluator(
     def _to_record(  # type: ignore
         self,
         example: Example[DummyStringInput, DummyStringOutput],
+        example_id: int,
         output: SuccessfulExampleOutput[DummyStringOutput],
     ) -> Sequence[RecordData]:
         return [
@@ -98,7 +99,7 @@ class DummyStringTaskArgillaEvaluator(
                     "input": example.input.input,
                     "output": output.output.output,
                 },
-                example_id=example.id,
+                example_id=example_id,
             )
         ]
 
@@ -173,7 +174,7 @@ def test_argilla_evaluator_can_do_sync_evaluation(
     saved_dataset = argilla_client._datasets[eval_overview.id]
     examples = list(examples_iter)
     assert len(saved_dataset) == len(examples)
-    assert saved_dataset[0].example_id == examples[0].id
+    assert saved_dataset[0].example_id == 0
     assert saved_dataset[0].content["input"] == examples[0].input.input
 
 

@@ -79,17 +79,24 @@ class Runner(Generic[Input, Output]):
         """
 
         def run(
-            example: Example[Input, ExpectedOutput]
-        ) -> tuple[str, Output | FailedExampleRun]:
+            t: tuple[int, Example[Input, ExpectedOutput]],
+        ) -> tuple[int, Output | FailedExampleRun]:
+            [example_id, example] = t
             evaluate_tracer = self._evaluation_repository.example_tracer(
-                run_id, example.id
+                run_id, example_id
             )
             if tracer:
                 evaluate_tracer = CompositeTracer([evaluate_tracer, tracer])
             try:
-                return example.id, self._task.run(example.input, evaluate_tracer)
-            except Exception as e:
-                return example.id, FailedExampleRun.from_exception(e)
+                if tracer:
+                    evaluate_tracer = CompositeTracer([evaluate_tracer, tracer])
+                try:
+                    return example_id, self._task.run(example.input, evaluate_tracer)
+                except Exception as e:
+                    return example_id, FailedExampleRun.from_exception(e)
+            finally:
+                if hasattr(evaluate_tracer, "cleanup"):
+                    evaluate_tracer.cleanup()
 
         examples = self._dataset_repository.examples_by_id(
             dataset_id, self.input_type(), self.output_type()
@@ -99,7 +106,9 @@ class Runner(Generic[Input, Output]):
         run_id = str(uuid4())
         start = utc_now()
         with ThreadPoolExecutor(max_workers=10) as executor:
-            ids_and_outputs = tqdm(executor.map(run, examples), desc="Evaluating")
+            ids_and_outputs = tqdm(
+                executor.map(run, enumerate(examples)), desc="Evaluating"
+            )
 
         failed_count = 0
         successful_count = 0

@@ -28,6 +28,19 @@ class HuggingFaceDatasetRepository(DatasetRepository):
         self._fs = HfFileSystem(token=token)
         self._root_directory = f"datasets/{database_name}"
 
+    # def create_dataset(self, examples: Iterable[Example[Input, ExpectedOutput]]) -> str:
+    #    def gen():
+    #        for example in examples:
+    #            yield example
+    #
+    #    dataset_id = str(uuid4())
+    #    # copy example when doing a run so example(db, id) is not needed
+    #    # keep it simple, use Dataset and a single file
+    #    # Remove example ids, use index into dataset
+    #    # don't worry about runtime, they are small for now, remove example(id, ex_id)
+    #    Dataset.from_generator(gen).push_to_hub(self._database_name, config_name=dataset_id, token=self._token)
+    #    return dataset_id
+
     def delete_repository(self) -> None:
         huggingface_hub.delete_repo(
             database_name=self._database_name,

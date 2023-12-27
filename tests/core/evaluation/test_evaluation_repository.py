@@ -38,7 +38,7 @@ def example_trace(
 ) -> ExampleTrace:
     return ExampleTrace(
         run_id="some_eval_id",
-        example_id="example_id",
+        example_id=0,
         trace=task_span_trace,
     )
 
@@ -47,7 +47,7 @@ def test_can_store_example_evaluation_traces_in_file(
     file_evaluation_repository: FileEvaluationRepository,
 ) -> None:
     run_id = "run_id"
-    example_id = "example_id"
+    example_id = 0
     now = datetime.now()
 
     tracer = file_evaluation_repository.example_tracer(run_id, example_id)
@@ -86,7 +86,7 @@ def test_storing_exception_with_same_structure_as_type_still_deserializes_except
     eval_id = "eval_id"
     exception: ExampleEvaluation[DummyEvaluation] = ExampleEvaluation(
         eval_id=eval_id,
-        example_id="example_id",
+        example_id=0,
         result=FailedExampleEvaluation(error_message="error"),
     )
 
@@ -104,8 +104,7 @@ def test_file_repository_returns_none_in_case_example_result_does_not_exist(
     file_evaluation_repository: FileEvaluationRepository,
 ) -> None:
     assert (
-        file_evaluation_repository.example_evaluation("id", "id", DummyEvaluation)
-        is None
+        file_evaluation_repository.example_evaluation("id", 0, DummyEvaluation) is None
     )
 
 
@@ -209,7 +208,7 @@ def test_file_repository_run_id_returns_run_ids(
     run_id = "id"
 
     file_evaluation_repository.store_example_output(
-        ExampleOutput(run_id=run_id, example_id="example_id", output=None)
+        ExampleOutput(run_id=run_id, example_id=0, output=None)
     )
 
     assert file_evaluation_repository.run_ids() == [run_id]
@@ -224,12 +223,12 @@ def evaluation_repository_returns_examples_in_same_order_for_two_runs(
 
     for example_id in range(num_examples):
         evaluation_repository.store_example_output(
-            ExampleOutput(run_id=run_id_1, example_id=str(example_id), output=None),
+            ExampleOutput(run_id=run_id_1, example_id=example_id, output=None),
         )
 
     for example_id in reversed(range(num_examples)):
         evaluation_repository.store_example_output(
-            ExampleOutput(run_id=run_id_2, example_id=str(example_id), output=None),
+            ExampleOutput(run_id=run_id_2, example_id=example_id, output=None),
         )
 
     assert list(

@@ -190,15 +190,14 @@ def test_evaluate_dataset_stores_example_evaluations(
 
     run_overview = dummy_runner.run_dataset(dataset_id, NoOpTracer())
     eval_overview = dummy_evaluator.evaluate_dataset(run_overview.id)
-    examples = list(dataset)
     success_result = evaluation_repository.example_evaluation(
-        eval_overview.id, examples[0].id, DummyEvaluation
+        eval_overview.id, 0, DummyEvaluation
     )
     failure_result_task = evaluation_repository.example_evaluation(
-        eval_overview.id, examples[1].id, DummyEvaluation
+        eval_overview.id, 1, DummyEvaluation
     )
     failure_result_eval = evaluation_repository.example_evaluation(
-        eval_overview.id, examples[2].id, DummyEvaluation
+        eval_overview.id, 2, DummyEvaluation
     )
 
     assert success_result and isinstance(success_result.result, DummyEvaluation)
@@ -222,15 +221,14 @@ def test_evaluate_dataset_stores_example_traces(
 
     run_overview = dummy_runner.run_dataset(dataset_id)
     evaluation_run_overview = dummy_evaluator.evaluate_dataset(run_overview.id)
-    examples = list(dataset)
     success_result = evaluation_repository.example_trace(
-        evaluation_run_overview.run_ids[0], examples[0].id
+        evaluation_run_overview.run_ids[0], 0
     )
     failure_result_task = evaluation_repository.example_trace(
-        evaluation_run_overview.run_ids[0], examples[1].id
+        evaluation_run_overview.run_ids[0], 1
     )
     failure_result_eval = evaluation_repository.example_trace(
-        evaluation_run_overview.run_ids[0], examples[2].id
+        evaluation_run_overview.run_ids[0], 2
     )
 
     assert success_result
@@ -298,8 +296,9 @@ def test_base_evaluator_type_magic_works(
         def evaluate(
             self,
             example: Example[Input, ExpectedOutput],
+            example_id: int,
             eval_id: str,
-            *outputs: SuccessfulExampleOutput[Output]
+            *example_output: SuccessfulExampleOutput[Output]
         ) -> None:
             pass
 

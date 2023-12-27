@@ -59,7 +59,7 @@ def eval_id() -> str:
 def failed_example_result(eval_id: str) -> ExampleEvaluation[DummyEvaluation]:
     return ExampleEvaluation(
         eval_id=eval_id,
-        example_id="failed_example",
+        example_id=0,
         result=FailedExampleEvaluation(error_message="error"),
     )
 
@@ -68,7 +68,7 @@ def failed_example_result(eval_id: str) -> ExampleEvaluation[DummyEvaluation]:
 def successful_example_result(eval_id: str) -> ExampleEvaluation[DummyEvaluation]:
     return ExampleEvaluation(
         eval_id=eval_id,
-        example_id="successful_example",
+        example_id=1,
         result=DummyEvaluation(result="result"),
     )
 

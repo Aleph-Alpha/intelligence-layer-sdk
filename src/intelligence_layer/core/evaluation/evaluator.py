@@ -102,7 +102,7 @@ class EvaluationRepository(ABC):
         ...
 
     @abstractmethod
-    def example_trace(self, run_id: str, example_id: str) -> Optional[ExampleTrace]:
+    def example_trace(self, run_id: str, example_id: int) -> Optional[ExampleTrace]:
         """Returns an :class:`ExampleTrace` for an example in a run.
 
         Args:
@@ -113,7 +113,7 @@ class EvaluationRepository(ABC):
         ...
 
     @abstractmethod
-    def example_tracer(self, run_id: str, example_id: str) -> Tracer:
+    def example_tracer(self, run_id: str, example_id: int) -> Tracer:
         """Returns a :class:`Tracer` to trace an individual example run.
 
         Args:
@@ -124,7 +124,7 @@ class EvaluationRepository(ABC):
 
     @abstractmethod
     def example_evaluation(
-        self, eval_id: str, example_id: str, evaluation_type: type[Evaluation]
+        self, eval_id: str, example_id: int, evaluation_type: type[Evaluation]
     ) -> Optional[ExampleEvaluation[Evaluation]]:
         """Returns an :class:`ExampleEvaluation` of a given run by its id.
 
@@ -249,7 +249,7 @@ class DatasetRepository(ABC):
     def example(
         self,
         dataset_id: str,
-        example_id: str,
+        example_id: int,
         input_type: type[Input],
         expected_output_type: type[ExpectedOutput],
     ) -> Optional[Example[Input, ExpectedOutput]]:
@@ -421,6 +421,7 @@ class BaseEvaluator(
     def evaluate(
         self,
         example: Example[Input, ExpectedOutput],
+        example_id: int,
         eval_id: str,
         *example_output: SuccessfulExampleOutput[Output],
     ) -> None:
@@ -534,6 +535,7 @@ class BaseEvaluator(
                 assert example is not None
                 self.evaluate(
                     example,
+                    example_id,
                     eval_id,
                     *[
                         SuccessfulExampleOutput(
@@ -650,6 +652,7 @@ class Evaluator(
     def evaluate(
         self,
         example: Example[Input, ExpectedOutput],
+        example_id: int,
         eval_id: str,
         *example_outputs: SuccessfulExampleOutput[Output],
     ) -> None:
@@ -662,7 +665,7 @@ class Evaluator(
         except Exception as e:
             result = FailedExampleEvaluation.from_exception(e)
         self._evaluation_repository.store_example_evaluation(
-            ExampleEvaluation(eval_id=eval_id, example_id=example.id, result=result)
+            ExampleEvaluation(eval_id=eval_id, example_id=example_id, result=result)
         )
 
     @final
@@ -748,14 +751,14 @@ class ArgillaEvaluationRepository(EvaluationRepository):
     def store_example_output(self, example_output: ExampleOutput[Output]) -> None:
         return self._evaluation_repository.store_example_output(example_output)
 
-    def example_trace(self, run_id: str, example_id: str) -> Optional[ExampleTrace]:
+    def example_trace(self, run_id: str, example_id: int) -> Optional[ExampleTrace]:
         return self._evaluation_repository.example_trace(run_id, example_id)
 
-    def example_tracer(self, run_id: str, example_id: str) -> Tracer:
+    def example_tracer(self, run_id: str, example_id: int) -> Tracer:
         return self._evaluation_repository.example_tracer(run_id, example_id)
 
     def example_evaluation(
-        self, eval_id: str, example_id: str, evaluation_type: type[Evaluation]
+        self, eval_id: str, example_id: int, evaluation_type: type[Evaluation]
     ) -> Optional[ExampleEvaluation[Evaluation]]:
         return self._evaluation_repository.example_evaluation(
             eval_id, example_id, evaluation_type
@@ -859,6 +862,7 @@ class ArgillaEvaluator(
     def _to_record(
         self,
         example: Example[Input, ExpectedOutput],
+        example_id: int,
         *example_outputs: SuccessfulExampleOutput[Output],
     ) -> Sequence[RecordData]:
         """This method is responsible for translating the `Example` and `Output` of the task to :class:`RecordData`
@@ -874,9 +878,10 @@ class ArgillaEvaluator(
     def evaluate(
         self,
         example: Example[Input, ExpectedOutput],
+        example_id: int,
         eval_id: str,
         *example_outputs: SuccessfulExampleOutput[Output],
     ) -> None:
-        records = self._to_record(example, *example_outputs)
+        records = self._to_record(example, example_id, *example_outputs)
         for record in records:
             self._client.add_record(eval_id, record)

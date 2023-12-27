@@ -81,7 +81,7 @@ def qa_records(
     records = [
         RecordData(
             content={"question": "What is 1+1?", "answer": str(i)},
-            example_id=str(i),
+            example_id=i,
             metadata={"model_1": "luminous-base"},
         )
         for i in range(60)

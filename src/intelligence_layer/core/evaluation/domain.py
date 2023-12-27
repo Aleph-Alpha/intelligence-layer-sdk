@@ -1,9 +1,8 @@
 from datetime import datetime
 from json import dumps
 from typing import Generic, Optional, Sequence, TypeVar, Union
-from uuid import uuid4
 
-from pydantic import BaseModel, ConfigDict, Field, SerializeAsAny
+from pydantic import BaseModel, ConfigDict, SerializeAsAny
 from rich.panel import Panel
 from rich.syntax import Syntax
 from rich.tree import Tree
@@ -189,7 +188,7 @@ class ExampleOutput(BaseModel, Generic[Output]):
     """
 
     run_id: str
-    example_id: str
+    example_id: int
     output: Output | FailedExampleRun
 
 
@@ -207,7 +206,7 @@ class SuccessfulExampleOutput(BaseModel, Generic[Output]):
     """
 
     run_id: str
-    example_id: str
+    example_id: int
     output: Output
 
 
@@ -223,7 +222,7 @@ class ExampleTrace(BaseModel):
     """
 
     run_id: str
-    example_id: str
+    example_id: int
     trace: TaskSpanTrace
 
 
@@ -266,7 +265,7 @@ class ExampleEvaluation(BaseModel, Generic[Evaluation]):
     """
 
     eval_id: str
-    example_id: str
+    example_id: int
     result: SerializeAsAny[Evaluation | FailedExampleEvaluation]
 
 
@@ -339,4 +338,3 @@ class Example(BaseModel, Generic[Input, ExpectedOutput]):
 
     input: Input
     expected_output: ExpectedOutput
-    id: str = Field(default_factory=lambda: str(uuid4()))

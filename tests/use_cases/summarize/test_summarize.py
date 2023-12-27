@@ -86,13 +86,10 @@ def test_single_chunk_summarize_evaluator(
     in_memory_dataset_repository: InMemoryDatasetRepository,
 ) -> None:
     input = SingleChunkSummarizeInput(chunk=chunk, language=Language("en"))
-    bad_example = Example(
-        input=input, expected_output="Heute ist das Wetter schön.", id="bad"
-    )
+    bad_example = Example(input=input, expected_output="Heute ist das Wetter schön.")
     good_example = Example(
         input=input,
         expected_output="The brown bear is a large mammal that lives in Eurasia and North America.",
-        id="good",
     )
     dataset_name = in_memory_dataset_repository.create_dataset(
         [good_example, bad_example]
@@ -107,14 +104,14 @@ def test_single_chunk_summarize_evaluator(
     good_result = (
         single_chunk_summarize_evaluator._evaluation_repository.example_evaluation(
             evaluation_overview.id,
-            "good",
+            0,
             SummarizeEvaluation,
         )
     )
     bad_result = (
         single_chunk_summarize_evaluator._evaluation_repository.example_evaluation(
             evaluation_overview.id,
-            "bad",
+            1,
             SummarizeEvaluation,
         )
     )
@@ -132,13 +129,10 @@ def test_long_context_summarize_evaluator(
     no_op_tracer: NoOpTracer,
 ) -> None:
     input = LongContextSummarizeInput(text=long_text, language=Language("en"))
-    bad_example = Example(
-        input=input, expected_output="Heute ist das Wetter schön.", id="bad"
-    )
+    bad_example = Example(input=input, expected_output="Heute ist das Wetter schön.")
     good_example = Example(
         input=input,
         expected_output="The brown bear is a large mammal that lives in Eurasia and North America.",
-        id="good",
     )
     dataset_name = in_memory_dataset_repository.create_dataset(
         [good_example, bad_example]
@@ -153,14 +147,14 @@ def test_long_context_summarize_evaluator(
     good_result = (
         long_context_summarize_evaluator._evaluation_repository.example_evaluation(
             evaluation_overview.id,
-            "good",
+            0,
             SummarizeEvaluation,
         )
     )
     bad_result = (
         long_context_summarize_evaluator._evaluation_repository.example_evaluation(
             evaluation_overview.id,
-            "bad",
+            1,
             SummarizeEvaluation,
         )
     )
