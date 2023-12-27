@@ -5,7 +5,9 @@ from uuid import uuid4
 import huggingface_hub  # type: ignore
 from huggingface_hub import HfFileSystem, create_repo
 
-from intelligence_layer.core import DatasetRepository, Example, ExpectedOutput, Input
+from intelligence_layer.core.evaluation.domain import Example, ExpectedOutput
+from intelligence_layer.core.evaluation.evaluator import DatasetRepository
+from intelligence_layer.core.task import Input
 from intelligence_layer.core.tracer import JsonSerializer
 
 
