@@ -82,7 +82,7 @@ class SerializedExampleEvaluation(BaseModel):
             )
 
 
-class FileEvaluationRepository(EvaluationRepository):
+class FileSystemEvaluationRepository(EvaluationRepository):
     """An :class:`EvaluationRepository` that stores evaluation results in json-files.
 
     Args:
@@ -222,7 +222,7 @@ class FileEvaluationRepository(EvaluationRepository):
 
     def example_tracer(self, run_id: str, example_id: str) -> Tracer:
         file_path = self._example_trace_path(run_id, example_id)
-        return FileTracer(file_path)
+        return FileTracer(self._fs.open(file_path, "w"))
 
     def store_example_evaluation(self, result: ExampleEvaluation[Evaluation]) -> None:
         serialized_result = SerializedExampleEvaluation.from_example_result(result)
@@ -262,7 +262,9 @@ class FileEvaluationRepository(EvaluationRepository):
         ]
 
     def eval_ids(self) -> Sequence[str]:
-        return [path.stem for path in self._eval_root_directory().glob("*.json")]
+        return [
+            Path(path).stem for path in self._fs.glob(self._eval_root_directory() + "/*.json")
+        ]
 
 
 def _parse_log(log_path: Path) -> InMemoryTracer:
