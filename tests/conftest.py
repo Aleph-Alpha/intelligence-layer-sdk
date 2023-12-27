@@ -8,16 +8,24 @@ from faker import Faker
 from pydantic import BaseModel
 from pytest import fixture
 
-from intelligence_layer.connectors import (
-    AlephAlphaClientProtocol,
-    Document,
+from intelligence_layer.connectors.document_index.document_index import (
     DocumentIndexClient,
-    DocumentIndexRetriever,
+)
+from intelligence_layer.connectors.limited_concurrency_client import (
+    AlephAlphaClientProtocol,
     LimitedConcurrencyClient,
+)
+from intelligence_layer.connectors.retrievers.base_retriever import (
+    Document,
+    DocumentChunk,
+)
+from intelligence_layer.connectors.retrievers.document_index_retriever import (
+    DocumentIndexRetriever,
+)
+from intelligence_layer.connectors.retrievers.qdrant_in_memory_retriever import (
     QdrantInMemoryRetriever,
     RetrieverType,
 )
-from intelligence_layer.connectors.retrievers.base_retriever import DocumentChunk
 from intelligence_layer.core import (
     InMemoryDatasetRepository,
     NoOpTracer,
