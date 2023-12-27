@@ -124,14 +124,14 @@ class FileSystemEvaluationRepository(EvaluationRepository):
         path.mkdir(exist_ok=True)
         return path
 
-    def _example_output_path(self, run_id: str, example_id: int) -> str:
-        return (self._output_directory(run_id) + "/" + str(example_id)) + ".json"
+    def _example_output_path(self, run_id: str, example_id: int) -> Path:
+        return self._output_directory(run_id) / (str(example_id) + ".json")
 
-    def _example_trace_path(self, run_id: str, example_id: int) -> str:
-        return (self._trace_directory(run_id) + "/" + str(example_id)) + ".jsonl"
+    def _example_trace_path(self, run_id: str, example_id: int) -> Path:
+        return self._trace_directory(run_id) / (str(example_id) + ".jsonl")
 
-    def _example_result_path(self, eval_id: str, example_id: int) -> str:
-        return (self._eval_directory(eval_id) + "/" + str(example_id)) + ".json"
+    def _example_result_path(self, eval_id: str, example_id: int) -> Path:
+        return self._eval_directory(eval_id) / (str(example_id) + ".json")
 
     def _evaluation_run_overview_path(self, eval_id: str) -> Path:
         return self._eval_directory(eval_id).with_suffix(".json")
