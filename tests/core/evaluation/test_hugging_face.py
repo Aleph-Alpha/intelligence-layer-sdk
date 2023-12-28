@@ -23,7 +23,7 @@ def hf_repository(hf_token: str) -> HuggingFaceDatasetRepository:
 
 @fixture
 def example() -> Example[str, str]:
-    return Example(input="hey", expected_output="ho")
+    return Example(input="hey", expected_output="ho", id="0")
 
 
 def test_hf_database_non_existing(hf_repository: HuggingFaceDatasetRepository) -> None:
@@ -49,5 +49,18 @@ def test_hf_database_operations(
         assert hf_repository.example(dataset_id, "abc", str, str) is None
         hf_repository.delete_dataset(dataset_id)
         assert hf_repository.examples_by_id(dataset_id, str, str) is None
+    finally:
+        hf_repository.delete_dataset(dataset_id)
+
+
+def test_hf_database_stores_multiple_examples(
+    hf_repository: HuggingFaceDatasetRepository, example: Example[str, str]
+) -> None:
+    second_example = Example(input="ho", expected_output="hey", id="1")
+    dataset_id = hf_repository.create_dataset([example, second_example])
+    try:
+        examples = hf_repository.examples_by_id(dataset_id, str, str)
+        assert examples is not None
+        assert [e for e in examples] == [example, second_example]
     finally:
         hf_repository.delete_dataset(dataset_id)
