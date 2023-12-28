@@ -42,7 +42,9 @@ def test_hf_database_non_existing(hf_repository: HuggingFaceDatasetRepository) -
 
 
 def test_hf_database_operations(
-    hf_repository: HuggingFaceDatasetRepository, example1: Example[str, str], example2: Example[str, str]
+    hf_repository: HuggingFaceDatasetRepository,
+    example1: Example[str, str],
+    example2: Example[str, str],
 ) -> None:
     original_examples = [example1, example2]
     dataset_id = hf_repository.create_dataset(original_examples)
