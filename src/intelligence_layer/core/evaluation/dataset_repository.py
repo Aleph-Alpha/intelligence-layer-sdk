@@ -1,4 +1,3 @@
-import json
 from pathlib import Path
 from typing import Dict, Iterable, Optional, Sequence, cast
 from uuid import uuid4
@@ -52,7 +51,7 @@ class FileSystemDatasetRepository(DatasetRepository):
         with self._fs.open(dataset_path, "w") as examples_file:
             for example in examples:
                 serialized_result = JsonSerializer(root=example)
-                text = json.dumps(serialized_result.model_dump()) + "\n"
+                text = serialized_result.model_dump_json() + "\n"
                 examples_file.write(text)
         return dataset_id
 
