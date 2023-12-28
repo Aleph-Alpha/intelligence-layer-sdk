@@ -64,10 +64,12 @@ class HuggingFaceDatasetRepository(DatasetRepository):
         dataset_path = self._dataset_path(dataset_id)
         if self._fs.exists(dataset_path):
             raise ValueError(f"Dataset name {dataset_id} already taken")
-        for example in examples:
-            serialized_result = JsonSerializer(root=example)
-            text = json.dumps(serialized_result.model_dump()) + "\n"
-            self._fs.write_text(dataset_path, text)
+
+        with self._fs.open(dataset_path, "w") as examples_file:
+            for example in examples:
+                serialized_result = JsonSerializer(root=example)
+                text = json.dumps(serialized_result.model_dump()) + "\n"
+                examples_file.write(text)
         return dataset_id
 
     def examples_by_id(
