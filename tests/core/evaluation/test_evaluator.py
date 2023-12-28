@@ -27,33 +27,8 @@ from tests.core.evaluation.conftest import (
     FAIL_IN_TASK_INPUT,
     DummyAggregatedEvaluationWithResultList,
     DummyEvaluation,
+    DummyEvaluator
 )
-
-
-class DummyEvaluator(
-    Evaluator[
-        str,
-        str,
-        None,
-        DummyEvaluation,
-        DummyAggregatedEvaluationWithResultList,
-    ]
-):
-    # mypy expects *args where this method only uses one output
-    def do_evaluate(  # type: ignore
-        self,
-        input: str,
-        expected_output: None,
-        output: str,
-    ) -> DummyEvaluation:
-        if output == FAIL_IN_EVAL_INPUT:
-            raise RuntimeError(output)
-        return DummyEvaluation(result="pass")
-
-    def aggregate(
-        self, evaluations: Iterable[DummyEvaluation]
-    ) -> DummyAggregatedEvaluationWithResultList:
-        return DummyAggregatedEvaluationWithResultList(results=list(evaluations))
 
 
 class ComparisonEvaluation(BaseModel):
@@ -108,17 +83,6 @@ def sequence_examples() -> Iterable[Example[str, None]]:
         Example(input=FAIL_IN_TASK_INPUT, expected_output=None),
         Example(input=FAIL_IN_EVAL_INPUT, expected_output=None),
     ]
-
-
-@fixture
-def dummy_evaluator(
-    in_memory_evaluation_repository: InMemoryEvaluationRepository,
-    in_memory_dataset_repository: InMemoryDatasetRepository,
-) -> DummyEvaluator:
-    return DummyEvaluator(
-        in_memory_evaluation_repository,
-        in_memory_dataset_repository,
-    )
 
 
 @fixture

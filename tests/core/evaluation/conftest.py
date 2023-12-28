@@ -17,7 +17,7 @@ from intelligence_layer.core import (
 from intelligence_layer.core.evaluation.dataset_repository import (
     InMemoryDatasetRepository,
 )
-from intelligence_layer.core.evaluation.evaluator import DatasetRepository
+from intelligence_layer.core.evaluation.evaluator import DatasetRepository, Evaluator
 from intelligence_layer.core.evaluation.runner import Runner
 from intelligence_layer.core.task import Task
 from intelligence_layer.core.tracer import Tracer
@@ -48,6 +48,32 @@ class DummyAggregatedEvaluation(BaseModel):
 
 class DummyAggregatedEvaluationWithResultList(BaseModel):
     results: Sequence[DummyEvaluation]
+
+
+class DummyEvaluator(
+    Evaluator[
+        str,
+        str,
+        None,
+        DummyEvaluation,
+        DummyAggregatedEvaluationWithResultList,
+    ]
+):
+    # mypy expects *args where this method only uses one output
+    def do_evaluate(  # type: ignore
+        self,
+        input: str,
+        expected_output: None,
+        output: str,
+    ) -> DummyEvaluation:
+        if output == FAIL_IN_EVAL_INPUT:
+            raise RuntimeError(output)
+        return DummyEvaluation(result="pass")
+
+    def aggregate(
+        self, evaluations: Iterable[DummyEvaluation]
+    ) -> DummyAggregatedEvaluationWithResultList:
+        return DummyAggregatedEvaluationWithResultList(results=list(evaluations))
 
 
 @fixture
@@ -142,4 +168,15 @@ def dummy_runner(
         in_memory_evaluation_repository,
         in_memory_dataset_repository,
         "dummy-runner",
+    )
+
+
+@fixture
+def dummy_evaluator(
+    in_memory_evaluation_repository: InMemoryEvaluationRepository,
+    in_memory_dataset_repository: InMemoryDatasetRepository,
+) -> DummyEvaluator:
+    return DummyEvaluator(
+        in_memory_evaluation_repository,
+        in_memory_dataset_repository,
     )
