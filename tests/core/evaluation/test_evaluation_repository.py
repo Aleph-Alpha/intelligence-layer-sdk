@@ -14,7 +14,7 @@ from intelligence_layer.core import (
     TaskSpanTrace,
 )
 from intelligence_layer.core.evaluation.domain import EvaluationOverview, ExampleOutput
-from intelligence_layer.core.evaluation.evaluator import EvaluationRepository
+from intelligence_layer.core.evaluation.evaluator import EvaluationRepository, Evaluator
 from intelligence_layer.core.tracer import CompositeTracer, InMemoryTracer
 from tests.conftest import DummyStringInput
 from tests.core.evaluation.conftest import DummyAggregatedEvaluation, DummyEvaluation
@@ -255,3 +255,21 @@ def test_file_evaluation_repository_returns_examples_in_same_order_for_two_runs(
     evaluation_repository_returns_examples_in_same_order_for_two_runs(
         file_evaluation_repository
     )
+
+
+def test_file_repository_can_aggregate_after_loading(
+    file_evaluation_repository: FileEvaluationRepository,
+    successful_example_result: ExampleEvaluation[DummyEvaluation],
+    failed_example_result: ExampleEvaluation[DummyEvaluation],
+    eval_id: str,
+    dummy_evaluator: Evaluator
+) -> None:
+    results: Sequence[ExampleEvaluation[DummyEvaluation]] = [
+        successful_example_result,
+        failed_example_result,
+    ]
+    for result in results:
+        file_evaluation_repository.store_example_evaluation(result)
+
+    dummy_evaluator.aggregate([eval_id])
+
