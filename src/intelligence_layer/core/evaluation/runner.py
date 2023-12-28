@@ -3,6 +3,7 @@ from inspect import get_annotations
 from typing import Generic, Optional, cast
 from uuid import uuid4
 
+from pydantic import JsonValue
 from tqdm import tqdm
 
 from intelligence_layer.core.evaluation.domain import (
@@ -91,8 +92,9 @@ class Runner(Generic[Input, Output]):
             except Exception as e:
                 return example.id, FailedExampleRun.from_exception(e)
 
+        # mypy does not like union types
         examples = self._dataset_repository.examples_by_id(
-            dataset_id, self.input_type(), self.output_type()
+            dataset_id, self.input_type(), JsonValue  # type: ignore
         )
         if examples is None:
             raise ValueError(f"Dataset with id {dataset_id} not found")
