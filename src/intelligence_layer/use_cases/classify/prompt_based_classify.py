@@ -71,12 +71,14 @@ Reply with only the class label.
 {{text}}
 
 ### Response:"""
-    MODEL: str = "luminous-base-control"
 
-    def __init__(self, client: AlephAlphaClientProtocol) -> None:
+    def __init__(
+        self, client: AlephAlphaClientProtocol, model: str = "luminous-base-control"
+    ) -> None:
         super().__init__()
         self._client = client
         self._echo_task = EchoTask(client)
+        self.model = model
 
     def do_run(
         self, input: ClassifyInput, task_span: TaskSpan
@@ -84,7 +86,7 @@ Reply with only the class label.
         log_probs_per_label = self._log_probs_per_label(
             text_to_classify=input.chunk,
             labels=input.labels,
-            model=self.MODEL,
+            model=self.model,
             task_span=task_span,
         )
         task_span.log("Log probs per label", log_probs_per_label)
