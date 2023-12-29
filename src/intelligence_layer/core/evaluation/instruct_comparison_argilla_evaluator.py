@@ -178,9 +178,13 @@ class InstructComparisonArgillaEvaluator(
         example: Example[InstructInput, None],
         *example_outputs: SuccessfulExampleOutput[PromptOutput],
     ) -> Sequence[RecordData]:
-        pairs = combinations(example_outputs, 2)
-        return [
-            RecordData(
+        def create_record_data(
+            first: SuccessfulExampleOutput[PromptOutput],
+            second: SuccessfulExampleOutput[PromptOutput],
+        ) -> RecordData:
+            if random.choice([True, False]):
+                first, second = second, first
+            return RecordData(
                 content={
                     self.KEY_INSTRUCTION: example.input.instruction,
                     self.KEY_INPUT: example.input.input or "",
@@ -193,6 +197,10 @@ class InstructComparisonArgillaEvaluator(
                     self.KEY_RESPONSE_2: second.run_id,
                 },
             )
+
+        pairs = combinations(example_outputs, 2)
+        return [
+            create_record_data(first, second)
             for [first, second] in pairs
             if self._high_priority_runs is None
             or any(
