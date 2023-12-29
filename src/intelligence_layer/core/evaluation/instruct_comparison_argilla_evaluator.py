@@ -1,7 +1,7 @@
-import random
 from collections import defaultdict
 from enum import Enum
 from itertools import combinations
+from random import choice, shuffle
 from typing import Iterable, Mapping, Optional, Sequence, cast
 
 from pydantic import BaseModel
@@ -178,9 +178,13 @@ class InstructComparisonArgillaEvaluator(
         example: Example[InstructInput, None],
         *example_outputs: SuccessfulExampleOutput[PromptOutput],
     ) -> Sequence[RecordData]:
-        pairs = combinations(example_outputs, 2)
-        return [
-            RecordData(
+        def create_record_data(
+            first: SuccessfulExampleOutput[PromptOutput],
+            second: SuccessfulExampleOutput[PromptOutput],
+        ) -> RecordData:
+            if choice([True, False]):
+                first, second = second, first
+            return RecordData(
                 content={
                     self.KEY_INSTRUCTION: example.input.instruction,
                     self.KEY_INPUT: example.input.input or "",
@@ -193,6 +197,10 @@ class InstructComparisonArgillaEvaluator(
                     self.KEY_RESPONSE_2: second.run_id,
                 },
             )
+
+        pairs = combinations(example_outputs, 2)
+        return [
+            create_record_data(first, second)
             for [first, second] in pairs
             if self._high_priority_runs is None
             or any(
@@ -230,7 +238,7 @@ class InstructComparisonArgillaEvaluator(
         tournaments_list = list(tournaments.items())
         for _ in range(100):
             elo_calc = EloCalculator(players)
-            random.shuffle(tournaments_list)
+            shuffle(tournaments_list)
             for _, tournament in tournaments_list:
                 elo_calc.calculate_tournament(tournament)
             for p in players:
