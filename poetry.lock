@@ -708,13 +708,13 @@ test = ["pytest"]
 
 [[package]]
 name = "datasets"
-version = "2.16.0"
+version = "2.16.1"
 description = "HuggingFace community-driven open-source library of datasets"
 optional = false
 python-versions = ">=3.8.0"
 files = [
-    {file = "datasets-2.16.0-py3-none-any.whl", hash = "sha256:301cc39b3d81cd751100b79c85f8ae8626c17b0b113819ba2831c204d90b43f2"},
-    {file = "datasets-2.16.0.tar.gz", hash = "sha256:91b06f7a8f0329179e7d603004102a6cc7a424a2f599315297a061caa1f8fa64"},
+    {file = "datasets-2.16.1-py3-none-any.whl", hash = "sha256:fafa300c78ff92d521473a3d47d60c2d3e0d6046212cc03ceb6caf6550737257"},
+    {file = "datasets-2.16.1.tar.gz", hash = "sha256:ad3215e9b1984d1de4fda2123bc7319ccbdf1e17d0c3d5590d13debff308a080"},
 ]
 
 [package.dependencies]
@@ -5238,4 +5238,4 @@ testing = ["big-O", "jaraco.functools", "jaraco.itertools", "more-itertools", "p
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.10,<3.12"
-content-hash = "60547a876e19f2ea9f8df8a887297877c62a872d2837b8abaadbe8746e01b294"
+content-hash = "3f7a771d99f6e6d84c21cd46a4312db7274f336f515705dbfcf4a4bd589e81d8"
