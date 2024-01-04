@@ -34,6 +34,24 @@ from intelligence_layer.core.tracer import (
     StartTask,
 )
 
+def test_composite_tracer_id_consistent_across_children(file_tracer: FileTracer) -> None:
+    input = "input"
+    tracer1 = InMemoryTracer()
+
+    TestTask().run(input, CompositeTracer([tracer1]))
+
+    assert tracer1.entries[0].id() == tracer1.entries[0].entries[0].id()
+
+
+def test_file_tracer(file_tracer: FileTracer) -> None:
+    input = "input"
+    expected = InMemoryTracer()
+
+    TestTask().run(input, CompositeTracer([expected, file_tracer]))
+
+    log_tree = parse_log(file_tracer._log_file_path)
+    assert log_tree == expected
+
 
 def test_tracer_id_exists_for_all_children_of_task_span() -> None:
     tracer = InMemoryTracer()
@@ -221,6 +239,7 @@ class TreeBuilder(BaseModel):
             name=start_task.name,
             input=start_task.input,
             start_timestamp=start_task.start,
+            trace_id=start_task.trace_id
         )
         self.tracers[start_task.uuid] = child
         self.tasks[start_task.uuid] = child
@@ -234,7 +253,7 @@ class TreeBuilder(BaseModel):
 
     def start_span(self, log_line: LogLine) -> None:
         start_span = StartSpan.model_validate(log_line.entry)
-        child = InMemorySpan(name=start_span.name, start_timestamp=start_span.start)
+        child = InMemorySpan(name=start_span.name, start_timestamp=start_span.start, trace_id=start_span.trace_id)
         self.tracers[start_span.uuid] = child
         self.spans[start_span.uuid] = child
         self.tracers.get(start_span.parent, self.root).entries.append(child)

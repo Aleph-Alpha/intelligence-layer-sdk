@@ -216,23 +216,27 @@ class CompositeTracer(Tracer, Generic[TracerVar]):
     """
 
     def __init__(self, tracers: Sequence[TracerVar]) -> None:
+        assert len(tracers) > 0
         self.tracers = tracers
 
     def span(
         self, name: str, timestamp: Optional[datetime] = None, id: Optional[str] = None
     ) -> "CompositeSpan[Span]":
         timestamp = timestamp or utc_now()
-        return CompositeSpan([tracer.span(name, timestamp) for tracer in self.tracers])
+        trace_id = id if id is not None else str(uuid4())
+        return CompositeSpan([tracer.span(name, timestamp, trace_id) for tracer in self.tracers])
 
     def task_span(
         self,
         task_name: str,
         input: PydanticSerializable,
         timestamp: Optional[datetime] = None,
+        id: Optional[str] = None
     ) -> "CompositeTaskSpan":
         timestamp = timestamp or utc_now()
+        trace_id = id if id is not None else str(uuid4())
         return CompositeTaskSpan(
-            [tracer.task_span(task_name, input, timestamp) for tracer in self.tracers]
+            [tracer.task_span(task_name, input, timestamp, trace_id) for tracer in self.tracers]
         )
 
 
@@ -247,6 +251,22 @@ class CompositeSpan(Generic[SpanVar], CompositeTracer[SpanVar], Span):
     Args:
         tracers: spans that will be forwarded all subsequent log and span calls.
     """
+    def id(self) -> str:
+        return self.tracers[0].id()
+
+    def span(
+            self, name: str, timestamp: Optional[datetime] = None, id: Optional[str] = None
+        ) -> "CompositeSpan[Span]":
+            return super().span(name, timestamp, id if id is not None else self.id())
+    
+    def task_span(
+        self,
+        task_name: str,
+        input: PydanticSerializable,
+        timestamp: Optional[datetime] = None,
+        id: Optional[str] = None
+    ) -> "CompositeTaskSpan":
+        return super().task_span(task_name, input, timestamp, id if id is not None else self.id())
 
     def log(
         self,
@@ -492,6 +512,7 @@ class StartTask(BaseModel):
     name: str
     start: datetime
     input: SerializeAsAny[PydanticSerializable]
+    trace_id: str
 
 
 class EndTask(BaseModel):
@@ -523,6 +544,8 @@ class StartSpan(BaseModel):
     parent: UUID
     name: str
     start: datetime
+    trace_id: str
+
 
 
 class EndSpan(BaseModel):
@@ -596,13 +619,14 @@ class FileTracer(Tracer):
             )
 
     def span(self, name: str, timestamp: Optional[datetime] = None, id: Optional[str] = None) -> "FileSpan":
-        span = FileSpan(self._log_file_path, name)
+        span = FileSpan(self._log_file_path, name, trace_id=id if id is not None else str(uuid4()))
         self._log_entry(
             StartSpan(
                 uuid=span.uuid,
                 parent=self.uuid,
                 name=name,
                 start=timestamp or utc_now(),
+                trace_id=span.id()
             )
         )
         return span
@@ -612,8 +636,9 @@ class FileTracer(Tracer):
         task_name: str,
         input: PydanticSerializable,
         timestamp: Optional[datetime] = None,
+        id: Optional[str] = None
     ) -> "FileTaskSpan":
-        task = FileTaskSpan(self._log_file_path, task_name, input)
+        task = FileTaskSpan(self._log_file_path, task_name, input, trace_id=id if id is not None else str(uuid4()))
         self._log_entry(
             StartTask(
                 uuid=task.uuid,
@@ -621,6 +646,7 @@ class FileTracer(Tracer):
                 name=task_name,
                 start=timestamp or utc_now(),
                 input=input,
+                trace_id=task.id()
             )
         )
         return task
@@ -630,9 +656,13 @@ class FileSpan(Span, FileTracer):
     """A `Span` created by `FileTracer.span`."""
 
     end_timestamp: Optional[datetime] = None
+    
+    def id(self) -> str:
+        return self.trace_id
 
-    def __init__(self, log_file_path: Path, name: str) -> None:
+    def __init__(self, log_file_path: Path, name: str, trace_id: str) -> None:
         super().__init__(log_file_path)
+        self.trace_id = trace_id
 
     def log(
         self,
@@ -661,9 +691,9 @@ class FileTaskSpan(TaskSpan, FileSpan):
     output: Optional[PydanticSerializable] = None
 
     def __init__(
-        self, log_file_path: Path, task_name: str, input: PydanticSerializable
+        self, log_file_path: Path, task_name: str, input: PydanticSerializable, trace_id: str
     ) -> None:
-        super().__init__(log_file_path, task_name)
+        super().__init__(log_file_path, task_name, trace_id)
 
     def record_output(self, output: PydanticSerializable) -> None:
         self.output = output
