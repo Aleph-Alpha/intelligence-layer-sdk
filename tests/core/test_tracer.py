@@ -35,6 +35,16 @@ from intelligence_layer.core.tracer import (
 )
 
 
+
+def test_tracer_id_exists_for_all_children() -> None:
+    tracer = InMemoryTracer()
+    parent_span = tracer.span("child", id="ID")
+    parent_span.span("child2")
+
+    assert tracer.entries[0].id() == "ID"
+    assert tracer.entries[0].entries[0].id() == tracer.entries[0].id()
+
+
 def test_can_add_child_tracer() -> None:
     tracer = InMemoryTracer()
     tracer.span("child")

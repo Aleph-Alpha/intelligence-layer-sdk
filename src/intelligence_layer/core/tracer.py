@@ -67,7 +67,7 @@ class Tracer(ABC):
     """
 
     @abstractmethod
-    def span(self, name: str, timestamp: Optional[datetime] = None) -> "Span":
+    def span(self, name: str, timestamp: Optional[datetime] = None, id: Optional[str] = None) -> "Span":
         """Generate a span from the current span or logging instance.
 
         Allows for grouping multiple logs and duration together as a single, logical step in the
@@ -120,6 +120,9 @@ class Span(Tracer, AbstractContextManager["Span"]):
     Can also be used as a Context Manager to easily capture the start and end time, and keep the
     span only in scope while it is active.
     """
+    @abstractmethod
+    def id(self) -> str:
+        ...
 
     def __enter__(self) -> Self:
         return self
@@ -216,7 +219,7 @@ class CompositeTracer(Tracer, Generic[TracerVar]):
         self.tracers = tracers
 
     def span(
-        self, name: str, timestamp: Optional[datetime] = None
+        self, name: str, timestamp: Optional[datetime] = None, id: Optional[str] = None
     ) -> "CompositeSpan[Span]":
         timestamp = timestamp or utc_now()
         return CompositeSpan([tracer.span(name, timestamp) for tracer in self.tracers])
@@ -292,7 +295,7 @@ class NoOpTracer(TaskSpan):
     ) -> None:
         pass
 
-    def span(self, name: str, timestamp: Optional[datetime] = None) -> "NoOpTracer":
+    def span(self, name: str, timestamp: Optional[datetime] = None, id: Optional[str] = None) -> "NoOpTracer":
         return self
 
     def task_span(
@@ -367,8 +370,8 @@ class InMemoryTracer(BaseModel, Tracer):
 
     entries: list[Union[LogEntry, "InMemoryTaskSpan", "InMemorySpan"]] = []
 
-    def span(self, name: str, timestamp: Optional[datetime] = None) -> "InMemorySpan":
-        child = InMemorySpan(name=name, start_timestamp=timestamp or utc_now())
+    def span(self, name: str, timestamp: Optional[datetime] = None, id: Optional[str] = None) -> "InMemorySpan":
+        child = InMemorySpan(name=name, start_timestamp=timestamp or utc_now(), trace_id=id if id is not None else str(uuid4()))
         self.entries.append(child)
         return child
 
@@ -404,7 +407,14 @@ class InMemorySpan(InMemoryTracer, Span):
     name: str
     start_timestamp: datetime = Field(default_factory=datetime.utcnow)
     end_timestamp: Optional[datetime] = None
+    trace_id: str
 
+    def span(self, name: str, timestamp: Optional[datetime] = None, id: Optional[str] = None) -> "InMemorySpan":
+        return super().span(name, timestamp, id if id is not None else self.trace_id)
+
+    def id(self) -> str:
+        return self.trace_id
+      
     def log(
         self,
         message: str,
@@ -575,7 +585,7 @@ class FileTracer(Tracer):
                 + "\n"
             )
 
-    def span(self, name: str, timestamp: Optional[datetime] = None) -> "FileSpan":
+    def span(self, name: str, timestamp: Optional[datetime] = None, id: Optional[str] = None) -> "FileSpan":
         span = FileSpan(self._log_file_path, name)
         self._log_entry(
             StartSpan(
@@ -674,7 +684,7 @@ class OpenTelemetryTracer(Tracer):
         self._tracer = tracer
 
     def span(
-        self, name: str, timestamp: Optional[datetime] = None
+        self, name: str, timestamp: Optional[datetime] = None, id: Optional[str] = None
     ) -> "OpenTelemetrySpan":
         tracer_span = self._tracer.start_span(
             name,
