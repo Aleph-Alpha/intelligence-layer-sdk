@@ -5,7 +5,12 @@ from time import sleep
 from typing import Callable
 
 from intelligence_layer.core.task import MAX_CONCURRENCY, Task
-from intelligence_layer.core.tracer import InMemoryTracer, NoOpTracer, TaskSpan
+from intelligence_layer.core.tracer import (
+    InMemorySpan,
+    InMemoryTracer,
+    NoOpTracer,
+    TaskSpan,
+)
 
 
 class ConcurrencyCounter(Task[None, None]):
@@ -79,6 +84,11 @@ class SubTask(BaseTask):
     pass
 
 
+class NestedTask(Task[None, None]):
+    def do_run(self, input: None, task_span: TaskSpan) -> None:
+        BaseTask().run(input, task_span)
+
+
 def test_run_concurrently() -> None:
     task = ConcurrencyCounter()
     task.run_concurrently([None] * MAX_CONCURRENCY * 10, NoOpTracer())
@@ -106,3 +116,21 @@ def test_sub_tasks_do_not_introduce_multiple_task_spans() -> None:
     assert isinstance(tracer.entries[0], TaskSpan)
     assert tracer.entries[0].entries
     assert not isinstance(tracer.entries[0].entries[0], TaskSpan)
+
+
+def test_ids_are_set_in_concurrent_run() -> None:
+    tracer = InMemoryTracer()
+    task = DeadlockDetector()
+
+    task.run_concurrently([None] * MAX_CONCURRENCY, tracer, id="ID")
+    assert tracer.entries
+    assert tracer.entries[0].id() == "ID"
+
+
+def test_ids_are_equal_for_multiple_subtasks() -> None:
+    tracer = InMemoryTracer()
+    NestedTask().run(None, tracer, "ID")
+    assert isinstance(tracer.entries, InMemorySpan)
+    assert tracer.entries[0].id() == "ID"
+    assert isinstance(tracer.entries[0], InMemorySpan)
+    assert tracer.entries[0].entries[0].id() == "ID"

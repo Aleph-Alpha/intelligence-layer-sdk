@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from concurrent.futures import ThreadPoolExecutor
-from typing import Generic, Iterable, Sequence, TypeVar, final
+from typing import Generic, Iterable, Optional, Sequence, TypeVar, final
 
 from pydantic import BaseModel
 
@@ -58,7 +58,7 @@ class Task(ABC, Generic[Input, Output]):
         ...
 
     @final
-    def run(self, input: Input, tracer: Tracer) -> Output:
+    def run(self, input: Input, tracer: Tracer, id: Optional[str] = None) -> Output:
         """Executes the implementation of `do_run` for this use case.
 
         This takes an input and runs the implementation to generate an output.
@@ -71,7 +71,7 @@ class Task(ABC, Generic[Input, Output]):
         Returns:
             Generic output defined by the task implementation.
         """
-        with tracer.task_span(type(self).__name__, input) as task_span:
+        with tracer.task_span(type(self).__name__, input, id=id) as task_span:
             output = self.do_run(input, task_span)
             task_span.record_output(output)
             return output
@@ -82,6 +82,7 @@ class Task(ABC, Generic[Input, Output]):
         inputs: Iterable[Input],
         tracer: Tracer,
         concurrency_limit: int = MAX_CONCURRENCY,
+        id: Optional[str] = None,
     ) -> Sequence[Output]:
         """Executes multiple processes of this task concurrently.
 
@@ -99,7 +100,7 @@ class Task(ABC, Generic[Input, Output]):
             The order of Outputs corresponds to the order of the Inputs.
         """
 
-        with tracer.span(f"Concurrent {type(self).__name__} tasks") as span:
+        with tracer.span(f"Concurrent {type(self).__name__} tasks", id=id) as span:
             with ThreadPoolExecutor(
                 max_workers=min(concurrency_limit, MAX_CONCURRENCY)
             ) as executor:
