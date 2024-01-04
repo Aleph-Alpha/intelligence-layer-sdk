@@ -380,9 +380,10 @@ class InMemoryTracer(BaseModel, Tracer):
         task_name: str,
         input: PydanticSerializable,
         timestamp: Optional[datetime] = None,
+        id: Optional[str] = None
     ) -> "InMemoryTaskSpan":
         child = InMemoryTaskSpan(
-            name=task_name, input=input, start_timestamp=timestamp or utc_now()
+            name=task_name, input=input, start_timestamp=timestamp or utc_now(), trace_id=id if id is not None else str(uuid4())
         )
         self.entries.append(child)
         return child
@@ -411,6 +412,15 @@ class InMemorySpan(InMemoryTracer, Span):
 
     def span(self, name: str, timestamp: Optional[datetime] = None, id: Optional[str] = None) -> "InMemorySpan":
         return super().span(name, timestamp, id if id is not None else self.trace_id)
+    
+    def task_span(
+        self,
+        task_name: str,
+        input: PydanticSerializable,
+        timestamp: Optional[datetime] = None,
+        id: Optional[str] = None
+        ) -> "InMemoryTaskSpan":        
+        return super().task_span(task_name, input, timestamp, id if id is not None else self.trace_id)
 
     def id(self) -> str:
         return self.trace_id

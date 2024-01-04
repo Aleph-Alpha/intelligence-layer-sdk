@@ -35,14 +35,29 @@ from intelligence_layer.core.tracer import (
 )
 
 
+def test_tracer_id_exists_for_all_children_of_task_span() -> None:
+    tracer = InMemoryTracer()
+    parent_span = tracer.task_span("child", "input", id="ID")
+    parent_span.span("child2")
 
-def test_tracer_id_exists_for_all_children() -> None:
+    assert tracer.entries[0].id() == "ID"
+    assert tracer.entries[0].entries[0].id() == tracer.entries[0].id()
+
+
+    parent_span.task_span("child3", "input")
+    assert tracer.entries[0].entries[1].id() == tracer.entries[0].id()
+
+
+def test_tracer_id_exists_for_all_children_of_span() -> None:
     tracer = InMemoryTracer()
     parent_span = tracer.span("child", id="ID")
     parent_span.span("child2")
 
     assert tracer.entries[0].id() == "ID"
     assert tracer.entries[0].entries[0].id() == tracer.entries[0].id()
+
+    parent_span.task_span("child3", "input")
+    assert tracer.entries[0].entries[1].id() == tracer.entries[0].id()
 
 
 def test_can_add_child_tracer() -> None:
