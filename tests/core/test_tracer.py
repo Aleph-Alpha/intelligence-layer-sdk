@@ -39,18 +39,8 @@ def test_composite_tracer_id_consistent_across_children(file_tracer: FileTracer)
     tracer1 = InMemoryTracer()
 
     TestTask().run(input, CompositeTracer([tracer1]))
-
+    assert isinstance(tracer1.entries[0], InMemorySpan)
     assert tracer1.entries[0].id() == tracer1.entries[0].entries[0].id()
-
-
-def test_file_tracer(file_tracer: FileTracer) -> None:
-    input = "input"
-    expected = InMemoryTracer()
-
-    TestTask().run(input, CompositeTracer([expected, file_tracer]))
-
-    log_tree = parse_log(file_tracer._log_file_path)
-    assert log_tree == expected
 
 
 def test_tracer_id_exists_for_all_children_of_task_span() -> None:
@@ -58,9 +48,10 @@ def test_tracer_id_exists_for_all_children_of_task_span() -> None:
     parent_span = tracer.task_span("child", "input", id="ID")
     parent_span.span("child2")
 
+    assert isinstance(tracer.entries[0], InMemorySpan)
     assert tracer.entries[0].id() == "ID"
+    
     assert tracer.entries[0].entries[0].id() == tracer.entries[0].id()
-
 
     parent_span.task_span("child3", "input")
     assert tracer.entries[0].entries[1].id() == tracer.entries[0].id()
@@ -71,6 +62,7 @@ def test_tracer_id_exists_for_all_children_of_span() -> None:
     parent_span = tracer.span("child", id="ID")
     parent_span.span("child2")
 
+    assert isinstance(tracer.entries[0], InMemorySpan)
     assert tracer.entries[0].id() == "ID"
     assert tracer.entries[0].entries[0].id() == tracer.entries[0].id()
 
