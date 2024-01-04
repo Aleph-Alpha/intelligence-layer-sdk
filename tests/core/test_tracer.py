@@ -1,11 +1,9 @@
 from json import loads
 from pathlib import Path
-from uuid import UUID
 
 from aleph_alpha_client import Prompt
 from aleph_alpha_client.completion import CompletionRequest
 from opentelemetry.trace import get_tracer
-from pydantic import BaseModel, Field
 from pytest import fixture, mark
 
 from intelligence_layer.connectors.limited_concurrency_client import (
@@ -32,9 +30,13 @@ from intelligence_layer.core.tracer import (
     PlainEntry,
     StartSpan,
     StartTask,
+    TreeBuilder,
 )
 
-def test_composite_tracer_id_consistent_across_children(file_tracer: FileTracer) -> None:
+
+def test_composite_tracer_id_consistent_across_children(
+    file_tracer: FileTracer,
+) -> None:
     input = "input"
     tracer1 = InMemoryTracer()
 
@@ -50,7 +52,7 @@ def test_tracer_id_exists_for_all_children_of_task_span() -> None:
 
     assert isinstance(tracer.entries[0], InMemorySpan)
     assert tracer.entries[0].id() == "ID"
-    
+
     assert tracer.entries[0].entries[0].id() == tracer.entries[0].id()
 
     parent_span.task_span("child3", "input")
@@ -217,52 +219,6 @@ def parse_log(log_path: Path) -> InMemoryTracer:
                 raise RuntimeError(f"Unexpected entry_type in {log_line}")
     assert tree_builder.root
     return tree_builder.root
-
-
-class TreeBuilder(BaseModel):
-    root: InMemoryTracer = InMemoryTracer()
-    tracers: dict[UUID, InMemoryTracer] = Field(default_factory=dict)
-    tasks: dict[UUID, InMemoryTaskSpan] = Field(default_factory=dict)
-    spans: dict[UUID, InMemorySpan] = Field(default_factory=dict)
-
-    def start_task(self, log_line: LogLine) -> None:
-        start_task = StartTask.model_validate(log_line.entry)
-        child = InMemoryTaskSpan(
-            name=start_task.name,
-            input=start_task.input,
-            start_timestamp=start_task.start,
-            trace_id=start_task.trace_id
-        )
-        self.tracers[start_task.uuid] = child
-        self.tasks[start_task.uuid] = child
-        self.tracers.get(start_task.parent, self.root).entries.append(child)
-
-    def end_task(self, log_line: LogLine) -> None:
-        end_task = EndTask.model_validate(log_line.entry)
-        task_span = self.tasks[end_task.uuid]
-        task_span.end_timestamp = end_task.end
-        task_span.record_output(end_task.output)
-
-    def start_span(self, log_line: LogLine) -> None:
-        start_span = StartSpan.model_validate(log_line.entry)
-        child = InMemorySpan(name=start_span.name, start_timestamp=start_span.start, trace_id=start_span.trace_id)
-        self.tracers[start_span.uuid] = child
-        self.spans[start_span.uuid] = child
-        self.tracers.get(start_span.parent, self.root).entries.append(child)
-
-    def end_span(self, log_line: LogLine) -> None:
-        end_span = EndSpan.model_validate(log_line.entry)
-        span = self.spans[end_span.uuid]
-        span.end_timestamp = end_span.end
-
-    def plain_entry(self, log_line: LogLine) -> None:
-        plain_entry = PlainEntry.model_validate(log_line.entry)
-        entry = LogEntry(
-            message=plain_entry.message,
-            value=plain_entry.value,
-            timestamp=plain_entry.timestamp,
-        )
-        self.tracers[plain_entry.parent].entries.append(entry)
 
 
 @mark.skip(

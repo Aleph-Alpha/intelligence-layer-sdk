@@ -2,9 +2,8 @@ from collections import defaultdict
 from json import loads
 from pathlib import Path
 from typing import Iterable, Optional, Sequence, cast
-from uuid import UUID
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 
 from intelligence_layer.core.evaluation.domain import (
     Evaluation,
@@ -25,17 +24,16 @@ from intelligence_layer.core.tracer import (
     EndSpan,
     EndTask,
     FileTracer,
-    InMemorySpan,
     InMemoryTaskSpan,
     InMemoryTracer,
     JsonSerializer,
-    LogEntry,
     LogLine,
     PlainEntry,
     PydanticSerializable,
     StartSpan,
     StartTask,
     Tracer,
+    TreeBuilder,
 )
 
 
@@ -285,51 +283,6 @@ def _parse_log(log_path: Path) -> InMemoryTracer:
                 raise RuntimeError(f"Unexpected entry_type in {log_line}")
     assert tree_builder.root
     return tree_builder.root
-
-
-class TreeBuilder(BaseModel):
-    root: InMemoryTracer = InMemoryTracer()
-    tracers: dict[UUID, InMemoryTracer] = Field(default_factory=dict)
-    tasks: dict[UUID, InMemoryTaskSpan] = Field(default_factory=dict)
-    spans: dict[UUID, InMemorySpan] = Field(default_factory=dict)
-
-    def start_task(self, log_line: LogLine) -> None:
-        start_task = StartTask.model_validate(log_line.entry)
-        child = InMemoryTaskSpan(
-            name=start_task.name,
-            input=start_task.input,
-            start_timestamp=start_task.start,
-        )
-        self.tracers[start_task.uuid] = child
-        self.tasks[start_task.uuid] = child
-        self.tracers.get(start_task.parent, self.root).entries.append(child)
-
-    def end_task(self, log_line: LogLine) -> None:
-        end_task = EndTask.model_validate(log_line.entry)
-        task_span = self.tasks[end_task.uuid]
-        task_span.end_timestamp = end_task.end
-        task_span.record_output(end_task.output)
-
-    def start_span(self, log_line: LogLine) -> None:
-        start_span = StartSpan.model_validate(log_line.entry)
-        child = InMemorySpan(name=start_span.name, start_timestamp=start_span.start)
-        self.tracers[start_span.uuid] = child
-        self.spans[start_span.uuid] = child
-        self.tracers.get(start_span.parent, self.root).entries.append(child)
-
-    def end_span(self, log_line: LogLine) -> None:
-        end_span = EndSpan.model_validate(log_line.entry)
-        span = self.spans[end_span.uuid]
-        span.end_timestamp = end_span.end
-
-    def plain_entry(self, log_line: LogLine) -> None:
-        plain_entry = PlainEntry.model_validate(log_line.entry)
-        entry = LogEntry(
-            message=plain_entry.message,
-            value=plain_entry.value,
-            timestamp=plain_entry.timestamp,
-        )
-        self.tracers[plain_entry.parent].entries.append(entry)
 
 
 class InMemoryEvaluationRepository(EvaluationRepository):

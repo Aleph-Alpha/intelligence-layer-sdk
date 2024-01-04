@@ -27,9 +27,12 @@ def test_to_trace_entry() -> None:
             start_timestamp=now,
             end_timestamp=now,
             entries=[
-                LogEntry(message="message", value="value"),
-                InMemorySpan(name="span", start_timestamp=now, end_timestamp=now),
+                LogEntry(message="message", value="value", trace_id="ID"),
+                InMemorySpan(
+                    name="span", start_timestamp=now, end_timestamp=now, trace_id="ID"
+                ),
             ],
+            trace_id="ID",
         )
     )
 
