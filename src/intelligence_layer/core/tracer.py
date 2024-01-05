@@ -54,6 +54,16 @@ def utc_now() -> datetime:
     """
     return datetime.now(timezone.utc)
 
+def ensure_id(id: Optional[str] =None) -> str:
+    """Returns a valid id for tracing.
+
+    Args:
+        id: current id to use if present.
+    Returns:
+        `id` if present, otherwise a new unique ID.
+    
+    """
+    return id if id is not None else str(uuid4())
 
 class Tracer(ABC):
     """Provides a consistent way to instrument a :class:`Task` with logging for each step of the
@@ -230,7 +240,7 @@ class CompositeTracer(Tracer, Generic[TracerVar]):
         self, name: str, timestamp: Optional[datetime] = None, id: Optional[str] = None
     ) -> "CompositeSpan[Span]":
         timestamp = timestamp or utc_now()
-        trace_id = id if id is not None else str(uuid4())
+        trace_id = ensure_id(id)
         return CompositeSpan(
             [tracer.span(name, timestamp, trace_id) for tracer in self.tracers]
         )
@@ -243,7 +253,7 @@ class CompositeTracer(Tracer, Generic[TracerVar]):
         id: Optional[str] = None,
     ) -> "CompositeTaskSpan":
         timestamp = timestamp or utc_now()
-        trace_id = id if id is not None else str(uuid4())
+        trace_id = ensure_id(id)
         return CompositeTaskSpan(
             [
                 tracer.task_span(task_name, input, timestamp, trace_id)
@@ -422,7 +432,7 @@ class InMemoryTracer(BaseModel, Tracer):
         child = InMemorySpan(
             name=name,
             start_timestamp=timestamp or utc_now(),
-            trace_id=id if id is not None else str(uuid4()),
+            trace_id=ensure_id(id),
         )
         self.entries.append(child)
         return child
@@ -438,7 +448,7 @@ class InMemoryTracer(BaseModel, Tracer):
             name=task_name,
             input=input,
             start_timestamp=timestamp or utc_now(),
-            trace_id=id if id is not None else str(uuid4()),
+            trace_id=ensure_id(id),
         )
         self.entries.append(child)
         return child
@@ -465,10 +475,13 @@ class InMemorySpan(InMemoryTracer, Span):
     end_timestamp: Optional[datetime] = None
     trace_id: str
 
+    def id(self) -> str:
+        return self.trace_id
+
     def span(
         self, name: str, timestamp: Optional[datetime] = None, id: Optional[str] = None
     ) -> "InMemorySpan":
-        return super().span(name, timestamp, id if id is not None else self.trace_id)
+        return super().span(name, timestamp, id if id is not None else self.id())
 
     def task_span(
         self,
@@ -478,11 +491,8 @@ class InMemorySpan(InMemoryTracer, Span):
         id: Optional[str] = None,
     ) -> "InMemoryTaskSpan":
         return super().task_span(
-            task_name, input, timestamp, id if id is not None else self.trace_id
+            task_name, input, timestamp, id if id is not None else self.id()
         )
-
-    def id(self) -> str:
-        return self.trace_id
 
     def log(
         self,
@@ -721,7 +731,7 @@ class FileTracer(Tracer):
         self, name: str, timestamp: Optional[datetime] = None, id: Optional[str] = None
     ) -> "FileSpan":
         span = FileSpan(
-            self._log_file_path, name, trace_id=id if id is not None else str(uuid4())
+            self._log_file_path, name, trace_id=ensure_id(id)
         )
         self._log_entry(
             StartSpan(
@@ -745,7 +755,7 @@ class FileTracer(Tracer):
             self._log_file_path,
             task_name,
             input,
-            trace_id=id if id is not None else str(uuid4()),
+            trace_id=ensure_id(id),
         )
         self._log_entry(
             StartTask(
@@ -839,7 +849,7 @@ class OpenTelemetryTracer(Tracer):
     def span(
         self, name: str, timestamp: Optional[datetime] = None, id: Optional[str] = None
     ) -> "OpenTelemetrySpan":
-        trace_id = id if id is not None else str(uuid4())
+        trace_id = ensure_id(id)
         tracer_span = self._tracer.start_span(
             name,
             attributes={"trace_id": trace_id},
@@ -855,7 +865,7 @@ class OpenTelemetryTracer(Tracer):
         timestamp: Optional[datetime] = None,
         id: Optional[str] = None,
     ) -> "OpenTelemetryTaskSpan":
-        trace_id = id if id is not None else str(uuid4())
+        trace_id = ensure_id(id)
 
         tracer_span = self._tracer.start_span(
             task_name,
