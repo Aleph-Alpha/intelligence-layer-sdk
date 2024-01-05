@@ -9,7 +9,6 @@ set -a # automatically export all variables
 source .env
 set +a
 
-./scripts/load_env.sh
 ./scripts/lint.sh
 ./scripts/doctest.sh
 ./scripts/notebook_runner.sh
