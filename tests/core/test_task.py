@@ -130,7 +130,7 @@ def test_ids_are_set_in_concurrent_run() -> None:
 def test_ids_are_equal_for_multiple_subtasks() -> None:
     tracer = InMemoryTracer()
     NestedTask().run(None, tracer, "ID")
-    assert isinstance(tracer.entries, InMemorySpan)
-    assert tracer.entries[0].id() == "ID"
     assert isinstance(tracer.entries[0], InMemorySpan)
+    assert tracer.entries[0].id() == "ID"
+    assert isinstance(tracer.entries[0].entries[0], InMemorySpan)
     assert tracer.entries[0].entries[0].id() == "ID"
