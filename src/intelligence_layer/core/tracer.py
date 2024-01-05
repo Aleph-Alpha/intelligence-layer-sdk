@@ -54,16 +54,18 @@ def utc_now() -> datetime:
     """
     return datetime.now(timezone.utc)
 
-def ensure_id(id: Optional[str] =None) -> str:
+
+def ensure_id(id: Optional[str] = None) -> str:
     """Returns a valid id for tracing.
 
     Args:
         id: current id to use if present.
     Returns:
         `id` if present, otherwise a new unique ID.
-    
+
     """
     return id if id is not None else str(uuid4())
+
 
 class Tracer(ABC):
     """Provides a consistent way to instrument a :class:`Task` with logging for each step of the
@@ -730,9 +732,7 @@ class FileTracer(Tracer):
     def span(
         self, name: str, timestamp: Optional[datetime] = None, id: Optional[str] = None
     ) -> "FileSpan":
-        span = FileSpan(
-            self._log_file_path, name, trace_id=ensure_id(id)
-        )
+        span = FileSpan(self._log_file_path, name, trace_id=ensure_id(id))
         self._log_entry(
             StartSpan(
                 uuid=span.uuid,
