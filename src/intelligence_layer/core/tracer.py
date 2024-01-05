@@ -81,7 +81,8 @@ class Tracer(ABC):
 
         Args:
             name: A descriptive name of what this span will contain logs about.
-            timestamp: optional override of the starting timestamp. Otherwise should default to now
+            timestamp: optional override of the starting timestamp. Otherwise should default to now.
+            id: optional override of a trace id. Otherwise it creates a new default id.
 
         Returns:
             An instance of a Span.
@@ -107,7 +108,9 @@ class Tracer(ABC):
         Args:
             task_name: The name of the task that is being logged
             input: The input for the task that is being logged.
-            timestamp: optional override of the starting timestamp. Otherwise should default to now
+            timestamp: optional override of the starting timestamp. Otherwise should default to now.
+            id: optional override of a trace id. Otherwise it creates a new default id.
+
 
         Returns:
             An instance of a TaskSpan.
@@ -377,6 +380,7 @@ class LogEntry(BaseModel):
         value: The relevant data you want to log. Can be anything that is serializable by
             Pydantic, which gives the tracers flexibility in how they store and emit the logs.
         timestamp: The time that the log was emitted.
+        id: The ID of the trace to which this log entry belongs.
     """
 
     message: str
@@ -545,6 +549,8 @@ class StartTask(BaseModel):
         name: The name of the task.
         start: The timestamp when this `Task` was started (i.e. `run` was called).
         input: The `Input` (i.e. parameter for `run`) the `Task` was started with.
+        trace_id: The trace id of the opened `TaskSpan`.
+
     """
 
     uuid: UUID
@@ -578,6 +584,7 @@ class StartSpan(BaseModel):
             This could refer to either a surrounding `TaskSpan`, `Span` or the top-level `Tracer`.
         name: The name of the task.
         start: The timestamp when this `Span` was started.
+        trace_id: The ID of the trace this span belongs to.
     """
 
     uuid: UUID
@@ -608,6 +615,7 @@ class PlainEntry(BaseModel):
         timestamp: the timestamp when `Tracer.log` was called.
         parent: The unique id of the parent element of the log.
             This could refer to either a surrounding `TaskSpan`, `Span` or the top-level `Tracer`.
+        trace_id: The ID of the trace this entry belongs to.
     """
 
     message: str
