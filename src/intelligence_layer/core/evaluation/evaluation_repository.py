@@ -37,6 +37,14 @@ from intelligence_layer.core.tracer import (
 )
 
 
+def write_utf8(path: Path, content: str) -> None:
+    path.write_text(content, encoding="utf-8")
+
+
+def read_utf8(path: Path) -> str:
+    return path.read_text(encoding="utf-8")
+
+
 class SerializedExampleEvaluation(BaseModel):
     """A json-serialized evaluation of a single example in a dataset.
 
@@ -139,9 +147,10 @@ class FileEvaluationRepository(EvaluationRepository):
 
     def store_example_output(self, example_output: ExampleOutput[Output]) -> None:
         serialized_result = JsonSerializer(root=example_output)
-        self._example_output_path(
-            example_output.run_id, example_output.example_id
-        ).write_text(serialized_result.model_dump_json(indent=2))
+        write_utf8(
+            self._example_output_path(example_output.run_id, example_output.example_id),
+            serialized_result.model_dump_json(indent=2),
+        )
 
     def example_output(
         self, run_id: str, example_id: str, output_type: type[Output]
@@ -149,7 +158,7 @@ class FileEvaluationRepository(EvaluationRepository):
         file_path = self._example_output_path(run_id, example_id)
         if not file_path.exists():
             return None
-        content = file_path.read_text()
+        content = read_utf8(file_path)
         # Mypy does not accept dynamic types
         return ExampleOutput[output_type].model_validate_json(json_data=content)  # type: ignore
 
@@ -204,7 +213,7 @@ class FileEvaluationRepository(EvaluationRepository):
         file_path = self._example_result_path(eval_id, example_id)
         if not file_path.exists():
             return None
-        content = file_path.read_text()
+        content = read_utf8(file_path)
         serialized_example = SerializedExampleEvaluation.model_validate_json(content)
         return serialized_example.to_example_result(evaluation_type)
 
@@ -224,8 +233,9 @@ class FileEvaluationRepository(EvaluationRepository):
 
     def store_example_evaluation(self, result: ExampleEvaluation[Evaluation]) -> None:
         serialized_result = SerializedExampleEvaluation.from_example_result(result)
-        self._example_result_path(result.eval_id, result.example_id).write_text(
-            serialized_result.model_dump_json(indent=2)
+        write_utf8(
+            self._example_result_path(result.eval_id, result.example_id),
+            serialized_result.model_dump_json(indent=2),
         )
 
     def evaluation_overview(
@@ -234,24 +244,25 @@ class FileEvaluationRepository(EvaluationRepository):
         file_path = self._evaluation_run_overview_path(eval_id)
         if not file_path.exists():
             return None
-        content = file_path.read_text()
+        content = read_utf8(file_path)
         return overview_type.model_validate_json(content)
 
     def store_evaluation_overview(self, overview: PartialEvaluationOverview) -> None:
-        self._evaluation_run_overview_path(overview.id).write_text(
-            overview.model_dump_json(indent=2)
+        write_utf8(
+            self._evaluation_run_overview_path(overview.id),
+            overview.model_dump_json(indent=2),
         )
 
     def run_overview(self, run_id: str) -> RunOverview | None:
         file_path = self._run_overview_path(run_id)
         if not file_path.exists():
             return None
-        content = file_path.read_text()
+        content = read_utf8(file_path)
         return RunOverview.model_validate_json(content)
 
     def store_run_overview(self, overview: RunOverview) -> None:
-        self._run_overview_path(overview.id).write_text(
-            overview.model_dump_json(indent=2)
+        write_utf8(
+            self._run_overview_path(overview.id), overview.model_dump_json(indent=2)
         )
 
     def run_ids(self) -> Sequence[str]:
