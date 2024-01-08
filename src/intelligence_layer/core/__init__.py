@@ -51,6 +51,11 @@ from .evaluation.domain import RunOverview as RunOverview
 from .evaluation.domain import SpanTrace as SpanTrace
 from .evaluation.domain import SuccessfulExampleOutput as SuccessfulExampleOutput
 from .evaluation.domain import TaskSpanTrace as TaskSpanTrace
+from .evaluation.elo import EloCalculator as EloCalculator
+from .evaluation.elo import Payoff as Payoff
+from .evaluation.elo import PayoffMatrix as PayoffMatrix
+from .evaluation.elo import PlayerScore as PlayerScore
+from .evaluation.elo import WinRateCalculator as WinRateCalculator
 from .evaluation.evaluation_repository import (
     FileEvaluationRepository as FileEvaluationRepository,
 )
