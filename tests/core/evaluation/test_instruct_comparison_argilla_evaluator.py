@@ -24,15 +24,13 @@ from intelligence_layer.core.evaluation.domain import (
     ExampleOutput,
     RunOverview,
 )
+from intelligence_layer.core.evaluation.elo import EloCalculator, Payoff, PayoffMatrix
 from intelligence_layer.core.evaluation.evaluation_repository import (
     InMemoryEvaluationRepository,
 )
 from intelligence_layer.core.evaluation.evaluator import ArgillaEvaluationRepository
 from intelligence_layer.core.evaluation.instruct_comparison_argilla_evaluator import (
-    EloCalculator,
     InstructComparisonArgillaEvaluator,
-    Payoff,
-    PayoffMatrix,
 )
 from intelligence_layer.core.prompt_template import PromptWithMetadata
 from intelligence_layer.core.tracer import utc_now
