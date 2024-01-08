@@ -55,6 +55,18 @@ def utc_now() -> datetime:
     return datetime.now(timezone.utc)
 
 
+def ensure_id(id: Optional[str] = None) -> str:
+    """Returns a valid id for tracing.
+
+    Args:
+        id: current id to use if present.
+    Returns:
+        `id` if present, otherwise a new unique ID.
+
+    """
+    return id if id is not None else str(uuid4())
+
+
 class Tracer(ABC):
     """Provides a consistent way to instrument a :class:`Task` with logging for each step of the
     workflow.
@@ -67,7 +79,9 @@ class Tracer(ABC):
     """
 
     @abstractmethod
-    def span(self, name: str, timestamp: Optional[datetime] = None) -> "Span":
+    def span(
+        self, name: str, timestamp: Optional[datetime] = None, id: Optional[str] = None
+    ) -> "Span":
         """Generate a span from the current span or logging instance.
 
         Allows for grouping multiple logs and duration together as a single, logical step in the
@@ -79,7 +93,8 @@ class Tracer(ABC):
 
         Args:
             name: A descriptive name of what this span will contain logs about.
-            timestamp: optional override of the starting timestamp. Otherwise should default to now
+            timestamp: optional override of the starting timestamp. Otherwise should default to now.
+            id: optional override of a trace id. Otherwise it creates a new default id.
 
         Returns:
             An instance of a Span.
@@ -92,6 +107,7 @@ class Tracer(ABC):
         task_name: str,
         input: PydanticSerializable,
         timestamp: Optional[datetime] = None,
+        id: Optional[str] = None,
     ) -> "TaskSpan":
         """Generate a task-specific span from the current span or logging instance.
 
@@ -104,7 +120,9 @@ class Tracer(ABC):
         Args:
             task_name: The name of the task that is being logged
             input: The input for the task that is being logged.
-            timestamp: optional override of the starting timestamp. Otherwise should default to now
+            timestamp: optional override of the starting timestamp. Otherwise should default to now.
+            id: optional override of a trace id. Otherwise it creates a new default id.
+
 
         Returns:
             An instance of a TaskSpan.
@@ -120,6 +138,10 @@ class Span(Tracer, AbstractContextManager["Span"]):
     Can also be used as a Context Manager to easily capture the start and end time, and keep the
     span only in scope while it is active.
     """
+
+    @abstractmethod
+    def id(self) -> str:
+        ...
 
     def __enter__(self) -> Self:
         return self
@@ -213,23 +235,32 @@ class CompositeTracer(Tracer, Generic[TracerVar]):
     """
 
     def __init__(self, tracers: Sequence[TracerVar]) -> None:
+        assert len(tracers) > 0
         self.tracers = tracers
 
     def span(
-        self, name: str, timestamp: Optional[datetime] = None
+        self, name: str, timestamp: Optional[datetime] = None, id: Optional[str] = None
     ) -> "CompositeSpan[Span]":
         timestamp = timestamp or utc_now()
-        return CompositeSpan([tracer.span(name, timestamp) for tracer in self.tracers])
+        trace_id = ensure_id(id)
+        return CompositeSpan(
+            [tracer.span(name, timestamp, trace_id) for tracer in self.tracers]
+        )
 
     def task_span(
         self,
         task_name: str,
         input: PydanticSerializable,
         timestamp: Optional[datetime] = None,
+        id: Optional[str] = None,
     ) -> "CompositeTaskSpan":
         timestamp = timestamp or utc_now()
+        trace_id = ensure_id(id)
         return CompositeTaskSpan(
-            [tracer.task_span(task_name, input, timestamp) for tracer in self.tracers]
+            [
+                tracer.task_span(task_name, input, timestamp, trace_id)
+                for tracer in self.tracers
+            ]
         )
 
 
@@ -244,6 +275,25 @@ class CompositeSpan(Generic[SpanVar], CompositeTracer[SpanVar], Span):
     Args:
         tracers: spans that will be forwarded all subsequent log and span calls.
     """
+
+    def id(self) -> str:
+        return self.tracers[0].id()
+
+    def span(
+        self, name: str, timestamp: Optional[datetime] = None, id: Optional[str] = None
+    ) -> "CompositeSpan[Span]":
+        return super().span(name, timestamp, id if id is not None else self.id())
+
+    def task_span(
+        self,
+        task_name: str,
+        input: PydanticSerializable,
+        timestamp: Optional[datetime] = None,
+        id: Optional[str] = None,
+    ) -> "CompositeTaskSpan":
+        return super().task_span(
+            task_name, input, timestamp, id if id is not None else self.id()
+        )
 
     def log(
         self,
@@ -284,6 +334,9 @@ class NoOpTracer(TaskSpan):
     All calls to `log` won't actually do anything.
     """
 
+    def id(self) -> str:
+        return "NoOp"
+
     def log(
         self,
         message: str,
@@ -292,7 +345,9 @@ class NoOpTracer(TaskSpan):
     ) -> None:
         pass
 
-    def span(self, name: str, timestamp: Optional[datetime] = None) -> "NoOpTracer":
+    def span(
+        self, name: str, timestamp: Optional[datetime] = None, id: Optional[str] = None
+    ) -> "NoOpTracer":
         return self
 
     def task_span(
@@ -300,6 +355,7 @@ class NoOpTracer(TaskSpan):
         task_name: str,
         input: PydanticSerializable,
         timestamp: Optional[datetime] = None,
+        id: Optional[str] = None,
     ) -> "NoOpTracer":
         return self
 
@@ -336,11 +392,16 @@ class LogEntry(BaseModel):
         value: The relevant data you want to log. Can be anything that is serializable by
             Pydantic, which gives the tracers flexibility in how they store and emit the logs.
         timestamp: The time that the log was emitted.
+        id: The ID of the trace to which this log entry belongs.
     """
 
     message: str
     value: SerializeAsAny[PydanticSerializable]
     timestamp: datetime = Field(default_factory=datetime.utcnow)
+    trace_id: str
+
+    def id(self) -> str:
+        return self.trace_id
 
     def _rich_render_(self) -> Panel:
         """Renders the trace via classes in the `rich` package"""
@@ -367,8 +428,14 @@ class InMemoryTracer(BaseModel, Tracer):
 
     entries: list[Union[LogEntry, "InMemoryTaskSpan", "InMemorySpan"]] = []
 
-    def span(self, name: str, timestamp: Optional[datetime] = None) -> "InMemorySpan":
-        child = InMemorySpan(name=name, start_timestamp=timestamp or utc_now())
+    def span(
+        self, name: str, timestamp: Optional[datetime] = None, id: Optional[str] = None
+    ) -> "InMemorySpan":
+        child = InMemorySpan(
+            name=name,
+            start_timestamp=timestamp or utc_now(),
+            trace_id=ensure_id(id),
+        )
         self.entries.append(child)
         return child
 
@@ -377,9 +444,13 @@ class InMemoryTracer(BaseModel, Tracer):
         task_name: str,
         input: PydanticSerializable,
         timestamp: Optional[datetime] = None,
+        id: Optional[str] = None,
     ) -> "InMemoryTaskSpan":
         child = InMemoryTaskSpan(
-            name=task_name, input=input, start_timestamp=timestamp or utc_now()
+            name=task_name,
+            input=input,
+            start_timestamp=timestamp or utc_now(),
+            trace_id=ensure_id(id),
         )
         self.entries.append(child)
         return child
@@ -404,6 +475,26 @@ class InMemorySpan(InMemoryTracer, Span):
     name: str
     start_timestamp: datetime = Field(default_factory=datetime.utcnow)
     end_timestamp: Optional[datetime] = None
+    trace_id: str
+
+    def id(self) -> str:
+        return self.trace_id
+
+    def span(
+        self, name: str, timestamp: Optional[datetime] = None, id: Optional[str] = None
+    ) -> "InMemorySpan":
+        return super().span(name, timestamp, id if id is not None else self.id())
+
+    def task_span(
+        self,
+        task_name: str,
+        input: PydanticSerializable,
+        timestamp: Optional[datetime] = None,
+        id: Optional[str] = None,
+    ) -> "InMemoryTaskSpan":
+        return super().task_span(
+            task_name, input, timestamp, id if id is not None else self.id()
+        )
 
     def log(
         self,
@@ -412,7 +503,12 @@ class InMemorySpan(InMemoryTracer, Span):
         timestamp: Optional[datetime] = None,
     ) -> None:
         self.entries.append(
-            LogEntry(message=message, value=value, timestamp=timestamp or utc_now())
+            LogEntry(
+                message=message,
+                value=value,
+                timestamp=timestamp or utc_now(),
+                trace_id=self.id(),
+            )
         )
 
     def end(self, timestamp: Optional[datetime] = None) -> None:
@@ -465,6 +561,8 @@ class StartTask(BaseModel):
         name: The name of the task.
         start: The timestamp when this `Task` was started (i.e. `run` was called).
         input: The `Input` (i.e. parameter for `run`) the `Task` was started with.
+        trace_id: The trace id of the opened `TaskSpan`.
+
     """
 
     uuid: UUID
@@ -472,6 +570,7 @@ class StartTask(BaseModel):
     name: str
     start: datetime
     input: SerializeAsAny[PydanticSerializable]
+    trace_id: str
 
 
 class EndTask(BaseModel):
@@ -497,12 +596,14 @@ class StartSpan(BaseModel):
             This could refer to either a surrounding `TaskSpan`, `Span` or the top-level `Tracer`.
         name: The name of the task.
         start: The timestamp when this `Span` was started.
+        trace_id: The ID of the trace this span belongs to.
     """
 
     uuid: UUID
     parent: UUID
     name: str
     start: datetime
+    trace_id: str
 
 
 class EndSpan(BaseModel):
@@ -526,12 +627,14 @@ class PlainEntry(BaseModel):
         timestamp: the timestamp when `Tracer.log` was called.
         parent: The unique id of the parent element of the log.
             This could refer to either a surrounding `TaskSpan`, `Span` or the top-level `Tracer`.
+        trace_id: The ID of the trace this entry belongs to.
     """
 
     message: str
     value: SerializeAsAny[PydanticSerializable]
     timestamp: datetime
     parent: UUID
+    trace_id: str
 
 
 class LogLine(BaseModel):
@@ -546,6 +649,57 @@ class LogLine(BaseModel):
 
     entry_type: str
     entry: SerializeAsAny[PydanticSerializable]
+
+
+class TreeBuilder(BaseModel):
+    root: InMemoryTracer = InMemoryTracer()
+    tracers: dict[UUID, InMemoryTracer] = Field(default_factory=dict)
+    tasks: dict[UUID, InMemoryTaskSpan] = Field(default_factory=dict)
+    spans: dict[UUID, InMemorySpan] = Field(default_factory=dict)
+
+    def start_task(self, log_line: LogLine) -> None:
+        start_task = StartTask.model_validate(log_line.entry)
+        child = InMemoryTaskSpan(
+            name=start_task.name,
+            input=start_task.input,
+            start_timestamp=start_task.start,
+            trace_id=start_task.trace_id,
+        )
+        self.tracers[start_task.uuid] = child
+        self.tasks[start_task.uuid] = child
+        self.tracers.get(start_task.parent, self.root).entries.append(child)
+
+    def end_task(self, log_line: LogLine) -> None:
+        end_task = EndTask.model_validate(log_line.entry)
+        task_span = self.tasks[end_task.uuid]
+        task_span.end_timestamp = end_task.end
+        task_span.record_output(end_task.output)
+
+    def start_span(self, log_line: LogLine) -> None:
+        start_span = StartSpan.model_validate(log_line.entry)
+        child = InMemorySpan(
+            name=start_span.name,
+            start_timestamp=start_span.start,
+            trace_id=start_span.trace_id,
+        )
+        self.tracers[start_span.uuid] = child
+        self.spans[start_span.uuid] = child
+        self.tracers.get(start_span.parent, self.root).entries.append(child)
+
+    def end_span(self, log_line: LogLine) -> None:
+        end_span = EndSpan.model_validate(log_line.entry)
+        span = self.spans[end_span.uuid]
+        span.end_timestamp = end_span.end
+
+    def plain_entry(self, log_line: LogLine) -> None:
+        plain_entry = PlainEntry.model_validate(log_line.entry)
+        entry = LogEntry(
+            message=plain_entry.message,
+            value=plain_entry.value,
+            timestamp=plain_entry.timestamp,
+            trace_id=plain_entry.trace_id,
+        )
+        self.tracers[plain_entry.parent].entries.append(entry)
 
 
 class FileTracer(Tracer):
@@ -575,14 +729,17 @@ class FileTracer(Tracer):
                 + "\n"
             )
 
-    def span(self, name: str, timestamp: Optional[datetime] = None) -> "FileSpan":
-        span = FileSpan(self._log_file_path, name)
+    def span(
+        self, name: str, timestamp: Optional[datetime] = None, id: Optional[str] = None
+    ) -> "FileSpan":
+        span = FileSpan(self._log_file_path, name, trace_id=ensure_id(id))
         self._log_entry(
             StartSpan(
                 uuid=span.uuid,
                 parent=self.uuid,
                 name=name,
                 start=timestamp or utc_now(),
+                trace_id=span.id(),
             )
         )
         return span
@@ -592,8 +749,14 @@ class FileTracer(Tracer):
         task_name: str,
         input: PydanticSerializable,
         timestamp: Optional[datetime] = None,
+        id: Optional[str] = None,
     ) -> "FileTaskSpan":
-        task = FileTaskSpan(self._log_file_path, task_name, input)
+        task = FileTaskSpan(
+            self._log_file_path,
+            task_name,
+            input,
+            trace_id=ensure_id(id),
+        )
         self._log_entry(
             StartTask(
                 uuid=task.uuid,
@@ -601,6 +764,7 @@ class FileTracer(Tracer):
                 name=task_name,
                 start=timestamp or utc_now(),
                 input=input,
+                trace_id=task.id(),
             )
         )
         return task
@@ -611,8 +775,12 @@ class FileSpan(Span, FileTracer):
 
     end_timestamp: Optional[datetime] = None
 
-    def __init__(self, log_file_path: Path, name: str) -> None:
+    def id(self) -> str:
+        return self.trace_id
+
+    def __init__(self, log_file_path: Path, name: str, trace_id: str) -> None:
         super().__init__(log_file_path)
+        self.trace_id = trace_id
 
     def log(
         self,
@@ -626,6 +794,7 @@ class FileSpan(Span, FileTracer):
                 value=value,
                 timestamp=timestamp or utc_now(),
                 parent=self.uuid,
+                trace_id=self.id(),
             )
         )
 
@@ -641,9 +810,13 @@ class FileTaskSpan(TaskSpan, FileSpan):
     output: Optional[PydanticSerializable] = None
 
     def __init__(
-        self, log_file_path: Path, task_name: str, input: PydanticSerializable
+        self,
+        log_file_path: Path,
+        task_name: str,
+        input: PydanticSerializable,
+        trace_id: str,
     ) -> None:
-        super().__init__(log_file_path, task_name)
+        super().__init__(log_file_path, task_name, trace_id)
 
     def record_output(self, output: PydanticSerializable) -> None:
         self.output = output
@@ -674,28 +847,33 @@ class OpenTelemetryTracer(Tracer):
         self._tracer = tracer
 
     def span(
-        self, name: str, timestamp: Optional[datetime] = None
+        self, name: str, timestamp: Optional[datetime] = None, id: Optional[str] = None
     ) -> "OpenTelemetrySpan":
+        trace_id = ensure_id(id)
         tracer_span = self._tracer.start_span(
             name,
+            attributes={"trace_id": trace_id},
             start_time=None if not timestamp else _open_telemetry_timestamp(timestamp),
         )
         token = attach(set_span_in_context(tracer_span))
-        return OpenTelemetrySpan(tracer_span, self._tracer, token)
+        return OpenTelemetrySpan(tracer_span, self._tracer, token, trace_id)
 
     def task_span(
         self,
         task_name: str,
         input: PydanticSerializable,
         timestamp: Optional[datetime] = None,
+        id: Optional[str] = None,
     ) -> "OpenTelemetryTaskSpan":
+        trace_id = ensure_id(id)
+
         tracer_span = self._tracer.start_span(
             task_name,
-            attributes={"input": _serialize(input)},
+            attributes={"input": _serialize(input), "trace_id": trace_id},
             start_time=None if not timestamp else _open_telemetry_timestamp(timestamp),
         )
         token = attach(set_span_in_context(tracer_span))
-        return OpenTelemetryTaskSpan(tracer_span, self._tracer, token)
+        return OpenTelemetryTaskSpan(tracer_span, self._tracer, token, trace_id)
 
 
 class OpenTelemetrySpan(Span, OpenTelemetryTracer):
@@ -703,10 +881,32 @@ class OpenTelemetrySpan(Span, OpenTelemetryTracer):
 
     end_timestamp: Optional[datetime] = None
 
-    def __init__(self, span: OpenTSpan, tracer: OpenTTracer, token: object) -> None:
+    def id(self) -> str:
+        return self._trace_id
+
+    def __init__(
+        self, span: OpenTSpan, tracer: OpenTTracer, token: object, trace_id: str
+    ) -> None:
         super().__init__(tracer)
         self.open_ts_span = span
         self._token = token
+        self._trace_id = trace_id
+
+    def span(
+        self, name: str, timestamp: Optional[datetime] = None, id: Optional[str] = None
+    ) -> "OpenTelemetrySpan":
+        return super().span(name, timestamp, id if id is not None else self.id())
+
+    def task_span(
+        self,
+        task_name: str,
+        input: PydanticSerializable,
+        timestamp: Optional[datetime] = None,
+        id: Optional[str] = None,
+    ) -> "OpenTelemetryTaskSpan":
+        return super().task_span(
+            task_name, input, timestamp, id if id is not None else self.id()
+        )
 
     def log(
         self,
@@ -716,7 +916,7 @@ class OpenTelemetrySpan(Span, OpenTelemetryTracer):
     ) -> None:
         self.open_ts_span.add_event(
             message,
-            {"value": _serialize(value)},
+            {"value": _serialize(value), "trace_id": self.id()},
             None if not timestamp else _open_telemetry_timestamp(timestamp),
         )
 
@@ -732,8 +932,10 @@ class OpenTelemetryTaskSpan(TaskSpan, OpenTelemetrySpan):
 
     output: Optional[PydanticSerializable] = None
 
-    def __init__(self, span: OpenTSpan, tracer: OpenTTracer, token: object) -> None:
-        super().__init__(span, tracer, token)
+    def __init__(
+        self, span: OpenTSpan, tracer: OpenTTracer, token: object, trace_id: str
+    ) -> None:
+        super().__init__(span, tracer, token, trace_id)
 
     def record_output(self, output: PydanticSerializable) -> None:
         self.open_ts_span.set_attribute("output", _serialize(output))
