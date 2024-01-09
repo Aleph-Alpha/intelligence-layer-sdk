@@ -1,9 +1,19 @@
 from abc import ABC, abstractmethod
 from contextlib import AbstractContextManager
 from datetime import datetime, timezone
+from json import loads
 from pathlib import Path
 from types import TracebackType
-from typing import TYPE_CHECKING, Generic, Mapping, Optional, Sequence, TypeVar, Union
+from typing import (
+    TYPE_CHECKING,
+    Generic,
+    Iterable,
+    Mapping,
+    Optional,
+    Sequence,
+    TypeVar,
+    Union,
+)
 from uuid import UUID, uuid4
 
 from opentelemetry.context import attach, detach
@@ -624,6 +634,7 @@ class LogLine(BaseModel):
 
     """
 
+    trace_id: str
     entry_type: str
     entry: SerializeAsAny[PydanticSerializable]
 
@@ -679,7 +690,115 @@ class TreeBuilder(BaseModel):
         self.tracers[plain_entry.parent].entries.append(entry)
 
 
-class FileTracer(Tracer):
+TaskSpanVar = TypeVar("TaskSpanVar", bound=TaskSpan)
+
+
+class PersistentTracer(Tracer, ABC):
+    def __init__(self) -> None:
+        self.uuid = uuid4()
+
+    @abstractmethod
+    def _log_entry(self, id: str, entry: BaseModel) -> None:
+        ...
+
+    @abstractmethod
+    def trace(self, trace_id: str) -> InMemoryTracer:
+        ...
+
+    def _log_span(
+        self, span: "PersistentSpan", name: str, timestamp: Optional[datetime] = None
+    ) -> None:
+        self._log_entry(
+            span.id(),
+            StartSpan(
+                uuid=span.uuid,
+                parent=self.uuid,
+                name=name,
+                start=timestamp or utc_now(),
+                trace_id=span.id(),
+            ),
+        )
+
+    def _log_task(
+        self,
+        task_span: "PersistentTaskSpan",
+        task_name: str,
+        input: PydanticSerializable,
+        timestamp: Optional[datetime] = None,
+    ) -> None:
+        self._log_entry(
+            task_span.id(),
+            StartTask(
+                uuid=task_span.uuid,
+                parent=self.uuid,
+                name=task_name,
+                start=timestamp or utc_now(),
+                input=input,
+                trace_id=task_span.id(),
+            ),
+        )
+
+    def _parse_log(self, log_entries: Iterable[LogLine]) -> InMemoryTracer:
+        tree_builder = TreeBuilder()
+        for log_line in log_entries:
+            if log_line.entry_type == StartTask.__name__:
+                tree_builder.start_task(log_line)
+            elif log_line.entry_type == EndTask.__name__:
+                tree_builder.end_task(log_line)
+            elif log_line.entry_type == StartSpan.__name__:
+                tree_builder.start_span(log_line)
+            elif log_line.entry_type == EndSpan.__name__:
+                tree_builder.end_span(log_line)
+            elif log_line.entry_type == PlainEntry.__name__:
+                tree_builder.plain_entry(log_line)
+            else:
+                raise RuntimeError(f"Unexpected entry_type in {log_line}")
+        assert tree_builder.root
+        return tree_builder.root
+
+
+class PersistentSpan(Span, PersistentTracer):
+    end_timestamp: Optional[datetime] = None
+
+    def log(
+        self,
+        message: str,
+        value: PydanticSerializable,
+        timestamp: Optional[datetime] = None,
+    ) -> None:
+        self._log_entry(
+            self.id(),
+            PlainEntry(
+                message=message,
+                value=value,
+                timestamp=timestamp or utc_now(),
+                parent=self.uuid,
+                trace_id=self.id(),
+            ),
+        )
+
+    def end(self, timestamp: Optional[datetime] = None) -> None:
+        if not self.end_timestamp:
+            self.end_timestamp = timestamp or utc_now()
+            self._log_entry(self.id(), EndSpan(uuid=self.uuid, end=self.end_timestamp))
+
+
+class PersistentTaskSpan(TaskSpan, PersistentSpan):
+    output: Optional[PydanticSerializable] = None
+
+    def record_output(self, output: PydanticSerializable) -> None:
+        self.output = output
+
+    def end(self, timestamp: Optional[datetime] = None) -> None:
+        if not self.end_timestamp:
+            self.end_timestamp = timestamp or utc_now()
+            self._log_entry(
+                self.id(),
+                EndTask(uuid=self.uuid, end=self.end_timestamp, output=self.output),
+            )
+
+
+class FileTracer(PersistentTracer):
     """A `Tracer` that logs to a file.
 
     Each log-entry is represented by a JSON object. The information logged allows
@@ -696,13 +815,15 @@ class FileTracer(Tracer):
     """
 
     def __init__(self, log_file_path: Path) -> None:
+        super().__init__()
         self._log_file_path = log_file_path
-        self.uuid = uuid4()
 
-    def _log_entry(self, entry: BaseModel) -> None:
+    def _log_entry(self, id: str, entry: BaseModel) -> None:
         with self._log_file_path.open(mode="a", encoding="utf-8") as f:
             f.write(
-                LogLine(entry_type=type(entry).__name__, entry=entry).model_dump_json()
+                LogLine(
+                    trace_id=id, entry_type=type(entry).__name__, entry=entry
+                ).model_dump_json()
                 + "\n"
             )
 
@@ -710,15 +831,7 @@ class FileTracer(Tracer):
         self, name: str, timestamp: Optional[datetime] = None, id: Optional[str] = None
     ) -> "FileSpan":
         span = FileSpan(self._log_file_path, trace_id=self.ensure_id(id))
-        self._log_entry(
-            StartSpan(
-                uuid=span.uuid,
-                parent=self.uuid,
-                name=name,
-                start=timestamp or utc_now(),
-                trace_id=span.id(),
-            )
-        )
+        self._log_span(span, name, timestamp)
         return span
 
     def task_span(
@@ -732,23 +845,22 @@ class FileTracer(Tracer):
             self._log_file_path,
             trace_id=self.ensure_id(id),
         )
-        self._log_entry(
-            StartTask(
-                uuid=task.uuid,
-                parent=self.uuid,
-                name=task_name,
-                start=timestamp or utc_now(),
-                input=input,
-                trace_id=task.id(),
-            )
-        )
+        self._log_task(task, task_name, input, timestamp)
         return task
 
+    def trace(self, trace_id: Optional[str] = None) -> InMemoryTracer:
+        with self._log_file_path.open("r") as f:
+            traces = (LogLine.model_validate(loads(line)) for line in f)
+            filtered_traces = (
+                (line for line in traces if line.trace_id == trace_id)
+                if trace_id is not None
+                else traces
+            )
+            return self._parse_log(filtered_traces)
 
-class FileSpan(Span, FileTracer):
+
+class FileSpan(PersistentSpan, FileTracer):
     """A `Span` created by `FileTracer.span`."""
-
-    end_timestamp: Optional[datetime] = None
 
     def id(self) -> str:
         return self.trace_id
@@ -757,32 +869,9 @@ class FileSpan(Span, FileTracer):
         super().__init__(log_file_path)
         self.trace_id = trace_id
 
-    def log(
-        self,
-        message: str,
-        value: PydanticSerializable,
-        timestamp: Optional[datetime] = None,
-    ) -> None:
-        self._log_entry(
-            PlainEntry(
-                message=message,
-                value=value,
-                timestamp=timestamp or utc_now(),
-                parent=self.uuid,
-                trace_id=self.id(),
-            )
-        )
 
-    def end(self, timestamp: Optional[datetime] = None) -> None:
-        if not self.end_timestamp:
-            self.end_timestamp = timestamp or utc_now()
-            self._log_entry(EndSpan(uuid=self.uuid, end=self.end_timestamp))
-
-
-class FileTaskSpan(TaskSpan, FileSpan):
+class FileTaskSpan(PersistentTaskSpan, FileSpan):
     """A `TaskSpan` created by `FileTracer.task_span`."""
-
-    output: Optional[PydanticSerializable] = None
 
     def __init__(
         self,
@@ -790,16 +879,6 @@ class FileTaskSpan(TaskSpan, FileSpan):
         trace_id: str,
     ) -> None:
         super().__init__(log_file_path, trace_id)
-
-    def record_output(self, output: PydanticSerializable) -> None:
-        self.output = output
-
-    def end(self, timestamp: Optional[datetime] = None) -> None:
-        if not self.end_timestamp:
-            self.end_timestamp = timestamp or utc_now()
-            self._log_entry(
-                EndTask(uuid=self.uuid, end=self.end_timestamp, output=self.output)
-            )
 
 
 def _serialize(s: SerializeAsAny[PydanticSerializable]) -> str:

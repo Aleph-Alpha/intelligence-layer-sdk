@@ -1,5 +1,4 @@
 from collections import defaultdict
-from json import loads
 from pathlib import Path
 from typing import Iterable, Optional, Sequence, cast
 
@@ -21,19 +20,12 @@ from intelligence_layer.core.evaluation.evaluator import (
 )
 from intelligence_layer.core.task import Output
 from intelligence_layer.core.tracer import (
-    EndSpan,
-    EndTask,
     FileTracer,
     InMemoryTaskSpan,
     InMemoryTracer,
     JsonSerializer,
-    LogLine,
-    PlainEntry,
     PydanticSerializable,
-    StartSpan,
-    StartTask,
     Tracer,
-    TreeBuilder,
 )
 
 
@@ -275,25 +267,7 @@ class FileEvaluationRepository(EvaluationRepository):
 
 
 def _parse_log(log_path: Path) -> InMemoryTracer:
-    tree_builder = TreeBuilder()
-    with log_path.open("r") as f:
-        for line in f:
-            json_line = loads(line)
-            log_line = LogLine.model_validate(json_line)
-            if log_line.entry_type == StartTask.__name__:
-                tree_builder.start_task(log_line)
-            elif log_line.entry_type == EndTask.__name__:
-                tree_builder.end_task(log_line)
-            elif log_line.entry_type == StartSpan.__name__:
-                tree_builder.start_span(log_line)
-            elif log_line.entry_type == EndSpan.__name__:
-                tree_builder.end_span(log_line)
-            elif log_line.entry_type == PlainEntry.__name__:
-                tree_builder.plain_entry(log_line)
-            else:
-                raise RuntimeError(f"Unexpected entry_type in {log_line}")
-    assert tree_builder.root
-    return tree_builder.root
+    return FileTracer(log_path).trace()
 
 
 class InMemoryEvaluationRepository(EvaluationRepository):

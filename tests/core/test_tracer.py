@@ -1,4 +1,3 @@
-from json import loads
 from pathlib import Path
 
 from aleph_alpha_client import Prompt
@@ -22,15 +21,6 @@ from intelligence_layer.core import (
     Task,
     TaskSpan,
     utc_now,
-)
-from intelligence_layer.core.tracer import (
-    EndSpan,
-    EndTask,
-    LogLine,
-    PlainEntry,
-    StartSpan,
-    StartTask,
-    TreeBuilder,
 )
 
 
@@ -195,30 +185,18 @@ def test_file_tracer(file_tracer: FileTracer) -> None:
 
     TestTask().run(input, CompositeTracer([expected, file_tracer]))
 
-    log_tree = parse_log(file_tracer._log_file_path)
+    log_tree = file_tracer.trace()
     assert log_tree == expected
 
 
-def parse_log(log_path: Path) -> InMemoryTracer:
-    tree_builder = TreeBuilder()
-    with log_path.open("r") as f:
-        for line in f:
-            json_line = loads(line)
-            log_line = LogLine.model_validate(json_line)
-            if log_line.entry_type == StartTask.__name__:
-                tree_builder.start_task(log_line)
-            elif log_line.entry_type == EndTask.__name__:
-                tree_builder.end_task(log_line)
-            elif log_line.entry_type == StartSpan.__name__:
-                tree_builder.start_span(log_line)
-            elif log_line.entry_type == EndSpan.__name__:
-                tree_builder.end_span(log_line)
-            elif log_line.entry_type == PlainEntry.__name__:
-                tree_builder.plain_entry(log_line)
-            else:
-                raise RuntimeError(f"Unexpected entry_type in {log_line}")
-    assert tree_builder.root
-    return tree_builder.root
+def test_file_tracer_retrieves_correct_trace(file_tracer: FileTracer) -> None:
+    input = "input"
+    expected = InMemoryTracer()
+    compositeTracer = CompositeTracer([expected, file_tracer])
+    TestTask().run(input, compositeTracer, "ID1")
+    TestTask().run(input, file_tracer, "ID2")
+    log_tree = file_tracer.trace("ID1")
+    assert log_tree == expected
 
 
 @mark.skip(
