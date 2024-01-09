@@ -27,12 +27,12 @@ class Runner(Generic[Input, Output]):
         task: Task[Input, Output],
         evaluation_repository: EvaluationRepository,
         dataset_repository: DatasetRepository,
-        identifier: str,
+        description: str,
     ) -> None:
         self._task = task
         self._evaluation_repository = evaluation_repository
         self._dataset_repository = dataset_repository
-        self.identifier = identifier
+        self.description = description
 
     def output_type(self) -> type[Output]:
         """Returns the type of the evaluated task's output.
@@ -123,7 +123,7 @@ class Runner(Generic[Input, Output]):
             end=utc_now(),
             failed_example_count=failed_count,
             successful_example_count=successful_count,
-            runner_id=self.identifier,
+            description=self.description,
         )
         self._evaluation_repository.store_run_overview(run_overview)
         return run_overview
