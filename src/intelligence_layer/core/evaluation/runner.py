@@ -103,18 +103,18 @@ class Runner(Generic[Input, Output]):
         with ThreadPoolExecutor(max_workers=10) as executor:
             ids_and_outputs = tqdm(executor.map(run, examples), desc="Evaluating")
 
-        failed_count = 0
-        successful_count = 0
-        for example_id, output in ids_and_outputs:
-            if isinstance(output, FailedExampleRun):
-                failed_count += 1
-            else:
-                successful_count += 1
-            self._evaluation_repository.store_example_output(
-                ExampleOutput[Output](
-                    run_id=run_id, example_id=example_id, output=output
-                ),
-            )
+            failed_count = 0
+            successful_count = 0
+            for example_id, output in ids_and_outputs:
+                if isinstance(output, FailedExampleRun):
+                    failed_count += 1
+                else:
+                    successful_count += 1
+                self._evaluation_repository.store_example_output(
+                    ExampleOutput[Output](
+                        run_id=run_id, example_id=example_id, output=output
+                    ),
+                )
 
         run_overview = RunOverview(
             dataset_id=dataset_id,
