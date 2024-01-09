@@ -4634,13 +4634,13 @@ test = ["argcomplete (>=3.0.3)", "mypy (>=1.7.0)", "pre-commit", "pytest (>=7.0,
 
 [[package]]
 name = "types-colorama"
-version = "0.4.15.12"
+version = "0.4.15.20240106"
 description = "Typing stubs for colorama"
 optional = false
-python-versions = "*"
+python-versions = ">=3.8"
 files = [
-    {file = "types-colorama-0.4.15.12.tar.gz", hash = "sha256:fbdfc5d9d24d85c33bd054fbe33adc6cec44eedb19cfbbabfbbb57dc257ae4b8"},
-    {file = "types_colorama-0.4.15.12-py3-none-any.whl", hash = "sha256:23c9d4a00961227f7ef018d5a1c190c4bbc282119c3ee76a17677a793f13bb82"},
+    {file = "types-colorama-0.4.15.20240106.tar.gz", hash = "sha256:49096b4c4cbfcaa11699a0470c36e4f5631f193fb980188e013ea64445d35656"},
+    {file = "types_colorama-0.4.15.20240106-py3-none-any.whl", hash = "sha256:18294bc18f60dc0b4895de8119964a5d895f5e180c2d1308fdd33009c0fa0f38"},
 ]
 
 [[package]]
