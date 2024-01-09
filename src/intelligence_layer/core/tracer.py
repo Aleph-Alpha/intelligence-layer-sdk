@@ -723,7 +723,7 @@ class FileTracer(Tracer):
         self.uuid = uuid4()
 
     def _log_entry(self, entry: BaseModel) -> None:
-        with self._log_file_path.open(mode="a", encoding='utf-8') as f:
+        with self._log_file_path.open(mode="a", encoding="utf-8") as f:
             f.write(
                 LogLine(entry_type=type(entry).__name__, entry=entry).model_dump_json()
                 + "\n"
