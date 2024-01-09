@@ -132,6 +132,7 @@ def string_argilla_evaluator(
             in_memory_evaluation_repository, stub_argilla_client
         ),
         in_memory_dataset_repository,
+        "dummy-string-task",
         stub_argilla_client._expected_workspace_id,
         fields,
         questions,

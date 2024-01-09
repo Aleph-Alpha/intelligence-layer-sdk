@@ -115,6 +115,7 @@ def evaluation_run_overview(
         failed_evaluation_count=3,
         successful_count=5,
         statistics=dummy_aggregated_evaluation,
+        description="dummy-evaluator",
     )
 
 

@@ -53,8 +53,9 @@ class DummyEvaluator(Evaluator[None, None, None, DummyEvaluation, DummyAggregati
         self,
         evaluation_repository: EvaluationRepository,
         dataset_repository: DatasetRepository,
+        description: str,
     ) -> None:
-        super().__init__(evaluation_repository, dataset_repository)
+        super().__init__(evaluation_repository, dataset_repository, description)
 
     # mypy expects *args where this method only uses one output
     def do_evaluate(  # type: ignore
@@ -90,6 +91,8 @@ def test_run_evaluation(
             dataset_id,
             "--target-dir",
             str(eval_path),
+            "--description",
+            "dummy-evaluator",
         ]
     )
 
@@ -124,5 +127,7 @@ def test_run_evaluation_with_task_with_client(
             dataset_id,
             "--target-dir",
             str(eval_path),
+            "--description",
+            "dummy-evaluator",
         ]
     )

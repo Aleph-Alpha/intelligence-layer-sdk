@@ -68,6 +68,12 @@ def parse_args(cli_args: Sequence[str]) -> Namespace:
         "The directory is created if it does not exist. "
         "The process must have corresponding write permissions.",
     )
+    parser.add_argument(
+        "--description",
+        required=True,
+        type=str,
+        help="Description of the evaluator.",
+    )
     args = parser.parse_args(cli_args[1:])
     return args
 
@@ -76,11 +82,12 @@ def main(cli_args: Sequence[str]) -> None:
     args = parse_args(cli_args)
     evaluation_repository = FileEvaluationRepository(args.target_dir)
     dataset_repository = FileDatasetRepository(args.dataset_repository_path)
+    description = args.description
     task = create_task(args.task)
     runner = Runner(task, evaluation_repository, dataset_repository, args.task.__name__)
     dataset_id = args.dataset_id
     run_overview = runner.run_dataset(dataset_id)
-    evaluator = args.evaluator(evaluation_repository, dataset_repository)
+    evaluator = args.evaluator(evaluation_repository, dataset_repository, description)
     evaluator.evaluate_dataset(run_overview.id)
 
 

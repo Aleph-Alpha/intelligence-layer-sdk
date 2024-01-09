@@ -51,6 +51,7 @@ class InstructComparisonArgillaEvaluator(
         self,
         evaluation_repository: ArgillaEvaluationRepository,
         dataset_repository: DatasetRepository,
+        description: str,
         workspace_id: str,
         high_priority_runs: Optional[frozenset[str]] = None,
     ) -> None:
@@ -72,6 +73,7 @@ class InstructComparisonArgillaEvaluator(
         super().__init__(
             evaluation_repository,
             dataset_repository,
+            description,
             workspace_id,
             fields,
             questions,
