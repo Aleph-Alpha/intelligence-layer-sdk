@@ -705,7 +705,9 @@ class PersistentTracer(Tracer, ABC):
     def trace(self, trace_id: str) -> InMemoryTracer:
         ...
 
-    def _log_span(self, span: Span, name: str, timestamp=Optional[datetime]) -> None:
+    def _log_span(
+        self, span: "PersistentSpan", name: str, timestamp: Optional[datetime] = None
+    ) -> None:
         self._log_entry(
             StartSpan(
                 uuid=span.uuid,
@@ -718,7 +720,7 @@ class PersistentTracer(Tracer, ABC):
 
     def _log_task(
         self,
-        task_span: TaskSpan,
+        task_span: "PersistentTaskSpan",
         task_name: str,
         input: PydanticSerializable,
         timestamp: Optional[datetime] = None,
