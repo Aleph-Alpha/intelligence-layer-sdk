@@ -91,6 +91,8 @@ def test_run_evaluation(
             dataset_id,
             "--target-dir",
             str(eval_path),
+            "--description",
+            "dummy-evaluator",
         ]
     )
 
@@ -125,5 +127,7 @@ def test_run_evaluation_with_task_with_client(
             dataset_id,
             "--target-dir",
             str(eval_path),
+            "--description",
+            "dummy-evaluator",
         ]
     )
