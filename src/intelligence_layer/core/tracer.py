@@ -841,10 +841,10 @@ class FileTracer(PersistentTracer):
         self._log_task(task, task_name, input, timestamp)
         return task
 
-    def trace(self, trace_id: str) -> InMemoryTracer:
+    def trace(self, trace_id: Optional[str] = None) -> InMemoryTracer:
         with self._log_file_path.open("r") as f:
             traces = (loads(line) for line in f)
-        return self._parse_log(traces)
+            return self._parse_log(traces)
 
 
 class FileSpan(PersistentSpan, FileTracer):
