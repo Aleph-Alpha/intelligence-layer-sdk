@@ -705,6 +705,35 @@ class PersistentTracer(Tracer, ABC):
     def trace(self, trace_id: str) -> InMemoryTracer:
         ...
 
+    def _log_span(self, span: Span, name: str, timestamp=Optional[datetime]) -> None:
+        self._log_entry(
+            StartSpan(
+                uuid=span.uuid,
+                parent=self.uuid,
+                name=name,
+                start=timestamp or utc_now(),
+                trace_id=span.id(),
+            )
+        )
+
+    def _log_task(
+        self,
+        task_span: TaskSpan,
+        task_name: str,
+        input: PydanticSerializable,
+        timestamp: Optional[datetime] = None,
+    ) -> None:
+        self._log_entry(
+            StartTask(
+                uuid=task_span.uuid,
+                parent=self.uuid,
+                name=task_name,
+                start=timestamp or utc_now(),
+                input=input,
+                trace_id=task_span.id(),
+            )
+        )
+
     def _parse_log(self, log_entries: Iterable[Mapping[str, Any]]) -> InMemoryTracer:
         tree_builder = TreeBuilder()
         for json_line in log_entries:
@@ -795,15 +824,7 @@ class FileTracer(PersistentTracer):
         self, name: str, timestamp: Optional[datetime] = None, id: Optional[str] = None
     ) -> "FileSpan":
         span = FileSpan(self._log_file_path, trace_id=self.ensure_id(id))
-        self._log_entry(
-            StartSpan(
-                uuid=span.uuid,
-                parent=self.uuid,
-                name=name,
-                start=timestamp or utc_now(),
-                trace_id=span.id(),
-            )
-        )
+        self._log_span(span, name, timestamp)
         return span
 
     def task_span(
@@ -817,16 +838,7 @@ class FileTracer(PersistentTracer):
             self._log_file_path,
             trace_id=self.ensure_id(id),
         )
-        self._log_entry(
-            StartTask(
-                uuid=task.uuid,
-                parent=self.uuid,
-                name=task_name,
-                start=timestamp or utc_now(),
-                input=input,
-                trace_id=task.id(),
-            )
-        )
+        self._log_task(task, task_name, input, timestamp)
         return task
 
     def trace(self, trace_id: str) -> InMemoryTracer:
