@@ -85,8 +85,9 @@ class SingleLabelClassifyEvaluator(
         self,
         evaluation_repository: EvaluationRepository,
         dataset_respository: DatasetRepository,
+        description: str,
     ):
-        super().__init__(evaluation_repository, dataset_respository)
+        super().__init__(evaluation_repository, dataset_respository, description)
 
     # mypy expects *args where this method only uses one output
     def do_evaluate(  # type: ignore
@@ -171,9 +172,10 @@ class MultiLabelClassifyEvaluator(
         self,
         evaluation_repository: EvaluationRepository,
         dataset_repository: DatasetRepository,
+        description: str,
         threshold: float = 0.55,
     ):
-        super().__init__(evaluation_repository, dataset_repository)
+        super().__init__(evaluation_repository, dataset_repository, description)
         self.threshold = threshold
 
     # mypy expects *args where this method only uses one output

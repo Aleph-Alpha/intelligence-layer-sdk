@@ -125,6 +125,7 @@ def classify_evaluator(
     return MultiLabelClassifyEvaluator(
         in_memory_evaluation_repository,
         in_memory_dataset_repository,
+        "multi-label-classify",
     )
 
 

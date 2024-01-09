@@ -113,8 +113,9 @@ class SingleChunkSummarizeEvaluator(
         self,
         repository: EvaluationRepository,
         dataset_repository: DatasetRepository,
+        description: str,
     ) -> None:
-        super().__init__(repository, dataset_repository)
+        super().__init__(repository, dataset_repository, description)
         self.bleu_grader = BleuGrader()
         self.rouge_grader = RougeGrader()
 
@@ -151,8 +152,9 @@ class LongContextSummarizeEvaluator(
         self,
         evaluation_repository: EvaluationRepository,
         dataset_repository: DatasetRepository,
+        description: str,
     ) -> None:
-        super().__init__(evaluation_repository, dataset_repository)
+        super().__init__(evaluation_repository, dataset_repository, description)
         self.bleu_grader = BleuGrader()
         self.rouge_grader = RougeGrader()
 

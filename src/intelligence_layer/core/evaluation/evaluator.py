@@ -300,8 +300,9 @@ class BaseEvaluator(
     """Base evaluator interface.
 
     Arguments:
-        task: The task that will be evaluated.
         evaluation_repository: The repository that will be used to store evaluation results.
+        dataset_repository: The repository with the examples that will be taken for the evaluation
+        description: human-readable description for the evaluator
 
     Generics:
         Input: Interface to be passed to the :class:`Task` that shall be evaluated.
@@ -315,9 +316,11 @@ class BaseEvaluator(
         self,
         evaluation_repository: EvaluationRepository,
         dataset_repository: DatasetRepository,
+        description: str,
     ) -> None:
         self._evaluation_repository = evaluation_repository
         self._dataset_repository = dataset_repository
+        self.description = description
 
     @lru_cache(maxsize=1)
     def _get_types(self) -> Mapping[str, type]:
@@ -547,7 +550,10 @@ class BaseEvaluator(
                 )
 
         partial_overview = PartialEvaluationOverview(
-            run_overviews=run_overviews, id=eval_id, start=start
+            run_overviews=run_overviews,
+            id=eval_id,
+            start=start,
+            description=self.description,
         )
         self._evaluation_repository.store_evaluation_overview(partial_overview)
 
@@ -592,6 +598,7 @@ class BaseEvaluator(
             id=evaluation_overview.id,
             run_overviews=evaluation_overview.run_overviews,
             start=evaluation_overview.start,
+            description=self.description,
         )
         self._evaluation_repository.store_evaluation_overview(run_overview)
         return run_overview
@@ -606,8 +613,9 @@ class Evaluator(
     :func:`BaseEvaluator.do_evaluate` and :func:`BaseEvaluator.aggregate`.
 
     Arguments:
-        task: The task that will be evaluated.
-        repository: The repository that will be used to store evaluation results.
+        evaluation_repository: The repository that will be used to store evaluation results.
+        dataset_repository: The repository with the examples that will be taken for the evaluation
+        description: human-readable description for the evaluator
 
     Generics:
         Input: Interface to be passed to the :class:`Task` that shall be evaluated.
@@ -621,8 +629,9 @@ class Evaluator(
         self,
         evaluation_repository: EvaluationRepository,
         dataset_repository: DatasetRepository,
+        description: str,
     ) -> None:
-        super().__init__(evaluation_repository, dataset_repository)
+        super().__init__(evaluation_repository, dataset_repository, description)
 
     @abstractmethod
     def do_evaluate(
@@ -808,8 +817,9 @@ class ArgillaEvaluator(
     After they have been evaluated, you can fetch the results by using the `aggregate_evaluation` method.
 
     Args:
-        task: The task that will be evaluated.
-        repository: The repository that will be used to store evaluation results.
+        evaluation_repository: The repository that will be used to store evaluation results.
+        dataset_repository: The repository with the examples that will be taken for the evaluation
+        description: human-readable description for the evaluator
         workspace_id: The workspace id to save the datasets in. Has to be created before in Argilla.
         fields: The Argilla fields of the dataset.
         questions: The questions that will be presented to the human evaluators.
@@ -819,11 +829,12 @@ class ArgillaEvaluator(
         self,
         evaluation_repository: ArgillaEvaluationRepository,
         dataset_repository: DatasetRepository,
+        description: str,
         workspace_id: str,
         fields: Sequence[Field],
         questions: Sequence[Question],
     ) -> None:
-        super().__init__(evaluation_repository, dataset_repository)
+        super().__init__(evaluation_repository, dataset_repository, description)
         self._workspace_id = workspace_id
         self._fields = fields
         self._questions = questions

@@ -36,6 +36,7 @@ def single_chunk_summarize_evaluator(
     return SingleChunkSummarizeEvaluator(
         in_memory_evaluation_repository,
         in_memory_dataset_repository,
+        "single-chunk-summarize",
     )
 
 
@@ -61,6 +62,7 @@ def long_context_summarize_evaluator(
     return LongContextSummarizeEvaluator(
         in_memory_evaluation_repository,
         in_memory_dataset_repository,
+        "long-context-summarize",
     )
 
 

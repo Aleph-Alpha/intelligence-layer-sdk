@@ -53,8 +53,9 @@ class DummyEvaluator(Evaluator[None, None, None, DummyEvaluation, DummyAggregati
         self,
         evaluation_repository: EvaluationRepository,
         dataset_repository: DatasetRepository,
+        description: str,
     ) -> None:
-        super().__init__(evaluation_repository, dataset_repository)
+        super().__init__(evaluation_repository, dataset_repository, description)
 
     # mypy expects *args where this method only uses one output
     def do_evaluate(  # type: ignore

@@ -86,7 +86,7 @@ def evaluator(
         in_memory_evaluation_repository, argilla_fake
     )
     return InstructComparisonArgillaEvaluator(
-        eval_repository, in_memory_dataset_repository, "workspace"
+        eval_repository, in_memory_dataset_repository, "instruct-evaluator", "workspace"
     )
 
 
@@ -170,7 +170,11 @@ def test_evaluate_run_only_evaluates_high_priority(
     )
     relevant_ids = frozenset({"1", "2"})
     evaluator = InstructComparisonArgillaEvaluator(
-        eval_repository, in_memory_dataset_repository, "workspace", relevant_ids
+        eval_repository,
+        in_memory_dataset_repository,
+        "instruct-evaluator",
+        "workspace",
+        relevant_ids,
     )
 
     run_count = 10
