@@ -107,7 +107,7 @@ def evaluation_run_overview(
                 end=now,
                 failed_example_count=0,
                 successful_example_count=0,
-                runner_id="dummy-run-id",
+                description="dummy-run-id",
             )
         ],
         start=now,

@@ -139,7 +139,7 @@ def test_evaluate_run_submits_pairwise_comparison_records(
                 end=utc_now(),
                 failed_example_count=0,
                 successful_example_count=0,
-                runner_id="runner",
+                description="runner",
             )
         )
 
@@ -201,7 +201,7 @@ def test_evaluate_run_only_evaluates_high_priority(
                 end=utc_now(),
                 failed_example_count=0,
                 successful_example_count=0,
-                runner_id="runner",
+                description="runner",
             )
         )
 

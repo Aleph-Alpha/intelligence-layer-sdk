@@ -237,7 +237,7 @@ class RunOverview(BaseModel):
         end: The time when the run ended
         failed_example_count: The number of examples where an exception was raised when running the task.
         successful_example_count: The number of examples that where successfully run.
-        runner_id: Human-readable of the runner that run the task.
+        description: Human-readable of the runner that run the task.
     """
 
     dataset_id: str
@@ -246,7 +246,7 @@ class RunOverview(BaseModel):
     end: datetime
     failed_example_count: int
     successful_example_count: int
-    runner_id: str
+    description: str
 
 
 class ExampleEvaluation(BaseModel, Generic[Evaluation]):
