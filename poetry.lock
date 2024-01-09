@@ -917,13 +917,13 @@ tests = ["asttokens (>=2.1.0)", "coverage", "coverage-enable-subprocess", "ipyth
 
 [[package]]
 name = "faker"
-version = "22.0.0"
+version = "22.1.0"
 description = "Faker is a Python package that generates fake data for you."
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "Faker-22.0.0-py3-none-any.whl", hash = "sha256:9c22c0a734ca01c6e4f2259eab5dab9081905a9d67b27272aea5c9feeb5a3789"},
-    {file = "Faker-22.0.0.tar.gz", hash = "sha256:1d5dc0a75da7bc40741ee4c84d99dc087b97bd086d4222ad06ac4dd2219bcf3f"},
+    {file = "Faker-22.1.0-py3-none-any.whl", hash = "sha256:d1b8fe8e8fc96d816294a301741940c2229dcf1f5dd1231805666e4005cc6353"},
+    {file = "Faker-22.1.0.tar.gz", hash = "sha256:3cd0e04ed7da1bb8037afc40d1127d19e0ac4afac247a1fe1d8dde9b5c6d6e5b"},
 ]
 
 [package.dependencies]
@@ -4645,13 +4645,13 @@ files = [
 
 [[package]]
 name = "types-decorator"
-version = "5.1.8.4"
+version = "5.1.8.20240106"
 description = "Typing stubs for decorator"
 optional = false
-python-versions = "*"
+python-versions = ">=3.8"
 files = [
-    {file = "types-decorator-5.1.8.4.tar.gz", hash = "sha256:a8c39024634e99834bef146cec2e36c585f47884addf4dc65d6d0b7b1f627517"},
-    {file = "types_decorator-5.1.8.4-py3-none-any.whl", hash = "sha256:e411203e0ec0116964dcd491e162a951e4a68cd2d4a946172690bee43c4ebe6e"},
+    {file = "types-decorator-5.1.8.20240106.tar.gz", hash = "sha256:32ff92b33615060d23b9d3760124bdb3506c4aa8d9eb50963cf1a3c20b9ecbbf"},
+    {file = "types_decorator-5.1.8.20240106-py3-none-any.whl", hash = "sha256:14d21e6a0755dbb8f301f2f532b3eab5148f433c69dad2d98bf5bd2b3a2ef4e7"},
 ]
 
 [[package]]
@@ -4667,13 +4667,13 @@ files = [
 
 [[package]]
 name = "types-pygments"
-version = "2.17.0.0"
+version = "2.17.0.20240106"
 description = "Typing stubs for Pygments"
 optional = false
-python-versions = ">=3.7"
+python-versions = ">=3.8"
 files = [
-    {file = "types-Pygments-2.17.0.0.tar.gz", hash = "sha256:4241c5f1b7448e559cd820143a564cf10de626a95ab10e2daa463449d16864e7"},
-    {file = "types_Pygments-2.17.0.0-py3-none-any.whl", hash = "sha256:83c33c89037f433fd5315b1abf80f5cb8b589b2d0549444d7f63824c628142c7"},
+    {file = "types-Pygments-2.17.0.20240106.tar.gz", hash = "sha256:92e62ac37793e567cd2b0f64f1456c24fccce4041d9c5f869697a6739fde4fce"},
+    {file = "types_Pygments-2.17.0.20240106-py3-none-any.whl", hash = "sha256:8052c574b0ab8f2dc94bdc4a31b9d48e8aa5a0f12398ef40cadadbe551da949b"},
 ]
 
 [package.dependencies]
@@ -4707,24 +4707,24 @@ types-urllib3 = "*"
 
 [[package]]
 name = "types-setuptools"
-version = "69.0.0.0"
+version = "69.0.0.20240106"
 description = "Typing stubs for setuptools"
 optional = false
-python-versions = ">=3.7"
+python-versions = ">=3.8"
 files = [
-    {file = "types-setuptools-69.0.0.0.tar.gz", hash = "sha256:b0a06219f628c6527b2f8ce770a4f47550e00d3e8c3ad83e2dc31bc6e6eda95d"},
-    {file = "types_setuptools-69.0.0.0-py3-none-any.whl", hash = "sha256:8c86195bae2ad81e6dea900a570fe9d64a59dbce2b11cc63c046b03246ea77bf"},
+    {file = "types-setuptools-69.0.0.20240106.tar.gz", hash = "sha256:e077f9089578df3c9938f6e4aa1633f182ba6740a6fdb1333f162bae5dfcbadc"},
+    {file = "types_setuptools-69.0.0.20240106-py3-none-any.whl", hash = "sha256:b1da8981425723a674fd459c43dfa4402abeaee3f9cf682723ee9cf226125cc3"},
 ]
 
 [[package]]
 name = "types-tqdm"
-version = "4.66.0.5"
+version = "4.66.0.20240106"
 description = "Typing stubs for tqdm"
 optional = false
-python-versions = ">=3.7"
+python-versions = ">=3.8"
 files = [
-    {file = "types-tqdm-4.66.0.5.tar.gz", hash = "sha256:74bd7e469238c28816300f72a9b713d02036f6b557734616430adb7b7e74112c"},
-    {file = "types_tqdm-4.66.0.5-py3-none-any.whl", hash = "sha256:d2c38085bec440e8ad1e94e8619f7cb3d1dd0a7ee06a863ccd0610a5945046ef"},
+    {file = "types-tqdm-4.66.0.20240106.tar.gz", hash = "sha256:7acf4aade5bad3ded76eb829783f9961b1c2187948eaa6dd1ae8644dff95a938"},
+    {file = "types_tqdm-4.66.0.20240106-py3-none-any.whl", hash = "sha256:7459b0f441b969735685645a5d8480f7912b10d05ab45f99a2db8a8e45cb550b"},
 ]
 
 [[package]]
@@ -5238,4 +5238,4 @@ testing = ["big-O", "jaraco.functools", "jaraco.itertools", "more-itertools", "p
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.10,<3.12"
-content-hash = "81f6a367759d98a035c9e84b9bd547dcfd1723eb22a71e163f7ad77f21ff2ae3"
+content-hash = "b650870101845e2fc1b2cf8bba5e662aa5c5146cf6641a55e3ca1069a6406a87"
