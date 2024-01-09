@@ -709,7 +709,7 @@ class FileTracer(Tracer):
     def span(
         self, name: str, timestamp: Optional[datetime] = None, id: Optional[str] = None
     ) -> "FileSpan":
-        span = FileSpan(self._log_file_path, name, trace_id=self.ensure_id(id))
+        span = FileSpan(self._log_file_path, trace_id=self.ensure_id(id))
         self._log_entry(
             StartSpan(
                 uuid=span.uuid,
@@ -730,8 +730,6 @@ class FileTracer(Tracer):
     ) -> "FileTaskSpan":
         task = FileTaskSpan(
             self._log_file_path,
-            task_name,
-            input,
             trace_id=self.ensure_id(id),
         )
         self._log_entry(
@@ -755,7 +753,7 @@ class FileSpan(Span, FileTracer):
     def id(self) -> str:
         return self.trace_id
 
-    def __init__(self, log_file_path: Path, name: str, trace_id: str) -> None:
+    def __init__(self, log_file_path: Path, trace_id: str) -> None:
         super().__init__(log_file_path)
         self.trace_id = trace_id
 
@@ -789,11 +787,9 @@ class FileTaskSpan(TaskSpan, FileSpan):
     def __init__(
         self,
         log_file_path: Path,
-        task_name: str,
-        input: PydanticSerializable,
         trace_id: str,
     ) -> None:
-        super().__init__(log_file_path, task_name, trace_id)
+        super().__init__(log_file_path, trace_id)
 
     def record_output(self, output: PydanticSerializable) -> None:
         self.output = output
