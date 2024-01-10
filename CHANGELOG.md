@@ -1,5 +1,31 @@
 # Changelog
 
+## 0.5.0
+
+### Breaking Changes
+
+- Document Index search results now properly return `DocumentChunk`s instead of `Document` objects to make it clear it is only a portion of the document.
+- `Instruct` and `FewShot` tasks now take the model name in the constructor instead of the input.
+- `Dataset`s have now been moved to `DatasetRepository`s, which are responsible for loading and storing datasets. This allows for more flexibility in how datasets are loaded and stored.
+
+### New Features
+
+- Introduced an `OpenTelemetryTracer` to allow for sending trace spans to an OpenTelemetry collector.
+- Notebook walking through how to use Argilla for human evaluation
+- `SteerableLongContextSummarize` task that allows for steering the summarization process by providing a natural language instruction.
+- Document index `SearchResult`s now also return the document ID for each chunk, to make it easier to retrieve the full document.
+- Retrievers now supply a way to retrieve the full document by ID.
+- Introduced the concept of `Accumulator`s to evaluation for incrementally calculating metrics.
+- Added `EloCalculator` metrics for calculating Elo scores in evaluation methods.
+- Introduced new `HuggingFaceDatasetRepository` for loading datasets from the HuggingFace datasets library.
+- Made it easier to evaluate two tasks and or models against each other.
+
+### Fixes
+
+- Argilla client properly handles pagination when retrieving records
+- Ensured file-based repositories are writing and reading in UTF-8
+
+
 ## 0.4.1
 
 Fix missing version bump in the packages
