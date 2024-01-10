@@ -1,5 +1,10 @@
 # Changelog
 
+
+## 0.5.1
+
+Failed deploy
+
 ## 0.5.0
 
 ### Breaking Changes
