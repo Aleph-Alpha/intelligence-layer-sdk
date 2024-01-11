@@ -151,19 +151,20 @@ files = [
 
 [[package]]
 name = "aleph-alpha-client"
-version = "5.0.0"
+version = "6.0.0"
 description = "python client to interact with Aleph Alpha api endpoints"
 optional = false
 python-versions = "*"
 files = [
-    {file = "aleph-alpha-client-5.0.0.tar.gz", hash = "sha256:8b3e5bdd57cbb63329e4b54deeff929c5f7a083dc136550dadd27e6fff625108"},
-    {file = "aleph_alpha_client-5.0.0-py3-none-any.whl", hash = "sha256:3f944e64627ac74b8f7a4edbc6a51d32db1d0542fe87a9a1f1fa6eca8548129e"},
+    {file = "aleph-alpha-client-6.0.0.tar.gz", hash = "sha256:b02cf68d243d1a643bb1234c04efdaa19206fdf5f948b5535fccec991ffb7154"},
+    {file = "aleph_alpha_client-6.0.0-py3-none-any.whl", hash = "sha256:eb70abd73dd9f4291cd2969945574603a987b92e1f3fec737853921cf2e86610"},
 ]
 
 [package.dependencies]
 aiodns = ">=3.0.0"
 aiohttp = ">=3.8.6"
 aiohttp-retry = ">=2.8.3"
+packaging = ">=23.2"
 Pillow = ">=9.2.0"
 python-liquid = ">=1.9.4"
 requests = ">=2.28"
