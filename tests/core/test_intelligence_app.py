@@ -30,6 +30,11 @@ class DummyTask(Task[DummyInput, DummyOutput]):
         return DummyOutput(response=f"Response to {input.text}")
 
 
+class NoOutputTask(Task[DummyInput, None]):
+    def do_run(self, input: DummyInput, task_span: TaskSpan) -> None:
+        return None
+
+
 class UntypedTask(Task[None, None]):
     def do_run(self, input, task_span):  # type: ignore
         return None
@@ -83,7 +88,9 @@ def password_auth_service() -> StubPasswordAuthService:
     return StubPasswordAuthService()
 
 
-def test_serve_task_can_serve_multiple_tasks(intelligence_app: IntelligenceApp) -> None:
+def test_register_task_can_serve_multiple_tasks(
+    intelligence_app: IntelligenceApp,
+) -> None:
     client = TestClient(intelligence_app._fast_api_app)
     path = "/path"
     path2 = "/path2"
@@ -101,7 +108,20 @@ def test_serve_task_can_serve_multiple_tasks(intelligence_app: IntelligenceApp) 
     assert DummyOutput2.model_validate(response2.json()).number == task_input2 + 1
 
 
-def test_serve_task_refuses_if_incorrect_password(
+def test_register_task_can_register_task_with_none_output(
+    intelligence_app: IntelligenceApp,
+) -> None:
+    client = TestClient(intelligence_app._fast_api_app)
+    path = "/path"
+    intelligence_app.register_task(NoOutputTask(), path)
+
+    response = client.post(path, json=DummyInput(text="input").model_dump(mode="json"))
+    response.raise_for_status()
+
+    assert response.json() is None
+
+
+def test_register_task_refuses_if_incorrect_password(
     password_auth_service: StubPasswordAuthService,
 ) -> None:
     path = "/path"
@@ -121,7 +141,7 @@ def test_serve_task_refuses_if_incorrect_password(
     assert output.status_code == status.HTTP_401_UNAUTHORIZED
 
 
-def test_serve_task_if_correct_password(
+def test_register_task_if_correct_password(
     password_auth_service: StubPasswordAuthService,
 ) -> None:
     path = "/path"
@@ -138,7 +158,7 @@ def test_serve_task_if_correct_password(
     assert output.status_code == status.HTTP_200_OK
 
 
-def test_serve_task_throws_error_if_task_untyped(
+def test_register_task_throws_error_if_task_untyped(
     intelligence_app: IntelligenceApp,
 ) -> None:
     with raises(RegisterTaskError) as error:
@@ -146,28 +166,26 @@ def test_serve_task_throws_error_if_task_untyped(
 
     assert (
         error.value.message
-        == "The task `do_run` method needs a type for its input, task_span and return value."
+        == IntelligenceApp.DO_RUN_NEEDS_TYPE_HINTS_FOR_INPUT_AND_TASK_SPAN
     )
 
 
-def test_serve_task_throws_error_if_no_task_span_type(
+def test_regsiter_task_throws_error_if_no_task_span_type(
     intelligence_app: IntelligenceApp,
 ) -> None:
     with raises(RegisterTaskError) as error:
         intelligence_app.register_task(TaskWithoutTaskSpanType(), "/path")
 
     assert (
-        error.value.message
-        == "The task `do_run` method needs a `TaskSpan` type as its second argument."
+        error.value.message == IntelligenceApp.DO_RUN_MUST_HAVE_SINGLE_TASKSPAN_ARGUMENT
     )
 
 
-def test_serve_task_throws_error_if_input_is_taskspan(
+def test_register_task_throws_error_if_input_is_taskspan(
     intelligence_app: IntelligenceApp,
 ) -> None:
     with raises(RegisterTaskError) as error:
         intelligence_app.register_task(TaskWithTaskSpanAsInput(), "/path")  # type: ignore
     assert (
-        error.value.message
-        == "The task `do_run` method cannot have a `TaskSpan` type as input."
+        error.value.message == IntelligenceApp.DO_RUN_MUST_HAVE_SINGLE_TASKSPAN_ARGUMENT
     )

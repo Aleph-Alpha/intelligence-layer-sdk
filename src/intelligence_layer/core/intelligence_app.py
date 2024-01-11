@@ -50,6 +50,13 @@ class IntelligenceApp:
         fast_api_app: This is the FastAPI app the IntelligenceApp relies on for routing.
     """
 
+    DO_RUN_NEEDS_TYPE_HINTS_FOR_INPUT_AND_TASK_SPAN = (
+        "The task `do_run` method needs a type at least for its input and task_span."
+    )
+    DO_RUN_MUST_HAVE_SINGLE_TASKSPAN_ARGUMENT = (
+        "The task `do_run` must have a single TaskSpan argument."
+    )
+
     def __init__(self, fast_api_app: FastAPI) -> None:
         self._fast_api_app = fast_api_app
 
@@ -85,32 +92,17 @@ class IntelligenceApp:
             return task.run(input, NoOpTracer())
 
     def _verify_annotations(self, annotations: dict[str, Any]) -> Any:
-        if len(annotations) < 3:
+        annotations.pop("return", None)
+        if len(annotations) != 2:
             raise RegisterTaskError(
-                "The task `do_run` method needs a type for its input, task_span and return value."
+                self.DO_RUN_NEEDS_TYPE_HINTS_FOR_INPUT_AND_TASK_SPAN
             )
-        if not annotations.pop("return", None):
-            raise RegisterTaskError(
-                "The task `do_run` method needs a type for it's return value."
-            )
-        task_span_arguments = [ty for ty in annotations.values() if ty is TaskSpan]
-        if len(task_span_arguments) >= 2:
-            raise RegisterTaskError(
-                "The task `do_run` method cannot have a `TaskSpan` type as input."
-            )
-        elif len(task_span_arguments) == 0:
-            raise RegisterTaskError(
-                "The task `do_run` method needs a `TaskSpan` type as its second argument."
-            )
-        input_type = next(
-            (
-                ty
-                for ty in list(annotations.values()).__reversed__()
-                if ty is not TaskSpan
-            ),
-            None,
+        number_of_task_span_arguments = sum(
+            1 for ty in annotations.values() if ty is TaskSpan
         )
-        assert input_type
+        if number_of_task_span_arguments != 1:
+            raise RegisterTaskError(self.DO_RUN_MUST_HAVE_SINGLE_TASKSPAN_ARGUMENT)
+        input_type = next(ty for ty in annotations.values() if ty is not TaskSpan)
         return input_type
 
     def serve(self, host: str = "127.0.0.1", port: int = 8000) -> None:
