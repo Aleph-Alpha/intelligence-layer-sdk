@@ -3,12 +3,14 @@ from typing import Mapping
 from intelligence_layer.connectors import AlephAlphaClientProtocol
 from intelligence_layer.core import ChunkInput, ChunkTask, Task, TaskSpan
 from intelligence_layer.core.detect_language import Language
-from intelligence_layer.use_cases import (
+from intelligence_layer.use_cases.summarize.steerable_single_chunk_summarize import (
+    SteerableSingleChunkSummarize,
+)
+from intelligence_layer.use_cases.summarize.summarize import (
     LongContextSummarizeInput,
     LongContextSummarizeOutput,
     PartialSummary,
     SingleChunkSummarizeInput,
-    SteerableSingleChunkSummarize
 )
 
 INSTRUCTION_CONFIGS = {
