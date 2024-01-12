@@ -1,9 +1,10 @@
 from abc import ABC, abstractmethod
 from functools import partial
+from http import HTTPStatus
 from inspect import get_annotations
 from typing import Annotated, Any, Generic, TypeVar
 
-from fastapi import Body, Depends, FastAPI, HTTPException, status
+from fastapi import Body, Depends, FastAPI, HTTPException, Response, status
 from uvicorn import run
 
 from intelligence_layer.core.task import Input, Output, Task
@@ -89,7 +90,12 @@ class IntelligenceApp:
 
         @self._fast_api_app.post(path)
         def task_route(input: Annotated[input_type, Body()]) -> Output:  # type: ignore
-            return task.run(input, NoOpTracer())
+            output = task.run(input, NoOpTracer())
+            return (
+                Response(status_code=HTTPStatus.NO_CONTENT)
+                if output is None
+                else output
+            )
 
     def _verify_annotations(self, annotations: dict[str, Any]) -> Any:
         annotations.pop("return", None)

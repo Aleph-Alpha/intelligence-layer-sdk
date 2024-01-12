@@ -1,3 +1,4 @@
+from http import HTTPStatus
 from typing import Annotated
 
 from fastapi import Depends, FastAPI, status
@@ -118,7 +119,8 @@ def test_register_task_can_register_task_with_none_output(
     response = client.post(path, json=DummyInput(text="input").model_dump(mode="json"))
     response.raise_for_status()
 
-    assert response.json() is None
+    assert response.text == ""
+    assert response.status_code == HTTPStatus.NO_CONTENT
 
 
 def test_register_task_refuses_if_incorrect_password(
