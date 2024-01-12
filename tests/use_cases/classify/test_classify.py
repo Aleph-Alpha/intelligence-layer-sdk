@@ -1,4 +1,4 @@
-from typing import Iterable, Sequence
+from typing import Iterable, List, Sequence
 
 from pytest import fixture
 
@@ -66,9 +66,7 @@ def embedding_based_classify(
 
 
 @fixture
-def embedding_based_classify_example() -> (
-    Iterable[Example[ClassifyInput, Sequence[str]]]
-):
+def embedding_based_classify_example() -> List[Example[ClassifyInput, Sequence[str]]]:
     return [
         Example(
             input=ClassifyInput(
@@ -82,9 +80,9 @@ def embedding_based_classify_example() -> (
 
 @fixture
 def embedding_based_classify_examples(
-    embedding_based_classify_example: Example[ClassifyInput, Sequence[str]],
-) -> Iterable[Example[ClassifyInput, Sequence[str]]]:
-    return [embedding_based_classify_example] + [
+    embedding_based_classify_example: List[Example[ClassifyInput, Sequence[str]]],
+) -> List[Example[ClassifyInput, Sequence[str]]]:
+    return embedding_based_classify_example + [
         Example(
             input=ClassifyInput(
                 chunk=Chunk("My university banking class really sucks."),
