@@ -37,7 +37,7 @@ from intelligence_layer.core.evaluation.domain import (
     RunOverview,
     SuccessfulExampleOutput,
 )
-from intelligence_layer.core.task import Input, Output, Task
+from intelligence_layer.core.task import Input, Output
 from intelligence_layer.core.tracer import Tracer, utc_now
 
 EvaluationOverviewType = TypeVar(
@@ -472,7 +472,7 @@ class BaseEvaluator(
                 dataset referenced by the runs the outputs of all runs are collected
                 and if all of them were successful they are passed on to the implementation
                 specific evaluation. For a simple evaluation only a single run_id is provided.
-                If the output of multiple runs are to be compated (for example to compare
+                If the output of multiple runs are to be compared (for example to compare
                 the performance of different model on the same task), multiple run_ids are
                 passed accordingly.
 
@@ -673,35 +673,6 @@ class Evaluator(
         self._evaluation_repository.store_example_evaluation(
             ExampleEvaluation(eval_id=eval_id, example_id=example.id, result=result)
         )
-
-    @final
-    def run_and_evaluate(
-        self,
-        task: Task[Input, Output],
-        input: Input,
-        expected_output: ExpectedOutput,
-        tracer: Tracer,
-    ) -> Evaluation | FailedExampleEvaluation:
-        """Evaluates a single example and returns an `Evaluation` or `EvaluationException`.
-
-        This will call the `run` method for the :class:`Task` defined in the `__init__` method.
-        Catches any errors that occur during :func:`Task.run` or :func:`Evaluator.do_evaluate`.
-
-        Args:
-            input: Input for the :class:`Task`. Has to be same type as the input for the task used.
-            expected_output: The expected output for the run.
-                This will be used by the evaluator to compare the received output with.
-            tracer: :class:`Tracer` used for tracing.
-        Returns:
-            Result of the evaluation or exception in case an error during running
-            the :class:`Task` or evaluation.
-        """
-
-        try:
-            output = task.run(input, tracer)
-            return self.do_evaluate(input, expected_output, output)
-        except Exception as e:
-            return FailedExampleEvaluation.from_exception(e)
 
     @final
     def evaluate_dataset(

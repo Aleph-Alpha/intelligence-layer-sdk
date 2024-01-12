@@ -142,20 +142,28 @@ def test_prompt_based_classify_handles_labels_starting_with_same_token(
 
 
 def test_can_evaluate_classify(
+    in_memory_dataset_repository: InMemoryDatasetRepository,
+    classify_runner: Runner[ClassifyInput, SingleLabelClassifyOutput],
+    in_memory_evaluation_repository: InMemoryEvaluationRepository,
     classify_evaluator: SingleLabelClassifyEvaluator,
     prompt_based_classify: PromptBasedClassify,
 ) -> None:
-    classify_input = ClassifyInput(
-        chunk=Chunk("This is good"),
-        labels=frozenset({"positive", "negative"}),
-    )
-
-    evaluation = classify_evaluator.run_and_evaluate(
-        task=prompt_based_classify,
-        input=classify_input,
-        tracer=NoOpTracer(),
+    example = Example(
+        input=ClassifyInput(
+            chunk=Chunk("This is good"),
+            labels=frozenset({"positive", "negative"}),
+        ),
         expected_output=["positive"],
     )
+
+    dataset_name = in_memory_dataset_repository.create_dataset([example])
+
+    run_overview = classify_runner.run_dataset(dataset_name)
+    evaluation_overview = classify_evaluator.evaluate_dataset(run_overview.id)
+
+    evaluation = in_memory_evaluation_repository.example_evaluations(
+        evaluation_overview.id, SingleLabelClassifyEvaluation
+    )[0].result
 
     assert isinstance(evaluation, SingleLabelClassifyEvaluation)
     assert evaluation.correct is True
