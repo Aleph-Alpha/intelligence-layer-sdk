@@ -59,7 +59,7 @@ from .summarize.single_chunk_few_shot_summarize import (
 from .summarize.steerable_long_context_summarize import (
     SteerableLongContextSummarize as SteerableLongContextSummarize,
 )
-from .summarize.steerable_single_shot_summarize import (
+from .summarize.steerable_single_chunk_summarize import (
     SteerableSingleChunkSummarize as SteerableSingleChunkSummarize,
 )
 from .summarize.summarize import LongContextSummarizeInput as LongContextSummarizeInput
