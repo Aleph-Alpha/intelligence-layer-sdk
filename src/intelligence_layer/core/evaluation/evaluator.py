@@ -37,7 +37,7 @@ from intelligence_layer.core.evaluation.domain import (
     RunOverview,
     SuccessfulExampleOutput,
 )
-from intelligence_layer.core.task import Input, Output, Task
+from intelligence_layer.core.task import Input, Output
 from intelligence_layer.core.tracer import Tracer, utc_now
 
 EvaluationOverviewType = TypeVar(

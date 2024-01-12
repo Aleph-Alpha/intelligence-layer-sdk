@@ -9,7 +9,6 @@ from intelligence_layer.core import (
     Example,
     InMemoryDatasetRepository,
     InMemoryEvaluationRepository,
-    NoOpTracer,
     Task,
 )
 from intelligence_layer.core.evaluation.runner import Runner
@@ -67,22 +66,25 @@ def embedding_based_classify(
 
 
 @fixture
-def embedding_based_classify_example() -> Iterable[Example[ClassifyInput, Sequence[str]]]:
-    return [Example(
-        input=ClassifyInput(
-            chunk=Chunk("My university biology class really sucks."),
-            labels=frozenset(["positive", "negative", "finance", "school"]),
-        ),
-        expected_output=["positive", "school"],
-    )]
+def embedding_based_classify_example() -> (
+    Iterable[Example[ClassifyInput, Sequence[str]]]
+):
+    return [
+        Example(
+            input=ClassifyInput(
+                chunk=Chunk("My university biology class really sucks."),
+                labels=frozenset(["positive", "negative", "finance", "school"]),
+            ),
+            expected_output=["positive", "school"],
+        )
+    ]
 
 
 @fixture
 def embedding_based_classify_examples(
     embedding_based_classify_example: Example[ClassifyInput, Sequence[str]],
 ) -> Iterable[Example[ClassifyInput, Sequence[str]]]:
-
-    return embedding_based_classify_example + [
+    return [embedding_based_classify_example] + [
         Example(
             input=ClassifyInput(
                 chunk=Chunk("My university banking class really sucks."),
@@ -106,14 +108,14 @@ def embedding_based_classify_examples(
         ),
     ]
 
+
 @fixture
 def single_entry_dataset_name(
-        in_memory_dataset_repository: InMemoryDatasetRepository,
-        embedding_based_classify_example: Iterable[Example[ClassifyInput, Sequence[str]]],
+    in_memory_dataset_repository: InMemoryDatasetRepository,
+    embedding_based_classify_example: Iterable[Example[ClassifyInput, Sequence[str]]],
 ) -> str:
-    return in_memory_dataset_repository.create_dataset(
-        embedding_based_classify_example
-    )
+    return in_memory_dataset_repository.create_dataset(embedding_based_classify_example)
+
 
 @fixture
 def multiple_entries_dataset_name(
@@ -152,14 +154,16 @@ def classify_runner(
 
 
 def test_multi_label_classify_evaluator_single_example(
-    single_entry_dataset_name,
+    single_entry_dataset_name: str,
     classify_evaluator: MultiLabelClassifyEvaluator,
-    classify_runner: Runner[ClassifyInput, MultiLabelClassifyOutput]
+    classify_runner: Runner[ClassifyInput, MultiLabelClassifyOutput],
 ) -> None:
     run_overview = classify_runner.run_dataset(single_entry_dataset_name)
 
     evaluation_overview = classify_evaluator.evaluate_dataset(run_overview.id)
-    evaluation = classify_runner._evaluation_repository.example_evaluations(evaluation_overview.id, MultiLabelClassifyEvaluation)[0].result
+    evaluation = classify_runner._evaluation_repository.example_evaluations(
+        evaluation_overview.id, MultiLabelClassifyEvaluation
+    )[0].result
 
     assert isinstance(evaluation, MultiLabelClassifyEvaluation)
     assert evaluation.tp == frozenset({"school"})
@@ -169,7 +173,7 @@ def test_multi_label_classify_evaluator_single_example(
 
 
 def test_multi_label_classify_evaluator_full_dataset(
-        multiple_entries_dataset_name: str,
+    multiple_entries_dataset_name: str,
     classify_evaluator: MultiLabelClassifyEvaluator,
     classify_runner: Runner[ClassifyInput, MultiLabelClassifyOutput],
 ) -> None:
