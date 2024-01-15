@@ -22,7 +22,7 @@
 		"@tailwindcss/forms": "^0.5.7",
 		"@tailwindcss/typography": "^0.5.10",
 		"@typescript-eslint/eslint-plugin": "^6.18.1",
-		"@typescript-eslint/parser": "^6.18.1",
+		"@typescript-eslint/parser": "^6.19.0",
 		"autoprefixer": "^10.4.16",
 		"class-variance-authority": "^0.7.0",
 		"codemirror": "^6.0.1",
