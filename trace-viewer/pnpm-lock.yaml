@@ -37,13 +37,13 @@ devDependencies:
     version: 1.3.7(less@4.2.0)(postcss@8.4.33)(react-dom@18.2.0)(react@18.2.0)(typescript@5.3.3)(webpack@5.89.0)
   '@storybook/addon-svelte-csf':
     specifier: ^4.1.0
-    version: 4.1.0(@storybook/svelte@7.6.8)(@storybook/theming@7.6.8)(@sveltejs/vite-plugin-svelte@2.5.3)(svelte@4.2.9)(vite@4.5.1)
+    version: 4.1.0(@storybook/svelte@7.6.9)(@storybook/theming@7.6.8)(@sveltejs/vite-plugin-svelte@2.5.3)(svelte@4.2.9)(vite@4.5.1)
   '@storybook/blocks':
     specifier: ^7.6.8
     version: 7.6.8(react-dom@18.2.0)(react@18.2.0)
   '@storybook/svelte':
-    specifier: ^7.6.8
-    version: 7.6.8(svelte@4.2.9)
+    specifier: ^7.6.9
+    version: 7.6.9(svelte@4.2.9)
   '@storybook/sveltekit':
     specifier: ^7.6.9
     version: 7.6.9(@babel/core@7.23.3)(less@4.2.0)(postcss@8.4.33)(svelte@4.2.9)(typescript@5.3.3)(vite@4.5.1)
@@ -2894,7 +2894,7 @@ packages:
       - typescript
     dev: true
 
-  /@storybook/addon-svelte-csf@4.1.0(@storybook/svelte@7.6.8)(@storybook/theming@7.6.8)(@sveltejs/vite-plugin-svelte@2.5.3)(svelte@4.2.9)(vite@4.5.1):
+  /@storybook/addon-svelte-csf@4.1.0(@storybook/svelte@7.6.9)(@storybook/theming@7.6.8)(@sveltejs/vite-plugin-svelte@2.5.3)(svelte@4.2.9)(vite@4.5.1):
     resolution: {integrity: sha512-h6AdfweSph09M0sMrwZy5WagkZcccA2i0ioywrheVZi65QtcIgGidbTixoiY94Xi71JT/MQ1psGoD91J44KJFQ==}
     peerDependencies:
       '@storybook/svelte': ^7.0.0
@@ -2912,7 +2912,7 @@ packages:
         optional: true
     dependencies:
       '@babel/runtime': 7.23.4
-      '@storybook/svelte': 7.6.8(svelte@4.2.9)
+      '@storybook/svelte': 7.6.9(svelte@4.2.9)
       '@storybook/theming': 7.6.8(react-dom@18.2.0)(react@18.2.0)
       '@sveltejs/vite-plugin-svelte': 2.5.3(svelte@4.2.9)(vite@4.5.1)
       dedent: 1.5.1
@@ -3229,13 +3229,6 @@ packages:
     transitivePeerDependencies:
       - '@types/react'
       - '@types/react-dom'
-    dev: true
-
-  /@storybook/core-client@7.6.8:
-    resolution: {integrity: sha512-Avt0R0F9U+PEndPS23LHyIBxbwVCeF/VCIuIfD1eTYwE9nSLzvJXqlxARfFyhYV43LQcC5fIKjxfrsyUjM5vbQ==}
-    dependencies:
-      '@storybook/client-logger': 7.6.8
-      '@storybook/preview-api': 7.6.8
     dev: true
 
   /@storybook/core-client@7.6.9:
@@ -3771,28 +3764,6 @@ packages:
       - supports-color
       - typescript
       - vite-plugin-glimmerx
-    dev: true
-
-  /@storybook/svelte@7.6.8(svelte@4.2.9):
-    resolution: {integrity: sha512-chE0Ljq+fF680zq8nQSpTAJFc4AVWRLqKDjiyfSde9m/oRVpXD5JSL+SqsC08EPgFe5VjD+UU67hrAR6c6Lbvg==}
-    engines: {node: '>=16.0.0'}
-    peerDependencies:
-      svelte: ^3.1.0 || ^4.0.0
-    dependencies:
-      '@storybook/client-logger': 7.6.8
-      '@storybook/core-client': 7.6.8
-      '@storybook/core-events': 7.6.8
-      '@storybook/docs-tools': 7.6.8
-      '@storybook/global': 5.0.0
-      '@storybook/preview-api': 7.6.8
-      '@storybook/types': 7.6.8
-      svelte: 4.2.9
-      sveltedoc-parser: 4.2.1
-      ts-dedent: 2.2.0
-      type-fest: 2.19.0
-    transitivePeerDependencies:
-      - encoding
-      - supports-color
     dev: true
 
   /@storybook/svelte@7.6.9(svelte@4.2.9):
