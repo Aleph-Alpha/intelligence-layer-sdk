@@ -30,8 +30,8 @@ devDependencies:
     specifier: ^7.6.10
     version: 7.6.10
   '@storybook/addon-links':
-    specifier: ^7.6.8
-    version: 7.6.8(react@18.2.0)
+    specifier: ^7.6.10
+    version: 7.6.10(react@18.2.0)
   '@storybook/addon-styling':
     specifier: ^1.3.7
     version: 1.3.7(less@4.2.0)(postcss@8.4.33)(react-dom@18.2.0)(react@18.2.0)(typescript@5.3.3)(webpack@5.89.0)
@@ -2810,8 +2810,8 @@ packages:
       ts-dedent: 2.2.0
     dev: true
 
-  /@storybook/addon-links@7.6.8(react@18.2.0):
-    resolution: {integrity: sha512-lw+xMvzfhyOR5I5792rGCf31OfVsiNG+uCc6CEewjKdC+e4GZDXzAkLIrLVUvbf6iUvHzERD63Y5nKz2bt5yZA==}
+  /@storybook/addon-links@7.6.10(react@18.2.0):
+    resolution: {integrity: sha512-s/WkSYHpr2pb9p57j6u/xDBg3TKJhBq55YMl0GB5gXgkRPIeuGbPhGJhm2yTGVFLvXgr/aHHnOxb/R/W8PiRhA==}
     peerDependencies:
       react: ^16.8.0 || ^17.0.0 || ^18.0.0
     peerDependenciesMeta:
