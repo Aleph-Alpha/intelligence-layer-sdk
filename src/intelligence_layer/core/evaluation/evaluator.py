@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+from concurrent.futures import ThreadPoolExecutor
 from functools import lru_cache
 from typing import (
     Callable,
@@ -15,6 +16,8 @@ from typing import (
     get_origin,
 )
 from uuid import uuid4
+
+from tqdm import tqdm
 
 from intelligence_layer.connectors import ArgillaClient, Field
 from intelligence_layer.connectors.argilla.argilla_client import (
@@ -429,6 +432,14 @@ class BaseEvaluator(
     ) -> None:
         ...
 
+    def evaluate_not_abstract(
+        self,
+        example: Example[Input, ExpectedOutput],
+        eval_id: str,
+        *example_output: SuccessfulExampleOutput[Output],
+    ) -> None:
+        self.evaluate(example, eval_id, example_output)
+
     @abstractmethod
     def aggregate(self, evaluations: Iterable[Evaluation]) -> AggregatedEvaluation:
         """`Evaluator`-specific method for aggregating individual `Evaluations` into report-like `Aggregated Evaluation`.
@@ -518,6 +529,9 @@ class BaseEvaluator(
             ),
             strict=True,
         )
+
+        evaluation_inputs = []
+
         for example_outputs in examples_zipped:
             if not any(
                 isinstance(output.output, FailedExampleRun)
@@ -535,19 +549,28 @@ class BaseEvaluator(
                     self.expected_output_type(),
                 )
                 assert example is not None
-                self.evaluate(
-                    example,
-                    eval_id,
-                    *[
-                        SuccessfulExampleOutput(
-                            run_id=example_output.run_id,
-                            example_id=example_output.example_id,
-                            output=example_output.output,
-                        )
-                        for example_output in example_outputs
-                        if not isinstance(example_output.output, FailedExampleRun)
-                    ],
+
+                evaluation_inputs.append(
+                    (
+                        example,
+                        eval_id,
+                        *[
+                            SuccessfulExampleOutput(
+                                run_id=example_output.run_id,
+                                example_id=example_output.example_id,
+                                output=example_output.output,
+                            )
+                            for example_output in example_outputs
+                            if not isinstance(example_output.output, FailedExampleRun)
+                        ],
+                    )
                 )
+
+        with ThreadPoolExecutor(max_workers=1) as executor:
+            tqdm(
+                executor.map(lambda args: self.evaluate(*args), evaluation_inputs),
+                desc="Evaluating",
+            )
 
         partial_overview = PartialEvaluationOverview(
             run_overviews=run_overviews,
