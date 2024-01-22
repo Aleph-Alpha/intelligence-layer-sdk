@@ -34,7 +34,7 @@ class FileSystemDatasetRepository(DatasetRepository):
         if not self._fs.exists(example_path):
             return None
 
-        with self._fs.open(example_path, "r") as examples_file:
+        with self._fs.open(example_path, "r", encoding="utf-8") as examples_file:
             # Mypy does not accept dynamic types
             for example in examples_file:
                 validated_example = Example[input_type, expected_output_type].model_validate_json(json_data=example)  # type: ignore
@@ -48,7 +48,7 @@ class FileSystemDatasetRepository(DatasetRepository):
         if self._fs.exists(dataset_path):
             raise ValueError(f"Dataset name {dataset_id} already taken")
 
-        with self._fs.open(dataset_path, "w") as examples_file:
+        with self._fs.open(dataset_path, "w", encoding="utf-8") as examples_file:
             for example in examples:
                 serialized_result = JsonSerializer(root=example)
                 text = serialized_result.model_dump_json() + "\n"
@@ -65,7 +65,7 @@ class FileSystemDatasetRepository(DatasetRepository):
         if not self._fs.exists(example_path):
             return None
 
-        with self._fs.open(example_path, "r") as examples_file:
+        with self._fs.open(example_path, "r", encoding="utf-8") as examples_file:
             # Mypy does not accept dynamic types
             examples = [Example[input_type, expected_output_type].model_validate_json(json_data=example) for example in examples_file]  # type: ignore
 
