@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+from concurrent.futures import ThreadPoolExecutor
 from functools import lru_cache
 from typing import (
     Callable,
@@ -8,6 +9,7 @@ from typing import (
     Mapping,
     Optional,
     Sequence,
+    Tuple,
     TypeVar,
     cast,
     final,
@@ -15,6 +17,8 @@ from typing import (
     get_origin,
 )
 from uuid import uuid4
+
+from tqdm import tqdm
 
 from intelligence_layer.connectors import ArgillaClient, Field
 from intelligence_layer.connectors.argilla.argilla_client import (
@@ -518,36 +522,64 @@ class BaseEvaluator(
             ),
             strict=True,
         )
-        for example_outputs in examples_zipped:
-            if not any(
-                isinstance(output.output, FailedExampleRun)
-                for output in example_outputs
-            ):
-                example_id = example_outputs[0].example_id
-                assert all(
-                    example_output.example_id == example_id
-                    for example_output in example_outputs
-                )
-                example = self._dataset_repository.example(
-                    dataset_id,
-                    example_id,
-                    self.input_type(),
-                    self.expected_output_type(),
-                )
-                assert example is not None
-                self.evaluate(
-                    example,
-                    eval_id,
-                    *[
-                        SuccessfulExampleOutput(
-                            run_id=example_output.run_id,
-                            example_id=example_output.example_id,
-                            output=example_output.output,
-                        )
+
+        def generate_evaluation_inputs() -> (
+            Iterable[
+                Tuple[
+                    Example[Input, ExpectedOutput],
+                    str,
+                    Sequence[SuccessfulExampleOutput[Output]],
+                ]
+            ]
+        ):
+            for example_outputs in examples_zipped:
+                if not any(
+                    isinstance(output.output, FailedExampleRun)
+                    for output in example_outputs
+                ):
+                    example_id = example_outputs[0].example_id
+                    assert all(
+                        example_output.example_id == example_id
                         for example_output in example_outputs
-                        if not isinstance(example_output.output, FailedExampleRun)
-                    ],
-                )
+                    )
+
+                    example = self._dataset_repository.example(
+                        dataset_id,
+                        example_id,
+                        self.input_type(),
+                        self.expected_output_type(),
+                    )
+                    assert example is not None
+
+                    yield (
+                        example,
+                        eval_id,
+                        [
+                            SuccessfulExampleOutput(
+                                run_id=example_output.run_id,
+                                example_id=example_output.example_id,
+                                output=example_output.output,
+                            )
+                            for example_output in example_outputs
+                            if not isinstance(example_output.output, FailedExampleRun)
+                        ],
+                    )
+
+        def evaluate(
+            args: Tuple[
+                Example[Input, ExpectedOutput],
+                str,
+                Sequence[SuccessfulExampleOutput[Output]],
+            ]
+        ) -> None:
+            example, eval_id, example_outputs = args
+            self.evaluate(example, eval_id, *example_outputs)
+
+        with ThreadPoolExecutor(max_workers=10) as executor:
+            tqdm(
+                executor.map(evaluate, generate_evaluation_inputs()),
+                desc="Evaluating",
+            )
 
         partial_overview = PartialEvaluationOverview(
             run_overviews=run_overviews,
