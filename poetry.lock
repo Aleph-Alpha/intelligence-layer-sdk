@@ -4087,22 +4087,22 @@ files = [
 
 [[package]]
 name = "semantic-text-splitter"
-version = "0.6.0"
+version = "0.6.3"
 description = "Split text into semantic chunks, up to a desired chunk size. Supports calculating length by characters and tokens (when used with large language models)."
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "semantic_text_splitter-0.6.0-cp38-abi3-macosx_10_12_x86_64.whl", hash = "sha256:36c6eb1c78872fd2438255c3c22e78e955b0687e582eed7e8c3367fc3cc98f08"},
-    {file = "semantic_text_splitter-0.6.0-cp38-abi3-macosx_11_0_arm64.whl", hash = "sha256:ac30884900c0a75cfda92a6434503074adb3dc9fe143f6696fa78af05374dffa"},
-    {file = "semantic_text_splitter-0.6.0-cp38-abi3-manylinux_2_12_i686.manylinux2010_i686.whl", hash = "sha256:75d62854ed217353b4c265b03c0280d886c180bde5d271f3859ae8ec53e86fb1"},
-    {file = "semantic_text_splitter-0.6.0-cp38-abi3-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:a80f0c10391a59af0af925db905f38cc81d73d4211ecbbdcb67b91b7c49e30c9"},
-    {file = "semantic_text_splitter-0.6.0-cp38-abi3-manylinux_2_17_armv7l.manylinux2014_armv7l.whl", hash = "sha256:77deace94a62ffe62a5f36be3648bb0158ed22fb2357c89ed8792c50e2a1b2d9"},
-    {file = "semantic_text_splitter-0.6.0-cp38-abi3-manylinux_2_17_ppc64le.manylinux2014_ppc64le.whl", hash = "sha256:509b56044b2daab74f37401dbb86ff2a3c5b6c989ea9652d0887ad1bf89cdff9"},
-    {file = "semantic_text_splitter-0.6.0-cp38-abi3-manylinux_2_17_s390x.manylinux2014_s390x.whl", hash = "sha256:df2eebf1ed79f9ed2e36e6e23c709257e8b4876fff617fb5599818f333f4d325"},
-    {file = "semantic_text_splitter-0.6.0-cp38-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:8825760612b21402eafe99a342648fc6f9091f2070001584e87ccf0db9abf858"},
-    {file = "semantic_text_splitter-0.6.0-cp38-abi3-win32.whl", hash = "sha256:05edce5d8975a610360bae185264d12bed92a61bd272b4776171a1a082c8887b"},
-    {file = "semantic_text_splitter-0.6.0-cp38-abi3-win_amd64.whl", hash = "sha256:9196c5a6bdfe0bb71476ea84915d6263178627331363ea3355d8f4ee62f1f4be"},
-    {file = "semantic_text_splitter-0.6.0.tar.gz", hash = "sha256:3bcfa40e69756af4c97ee6d3e37db0519d846948e04275cbc894c070122ed51c"},
+    {file = "semantic_text_splitter-0.6.3-cp38-abi3-macosx_10_12_x86_64.whl", hash = "sha256:c4fbd7337f52b04eccad3d9cfc2a2cb37df88b5c384ddf9ad435d9df339c41c8"},
+    {file = "semantic_text_splitter-0.6.3-cp38-abi3-macosx_11_0_arm64.whl", hash = "sha256:8cd83e8e54278ddd748eaf355269ca316410e184452ea422c75858a7b0a9197d"},
+    {file = "semantic_text_splitter-0.6.3-cp38-abi3-manylinux_2_12_i686.manylinux2010_i686.whl", hash = "sha256:7b812fd927eaa1638237e32abd8f8ceb4622a141bfeff26720f0fc5f512a66c5"},
+    {file = "semantic_text_splitter-0.6.3-cp38-abi3-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:4af7a11720e40ecf73d77dee90837fae1a991fe6a36709a93d2d485f2644d183"},
+    {file = "semantic_text_splitter-0.6.3-cp38-abi3-manylinux_2_17_armv7l.manylinux2014_armv7l.whl", hash = "sha256:fa271b51ff44522aa76dfc8d1f0e98a441a27c88410986162106e51e1850dcba"},
+    {file = "semantic_text_splitter-0.6.3-cp38-abi3-manylinux_2_17_ppc64le.manylinux2014_ppc64le.whl", hash = "sha256:f8f5af95b62f292797172c5e7b3a215a9f794c9ad89b84288bc40a49e8cc4eb8"},
+    {file = "semantic_text_splitter-0.6.3-cp38-abi3-manylinux_2_17_s390x.manylinux2014_s390x.whl", hash = "sha256:e33fc5ba8b562d6f5d31fa3a94df76b39195879fe8a61b93e88675ad7dcfb4da"},
+    {file = "semantic_text_splitter-0.6.3-cp38-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:7e18df47b39a91214a102213377be1defe3f01d9075327471ed5c63b88013ca2"},
+    {file = "semantic_text_splitter-0.6.3-cp38-abi3-win32.whl", hash = "sha256:7694259c27370153ec55ae08e464a013ea92729c2663a650e7e28612d7388884"},
+    {file = "semantic_text_splitter-0.6.3-cp38-abi3-win_amd64.whl", hash = "sha256:822d36ec02cf2eceb088ba61ae9460e87a499e22622ae71abe88008e09aceceb"},
+    {file = "semantic_text_splitter-0.6.3.tar.gz", hash = "sha256:37907cda192454f73bd9f20ce3f3bebb37d7b2aca2548f06b558876944c74ba8"},
 ]
 
 [package.extras]
@@ -5240,4 +5240,4 @@ testing = ["big-O", "jaraco.functools", "jaraco.itertools", "more-itertools", "p
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.10,<3.12"
-content-hash = "ca3b86635e39d19dd439e76e49bd6f24d4a40ba090bacba04e2ebf06a11818e5"
+content-hash = "16f594370c54616c486acd05b41efde7b0572db140c516db874f768e0b68ee8b"
