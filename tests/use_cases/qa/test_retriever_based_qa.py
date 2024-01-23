@@ -2,6 +2,7 @@ from typing import Sequence
 
 from pytest import fixture
 
+from intelligence_layer.connectors.document_index.document_index import DocumentPath
 from intelligence_layer.connectors.limited_concurrency_client import (
     AlephAlphaClientProtocol,
 )
@@ -41,7 +42,7 @@ def in_memory_retriever_documents() -> Sequence[Document]:
 def retriever_based_qa_with_in_memory_retriever(
     client: AlephAlphaClientProtocol,
     asymmetric_in_memory_retriever: QdrantInMemoryRetriever,
-) -> RetrieverBasedQa:
+) -> RetrieverBasedQa[int]:
     return RetrieverBasedQa(
         client, asymmetric_in_memory_retriever, model="luminous-base-control"
     )
@@ -50,14 +51,14 @@ def retriever_based_qa_with_in_memory_retriever(
 @fixture
 def retriever_based_qa_with_document_index(
     client: AlephAlphaClientProtocol, document_index_retriever: DocumentIndexRetriever
-) -> RetrieverBasedQa:
+) -> RetrieverBasedQa[DocumentPath]:
     return RetrieverBasedQa(
         client, document_index_retriever, model="luminous-base-control"
     )
 
 
 def test_retriever_based_qa_using_in_memory_retriever(
-    retriever_based_qa_with_in_memory_retriever: RetrieverBasedQa,
+    retriever_based_qa_with_in_memory_retriever: RetrieverBasedQa[int],
     no_op_tracer: NoOpTracer,
 ) -> None:
     question = "When was Robert Moses born?"
@@ -65,10 +66,11 @@ def test_retriever_based_qa_using_in_memory_retriever(
     output = retriever_based_qa_with_in_memory_retriever.run(input, no_op_tracer)
     assert output.answer
     assert "1888" in output.answer
+    assert output.subanswers[0].id == 3
 
 
 def test_retriever_based_qa_with_document_index(
-    retriever_based_qa_with_document_index: RetrieverBasedQa,
+    retriever_based_qa_with_document_index: RetrieverBasedQa[DocumentPath],
     no_op_tracer: NoOpTracer,
 ) -> None:
     question = "When was Robert Moses born?"
@@ -76,3 +78,4 @@ def test_retriever_based_qa_with_document_index(
     output = retriever_based_qa_with_document_index.run(input, no_op_tracer)
     assert output.answer
     assert "1888" in output.answer
+    assert output.subanswers[0].id.document_name == "Robert Moses (Begriffsklärung)"
