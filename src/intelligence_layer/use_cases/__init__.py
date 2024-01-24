@@ -37,8 +37,10 @@ from .qa.long_context_qa import LongContextQa as LongContextQa
 from .qa.long_context_qa import LongContextQaInput as LongContextQaInput
 from .qa.multiple_chunk_qa import MultipleChunkQa as MultipleChunkQa
 from .qa.multiple_chunk_qa import MultipleChunkQaInput as MultipleChunkQaInput
+from .qa.retriever_based_qa import EnrichedSubanswer as EnrichedSubanswer
 from .qa.retriever_based_qa import RetrieverBasedQa as RetrieverBasedQa
 from .qa.retriever_based_qa import RetrieverBasedQaInput as RetrieverBasedQaInput
+from .qa.retriever_based_qa import RetrieverBasedQaOutput as RetrieverBasedQaOutput
 from .qa.single_chunk_qa import SingleChunkQa as SingleChunkQa
 from .qa.single_chunk_qa import SingleChunkQaInput as SingleChunkQaInput
 from .qa.single_chunk_qa import SingleChunkQaOutput as SingleChunkQaOutput
