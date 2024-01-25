@@ -49,6 +49,13 @@ Pemberton's life story is a testament to the spirit of innovation and resilience
 
 
 @pytest.mark.internal
+def test_document_index_lists_namespaces(document_index: DocumentIndexClient) -> None:
+    namespaces = document_index.list_namespaces()
+
+    assert "aleph-alpha" in namespaces
+
+
+@pytest.mark.internal
 def test_document_index_creates_collection(
     document_index: DocumentIndexClient, collection_path: CollectionPath
 ) -> None:
