@@ -2,7 +2,7 @@
 	"devDependencies": {
 		"@codemirror/lang-json": "^6.0.1",
 		"@codemirror/theme-one-dark": "^6.1.2",
-		"@faker-js/faker": "^8.3.1",
+		"@faker-js/faker": "^8.4.0",
 		"@melt-ui/pp": "^0.3.0",
 		"@melt-ui/svelte": "^0.70.0",
 		"@playwright/test": "^1.41.1",
