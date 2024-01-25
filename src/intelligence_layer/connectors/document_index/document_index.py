@@ -288,6 +288,18 @@ class DocumentIndexClient:
             )
             raise exception_factory(response.text, HTTPStatus(response.status_code))
 
+    def list_namespaces(self) -> Sequence[str]:
+        """Lists all available namespaces.
+
+        Returns:
+            List of all available namespaces.
+        """
+
+        url = f"{self._base_document_index_url}/namespaces"
+        response = requests.get(url, headers=self.headers)
+        self._raise_for_status(response)
+        return [str(namespace) for namespace in response.json()]
+
     def create_collection(self, collection_path: CollectionPath) -> None:
         """Creates a collection at the path.
 
