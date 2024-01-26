@@ -269,14 +269,14 @@ class DocumentIndexClient:
 
     def __init__(
         self,
-        token: str,
+        token: str | None,
         base_document_index_url: str = "https://document-index.aleph-alpha.com",
     ) -> None:
         self._base_document_index_url = base_document_index_url
         self.headers = {
             "Content-Type": "application/json",
             "Accept": "application/json",
-            "Authorization": f"Bearer {token}",
+            **({"Authorization": f"Bearer {token}"} if token is not None else {}),
         }
 
     def _raise_for_status(self, response: requests.Response) -> None:
