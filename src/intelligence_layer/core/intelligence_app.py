@@ -111,28 +111,18 @@ class AuthenticatedIntelligenceApp(IntelligenceApp, Generic[T]):
         path: str,
         required_permissions: frozenset[str] = frozenset(),
     ) -> None:
+        has_permission = Depends(
+            partial(self._auth_service.get_permissions, required_permissions)
+        )
         # mypy does not like the dynamic input_type as type-parameter
         if isinstance(task, Task):
 
             @self._fast_api_app.post(path)
             def task_route(
                 input: Annotated[input_type, Body()],  # type: ignore
-                allowed: Annotated[
-                    bool,
-                    Depends(
-                        partial(
-                            self._auth_service.get_permissions, required_permissions
-                        )
-                    ),
-                ],
+                allowed: Annotated[bool, has_permission],
             ) -> Output:
-                if allowed:
-                    return _run_task(task, input, NoOpTracer())
-                else:
-                    raise HTTPException(
-                        status_code=status.HTTP_401_UNAUTHORIZED,
-                        detail="No permission rights",
-                    )
+                return _run_task(task, input, NoOpTracer(), allowed)
 
         else:
 
@@ -140,24 +130,18 @@ class AuthenticatedIntelligenceApp(IntelligenceApp, Generic[T]):
             def task_route(
                 input: Annotated[input_type, Body()],  # type: ignore
                 task: Annotated[Task[Input, Output], Depends(task)],
-                allowed: Annotated[
-                    bool,
-                    Depends(
-                        partial(
-                            self._auth_service.get_permissions, required_permissions
-                        )
-                    ),
-                ],
+                allowed: Annotated[bool, has_permission],
             ) -> Output:
-                if allowed:
-                    return _run_task(task, input, NoOpTracer())
-                else:
-                    raise HTTPException(
-                        status_code=status.HTTP_401_UNAUTHORIZED,
-                        detail="No permission rights",
-                    )
+                return _run_task(task, input, NoOpTracer(), allowed)
 
 
-def _run_task(task: Task[Input, Output], input: Input, tracer: Tracer) -> Output:
-    output = task.run(input, tracer)
-    return Response(status_code=HTTPStatus.NO_CONTENT) if output is None else output
+def _run_task(
+    task: Task[Input, Output], input: Input, tracer: Tracer, allowed: bool = True
+) -> Output:
+    if allowed:
+        output = task.run(input, tracer)
+        return Response(status_code=HTTPStatus.NO_CONTENT) if output is None else output
+    raise HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="No permission rights",
+    )
