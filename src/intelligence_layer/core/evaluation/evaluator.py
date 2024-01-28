@@ -624,13 +624,13 @@ class BaseEvaluator(
         statistics = self.aggregate(cast(Iterable[Evaluation], successful_evaluations))
         run_overview = EvaluationOverview(
             statistics=statistics,
-            end=utc_now(),
             successful_count=successful_evaluations.included_count(),
             failed_evaluation_count=successful_evaluations.excluded_count(),
             id=evaluation_overview.id,
             run_overviews=evaluation_overview.run_overviews,
             start=evaluation_overview.start,
             description=self.description,
+            end=utc_now(),
         )
         self._evaluation_repository.store_evaluation_overview(run_overview)
         return run_overview

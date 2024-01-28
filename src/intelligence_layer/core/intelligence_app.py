@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 from functools import partial
 from http import HTTPStatus
 from inspect import get_annotations
-from typing import Annotated, Any, Generic, TypeVar
+from typing import Annotated, Any, Callable, Generic, TypeVar
 
 from fastapi import Body, Depends, FastAPI, HTTPException, Response, status
 from uvicorn import run
@@ -60,6 +60,24 @@ class IntelligenceApp:
 
     def __init__(self, fast_api_app: FastAPI) -> None:
         self._fast_api_app = fast_api_app
+
+    def register_task_with_dependency(
+        self,
+        task_dependency: Callable[..., Task[Input, Output]],
+        input_type: type[Input],
+        path: str,
+    ) -> None:
+        @self._fast_api_app.post(path)
+        def task_route(
+            input: Annotated[input_type, Body()],  # type: ignore
+            task: Annotated[Task[Input, Output], Depends(task_dependency)],
+        ) -> Output:
+            output = task.run(input, NoOpTracer())
+            return (
+                Response(status_code=HTTPStatus.NO_CONTENT)
+                if output is None
+                else output
+            )
 
     def register_task(
         self,

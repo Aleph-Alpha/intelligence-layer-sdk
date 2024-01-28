@@ -1,5 +1,5 @@
 from http import HTTPStatus
-from typing import Annotated
+from typing import Annotated, Iterable
 
 from fastapi import Depends, FastAPI, status
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
@@ -64,6 +64,22 @@ class DummyTask2(Task[int, DummyOutput2]):
         return DummyOutput2(number=zzz + 1)
 
 
+def config() -> str:
+    return "prefix "
+
+
+class TaskWithDependency(Task[DummyInput, DummyOutput]):
+    def __init__(self, prefix: str) -> None:
+        self.prefix = prefix
+
+    def do_run(self, input: DummyInput, task_span: TaskSpan) -> DummyOutput:
+        return DummyOutput(response=self.prefix + input.text)
+
+
+def task_with_dependency(prefix: Annotated[str, Depends(config)]) -> TaskWithDependency:
+    return TaskWithDependency(prefix)
+
+
 class StubPasswordAuthService(AuthService[HTTPBasicCredentials]):
     def __init__(self, expected_password: str = "password") -> None:
         self.expected_password = expected_password
@@ -80,13 +96,38 @@ class StubPasswordAuthService(AuthService[HTTPBasicCredentials]):
 
 
 @fixture
-def intelligence_app() -> IntelligenceApp:
-    return IntelligenceApp(FastAPI())
+def fast_api() -> FastAPI:
+    return FastAPI()
+
+
+@fixture
+def intelligence_app(fast_api: FastAPI) -> IntelligenceApp:
+    return IntelligenceApp(fast_api)
+
+
+@fixture
+def client(fast_api: FastAPI) -> Iterable[TestClient]:
+    with TestClient(fast_api) as client:
+        yield client
 
 
 @fixture
 def password_auth_service() -> StubPasswordAuthService:
     return StubPasswordAuthService()
+
+
+def test_register_task_with_dependency(
+    intelligence_app: IntelligenceApp, client: TestClient
+) -> None:
+    path = "/path"
+    intelligence_app.register_task_with_dependency(
+        task_with_dependency, DummyInput, path
+    )
+    input = "inp"
+    response = client.post(path, json=DummyInput(text=input).model_dump(mode="json"))
+    response.raise_for_status()
+
+    assert DummyOutput.model_validate(response.json()).response == config() + input
 
 
 def test_register_task_can_serve_multiple_tasks(
