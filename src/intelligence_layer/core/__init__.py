@@ -10,9 +10,6 @@ from intelligence_layer.core.intelligence_app import (
 )
 from intelligence_layer.core.intelligence_app import AuthService as AuthService
 from intelligence_layer.core.intelligence_app import IntelligenceApp as IntelligenceApp
-from intelligence_layer.core.intelligence_app import (
-    RegisterTaskError as RegisterTaskError,
-)
 
 from .chunk import Chunk as Chunk
 from .chunk import ChunkInput as ChunkInput
