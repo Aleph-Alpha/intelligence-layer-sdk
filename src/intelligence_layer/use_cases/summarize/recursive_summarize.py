@@ -1,8 +1,3 @@
-from typing import Optional
-
-from pydantic import BaseModel
-
-from intelligence_layer.core.detect_language import Language
 from intelligence_layer.core.task import Task
 from intelligence_layer.core.tracer import TaskSpan
 from intelligence_layer.use_cases.summarize.summarize import (
@@ -12,23 +7,7 @@ from intelligence_layer.use_cases.summarize.summarize import (
 )
 
 
-class RecursiveSummarizeInput(BaseModel):
-    """The Input for a recursive summarize task.
-
-    Attributes:
-        text: A text of any length.
-        language: The desired language of the summary. ISO 619 str with language e.g. en, fr, etc.
-        max_tokens: The max number of tokens to be in the final summary.
-        max_loops: The max number of times to recursively summarize.
-    """
-
-    text: str
-    language: Language = Language("en")
-    max_tokens: Optional[int] = None
-    max_loops: Optional[int] = None
-
-
-class RecursiveSummarize(Task[RecursiveSummarizeInput, SummarizeOutput]):
+class RecursiveSummarize(Task[LongContextSummarizeInput, SummarizeOutput]):
     """Condenses a text recursively by summarizing summaries.
 
     Uses any long-context summarize task to go over text recursively and condense it even further.
@@ -46,7 +25,7 @@ class RecursiveSummarize(Task[RecursiveSummarizeInput, SummarizeOutput]):
         self.long_context_summarize_task = long_context_summarize_task
 
     def do_run(
-        self, input: RecursiveSummarizeInput, task_span: TaskSpan
+        self, input: LongContextSummarizeInput, task_span: TaskSpan
     ) -> SummarizeOutput:
         text = input.text
         loop_count = 0
@@ -66,9 +45,6 @@ class RecursiveSummarize(Task[RecursiveSummarizeInput, SummarizeOutput]):
                 break
 
             elif input.max_tokens and num_generated_tokens < input.max_tokens:
-                break
-
-            elif input.max_loops and loop_count <= input.max_loops:
                 break
 
         return SummarizeOutput(
