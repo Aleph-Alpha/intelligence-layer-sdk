@@ -1,4 +1,4 @@
-from typing import Iterable, Sequence, Union
+from typing import Iterable, Optional, Sequence, Union
 
 from pydantic import BaseModel
 
@@ -24,6 +24,7 @@ class LongContextSummarizeInput(BaseModel):
 
     text: str
     language: Language = Language("en")
+    max_tokens: Optional[int] = None
 
 
 class PartialSummary(BaseModel):

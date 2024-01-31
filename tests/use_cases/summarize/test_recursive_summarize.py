@@ -4,13 +4,11 @@ from pathlib import Path
 from aleph_alpha_client import Client, CompletionRequest, CompletionResponse
 from pytest import fixture
 
-from intelligence_layer.core.tracer import NoOpTracer
-from intelligence_layer.use_cases.summarize.long_context_high_compression_summarize import (
+from intelligence_layer.core import NoOpTracer
+from intelligence_layer.use_cases import (
     LongContextHighCompressionSummarize,
-)
-from intelligence_layer.use_cases.summarize.recursive_summarize import (
+    LongContextSummarizeInput,
     RecursiveSummarize,
-    RecursiveSummarizeInput,
 )
 
 
@@ -45,30 +43,12 @@ def test_recursive_summarize_stops_when_hitting_max_tokens(
     long_context_high_compression_summarize: LongContextHighCompressionSummarize,
 ) -> None:
     max_tokens = 1000
-    input = RecursiveSummarizeInput(text=very_long_text, max_tokens=max_tokens)
+    input = LongContextSummarizeInput(text=very_long_text, max_tokens=max_tokens)
     task = RecursiveSummarize(long_context_high_compression_summarize)
     output = task.run(input, NoOpTracer())
 
     assert len(output.summary) < len(very_long_text)
     assert output.generated_tokens < max_tokens
-    assert "new orleans" in output.summary.lower()
-
-
-def test_recursive_summarize_stops_when_hitting_max_loops(
-    very_long_text: str,
-    recursive_counting_client: RecursiveCountingClient,
-) -> None:
-    long_context_high_compression_summarize = LongContextHighCompressionSummarize(
-        recursive_counting_client, model="luminous-base"
-    )
-    input = RecursiveSummarizeInput(text=very_long_text, max_loops=1)
-    task = RecursiveSummarize(long_context_high_compression_summarize)
-    output = task.run(input, NoOpTracer())
-
-    assert len(output.summary) < len(very_long_text)
-    assert (
-        recursive_counting_client.recursive_counter == 71
-    )  # text is chunked into 71 chunks
     assert "new orleans" in output.summary.lower()
 
 
@@ -78,7 +58,7 @@ def test_recursive_summarize_stops_after_one_chunk(
     long_context_high_compression_summarize = LongContextHighCompressionSummarize(
         recursive_counting_client, model="luminous-base"
     )
-    input = RecursiveSummarizeInput(text=short_text)
+    input = LongContextSummarizeInput(text=short_text)
     task = RecursiveSummarize(long_context_high_compression_summarize)
     task.run(input, NoOpTracer())
 
