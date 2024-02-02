@@ -44,6 +44,7 @@ class QdrantInMemoryRetriever(BaseRetriever[int]):
         retriever_type: The type of retriever to be instantiated.
             Should be `ASYMMETRIC` for most query-document retrieveal use cases, `SYMMETRIC` is optimized
             for similar document retrieval.
+        distance_metric: The distance metric to be used for vector comparison.
 
     Example:
         >>> import os
