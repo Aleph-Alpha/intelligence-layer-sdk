@@ -64,6 +64,7 @@ class QdrantInMemoryRetriever(BaseRetriever[int]):
         k: int,
         threshold: float = 0.5,
         retriever_type: RetrieverType = RetrieverType.ASYMMETRIC,
+        distance_metric: Distance = Distance.COSINE,
     ) -> None:
         self._client = client
         self._search_client = QdrantClient(":memory:")
@@ -71,10 +72,11 @@ class QdrantInMemoryRetriever(BaseRetriever[int]):
         self._k = k
         self._threshold = threshold
         self._query_representation, self._document_representation = retriever_type.value
+        self._distance_metric = distance_metric
 
         self._search_client.recreate_collection(
             collection_name=self._collection_name,
-            vectors_config=VectorParams(size=128, distance=Distance.COSINE),
+            vectors_config=VectorParams(size=128, distance=self._distance_metric),
         )
         self._add_texts_to_memory(documents)
 
