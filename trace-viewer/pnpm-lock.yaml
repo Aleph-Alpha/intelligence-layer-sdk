@@ -36,8 +36,8 @@ devDependencies:
     specifier: ^1.3.7
     version: 1.3.7(less@4.2.0)(postcss@8.4.33)(react-dom@18.2.0)(react@18.2.0)(typescript@5.3.3)(webpack@5.89.0)
   '@storybook/addon-svelte-csf':
-    specifier: ^4.1.0
-    version: 4.1.0(@storybook/svelte@7.6.11)(@storybook/theming@7.6.12)(@sveltejs/vite-plugin-svelte@2.5.3)(svelte@4.2.9)(vite@4.5.1)
+    specifier: ^4.1.1
+    version: 4.1.1(@storybook/svelte@7.6.11)(@storybook/theming@7.6.12)(@sveltejs/vite-plugin-svelte@2.5.3)(svelte@4.2.9)(vite@4.5.1)
   '@storybook/blocks':
     specifier: ^7.6.12
     version: 7.6.12(react-dom@18.2.0)(react@18.2.0)
@@ -2883,8 +2883,8 @@ packages:
       - typescript
     dev: true
 
-  /@storybook/addon-svelte-csf@4.1.0(@storybook/svelte@7.6.11)(@storybook/theming@7.6.12)(@sveltejs/vite-plugin-svelte@2.5.3)(svelte@4.2.9)(vite@4.5.1):
-    resolution: {integrity: sha512-h6AdfweSph09M0sMrwZy5WagkZcccA2i0ioywrheVZi65QtcIgGidbTixoiY94Xi71JT/MQ1psGoD91J44KJFQ==}
+  /@storybook/addon-svelte-csf@4.1.1(@storybook/svelte@7.6.11)(@storybook/theming@7.6.12)(@sveltejs/vite-plugin-svelte@2.5.3)(svelte@4.2.9)(vite@4.5.1):
+    resolution: {integrity: sha512-ctw4K17JTZ0htzXWby5JLsk5rxmlybxKL+YmUYLd1Mwr6brgIlW2++EEFGBGqrmqvjxUIP1UOz71WhhXHKp8KQ==}
     peerDependencies:
       '@storybook/svelte': ^7.0.0
       '@storybook/theming': ^7.0.0
