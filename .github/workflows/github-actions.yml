@@ -43,7 +43,7 @@ jobs:
           poetry install --no-interaction
 
       - name: install Sphinx
-        run: sudo apt-get install python3-sphinx
+        run: sudo apt-get update -y && sudo apt-get install python3-sphinx
 
       - name: run doctest
         env:
