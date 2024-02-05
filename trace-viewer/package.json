@@ -46,7 +46,7 @@
 		"tslib": "^2.6.2",
 		"typescript": "^5.3.3",
 		"vite": "^4.5.1",
-		"vitest": "^0.34.6",
+		"vitest": "^1.2.2",
 		"zod": "^3.22.4"
 	},
 	"name": "trace-viewer",
