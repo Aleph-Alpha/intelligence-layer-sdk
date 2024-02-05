@@ -31,14 +31,11 @@ class SteerableLongContextSummarize(
 
     Args:
         client: Aleph Alpha client instance for running model related API calls.
-        few_shot_configs: A mapping of valid `Language` to `FewShotConfig` for each
-            supported language.
-        model: A valid Aleph Alpha model name.
         max_generated_tokens: The maximum number of tokens per sub-summary.
         max_tokens_per_chunk: The maximum number of tokens per chunk that the long text
             is divided into.
-        allowed_languages: List of languages to which the language detection is limited (ISO619).
-        fallback_language: The default language of the output.
+        model: A valid Aleph Alpha model name.
+        intruction_configs: Dictionary of the prompts for each language.
     """
 
     def __init__(
