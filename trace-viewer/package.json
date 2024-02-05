@@ -38,7 +38,7 @@
 		"react": "^18.2.0",
 		"react-dom": "^18.2.0",
 		"storybook": "^7.6.12",
-		"svelte": "^4.2.9",
+		"svelte": "^4.2.10",
 		"svelte-check": "^3.6.3",
 		"svelte-codemirror-editor": "^1.2.0",
 		"svelte-sequential-preprocessor": "^2.0.1",
