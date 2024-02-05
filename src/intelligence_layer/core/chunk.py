@@ -97,9 +97,10 @@ class ChunkOverlapTask(Task[ChunkInput, ChunkOutput]):
                 )
             )
         self.chunk_task = ChunkTask(
-            client, model, max_tokens_per_chunk - overlap_length_tokens
+            client, model, overlap_length_tokens // 2
         )
         self.tokenizer = client.tokenizer(model)
+        self.max_tokens_per_chunk = max_tokens_per_chunk
         self.overlap_length_tokens = overlap_length_tokens
 
     def do_run(self, input: ChunkInput, task_span: TaskSpan) -> ChunkOutput:
@@ -107,10 +108,21 @@ class ChunkOverlapTask(Task[ChunkInput, ChunkOutput]):
         id_chunks = self.tokenizer.encode_batch(chunks)
 
         chunk_ids = [id_chunks[0].ids]
-        for i in range(len(id_chunks) - 1):
-            chunk_ids.append(
-                chunk_ids[i][-self.overlap_length_tokens :] + id_chunks[i + 1].ids
-            )
+        current_chunk = chunk_ids[0]
+        last_overlap = [chunk_ids[0]]
+        for chunk in id_chunks[1:]:
+            if len(chunk.ids) + len(current_chunk) <= self.max_tokens_per_chunk:
+                current_chunk.extend(chunk.ids)
+            else:
+                current_chunk = sum(last_overlap, []) + chunk.ids
+                chunk_ids.append(current_chunk)
 
+            last_overlap.append(chunk.ids)
+            total_length = len(sum(last_overlap, []))
+            while total_length > self.overlap_length_tokens:
+                total_length -= len(last_overlap[0])
+                last_overlap = last_overlap[1:]
+
+        print(chunk_ids)
         decoded_chunks = self.tokenizer.decode_batch(chunk_ids)
         return ChunkOutput(chunks=decoded_chunks)
