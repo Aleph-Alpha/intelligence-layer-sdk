@@ -18,8 +18,8 @@ def test_overlapped_chunking(
     client: AlephAlphaClientProtocol, some_large_text: str
 ) -> None:
     MODEL = "luminous-base"
-    OVERLAP = 8
-    MAX_TOKENS = 16
+    OVERLAP = 4
+    MAX_TOKENS = 10
 
     tracer = InMemoryTracer()
     task = ChunkOverlapTask(
@@ -34,25 +34,17 @@ def test_overlapped_chunking(
     output_tokenized = tokenizer.encode_batch(output.chunks)
     for chunk_index in range(len(output_tokenized) - 1):
         first = output_tokenized[chunk_index].tokens
-        print(first)
 
         assert (
-            len(first)
-            <= MAX_TOKENS + 2
-            # `+2` because re-tokenizing the chunk can add a few extra tokens at
-            # the beginning or end of each chunk. This is a hack.
-        )
+            len(first) <= MAX_TOKENS + 2
+        )  # `+2` because re-tokenizing the chunk can add a few extra tokens at the beginning or end of each chunk. This is a hack.
         next = output_tokenized[chunk_index + 1].tokens
 
         found = False
-        for offset in range(len(next) - OVERLAP // 2):
+        for offset in range(OVERLAP):
             if first[-OVERLAP // 2 :] != next[offset : offset + OVERLAP // 2]:
                 continue
             found = True
             break
-
-        if not found:
-            print("first = ", first)
-            print("next =  ", next)
 
         assert found
