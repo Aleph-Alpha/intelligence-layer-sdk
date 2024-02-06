@@ -96,9 +96,7 @@ class ChunkOverlapTask(Task[ChunkInput, ChunkOutput]):
                     overlap_length_tokens, max_tokens_per_chunk
                 )
             )
-        self.chunk_task = ChunkTask(
-            client, model, overlap_length_tokens // 2
-        )
+        self.chunk_task = ChunkTask(client, model, overlap_length_tokens // 2)
         self.tokenizer = client.tokenizer(model)
         self.max_tokens_per_chunk = max_tokens_per_chunk
         self.overlap_length_tokens = overlap_length_tokens

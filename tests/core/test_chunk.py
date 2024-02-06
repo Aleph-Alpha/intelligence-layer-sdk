@@ -37,14 +37,15 @@ def test_overlapped_chunking(
         print(first)
 
         assert (
-            len(first) <= MAX_TOKENS + 2
+            len(first)
+            <= MAX_TOKENS + 2
             # `+2` because re-tokenizing the chunk can add a few extra tokens at
             # the beginning or end of each chunk. This is a hack.
         )
         next = output_tokenized[chunk_index + 1].tokens
 
         found = False
-        for offset in range(len(next)-OVERLAP//2):
+        for offset in range(len(next) - OVERLAP // 2):
             if first[-OVERLAP // 2 :] != next[offset : offset + OVERLAP // 2]:
                 continue
             found = True
