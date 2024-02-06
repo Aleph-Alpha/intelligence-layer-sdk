@@ -27,19 +27,21 @@ class RecursiveSummarize(Task[LongContextSummarizeInput, SummarizeOutput]):
     def do_run(
         self, input: LongContextSummarizeInput, task_span: TaskSpan
     ) -> SummarizeOutput:
+        num_partial_summaries = 0
         text = input.text
-        loop_count = 0
         while True:
             summarize_output = self.long_context_summarize_task.run(
                 LongContextSummarizeInput(text=text, language=input.language), task_span
             )
+            if num_partial_summaries == len(summarize_output.partial_summaries):
+                break
+            num_partial_summaries = len(summarize_output.partial_summaries)
+
             num_generated_tokens = 0
             text = ""
             for partial_summary in summarize_output.partial_summaries:
                 num_generated_tokens += partial_summary.generated_tokens
                 text += partial_summary.summary + "\n"
-
-            loop_count += 1
 
             if len(summarize_output.partial_summaries) == 1:
                 break

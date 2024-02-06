@@ -4,11 +4,17 @@ from pathlib import Path
 from aleph_alpha_client import Client, CompletionRequest, CompletionResponse
 from pytest import fixture
 
+from intelligence_layer.connectors.limited_concurrency_client import (
+    AlephAlphaClientProtocol,
+)
 from intelligence_layer.core import NoOpTracer
 from intelligence_layer.use_cases import (
     LongContextHighCompressionSummarize,
     LongContextSummarizeInput,
     RecursiveSummarize,
+)
+from intelligence_layer.use_cases.summarize.steerable_long_context_summarize import (
+    SteerableLongContextSummarize,
 )
 
 
@@ -50,6 +56,20 @@ def test_recursive_summarize_stops_when_hitting_max_tokens(
     assert len(output.summary) < len(very_long_text)
     assert output.generated_tokens < max_tokens
     assert "new orleans" in output.summary.lower()
+
+
+def test_recursive_summarize_stops_when_num_partial_summaries_stays_same(
+    client: AlephAlphaClientProtocol,
+) -> None:
+    max_tokens = None
+    slcs = SteerableLongContextSummarize(
+        client, model="luminous-base", max_generated_tokens=75, max_tokens_per_chunk=145
+    )
+    input = LongContextSummarizeInput(text=short_text, max_tokens=max_tokens)
+    task = RecursiveSummarize(slcs)
+    output = task.run(input, NoOpTracer())
+
+    assert output.generated_tokens > 145
 
 
 def test_recursive_summarize_stops_after_one_chunk(
