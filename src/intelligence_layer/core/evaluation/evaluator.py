@@ -189,7 +189,7 @@ class EvaluationRepository(ABC):
     def evaluation_overview(
         self, eval_id: str, overview_type: type[EvaluationOverviewType]
     ) -> EvaluationOverviewType | None:
-        """Returns an :class:`EvaluationRunOverview` of a given run by its id.
+        """Returns an :class:`EvaluationOverview` of a given run by its id.
 
         Args:
             eval_id: Identifier of the eval run to obtain the overview for.
@@ -197,7 +197,7 @@ class EvaluationRepository(ABC):
                 in :func:`Evaluator.aggregate`
 
         Returns:
-            :class:`EvaluationRunOverview` if one was found, `None` otherwise.
+            :class:`EvaluationOverview` if one was found, `None` otherwise.
         """
         ...
 
@@ -494,16 +494,16 @@ class BaseEvaluator(
 
         if not run_ids:
             raise ValueError("At least one run-id needs to be provided")
-        run_overviews = [load_overview(run_id) for run_id in run_ids]
+        run_overviews = frozenset(load_overview(run_id) for run_id in run_ids)
         if not all(
-            run_overviews[0].dataset_id == run_overview.dataset_id
+            next(iter(run_overviews)).dataset_id == run_overview.dataset_id
             for run_overview in run_overviews
         ):
             raise ValueError(
                 f"All run-overviews must reference the same dataset: {run_overviews}"
             )
         eval_id = self._create_evaluation_dataset()
-        dataset_id = run_overviews[0].dataset_id
+        dataset_id = next(iter(run_overviews)).dataset_id
         examples = self._dataset_repository.examples_by_id(
             dataset_id,
             self.input_type(),
@@ -593,7 +593,7 @@ class BaseEvaluator(
 
     @final
     def aggregate_evaluation(
-        self, eval_id: str
+        self, *eval_ids: str
     ) -> EvaluationOverview[AggregatedEvaluation]:
         """Aggregates all evaluations into an overview that includes high-level statistics.
 
@@ -607,28 +607,55 @@ class BaseEvaluator(
             An overview of the aggregated evaluation.
         """
 
-        evaluation_overview = self._evaluation_repository.evaluation_overview(
-            eval_id, PartialEvaluationOverview
-        )
-        if not evaluation_overview:
-            raise ValueError(
-                f"No PartialEvaluationOverview found for eval-id: {eval_id}"
+        def load_overview(eval_id: str) -> PartialEvaluationOverview:
+            evaluation_overview = self._evaluation_repository.evaluation_overview(
+                eval_id, PartialEvaluationOverview
             )
-        example_evaluations = self._evaluation_repository.example_evaluations(
-            evaluation_overview.id, self.evaluation_type()
-        )
+            if not evaluation_overview:
+                raise ValueError(
+                    f"No PartialEvaluationOverview found for eval-id: {eval_id}"
+                )
+            return evaluation_overview
+
+        evaluation_overviews = [load_overview(id) for id in eval_ids]
+
+        nested_evaluations = [
+            self._evaluation_repository.example_evaluations(
+                overview.id, self.evaluation_type()
+            )
+            for overview in evaluation_overviews
+        ]
+        example_evaluations = [
+            eval for sublist in nested_evaluations for eval in sublist
+        ]
+
         successful_evaluations = CountingFilterIterable(
             (example_eval.result for example_eval in example_evaluations),
             lambda evaluation: not isinstance(evaluation, FailedExampleEvaluation),
         )
         statistics = self.aggregate(cast(Iterable[Evaluation], successful_evaluations))
+
+        if len(eval_ids) == 1:
+            id = eval_ids[0]
+            aggregated_ids: frozenset[str] = frozenset()
+            start = evaluation_overviews[0].start
+        else:
+            id = str(uuid4())
+            aggregated_ids = frozenset(eval_ids)
+            start = None
+
         run_overview = EvaluationOverview(
             statistics=statistics,
             successful_count=successful_evaluations.included_count(),
             failed_evaluation_count=successful_evaluations.excluded_count(),
-            id=evaluation_overview.id,
-            run_overviews=evaluation_overview.run_overviews,
-            start=evaluation_overview.start,
+            id=id,
+            aggregated_ids=aggregated_ids,
+            run_overviews=frozenset(
+                overview
+                for subset in evaluation_overviews
+                for overview in subset.run_overviews
+            ),
+            start=start,
             description=self.description,
             end=utc_now(),
         )

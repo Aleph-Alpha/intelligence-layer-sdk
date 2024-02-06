@@ -146,7 +146,7 @@ def test_evaluate_dataset_returns_generic_statistics(
     run_overview = dummy_runner.run_dataset(dataset_id)
     evaluation_overview = dummy_evaluator.evaluate_dataset(run_overview.id)
 
-    assert evaluation_overview.run_overviews[0].dataset_id == dataset_id
+    assert next(iter(evaluation_overview.run_overviews)).dataset_id == dataset_id
     assert evaluation_overview.successful_count == 1
     assert evaluation_overview.failed_count == 2
 

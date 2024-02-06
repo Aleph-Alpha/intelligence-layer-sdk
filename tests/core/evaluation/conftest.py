@@ -99,17 +99,19 @@ def evaluation_run_overview(
     now = datetime.now()
     return EvaluationOverview(
         id=eval_id,
-        run_overviews=[
-            RunOverview(
-                dataset_id="dataset",
-                id="run-id",
-                start=now,
-                end=now,
-                failed_example_count=0,
-                successful_example_count=0,
-                description="dummy-run-id",
-            )
-        ],
+        run_overviews=frozenset(
+            [
+                RunOverview(
+                    dataset_id="dataset",
+                    id="run-id",
+                    start=now,
+                    end=now,
+                    failed_example_count=0,
+                    successful_example_count=0,
+                    description="dummy-run-id",
+                )
+            ]
+        ),
         start=now,
         end=now,
         failed_evaluation_count=3,

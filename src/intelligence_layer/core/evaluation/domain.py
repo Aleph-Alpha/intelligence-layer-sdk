@@ -227,7 +227,7 @@ class ExampleTrace(BaseModel):
     trace: TaskSpanTrace
 
 
-class RunOverview(BaseModel):
+class RunOverview(BaseModel, frozen=True):
     """Overview of the run of a :class:`Task` on a dataset.
 
     Attributes:
@@ -280,8 +280,9 @@ class PartialEvaluationOverview(BaseModel):
         description: human-readable for the evaluator that created the evaluation
     """
 
-    run_overviews: Sequence[RunOverview]
+    run_overviews: frozenset[RunOverview]
     id: str
+    aggregated_ids: frozenset[str] = frozenset()
     start: Optional[datetime]
     description: str
 
