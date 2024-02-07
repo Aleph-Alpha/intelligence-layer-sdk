@@ -121,6 +121,5 @@ class ChunkOverlapTask(Task[ChunkInput, ChunkOutput]):
                 total_length -= len(last_overlap[0])
                 last_overlap = last_overlap[1:]
 
-        print(chunk_ids)
         decoded_chunks = self.tokenizer.decode_batch(chunk_ids)
         return ChunkOutput(chunks=decoded_chunks)
