@@ -147,9 +147,9 @@ def test_evaluate_run_submits_pairwise_comparison_records(
 
     pairs = combinations(run_ids, 2)
     assert sorted(
-       sorted((record_data.metadata["first"], record_data.metadata["second"]))
+        tuple(sorted((record_data.metadata["first"], record_data.metadata["second"])))
         for record_data in argilla_fake.record_data(evaluation_overview.id)
-    ) == sorted( pairs )
+    ) == sorted(pairs)
 
     elo_score = evaluator.aggregate_evaluation(evaluation_overview.id)
     scores = elo_score.statistics.scores
