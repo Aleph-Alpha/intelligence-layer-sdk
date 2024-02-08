@@ -123,8 +123,8 @@ devDependencies:
     specifier: ^4.2.10
     version: 4.2.10
   svelte-check:
-    specifier: ^3.6.3
-    version: 3.6.3(@babel/core@7.23.3)(less@4.2.0)(postcss@8.4.35)(svelte@4.2.10)
+    specifier: ^3.6.4
+    version: 3.6.4(@babel/core@7.23.3)(less@4.2.0)(postcss@8.4.35)(svelte@4.2.10)
   svelte-codemirror-editor:
     specifier: ^1.2.0
     version: 1.2.0(codemirror@6.0.1)(svelte@4.2.10)
@@ -9269,8 +9269,8 @@ packages:
     engines: {node: '>= 0.4'}
     dev: true
 
-  /svelte-check@3.6.3(@babel/core@7.23.3)(less@4.2.0)(postcss@8.4.35)(svelte@4.2.10):
-    resolution: {integrity: sha512-Q2nGnoysxUnB9KjnjpQLZwdjK62DHyW6nuH/gm2qteFnDk0lCehe/6z8TsIvYeKjC6luKaWxiNGyOcWiLLPSwA==}
+  /svelte-check@3.6.4(@babel/core@7.23.3)(less@4.2.0)(postcss@8.4.35)(svelte@4.2.10):
+    resolution: {integrity: sha512-mY/dqucqm46p72M8yZmn81WPZx9mN6uuw8UVfR3ZKQeLxQg5HDGO3HHm5AZuWZPYNMLJ+TRMn+TeN53HfQ/vsw==}
     hasBin: true
     peerDependencies:
       svelte: ^3.55.0 || ^4.0.0-next.0 || ^4.0.0 || ^5.0.0-next.0
