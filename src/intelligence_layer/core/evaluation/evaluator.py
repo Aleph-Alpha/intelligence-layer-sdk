@@ -617,7 +617,7 @@ class BaseEvaluator(
                 )
             return evaluation_overview
 
-        evaluation_overviews = [load_overview(id) for id in eval_ids]
+        evaluation_overviews = [load_overview(id) for id in set(eval_ids)]
 
         nested_evaluations = [
             self._evaluation_repository.example_evaluations(
