@@ -17,20 +17,22 @@ from intelligence_layer.core.tracer import TaskSpan
 QA_INSTRUCTIONS = {
     Language(
         "en"
-    ): """{{question}} If there's no answer, say {{no_answer_text}}. Only answer the question based on the text.""",
+    ): "{{question}} If there's no answer, say {{no_answer_text}}. Only answer the question based on the text.",
     Language(
         "de"
-    ): """{{question}} Wenn es keine Antwort gibt, gib {{no_answer_text}} aus. Beantworte die Frage nur anhand des Textes.""",
+    ): "{{question}} Wenn es keine Antwort gibt, gib {{no_answer_text}} aus. Beantworte die Frage nur anhand des Textes.",
     Language(
         "fr"
-    ): """{{question}} S'il n'y a pas de réponse, dites {{no_answer_text}}. Ne répondez à la question qu'en vous basant sur le texte. """,
+    ): "{{question}} S'il n'y a pas de réponse, dites {{no_answer_text}}. Ne répondez à la question qu'en vous basant sur le texte.",
     Language(
         "es"
-    ): """{{question}}Si no hay respuesta, di {{no_answer_text}}. Responde sólo a la pregunta basándote en el texto.""",
+    ): "{{question}} Si no hay respuesta, di {{no_answer_text}}. Responde sólo a la pregunta basándote en el texto.",
     Language(
         "it"
-    ): """{{question}}Se non c'è risposta, dire {{no_answer_text}}. Rispondere alla domanda solo in base al testo.""",
+    ): "{{question}} Se non c'è risposta, dire {{no_answer_text}}. Rispondere alla domanda solo in base al testo.",
 }
+
+NO_ANSWER_STR = "NO_ANSWER_IN_TEXT"
 
 
 class SingleChunkQaInput(BaseModel):
@@ -98,14 +100,13 @@ class SingleChunkQa(Task[SingleChunkQaInput, SingleChunkQaOutput]):
         >>> output = task.run(input, tracer)
     """
 
-    NO_ANSWER_STR = "NO_ANSWER_IN_TEXT"
-
     def __init__(
         self,
         client: AlephAlphaClientProtocol,
         model: str = "luminous-supreme-control",
         instruction_config: Mapping[Language, str] = QA_INSTRUCTIONS,
         maximum_tokens: int = 64,
+        no_answer_str: str = NO_ANSWER_STR,
     ):
         super().__init__()
         self._client = client
@@ -114,6 +115,7 @@ class SingleChunkQa(Task[SingleChunkQaInput, SingleChunkQaOutput]):
         self._text_highlight = TextHighlight(client)
         self._instruction_config = instruction_config
         self._maximum_tokens = maximum_tokens
+        self._no_answer_str = no_answer_str
 
     def do_run(
         self, input: SingleChunkQaInput, task_span: TaskSpan
@@ -122,7 +124,7 @@ class SingleChunkQa(Task[SingleChunkQaInput, SingleChunkQaOutput]):
 
         output = self._generate_answer(
             Template(instruction_text).render(
-                question=input.question, no_answer_text=self.NO_ANSWER_STR
+                question=input.question, no_answer_text=self._no_answer_str
             ),
             input.chunk,
             task_span,
@@ -170,4 +172,4 @@ class SingleChunkQa(Task[SingleChunkQaInput, SingleChunkQaOutput]):
         return [h.text for h in highlight_output.highlights if h.score > 0]
 
     def _no_answer_to_none(self, completion: str) -> Optional[str]:
-        return completion if completion != self.NO_ANSWER_STR else None
+        return completion if completion != self._no_answer_str else None
