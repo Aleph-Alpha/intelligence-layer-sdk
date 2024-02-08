@@ -3671,13 +3671,13 @@ cffi = {version = "*", markers = "implementation_name == \"pypy\""}
 
 [[package]]
 name = "qdrant-client"
-version = "1.7.2"
+version = "1.7.3"
 description = "Client library for the Qdrant vector search engine"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "qdrant_client-1.7.2-py3-none-any.whl", hash = "sha256:d00cf0b7b7d6f06847c9bb0126b234151f78f75caf0b920ad976487808bb71ce"},
-    {file = "qdrant_client-1.7.2.tar.gz", hash = "sha256:ec8286cd3a6556d3f033d3b687225af1e715d47767ee27f119aee3c8354c0e07"},
+    {file = "qdrant_client-1.7.3-py3-none-any.whl", hash = "sha256:b062420ba55eb847652c7d2a26404fb1986bea13aa785763024013f96a7a915c"},
+    {file = "qdrant_client-1.7.3.tar.gz", hash = "sha256:7b809be892cdc5137ae80ea3335da40c06499ad0b0072b5abc6bad79da1d29fc"},
 ]
 
 [package.dependencies]
@@ -5221,4 +5221,4 @@ testing = ["big-O", "jaraco.functools", "jaraco.itertools", "more-itertools", "p
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.10,<3.12"
-content-hash = "db2cc880f836921afe7a9abe102bd938f2f9194bd0b1a49bed2ccc55cd1a471e"
+content-hash = "2c156fc0485413c3c5e03c1e99601d13cb943c0e8481ee174ea3874452b5203d"
