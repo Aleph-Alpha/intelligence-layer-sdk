@@ -275,6 +275,27 @@ def test_evaluate_can_evaluate_multiple_runs(
     assert eval_overview.statistics.equal_ratio == 1
 
 
+def test_aggregate_evaluation_can_aggregate_multiple_evals(
+    comparing_evaluator: ComparingEvaluator,
+    string_dataset_id: str,
+    dummy_runner: Runner[str, str],
+) -> None:
+    run_overview_1 = dummy_runner.run_dataset(string_dataset_id)
+    run_overview_2 = dummy_runner.run_dataset(string_dataset_id)
+
+    partial_overview_1 = comparing_evaluator.evaluate_runs(run_overview_1.id)
+    partial_overview_2 = comparing_evaluator.evaluate_runs(
+        run_overview_1.id, run_overview_2.id
+    )
+
+    eval_overview = comparing_evaluator.aggregate_evaluation(
+        partial_overview_1.id, partial_overview_1.id, partial_overview_2.id
+    )
+
+    assert len(eval_overview.run_overviews) == 2
+    assert eval_overview.statistics.equal_ratio == 1
+
+
 def test_base_evaluator_type_magic_works(
     in_memory_evaluation_repository: InMemoryEvaluationRepository,
     in_memory_dataset_repository: InMemoryDatasetRepository,
