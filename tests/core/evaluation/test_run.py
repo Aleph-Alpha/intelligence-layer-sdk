@@ -96,7 +96,7 @@ def test_run_evaluation(
         ]
     )
 
-    eval_ids = eval_repository.eval_ids()
+    eval_ids = eval_repository.eval_ids(EvaluationOverview[DummyAggregation])
     assert len(eval_ids) == 1
     overview = eval_repository.evaluation_overview(
         eval_ids[0], EvaluationOverview[DummyAggregation]

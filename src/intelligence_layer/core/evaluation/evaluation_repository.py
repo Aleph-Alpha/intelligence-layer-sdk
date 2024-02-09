@@ -2,7 +2,7 @@ from collections import defaultdict
 from pathlib import Path
 from typing import Iterable, Optional, Sequence, cast
 
-from pydantic import BaseModel
+from pydantic import BaseModel, ValidationError
 
 from intelligence_layer.core.evaluation.domain import (
     Evaluation,
@@ -10,7 +10,7 @@ from intelligence_layer.core.evaluation.domain import (
     ExampleOutput,
     ExampleTrace,
     FailedExampleEvaluation,
-    PartialEvaluationOverview,
+    IndividualEvaluationOverview,
     RunOverview,
     TaskSpanTrace,
 )
@@ -239,7 +239,7 @@ class FileEvaluationRepository(EvaluationRepository):
         content = read_utf8(file_path)
         return overview_type.model_validate_json(content)
 
-    def store_evaluation_overview(self, overview: PartialEvaluationOverview) -> None:
+    def store_evaluation_overview(self, overview: IndividualEvaluationOverview) -> None:
         write_utf8(
             self._evaluation_run_overview_path(overview.id),
             overview.model_dump_json(indent=2),
@@ -262,8 +262,24 @@ class FileEvaluationRepository(EvaluationRepository):
             path.parent.name for path in self._run_root_directory().glob("*/output")
         ]
 
-    def eval_ids(self) -> Sequence[str]:
-        return [path.stem for path in self._eval_root_directory().glob("*.json")]
+    def eval_ids(
+        self, overview_type: type[EvaluationOverviewType] | None = None
+    ) -> Sequence[str]:
+        def evaluation_overview(
+            eval_id: str, overview_type: type[EvaluationOverviewType]
+        ) -> EvaluationOverviewType | None:
+            try:
+                return self.evaluation_overview(eval_id, overview_type)
+            except ValidationError:
+                return None
+
+        if overview_type is None:
+            return [path.stem for path in self._eval_root_directory().glob("*.json")]
+        overviews = (
+            evaluation_overview(path.stem, overview_type)
+            for path in self._eval_root_directory().glob("*.json")
+        )
+        return [overview.id for overview in overviews if overview is not None]
 
 
 def _parse_log(log_path: Path) -> InMemoryTracer:
@@ -284,7 +300,7 @@ class InMemoryEvaluationRepository(EvaluationRepository):
             str, list[ExampleEvaluation[BaseModel]]
         ] = defaultdict(list)
         self._example_traces: dict[str, InMemoryTracer] = dict()
-        self._evaluation_run_overviews: dict[str, PartialEvaluationOverview] = dict()
+        self._evaluation_run_overviews: dict[str, IndividualEvaluationOverview] = dict()
         self._run_overviews: dict[str, RunOverview] = dict()
 
     def run_ids(self) -> Sequence[str]:
@@ -363,7 +379,7 @@ class InMemoryEvaluationRepository(EvaluationRepository):
     ) -> EvaluationOverviewType | None:
         return cast(EvaluationOverviewType, self._evaluation_run_overviews[eval_id])
 
-    def store_evaluation_overview(self, overview: PartialEvaluationOverview) -> None:
+    def store_evaluation_overview(self, overview: IndividualEvaluationOverview) -> None:
         self._evaluation_run_overviews[overview.id] = overview
 
     def run_overview(self, run_id: str) -> RunOverview | None:

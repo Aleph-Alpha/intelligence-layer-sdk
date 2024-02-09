@@ -210,13 +210,19 @@ def test_evaluate_dataset_stores_example_evaluations(
     eval_overview = dummy_evaluator.evaluate_dataset(run_overview.id)
     examples = list(dataset)
     success_result = evaluation_repository.example_evaluation(
-        eval_overview.id, examples[0].id, DummyEvaluation
+        list(eval_overview.individual_evaluation_overviews)[0].id,
+        examples[0].id,
+        DummyEvaluation,
     )
     failure_result_task = evaluation_repository.example_evaluation(
-        eval_overview.id, examples[1].id, DummyEvaluation
+        list(eval_overview.individual_evaluation_overviews)[0].id,
+        examples[1].id,
+        DummyEvaluation,
     )
     failure_result_eval = evaluation_repository.example_evaluation(
-        eval_overview.id, examples[2].id, DummyEvaluation
+        list(eval_overview.individual_evaluation_overviews)[0].id,
+        examples[2].id,
+        DummyEvaluation,
     )
 
     assert success_result and isinstance(success_result.result, DummyEvaluation)

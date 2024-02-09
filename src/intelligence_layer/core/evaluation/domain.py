@@ -270,7 +270,7 @@ class ExampleEvaluation(BaseModel, Generic[Evaluation]):
     result: SerializeAsAny[Evaluation | FailedExampleEvaluation]
 
 
-class PartialEvaluationOverview(BaseModel):
+class IndividualEvaluationOverview(BaseModel, frozen=True):
     """Overview of the unaggregated results of evaluating a :class:`Task` on a dataset.
 
     Attributes:
@@ -282,7 +282,6 @@ class PartialEvaluationOverview(BaseModel):
 
     run_overviews: frozenset[RunOverview]
     id: str
-    aggregated_ids: frozenset[str] = frozenset()
     start: Optional[datetime]
     description: str
 
@@ -294,7 +293,9 @@ class EvaluationFailed(Exception):
         )
 
 
-class EvaluationOverview(PartialEvaluationOverview, Generic[AggregatedEvaluation]):
+class EvaluationOverview(
+    IndividualEvaluationOverview, Generic[AggregatedEvaluation], frozen=True
+):
     """Complete overview of the results of evaluating a :class:`Task` on a dataset.
 
     Created when running :meth:`Evaluator.evaluate_dataset`. Contains high-level information and statistics.
@@ -310,6 +311,9 @@ class EvaluationOverview(PartialEvaluationOverview, Generic[AggregatedEvaluation
     end: Optional[datetime]
     failed_evaluation_count: int
     successful_count: int
+    individual_evaluation_overviews: frozenset[
+        IndividualEvaluationOverview
+    ] = frozenset()
 
     @property
     def run_ids(self) -> Sequence[str]:

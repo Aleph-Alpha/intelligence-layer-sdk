@@ -162,7 +162,8 @@ def test_can_evaluate_classify(
     evaluation_overview = classify_evaluator.evaluate_dataset(run_overview.id)
 
     evaluation = in_memory_evaluation_repository.example_evaluations(
-        evaluation_overview.id, SingleLabelClassifyEvaluation
+        next(iter(evaluation_overview.individual_evaluation_overviews)).id,
+        SingleLabelClassifyEvaluation,
     )[0].result
 
     assert isinstance(evaluation, SingleLabelClassifyEvaluation)

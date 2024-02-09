@@ -106,16 +106,19 @@ def test_single_chunk_summarize_evaluator(
     )
 
     assert evaluation_overview.successful_count == 2
+    individual_evaluation_id = next(
+        iter(evaluation_overview.individual_evaluation_overviews)
+    ).id
     good_result = (
         single_chunk_summarize_evaluator._evaluation_repository.example_evaluation(
-            evaluation_overview.id,
+            individual_evaluation_id,
             "good",
             SummarizeEvaluation,
         )
     )
     bad_result = (
         single_chunk_summarize_evaluator._evaluation_repository.example_evaluation(
-            evaluation_overview.id,
+            individual_evaluation_id,
             "bad",
             SummarizeEvaluation,
         )
@@ -152,16 +155,19 @@ def test_long_context_summarize_evaluator(
     )
 
     assert evaluation_overview.successful_count == 2
+    individual_evaluation_id = next(
+        iter(evaluation_overview.individual_evaluation_overviews)
+    ).id
     good_result = (
         long_context_summarize_evaluator._evaluation_repository.example_evaluation(
-            evaluation_overview.id,
+            individual_evaluation_id,
             "good",
             SummarizeEvaluation,
         )
     )
     bad_result = (
         long_context_summarize_evaluator._evaluation_repository.example_evaluation(
-            evaluation_overview.id,
+            individual_evaluation_id,
             "bad",
             SummarizeEvaluation,
         )

@@ -160,7 +160,8 @@ def test_multi_label_classify_evaluator_single_example(
 
     evaluation_overview = classify_evaluator.evaluate_dataset(run_overview.id)
     evaluation = classify_runner._evaluation_repository.example_evaluations(
-        evaluation_overview.id, MultiLabelClassifyEvaluation
+        next(iter(evaluation_overview.individual_evaluation_overviews)).id,
+        MultiLabelClassifyEvaluation,
     )[0].result
 
     assert isinstance(evaluation, MultiLabelClassifyEvaluation)

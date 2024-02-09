@@ -37,7 +37,7 @@ from intelligence_layer.core.evaluation.domain import (
     ExpectedOutput,
     FailedExampleEvaluation,
     FailedExampleRun,
-    PartialEvaluationOverview,
+    IndividualEvaluationOverview,
     RunOverview,
     SuccessfulExampleOutput,
 )
@@ -45,7 +45,7 @@ from intelligence_layer.core.task import Input, Output
 from intelligence_layer.core.tracer import Tracer, utc_now
 
 EvaluationOverviewType = TypeVar(
-    "EvaluationOverviewType", bound=PartialEvaluationOverview
+    "EvaluationOverviewType", bound=IndividualEvaluationOverview
 )
 
 
@@ -202,7 +202,7 @@ class EvaluationRepository(ABC):
         ...
 
     @abstractmethod
-    def store_evaluation_overview(self, overview: PartialEvaluationOverview) -> None:
+    def store_evaluation_overview(self, overview: IndividualEvaluationOverview) -> None:
         """Stores an :class:`EvaluationRunOverview` in the repository.
 
         Args:
@@ -462,9 +462,7 @@ class BaseEvaluator(
         return str(uuid4())
 
     @final
-    def evaluate_runs(
-        self, *run_ids: str, num_examples: Optional[int] = None
-    ) -> PartialEvaluationOverview:
+    def evaluate_runs(self, *run_ids: str, num_examples: Optional[int] = None) -> IndividualEvaluationOverview:
         """Evaluates all generated outputs in the run.
 
         For each set of successful outputs in the referenced runs,
@@ -590,7 +588,7 @@ class BaseEvaluator(
                 desc="Evaluating",
             )
 
-        partial_overview = PartialEvaluationOverview(
+        partial_overview = IndividualEvaluationOverview(
             run_overviews=run_overviews,
             id=eval_id,
             start=start,
@@ -616,9 +614,9 @@ class BaseEvaluator(
             An overview of the aggregated evaluation.
         """
 
-        def load_overview(eval_id: str) -> PartialEvaluationOverview:
+        def load_overview(eval_id: str) -> IndividualEvaluationOverview:
             evaluation_overview = self._evaluation_repository.evaluation_overview(
-                eval_id, PartialEvaluationOverview
+                eval_id, IndividualEvaluationOverview
             )
             if not evaluation_overview:
                 raise ValueError(
@@ -626,7 +624,7 @@ class BaseEvaluator(
                 )
             return evaluation_overview
 
-        evaluation_overviews = [load_overview(id) for id in set(eval_ids)]
+        evaluation_overviews = frozenset(load_overview(id) for id in set(eval_ids))
 
         nested_evaluations = [
             self._evaluation_repository.example_evaluations(
@@ -642,28 +640,21 @@ class BaseEvaluator(
             (example_eval.result for example_eval in example_evaluations),
             lambda evaluation: not isinstance(evaluation, FailedExampleEvaluation),
         )
+        id = str(uuid4())
+        start = utc_now()
         statistics = self.aggregate(cast(Iterable[Evaluation], successful_evaluations))
-
-        if len(eval_ids) == 1:
-            id = eval_ids[0]
-            aggregated_ids: frozenset[str] = frozenset()
-            start = evaluation_overviews[0].start
-        else:
-            id = str(uuid4())
-            aggregated_ids = frozenset(eval_ids)
-            start = None
 
         run_overview = EvaluationOverview(
             statistics=statistics,
             successful_count=successful_evaluations.included_count(),
             failed_evaluation_count=successful_evaluations.excluded_count(),
             id=id,
-            aggregated_ids=aggregated_ids,
             run_overviews=frozenset(
                 overview
                 for subset in evaluation_overviews
                 for overview in subset.run_overviews
             ),
+            individual_evaluation_overviews=evaluation_overviews,
             start=start,
             description=self.description,
             end=utc_now(),
@@ -833,7 +824,7 @@ class ArgillaEvaluationRepository(EvaluationRepository):
     ) -> EvaluationOverviewType | None:
         return self._evaluation_repository.evaluation_overview(eval_id, overview_type)
 
-    def store_evaluation_overview(self, overview: PartialEvaluationOverview) -> None:
+    def store_evaluation_overview(self, overview: IndividualEvaluationOverview) -> None:
         return self._evaluation_repository.store_evaluation_overview(overview)
 
     def run_overview(self, run_id: str) -> RunOverview | None:
@@ -892,7 +883,7 @@ class ArgillaEvaluator(
         )
 
     @final
-    def partial_evaluate_dataset(self, *run_ids: str) -> PartialEvaluationOverview:
+    def partial_evaluate_dataset(self, *run_ids: str) -> IndividualEvaluationOverview:
         """Evaluates an entire :class:`Dataset` in a threaded manner and pushes the results to Argilla.
 
         Args:
