@@ -106,9 +106,7 @@ def test_single_chunk_summarize_evaluator(
     )
 
     assert evaluation_overview.successful_count == 2
-    individual_evaluation_id = next(
-        iter(evaluation_overview.individual_evaluation_overviews)
-    ).id
+    individual_evaluation_id = evaluation_overview.individual_evaluation_overviews[0].id
     good_result = (
         single_chunk_summarize_evaluator._evaluation_repository.example_evaluation(
             individual_evaluation_id,
@@ -155,9 +153,7 @@ def test_long_context_summarize_evaluator(
     )
 
     assert evaluation_overview.successful_count == 2
-    individual_evaluation_id = next(
-        iter(evaluation_overview.individual_evaluation_overviews)
-    ).id
+    individual_evaluation_id = evaluation_overview.individual_evaluation_overviews[0].id
     good_result = (
         long_context_summarize_evaluator._evaluation_repository.example_evaluation(
             individual_evaluation_id,

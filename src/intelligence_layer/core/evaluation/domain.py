@@ -311,7 +311,7 @@ class EvaluationOverview(
     end: Optional[datetime]
     failed_evaluation_count: int
     successful_count: int
-    individual_evaluation_overviews: frozenset[
+    individual_evaluation_overview_set: frozenset[
         IndividualEvaluationOverview
     ] = frozenset()
 
@@ -324,6 +324,10 @@ class EvaluationOverview(
         return self.failed_evaluation_count + sum(
             run_overview.failed_example_count for run_overview in self.run_overviews
         )
+
+    @property
+    def individual_evaluation_overviews(self) -> Sequence[IndividualEvaluationOverview]:
+        return list(self.individual_evaluation_overview_set)
 
     def raise_on_evaluation_failure(self) -> None:
         if self.failed_count > 0:

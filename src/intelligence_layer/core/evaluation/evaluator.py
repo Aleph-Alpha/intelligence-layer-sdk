@@ -462,7 +462,9 @@ class BaseEvaluator(
         return str(uuid4())
 
     @final
-    def evaluate_runs(self, *run_ids: str, num_examples: Optional[int] = None) -> IndividualEvaluationOverview:
+    def evaluate_runs(
+        self, *run_ids: str, num_examples: Optional[int] = None
+    ) -> IndividualEvaluationOverview:
         """Evaluates all generated outputs in the run.
 
         For each set of successful outputs in the referenced runs,
@@ -654,7 +656,7 @@ class BaseEvaluator(
                 for subset in evaluation_overviews
                 for overview in subset.run_overviews
             ),
-            individual_evaluation_overviews=evaluation_overviews,
+            individual_evaluation_overview_set=evaluation_overviews,
             start=start,
             description=self.description,
             end=utc_now(),

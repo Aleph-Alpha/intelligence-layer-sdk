@@ -162,7 +162,7 @@ def test_can_evaluate_classify(
     evaluation_overview = classify_evaluator.evaluate_dataset(run_overview.id)
 
     evaluation = in_memory_evaluation_repository.example_evaluations(
-        next(iter(evaluation_overview.individual_evaluation_overviews)).id,
+        evaluation_overview.individual_evaluation_overviews[0].id,
         SingleLabelClassifyEvaluation,
     )[0].result
 
