@@ -2,18 +2,14 @@ from typing import Generic, Optional, Sequence
 
 from pydantic import BaseModel
 
-from intelligence_layer.connectors.limited_concurrency_client import (
-    AlephAlphaClientProtocol,
-)
 from intelligence_layer.connectors.retrievers.base_retriever import ID, BaseRetriever
-from intelligence_layer.core.chunk import Chunk
 from intelligence_layer.core.detect_language import Language
 from intelligence_layer.core.task import Task
 from intelligence_layer.core.tracer import TaskSpan
-from intelligence_layer.use_cases.qa.multiple_chunk_qa import (
-    MultipleChunkQa,
-    MultipleChunkQaInput,
-    Subanswer,
+from intelligence_layer.use_cases.qa.multiple_chunk_qa import Subanswer
+from intelligence_layer.use_cases.qa.single_chunk_qa import (
+    SingleChunkQaInput,
+    SingleChunkQaOutput,
 )
 from intelligence_layer.use_cases.search.search import Search, SearchInput
 
@@ -81,14 +77,15 @@ class RetrieverBasedQa(
         >>> from intelligence_layer.connectors import LimitedConcurrencyClient
         >>> from intelligence_layer.connectors import DocumentIndexRetriever
         >>> from intelligence_layer.core import InMemoryTracer
-        >>> from intelligence_layer.use_cases import RetrieverBasedQa, RetrieverBasedQaInput
+        >>> from intelligence_layer.use_cases import RetrieverBasedQa, RetrieverBasedQaInput, SingleChunkQa
 
 
         >>> token = os.getenv("AA_TOKEN")
         >>> client = LimitedConcurrencyClient.from_token(token)
         >>> document_index = DocumentIndexClient(token)
         >>> retriever = DocumentIndexRetriever(document_index, "aleph-alpha", "wikipedia-de", 3)
-        >>> task = RetrieverBasedQa(client, retriever)
+        >>> qa_task = SingleChunkQa(client)
+        >>> task = RetrieverBasedQa(retriever, qa_task)
         >>> input_data = RetrieverBasedQaInput(question="When was Rome founded?")
         >>> tracer = InMemoryTracer()
         >>> output = task.run(input_data, tracer)
@@ -96,47 +93,52 @@ class RetrieverBasedQa(
 
     def __init__(
         self,
-        client: AlephAlphaClientProtocol,
         retriever: BaseRetriever[ID],
-        model: str = "luminous-supreme-control",
+        qa_task: Task[SingleChunkQaInput, SingleChunkQaOutput],
     ):
         super().__init__()
-        self._client = client
-        self._model = model
         self._search = Search(retriever)
-        self._multi_chunk_qa = MultipleChunkQa(self._client, self._model)
+        self._qa_task = qa_task
 
     def do_run(
         self, input: RetrieverBasedQaInput, task_span: TaskSpan
     ) -> RetrieverBasedQaOutput[ID]:
-        search_output = self._search.run(SearchInput(query=input.question), task_span)
-
-        multi_chunk_qa_input = MultipleChunkQaInput(
-            chunks=[
-                Chunk(result.document_chunk.text) for result in search_output.results
-            ],
-            question=input.question,
-            language=input.language,
+        search_output = self._search.run(
+            SearchInput(query=input.question), task_span
+        ).results
+        sorted_search_output = sorted(
+            search_output, key=lambda output: output.score, reverse=True
         )
 
-        result = self._multi_chunk_qa.run(multi_chunk_qa_input, task_span)
+        sorted_qa_inputs = [
+            SingleChunkQaInput(
+                chunk=output.document_chunk.text,
+                question=input.question,
+                language=input.language,
+            )
+            for output in sorted_search_output
+        ]
 
-        # multi_chunk_qa does not known IDs so we need to rematch them
-        text_to_id = {
-            document.document_chunk.text: document.id
-            for document in search_output.results
-        }
+        sorted_qa_outputs = self._qa_task.run_concurrently(sorted_qa_inputs, task_span)
+
         enriched_answers = [
             EnrichedSubanswer(
                 answer=answer.answer,
-                chunk=answer.chunk,
+                chunk=input.document_chunk.text,
                 highlights=answer.highlights,
-                id=text_to_id[answer.chunk],
+                id=input.id,
             )
-            for answer in result.subanswers
+            for answer, input in zip(sorted_qa_outputs, sorted_search_output)
         ]
         correctly_formatted_output = RetrieverBasedQaOutput(
-            answer=result.answer,
+            answer=next(
+                (
+                    qa_output.answer
+                    for qa_output in sorted_qa_outputs
+                    if qa_output.answer
+                ),
+                None,
+            ),
             subanswers=enriched_answers,
         )
         return correctly_formatted_output

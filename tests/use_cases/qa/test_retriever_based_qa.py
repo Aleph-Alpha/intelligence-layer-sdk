@@ -3,9 +3,6 @@ from typing import Sequence
 from pytest import fixture
 
 from intelligence_layer.connectors.document_index.document_index import DocumentPath
-from intelligence_layer.connectors.limited_concurrency_client import (
-    AlephAlphaClientProtocol,
-)
 from intelligence_layer.connectors.retrievers.base_retriever import Document
 from intelligence_layer.connectors.retrievers.document_index_retriever import (
     DocumentIndexRetriever,
@@ -18,6 +15,7 @@ from intelligence_layer.use_cases.qa.retriever_based_qa import (
     RetrieverBasedQa,
     RetrieverBasedQaInput,
 )
+from intelligence_layer.use_cases.qa.single_chunk_qa import SingleChunkQa
 
 
 @fixture
@@ -40,21 +38,19 @@ def in_memory_retriever_documents() -> Sequence[Document]:
 
 @fixture
 def retriever_based_qa_with_in_memory_retriever(
-    client: AlephAlphaClientProtocol,
+    single_chunk_qa: SingleChunkQa,
     asymmetric_in_memory_retriever: QdrantInMemoryRetriever,
 ) -> RetrieverBasedQa[int]:
     return RetrieverBasedQa(
-        client, asymmetric_in_memory_retriever, model="luminous-base-control"
+        retriever=asymmetric_in_memory_retriever, qa_task=single_chunk_qa
     )
 
 
 @fixture
 def retriever_based_qa_with_document_index(
-    client: AlephAlphaClientProtocol, document_index_retriever: DocumentIndexRetriever
+    single_chunk_qa: SingleChunkQa, document_index_retriever: DocumentIndexRetriever
 ) -> RetrieverBasedQa[DocumentPath]:
-    return RetrieverBasedQa(
-        client, document_index_retriever, model="luminous-base-control"
-    )
+    return RetrieverBasedQa(retriever=document_index_retriever, qa_task=single_chunk_qa)
 
 
 def test_retriever_based_qa_using_in_memory_retriever(
