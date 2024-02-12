@@ -111,6 +111,15 @@ def sequence_examples() -> Iterable[Example[str, None]]:
 
 
 @fixture
+def sequence_good_examples() -> Iterable[Example[str, None]]:
+    return [
+        Example(input="success", expected_output=None),
+        Example(input="success", expected_output=None),
+        Example(input=FAIL_IN_EVAL_INPUT, expected_output=None),
+    ]
+
+
+@fixture
 def dummy_evaluator(
     in_memory_evaluation_repository: InMemoryEvaluationRepository,
     in_memory_dataset_repository: InMemoryDatasetRepository,
@@ -126,6 +135,14 @@ def dataset_id(
     in_memory_dataset_repository: InMemoryDatasetRepository,
 ) -> str:
     return in_memory_dataset_repository.create_dataset(sequence_examples)
+
+
+@fixture
+def good_dataset_id(
+    sequence_good_examples: Iterable[Example[str, None]],
+    in_memory_dataset_repository: InMemoryDatasetRepository,
+) -> str:
+    return in_memory_dataset_repository.create_dataset(sequence_good_examples)
 
 
 @fixture
@@ -349,3 +366,16 @@ def test_base_evaluator_type_magic_works(
     who_is_timmy = timmy._get_types()
 
     assert who_is_timmy == types
+
+def test_evaluate_dataset_only_runs_n_examples(
+    dummy_evaluator: DummyEvaluator,
+    dummy_runner: Runner[str, str],
+    good_dataset_id: str,
+) -> None:
+    run_overview = dummy_runner.run_dataset(good_dataset_id)
+    evaluation_overview = dummy_evaluator.evaluate_dataset(run_overview.id)
+    partial_evaluation_overview = dummy_evaluator.evaluate_runs(run_overview.id, num_examples=2)
+    evaluation_overview_n =  dummy_evaluator.aggregate_evaluation(partial_evaluation_overview.id)
+
+    assert evaluation_overview.successful_count + evaluation_overview.failed_count == 3
+    assert evaluation_overview_n.successful_count + evaluation_overview_n.failed_count == 2

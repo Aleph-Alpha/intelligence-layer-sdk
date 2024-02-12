@@ -462,7 +462,7 @@ class BaseEvaluator(
         return str(uuid4())
 
     @final
-    def evaluate_runs(self, *run_ids: str) -> PartialEvaluationOverview:
+    def evaluate_runs(self, *run_ids: str, num_examples: Optional[int] = None) -> PartialEvaluationOverview:
         """Evaluates all generated outputs in the run.
 
         For each set of successful outputs in the referenced runs,
@@ -479,6 +479,8 @@ class BaseEvaluator(
                 If the output of multiple runs are to be compared (for example to compare
                 the performance of different model on the same task), multiple run_ids are
                 passed accordingly.
+            num_examples: The number of examples which should be evaluated from the given runs.
+                Always the first n runs stored in the evaluation repository
 
         Returns:
             An overview of the evaluation. Individual :class:`Evaluation`s will not be
@@ -532,6 +534,7 @@ class BaseEvaluator(
                 ]
             ]
         ):
+            current_example = 0
             for example_outputs in examples_zipped:
                 if not any(
                     isinstance(output.output, FailedExampleRun)
@@ -550,6 +553,10 @@ class BaseEvaluator(
                         self.expected_output_type(),
                     )
                     assert example is not None
+
+                    if num_examples and current_example >= num_examples:
+                        break
+                    current_example += 1
 
                     yield (
                         example,
