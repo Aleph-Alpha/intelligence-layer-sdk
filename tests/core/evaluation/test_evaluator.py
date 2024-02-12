@@ -367,6 +367,7 @@ def test_base_evaluator_type_magic_works(
 
     assert who_is_timmy == types
 
+
 def test_evaluate_dataset_only_runs_n_examples(
     dummy_evaluator: DummyEvaluator,
     dummy_runner: Runner[str, str],
@@ -374,8 +375,14 @@ def test_evaluate_dataset_only_runs_n_examples(
 ) -> None:
     run_overview = dummy_runner.run_dataset(good_dataset_id)
     evaluation_overview = dummy_evaluator.evaluate_dataset(run_overview.id)
-    partial_evaluation_overview = dummy_evaluator.evaluate_runs(run_overview.id, num_examples=2)
-    evaluation_overview_n =  dummy_evaluator.aggregate_evaluation(partial_evaluation_overview.id)
+    partial_evaluation_overview = dummy_evaluator.evaluate_runs(
+        run_overview.id, num_examples=2
+    )
+    evaluation_overview_n = dummy_evaluator.aggregate_evaluation(
+        partial_evaluation_overview.id
+    )
 
     assert evaluation_overview.successful_count + evaluation_overview.failed_count == 3
-    assert evaluation_overview_n.successful_count + evaluation_overview_n.failed_count == 2
+    assert (
+        evaluation_overview_n.successful_count + evaluation_overview_n.failed_count == 2
+    )

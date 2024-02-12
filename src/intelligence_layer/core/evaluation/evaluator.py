@@ -462,7 +462,9 @@ class BaseEvaluator(
         return str(uuid4())
 
     @final
-    def evaluate_runs(self, *run_ids: str, num_examples: Optional[int] = None) -> PartialEvaluationOverview:
+    def evaluate_runs(
+        self, *run_ids: str, num_examples: Optional[int] = None
+    ) -> PartialEvaluationOverview:
         """Evaluates all generated outputs in the run.
 
         For each set of successful outputs in the referenced runs,
