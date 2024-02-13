@@ -88,7 +88,9 @@ class Runner(Generic[Input, Output]):
         def run(
             example: Example[Input, ExpectedOutput]
         ) -> tuple[str, Output | FailedExampleRun]:
-            evaluate_tracer = self._evaluation_repository.example_tracer(run_id, example.id)
+            evaluate_tracer = self._evaluation_repository.example_tracer(
+                run_id, example.id
+            )
             if tracer:
                 evaluate_tracer = CompositeTracer([evaluate_tracer, tracer])
             try:
@@ -133,4 +135,3 @@ class Runner(Generic[Input, Output]):
         )
         self._evaluation_repository.store_run_overview(run_overview)
         return run_overview
-
