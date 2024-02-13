@@ -40,7 +40,7 @@ def test_runner_runs_dataset(
     assert set(output.example_id for output in outputs) == set(
         example.id for example in examples
     )
-    
+
 
 def test_runner_runs_n_examples(
     in_memory_evaluation_repository: InMemoryEvaluationRepository,
