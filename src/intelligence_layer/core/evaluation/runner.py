@@ -64,7 +64,8 @@ class Runner(Generic[Input, Output]):
         return cast(type[Input], input_type)
 
     def run_dataset(
-        self, dataset_id: str,
+        self,
+        dataset_id: str,
         tracer: Optional[Tracer] = None,
         num_examples: Optional[int] = None,
     ) -> RunOverview:
@@ -87,9 +88,7 @@ class Runner(Generic[Input, Output]):
         def run(
             example: Example[Input, ExpectedOutput]
         ) -> tuple[str, Output | FailedExampleRun]:
-            evaluate_tracer = self._evaluation_repository.example_tracer(
-                run_id, example.id
-            )
+            evaluate_tracer = self._evaluation_repository.example_tracer(run_id, example.id)
             if tracer:
                 evaluate_tracer = CompositeTracer([evaluate_tracer, tracer])
             try:
@@ -98,6 +97,7 @@ class Runner(Generic[Input, Output]):
                 return example.id, FailedExampleRun.from_exception(e)
 
         # mypy does not like union types
+
         examples = self._dataset_repository.examples_by_id(
             dataset_id, self.input_type(), JsonValue  # type: ignore
         )
@@ -122,7 +122,6 @@ class Runner(Generic[Input, Output]):
                         run_id=run_id, example_id=example_id, output=output
                     ),
                 )
-
         run_overview = RunOverview(
             dataset_id=dataset_id,
             id=run_id,
@@ -134,3 +133,4 @@ class Runner(Generic[Input, Output]):
         )
         self._evaluation_repository.store_run_overview(run_overview)
         return run_overview
+
