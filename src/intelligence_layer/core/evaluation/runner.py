@@ -64,7 +64,9 @@ class Runner(Generic[Input, Output]):
         return cast(type[Input], input_type)
 
     def run_dataset(
-        self, dataset_id: str, tracer: Optional[Tracer] = None, num_examples: Optional[int] = None
+        self, dataset_id: str,
+        tracer: Optional[Tracer] = None,
+        num_examples: Optional[int] = None,
     ) -> RunOverview:
         """Generates all outputs for the provided dataset.
 
