@@ -1,5 +1,6 @@
 from concurrent.futures import ThreadPoolExecutor
 from inspect import get_annotations
+from itertools import islice
 from typing import Generic, Optional, cast
 from uuid import uuid4
 
@@ -63,7 +64,10 @@ class Runner(Generic[Input, Output]):
         return cast(type[Input], input_type)
 
     def run_dataset(
-        self, dataset_id: str, tracer: Optional[Tracer] = None
+        self,
+        dataset_id: str,
+        tracer: Optional[Tracer] = None,
+        num_examples: Optional[int] = None,
     ) -> RunOverview:
         """Generates all outputs for the provided dataset.
 
@@ -72,7 +76,9 @@ class Runner(Generic[Input, Output]):
         Args:
             dataset_id: The id of the dataset to generate output for. Consists of examples, each
                 with an :class:`Input` and an :class:`ExpectedOutput` (can be None).
-            output: Output of the :class:`Task` that shall be evaluated
+            tracer: An optional :class:`Tracer` to trace all the runs from each example
+            num_examples: An optional int to specify how many examples from the dataset should be run.
+                Always the first n examples will be taken.
 
         Returns:
             An overview of the run. Outputs will not be returned but instead stored in the
@@ -93,11 +99,14 @@ class Runner(Generic[Input, Output]):
                 return example.id, FailedExampleRun.from_exception(e)
 
         # mypy does not like union types
+
         examples = self._dataset_repository.examples_by_id(
             dataset_id, self.input_type(), JsonValue  # type: ignore
         )
         if examples is None:
             raise ValueError(f"Dataset with id {dataset_id} not found")
+        if num_examples:
+            examples = islice(examples, num_examples)
         run_id = str(uuid4())
         start = utc_now()
         with ThreadPoolExecutor(max_workers=10) as executor:
@@ -115,7 +124,6 @@ class Runner(Generic[Input, Output]):
                         run_id=run_id, example_id=example_id, output=output
                     ),
                 )
-
         run_overview = RunOverview(
             dataset_id=dataset_id,
             id=run_id,
