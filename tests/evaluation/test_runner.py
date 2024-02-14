@@ -1,15 +1,11 @@
-from intelligence_layer.core import (
+from intelligence_layer.core.tracer import InMemoryTracer
+from intelligence_layer.evaluation import (
     Example,
     InMemoryDatasetRepository,
     InMemoryEvaluationRepository,
     Runner,
 )
-from intelligence_layer.core.tracer import InMemoryTracer
-from tests.core.evaluation.conftest import (
-    FAIL_IN_EVAL_INPUT,
-    FAIL_IN_TASK_INPUT,
-    DummyTask,
-)
+from tests.evaluation.conftest import FAIL_IN_EVAL_INPUT, FAIL_IN_TASK_INPUT, DummyTask
 
 
 def test_runner_runs_dataset(

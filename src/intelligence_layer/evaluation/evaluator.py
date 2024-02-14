@@ -26,7 +26,9 @@ from intelligence_layer.connectors.argilla.argilla_client import (
     Question,
     RecordData,
 )
-from intelligence_layer.core.evaluation.domain import (
+from intelligence_layer.core.task import Input, Output
+from intelligence_layer.core.tracer import Tracer, utc_now
+from intelligence_layer.evaluation.domain import (
     AggregatedEvaluation,
     Evaluation,
     EvaluationOverview,
@@ -41,8 +43,6 @@ from intelligence_layer.core.evaluation.domain import (
     RunOverview,
     SuccessfulExampleOutput,
 )
-from intelligence_layer.core.task import Input, Output
-from intelligence_layer.core.tracer import Tracer, utc_now
 
 EvaluationOverviewType = TypeVar(
     "EvaluationOverviewType", bound=IndividualEvaluationOverview

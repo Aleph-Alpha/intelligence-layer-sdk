@@ -5,22 +5,20 @@ from typing import Iterable, Sequence
 from pydantic import BaseModel
 from pytest import fixture
 
-from intelligence_layer.core import (
+from intelligence_layer.core.task import Task
+from intelligence_layer.core.tracer import Tracer
+from intelligence_layer.evaluation import (
+    DatasetRepository,
     EvaluationOverview,
     Example,
     ExampleEvaluation,
     FailedExampleEvaluation,
     FileEvaluationRepository,
     InMemoryEvaluationRepository,
+    Runner,
     RunOverview,
 )
-from intelligence_layer.core.evaluation.dataset_repository import (
-    InMemoryDatasetRepository,
-)
-from intelligence_layer.core.evaluation.evaluator import DatasetRepository
-from intelligence_layer.core.evaluation.runner import Runner
-from intelligence_layer.core.task import Task
-from intelligence_layer.core.tracer import Tracer
+from intelligence_layer.evaluation.dataset_repository import InMemoryDatasetRepository
 from tests.conftest import DummyStringInput, DummyStringOutput
 
 FAIL_IN_EVAL_INPUT = "fail in eval"

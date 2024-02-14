@@ -3,7 +3,10 @@ from typing import Generic, Iterable, Optional, TypeVar
 from pydantic import BaseModel
 from pytest import fixture
 
-from intelligence_layer.core import (
+from intelligence_layer.core import InMemoryTaskSpan, InMemoryTracer, NoOpTracer, Tracer
+from intelligence_layer.core.task import Input, Output, Task
+from intelligence_layer.evaluation import (
+    BaseEvaluator,
     Evaluation,
     EvaluationOverview,
     Evaluator,
@@ -12,17 +15,11 @@ from intelligence_layer.core import (
     FailedExampleEvaluation,
     InMemoryDatasetRepository,
     InMemoryEvaluationRepository,
-    InMemoryTaskSpan,
-    InMemoryTracer,
-    NoOpTracer,
+    MeanAccumulator,
+    Runner,
     SuccessfulExampleOutput,
-    Tracer,
 )
-from intelligence_layer.core.evaluation.accumulator import MeanAccumulator
-from intelligence_layer.core.evaluation.evaluator import BaseEvaluator
-from intelligence_layer.core.evaluation.runner import Runner
-from intelligence_layer.core.task import Input, Output, Task
-from tests.core.evaluation.conftest import (
+from tests.evaluation.conftest import (
     FAIL_IN_EVAL_INPUT,
     FAIL_IN_TASK_INPUT,
     DummyAggregatedEvaluationWithResultList,

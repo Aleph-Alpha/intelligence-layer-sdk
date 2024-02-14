@@ -16,24 +16,20 @@ from intelligence_layer.connectors.argilla.argilla_client import (
     RecordData,
 )
 from intelligence_layer.core.complete import InstructInput, PromptOutput
-from intelligence_layer.core.evaluation.dataset_repository import (
-    InMemoryDatasetRepository,
-)
-from intelligence_layer.core.evaluation.domain import (
-    Example,
-    ExampleOutput,
-    RunOverview,
-)
-from intelligence_layer.core.evaluation.elo import EloCalculator, Payoff, PayoffMatrix
-from intelligence_layer.core.evaluation.evaluation_repository import (
-    InMemoryEvaluationRepository,
-)
-from intelligence_layer.core.evaluation.evaluator import ArgillaEvaluationRepository
-from intelligence_layer.core.evaluation.instruct_comparison_argilla_evaluator import (
-    InstructComparisonArgillaEvaluator,
-)
 from intelligence_layer.core.prompt_template import PromptWithMetadata
 from intelligence_layer.core.tracer import utc_now
+from intelligence_layer.evaluation import (
+    ArgillaEvaluationRepository,
+    EloCalculator,
+    Example,
+    ExampleOutput,
+    InMemoryDatasetRepository,
+    InMemoryEvaluationRepository,
+    InstructComparisonArgillaEvaluator,
+    Payoff,
+    PayoffMatrix,
+    RunOverview,
+)
 
 
 class ArgillaFake(ArgillaClient):

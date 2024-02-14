@@ -5,10 +5,10 @@ from uuid import uuid4
 from fsspec import AbstractFileSystem  # type: ignore
 from fsspec.implementations.local import LocalFileSystem  # type: ignore
 
-from intelligence_layer.core.evaluation.domain import Example, ExpectedOutput
-from intelligence_layer.core.evaluation.evaluator import DatasetRepository
 from intelligence_layer.core.task import Input
 from intelligence_layer.core.tracer import JsonSerializer, PydanticSerializable
+from intelligence_layer.evaluation.domain import Example, ExpectedOutput
+from intelligence_layer.evaluation.evaluator import DatasetRepository
 
 
 class FileSystemDatasetRepository(DatasetRepository):

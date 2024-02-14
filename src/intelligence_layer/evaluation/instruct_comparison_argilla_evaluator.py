@@ -12,16 +12,16 @@ from intelligence_layer.connectors.argilla.argilla_client import (
     RecordData,
 )
 from intelligence_layer.core.complete import InstructInput, PromptOutput
-from intelligence_layer.core.evaluation.accumulator import MeanAccumulator
-from intelligence_layer.core.evaluation.domain import Example, SuccessfulExampleOutput
-from intelligence_layer.core.evaluation.elo import (
+from intelligence_layer.evaluation.accumulator import MeanAccumulator
+from intelligence_layer.evaluation.domain import Example, SuccessfulExampleOutput
+from intelligence_layer.evaluation.elo import (
     EloCalculator,
     Payoff,
     PayoffMatrix,
     PlayerScore,
     WinRateCalculator,
 )
-from intelligence_layer.core.evaluation.evaluator import (
+from intelligence_layer.evaluation.evaluator import (
     ArgillaEvaluationRepository,
     ArgillaEvaluator,
     DatasetRepository,

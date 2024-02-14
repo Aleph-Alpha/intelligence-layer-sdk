@@ -304,7 +304,8 @@ class EvaluationOverview(
         statistics: Aggregated statistics of the run. Whatever is returned by :meth:`Evaluator.aggregate`
         end: The time when the evaluation run ended
         failed_evaluation_count: The number of examples where an exception was raised when evaluating the output.
-        successful_evaluation_count: The number of examples that where successfully evaluated.
+        successful_count: The number of examples that where successfully evaluated.
+        individual_evaluation_overview_set: All individual overviews contributing to the aggregated overview.
     """
 
     statistics: SerializeAsAny[AggregatedEvaluation]

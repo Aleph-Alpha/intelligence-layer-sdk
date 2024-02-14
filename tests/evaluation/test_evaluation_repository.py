@@ -4,20 +4,21 @@ from typing import Sequence, cast
 from pydantic import BaseModel
 from pytest import fixture
 
-from intelligence_layer.core import (
+from intelligence_layer.core import InMemoryTaskSpan
+from intelligence_layer.core.tracer import CompositeTracer, InMemoryTracer
+from intelligence_layer.evaluation import (
+    EvaluationOverview,
+    EvaluationRepository,
     ExampleEvaluation,
+    ExampleOutput,
     ExampleTrace,
     FailedExampleEvaluation,
     FileEvaluationRepository,
     InMemoryEvaluationRepository,
-    InMemoryTaskSpan,
     TaskSpanTrace,
 )
-from intelligence_layer.core.evaluation.domain import EvaluationOverview, ExampleOutput
-from intelligence_layer.core.evaluation.evaluator import EvaluationRepository
-from intelligence_layer.core.tracer import CompositeTracer, InMemoryTracer
 from tests.conftest import DummyStringInput
-from tests.core.evaluation.conftest import DummyAggregatedEvaluation, DummyEvaluation
+from tests.evaluation.conftest import DummyAggregatedEvaluation, DummyEvaluation
 
 
 class DummyEvaluationWithExceptionStructure(BaseModel):

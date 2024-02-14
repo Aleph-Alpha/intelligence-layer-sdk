@@ -3,7 +3,11 @@ from typing import Iterable
 
 from pytest import FixtureRequest, fixture, mark
 
-from intelligence_layer.core import DatasetRepository, Example, FileDatasetRepository
+from intelligence_layer.evaluation import (
+    DatasetRepository,
+    Example,
+    FileDatasetRepository,
+)
 from tests.conftest import DummyStringInput, DummyStringOutput
 
 

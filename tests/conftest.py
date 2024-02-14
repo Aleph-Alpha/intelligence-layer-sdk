@@ -26,13 +26,9 @@ from intelligence_layer.connectors.retrievers.qdrant_in_memory_retriever import 
     QdrantInMemoryRetriever,
     RetrieverType,
 )
-from intelligence_layer.core import (
+from intelligence_layer.core import NoOpTracer, Task, TaskSpan
+from intelligence_layer.evaluation import (
     InMemoryDatasetRepository,
-    NoOpTracer,
-    Task,
-    TaskSpan,
-)
-from intelligence_layer.core.evaluation.evaluation_repository import (
     InMemoryEvaluationRepository,
 )
 

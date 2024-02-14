@@ -1,4 +1,4 @@
-from intelligence_layer.core.evaluation.accumulator import MeanAccumulator
+from intelligence_layer.evaluation import MeanAccumulator
 
 
 def test_mean_accumulator() -> None:

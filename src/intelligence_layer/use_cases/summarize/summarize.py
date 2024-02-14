@@ -2,13 +2,12 @@ from typing import Iterable, Optional, Sequence, Union
 
 from pydantic import BaseModel
 
-from intelligence_layer.core import (
+from intelligence_layer.core import Chunk, Language
+from intelligence_layer.evaluation import (
     BleuGrader,
-    Chunk,
     DatasetRepository,
     EvaluationRepository,
     Evaluator,
-    Language,
     MeanAccumulator,
     RougeGrader,
 )

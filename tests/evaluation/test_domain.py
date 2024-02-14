@@ -1,20 +1,16 @@
 from pytest import raises
 
-from intelligence_layer.core import (
-    InMemorySpan,
-    InMemoryTaskSpan,
-    LogEntry,
+from intelligence_layer.core import InMemorySpan, InMemoryTaskSpan, LogEntry
+from intelligence_layer.core.tracer import utc_now
+from intelligence_layer.evaluation import (
+    EvaluationFailed,
+    EvaluationOverview,
     LogTrace,
     SpanTrace,
     TaskSpanTrace,
 )
-from intelligence_layer.core.evaluation.domain import (
-    EvaluationFailed,
-    EvaluationOverview,
-    _to_trace_entry,
-)
-from intelligence_layer.core.tracer import utc_now
-from tests.core.evaluation.conftest import DummyAggregatedEvaluation
+from intelligence_layer.evaluation.domain import _to_trace_entry
+from tests.evaluation.conftest import DummyAggregatedEvaluation
 
 
 def test_to_trace_entry() -> None:
