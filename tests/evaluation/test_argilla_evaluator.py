@@ -10,7 +10,7 @@ from intelligence_layer.connectors import (
     Question,
     RecordData,
 )
-from intelligence_layer.core import (
+from intelligence_layer.evaluation import (
     ArgillaEvaluationRepository,
     ArgillaEvaluator,
     Example,
@@ -20,7 +20,7 @@ from intelligence_layer.core import (
     SuccessfulExampleOutput,
 )
 from tests.conftest import DummyStringInput, DummyStringOutput, DummyStringTask
-from tests.core.evaluation.conftest import DummyAggregatedEvaluation
+from tests.evaluation.conftest import DummyAggregatedEvaluation
 
 
 class StubArgillaClient(ArgillaClient):

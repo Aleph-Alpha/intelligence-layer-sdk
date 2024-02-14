@@ -1,16 +1,14 @@
 from pytest import fixture
 
-from intelligence_layer.core import (
-    Chunk,
+from intelligence_layer.core import Chunk, Language, NoOpTracer
+from intelligence_layer.evaluation import (
     DatasetRepository,
+    EvaluationRepository,
     Example,
     InMemoryDatasetRepository,
     InMemoryEvaluationRepository,
-    Language,
-    NoOpTracer,
+    Runner,
 )
-from intelligence_layer.core.evaluation.evaluator import EvaluationRepository
-from intelligence_layer.core.evaluation.runner import Runner
 from intelligence_layer.use_cases.summarize.long_context_high_compression_summarize import (
     LongContextHighCompressionSummarize,
 )

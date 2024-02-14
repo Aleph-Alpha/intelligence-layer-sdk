@@ -4,7 +4,16 @@ from typing import Iterable, Optional, Sequence, cast
 
 from pydantic import BaseModel, ValidationError
 
-from intelligence_layer.core.evaluation.domain import (
+from intelligence_layer.core.task import Output
+from intelligence_layer.core.tracer import (
+    FileTracer,
+    InMemoryTaskSpan,
+    InMemoryTracer,
+    JsonSerializer,
+    PydanticSerializable,
+    Tracer,
+)
+from intelligence_layer.evaluation.domain import (
     Evaluation,
     ExampleEvaluation,
     ExampleOutput,
@@ -14,18 +23,9 @@ from intelligence_layer.core.evaluation.domain import (
     RunOverview,
     TaskSpanTrace,
 )
-from intelligence_layer.core.evaluation.evaluator import (
+from intelligence_layer.evaluation.evaluator import (
     EvaluationOverviewType,
     EvaluationRepository,
-)
-from intelligence_layer.core.task import Output
-from intelligence_layer.core.tracer import (
-    FileTracer,
-    InMemoryTaskSpan,
-    InMemoryTracer,
-    JsonSerializer,
-    PydanticSerializable,
-    Tracer,
 )
 
 

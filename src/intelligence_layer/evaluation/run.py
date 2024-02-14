@@ -9,9 +9,9 @@ from dotenv import load_dotenv
 from intelligence_layer.connectors.limited_concurrency_client import (
     LimitedConcurrencyClient,
 )
-from intelligence_layer.core import FileEvaluationRepository
-from intelligence_layer.core.evaluation.dataset_repository import FileDatasetRepository
-from intelligence_layer.core.evaluation.runner import Runner
+from intelligence_layer.evaluation.evaluation_repository import FileEvaluationRepository
+from intelligence_layer.evaluation.dataset_repository import FileDatasetRepository
+from intelligence_layer.evaluation.runner import Runner
 
 
 def function_from_string(fully_qualified_function_name: str) -> Any:

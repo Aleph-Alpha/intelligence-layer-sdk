@@ -6,7 +6,8 @@ from pydantic import BaseModel
 from pytest import fixture
 
 from intelligence_layer.connectors import AlephAlphaClientProtocol
-from intelligence_layer.core import (
+from intelligence_layer.core import Task, TaskSpan
+from intelligence_layer.evaluation import (
     DatasetRepository,
     EvaluationOverview,
     EvaluationRepository,
@@ -14,10 +15,8 @@ from intelligence_layer.core import (
     Example,
     FileDatasetRepository,
     FileEvaluationRepository,
-    Task,
-    TaskSpan,
 )
-from intelligence_layer.core.evaluation.run import main
+from intelligence_layer.evaluation.run import main
 
 load_dotenv()
 
@@ -82,9 +81,9 @@ def test_run_evaluation(
         [
             "",
             "--evaluator",
-            "tests.core.evaluation.test_run.DummyEvaluator",
+            "tests.evaluation.test_run.DummyEvaluator",
             "--task",
-            "tests.core.evaluation.test_run.DummyTask",
+            "tests.evaluation.test_run.DummyTask",
             "--dataset-repository-path",
             str(dataset_path),
             "--dataset-id",
@@ -118,9 +117,9 @@ def test_run_evaluation_with_task_with_client(
         [
             "",
             "--evaluator",
-            "tests.core.evaluation.test_run.DummyEvaluator",
+            "tests.evaluation.test_run.DummyEvaluator",
             "--task",
-            "tests.core.evaluation.test_run.DummyTaskWithClient",
+            "tests.evaluation.test_run.DummyTaskWithClient",
             "--dataset-repository-path",
             str(dataset_path),
             "--dataset-id",

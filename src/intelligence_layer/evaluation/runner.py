@@ -7,19 +7,19 @@ from uuid import uuid4
 from pydantic import JsonValue
 from tqdm import tqdm
 
-from intelligence_layer.core.evaluation.domain import (
+from intelligence_layer.core.task import Input, Output, Task
+from intelligence_layer.core.tracer import CompositeTracer, Tracer, utc_now
+from intelligence_layer.evaluation.domain import (
     Example,
     ExampleOutput,
     ExpectedOutput,
     FailedExampleRun,
     RunOverview,
 )
-from intelligence_layer.core.evaluation.evaluator import (
+from intelligence_layer.evaluation.evaluator import (
     DatasetRepository,
     EvaluationRepository,
 )
-from intelligence_layer.core.task import Input, Output, Task
-from intelligence_layer.core.tracer import CompositeTracer, Tracer, utc_now
 
 
 class Runner(Generic[Input, Output]):

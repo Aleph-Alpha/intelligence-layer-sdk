@@ -1,9 +1,7 @@
 import huggingface_hub  # type: ignore
 from huggingface_hub import HfFileSystem, create_repo
 
-from intelligence_layer.core.evaluation.dataset_repository import (
-    FileSystemDatasetRepository,
-)
+from intelligence_layer.evaluation.dataset_repository import FileSystemDatasetRepository
 
 
 class HuggingFaceDatasetRepository(FileSystemDatasetRepository):

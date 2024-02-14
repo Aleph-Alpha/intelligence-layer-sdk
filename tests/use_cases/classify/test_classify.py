@@ -3,15 +3,14 @@ from typing import Iterable, List, Sequence
 from pytest import fixture
 
 from intelligence_layer.connectors import AlephAlphaClientProtocol
-from intelligence_layer.core import (
-    Chunk,
+from intelligence_layer.core import Chunk, Task
+from intelligence_layer.evaluation import (
     DatasetRepository,
     Example,
     InMemoryDatasetRepository,
     InMemoryEvaluationRepository,
-    Task,
+    Runner,
 )
-from intelligence_layer.core.evaluation.runner import Runner
 from intelligence_layer.use_cases.classify.classify import (
     ClassifyInput,
     MultiLabelClassifyEvaluation,

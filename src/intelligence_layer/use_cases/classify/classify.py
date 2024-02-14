@@ -3,13 +3,13 @@ from typing import Iterable, Mapping, NewType, Sequence
 
 from pydantic import BaseModel
 
-from intelligence_layer.core import (
-    Chunk,
+from intelligence_layer.core import Chunk
+from intelligence_layer.evaluation import (
     DatasetRepository,
     EvaluationRepository,
     Evaluator,
+    MeanAccumulator,
 )
-from intelligence_layer.core.evaluation.accumulator import MeanAccumulator
 
 Probability = NewType("Probability", float)
 
