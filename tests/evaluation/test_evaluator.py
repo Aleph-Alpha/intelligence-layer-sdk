@@ -15,6 +15,7 @@ from intelligence_layer.evaluation import (
     FailedExampleEvaluation,
     InMemoryDatasetRepository,
     InMemoryEvaluationRepository,
+    InMemoryRunRepository,
     MeanAccumulator,
     Runner,
     SuccessfulExampleOutput,
@@ -118,11 +119,15 @@ def sequence_good_examples() -> Iterable[Example[str, None]]:
 
 @fixture
 def dummy_evaluator(
-    in_memory_evaluation_repository: InMemoryEvaluationRepository,
     in_memory_dataset_repository: InMemoryDatasetRepository,
+    in_memory_run_repository: InMemoryRunRepository,
+    in_memory_evaluation_repository: InMemoryEvaluationRepository,
 ) -> DummyEvaluator:
     return DummyEvaluator(
-        in_memory_evaluation_repository, in_memory_dataset_repository, "dummy-evaluator"
+        in_memory_dataset_repository,
+        in_memory_run_repository,
+        in_memory_evaluation_repository,
+        "dummy-evaluator",
     )
 
 
@@ -144,12 +149,14 @@ def good_dataset_id(
 
 @fixture
 def comparing_evaluator(
-    in_memory_evaluation_repository: InMemoryEvaluationRepository,
     in_memory_dataset_repository: InMemoryDatasetRepository,
+    in_memory_run_repository: InMemoryRunRepository,
+    in_memory_evaluation_repository: InMemoryEvaluationRepository,
 ) -> ComparingEvaluator:
     return ComparingEvaluator(
-        in_memory_evaluation_repository,
         in_memory_dataset_repository,
+        in_memory_run_repository,
+        in_memory_evaluation_repository,
         "comparing-evaluator",
     )
 
@@ -234,7 +241,7 @@ def test_evaluate_dataset_stores_example_traces(
     dataset_id: str,
     dummy_runner: Runner[str, str],
 ) -> None:
-    evaluation_repository = dummy_evaluator._evaluation_repository
+    run_repository = dummy_evaluator._run_repository
     dataset_repository = dummy_evaluator._dataset_repository
     dataset: Optional[Iterable[Example[str, None]]] = dataset_repository.examples_by_id(
         dataset_id, str, type(None)
@@ -244,13 +251,13 @@ def test_evaluate_dataset_stores_example_traces(
     run_overview = dummy_runner.run_dataset(dataset_id)
     evaluation_run_overview = dummy_evaluator.evaluate_dataset(run_overview.id)
     examples = list(dataset)
-    success_result = evaluation_repository.example_trace(
+    success_result = run_repository.example_trace(
         evaluation_run_overview.run_ids[0], examples[0].id
     )
-    failure_result_task = evaluation_repository.example_trace(
+    failure_result_task = run_repository.example_trace(
         evaluation_run_overview.run_ids[0], examples[1].id
     )
-    failure_result_eval = evaluation_repository.example_trace(
+    failure_result_eval = run_repository.example_trace(
         evaluation_run_overview.run_ids[0], examples[2].id
     )
 
@@ -317,8 +324,9 @@ def test_aggregate_evaluation_can_aggregate_multiple_evals(
 
 
 def test_base_evaluator_type_magic_works(
-    in_memory_evaluation_repository: InMemoryEvaluationRepository,
     in_memory_dataset_repository: InMemoryDatasetRepository,
+    in_memory_run_repository: InMemoryRunRepository,
+    in_memory_evaluation_repository: InMemoryEvaluationRepository,
 ) -> None:
     class EvaluationType(BaseModel):
         pass
@@ -364,7 +372,10 @@ def test_base_evaluator_type_magic_works(
         pass
 
     timmy = GreatGrandChildEvaluator(
-        in_memory_evaluation_repository, in_memory_dataset_repository, "dummy"
+        in_memory_dataset_repository,
+        in_memory_run_repository,
+        in_memory_evaluation_repository,
+        "dummy",
     )
     who_is_timmy = timmy._get_types()
 

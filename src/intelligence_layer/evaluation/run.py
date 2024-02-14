@@ -9,8 +9,13 @@ from dotenv import load_dotenv
 from intelligence_layer.connectors.limited_concurrency_client import (
     LimitedConcurrencyClient,
 )
-from intelligence_layer.evaluation.dataset_repository import FileDatasetRepository
-from intelligence_layer.evaluation.evaluation_repository import FileEvaluationRepository
+from intelligence_layer.evaluation.data_storage.dataset_repository import (
+    FileDatasetRepository,
+)
+from intelligence_layer.evaluation.data_storage.evaluation_repository import (
+    FileEvaluationRepository,
+)
+from intelligence_layer.evaluation.data_storage.run_repository import FileRunRepository
 from intelligence_layer.evaluation.runner import Runner
 
 
@@ -80,15 +85,18 @@ def parse_args(cli_args: Sequence[str]) -> Namespace:
 
 def main(cli_args: Sequence[str]) -> None:
     args = parse_args(cli_args)
-    evaluation_repository = FileEvaluationRepository(args.target_dir)
     dataset_repository = FileDatasetRepository(args.dataset_repository_path)
+    runner_repository = FileRunRepository(args.target_dir)
+    evaluation_repository = FileEvaluationRepository(args.target_dir)
     description = args.description
     task = create_task(args.task)
-    runner = Runner(task, evaluation_repository, dataset_repository, args.task.__name__)
+    runner = Runner(task, dataset_repository, runner_repository, args.task.__name__)
     dataset_id = args.dataset_id
-    run_overview = runner.run_dataset(dataset_id)
-    evaluator = args.evaluator(evaluation_repository, dataset_repository, description)
-    evaluator.evaluate_dataset(run_overview.id)
+    run_overview_id = runner.run_dataset(dataset_id).id
+    evaluator = args.evaluator(
+        dataset_repository, runner_repository, evaluation_repository, description
+    )
+    evaluator.evaluate_dataset(run_overview_id)
 
 
 if __name__ == "__main__":

@@ -9,6 +9,10 @@ from tqdm import tqdm
 
 from intelligence_layer.core.task import Input, Output, Task
 from intelligence_layer.core.tracer import CompositeTracer, Tracer, utc_now
+from intelligence_layer.evaluation.data_storage.dataset_repository import (
+    DatasetRepository,
+)
+from intelligence_layer.evaluation.data_storage.run_repository import RunRepository
 from intelligence_layer.evaluation.domain import (
     Example,
     ExampleOutput,
@@ -16,22 +20,18 @@ from intelligence_layer.evaluation.domain import (
     FailedExampleRun,
     RunOverview,
 )
-from intelligence_layer.evaluation.evaluator import (
-    DatasetRepository,
-    EvaluationRepository,
-)
 
 
 class Runner(Generic[Input, Output]):
     def __init__(
         self,
         task: Task[Input, Output],
-        evaluation_repository: EvaluationRepository,
         dataset_repository: DatasetRepository,
+        run_repository: RunRepository,
         description: str,
     ) -> None:
         self._task = task
-        self._evaluation_repository = evaluation_repository
+        self._run_repository = run_repository
         self._dataset_repository = dataset_repository
         self.description = description
 
@@ -39,7 +39,7 @@ class Runner(Generic[Input, Output]):
         """Returns the type of the evaluated task's output.
 
         This can be used to retrieve properly typed outputs of an evaluation run
-        from a :class:`EvaluationRepository`
+        from a :class:`RunRepository`
 
         Returns:
             the type of the evaluated task's output.
@@ -82,15 +82,13 @@ class Runner(Generic[Input, Output]):
 
         Returns:
             An overview of the run. Outputs will not be returned but instead stored in the
-            :class:`EvaluationRepository` provided in the __init__.
+            :class:`RunRepository` provided in the __init__.
         """
 
         def run(
             example: Example[Input, ExpectedOutput]
         ) -> tuple[str, Output | FailedExampleRun]:
-            evaluate_tracer = self._evaluation_repository.example_tracer(
-                run_id, example.id
-            )
+            evaluate_tracer = self._run_repository.example_tracer(run_id, example.id)
             if tracer:
                 evaluate_tracer = CompositeTracer([evaluate_tracer, tracer])
             try:
@@ -119,7 +117,7 @@ class Runner(Generic[Input, Output]):
                     failed_count += 1
                 else:
                     successful_count += 1
-                self._evaluation_repository.store_example_output(
+                self._run_repository.store_example_output(
                     ExampleOutput[Output](
                         run_id=run_id, example_id=example_id, output=output
                     ),
@@ -133,5 +131,5 @@ class Runner(Generic[Input, Output]):
             successful_example_count=successful_count,
             description=self.description,
         )
-        self._evaluation_repository.store_run_overview(run_overview)
+        self._run_repository.store_run_overview(run_overview)
         return run_overview

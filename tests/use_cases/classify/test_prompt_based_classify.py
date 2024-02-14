@@ -8,11 +8,11 @@ from intelligence_layer.connectors.limited_concurrency_client import (
 from intelligence_layer.core import Chunk, InMemoryTracer, NoOpTracer
 from intelligence_layer.evaluation import (
     DatasetRepository,
-    EvaluationRepository,
     Example,
     InMemoryDatasetRepository,
     InMemoryEvaluationRepository,
     Runner,
+    RunRepository,
 )
 from intelligence_layer.use_cases.classify.classify import (
     ClassifyInput,
@@ -32,12 +32,14 @@ def prompt_based_classify(client: AlephAlphaClientProtocol) -> PromptBasedClassi
 
 @fixture
 def classify_evaluator(
-    in_memory_evaluation_repository: InMemoryEvaluationRepository,
     in_memory_dataset_repository: DatasetRepository,
+    in_memory_run_repository: RunRepository,
+    in_memory_evaluation_repository: InMemoryEvaluationRepository,
 ) -> SingleLabelClassifyEvaluator:
     return SingleLabelClassifyEvaluator(
-        in_memory_evaluation_repository,
         in_memory_dataset_repository,
+        in_memory_run_repository,
+        in_memory_evaluation_repository,
         "single-label-classify",
     )
 
@@ -45,13 +47,13 @@ def classify_evaluator(
 @fixture
 def classify_runner(
     prompt_based_classify: PromptBasedClassify,
-    in_memory_evaluation_repository: EvaluationRepository,
     in_memory_dataset_repository: DatasetRepository,
+    in_memory_run_repository: RunRepository,
 ) -> Runner[ClassifyInput, SingleLabelClassifyOutput]:
     return Runner(
         prompt_based_classify,
-        in_memory_evaluation_repository,
         in_memory_dataset_repository,
+        in_memory_run_repository,
         "prompt-based-classify",
     )
 

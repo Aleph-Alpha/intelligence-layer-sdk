@@ -14,11 +14,12 @@ from intelligence_layer.evaluation import (
     ExampleEvaluation,
     FailedExampleEvaluation,
     FileEvaluationRepository,
-    InMemoryEvaluationRepository,
+    FileRunRepository,
+    InMemoryDatasetRepository,
+    InMemoryRunRepository,
     Runner,
     RunOverview,
 )
-from intelligence_layer.evaluation.dataset_repository import InMemoryDatasetRepository
 from tests.conftest import DummyStringInput, DummyStringOutput
 
 FAIL_IN_EVAL_INPUT = "fail in eval"
@@ -74,6 +75,11 @@ def successful_example_result(eval_id: str) -> ExampleEvaluation[DummyEvaluation
 @fixture
 def file_evaluation_repository(tmp_path: Path) -> FileEvaluationRepository:
     return FileEvaluationRepository(tmp_path)
+
+
+@fixture
+def file_run_repository(tmp_path: Path) -> FileRunRepository:
+    return FileRunRepository(tmp_path)
 
 
 @fixture
@@ -135,12 +141,12 @@ def dummy_string_examples(
 
 @fixture
 def dummy_runner(
-    in_memory_evaluation_repository: InMemoryEvaluationRepository,
     in_memory_dataset_repository: InMemoryDatasetRepository,
+    in_memory_run_repository: InMemoryRunRepository,
 ) -> Runner[str, str]:
     return Runner(
         DummyTask(),
-        in_memory_evaluation_repository,
         in_memory_dataset_repository,
+        in_memory_run_repository,
         "dummy-runner",
     )

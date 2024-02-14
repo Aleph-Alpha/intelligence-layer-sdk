@@ -9,6 +9,7 @@ from intelligence_layer.evaluation import (
     EvaluationRepository,
     Evaluator,
     MeanAccumulator,
+    RunRepository,
 )
 
 Probability = NewType("Probability", float)
@@ -81,14 +82,6 @@ class SingleLabelClassifyEvaluator(
         AggregatedSingleLabelClassifyEvaluation,
     ]
 ):
-    def __init__(
-        self,
-        evaluation_repository: EvaluationRepository,
-        dataset_respository: DatasetRepository,
-        description: str,
-    ):
-        super().__init__(evaluation_repository, dataset_respository, description)
-
     # mypy expects *args where this method only uses one output
     def do_evaluate(  # type: ignore
         self,
@@ -170,12 +163,15 @@ class MultiLabelClassifyEvaluator(
 ):
     def __init__(
         self,
-        evaluation_repository: EvaluationRepository,
         dataset_repository: DatasetRepository,
+        run_repository: RunRepository,
+        evaluation_repository: EvaluationRepository,
         description: str,
         threshold: float = 0.55,
     ):
-        super().__init__(evaluation_repository, dataset_repository, description)
+        super().__init__(
+            dataset_repository, run_repository, evaluation_repository, description
+        )
         self.threshold = threshold
 
     # mypy expects *args where this method only uses one output

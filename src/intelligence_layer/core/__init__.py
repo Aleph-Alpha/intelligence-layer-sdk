@@ -1,3 +1,9 @@
+from intelligence_layer.core.intelligence_app import (
+    AuthenticatedIntelligenceApp as AuthenticatedIntelligenceApp,
+)
+from intelligence_layer.core.intelligence_app import AuthService as AuthService
+from intelligence_layer.core.intelligence_app import IntelligenceApp as IntelligenceApp
+
 from .chunk import Chunk as Chunk
 from .chunk import ChunkInput as ChunkInput
 from .chunk import ChunkOutput as ChunkOutput

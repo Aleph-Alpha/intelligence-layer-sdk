@@ -30,6 +30,7 @@ from intelligence_layer.core import NoOpTracer, Task, TaskSpan
 from intelligence_layer.evaluation import (
     InMemoryDatasetRepository,
     InMemoryEvaluationRepository,
+    InMemoryRunRepository,
 )
 
 
@@ -133,6 +134,11 @@ def dummy_string_task() -> DummyStringTask:
 @fixture
 def in_memory_dataset_repository() -> InMemoryDatasetRepository:
     return InMemoryDatasetRepository()
+
+
+@fixture
+def in_memory_run_repository() -> InMemoryRunRepository:
+    return InMemoryRunRepository()
 
 
 @fixture

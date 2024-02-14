@@ -2,22 +2,19 @@ from intelligence_layer.core.tracer import InMemoryTracer
 from intelligence_layer.evaluation import (
     Example,
     InMemoryDatasetRepository,
-    InMemoryEvaluationRepository,
+    InMemoryRunRepository,
     Runner,
 )
 from tests.evaluation.conftest import FAIL_IN_EVAL_INPUT, FAIL_IN_TASK_INPUT, DummyTask
 
 
 def test_runner_runs_dataset(
-    in_memory_evaluation_repository: InMemoryEvaluationRepository,
     in_memory_dataset_repository: InMemoryDatasetRepository,
+    in_memory_run_repository: InMemoryRunRepository,
 ) -> None:
     task = DummyTask()
     runner = Runner(
-        task,
-        in_memory_evaluation_repository,
-        in_memory_dataset_repository,
-        "dummy-runner",
+        task, in_memory_dataset_repository, in_memory_run_repository, "dummy-runner"
     )
     examples = [
         Example(input="success", expected_output=None),
@@ -28,7 +25,7 @@ def test_runner_runs_dataset(
     dataset_id = in_memory_dataset_repository.create_dataset(examples=examples)
     overview = runner.run_dataset(dataset_id)
     outputs = list(
-        in_memory_evaluation_repository.example_outputs(
+        in_memory_run_repository.example_outputs(
             overview.id, output_type=runner.output_type()
         )
     )
@@ -39,16 +36,13 @@ def test_runner_runs_dataset(
 
 
 def test_runner_runs_n_examples(
-    in_memory_evaluation_repository: InMemoryEvaluationRepository,
     in_memory_dataset_repository: InMemoryDatasetRepository,
+    in_memory_run_repository: InMemoryRunRepository,
 ) -> None:
     task = DummyTask()
     tracer = InMemoryTracer()
     runner = Runner(
-        task,
-        in_memory_evaluation_repository,
-        in_memory_dataset_repository,
-        "dummy-runner",
+        task, in_memory_dataset_repository, in_memory_run_repository, "dummy-runner"
     )
     examples = [
         Example(input="success", expected_output=None),
