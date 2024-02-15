@@ -3,8 +3,6 @@ from typing import Any, Generic, Optional, Sequence, TypeVar
 
 from pydantic import BaseModel
 
-from intelligence_layer.core.chunk import Chunk
-
 
 class Document(BaseModel):
     """A document.
@@ -22,11 +20,11 @@ class DocumentChunk(BaseModel):
     """Part of a :class:`Document`, specifically for retrieval use cases.
 
     Attributes:
-        chunk: Chunk of the document that matched the search query.
+        text: Chunk of the document that matched the search query.
         metadata: Any metadata added to the document.
     """
 
-    text: Chunk
+    text: str
     metadata: Any = None
 
 
@@ -37,9 +35,10 @@ class SearchResult(BaseModel, Generic[ID]):
     """Contains a text alongside its search score.
 
     Attributes:
+        id: Unique identifier of the document
         score: The similarity score between the text and the query that was searched with.
             Will be between 0 and 1, where 0 means no similarity and 1 perfect similarity.
-        document: The document found by search.
+        document_chunk: The document chunk found by search.
     """
 
     id: ID

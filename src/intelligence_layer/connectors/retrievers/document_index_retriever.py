@@ -12,7 +12,6 @@ from intelligence_layer.connectors.retrievers.base_retriever import (
     DocumentChunk,
     SearchResult,
 )
-from intelligence_layer.core.chunk import Chunk
 
 
 class DocumentIndexRetriever(BaseRetriever[DocumentPath]):
@@ -65,7 +64,7 @@ class DocumentIndexRetriever(BaseRetriever[DocumentPath]):
                 id=result.document_path,
                 score=result.score,
                 document_chunk=DocumentChunk(
-                    text=Chunk(result.section),
+                    text=result.section,
                 ),
             )
             for result in response
