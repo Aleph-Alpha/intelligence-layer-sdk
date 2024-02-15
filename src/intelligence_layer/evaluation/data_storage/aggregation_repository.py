@@ -1,8 +1,8 @@
 from abc import ABC, abstractmethod
 from pathlib import Path
 from typing import Any, Sequence
-from intelligence_layer.evaluation.data_storage.utils import FileBasedRepository
 
+from intelligence_layer.evaluation.data_storage.utils import FileBasedRepository
 from intelligence_layer.evaluation.domain import (
     AggregatedEvaluation,
     AggregationOverview,
@@ -59,7 +59,9 @@ class FileAggregationRepository(AggregationRepository, FileBasedRepository):
         if not file_path.exists():
             return None
         content = self.read_utf8(file_path)
-        return AggregationOverview[stat_type].model_validate_json(content)  # type:ignore
+        return AggregationOverview[stat_type].model_validate_json(  # type:ignore
+            content
+        )
 
     def store_aggregation_overview(
         self, overview: AggregationOverview[AggregatedEvaluation]
