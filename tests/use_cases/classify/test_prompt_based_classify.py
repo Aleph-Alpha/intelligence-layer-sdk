@@ -14,6 +14,9 @@ from intelligence_layer.evaluation import (
     Runner,
     RunRepository,
 )
+from intelligence_layer.evaluation.data_storage.aggregation_repository import (
+    InMemoryAggregationRepository,
+)
 from intelligence_layer.use_cases.classify.classify import (
     ClassifyInput,
     SingleLabelClassifyEvaluation,
@@ -35,11 +38,13 @@ def classify_evaluator(
     in_memory_dataset_repository: DatasetRepository,
     in_memory_run_repository: RunRepository,
     in_memory_evaluation_repository: InMemoryEvaluationRepository,
+    in_memory_aggregation_repository: InMemoryAggregationRepository,
 ) -> SingleLabelClassifyEvaluator:
     return SingleLabelClassifyEvaluator(
         in_memory_dataset_repository,
         in_memory_run_repository,
         in_memory_evaluation_repository,
+        in_memory_aggregation_repository,
         "single-label-classify",
     )
 
@@ -159,10 +164,10 @@ def test_can_evaluate_classify(
     dataset_name = in_memory_dataset_repository.create_dataset([example])
 
     run_overview = classify_runner.run_dataset(dataset_name)
-    evaluation_overview = classify_evaluator.evaluate_dataset(run_overview.id)
+    evaluation_overview = classify_evaluator.evaluate_runs(run_overview.id)
 
     evaluation = in_memory_evaluation_repository.example_evaluations(
-        evaluation_overview.individual_evaluation_overviews[0].id,
+        evaluation_overview.id,
         SingleLabelClassifyEvaluation,
     )[0].result
 
@@ -195,7 +200,7 @@ def test_can_aggregate_evaluations(
     )
 
     run_overview = classify_runner.run_dataset(dataset_name)
-    evaluation_overview = classify_evaluator.evaluate_dataset(run_overview.id)
+    evaluation_overview = classify_evaluator.eval_and_aggregate_runs(run_overview.id)
 
     assert evaluation_overview.statistics.percentage_correct == 0.5
 
@@ -207,6 +212,6 @@ def test_aggregating_evaluations_works_with_empty_list(
 ) -> None:
     dataset_id = in_memory_dataset_repository.create_dataset([])
     run_overview = classify_runner.run_dataset(dataset_id)
-    evaluation_overview = classify_evaluator.evaluate_dataset(run_overview.id)
+    evaluation_overview = classify_evaluator.eval_and_aggregate_runs(run_overview.id)
 
     assert evaluation_overview.statistics.percentage_correct == 0

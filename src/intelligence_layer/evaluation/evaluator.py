@@ -28,6 +28,9 @@ from intelligence_layer.connectors.argilla.argilla_client import (
 )
 from intelligence_layer.core.task import Input, Output
 from intelligence_layer.core.tracer import utc_now
+from intelligence_layer.evaluation.data_storage.aggregation_repository import (
+    AggregationRepository,
+)
 from intelligence_layer.evaluation.data_storage.dataset_repository import (
     DatasetRepository,
 )
@@ -38,6 +41,7 @@ from intelligence_layer.evaluation.data_storage.evaluation_repository import (
 from intelligence_layer.evaluation.data_storage.run_repository import RunRepository
 from intelligence_layer.evaluation.domain import (
     AggregatedEvaluation,
+    AggregationOverview,
     Evaluation,
     EvaluationOverview,
     Example,
@@ -46,7 +50,6 @@ from intelligence_layer.evaluation.domain import (
     ExpectedOutput,
     FailedExampleEvaluation,
     FailedExampleRun,
-    IndividualEvaluationOverview,
     RunOverview,
     SuccessfulExampleOutput,
 )
@@ -105,11 +108,13 @@ class BaseEvaluator(
         dataset_repository: DatasetRepository,
         run_repository: RunRepository,
         evaluation_repository: EvaluationRepository,
+        aggregation_repository: AggregationRepository,
         description: str,
     ) -> None:
         self._dataset_repository = dataset_repository
         self._run_repository = run_repository
         self._evaluation_repository = evaluation_repository
+        self._aggregation_repository = aggregation_repository
         self.description = description
 
     @lru_cache(maxsize=1)
@@ -227,7 +232,7 @@ class BaseEvaluator(
         It should create an `AggregatedEvaluation` class and return it at the end.
 
         Args:
-            evaluations: The results from running `evaluate_dataset` with a :class:`Task`.
+            evaluations: The results from running `eval_and_aggregate_runs` with a :class:`Task`.
 
         Returns:
             The aggregated results of an evaluation run with a :class:`Dataset`.
@@ -250,7 +255,7 @@ class BaseEvaluator(
     @final
     def evaluate_runs(
         self, *run_ids: str, num_examples: Optional[int] = None
-    ) -> IndividualEvaluationOverview:
+    ) -> EvaluationOverview:
         """Evaluates all generated outputs in the run.
 
         For each set of successful outputs in the referenced runs,
@@ -362,7 +367,7 @@ class BaseEvaluator(
                 Example[Input, ExpectedOutput],
                 str,
                 Sequence[SuccessfulExampleOutput[Output]],
-            ]
+            ],
         ) -> None:
             example, eval_id, example_outputs = args
             self.evaluate(example, eval_id, *example_outputs)
@@ -373,7 +378,7 @@ class BaseEvaluator(
                 desc="Evaluating",
             )
 
-        partial_overview = IndividualEvaluationOverview(
+        partial_overview = EvaluationOverview(
             run_overviews=run_overviews,
             id=eval_id,
             start=start,
@@ -386,7 +391,7 @@ class BaseEvaluator(
     @final
     def aggregate_evaluation(
         self, *eval_ids: str
-    ) -> EvaluationOverview[AggregatedEvaluation]:
+    ) -> AggregationOverview[AggregatedEvaluation]:
         """Aggregates all evaluations into an overview that includes high-level statistics.
 
         Aggregates :class:`Evaluation`s according to the implementation of :func:`BaseEvaluator.aggregate`.
@@ -399,9 +404,9 @@ class BaseEvaluator(
             An overview of the aggregated evaluation.
         """
 
-        def load_eval_overview(eval_id: str) -> IndividualEvaluationOverview:
+        def load_eval_overview(eval_id: str) -> EvaluationOverview:
             evaluation_overview = self._evaluation_repository.evaluation_overview(
-                eval_id, IndividualEvaluationOverview
+                eval_id
             )
             if not evaluation_overview:
                 raise ValueError(
@@ -429,23 +434,18 @@ class BaseEvaluator(
         start = utc_now()
         statistics = self.aggregate(cast(Iterable[Evaluation], successful_evaluations))
 
-        run_overview = EvaluationOverview(
-            statistics=statistics,
-            successful_count=successful_evaluations.included_count(),
-            failed_evaluation_count=successful_evaluations.excluded_count(),
+        aggregation_overview = AggregationOverview(
+            evaluation_overviews=frozenset(evaluation_overviews),
             id=id,
-            run_overviews=frozenset(
-                overview
-                for subset in evaluation_overviews
-                for overview in subset.run_overviews
-            ),
-            individual_evaluation_overview_set=evaluation_overviews,
             start=start,
-            description=self.description,
             end=utc_now(),
+            successful_evaluation_count=successful_evaluations.included_count(),
+            crashed_during_eval_count=successful_evaluations.excluded_count(),
+            description=self.description,
+            statistics=statistics,
         )
-        self._evaluation_repository.store_evaluation_overview(run_overview)
-        return run_overview
+        self._aggregation_repository.store_aggregation_overview(aggregation_overview)
+        return aggregation_overview
 
 
 class Evaluator(
@@ -474,10 +474,15 @@ class Evaluator(
         dataset_repository: DatasetRepository,
         run_repository: RunRepository,
         evaluation_repository: EvaluationRepository,
+        aggregation_repository: AggregationRepository,
         description: str,
     ) -> None:
         super().__init__(
-            dataset_repository, run_repository, evaluation_repository, description
+            dataset_repository,
+            run_repository,
+            evaluation_repository,
+            aggregation_repository,
+            description,
         )
 
     @abstractmethod
@@ -522,9 +527,9 @@ class Evaluator(
         )
 
     @final
-    def evaluate_dataset(
+    def eval_and_aggregate_runs(
         self, *run_ids: str
-    ) -> EvaluationOverview[AggregatedEvaluation]:
+    ) -> AggregationOverview[AggregatedEvaluation]:
         """Evaluates an entire dataset in a threaded manner and aggregates the results into an `AggregatedEvaluation`.
 
         This will call the `run` method for each example in the dataset.
@@ -569,13 +574,18 @@ class ArgillaEvaluator(
         dataset_repository: DatasetRepository,
         run_repository: RunRepository,
         evaluation_repository: ArgillaEvaluationRepository,
+        aggregation_repository: AggregationRepository,
         description: str,
         workspace_id: str,
         fields: Sequence[Field],
         questions: Sequence[Question],
     ) -> None:
         super().__init__(
-            dataset_repository, run_repository, evaluation_repository, description
+            dataset_repository,
+            run_repository,
+            evaluation_repository,
+            aggregation_repository,
+            description,
         )
         self._workspace_id = workspace_id
         self._fields = fields
@@ -595,7 +605,7 @@ class ArgillaEvaluator(
         )
 
     @final
-    def partial_evaluate_dataset(self, *run_ids: str) -> IndividualEvaluationOverview:
+    def partial_eval_and_aggregate_runs(self, *run_ids: str) -> EvaluationOverview:
         """Evaluates an entire :class:`Dataset` in a threaded manner and pushes the results to Argilla.
 
         Args:

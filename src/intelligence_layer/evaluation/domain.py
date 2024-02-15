@@ -1,6 +1,6 @@
 from datetime import datetime
 from json import dumps
-from typing import Generic, Optional, Sequence, TypeVar, Union
+from typing import Generic, Iterable, Optional, Sequence, TypeVar, Union
 from uuid import uuid4
 
 from pydantic import BaseModel, ConfigDict, Field, SerializeAsAny
@@ -270,7 +270,7 @@ class ExampleEvaluation(BaseModel, Generic[Evaluation]):
     result: SerializeAsAny[Evaluation | FailedExampleEvaluation]
 
 
-class IndividualEvaluationOverview(BaseModel, frozen=True):
+class EvaluationOverview(BaseModel, frozen=True):
     """Overview of the unaggregated results of evaluating a :class:`Task` on a dataset.
 
     Attributes:
@@ -292,13 +292,16 @@ class EvaluationFailed(Exception):
             f"Evaluation {eval_id} failed with {failed_count} failed examples."
         )
 
+    end: datetime
+    failed_example_count: int
+    successful_example_count: int
+    description: str
 
-class EvaluationOverview(
-    IndividualEvaluationOverview, Generic[AggregatedEvaluation], frozen=True
-):
+
+class AggregationOverview(BaseModel, Generic[AggregatedEvaluation], frozen=True):
     """Complete overview of the results of evaluating a :class:`Task` on a dataset.
 
-    Created when running :meth:`Evaluator.evaluate_dataset`. Contains high-level information and statistics.
+    Created when running :meth:`Evaluator.eval_and_aggregate_runs`. Contains high-level information and statistics.
 
     Attributes:
         statistics: Aggregated statistics of the run. Whatever is returned by :meth:`Evaluator.aggregate`
@@ -308,31 +311,35 @@ class EvaluationOverview(
         individual_evaluation_overview_set: All individual overviews contributing to the aggregated overview.
     """
 
+    evaluation_overviews: frozenset[EvaluationOverview]
+    id: str
+    start: datetime
+    end: datetime
+    successful_evaluation_count: int
+    crashed_during_eval_count: int
+    description: str
     statistics: SerializeAsAny[AggregatedEvaluation]
-    end: Optional[datetime]
-    failed_evaluation_count: int
-    successful_count: int
-    individual_evaluation_overview_set: frozenset[
-        IndividualEvaluationOverview
-    ] = frozenset()
 
     @property
     def run_ids(self) -> Sequence[str]:
-        return [run_overview.id for run_overview in self.run_overviews]
+        return [overview.id for overview in self.run_overviews()]
 
-    @property
-    def failed_count(self) -> int:
-        return self.failed_evaluation_count + sum(
-            run_overview.failed_example_count for run_overview in self.run_overviews
+    def run_overviews(self) -> Iterable[RunOverview]:
+        return set(
+            run_overview
+            for evaluation_overview in self.evaluation_overviews
+            for run_overview in evaluation_overview.run_overviews
         )
 
     @property
-    def individual_evaluation_overviews(self) -> Sequence[IndividualEvaluationOverview]:
-        return list(self.individual_evaluation_overview_set)
+    def failed_evaluation_count(self) -> int:
+        return self.crashed_during_eval_count + sum(
+            run_overview.failed_example_count for run_overview in self.run_overviews()
+        )
 
     def raise_on_evaluation_failure(self) -> None:
-        if self.failed_count > 0:
-            raise EvaluationFailed(self.id, self.failed_count)
+        if self.crashed_during_eval_count > 0:
+            raise EvaluationFailed(self.id, self.crashed_during_eval_count)
 
 
 class Example(BaseModel, Generic[Input, ExpectedOutput]):

@@ -9,6 +9,9 @@ from dotenv import load_dotenv
 from intelligence_layer.connectors.limited_concurrency_client import (
     LimitedConcurrencyClient,
 )
+from intelligence_layer.evaluation.data_storage.aggregation_repository import (
+    FileAggregationRepository,
+)
 from intelligence_layer.evaluation.data_storage.dataset_repository import (
     FileDatasetRepository,
 )
@@ -88,15 +91,20 @@ def main(cli_args: Sequence[str]) -> None:
     dataset_repository = FileDatasetRepository(args.dataset_repository_path)
     runner_repository = FileRunRepository(args.target_dir)
     evaluation_repository = FileEvaluationRepository(args.target_dir)
+    aggregation_repository = FileAggregationRepository(args.target_dir)
     description = args.description
     task = create_task(args.task)
     runner = Runner(task, dataset_repository, runner_repository, args.task.__name__)
     dataset_id = args.dataset_id
     run_overview_id = runner.run_dataset(dataset_id).id
     evaluator = args.evaluator(
-        dataset_repository, runner_repository, evaluation_repository, description
+        dataset_repository,
+        runner_repository,
+        evaluation_repository,
+        aggregation_repository,
+        description,
     )
-    evaluator.evaluate_dataset(run_overview_id)
+    evaluator.eval_and_aggregate_runs(run_overview_id)
 
 
 if __name__ == "__main__":

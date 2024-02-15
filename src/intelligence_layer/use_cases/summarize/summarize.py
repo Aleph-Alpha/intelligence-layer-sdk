@@ -11,6 +11,9 @@ from intelligence_layer.evaluation import (
     MeanAccumulator,
     RougeGrader,
 )
+from intelligence_layer.evaluation.data_storage.aggregation_repository import (
+    AggregationRepository,
+)
 from intelligence_layer.evaluation.data_storage.run_repository import RunRepository
 
 
@@ -115,10 +118,15 @@ class SingleChunkSummarizeEvaluator(
         dataset_repository: DatasetRepository,
         run_repository: RunRepository,
         evaluation_repository: EvaluationRepository,
+        aggregation_repository: AggregationRepository,
         description: str,
     ) -> None:
         super().__init__(
-            dataset_repository, run_repository, evaluation_repository, description
+            dataset_repository,
+            run_repository,
+            evaluation_repository,
+            aggregation_repository,
+            description,
         )
         self.bleu_grader = BleuGrader()
         self.rouge_grader = RougeGrader()
@@ -157,10 +165,15 @@ class LongContextSummarizeEvaluator(
         dataset_repository: DatasetRepository,
         run_repository: RunRepository,
         evaluation_repository: EvaluationRepository,
+        aggregation_repository: AggregationRepository,
         description: str,
     ) -> None:
         super().__init__(
-            dataset_repository, run_repository, evaluation_repository, description
+            dataset_repository,
+            run_repository,
+            evaluation_repository,
+            aggregation_repository,
+            description,
         )
         self.bleu_grader = BleuGrader()
         self.rouge_grader = RougeGrader()

@@ -12,6 +12,9 @@ from intelligence_layer.evaluation import (
     Runner,
     RunRepository,
 )
+from intelligence_layer.evaluation.data_storage.aggregation_repository import (
+    InMemoryAggregationRepository,
+)
 from intelligence_layer.use_cases.classify.classify import (
     ClassifyInput,
     MultiLabelClassifyEvaluation,
@@ -130,11 +133,13 @@ def classify_evaluator(
     in_memory_dataset_repository: DatasetRepository,
     in_memory_run_repository: RunRepository,
     in_memory_evaluation_repository: InMemoryEvaluationRepository,
+    in_memory_aggregation_repository: InMemoryAggregationRepository,
 ) -> MultiLabelClassifyEvaluator:
     return MultiLabelClassifyEvaluator(
         in_memory_dataset_repository,
         in_memory_run_repository,
         in_memory_evaluation_repository,
+        in_memory_aggregation_repository,
         "multi-label-classify",
     )
 
@@ -160,9 +165,9 @@ def test_multi_label_classify_evaluator_single_example(
 ) -> None:
     run_overview = classify_runner.run_dataset(single_entry_dataset_name)
 
-    evaluation_overview = classify_evaluator.evaluate_dataset(run_overview.id)
+    evaluation_overview = classify_evaluator.evaluate_runs(run_overview.id)
     evaluation = classify_evaluator._evaluation_repository.example_evaluations(
-        evaluation_overview.individual_evaluation_overviews[0].id,
+        evaluation_overview.id,
         MultiLabelClassifyEvaluation,
     )[0].result
 
@@ -180,7 +185,7 @@ def test_multi_label_classify_evaluator_full_dataset(
 ) -> None:
     run_overview = classify_runner.run_dataset(multiple_entries_dataset_name)
 
-    evaluation = classify_evaluator.evaluate_dataset(run_overview.id)
+    evaluation = classify_evaluator.eval_and_aggregate_runs(run_overview.id)
 
     assert set(["positive", "negative", "finance", "school"]) == set(
         evaluation.statistics.class_metrics.keys()

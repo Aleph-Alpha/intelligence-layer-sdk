@@ -31,6 +31,9 @@ from intelligence_layer.evaluation import (
     PayoffMatrix,
     RunOverview,
 )
+from intelligence_layer.evaluation.data_storage.aggregation_repository import (
+    InMemoryAggregationRepository,
+)
 
 
 class ArgillaFake(ArgillaClient):
@@ -78,6 +81,7 @@ def evaluator(
     in_memory_dataset_repository: InMemoryDatasetRepository,
     in_memory_run_repository: InMemoryRunRepository,
     in_memory_evaluation_repository: InMemoryEvaluationRepository,
+    in_memory_aggregation_repository: InMemoryAggregationRepository,
     argilla_fake: ArgillaClient,
 ) -> InstructComparisonArgillaEvaluator:
     eval_repository = ArgillaEvaluationRepository(
@@ -87,6 +91,7 @@ def evaluator(
         in_memory_dataset_repository,
         in_memory_run_repository,
         eval_repository,
+        in_memory_aggregation_repository,
         "instruct-evaluator",
         "workspace",
     )
@@ -110,7 +115,6 @@ def test_evaluate_run_submits_pairwise_comparison_records(
     evaluator: InstructComparisonArgillaEvaluator,
     in_memory_dataset_repository: InMemoryDatasetRepository,
     in_memory_run_repository: InMemoryRunRepository,
-    in_memory_evaluation_repository: InMemoryEvaluationRepository,
     any_instruct_output: PromptOutput,
     argilla_fake: ArgillaFake,
 ) -> None:
@@ -166,6 +170,7 @@ def test_evaluate_run_only_evaluates_high_priority(
     in_memory_dataset_repository: InMemoryDatasetRepository,
     in_memory_run_repository: InMemoryRunRepository,
     in_memory_evaluation_repository: InMemoryEvaluationRepository,
+    in_memory_aggregation_repository: InMemoryAggregationRepository,
     any_instruct_output: PromptOutput,
     argilla_fake: ArgillaFake,
 ) -> None:
@@ -177,6 +182,7 @@ def test_evaluate_run_only_evaluates_high_priority(
         in_memory_dataset_repository,
         in_memory_run_repository,
         eval_repository,
+        in_memory_aggregation_repository,
         "instruct-evaluator",
         "workspace",
         relevant_ids,

@@ -11,6 +11,9 @@ from intelligence_layer.evaluation import (
     Runner,
     RunRepository,
 )
+from intelligence_layer.evaluation.data_storage.aggregation_repository import (
+    InMemoryAggregationRepository,
+)
 from intelligence_layer.use_cases.summarize.long_context_high_compression_summarize import (
     LongContextHighCompressionSummarize,
 )
@@ -33,11 +36,13 @@ def single_chunk_summarize_evaluator(
     in_memory_dataset_repository: InMemoryDatasetRepository,
     in_memory_run_repository: InMemoryRunRepository,
     in_memory_evaluation_repository: InMemoryEvaluationRepository,
+    in_memory_aggregation_repository: InMemoryAggregationRepository,
 ) -> SingleChunkSummarizeEvaluator:
     return SingleChunkSummarizeEvaluator(
         in_memory_dataset_repository,
         in_memory_run_repository,
         in_memory_evaluation_repository,
+        in_memory_aggregation_repository,
         "single-chunk-summarize",
     )
 
@@ -61,11 +66,13 @@ def long_context_summarize_evaluator(
     in_memory_dataset_repository: DatasetRepository,
     in_memory_run_repository: RunRepository,
     in_memory_evaluation_repository: EvaluationRepository,
+    in_memory_aggregation_repository: InMemoryAggregationRepository,
 ) -> LongContextSummarizeEvaluator:
     return LongContextSummarizeEvaluator(
         in_memory_dataset_repository,
         in_memory_run_repository,
         in_memory_evaluation_repository,
+        in_memory_aggregation_repository,
         "long-context-summarize",
     )
 
@@ -105,12 +112,12 @@ def test_single_chunk_summarize_evaluator(
     )
     run_overview = single_chunk_summarize_runner.run_dataset(dataset_name)
 
-    evaluation_overview = single_chunk_summarize_evaluator.evaluate_dataset(
+    aggregation_overview = single_chunk_summarize_evaluator.eval_and_aggregate_runs(
         run_overview.id
     )
 
-    assert evaluation_overview.successful_count == 2
-    individual_evaluation_id = evaluation_overview.individual_evaluation_overviews[0].id
+    assert aggregation_overview.successful_evaluation_count == 2
+    individual_evaluation_id = next(iter(aggregation_overview.evaluation_overviews)).id
     good_result = (
         single_chunk_summarize_evaluator._evaluation_repository.example_evaluation(
             individual_evaluation_id,
@@ -152,12 +159,12 @@ def test_long_context_summarize_evaluator(
     )
     run_overview = long_context_summarize_runner.run_dataset(dataset_name)
 
-    evaluation_overview = long_context_summarize_evaluator.evaluate_dataset(
+    aggregation_overview = long_context_summarize_evaluator.eval_and_aggregate_runs(
         run_overview.id
     )
 
-    assert evaluation_overview.successful_count == 2
-    individual_evaluation_id = evaluation_overview.individual_evaluation_overviews[0].id
+    assert aggregation_overview.successful_evaluation_count == 2
+    individual_evaluation_id = next(iter(aggregation_overview.evaluation_overviews)).id
     good_result = (
         long_context_summarize_evaluator._evaluation_repository.example_evaluation(
             individual_evaluation_id,

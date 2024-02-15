@@ -32,6 +32,9 @@ from intelligence_layer.evaluation import (
     InMemoryEvaluationRepository,
     InMemoryRunRepository,
 )
+from intelligence_layer.evaluation.data_storage.aggregation_repository import (
+    InMemoryAggregationRepository,
+)
 
 
 @fixture(scope="session")
@@ -144,3 +147,8 @@ def in_memory_run_repository() -> InMemoryRunRepository:
 @fixture
 def in_memory_evaluation_repository() -> InMemoryEvaluationRepository:
     return InMemoryEvaluationRepository()
+
+
+@fixture
+def in_memory_aggregation_repository() -> InMemoryAggregationRepository:
+    return InMemoryAggregationRepository()

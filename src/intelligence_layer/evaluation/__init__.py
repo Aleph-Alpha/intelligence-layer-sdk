@@ -1,4 +1,13 @@
 from .accumulator import MeanAccumulator as MeanAccumulator
+from .data_storage.aggregation_repository import (
+    AggregationRepository as AggregationRepository,
+)
+from .data_storage.aggregation_repository import (
+    FileAggregationRepository as FileAggregationRepository,
+)
+from .data_storage.aggregation_repository import (
+    InMemoryAggregationRepository as InMemoryAggregationRepository,
+)
 from .data_storage.dataset_repository import DatasetRepository as DatasetRepository
 from .data_storage.dataset_repository import (
     FileDatasetRepository as FileDatasetRepository,
@@ -21,9 +30,9 @@ from .data_storage.evaluation_repository import (
 from .data_storage.run_repository import FileRunRepository as FileRunRepository
 from .data_storage.run_repository import InMemoryRunRepository as InMemoryRunRepository
 from .data_storage.run_repository import RunRepository as RunRepository
+from .domain import AggregationOverview as AggregationOverview
 from .domain import Evaluation as Evaluation
 from .domain import EvaluationFailed as EvaluationFailed
-from .domain import EvaluationOverview as EvaluationOverview
 from .domain import Example as Example
 from .domain import ExampleEvaluation as ExampleEvaluation
 from .domain import ExampleOutput as ExampleOutput

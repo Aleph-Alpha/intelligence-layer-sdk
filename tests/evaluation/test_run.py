@@ -7,12 +7,9 @@ from pytest import fixture
 
 from intelligence_layer.connectors import AlephAlphaClientProtocol
 from intelligence_layer.core import Task, TaskSpan
-from intelligence_layer.evaluation import (
-    EvaluationOverview,
-    Evaluator,
-    Example,
-    FileDatasetRepository,
-    FileEvaluationRepository,
+from intelligence_layer.evaluation import Evaluator, Example, FileDatasetRepository
+from intelligence_layer.evaluation.data_storage.aggregation_repository import (
+    FileAggregationRepository,
 )
 from intelligence_layer.evaluation.run import main
 
@@ -64,8 +61,8 @@ def test_run_evaluation(
     dataset_repository = FileDatasetRepository(dataset_path)
     dataset_id = dataset_repository.create_dataset(examples)
 
-    eval_path = tmp_path / "eval"
-    eval_repository = FileEvaluationRepository(eval_path)
+    aggregation_path = tmp_path / "eval"
+    aggregation_repository = FileAggregationRepository(aggregation_path)
 
     main(
         [
@@ -79,19 +76,16 @@ def test_run_evaluation(
             "--dataset-id",
             dataset_id,
             "--target-dir",
-            str(eval_path),
+            str(aggregation_path),
             "--description",
             "dummy-evaluator",
         ]
     )
-
-    eval_ids = eval_repository.eval_ids(EvaluationOverview[DummyAggregation])
-    assert len(eval_ids) == 1
-    overview = eval_repository.evaluation_overview(
-        eval_ids[0], EvaluationOverview[DummyAggregation]
-    )
+    ids = aggregation_repository.aggregation_ids()
+    assert len(ids) == 1
+    overview = aggregation_repository.aggregation_overview(ids[0], DummyAggregation)
     assert overview
-    assert overview.successful_count == 1
+    assert overview.successful_evaluation_count == 1
 
 
 def test_run_evaluation_with_task_with_client(

@@ -3,8 +3,8 @@ from pytest import raises
 from intelligence_layer.core import InMemorySpan, InMemoryTaskSpan, LogEntry
 from intelligence_layer.core.tracer import utc_now
 from intelligence_layer.evaluation import (
+    AggregationOverview,
     EvaluationFailed,
-    EvaluationOverview,
     LogTrace,
     SpanTrace,
     TaskSpanTrace,
@@ -58,7 +58,7 @@ def test_deserialize_task_trace() -> None:
 
 
 def test_raise_on_exception_for_evaluation_run_overview(
-    evaluation_run_overview: EvaluationOverview[DummyAggregatedEvaluation],
+    aggregation_overview: AggregationOverview[DummyAggregatedEvaluation],
 ) -> None:
     with raises(EvaluationFailed):
-        evaluation_run_overview.raise_on_evaluation_failure()
+        aggregation_overview.raise_on_evaluation_failure()
