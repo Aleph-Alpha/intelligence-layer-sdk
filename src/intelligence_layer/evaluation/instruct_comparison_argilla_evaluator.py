@@ -19,6 +19,9 @@ from intelligence_layer.evaluation import (
     RunRepository,
     SuccessfulExampleOutput,
 )
+from intelligence_layer.evaluation.data_storage.aggregation_repository import (
+    AggregationRepository,
+)
 from intelligence_layer.evaluation.elo import (
     AutomatedEloComparison,
     EloCalculator,
@@ -54,6 +57,7 @@ class InstructComparisonArgillaEvaluator(
         dataset_repository: DatasetRepository,
         run_repository: RunRepository,
         evaluation_repository: ArgillaEvaluationRepository,
+        aggregation_repository: AggregationRepository,
         description: str,
         workspace_id: str,
         high_priority_runs: Optional[frozenset[str]] = None,
@@ -77,6 +81,7 @@ class InstructComparisonArgillaEvaluator(
             dataset_repository,
             run_repository,
             evaluation_repository,
+            aggregation_repository,
             description,
             workspace_id,
             fields,

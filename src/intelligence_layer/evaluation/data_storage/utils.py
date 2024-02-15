@@ -1,15 +1,15 @@
 from pathlib import Path
 
-from intelligence_layer.core.tracer import FileTracer, InMemoryTracer
 
+class FileBasedRepository:
+    def __init__(self, root_directory: Path) -> None:
+        root_directory.mkdir(parents=True, exist_ok=True)
+        self._root_directory = root_directory
 
-def write_utf8(path: Path, content: str) -> None:
-    path.write_text(content, encoding="utf-8")
+    @staticmethod
+    def write_utf8(path: Path, content: str) -> None:
+        path.write_text(content, encoding="utf-8")
 
-
-def read_utf8(path: Path) -> str:
-    return path.read_text(encoding="utf-8")
-
-
-def _parse_log(log_path: Path) -> InMemoryTracer:
-    return FileTracer(log_path).trace()
+    @staticmethod
+    def read_utf8(path: Path) -> str:
+        return path.read_text(encoding="utf-8")

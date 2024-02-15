@@ -5,7 +5,6 @@ from pydantic import BaseModel
 from pytest import fixture
 
 from intelligence_layer.evaluation import (
-    EvaluationOverview,
     ExampleEvaluation,
     ExampleTrace,
     FailedExampleEvaluation,
@@ -13,7 +12,8 @@ from intelligence_layer.evaluation import (
     InMemoryEvaluationRepository,
     TaskSpanTrace,
 )
-from tests.evaluation.conftest import DummyAggregatedEvaluation, DummyEvaluation
+from intelligence_layer.evaluation.domain import EvaluationOverview
+from tests.evaluation.conftest import DummyEvaluation
 
 
 class DummyEvaluationWithExceptionStructure(BaseModel):
@@ -157,24 +157,16 @@ def test_file_repository_returns_empty_sequence_for_non_existing_run_id(
 
 def test_file_repository_stores_overview(
     file_evaluation_repository: FileEvaluationRepository,
-    evaluation_run_overview: EvaluationOverview[DummyAggregatedEvaluation],
+    evaluation_overview: EvaluationOverview,
 ) -> None:
-    file_evaluation_repository.store_evaluation_overview(evaluation_run_overview)
+    file_evaluation_repository.store_evaluation_overview(evaluation_overview)
     assert (
-        file_evaluation_repository.evaluation_overview(
-            evaluation_run_overview.id,
-            EvaluationOverview[DummyAggregatedEvaluation],
-        )
-        == evaluation_run_overview
+        file_evaluation_repository.evaluation_overview(evaluation_overview.id)
+        == evaluation_overview
     )
 
 
 def test_file_repository_returns_none_for_nonexisting_overview(
     file_evaluation_repository: FileEvaluationRepository,
 ) -> None:
-    assert (
-        file_evaluation_repository.evaluation_overview(
-            "does-not-exist", EvaluationOverview[DummyAggregatedEvaluation]
-        )
-        is None
-    )
+    assert file_evaluation_repository.evaluation_overview("does-not-exist") is None

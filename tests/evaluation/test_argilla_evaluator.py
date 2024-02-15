@@ -19,6 +19,9 @@ from intelligence_layer.evaluation import (
     Runner,
     SuccessfulExampleOutput,
 )
+from intelligence_layer.evaluation.data_storage.aggregation_repository import (
+    InMemoryAggregationRepository,
+)
 from intelligence_layer.evaluation.data_storage.run_repository import (
     InMemoryRunRepository,
 )
@@ -116,6 +119,7 @@ def string_argilla_evaluator(
     in_memory_dataset_repository: InMemoryDatasetRepository,
     in_memory_run_repository: InMemoryRunRepository,
     in_memory_evaluation_repository: InMemoryEvaluationRepository,
+    in_memory_aggregation_repository: InMemoryAggregationRepository,
     stub_argilla_client: StubArgillaClient,
 ) -> DummyStringTaskArgillaEvaluator:
     stub_argilla_client._expected_workspace_id = "workspace-id"
@@ -137,6 +141,7 @@ def string_argilla_evaluator(
         ArgillaEvaluationRepository(
             in_memory_evaluation_repository, stub_argilla_client
         ),
+        in_memory_aggregation_repository,
         "dummy-string-task",
         stub_argilla_client._expected_workspace_id,
         fields,
@@ -169,7 +174,9 @@ def test_argilla_evaluator_can_do_sync_evaluation(
     argilla_client = cast(StubArgillaClient, string_argilla_evaluator._client)
 
     run_overview = string_argilla_runner.run_dataset(string_dataset_id)
-    eval_overview = string_argilla_evaluator.partial_evaluate_dataset(run_overview.id)
+    eval_overview = string_argilla_evaluator.partial_eval_and_aggregate_runs(
+        run_overview.id
+    )
     examples_iter = string_argilla_evaluator._dataset_repository.examples_by_id(
         string_dataset_id, DummyStringInput, DummyStringOutput
     )
@@ -190,7 +197,9 @@ def test_argilla_evaluator_can_aggregate_evaluation(
 ) -> None:
     argilla_client = cast(StubArgillaClient, string_argilla_evaluator._client)
     run_overview = string_argilla_runner.run_dataset(string_dataset_id)
-    eval_overview = string_argilla_evaluator.partial_evaluate_dataset(run_overview.id)
+    eval_overview = string_argilla_evaluator.partial_eval_and_aggregate_runs(
+        run_overview.id
+    )
     aggregated_eval_overview = string_argilla_evaluator.aggregate_evaluation(
         eval_overview.id
     )

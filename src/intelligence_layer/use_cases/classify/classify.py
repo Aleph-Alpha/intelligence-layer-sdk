@@ -11,6 +11,9 @@ from intelligence_layer.evaluation import (
     MeanAccumulator,
     RunRepository,
 )
+from intelligence_layer.evaluation.data_storage.aggregation_repository import (
+    AggregationRepository,
+)
 
 Probability = NewType("Probability", float)
 
@@ -166,11 +169,16 @@ class MultiLabelClassifyEvaluator(
         dataset_repository: DatasetRepository,
         run_repository: RunRepository,
         evaluation_repository: EvaluationRepository,
+        aggregation_repository: AggregationRepository,
         description: str,
         threshold: float = 0.55,
     ):
         super().__init__(
-            dataset_repository, run_repository, evaluation_repository, description
+            dataset_repository,
+            run_repository,
+            evaluation_repository,
+            aggregation_repository,
+            description,
         )
         self.threshold = threshold
 

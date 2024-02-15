@@ -8,8 +8,8 @@ from pytest import fixture
 from intelligence_layer.core.task import Task
 from intelligence_layer.core.tracer import Tracer
 from intelligence_layer.evaluation import (
+    AggregationOverview,
     DatasetRepository,
-    EvaluationOverview,
     Example,
     ExampleEvaluation,
     FailedExampleEvaluation,
@@ -20,6 +20,7 @@ from intelligence_layer.evaluation import (
     Runner,
     RunOverview,
 )
+from intelligence_layer.evaluation.domain import EvaluationOverview
 from tests.conftest import DummyStringInput, DummyStringOutput
 
 FAIL_IN_EVAL_INPUT = "fail in eval"
@@ -96,10 +97,9 @@ def dummy_aggregated_evaluation() -> DummyAggregatedEvaluation:
 
 
 @fixture
-def evaluation_run_overview(
+def evaluation_overview(
     eval_id: str,
-    dummy_aggregated_evaluation: DummyAggregatedEvaluation,
-) -> EvaluationOverview[DummyAggregatedEvaluation]:
+) -> EvaluationOverview:
     now = datetime.now()
     return EvaluationOverview(
         id=eval_id,
@@ -117,9 +117,24 @@ def evaluation_run_overview(
             ]
         ),
         start=now,
+        description="dummy-evaluator",
+    )
+
+
+@fixture
+def aggregation_overview(
+    eval_id: str,
+    evaluation_overview: EvaluationOverview,
+    dummy_aggregated_evaluation: DummyAggregatedEvaluation,
+) -> AggregationOverview[DummyAggregatedEvaluation]:
+    now = datetime.now()
+    return AggregationOverview(
+        id=eval_id,
+        evaluation_overviews=frozenset([evaluation_overview]),
+        start=now,
         end=now,
-        failed_evaluation_count=3,
-        successful_count=5,
+        crashed_during_eval_count=3,
+        successful_evaluation_count=5,
         statistics=dummy_aggregated_evaluation,
         description="dummy-evaluator",
     )

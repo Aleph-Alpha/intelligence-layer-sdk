@@ -12,11 +12,7 @@ from intelligence_layer.core.tracer import (
     PydanticSerializable,
     Tracer,
 )
-from intelligence_layer.evaluation.data_storage.utils import (
-    _parse_log,
-    read_utf8,
-    write_utf8,
-)
+from intelligence_layer.evaluation.data_storage.utils import FileBasedRepository
 from intelligence_layer.evaluation.domain import (
     ExampleOutput,
     ExampleTrace,
@@ -106,11 +102,7 @@ class RunRepository(ABC):
         ...
 
 
-class FileRunRepository(RunRepository):
-    def __init__(self, root_directory: Path) -> None:
-        root_directory.mkdir(parents=True, exist_ok=True)
-        self._root_directory = root_directory
-
+class FileRunRepository(RunRepository, FileBasedRepository):
     def _example_trace_path(self, run_id: str, example_id: str) -> Path:
         return (self._trace_directory(run_id) / example_id).with_suffix(".jsonl")
 
@@ -139,6 +131,10 @@ class FileRunRepository(RunRepository):
         path.mkdir(exist_ok=True)
         return path
 
+    @staticmethod
+    def _parse_log(log_path: Path) -> InMemoryTracer:
+        return FileTracer(log_path).trace()
+
     def _example_output_path(self, run_id: str, example_id: str) -> Path:
         return (self._output_directory(run_id) / example_id).with_suffix(".json")
 
@@ -146,14 +142,14 @@ class FileRunRepository(RunRepository):
         file_path = self._run_overview_path(run_id)
         if not file_path.exists():
             return None
-        content = read_utf8(file_path)
+        content = self.read_utf8(file_path)
         return RunOverview.model_validate_json(content)
 
     def example_trace(self, run_id: str, example_id: str) -> Optional[ExampleTrace]:
         file_path = self._example_trace_path(run_id, example_id)
         if not file_path.exists():
             return None
-        in_memory_tracer = _parse_log(file_path)
+        in_memory_tracer = self._parse_log(file_path)
         trace = TaskSpanTrace.from_task_span(
             cast(InMemoryTaskSpan, in_memory_tracer.entries[0])
         )
@@ -165,7 +161,7 @@ class FileRunRepository(RunRepository):
         file_path = self._example_output_path(run_id, example_id)
         if not file_path.exists():
             return None
-        content = read_utf8(file_path)
+        content = self.read_utf8(file_path)
         # Mypy does not accept dynamic types
         return ExampleOutput[output_type].model_validate_json(  # type: ignore
             json_data=content
@@ -203,13 +199,13 @@ class FileRunRepository(RunRepository):
         return FileTracer(file_path)
 
     def store_run_overview(self, overview: RunOverview) -> None:
-        write_utf8(
+        self.write_utf8(
             self._run_overview_path(overview.id), overview.model_dump_json(indent=2)
         )
 
     def store_example_output(self, example_output: ExampleOutput[Output]) -> None:
         serialized_result = JsonSerializer(root=example_output)
-        write_utf8(
+        self.write_utf8(
             self._example_output_path(example_output.run_id, example_output.example_id),
             serialized_result.model_dump_json(indent=2),
         )
