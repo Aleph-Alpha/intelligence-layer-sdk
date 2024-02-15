@@ -1,5 +1,6 @@
+from collections import defaultdict
 from enum import Enum
-from typing import Iterable, Mapping, Sequence
+from typing import Iterable, Mapping, Sequence, cast
 
 from pydantic import BaseModel
 
@@ -103,3 +104,36 @@ class WinRateCalculator:
 class PlayerScore(BaseModel):
     elo: float
     win_rate: float
+
+
+class EloComparison(BaseModel):
+    example_id: str
+    winner: int
+    first_run_id: str
+    second_run_id: str
+
+
+class AutomatedEloComparison(BaseModel):
+    outputs: Sequence[EloComparison]
+
+
+def build_tournaments(
+    evaluations: Iterable[AutomatedEloComparison],
+) -> tuple[Mapping[str, Sequence[Payoff]], set[str]]:
+    players: set[str] = set()
+    # we group by example id to get a tournament round per example
+    matches: dict[str, list[Payoff]] = defaultdict(list)
+    for instruct_comparison in evaluations:
+        for evaluation in instruct_comparison.outputs:
+            winner = evaluation.winner
+            assert isinstance(winner, int)
+            matches[evaluation.example_id].append(
+                Payoff(
+                    player1=evaluation.first_run_id,
+                    player2=evaluation.second_run_id,
+                    matrix=PayoffMatrix.from_rank_literal(winner),
+                )
+            )
+            players.add(evaluation.first_run_id)
+            players.add(evaluation.second_run_id)
+    return cast(Mapping[str, Sequence[Payoff]], matches), players

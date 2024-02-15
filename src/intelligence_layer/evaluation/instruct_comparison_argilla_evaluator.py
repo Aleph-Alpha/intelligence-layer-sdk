@@ -1,7 +1,6 @@
 import random
-from collections import defaultdict
 from itertools import combinations
-from typing import Iterable, Mapping, Optional, Sequence, cast
+from typing import Iterable, Mapping, Optional, Sequence
 
 from pydantic import BaseModel
 
@@ -12,14 +11,18 @@ from intelligence_layer.connectors.argilla.argilla_client import (
     RecordData,
 )
 from intelligence_layer.core.complete import InstructInput, PromptOutput
-from intelligence_layer.evaluation.accumulator import MeanAccumulator
-from intelligence_layer.evaluation.domain import Example, SuccessfulExampleOutput
+from intelligence_layer.evaluation import (
+    Example,
+    MeanAccumulator,
+    SuccessfulExampleOutput,
+)
 from intelligence_layer.evaluation.elo import (
+    AutomatedEloComparison,
     EloCalculator,
-    Payoff,
-    PayoffMatrix,
+    EloComparison,
     PlayerScore,
     WinRateCalculator,
+    build_tournaments,
 )
 from intelligence_layer.evaluation.evaluator import (
     ArgillaEvaluationRepository,
@@ -119,27 +122,20 @@ class InstructComparisonArgillaEvaluator(
     def aggregate(
         self, evaluations: Iterable[ArgillaEvaluation]
     ) -> AggregatedInstructComparison:
-        def build_tournaments(
-            evaluations: Iterable[ArgillaEvaluation],
-        ) -> tuple[Mapping[str, Sequence[Payoff]], set[str]]:
-            players: set[str] = set()
-            # we group by example id to get a tournament round per example
-            matches: dict[str, list[Payoff]] = defaultdict(list)
-            for evaluation in evaluations:
-                response = evaluation.responses[self.KEY_QUESTION]
-                assert isinstance(response, int)
-                matches[evaluation.example_id].append(
-                    Payoff(
-                        player1=evaluation.metadata[self.KEY_RESPONSE_1],
-                        player2=evaluation.metadata[self.KEY_RESPONSE_2],
-                        matrix=PayoffMatrix.from_rank_literal(response),
+        elo_evaluations = [
+            AutomatedEloComparison(
+                outputs=[
+                    EloComparison(
+                        example_id=evaluation.example_id,
+                        winner=int(evaluation.responses["winner"]),
+                        first_run_id=evaluation.metadata["first"],
+                        second_run_id=evaluation.metadata["second"],
                     )
-                )
-                players.add(evaluation.metadata[self.KEY_RESPONSE_1])
-                players.add(evaluation.metadata[self.KEY_RESPONSE_2])
-            return cast(Mapping[str, Sequence[Payoff]], matches), players
-
-        tournaments, players = build_tournaments(evaluations)
+                ]
+            )
+            for evaluation in evaluations
+        ]
+        tournaments, players = build_tournaments(elo_evaluations)
 
         accumulators = {p: MeanAccumulator() for p in players}
         tournaments_list = list(tournaments.items())
