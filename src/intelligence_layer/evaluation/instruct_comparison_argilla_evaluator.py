@@ -12,8 +12,11 @@ from intelligence_layer.connectors.argilla.argilla_client import (
 )
 from intelligence_layer.core.complete import InstructInput, PromptOutput
 from intelligence_layer.evaluation import (
+    ArgillaEvaluationRepository,
+    DatasetRepository,
     Example,
     MeanAccumulator,
+    RunRepository,
     SuccessfulExampleOutput,
 )
 from intelligence_layer.evaluation.elo import (
