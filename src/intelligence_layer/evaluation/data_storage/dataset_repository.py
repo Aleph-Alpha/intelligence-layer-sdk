@@ -1,3 +1,4 @@
+from abc import ABC, abstractmethod
 from pathlib import Path
 from typing import Dict, Iterable, Optional, Sequence, cast
 from uuid import uuid4
@@ -5,10 +6,45 @@ from uuid import uuid4
 from fsspec import AbstractFileSystem  # type: ignore
 from fsspec.implementations.local import LocalFileSystem  # type: ignore
 
-from intelligence_layer.core.task import Input
+from intelligence_layer.core import Input
 from intelligence_layer.core.tracer import JsonSerializer, PydanticSerializable
 from intelligence_layer.evaluation.domain import Example, ExpectedOutput
-from intelligence_layer.evaluation.evaluator import DatasetRepository
+
+
+class DatasetRepository(ABC):
+    @abstractmethod
+    def create_dataset(
+        self,
+        examples: Iterable[Example[Input, ExpectedOutput]],
+    ) -> str:
+        ...
+
+    @abstractmethod
+    def examples_by_id(
+        self,
+        dataset_id: str,
+        input_type: type[Input],
+        expected_output_type: type[ExpectedOutput],
+    ) -> Optional[Iterable[Example[Input, ExpectedOutput]]]:
+        ...
+
+    @abstractmethod
+    def example(
+        self,
+        dataset_id: str,
+        example_id: str,
+        input_type: type[Input],
+        expected_output_type: type[ExpectedOutput],
+    ) -> Optional[Example[Input, ExpectedOutput]]:
+        ...
+
+    @abstractmethod
+    def delete_dataset(self, dataset_id: str) -> None:
+        ...
+
+    @abstractmethod
+    def list_datasets(self) -> Iterable[str]:
+        ...
 
 
 class FileSystemDatasetRepository(DatasetRepository):

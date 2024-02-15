@@ -10,6 +10,7 @@ from intelligence_layer.evaluation import (
     InMemoryDatasetRepository,
     InMemoryEvaluationRepository,
     Runner,
+    RunRepository,
 )
 from intelligence_layer.use_cases.classify.classify import (
     ClassifyInput,
@@ -126,12 +127,14 @@ def multiple_entries_dataset_name(
 
 @fixture
 def classify_evaluator(
-    in_memory_evaluation_repository: InMemoryEvaluationRepository,
     in_memory_dataset_repository: DatasetRepository,
+    in_memory_run_repository: RunRepository,
+    in_memory_evaluation_repository: InMemoryEvaluationRepository,
 ) -> MultiLabelClassifyEvaluator:
     return MultiLabelClassifyEvaluator(
-        in_memory_evaluation_repository,
         in_memory_dataset_repository,
+        in_memory_run_repository,
+        in_memory_evaluation_repository,
         "multi-label-classify",
     )
 
@@ -139,13 +142,13 @@ def classify_evaluator(
 @fixture
 def classify_runner(
     embedding_based_classify: Task[ClassifyInput, MultiLabelClassifyOutput],
-    in_memory_evaluation_repository: InMemoryEvaluationRepository,
     in_memory_dataset_repository: DatasetRepository,
+    in_memory_run_repository: RunRepository,
 ) -> Runner[ClassifyInput, MultiLabelClassifyOutput]:
     return Runner(
         embedding_based_classify,
-        in_memory_evaluation_repository,
         in_memory_dataset_repository,
+        in_memory_run_repository,
         "multi-label-classify",
     )
 
@@ -158,7 +161,7 @@ def test_multi_label_classify_evaluator_single_example(
     run_overview = classify_runner.run_dataset(single_entry_dataset_name)
 
     evaluation_overview = classify_evaluator.evaluate_dataset(run_overview.id)
-    evaluation = classify_runner._evaluation_repository.example_evaluations(
+    evaluation = classify_evaluator._evaluation_repository.example_evaluations(
         evaluation_overview.individual_evaluation_overviews[0].id,
         MultiLabelClassifyEvaluation,
     )[0].result

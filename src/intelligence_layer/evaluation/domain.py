@@ -274,7 +274,7 @@ class IndividualEvaluationOverview(BaseModel, frozen=True):
     """Overview of the unaggregated results of evaluating a :class:`Task` on a dataset.
 
     Attributes:
-        run_overview: Overview of the run that was evaluated.
+        run_overviews: Overviews of the runs that were evaluated.
         id: The unique identifier of this evaluation.
         start: The time when the evaluation run was started
         description: human-readable for the evaluator that created the evaluation

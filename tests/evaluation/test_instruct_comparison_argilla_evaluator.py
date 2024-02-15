@@ -25,6 +25,7 @@ from intelligence_layer.evaluation import (
     ExampleOutput,
     InMemoryDatasetRepository,
     InMemoryEvaluationRepository,
+    InMemoryRunRepository,
     InstructComparisonArgillaEvaluator,
     Payoff,
     PayoffMatrix,
@@ -75,6 +76,7 @@ def argilla_fake() -> ArgillaClient:
 @fixture
 def evaluator(
     in_memory_dataset_repository: InMemoryDatasetRepository,
+    in_memory_run_repository: InMemoryRunRepository,
     in_memory_evaluation_repository: InMemoryEvaluationRepository,
     argilla_fake: ArgillaClient,
 ) -> InstructComparisonArgillaEvaluator:
@@ -82,7 +84,11 @@ def evaluator(
         in_memory_evaluation_repository, argilla_fake
     )
     return InstructComparisonArgillaEvaluator(
-        eval_repository, in_memory_dataset_repository, "instruct-evaluator", "workspace"
+        in_memory_dataset_repository,
+        in_memory_run_repository,
+        eval_repository,
+        "instruct-evaluator",
+        "workspace",
     )
 
 
@@ -102,8 +108,9 @@ def any_instruct_output() -> PromptOutput:
 
 def test_evaluate_run_submits_pairwise_comparison_records(
     evaluator: InstructComparisonArgillaEvaluator,
-    in_memory_evaluation_repository: InMemoryEvaluationRepository,
     in_memory_dataset_repository: InMemoryDatasetRepository,
+    in_memory_run_repository: InMemoryRunRepository,
+    in_memory_evaluation_repository: InMemoryEvaluationRepository,
     any_instruct_output: PromptOutput,
     argilla_fake: ArgillaFake,
 ) -> None:
@@ -122,12 +129,12 @@ def test_evaluate_run_submits_pairwise_comparison_records(
         ]
     )
     for run_id in run_ids:
-        in_memory_evaluation_repository.store_example_output(
+        in_memory_run_repository.store_example_output(
             example_output=ExampleOutput(
                 run_id=run_id, example_id="example_id", output=any_instruct_output
             )
         )
-        in_memory_evaluation_repository.store_run_overview(
+        in_memory_run_repository.store_run_overview(
             RunOverview(
                 dataset_id=dataset_id,
                 id=run_id,
@@ -156,8 +163,9 @@ def test_evaluate_run_submits_pairwise_comparison_records(
 
 
 def test_evaluate_run_only_evaluates_high_priority(
-    in_memory_evaluation_repository: InMemoryEvaluationRepository,
     in_memory_dataset_repository: InMemoryDatasetRepository,
+    in_memory_run_repository: InMemoryRunRepository,
+    in_memory_evaluation_repository: InMemoryEvaluationRepository,
     any_instruct_output: PromptOutput,
     argilla_fake: ArgillaFake,
 ) -> None:
@@ -166,8 +174,9 @@ def test_evaluate_run_only_evaluates_high_priority(
     )
     relevant_ids = frozenset({"1", "2"})
     evaluator = InstructComparisonArgillaEvaluator(
-        eval_repository,
         in_memory_dataset_repository,
+        in_memory_run_repository,
+        eval_repository,
         "instruct-evaluator",
         "workspace",
         relevant_ids,
@@ -188,12 +197,12 @@ def test_evaluate_run_only_evaluates_high_priority(
         ]
     )
     for run_id in run_ids:
-        in_memory_evaluation_repository.store_example_output(
+        in_memory_run_repository.store_example_output(
             example_output=ExampleOutput(
                 run_id=run_id, example_id="example_id", output=any_instruct_output
             )
         )
-        in_memory_evaluation_repository.store_run_overview(
+        in_memory_run_repository.store_run_overview(
             RunOverview(
                 dataset_id=dataset_id,
                 id=run_id,

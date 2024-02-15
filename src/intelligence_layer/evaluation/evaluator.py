@@ -20,14 +20,22 @@ from uuid import uuid4
 
 from tqdm import tqdm
 
-from intelligence_layer.connectors import ArgillaClient, Field
+from intelligence_layer.connectors import Field
 from intelligence_layer.connectors.argilla.argilla_client import (
     ArgillaEvaluation,
     Question,
     RecordData,
 )
 from intelligence_layer.core.task import Input, Output
-from intelligence_layer.core.tracer import Tracer, utc_now
+from intelligence_layer.core.tracer import utc_now
+from intelligence_layer.evaluation.data_storage.dataset_repository import (
+    DatasetRepository,
+)
+from intelligence_layer.evaluation.data_storage.evaluation_repository import (
+    ArgillaEvaluationRepository,
+    EvaluationRepository,
+)
+from intelligence_layer.evaluation.data_storage.run_repository import RunRepository
 from intelligence_layer.evaluation.domain import (
     AggregatedEvaluation,
     Evaluation,
@@ -35,7 +43,6 @@ from intelligence_layer.evaluation.domain import (
     Example,
     ExampleEvaluation,
     ExampleOutput,
-    ExampleTrace,
     ExpectedOutput,
     FailedExampleEvaluation,
     FailedExampleRun,
@@ -43,230 +50,6 @@ from intelligence_layer.evaluation.domain import (
     RunOverview,
     SuccessfulExampleOutput,
 )
-
-EvaluationOverviewType = TypeVar(
-    "EvaluationOverviewType", bound=IndividualEvaluationOverview
-)
-
-
-class EvaluationRepository(ABC):
-    """Base evaluation repository interface.
-
-    Provides methods to store and load evaluation results for individual examples
-    of a run and the aggregated evaluation of said run.
-    """
-
-    @abstractmethod
-    def run_ids(self) -> Sequence[str]:
-        """Returns the ids of all stored runs.
-
-        Having the id of a run, its outputs can be retrieved with
-        :meth:`EvaluationRepository.example_outputs`.
-
-        Returns:
-            The ids of all stored runs.
-        """
-        ...
-
-    @abstractmethod
-    def eval_ids(self) -> Sequence[str]:
-        """Returns the ids of all stored evaluation runs.
-
-        Having the id of an evaluation run, its overview can be retrieved with
-        :meth:`EvaluationRepository.evaluation_run_overview`.
-
-        Returns:
-            The ids of all stored evaluation runs.
-        """
-        ...
-
-    @abstractmethod
-    def example_outputs(
-        self, run_id: str, output_type: type[Output]
-    ) -> Iterable[ExampleOutput[Output]]:
-        """Returns all :class:`ExampleOutput` for a given run.
-
-        Args:
-            run_id: The unique identifier of the run.
-            output_type: Type of output that the `Task` returned
-                in :func:`Task.do_run`
-
-        Returns:
-            Iterable over all outputs.
-        """
-        ...
-
-    @abstractmethod
-    def store_example_output(self, example_output: ExampleOutput[Output]) -> None:
-        """Stores an individual :class:`ExampleOutput`.
-
-        Args:
-            example_output: The actual output.
-        """
-        ...
-
-    @abstractmethod
-    def example_trace(self, run_id: str, example_id: str) -> Optional[ExampleTrace]:
-        """Returns an :class:`ExampleTrace` for an example in a run.
-
-        Args:
-            run_id: The unique identifier of the run.
-            example_id: Example identifier, will match :class:`ExampleEvaluation` identifier.
-            example_output: The actual output.
-        """
-        ...
-
-    @abstractmethod
-    def example_tracer(self, run_id: str, example_id: str) -> Tracer:
-        """Returns a :class:`Tracer` to trace an individual example run.
-
-        Args:
-            run_id: The unique identifier of the run.
-            example_id: Example identifier, will match :class:`ExampleEvaluation` identifier.
-        """
-        ...
-
-    @abstractmethod
-    def example_evaluation(
-        self, eval_id: str, example_id: str, evaluation_type: type[Evaluation]
-    ) -> Optional[ExampleEvaluation[Evaluation]]:
-        """Returns an :class:`ExampleEvaluation` of a given run by its id.
-
-        Args:
-            eval_id: Identifier of the run to obtain the results for.
-            example_id: Example identifier, will match :class:`ExampleEvaluation` identifier.
-            evaluation_type: Type of evaluations that the `Evaluator` returned
-                in :func:`Evaluator.do_evaluate`
-
-        Returns:
-            :class:`ExampleEvaluation` if one was found, `None` otherwise.
-        """
-        ...
-
-    @abstractmethod
-    def store_example_evaluation(self, result: ExampleEvaluation[Evaluation]) -> None:
-        """Stores an :class:`ExampleEvaluation` for a run in the repository.
-
-        Args:
-            eval_id: Identifier of the eval run.
-            result: The result to be persisted.
-        """
-        ...
-
-    @abstractmethod
-    def example_evaluations(
-        self, eval_id: str, evaluation_type: type[Evaluation]
-    ) -> Sequence[ExampleEvaluation[Evaluation]]:
-        """Returns all :class:`ExampleResult` instances of a given run
-
-        Args:
-            eval_id: Identifier of the eval run to obtain the results for.
-            evaluation_type: Type of evaluations that the :class:`Evaluator` returned
-                in :func:`Evaluator.do_evaluate`
-
-        Returns:
-            All :class:`ExampleResult` of the run. Will return an empty list if there's none.
-        """
-        ...
-
-    @abstractmethod
-    def failed_example_evaluations(
-        self, eval_id: str, evaluation_type: type[Evaluation]
-    ) -> Sequence[ExampleEvaluation[Evaluation]]:
-        """Returns all failed :class:`ExampleResult` instances of a given run
-
-        Args:
-            eval_id: Identifier of the eval run to obtain the results for.
-            evaluation_type: Type of evaluations that the :class:`Evaluator` returned
-                in :func:`Evaluator.do_evaluate`
-
-        Returns:
-            All failed :class:`ExampleResult` of the run. Will return an empty list if there's none.
-        """
-        ...
-
-    @abstractmethod
-    def evaluation_overview(
-        self, eval_id: str, overview_type: type[EvaluationOverviewType]
-    ) -> EvaluationOverviewType | None:
-        """Returns an :class:`EvaluationOverview` of a given run by its id.
-
-        Args:
-            eval_id: Identifier of the eval run to obtain the overview for.
-            aggregation_type: Type of aggregations that the :class:`Evaluator` returned
-                in :func:`Evaluator.aggregate`
-
-        Returns:
-            :class:`EvaluationOverview` if one was found, `None` otherwise.
-        """
-        ...
-
-    @abstractmethod
-    def store_evaluation_overview(self, overview: IndividualEvaluationOverview) -> None:
-        """Stores an :class:`EvaluationRunOverview` in the repository.
-
-        Args:
-            overview: The overview to be persisted.
-        """
-        ...
-
-    @abstractmethod
-    def run_overview(self, run_id: str) -> RunOverview | None:
-        """Returns an :class:`RunOverview` of a given run by its id.
-
-        Args:
-            run_id: Identifier of the eval run to obtain the overview for.
-
-        Returns:
-            :class:`RunOverview` if one was found, `None` otherwise.
-        """
-        ...
-
-    @abstractmethod
-    def store_run_overview(self, overview: RunOverview) -> None:
-        """Stores an :class:`RunOverview` in the repository.
-
-        Args:
-            overview: The overview to be persisted.
-        """
-        ...
-
-
-class DatasetRepository(ABC):
-    @abstractmethod
-    def create_dataset(
-        self,
-        examples: Iterable[Example[Input, ExpectedOutput]],
-    ) -> str:
-        ...
-
-    @abstractmethod
-    def examples_by_id(
-        self,
-        dataset_id: str,
-        input_type: type[Input],
-        expected_output_type: type[ExpectedOutput],
-    ) -> Optional[Iterable[Example[Input, ExpectedOutput]]]:
-        ...
-
-    @abstractmethod
-    def example(
-        self,
-        dataset_id: str,
-        example_id: str,
-        input_type: type[Input],
-        expected_output_type: type[ExpectedOutput],
-    ) -> Optional[Example[Input, ExpectedOutput]]:
-        ...
-
-    @abstractmethod
-    def delete_dataset(self, dataset_id: str) -> None:
-        ...
-
-    @abstractmethod
-    def list_datasets(self) -> Iterable[str]:
-        ...
-
 
 T = TypeVar("T")
 
@@ -304,8 +87,9 @@ class BaseEvaluator(
     """Base evaluator interface.
 
     Arguments:
-        evaluation_repository: The repository that will be used to store evaluation results.
         dataset_repository: The repository with the examples that will be taken for the evaluation
+        run_repository: The repository with the run output that will be taken for the evaluation
+        evaluation_repository: The repository that will be used to store evaluation results.
         description: human-readable description for the evaluator
 
     Generics:
@@ -318,12 +102,14 @@ class BaseEvaluator(
 
     def __init__(
         self,
-        evaluation_repository: EvaluationRepository,
         dataset_repository: DatasetRepository,
+        run_repository: RunRepository,
+        evaluation_repository: EvaluationRepository,
         description: str,
     ) -> None:
-        self._evaluation_repository = evaluation_repository
         self._dataset_repository = dataset_repository
+        self._run_repository = run_repository
+        self._evaluation_repository = evaluation_repository
         self.description = description
 
     @lru_cache(maxsize=1)
@@ -441,7 +227,7 @@ class BaseEvaluator(
         It should create an `AggregatedEvaluation` class and return it at the end.
 
         Args:
-            evalautions: The results from running `evaluate_dataset` with a :class:`Task`.
+            evaluations: The results from running `evaluate_dataset` with a :class:`Task`.
 
         Returns:
             The aggregated results of an evaluation run with a :class:`Dataset`.
@@ -477,10 +263,7 @@ class BaseEvaluator(
                 and their tasks have the same output-type. For each example in the
                 dataset referenced by the runs the outputs of all runs are collected
                 and if all of them were successful they are passed on to the implementation
-                specific evaluation. For a simple evaluation only a single run_id is provided.
-                If the output of multiple runs are to be compared (for example to compare
-                the performance of different model on the same task), multiple run_ids are
-                passed accordingly.
+                specific evaluation. The method compares all run of the provided ids to each other.
             num_examples: The number of examples which should be evaluated from the given runs.
                 Always the first n runs stored in the evaluation repository
 
@@ -490,15 +273,15 @@ class BaseEvaluator(
             __init__.
         """
 
-        def load_overview(run_id: str) -> RunOverview:
-            run_overview = self._evaluation_repository.run_overview(run_id)
+        def load_run_overview(run_id: str) -> RunOverview:
+            run_overview = self._run_repository.run_overview(run_id)
             if not run_overview:
                 raise ValueError(f"No RunOverview found for run-id: {run_id}")
             return run_overview
 
         if not run_ids:
             raise ValueError("At least one run-id needs to be provided")
-        run_overviews = frozenset(load_overview(run_id) for run_id in run_ids)
+        run_overviews = frozenset(load_run_overview(run_id) for run_id in run_ids)
         if not all(
             next(iter(run_overviews)).dataset_id == run_overview.dataset_id
             for run_overview in run_overviews
@@ -519,7 +302,7 @@ class BaseEvaluator(
 
         examples_zipped: Iterable[tuple[ExampleOutput[Output], ...]] = zip(
             *(
-                self._evaluation_repository.example_outputs(
+                self._run_repository.example_outputs(
                     run_overview.id, self.output_type()
                 )
                 for run_overview in run_overviews
@@ -616,7 +399,7 @@ class BaseEvaluator(
             An overview of the aggregated evaluation.
         """
 
-        def load_overview(eval_id: str) -> IndividualEvaluationOverview:
+        def load_eval_overview(eval_id: str) -> IndividualEvaluationOverview:
             evaluation_overview = self._evaluation_repository.evaluation_overview(
                 eval_id, IndividualEvaluationOverview
             )
@@ -626,7 +409,7 @@ class BaseEvaluator(
                 )
             return evaluation_overview
 
-        evaluation_overviews = frozenset(load_overview(id) for id in set(eval_ids))
+        evaluation_overviews = frozenset(load_eval_overview(id) for id in set(eval_ids))
 
         nested_evaluations = [
             self._evaluation_repository.example_evaluations(
@@ -688,11 +471,14 @@ class Evaluator(
 
     def __init__(
         self,
-        evaluation_repository: EvaluationRepository,
         dataset_repository: DatasetRepository,
+        run_repository: RunRepository,
+        evaluation_repository: EvaluationRepository,
         description: str,
     ) -> None:
-        super().__init__(evaluation_repository, dataset_repository, description)
+        super().__init__(
+            dataset_repository, run_repository, evaluation_repository, description
+        )
 
     @abstractmethod
     def do_evaluate(
@@ -757,85 +543,6 @@ class Evaluator(
         return self.aggregate_evaluation(partial_evaluation_overview.id)
 
 
-class ArgillaEvaluationRepository(EvaluationRepository):
-    """Evaluation repository used for the :class:`ArgillaEvaluator`.
-
-    Wraps an :class:`Evaluator`.
-    Does not support storing evaluations, since the ArgillaEvaluator does not do automated evaluations.
-
-    Args:
-        evaluation_repository: repository to wrap.
-        argilla_client: client used to connect to Argilla.
-    """
-
-    def __init__(
-        self, evaluation_repository: EvaluationRepository, argilla_client: ArgillaClient
-    ) -> None:
-        super().__init__()
-        self._evaluation_repository = evaluation_repository
-        self._client = argilla_client
-
-    def run_ids(self) -> Sequence[str]:
-        return self._evaluation_repository.run_ids()
-
-    def eval_ids(self) -> Sequence[str]:
-        return self._evaluation_repository.eval_ids()
-
-    def example_outputs(
-        self, run_id: str, output_type: type[Output]
-    ) -> Iterable[ExampleOutput[Output]]:
-        return self._evaluation_repository.example_outputs(run_id, output_type)
-
-    def store_example_output(self, example_output: ExampleOutput[Output]) -> None:
-        return self._evaluation_repository.store_example_output(example_output)
-
-    def example_trace(self, run_id: str, example_id: str) -> Optional[ExampleTrace]:
-        return self._evaluation_repository.example_trace(run_id, example_id)
-
-    def example_tracer(self, run_id: str, example_id: str) -> Tracer:
-        return self._evaluation_repository.example_tracer(run_id, example_id)
-
-    def example_evaluation(
-        self, eval_id: str, example_id: str, evaluation_type: type[Evaluation]
-    ) -> Optional[ExampleEvaluation[Evaluation]]:
-        return self._evaluation_repository.example_evaluation(
-            eval_id, example_id, evaluation_type
-        )
-
-    def store_example_evaluation(self, _: ExampleEvaluation[Evaluation]) -> None:
-        raise TypeError(
-            "ArgillaEvaluationRepository does not support storing evaluations."
-        )
-
-    def example_evaluations(
-        self, eval_id: str, eval_type: type[Evaluation]
-    ) -> Sequence[ExampleEvaluation[Evaluation]]:
-        assert eval_type == ArgillaEvaluation
-        # Mypy does not derive that the return type is always ExampleEvaluation with ArgillaEvaluation
-        return [ExampleEvaluation(eval_id=eval_id, example_id=e.example_id, result=e) for e in self._client.evaluations(eval_id)]  # type: ignore
-
-    def failed_example_evaluations(
-        self, eval_id: str, evaluation_type: type[Evaluation]
-    ) -> Sequence[ExampleEvaluation[Evaluation]]:
-        return self._evaluation_repository.failed_example_evaluations(
-            eval_id, evaluation_type
-        )
-
-    def evaluation_overview(
-        self, eval_id: str, overview_type: type[EvaluationOverviewType]
-    ) -> EvaluationOverviewType | None:
-        return self._evaluation_repository.evaluation_overview(eval_id, overview_type)
-
-    def store_evaluation_overview(self, overview: IndividualEvaluationOverview) -> None:
-        return self._evaluation_repository.store_evaluation_overview(overview)
-
-    def run_overview(self, run_id: str) -> RunOverview | None:
-        return self._evaluation_repository.run_overview(run_id)
-
-    def store_run_overview(self, overview: RunOverview) -> None:
-        return self._evaluation_repository.store_run_overview(overview)
-
-
 class ArgillaEvaluator(
     BaseEvaluator[
         Input, Output, ExpectedOutput, ArgillaEvaluation, AggregatedEvaluation
@@ -859,14 +566,17 @@ class ArgillaEvaluator(
 
     def __init__(
         self,
-        evaluation_repository: ArgillaEvaluationRepository,
         dataset_repository: DatasetRepository,
+        run_repository: RunRepository,
+        evaluation_repository: ArgillaEvaluationRepository,
         description: str,
         workspace_id: str,
         fields: Sequence[Field],
         questions: Sequence[Question],
     ) -> None:
-        super().__init__(evaluation_repository, dataset_repository, description)
+        super().__init__(
+            dataset_repository, run_repository, evaluation_repository, description
+        )
         self._workspace_id = workspace_id
         self._fields = fields
         self._questions = questions

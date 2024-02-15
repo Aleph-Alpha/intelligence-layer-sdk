@@ -1,40 +1,29 @@
+from abc import ABC, abstractmethod
 from collections import defaultdict
 from pathlib import Path
-from typing import Iterable, Optional, Sequence, cast
+from typing import Optional, Sequence, TypeVar, cast
 
 from pydantic import BaseModel, ValidationError
 
-from intelligence_layer.core.task import Output
-from intelligence_layer.core.tracer import (
-    FileTracer,
-    InMemoryTaskSpan,
-    InMemoryTracer,
-    JsonSerializer,
-    PydanticSerializable,
-    Tracer,
+from intelligence_layer.connectors.argilla.argilla_client import (
+    ArgillaClient,
+    ArgillaEvaluation,
 )
+from intelligence_layer.core import Output
+from intelligence_layer.core.tracer import FileTracer, JsonSerializer, Tracer
+from intelligence_layer.evaluation.data_storage.utils import read_utf8, write_utf8
 from intelligence_layer.evaluation.domain import (
     Evaluation,
     ExampleEvaluation,
     ExampleOutput,
-    ExampleTrace,
     FailedExampleEvaluation,
     IndividualEvaluationOverview,
     RunOverview,
-    TaskSpanTrace,
-)
-from intelligence_layer.evaluation.evaluator import (
-    EvaluationOverviewType,
-    EvaluationRepository,
 )
 
-
-def write_utf8(path: Path, content: str) -> None:
-    path.write_text(content, encoding="utf-8")
-
-
-def read_utf8(path: Path) -> str:
-    return path.read_text(encoding="utf-8")
+EvaluationOverviewType = TypeVar(
+    "EvaluationOverviewType", bound=IndividualEvaluationOverview
+)
 
 
 class SerializedExampleEvaluation(BaseModel):
@@ -78,6 +67,110 @@ class SerializedExampleEvaluation(BaseModel):
                 example_id=self.example_id,
                 result=evaluation_type.model_validate_json(self.json_result),
             )
+
+
+class EvaluationRepository(ABC):
+    """Base evaluation repository interface.
+
+    Provides methods to store and load evaluation results for individual examples
+    of a run and the aggregated evaluation of said run.
+    """
+
+    @abstractmethod
+    def eval_ids(self) -> Sequence[str]:
+        """Returns the ids of all stored evaluation runs.
+
+        Having the id of an evaluation run, its overview can be retrieved with
+        :meth:`EvaluationRepository.evaluation_run_overview`.
+
+        Returns:
+            The ids of all stored evaluation runs.
+        """
+        ...
+
+    @abstractmethod
+    def example_evaluation(
+        self, eval_id: str, example_id: str, evaluation_type: type[Evaluation]
+    ) -> Optional[ExampleEvaluation[Evaluation]]:
+        """Returns an :class:`ExampleEvaluation` of a given run by its id.
+
+        Args:
+            eval_id: Identifier of the run to obtain the results for.
+            example_id: Example identifier, will match :class:`ExampleEvaluation` identifier.
+            evaluation_type: Type of evaluations that the `Evaluator` returned
+                in :func:`Evaluator.do_evaluate`
+
+        Returns:
+            :class:`ExampleEvaluation` if one was found, `None` otherwise.
+        """
+        ...
+
+    @abstractmethod
+    def store_example_evaluation(self, result: ExampleEvaluation[Evaluation]) -> None:
+        """Stores an :class:`ExampleEvaluation` for a run in the repository.
+
+        Args:
+            eval_id: Identifier of the eval run.
+            result: The result to be persisted.
+        """
+        ...
+
+    @abstractmethod
+    def example_evaluations(
+        self, eval_id: str, evaluation_type: type[Evaluation]
+    ) -> Sequence[ExampleEvaluation[Evaluation]]:
+        """Returns all :class:`ExampleResult` instances of a given run
+
+        Args:
+            eval_id: Identifier of the eval run to obtain the results for.
+            evaluation_type: Type of evaluations that the :class:`Evaluator` returned
+                in :func:`Evaluator.do_evaluate`
+
+        Returns:
+            All :class:`ExampleResult` of the run. Will return an empty list if there's none.
+        """
+        ...
+
+    @abstractmethod
+    def failed_example_evaluations(
+        self, eval_id: str, evaluation_type: type[Evaluation]
+    ) -> Sequence[ExampleEvaluation[Evaluation]]:
+        """Returns all failed :class:`ExampleResult` instances of a given run
+
+        Args:
+            eval_id: Identifier of the eval run to obtain the results for.
+            evaluation_type: Type of evaluations that the :class:`Evaluator` returned
+                in :func:`Evaluator.do_evaluate`
+
+        Returns:
+            All failed :class:`ExampleResult` of the run. Will return an empty list if there's none.
+        """
+        ...
+
+    @abstractmethod
+    def evaluation_overview(
+        self, eval_id: str, overview_type: type[EvaluationOverviewType]
+    ) -> EvaluationOverviewType | None:
+        """Returns an :class:`EvaluationOverview` of a given run by its id.
+
+        Args:
+            eval_id: Identifier of the eval run to obtain the overview for.
+            aggregation_type: Type of aggregations that the :class:`Evaluator` returned
+                in :func:`Evaluator.aggregate`
+
+        Returns:
+            :class:`EvaluationOverview` if one was found, `None` otherwise.
+        """
+        ...
+
+    @abstractmethod
+    def store_evaluation_overview(self, overview: IndividualEvaluationOverview) -> None:
+        """Stores an :class:`EvaluationRunOverview` in the repository.
+
+        Args:
+            overview: The overview to be persisted.
+        """
+        ...
 
 
 class FileEvaluationRepository(EvaluationRepository):
@@ -144,38 +237,6 @@ class FileEvaluationRepository(EvaluationRepository):
             serialized_result.model_dump_json(indent=2),
         )
 
-    def example_output(
-        self, run_id: str, example_id: str, output_type: type[Output]
-    ) -> Optional[ExampleOutput[Output]]:
-        file_path = self._example_output_path(run_id, example_id)
-        if not file_path.exists():
-            return None
-        content = read_utf8(file_path)
-        # Mypy does not accept dynamic types
-        return ExampleOutput[output_type].model_validate_json(json_data=content)  # type: ignore
-
-    def example_outputs(
-        self, run_id: str, output_type: type[Output]
-    ) -> Iterable[ExampleOutput[Output]]:
-        def load_example_output(
-            path: Path,
-        ) -> Optional[ExampleOutput[Output]]:
-            id = path.with_suffix("").name
-            return self.example_output(run_id, id, output_type)
-
-        path = self._output_directory(run_id)
-        output_files = path.glob("*.json")
-        return (
-            example_output
-            for example_output in sorted(
-                (load_example_output(file) for file in output_files),
-                key=lambda example_output: example_output.example_id
-                if example_output
-                else "",
-            )
-            if example_output
-        )
-
     def example_evaluations(
         self, eval_id: str, evaluation_type: type[Evaluation]
     ) -> Sequence[ExampleEvaluation[Evaluation]]:
@@ -209,16 +270,6 @@ class FileEvaluationRepository(EvaluationRepository):
         serialized_example = SerializedExampleEvaluation.model_validate_json(content)
         return serialized_example.to_example_result(evaluation_type)
 
-    def example_trace(self, run_id: str, example_id: str) -> Optional[ExampleTrace]:
-        file_path = self._example_trace_path(run_id, example_id)
-        if not file_path.exists():
-            return None
-        in_memory_tracer = _parse_log(file_path)
-        trace = TaskSpanTrace.from_task_span(
-            cast(InMemoryTaskSpan, in_memory_tracer.entries[0])
-        )
-        return ExampleTrace(run_id=run_id, example_id=example_id, trace=trace)
-
     def example_tracer(self, run_id: str, example_id: str) -> Tracer:
         file_path = self._example_trace_path(run_id, example_id)
         return FileTracer(file_path)
@@ -245,22 +296,10 @@ class FileEvaluationRepository(EvaluationRepository):
             overview.model_dump_json(indent=2),
         )
 
-    def run_overview(self, run_id: str) -> RunOverview | None:
-        file_path = self._run_overview_path(run_id)
-        if not file_path.exists():
-            return None
-        content = read_utf8(file_path)
-        return RunOverview.model_validate_json(content)
-
     def store_run_overview(self, overview: RunOverview) -> None:
         write_utf8(
             self._run_overview_path(overview.id), overview.model_dump_json(indent=2)
         )
-
-    def run_ids(self) -> Sequence[str]:
-        return [
-            path.parent.name for path in self._run_root_directory().glob("*/output")
-        ]
 
     def eval_ids(
         self, overview_type: type[EvaluationOverviewType] | None = None
@@ -282,10 +321,6 @@ class FileEvaluationRepository(EvaluationRepository):
         return [overview.id for overview in overviews if overview is not None]
 
 
-def _parse_log(log_path: Path) -> InMemoryTracer:
-    return FileTracer(log_path).trace()
-
-
 class InMemoryEvaluationRepository(EvaluationRepository):
     """An :class:`EvaluationRepository` that stores evaluation results in memory.
 
@@ -293,55 +328,13 @@ class InMemoryEvaluationRepository(EvaluationRepository):
     """
 
     def __init__(self) -> None:
-        self._example_outputs: dict[
-            str, list[ExampleOutput[PydanticSerializable]]
-        ] = defaultdict(list)
         self._example_evaluations: dict[
             str, list[ExampleEvaluation[BaseModel]]
         ] = defaultdict(list)
-        self._example_traces: dict[str, InMemoryTracer] = dict()
         self._evaluation_run_overviews: dict[str, IndividualEvaluationOverview] = dict()
-        self._run_overviews: dict[str, RunOverview] = dict()
-
-    def run_ids(self) -> Sequence[str]:
-        return list(self._example_outputs.keys())
 
     def eval_ids(self) -> Sequence[str]:
         return list(self._evaluation_run_overviews.keys())
-
-    def store_example_output(self, example_output: ExampleOutput[Output]) -> None:
-        self._example_outputs[example_output.run_id].append(
-            cast(ExampleOutput[PydanticSerializable], example_output)
-        )
-
-    def example_outputs(
-        self, run_id: str, output_type: type[Output]
-    ) -> Iterable[ExampleOutput[Output]]:
-        return (
-            cast(ExampleOutput[Output], example_output)
-            for example_output in sorted(
-                self._example_outputs[run_id],
-                key=lambda example_output: example_output.example_id,
-            )
-        )
-
-    def example_trace(self, run_id: str, example_id: str) -> Optional[ExampleTrace]:
-        tracer = self._example_traces.get(f"{run_id}/{example_id}")
-        if tracer is None:
-            return None
-        assert tracer
-        return ExampleTrace(
-            run_id=run_id,
-            example_id=example_id,
-            trace=TaskSpanTrace.from_task_span(
-                cast(InMemoryTaskSpan, tracer.entries[0])
-            ),
-        )
-
-    def example_tracer(self, run_id: str, example_id: str) -> Tracer:
-        tracer = InMemoryTracer()
-        self._example_traces[f"{run_id}/{example_id}"] = tracer
-        return tracer
 
     def example_evaluation(
         self, eval_id: str, example_id: str, evaluation_type: type[Evaluation]
@@ -382,8 +375,61 @@ class InMemoryEvaluationRepository(EvaluationRepository):
     def store_evaluation_overview(self, overview: IndividualEvaluationOverview) -> None:
         self._evaluation_run_overviews[overview.id] = overview
 
-    def run_overview(self, run_id: str) -> RunOverview | None:
-        return self._run_overviews.get(run_id)
 
-    def store_run_overview(self, overview: RunOverview) -> None:
-        self._run_overviews[overview.id] = overview
+class ArgillaEvaluationRepository(EvaluationRepository):
+    """Evaluation repository used for the :class:`ArgillaEvaluator`.
+
+    Wraps an :class:`Evaluator`.
+    Does not support storing evaluations, since the ArgillaEvaluator does not do automated evaluations.
+
+    Args:
+        evaluation_repository: repository to wrap.
+        argilla_client: client used to connect to Argilla.
+    """
+
+    def __init__(
+        self, evaluation_repository: EvaluationRepository, argilla_client: ArgillaClient
+    ) -> None:
+        super().__init__()
+        self._evaluation_repository = evaluation_repository
+        self._client = argilla_client
+
+    def eval_ids(self) -> Sequence[str]:
+        return self._evaluation_repository.eval_ids()
+
+    def example_evaluation(
+        self, eval_id: str, example_id: str, evaluation_type: type[Evaluation]
+    ) -> Optional[ExampleEvaluation[Evaluation]]:
+        return self._evaluation_repository.example_evaluation(
+            eval_id, example_id, evaluation_type
+        )
+
+    def store_example_evaluation(self, _: ExampleEvaluation[Evaluation]) -> None:
+        raise TypeError(
+            "ArgillaEvaluationRepository does not support storing evaluations."
+        )
+
+    def example_evaluations(
+        self, eval_id: str, eval_type: type[Evaluation]
+    ) -> Sequence[ExampleEvaluation[Evaluation]]:
+        assert eval_type == ArgillaEvaluation
+        # Mypy does not derive that the return type is always ExampleEvaluation with ArgillaEvaluation
+        return [
+            ExampleEvaluation(eval_id=eval_id, example_id=e.example_id, result=e)  # type: ignore
+            for e in self._client.evaluations(eval_id)
+        ]
+
+    def failed_example_evaluations(
+        self, eval_id: str, evaluation_type: type[Evaluation]
+    ) -> Sequence[ExampleEvaluation[Evaluation]]:
+        return self._evaluation_repository.failed_example_evaluations(
+            eval_id, evaluation_type
+        )
+
+    def evaluation_overview(
+        self, eval_id: str, overview_type: type[EvaluationOverviewType]
+    ) -> EvaluationOverviewType | None:
+        return self._evaluation_repository.evaluation_overview(eval_id, overview_type)
+
+    def store_evaluation_overview(self, overview: IndividualEvaluationOverview) -> None:
+        return self._evaluation_repository.store_evaluation_overview(overview)

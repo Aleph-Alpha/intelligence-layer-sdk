@@ -19,6 +19,9 @@ from intelligence_layer.evaluation import (
     Runner,
     SuccessfulExampleOutput,
 )
+from intelligence_layer.evaluation.data_storage.run_repository import (
+    InMemoryRunRepository,
+)
 from tests.conftest import DummyStringInput, DummyStringOutput, DummyStringTask
 from tests.evaluation.conftest import DummyAggregatedEvaluation
 
@@ -110,8 +113,9 @@ def stub_argilla_client() -> StubArgillaClient:
 
 @fixture
 def string_argilla_evaluator(
-    in_memory_evaluation_repository: InMemoryEvaluationRepository,  # noqa: w0404
     in_memory_dataset_repository: InMemoryDatasetRepository,
+    in_memory_run_repository: InMemoryRunRepository,
+    in_memory_evaluation_repository: InMemoryEvaluationRepository,
     stub_argilla_client: StubArgillaClient,
 ) -> DummyStringTaskArgillaEvaluator:
     stub_argilla_client._expected_workspace_id = "workspace-id"
@@ -128,10 +132,11 @@ def string_argilla_evaluator(
         Field(name="input", title="Input"),
     ]
     evaluator = DummyStringTaskArgillaEvaluator(
+        in_memory_dataset_repository,
+        in_memory_run_repository,
         ArgillaEvaluationRepository(
             in_memory_evaluation_repository, stub_argilla_client
         ),
-        in_memory_dataset_repository,
         "dummy-string-task",
         stub_argilla_client._expected_workspace_id,
         fields,
@@ -145,13 +150,13 @@ def string_argilla_evaluator(
 @fixture
 def string_argilla_runner(
     dummy_string_task: DummyStringTask,
-    in_memory_evaluation_repository: InMemoryEvaluationRepository,  # noqa: w0404
     in_memory_dataset_repository: InMemoryDatasetRepository,
+    in_memory_run_repository: InMemoryRunRepository,
 ) -> Runner[DummyStringInput, DummyStringOutput]:
     return Runner(
         dummy_string_task,
-        in_memory_evaluation_repository,
         in_memory_dataset_repository,
+        in_memory_run_repository,
         "dummy-task",
     )
 

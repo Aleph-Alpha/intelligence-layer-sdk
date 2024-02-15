@@ -1,23 +1,18 @@
 from datetime import datetime
-from typing import Sequence, cast
+from typing import Sequence
 
 from pydantic import BaseModel
 from pytest import fixture
 
-from intelligence_layer.core import InMemoryTaskSpan
-from intelligence_layer.core.tracer import CompositeTracer, InMemoryTracer
 from intelligence_layer.evaluation import (
     EvaluationOverview,
-    EvaluationRepository,
     ExampleEvaluation,
-    ExampleOutput,
     ExampleTrace,
     FailedExampleEvaluation,
     FileEvaluationRepository,
     InMemoryEvaluationRepository,
     TaskSpanTrace,
 )
-from tests.conftest import DummyStringInput
 from tests.evaluation.conftest import DummyAggregatedEvaluation, DummyEvaluation
 
 
@@ -41,26 +36,6 @@ def example_trace(
         run_id="some_eval_id",
         example_id="example_id",
         trace=task_span_trace,
-    )
-
-
-def test_can_store_example_evaluation_traces_in_file(
-    file_evaluation_repository: FileEvaluationRepository,
-) -> None:
-    run_id = "run_id"
-    example_id = "example_id"
-    now = datetime.now()
-
-    tracer = file_evaluation_repository.example_tracer(run_id, example_id)
-    expected = InMemoryTracer()
-    CompositeTracer([tracer, expected]).task_span(
-        "task", DummyStringInput(input="input"), now
-    )
-
-    assert file_evaluation_repository.example_trace(run_id, example_id) == ExampleTrace(
-        run_id=run_id,
-        example_id=example_id,
-        trace=TaskSpanTrace.from_task_span(cast(InMemoryTaskSpan, expected.entries[0])),
     )
 
 
@@ -202,58 +177,4 @@ def test_file_repository_returns_none_for_nonexisting_overview(
             "does-not-exist", EvaluationOverview[DummyAggregatedEvaluation]
         )
         is None
-    )
-
-
-def test_file_repository_run_id_returns_run_ids(
-    file_evaluation_repository: FileEvaluationRepository,
-) -> None:
-    run_id = "id"
-
-    file_evaluation_repository.store_example_output(
-        ExampleOutput(run_id=run_id, example_id="example_id", output=None)
-    )
-
-    assert file_evaluation_repository.run_ids() == [run_id]
-
-
-def evaluation_repository_returns_examples_in_same_order_for_two_runs(
-    evaluation_repository: EvaluationRepository,
-) -> None:
-    run_id_1 = "id_1"
-    run_id_2 = "id_2"
-    num_examples = 20
-
-    for example_id in range(num_examples):
-        evaluation_repository.store_example_output(
-            ExampleOutput(run_id=run_id_1, example_id=str(example_id), output=None),
-        )
-
-    for example_id in reversed(range(num_examples)):
-        evaluation_repository.store_example_output(
-            ExampleOutput(run_id=run_id_2, example_id=str(example_id), output=None),
-        )
-
-    assert list(
-        (output.example_id, output.output)
-        for output in evaluation_repository.example_outputs(run_id_1, type(None))
-    ) == list(
-        (output.example_id, output.output)
-        for output in evaluation_repository.example_outputs(run_id_2, type(None))
-    )
-
-
-def test_in_memory_evaluation_repository_returns_examples_in_same_order_for_two_runs(
-    in_memory_evaluation_repository: InMemoryEvaluationRepository,
-) -> None:
-    evaluation_repository_returns_examples_in_same_order_for_two_runs(
-        in_memory_evaluation_repository
-    )
-
-
-def test_file_evaluation_repository_returns_examples_in_same_order_for_two_runs(
-    file_evaluation_repository: FileEvaluationRepository,
-) -> None:
-    evaluation_repository_returns_examples_in_same_order_for_two_runs(
-        file_evaluation_repository
     )

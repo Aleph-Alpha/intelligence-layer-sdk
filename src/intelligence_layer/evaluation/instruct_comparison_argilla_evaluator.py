@@ -12,8 +12,11 @@ from intelligence_layer.connectors.argilla.argilla_client import (
 )
 from intelligence_layer.core.complete import InstructInput, PromptOutput
 from intelligence_layer.evaluation import (
+    ArgillaEvaluationRepository,
+    DatasetRepository,
     Example,
     MeanAccumulator,
+    RunRepository,
     SuccessfulExampleOutput,
 )
 from intelligence_layer.evaluation.elo import (
@@ -24,11 +27,7 @@ from intelligence_layer.evaluation.elo import (
     WinRateCalculator,
     build_tournaments,
 )
-from intelligence_layer.evaluation.evaluator import (
-    ArgillaEvaluationRepository,
-    ArgillaEvaluator,
-    DatasetRepository,
-)
+from intelligence_layer.evaluation.evaluator import ArgillaEvaluator
 
 
 class AggregatedInstructComparison(BaseModel):
@@ -52,8 +51,9 @@ class InstructComparisonArgillaEvaluator(
 
     def __init__(
         self,
-        evaluation_repository: ArgillaEvaluationRepository,
         dataset_repository: DatasetRepository,
+        run_repository: RunRepository,
+        evaluation_repository: ArgillaEvaluationRepository,
         description: str,
         workspace_id: str,
         high_priority_runs: Optional[frozenset[str]] = None,
@@ -74,8 +74,9 @@ class InstructComparisonArgillaEvaluator(
         ]
 
         super().__init__(
-            evaluation_repository,
             dataset_repository,
+            run_repository,
+            evaluation_repository,
             description,
             workspace_id,
             fields,

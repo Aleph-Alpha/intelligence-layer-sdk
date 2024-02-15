@@ -7,7 +7,9 @@ from intelligence_layer.evaluation import (
     Example,
     InMemoryDatasetRepository,
     InMemoryEvaluationRepository,
+    InMemoryRunRepository,
     Runner,
+    RunRepository,
 )
 from intelligence_layer.use_cases.summarize.long_context_high_compression_summarize import (
     LongContextHighCompressionSummarize,
@@ -28,12 +30,14 @@ from intelligence_layer.use_cases.summarize.summarize import (
 
 @fixture
 def single_chunk_summarize_evaluator(
-    in_memory_evaluation_repository: InMemoryEvaluationRepository,
     in_memory_dataset_repository: InMemoryDatasetRepository,
+    in_memory_run_repository: InMemoryRunRepository,
+    in_memory_evaluation_repository: InMemoryEvaluationRepository,
 ) -> SingleChunkSummarizeEvaluator:
     return SingleChunkSummarizeEvaluator(
-        in_memory_evaluation_repository,
         in_memory_dataset_repository,
+        in_memory_run_repository,
+        in_memory_evaluation_repository,
         "single-chunk-summarize",
     )
 
@@ -41,25 +45,27 @@ def single_chunk_summarize_evaluator(
 @fixture
 def single_chunk_summarize_runner(
     single_chunk_few_shot_summarize: SingleChunkFewShotSummarize,
-    in_memory_evaluation_repository: InMemoryEvaluationRepository,
     in_memory_dataset_repository: InMemoryDatasetRepository,
+    in_memory_run_repository: InMemoryRunRepository,
 ) -> Runner[SingleChunkSummarizeInput, SummarizeOutput]:
     return Runner(
         single_chunk_few_shot_summarize,
-        in_memory_evaluation_repository,
         in_memory_dataset_repository,
+        in_memory_run_repository,
         "single-chunk-summarize",
     )
 
 
 @fixture
 def long_context_summarize_evaluator(
-    in_memory_evaluation_repository: EvaluationRepository,
     in_memory_dataset_repository: DatasetRepository,
+    in_memory_run_repository: RunRepository,
+    in_memory_evaluation_repository: EvaluationRepository,
 ) -> LongContextSummarizeEvaluator:
     return LongContextSummarizeEvaluator(
-        in_memory_evaluation_repository,
         in_memory_dataset_repository,
+        in_memory_run_repository,
+        in_memory_evaluation_repository,
         "long-context-summarize",
     )
 
@@ -67,13 +73,13 @@ def long_context_summarize_evaluator(
 @fixture
 def long_context_summarize_runner(
     long_context_high_compression_summarize: LongContextHighCompressionSummarize,
-    in_memory_evaluation_repository: InMemoryEvaluationRepository,
     in_memory_dataset_repository: DatasetRepository,
+    in_memory_run_repository: InMemoryRunRepository,
 ) -> Runner[LongContextSummarizeInput, LongContextSummarizeOutput]:
     return Runner(
         long_context_high_compression_summarize,
-        in_memory_evaluation_repository,
         in_memory_dataset_repository,
+        in_memory_run_repository,
         "long-context-summarize",
     )
 

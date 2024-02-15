@@ -8,9 +8,7 @@ from pytest import fixture
 from intelligence_layer.connectors import AlephAlphaClientProtocol
 from intelligence_layer.core import Task, TaskSpan
 from intelligence_layer.evaluation import (
-    DatasetRepository,
     EvaluationOverview,
-    EvaluationRepository,
     Evaluator,
     Example,
     FileDatasetRepository,
@@ -48,14 +46,6 @@ class DummyTaskWithClient(DummyTask):
 
 
 class DummyEvaluator(Evaluator[None, None, None, DummyEvaluation, DummyAggregation]):
-    def __init__(
-        self,
-        evaluation_repository: EvaluationRepository,
-        dataset_repository: DatasetRepository,
-        description: str,
-    ) -> None:
-        super().__init__(evaluation_repository, dataset_repository, description)
-
     # mypy expects *args where this method only uses one output
     def do_evaluate(  # type: ignore
         self, input: None, expected_output: None, output: None
