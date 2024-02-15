@@ -3,9 +3,7 @@ from typing import Generic, Optional, Sequence
 from pydantic import BaseModel
 
 from intelligence_layer.connectors.retrievers.base_retriever import ID, BaseRetriever
-from intelligence_layer.core.detect_language import Language
-from intelligence_layer.core.task import Task
-from intelligence_layer.core.tracer import TaskSpan
+from intelligence_layer.core import Chunk, Language, Task, TaskSpan
 from intelligence_layer.use_cases.qa.multiple_chunk_qa import Subanswer
 from intelligence_layer.use_cases.qa.single_chunk_qa import (
     SingleChunkQaInput,
@@ -65,11 +63,8 @@ class RetrieverBasedQa(
         `model` provided should be a control-type model.
 
     Args:
-        client: Aleph Alpha client instance for running model related API calls.
         retriever: Used to access and return a set of texts.
-        model: A valid Aleph Alpha model name.
-        allowed_languages: List of languages to which the language detection is limited (ISO619).
-        fallback_language: The default language of the output.
+        qa_task: Any single chunk QA task.
 
     Example:
         >>> import os
@@ -112,7 +107,7 @@ class RetrieverBasedQa(
 
         sorted_qa_inputs = [
             SingleChunkQaInput(
-                chunk=output.document_chunk.text,
+                chunk=Chunk(output.document_chunk.text),
                 question=input.question,
                 language=input.language,
             )
@@ -124,7 +119,7 @@ class RetrieverBasedQa(
         enriched_answers = [
             EnrichedSubanswer(
                 answer=answer.answer,
-                chunk=input.document_chunk.text,
+                chunk=Chunk(input.document_chunk.text),
                 highlights=answer.highlights,
                 id=input.id,
             )
