@@ -110,7 +110,18 @@ pip install git+https://$GITHUB_TOKEN@github.com/Aleph-Alpha/intelligence-layer.
 Now the Intelligence Layer should be available as a Python package and ready to use.
 
 ```py
-from intelligence_layer.core.task import Task
+from intelligence_layer.core import Task
+```
+
+In VSCode, to enable auto-import up to the second depth, where all symbols are exported, add the following entry to your `./.vscode/settings.json`:
+
+``` json
+"python.analysis.packageIndexDepths": [
+    {
+        "name": "intelligence_layer",
+        "depth": 2
+    }
+]
 ```
 
 ## Use-case index
