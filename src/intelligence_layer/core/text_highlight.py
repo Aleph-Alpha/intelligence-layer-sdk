@@ -18,7 +18,7 @@ from intelligence_layer.core.explain import Explain, ExplainInput
 from intelligence_layer.core.prompt_template import (
     Cursor,
     PromptRange,
-    PromptWithMetadata,
+    RichPrompt,
     TextCursor,
 )
 from intelligence_layer.core.task import Task
@@ -38,7 +38,7 @@ class TextHighlightInput(BaseModel):
             If this set is empty highlights of the entire prompt are returned.
     """
 
-    prompt_with_metadata: PromptWithMetadata
+    rich_prompt: RichPrompt
     target: str
     model: str
     focus_ranges: frozenset[str] = frozenset()
@@ -70,7 +70,7 @@ class TextHighlight(Task[TextHighlightInput, TextHighlightOutput]):
     """Generates text highlights given a prompt and completion.
 
     For a given prompt and target (completion), extracts the parts of the prompt responsible for generation.
-    A range can be provided in the input 'PromptWithMetadata' via use of the liquid language (see the example).
+    A range can be provided via use of the liquid language (see the example).
     In this case, the highlights will only refer to text within this range.
 
     Args:
@@ -117,19 +117,19 @@ class TextHighlight(Task[TextHighlightInput, TextHighlightOutput]):
     ) -> TextHighlightOutput:
         self._raise_on_invalid_focus_range(input)
         explanation = self._explain(
-            prompt=input.prompt_with_metadata.prompt,
+            prompt=input.rich_prompt,
             target=input.target,
             model=input.model,
             task_span=task_span,
         )
         prompt_ranges = self._flatten_prompt_ranges(
             range
-            for name, range in input.prompt_with_metadata.ranges.items()
+            for name, range in input.rich_prompt.ranges.items()
             if name in input.focus_ranges
         )
         text_prompt_item_explanations_and_indices = (
             self._extract_text_prompt_item_explanations_and_item_index(
-                input.prompt_with_metadata.prompt, explanation
+                input.rich_prompt, explanation
             )
         )
         highlights = self._to_highlights(
@@ -140,9 +140,7 @@ class TextHighlight(Task[TextHighlightInput, TextHighlightOutput]):
         return TextHighlightOutput(highlights=highlights)
 
     def _raise_on_invalid_focus_range(self, input: TextHighlightInput) -> None:
-        unknown_focus_ranges = input.focus_ranges - set(
-            input.prompt_with_metadata.ranges.keys()
-        )
+        unknown_focus_ranges = input.focus_ranges - set(input.rich_prompt.ranges.keys())
         if unknown_focus_ranges:
             raise ValueError(f"Unknown focus ranges: {', '.join(unknown_focus_ranges)}")
 

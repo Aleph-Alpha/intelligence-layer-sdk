@@ -76,16 +76,14 @@ class PromptRange:
     end: Cursor
 
 
-@dataclass(frozen=True)
-class PromptWithMetadata:
+@dataclass
+class RichPrompt(Prompt):
     """The `Prompt` along with some metadata generated when a `PromptTemplate` is turned into a `Prompt`.
 
     Args:
-      prompt: The actual `Prompt`.
       ranges: A mapping of range name to a `Sequence` of corresponding `PromptRange` instances.
     """
 
-    prompt: Prompt
     ranges: Mapping[str, Sequence[PromptRange]]
 
 
@@ -278,7 +276,7 @@ class PromptTemplate:
             last_item = item
         return prompt_text
 
-    def to_prompt_with_metadata(self, **kwargs: Any) -> PromptWithMetadata:
+    def to_rich_prompt(self, **kwargs: Any) -> RichPrompt:
         """Creates a `Prompt` along with metadata from the template string and the given parameters.
 
         Currently the only metadata returned is information about ranges that are marked in the template.
@@ -303,16 +301,9 @@ class PromptTemplate:
             placeholder_indices, context.placeholder_range_names(), liquid_prompt
         )
 
-        result = PromptWithMetadata(Prompt(modalities), placeholder_ranges)
+        result = RichPrompt(modalities, placeholder_ranges)
         self._reset_placeholder_state()
         return result
-
-    def to_prompt(self, **kwargs: Any) -> Prompt:
-        """Creates a `Prompt` from the template string and the given parameters.
-
-        Provided parameters are passed to `liquid.Template.render`.
-        """
-        return self.to_prompt_with_metadata(**kwargs).prompt
 
     def _reset_placeholder_state(self) -> None:
         self._prompt_item_placeholders = {}

@@ -33,7 +33,7 @@ from .prompt_template import Cursor as Cursor
 from .prompt_template import PromptItemCursor as PromptItemCursor
 from .prompt_template import PromptRange as PromptRange
 from .prompt_template import PromptTemplate as PromptTemplate
-from .prompt_template import PromptWithMetadata as PromptWithMetadata
+from .prompt_template import RichPrompt as RichPrompt
 from .prompt_template import TextCursor as TextCursor
 from .task import Input as Input
 from .task import Output as Output

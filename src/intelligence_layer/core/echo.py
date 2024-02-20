@@ -88,7 +88,7 @@ class EchoTask(Task[EchoInput, EchoOutput]):
             input.expected_completion, input.model
         )
         prompt_template = PromptTemplate(self.PROMPT_TEMPLATE_STR)
-        prompt = prompt_template.to_prompt(
+        prompt = prompt_template.to_rich_prompt(
             prompt=prompt_template.embed_prompt(input.prompt),
             expected_completion=prompt_template.placeholder(
                 Tokens.from_token_ids(

@@ -9,7 +9,7 @@ from intelligence_layer.connectors.limited_concurrency_client import (
 from intelligence_layer.core.chunk import Chunk
 from intelligence_layer.core.complete import Instruct, InstructInput, PromptOutput
 from intelligence_layer.core.detect_language import Language, language_config
-from intelligence_layer.core.prompt_template import PromptWithMetadata
+from intelligence_layer.core.prompt_template import RichPrompt
 from intelligence_layer.core.task import Task
 from intelligence_layer.core.text_highlight import TextHighlight, TextHighlightInput
 from intelligence_layer.core.tracer import TaskSpan
@@ -132,7 +132,7 @@ class SingleChunkQa(Task[SingleChunkQaInput, SingleChunkQaOutput]):
         answer = self._no_answer_to_none(output.completion.strip())
         highlights = (
             self._get_highlights(
-                output.prompt_with_metadata,
+                output.rich_prompt,
                 output.completion,
                 task_span,
             )
@@ -158,12 +158,12 @@ class SingleChunkQa(Task[SingleChunkQaInput, SingleChunkQaOutput]):
 
     def _get_highlights(
         self,
-        prompt_with_metadata: PromptWithMetadata,
+        prompt_with_metadata: RichPrompt,
         completion: str,
         task_span: TaskSpan,
     ) -> Sequence[str]:
         highlight_input = TextHighlightInput(
-            prompt_with_metadata=prompt_with_metadata,
+            rich_prompt=prompt_with_metadata,
             target=completion,
             model=self._model,
             focus_ranges=frozenset({"input"}),

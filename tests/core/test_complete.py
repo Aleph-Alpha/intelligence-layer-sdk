@@ -33,7 +33,7 @@ def test_instruct_without_input(instruct: Instruct, no_op_tracer: NoOpTracer) ->
     output = instruct.run(input, no_op_tracer)
 
     assert "Berlin" in output.completion
-    prompt_text_item = output.prompt_with_metadata.prompt.items[0]
+    prompt_text_item = output.rich_prompt.items[0]
     assert isinstance(prompt_text_item, Text)
     assert "Input" not in prompt_text_item.text
 

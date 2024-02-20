@@ -24,7 +24,7 @@ Hello {{name}}!
     )
     names = ["World", "Rutger"]
 
-    prompt = template.to_prompt(names=names)
+    prompt = template.to_rich_prompt(names=names)
 
     expected = "".join([f"Hello {name}!\n" for name in names])
     assert prompt == Prompt.from_text(expected)
@@ -40,7 +40,7 @@ Hello {{name}}!
     )
 
     with raises(LiquidTypeError):
-        template.to_prompt(names=7)
+        template.to_rich_prompt(names=7)
 
 
 def test_to_prompt_with_single_image(prompt_image: Image) -> None:
@@ -51,7 +51,7 @@ More Text
 """
     )
 
-    prompt = template.to_prompt(whatever=template.placeholder(prompt_image))
+    prompt = template.to_rich_prompt(whatever=template.placeholder(prompt_image))
 
     expected = Prompt(
         [
@@ -72,7 +72,7 @@ def test_to_prompt_with_image_sequence(prompt_image: Image) -> None:
         """
     )
 
-    prompt = template.to_prompt(
+    prompt = template.to_rich_prompt(
         images=[template.placeholder(prompt_image), template.placeholder(prompt_image)]
     )
 
@@ -83,7 +83,7 @@ def test_to_prompt_with_image_sequence(prompt_image: Image) -> None:
 def test_to_prompt_with_mixed_modality_variables(prompt_image: Image) -> None:
     template = PromptTemplate("""{{image}}{{name}}{{image}}""")
 
-    prompt = template.to_prompt(
+    prompt = template.to_rich_prompt(
         image=template.placeholder(prompt_image), name="whatever"
     )
 
@@ -94,7 +94,7 @@ def test_to_prompt_with_mixed_modality_variables(prompt_image: Image) -> None:
 def test_to_prompt_with_unused_image(prompt_image: Image) -> None:
     template = PromptTemplate("cool")
 
-    prompt = template.to_prompt(images=template.placeholder(prompt_image))
+    prompt = template.to_rich_prompt(images=template.placeholder(prompt_image))
 
     assert prompt == Prompt.from_text("cool")
 
@@ -105,7 +105,7 @@ def test_to_prompt_with_multiple_different_images(prompt_image: Image) -> None:
 
     template = PromptTemplate("""{{image_1}}{{image_2}}""")
 
-    prompt = template.to_prompt(
+    prompt = template.to_rich_prompt(
         image_1=template.placeholder(prompt_image),
         image_2=template.placeholder(second_image),
     )
@@ -118,7 +118,7 @@ def test_to_prompt_with_embedded_prompt(prompt_image: Image) -> None:
 
     template = PromptTemplate("""{{user_prompt}}""")
 
-    prompt = template.to_prompt(user_prompt=template.embed_prompt(user_prompt))
+    prompt = template.to_rich_prompt(user_prompt=template.embed_prompt(user_prompt))
 
     assert prompt == user_prompt
 
@@ -128,7 +128,7 @@ def test_to_prompt_does_not_add_whitespace_after_image(prompt_image: Image) -> N
 
     template = PromptTemplate("{{user_prompt}}")
 
-    prompt = template.to_prompt(user_prompt=template.embed_prompt(user_prompt))
+    prompt = template.to_rich_prompt(user_prompt=template.embed_prompt(user_prompt))
 
     assert prompt == user_prompt
 
@@ -140,7 +140,7 @@ def test_to_prompt_skips_empty_strings() -> None:
 
     template = PromptTemplate("{{user_prompt}}")
 
-    prompt = template.to_prompt(user_prompt=template.embed_prompt(user_prompt))
+    prompt = template.to_rich_prompt(user_prompt=template.embed_prompt(user_prompt))
 
     assert prompt == Prompt([Text.from_text("Cool Also cool")])
 
@@ -152,7 +152,7 @@ def test_to_prompt_adds_whitespaces() -> None:
 
     template = PromptTemplate("{{user_prompt}}")
 
-    prompt = template.to_prompt(user_prompt=template.embed_prompt(user_prompt))
+    prompt = template.to_rich_prompt(user_prompt=template.embed_prompt(user_prompt))
 
     assert prompt == Prompt([Text.from_text("start middle end")])
 
@@ -168,21 +168,21 @@ def test_to_prompt_works_with_tokens() -> None:
 
     template = PromptTemplate("{{user_prompt}}")
 
-    prompt = template.to_prompt(user_prompt=template.embed_prompt(user_prompt))
+    prompt = template.to_rich_prompt(user_prompt=template.embed_prompt(user_prompt))
 
     assert prompt == user_prompt
 
 
 def test_to_prompt_with_empty_template() -> None:
-    assert PromptTemplate("").to_prompt() == Prompt([])
+    assert PromptTemplate("").to_rich_prompt() == Prompt([])
 
 
 def test_to_prompt_resets_template(prompt_image: Image) -> None:
     template = PromptTemplate("{{image}}")
     placeholder = template.placeholder(prompt_image)
-    prompt = template.to_prompt(image=placeholder)
+    prompt = template.to_rich_prompt(image=placeholder)
 
-    prompt_with_reset_template = template.to_prompt(image=placeholder)
+    prompt_with_reset_template = template.to_rich_prompt(image=placeholder)
 
     assert prompt_with_reset_template != prompt
 
@@ -201,7 +201,7 @@ def test_to_prompt_data_returns_ranges(prompt_image: Image) -> None:
         "{{prefix_items}}{{prefix_text}}{% promptrange r1 %}{{embedded_text}}{{embedded_items}}{% endpromptrange %}",
     )
 
-    prompt_data = template.to_prompt_with_metadata(
+    prompt_data = template.to_rich_prompt(
         prefix_items=template.embed_prompt(Prompt(prefix_items + [prefix_merged])),
         prefix_text=prefix_text,
         embedded_text=embedded_text,
@@ -237,9 +237,7 @@ def test_to_prompt_data_returns_ranges_for_image_only_prompt(
         ).lstrip()
     )
 
-    prompt_data = template.to_prompt_with_metadata(
-        image=template.placeholder(prompt_image)
-    )
+    prompt_data = template.to_rich_prompt(image=template.placeholder(prompt_image))
     r1 = prompt_data.ranges.get("r1")
 
     assert r1 == [PromptRange(start=PromptItemCursor(0), end=PromptItemCursor(0))]
@@ -249,7 +247,7 @@ def test_to_prompt_data_returns_ranges_for_image_only_prompt(
 def test_to_prompt_data_returns_no_range_with_empty_template() -> None:
     template = PromptTemplate("{% promptrange r1 %}{% endpromptrange %}")
 
-    assert template.to_prompt_with_metadata().ranges.get("r1") == []
+    assert template.to_rich_prompt().ranges.get("r1") == []
 
 
 def test_to_prompt_data_returns_no_empty_ranges(prompt_image: Image) -> None:
@@ -258,9 +256,9 @@ def test_to_prompt_data_returns_no_empty_ranges(prompt_image: Image) -> None:
     )
 
     assert (
-        template.to_prompt_with_metadata(
-            image=template.placeholder(prompt_image)
-        ).ranges.get("r1")
+        template.to_rich_prompt(image=template.placeholder(prompt_image)).ranges.get(
+            "r1"
+        )
         == []
     )
 
@@ -278,7 +276,7 @@ def test_to_prompt_data_returns_multiple_text_ranges_in_for_loop() -> None:
         "{% for i in (1..4) %}{% promptrange r1 %}{{embedded}}{% endpromptrange %}{% endfor %}"
     )
 
-    prompt_data = template.to_prompt_with_metadata(embedded=embedded)
+    prompt_data = template.to_rich_prompt(embedded=embedded)
 
     assert prompt_data.ranges.get("r1") == [
         PromptRange(
@@ -296,9 +294,7 @@ def test_to_prompt_data_returns_multiple_imgae_ranges_in_for_loop(
         "{% for i in (1..4) %}{% promptrange r1 %}{{embedded}}{% endpromptrange %}{% endfor %}"
     )
 
-    prompt_data = template.to_prompt_with_metadata(
-        embedded=template.placeholder(prompt_image)
-    )
+    prompt_data = template.to_rich_prompt(embedded=template.placeholder(prompt_image))
 
     assert prompt_data.ranges.get("r1") == [
         PromptRange(
