@@ -7,7 +7,12 @@ from pytest import fixture
 
 from intelligence_layer.connectors import AlephAlphaClientProtocol
 from intelligence_layer.core import Task, TaskSpan
-from intelligence_layer.evaluation import Evaluator, Example, FileDatasetRepository
+from intelligence_layer.evaluation import (
+    Example,
+    FileDatasetRepository,
+    SuccessfulExampleOutput,
+)
+from intelligence_layer.evaluation.base_logic import AggregationLogic, EvaluationLogic
 from intelligence_layer.evaluation.data_storage.aggregation_repository import (
     FileAggregationRepository,
 )
@@ -42,16 +47,17 @@ class DummyTaskWithClient(DummyTask):
         pass
 
 
-class DummyEvaluator(Evaluator[None, None, None, DummyEvaluation, DummyAggregation]):
-    # mypy expects *args where this method only uses one output
-    def do_evaluate(  # type: ignore
-        self, input: None, expected_output: None, output: None
-    ) -> DummyEvaluation:
-        return DummyEvaluation(correct=True)
-
+class DummyAggregationLogic(AggregationLogic[DummyEvaluation, DummyAggregation]):
     def aggregate(self, evaluations: Iterable[DummyEvaluation]) -> DummyAggregation:
         list(evaluations)
         return DummyAggregation(correct_rate=1.0)
+
+
+class DummyEvaluationLogic(EvaluationLogic[None, None, None, DummyEvaluation]):
+    def do_evaluate(
+        self, example: Example[None, None], *output: SuccessfulExampleOutput[None]
+    ) -> DummyEvaluation:
+        return DummyEvaluation(correct=True)
 
 
 def test_run_evaluation(
@@ -67,8 +73,10 @@ def test_run_evaluation(
     main(
         [
             "",
-            "--evaluator",
-            "tests.evaluation.test_run.DummyEvaluator",
+            "--eval-logic",
+            "tests.evaluation.test_run.DummyEvaluationLogic",
+            "--aggregation-logic",
+            "tests.evaluation.test_run.DummyAggregationLogic",
             "--task",
             "tests.evaluation.test_run.DummyTask",
             "--dataset-repository-path",
@@ -100,8 +108,10 @@ def test_run_evaluation_with_task_with_client(
     main(
         [
             "",
-            "--evaluator",
-            "tests.evaluation.test_run.DummyEvaluator",
+            "--eval-logic",
+            "tests.evaluation.test_run.DummyEvaluationLogic",
+            "--aggregation-logic",
+            "tests.evaluation.test_run.DummyAggregationLogic",
             "--task",
             "tests.evaluation.test_run.DummyTaskWithClient",
             "--dataset-repository-path",

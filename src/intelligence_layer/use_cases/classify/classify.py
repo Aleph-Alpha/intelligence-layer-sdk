@@ -4,15 +4,10 @@ from typing import Iterable, Mapping, NewType, Sequence
 from pydantic import BaseModel
 
 from intelligence_layer.core import Chunk
-from intelligence_layer.evaluation import (
-    DatasetRepository,
-    EvaluationRepository,
-    Evaluator,
-    MeanAccumulator,
-    RunRepository,
-)
-from intelligence_layer.evaluation.data_storage.aggregation_repository import (
-    AggregationRepository,
+from intelligence_layer.evaluation import Example, MeanAccumulator
+from intelligence_layer.evaluation.base_logic import (
+    AggregationLogic,
+    SingleOutputEvaluationLogic,
 )
 
 Probability = NewType("Probability", float)
@@ -76,31 +71,11 @@ class AggregatedSingleLabelClassifyEvaluation(BaseModel):
     percentage_correct: float
 
 
-class SingleLabelClassifyEvaluator(
-    Evaluator[
-        ClassifyInput,
-        SingleLabelClassifyOutput,
-        Sequence[str],
-        SingleLabelClassifyEvaluation,
-        AggregatedSingleLabelClassifyEvaluation,
+class SingleLabelClassifyAggregationLogic(
+    AggregationLogic[
+        SingleLabelClassifyEvaluation, AggregatedSingleLabelClassifyEvaluation
     ]
 ):
-    # mypy expects *args where this method only uses one output
-    def do_evaluate(  # type: ignore
-        self,
-        input: ClassifyInput,
-        expected_output: Sequence[str],
-        output: SingleLabelClassifyOutput,
-    ) -> SingleLabelClassifyEvaluation:
-        sorted_classes = sorted(
-            output.scores.items(), key=lambda item: item[1], reverse=True
-        )
-        if sorted_classes[0][0] in expected_output:
-            correct = True
-        else:
-            correct = False
-        return SingleLabelClassifyEvaluation(correct=correct)
-
     def aggregate(
         self, evaluations: Iterable[SingleLabelClassifyEvaluation]
     ) -> AggregatedSingleLabelClassifyEvaluation:
@@ -108,6 +83,29 @@ class SingleLabelClassifyEvaluator(
         for evaluation in evaluations:
             acc.add(1.0 if evaluation.correct else 0.0)
         return AggregatedSingleLabelClassifyEvaluation(percentage_correct=acc.extract())
+
+
+class SingleLabelClassifyEvaluationLogic(
+    SingleOutputEvaluationLogic[
+        ClassifyInput,
+        SingleLabelClassifyOutput,
+        Sequence[str],
+        SingleLabelClassifyEvaluation,
+    ]
+):
+    def do_evaluate_single_output(
+        self,
+        example: Example[ClassifyInput, Sequence[str]],
+        output: SingleLabelClassifyOutput,
+    ) -> SingleLabelClassifyEvaluation:
+        sorted_classes = sorted(
+            output.scores.items(), key=lambda item: item[1], reverse=True
+        )
+        if sorted_classes[0][0] in example.expected_output:
+            correct = True
+        else:
+            correct = False
+        return SingleLabelClassifyEvaluation(correct=correct)
 
 
 class MultiLabelClassifyEvaluation(BaseModel):
@@ -155,51 +153,11 @@ class AggregatedMultiLabelClassifyEvaluation(BaseModel):
     macro_avg: MultiLabelClassifyMetrics
 
 
-class MultiLabelClassifyEvaluator(
-    Evaluator[
-        ClassifyInput,
-        MultiLabelClassifyOutput,
-        Sequence[str],
-        MultiLabelClassifyEvaluation,
-        AggregatedMultiLabelClassifyEvaluation,
+class MultiLabelClassifyAggregationLogic(
+    AggregationLogic[
+        MultiLabelClassifyEvaluation, AggregatedMultiLabelClassifyEvaluation
     ]
 ):
-    def __init__(
-        self,
-        dataset_repository: DatasetRepository,
-        run_repository: RunRepository,
-        evaluation_repository: EvaluationRepository,
-        aggregation_repository: AggregationRepository,
-        description: str,
-        threshold: float = 0.55,
-    ):
-        super().__init__(
-            dataset_repository,
-            run_repository,
-            evaluation_repository,
-            aggregation_repository,
-            description,
-        )
-        self.threshold = threshold
-
-    # mypy expects *args where this method only uses one output
-    def do_evaluate(  # type: ignore
-        self,
-        input: ClassifyInput,
-        expected_output: Sequence[str],
-        output: MultiLabelClassifyOutput,
-    ) -> MultiLabelClassifyEvaluation:
-        predicted_classes = frozenset(
-            label for label, score in output.scores.items() if score > self.threshold
-        )
-        expected_classes = frozenset(expected_output)
-        tp = predicted_classes & expected_classes
-        tn = (input.labels - predicted_classes) & (input.labels - expected_classes)
-        fp = (input.labels - expected_classes) - (input.labels - predicted_classes)
-        fn = expected_classes - predicted_classes
-
-        return MultiLabelClassifyEvaluation(tp=tp, tn=tn, fp=fp, fn=fn)
-
     def aggregate(
         self, evaluations: Iterable[MultiLabelClassifyEvaluation]
     ) -> AggregatedMultiLabelClassifyEvaluation:
@@ -273,3 +231,39 @@ class MultiLabelClassifyEvaluator(
         return AggregatedMultiLabelClassifyEvaluation(
             class_metrics=class_metrics, micro_avg=micro_avg, macro_avg=macro_avg
         )
+
+
+class MultiLabelClassifyEvaluationLogic(
+    SingleOutputEvaluationLogic[
+        ClassifyInput,
+        MultiLabelClassifyOutput,
+        Sequence[str],
+        MultiLabelClassifyEvaluation,
+    ]
+):
+    def __init__(
+        self,
+        threshold: float = 0.55,
+    ):
+        super().__init__()
+        self.threshold = threshold
+
+    def do_evaluate_single_output(
+        self,
+        example: Example[ClassifyInput, Sequence[str]],
+        output: MultiLabelClassifyOutput,
+    ) -> MultiLabelClassifyEvaluation:
+        predicted_classes = frozenset(
+            label for label, score in output.scores.items() if score > self.threshold
+        )
+        expected_classes = frozenset(example.expected_output)
+        tp = predicted_classes & expected_classes
+        tn = (example.input.labels - predicted_classes) & (
+            example.input.labels - expected_classes
+        )
+        fp = (example.input.labels - expected_classes) - (
+            example.input.labels - predicted_classes
+        )
+        fn = expected_classes - predicted_classes
+
+        return MultiLabelClassifyEvaluation(tp=tp, tn=tn, fp=fp, fn=fn)

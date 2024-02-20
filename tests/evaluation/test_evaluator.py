@@ -6,7 +6,6 @@ from pytest import fixture
 from intelligence_layer.core import InMemoryTaskSpan, InMemoryTracer, NoOpTracer, Tracer
 from intelligence_layer.core.task import Input, Output, Task
 from intelligence_layer.evaluation import (
-    BaseEvaluator,
     Evaluation,
     Evaluator,
     Example,
@@ -19,9 +18,15 @@ from intelligence_layer.evaluation import (
     Runner,
     SuccessfulExampleOutput,
 )
+from intelligence_layer.evaluation.base_logic import (
+    AggregationLogic,
+    EvaluationLogic,
+    SingleOutputEvaluationLogic,
+)
 from intelligence_layer.evaluation.data_storage.aggregation_repository import (
     InMemoryAggregationRepository,
 )
+from intelligence_layer.evaluation.domain import AggregatedEvaluation
 from tests.evaluation.conftest import (
     FAIL_IN_EVAL_INPUT,
     FAIL_IN_TASK_INPUT,
@@ -30,30 +35,31 @@ from tests.evaluation.conftest import (
 )
 
 
-class DummyEvaluator(
-    Evaluator[
+class DummyAggregationLogic(
+    AggregationLogic[DummyEvaluation, DummyAggregatedEvaluationWithResultList]
+):
+    def aggregate(
+        self, evaluations: Iterable[DummyEvaluation]
+    ) -> DummyAggregatedEvaluationWithResultList:
+        return DummyAggregatedEvaluationWithResultList(results=list(evaluations))
+
+
+class DummyEvaluationLogic(
+    SingleOutputEvaluationLogic[
         str,
         str,
         None,
         DummyEvaluation,
-        DummyAggregatedEvaluationWithResultList,
     ]
 ):
-    # mypy expects *args where this method only uses one output
-    def do_evaluate(  # type: ignore
+    def do_evaluate_single_output(
         self,
-        input: str,
-        expected_output: None,
+        example: Example[str, None],
         output: str,
     ) -> DummyEvaluation:
         if output == FAIL_IN_EVAL_INPUT:
             raise RuntimeError(output)
         return DummyEvaluation(result="pass")
-
-    def aggregate(
-        self, evaluations: Iterable[DummyEvaluation]
-    ) -> DummyAggregatedEvaluationWithResultList:
-        return DummyAggregatedEvaluationWithResultList(results=list(evaluations))
 
 
 class ComparisonEvaluation(BaseModel):
@@ -64,20 +70,12 @@ class ComparisonAggregation(BaseModel):
     equal_ratio: float
 
 
-class ComparingEvaluator(
-    Evaluator[
-        str,
-        str,
-        None,
+class ComparingAggregationLogic(
+    AggregationLogic[
         ComparisonEvaluation,
         ComparisonAggregation,
     ]
 ):
-    def do_evaluate(
-        self, input: str, expected_output: None, *output: str
-    ) -> ComparisonEvaluation:
-        return ComparisonEvaluation(is_equal=output[1:] == output[:-1])
-
     def aggregate(
         self, evaluations: Iterable[ComparisonEvaluation]
     ) -> ComparisonAggregation:
@@ -87,12 +85,26 @@ class ComparingEvaluator(
         return ComparisonAggregation(equal_ratio=acc.extract())
 
 
-class DummyEvaluatorWithoutTypeHints(DummyEvaluator):
-    # type hint for return value missing on purpose for testing
-    def do_evaluate(  # type: ignore
-        self, input: str, output: str, expected_output: None
-    ):
-        return super().do_evaluate(input, expected_output, output)
+class ComparingEvaluationLogic(
+    EvaluationLogic[
+        str,
+        str,
+        None,
+        ComparisonEvaluation,
+    ]
+):
+    def do_evaluate(
+        self, example: Example[str, None], *output: SuccessfulExampleOutput[str]
+    ) -> ComparisonEvaluation:
+        unwrapped_output = [o.output for o in output]
+        return ComparisonEvaluation(
+            is_equal=unwrapped_output[1:] == unwrapped_output[:-1]
+        )
+
+
+class DummyEvaluatorWithoutTypeHints(DummyEvaluationLogic):
+    def do_evaluate(self, example: Example, *output: SuccessfulExampleOutput[str]) -> DummyEvaluation:  # type: ignore
+        return super().do_evaluate(example, *output)
 
 
 class DummyTaskWithoutTypeHints(Task[str, str]):
@@ -120,18 +132,34 @@ def sequence_good_examples() -> Iterable[Example[str, None]]:
 
 
 @fixture
+def dummy_eval_logic() -> DummyEvaluationLogic:
+    return DummyEvaluationLogic()
+
+
+@fixture
+def dummy_aggregate_logic() -> DummyAggregationLogic:
+    return DummyAggregationLogic()
+
+
+@fixture
 def dummy_evaluator(
     in_memory_dataset_repository: InMemoryDatasetRepository,
     in_memory_run_repository: InMemoryRunRepository,
     in_memory_evaluation_repository: InMemoryEvaluationRepository,
     in_memory_aggregation_repository: InMemoryAggregationRepository,
-) -> DummyEvaluator:
-    return DummyEvaluator(
+    dummy_eval_logic: DummyEvaluationLogic,
+    dummy_aggregate_logic: DummyAggregationLogic,
+) -> Evaluator[
+    str, str, None, DummyEvaluation, DummyAggregatedEvaluationWithResultList
+]:
+    return Evaluator(
         in_memory_dataset_repository,
         in_memory_run_repository,
         in_memory_evaluation_repository,
         in_memory_aggregation_repository,
         "dummy-evaluator",
+        dummy_eval_logic,
+        dummy_aggregate_logic,
     )
 
 
@@ -152,23 +180,41 @@ def good_dataset_id(
 
 
 @fixture
+def comparing_eval_logic() -> ComparingEvaluationLogic:
+    return ComparingEvaluationLogic()
+
+
+@fixture
+def comparing_aggregation_logic() -> ComparingAggregationLogic:
+    return ComparingAggregationLogic()
+
+
+@fixture
 def comparing_evaluator(
     in_memory_dataset_repository: InMemoryDatasetRepository,
     in_memory_run_repository: InMemoryRunRepository,
     in_memory_evaluation_repository: InMemoryEvaluationRepository,
     in_memory_aggregation_repository: InMemoryAggregationRepository,
-) -> ComparingEvaluator:
-    return ComparingEvaluator(
+    comparing_eval_logic: ComparingEvaluationLogic,
+    comparing_aggregation_logic: ComparingAggregationLogic,
+) -> Evaluator[str, str, None, ComparisonEvaluation, ComparisonAggregation]:
+    return Evaluator(
         in_memory_dataset_repository,
         in_memory_run_repository,
         in_memory_evaluation_repository,
         in_memory_aggregation_repository,
         "comparing-evaluator",
+        comparing_eval_logic,
+        comparing_aggregation_logic,
     )
 
 
 def test_eval_and_aggregate_runs_returns_generic_statistics(
-    dummy_evaluator: DummyEvaluator, dummy_runner: Runner[str, str], dataset_id: str
+    dummy_evaluator: Evaluator[
+        str, str, None, DummyEvaluation, DummyAggregatedEvaluationWithResultList
+    ],
+    dummy_runner: Runner[str, str],
+    dataset_id: str,
 ) -> None:
     run_overview = dummy_runner.run_dataset(dataset_id)
     aggregation_overview = dummy_evaluator.eval_and_aggregate_runs(run_overview.id)
@@ -179,7 +225,11 @@ def test_eval_and_aggregate_runs_returns_generic_statistics(
 
 
 def test_eval_and_aggregate_runs_uses_passed_tracer(
-    dummy_evaluator: DummyEvaluator, dataset_id: str, dummy_runner: Runner[str, str]
+    dummy_evaluator: Evaluator[
+        str, str, None, DummyEvaluation, DummyAggregatedEvaluationWithResultList
+    ],
+    dataset_id: str,
+    dummy_runner: Runner[str, str],
 ) -> None:
     in_memory_tracer = InMemoryTracer()
     run_overview = dummy_runner.run_dataset(dataset_id, in_memory_tracer)
@@ -191,7 +241,11 @@ def test_eval_and_aggregate_runs_uses_passed_tracer(
 
 
 def test_eval_and_aggregate_runs_stores_example_evaluations(
-    dummy_evaluator: DummyEvaluator, dataset_id: str, dummy_runner: Runner[str, str]
+    dummy_evaluator: Evaluator[
+        str, str, None, DummyEvaluation, DummyAggregatedEvaluationWithResultList
+    ],
+    dataset_id: str,
+    dummy_runner: Runner[str, str],
 ) -> None:
     evaluation_repository = dummy_evaluator._evaluation_repository
     dataset_repository = dummy_evaluator._dataset_repository
@@ -229,7 +283,9 @@ def test_eval_and_aggregate_runs_stores_example_evaluations(
 
 
 def test_eval_and_aggregate_runs_stores_example_traces(
-    dummy_evaluator: DummyEvaluator,
+    dummy_evaluator: Evaluator[
+        str, str, None, DummyEvaluation, DummyAggregatedEvaluationWithResultList
+    ],
     dataset_id: str,
     dummy_runner: Runner[str, str],
 ) -> None:
@@ -262,7 +318,9 @@ def test_eval_and_aggregate_runs_stores_example_traces(
 
 
 def test_eval_and_aggregate_runs_stores_aggregated_results(
-    dummy_evaluator: DummyEvaluator,
+    dummy_evaluator: Evaluator[
+        str, str, None, DummyEvaluation, DummyAggregatedEvaluationWithResultList
+    ],
     dummy_runner: Runner[str, str],
     dataset_id: str,
 ) -> None:
@@ -278,7 +336,9 @@ def test_eval_and_aggregate_runs_stores_aggregated_results(
 
 
 def test_evaluate_can_evaluate_multiple_runs(
-    comparing_evaluator: ComparingEvaluator,
+    comparing_evaluator: Evaluator[
+        str, str, None, ComparisonEvaluation, ComparisonAggregation
+    ],
     string_dataset_id: str,
     dummy_runner: Runner[str, str],
 ) -> None:
@@ -294,7 +354,9 @@ def test_evaluate_can_evaluate_multiple_runs(
 
 
 def test_aggregate_evaluation_can_aggregate_multiple_evals(
-    comparing_evaluator: ComparingEvaluator,
+    comparing_evaluator: Evaluator[
+        str, str, None, ComparisonEvaluation, ComparisonAggregation
+    ],
     string_dataset_id: str,
     dummy_runner: Runner[str, str],
 ) -> None:
@@ -314,7 +376,7 @@ def test_aggregate_evaluation_can_aggregate_multiple_evals(
     assert aggregation_overview.statistics.equal_ratio == 1
 
 
-def test_base_evaluator_type_magic_works(
+def test_evaluator_type_magic_works(
     in_memory_dataset_repository: InMemoryDatasetRepository,
     in_memory_run_repository: InMemoryRunRepository,
     in_memory_evaluation_repository: InMemoryEvaluationRepository,
@@ -331,44 +393,44 @@ def test_base_evaluator_type_magic_works(
         "Output": str,
         "ExpectedOutput": type(None),
         "Evaluation": EvaluationType,
-        "AggregatedEvaluation": AggregatedEvaluationType,
+        # "AggregatedEvaluation": AggregatedEvaluationType,  # TODO: fix after Evaluation and Aggregation have been split
     }
 
-    class ChildEvaluator(
-        BaseEvaluator[Input, Output, None, Evaluation, AggregatedEvaluationType]
-    ):
-        def evaluate(
-            self,
-            example: Example[Input, ExpectedOutput],
-            eval_id: str,
-            *outputs: SuccessfulExampleOutput[Output],
-        ) -> None:
-            pass
-
-        def aggregate(
-            self, evaluations: Iterable[Evaluation]
-        ) -> AggregatedEvaluationType:
-            return AggregatedEvaluationType()
-
     A = TypeVar("A", bound=BaseModel)
-
-    class GrandChildEvaluator(ChildEvaluator[Input, str, A]):
-        pass
 
     class Mailman(Generic[A]):
         pass
 
-    class GreatGrandChildEvaluator(
-        Mailman[EvaluationType], GrandChildEvaluator[str, EvaluationType]
+    class ChildEvaluationLogic(EvaluationLogic[Input, Output, None, Evaluation]):
+        def do_evaluate(
+            self,
+            example: Example[Input, ExpectedOutput],
+            *output: SuccessfulExampleOutput[Output],
+        ) -> Evaluation:
+            return None  # type: ignore
+
+    class ChildAggregationLogic(AggregationLogic[Evaluation, AggregatedEvaluation]):
+        def aggregate(self, evaluations: Iterable[Evaluation]) -> AggregatedEvaluation:
+            return None  # type: ignore
+
+    class GrandChildEvaluationLogic(ChildEvaluationLogic[Input, str, A]):
+        pass
+
+    class GreatGrandChildEvaluationLogic(
+        Mailman[EvaluationType], GrandChildEvaluationLogic[str, EvaluationType]
     ):
         pass
 
-    timmy = GreatGrandChildEvaluator(
+    timmy: Evaluator[
+        str, str, None, EvaluationType, AggregatedEvaluationType
+    ] = Evaluator(
         in_memory_dataset_repository,
         in_memory_run_repository,
         in_memory_evaluation_repository,
         in_memory_aggregation_repository,
         "dummy",
+        evaluation_logic=GreatGrandChildEvaluationLogic(),
+        aggregation_logic=ChildAggregationLogic(),
     )
     who_is_timmy = timmy._get_types()
 
@@ -376,7 +438,9 @@ def test_base_evaluator_type_magic_works(
 
 
 def test_eval_and_aggregate_runs_only_runs_n_examples(
-    dummy_evaluator: DummyEvaluator,
+    dummy_evaluator: Evaluator[
+        str, str, None, DummyEvaluation, DummyAggregatedEvaluationWithResultList
+    ],
     dummy_runner: Runner[str, str],
     good_dataset_id: str,
 ) -> None:

@@ -2,12 +2,16 @@ from abc import ABC, abstractmethod
 from collections import defaultdict
 from pathlib import Path
 from typing import Optional, Sequence, cast
+from uuid import uuid4
 
 from pydantic import BaseModel
 
 from intelligence_layer.connectors.argilla.argilla_client import (
     ArgillaClient,
     ArgillaEvaluation,
+    Field,
+    Question,
+    RecordData,
 )
 from intelligence_layer.core.tracer import JsonSerializer
 from intelligence_layer.evaluation.data_storage.utils import FileBasedRepository
@@ -68,6 +72,19 @@ class EvaluationRepository(ABC):
     Provides methods to store and load evaluation results for individual examples
     of a run and the aggregated evaluation of said run.
     """
+
+    def create_evaluation_dataset(self) -> str:
+        """Generates an ID for the dataset and creates it if necessary.
+
+        If no extra logic is required to create the dataset for the run,
+        this function just returns a UUID as string.
+        In other cases (like when the dataset has to be created in an external repository),
+        this method is responsible for implementing this logic and returning the ID.
+
+        Returns:
+            The ID of the dataset used for retrieval.
+        """
+        return str(uuid4())
 
     @abstractmethod
     def eval_ids(self) -> Sequence[str]:
@@ -300,6 +317,10 @@ class InMemoryEvaluationRepository(EvaluationRepository):
         self._evaluation_run_overviews[overview.id] = overview
 
 
+class RecordDataSequence(BaseModel):
+    records: Sequence[RecordData]
+
+
 class ArgillaEvaluationRepository(EvaluationRepository):
     """Evaluation repository used for the :class:`ArgillaEvaluator`.
 
@@ -309,14 +330,33 @@ class ArgillaEvaluationRepository(EvaluationRepository):
     Args:
         evaluation_repository: repository to wrap.
         argilla_client: client used to connect to Argilla.
+        workspace_id: The workspace id to save the datasets in. Has to be created before in Argilla.
+        fields: The Argilla fields of the dataset.
+        questions: The questions that will be presented to the human evaluators.
     """
 
     def __init__(
-        self, evaluation_repository: EvaluationRepository, argilla_client: ArgillaClient
+        self,
+        evaluation_repository: EvaluationRepository,
+        argilla_client: ArgillaClient,
+        workspace_id: str,
+        fields: Sequence[Field],
+        questions: Sequence[Question],
     ) -> None:
         super().__init__()
         self._evaluation_repository = evaluation_repository
         self._client = argilla_client
+        self._workspace_id = workspace_id
+        self._fields = fields
+        self._questions = questions
+
+    def create_evaluation_dataset(self) -> str:
+        return self._client.create_dataset(
+            self._workspace_id,
+            str(uuid4()),
+            self._fields,
+            self._questions,
+        )
 
     def eval_ids(self) -> Sequence[str]:
         return self._evaluation_repository.eval_ids()
@@ -328,9 +368,14 @@ class ArgillaEvaluationRepository(EvaluationRepository):
             eval_id, example_id, evaluation_type
         )
 
-    def store_example_evaluation(self, _: ExampleEvaluation[Evaluation]) -> None:
+    def store_example_evaluation(
+        self, evaluation: ExampleEvaluation[Evaluation]
+    ) -> None:
+        if isinstance(evaluation.result, RecordDataSequence):
+            for record in evaluation.result.records:
+                self._client.add_record(evaluation.eval_id, record)
         raise TypeError(
-            "ArgillaEvaluationRepository does not support storing evaluations."
+            "ArgillaEvaluationRepository does not support storing non-RecordDataSequence evaluations."
         )
 
     def example_evaluations(

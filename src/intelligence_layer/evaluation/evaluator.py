@@ -1,4 +1,3 @@
-from abc import ABC, abstractmethod
 from concurrent.futures import ThreadPoolExecutor
 from functools import lru_cache
 from typing import (
@@ -20,14 +19,9 @@ from uuid import uuid4
 
 from tqdm import tqdm
 
-from intelligence_layer.connectors import Field
-from intelligence_layer.connectors.argilla.argilla_client import (
-    ArgillaEvaluation,
-    Question,
-    RecordData,
-)
 from intelligence_layer.core.task import Input, Output
 from intelligence_layer.core.tracer import utc_now
+from intelligence_layer.evaluation.base_logic import AggregationLogic, EvaluationLogic
 from intelligence_layer.evaluation.data_storage.aggregation_repository import (
     AggregationRepository,
 )
@@ -35,7 +29,6 @@ from intelligence_layer.evaluation.data_storage.dataset_repository import (
     DatasetRepository,
 )
 from intelligence_layer.evaluation.data_storage.evaluation_repository import (
-    ArgillaEvaluationRepository,
     EvaluationRepository,
 )
 from intelligence_layer.evaluation.data_storage.run_repository import RunRepository
@@ -84,23 +77,30 @@ class CountingFilterIterable(Iterable[T]):
         return self._excluded_count
 
 
-class BaseEvaluator(
-    ABC, Generic[Input, Output, ExpectedOutput, Evaluation, AggregatedEvaluation]
+class Evaluator(
+    Generic[Input, Output, ExpectedOutput, Evaluation, AggregatedEvaluation]
 ):
-    """Base evaluator interface.
+    """Evaluator that can handle automatic evaluation scenarios.
+
+    This evaluator should be used for automatic eval. A user still has to implement
+    :class:`EvaluationLogic` and :class: `AggregationLogic`.
+
 
     Arguments:
-        dataset_repository: The repository with the examples that will be taken for the evaluation
-        run_repository: The repository with the run output that will be taken for the evaluation
+        dataset_repository: The repository with the examples that will be taken for the evaluation.
+        run_repository: The repository of the runs to evaluate.
         evaluation_repository: The repository that will be used to store evaluation results.
-        description: human-readable description for the evaluator
+        aggregation_repository: The repository that will be used to store aggregation results.
+        description: Human-readable description for the evaluator.
+        evaluation_logic: The logic to use for evaluation.
+        aggregation_logic: The logic to aggregate the evaluations.
 
     Generics:
         Input: Interface to be passed to the :class:`Task` that shall be evaluated.
         Output: Type of the output of the :class:`Task` to be evaluated.
         ExpectedOutput: Output that is expected from the run with the supplied input.
         Evaluation: Interface of the metrics that come from the evaluated :class:`Task`.
-        AggregatedEvaluation: The aggregated results of an evaluation run with a dataset.
+        AggregatedEvaluation: The aggregated results of an evaluation run with a :class:`Dataset`.
     """
 
     def __init__(
@@ -110,11 +110,16 @@ class BaseEvaluator(
         evaluation_repository: EvaluationRepository,
         aggregation_repository: AggregationRepository,
         description: str,
+        evaluation_logic: EvaluationLogic[Input, Output, ExpectedOutput, Evaluation],
+        aggregation_logic: AggregationLogic[Evaluation, AggregatedEvaluation],
     ) -> None:
         self._dataset_repository = dataset_repository
         self._run_repository = run_repository
         self._evaluation_repository = evaluation_repository
         self._aggregation_repository = aggregation_repository
+
+        self._evaluation_logic = evaluation_logic
+        self._aggregation_logic = aggregation_logic
         self.description = description
 
     @lru_cache(maxsize=1)
@@ -129,7 +134,7 @@ class BaseEvaluator(
 
         def is_eligible_subclass(parent: type) -> bool:
             return hasattr(parent, "__orig_bases__") and issubclass(
-                parent, BaseEvaluator
+                parent, EvaluationLogic
             )
 
         def update_types() -> None:
@@ -147,18 +152,22 @@ class BaseEvaluator(
                     num_types_set += 1
 
         # mypy does not know __orig_bases__
-        base_evaluator_bases = BaseEvaluator.__orig_bases__[1]  # type: ignore
+        base_evaluator_bases = EvaluationLogic.__orig_bases__[1]  # type: ignore
         type_list: list[type | TypeVar] = list(get_args(base_evaluator_bases))
-        for parent in (
-            p for p in reversed(type(self).__mro__) if is_eligible_subclass(p)
-        ):
+        possible_parent_classes = [
+            p
+            for p in reversed(type(self._evaluation_logic).__mro__)
+            if is_eligible_subclass(p)
+        ]
+        for parent in possible_parent_classes:
             # mypy does not know __orig_bases__
             for base in parent.__orig_bases__:  # type: ignore
                 origin = get_origin(base)
-                if origin is None or not issubclass(origin, BaseEvaluator):
+                if origin is None or not issubclass(origin, EvaluationLogic):
                     continue
                 current_types = list(get_args(base))
                 update_types()
+
         return {
             name: param_type
             for name, param_type in zip(
@@ -215,43 +224,6 @@ class BaseEvaluator(
             )
         return cast(type[Evaluation], evaluation_type)
 
-    @abstractmethod
-    def evaluate(
-        self,
-        example: Example[Input, ExpectedOutput],
-        eval_id: str,
-        *example_output: SuccessfulExampleOutput[Output],
-    ) -> None:
-        ...
-
-    @abstractmethod
-    def aggregate(self, evaluations: Iterable[Evaluation]) -> AggregatedEvaluation:
-        """`Evaluator`-specific method for aggregating individual `Evaluations` into report-like `Aggregated Evaluation`.
-
-        This method is responsible for taking the results of an evaluation run and aggregating all the results.
-        It should create an `AggregatedEvaluation` class and return it at the end.
-
-        Args:
-            evaluations: The results from running `eval_and_aggregate_runs` with a :class:`Task`.
-
-        Returns:
-            The aggregated results of an evaluation run with a :class:`Dataset`.
-        """
-        ...
-
-    def _create_evaluation_dataset(self) -> str:
-        """Generates an ID for the dataset and creates it if necessary.
-
-        If no extra logic is required to create the dataset for the run,
-        this function just returns a UUID as string.
-        In other cases (like when the dataset has to be created in an external repository),
-        this method is responsible for implementing this logic and returning the ID.
-
-        Returns:
-            The ID of the dataset used for retrieval.
-        """
-        return str(uuid4())
-
     @final
     def evaluate_runs(
         self, *run_ids: str, num_examples: Optional[int] = None
@@ -259,7 +231,7 @@ class BaseEvaluator(
         """Evaluates all generated outputs in the run.
 
         For each set of successful outputs in the referenced runs,
-        :func:`BaseEvaluator.do_evaluate` is called and eval metrics are produced &
+        :func:`EvaluationLogic.do_evaluate` is called and eval metrics are produced &
         stored in the provided :class:`EvaluationRepository`.
 
         Args:
@@ -294,7 +266,7 @@ class BaseEvaluator(
             raise ValueError(
                 f"All run-overviews must reference the same dataset: {run_overviews}"
             )
-        eval_id = self._create_evaluation_dataset()
+        eval_id = self._evaluation_repository.create_evaluation_dataset()
         dataset_id = next(iter(run_overviews)).dataset_id
         examples = self._dataset_repository.examples_by_id(
             dataset_id,
@@ -432,7 +404,9 @@ class BaseEvaluator(
         )
         id = str(uuid4())
         start = utc_now()
-        statistics = self.aggregate(cast(Iterable[Evaluation], successful_evaluations))
+        statistics = self._aggregation_logic.aggregate(
+            cast(Iterable[Evaluation], successful_evaluations)
+        )
 
         aggregation_overview = AggregationOverview(
             evaluation_overviews=frozenset(evaluation_overviews),
@@ -447,66 +421,6 @@ class BaseEvaluator(
         self._aggregation_repository.store_aggregation_overview(aggregation_overview)
         return aggregation_overview
 
-
-class Evaluator(
-    BaseEvaluator[Input, Output, ExpectedOutput, Evaluation, AggregatedEvaluation]
-):
-    """Evaluator that can handle automatic evaluation scenarios.
-
-    This evaluator should be used for automatic eval. A user still has to implement
-    :func:`BaseEvaluator.do_evaluate` and :func:`BaseEvaluator.aggregate`.
-
-    Arguments:
-        evaluation_repository: The repository that will be used to store evaluation results.
-        dataset_repository: The repository with the examples that will be taken for the evaluation
-        description: human-readable description for the evaluator
-
-    Generics:
-        Input: Interface to be passed to the :class:`Task` that shall be evaluated.
-        Output: Type of the output of the :class:`Task` to be evaluated.
-        ExpectedOutput: Output that is expected from the run with the supplied input.
-        Evaluation: Interface of the metrics that come from the evaluated :class:`Task`.
-        AggregatedEvaluation: The aggregated results of an evaluation run with a :class:`Dataset`.
-    """
-
-    def __init__(
-        self,
-        dataset_repository: DatasetRepository,
-        run_repository: RunRepository,
-        evaluation_repository: EvaluationRepository,
-        aggregation_repository: AggregationRepository,
-        description: str,
-    ) -> None:
-        super().__init__(
-            dataset_repository,
-            run_repository,
-            evaluation_repository,
-            aggregation_repository,
-            description,
-        )
-
-    @abstractmethod
-    def do_evaluate(
-        self,
-        input: Input,
-        expected_output: ExpectedOutput,
-        *output: Output,
-    ) -> Evaluation:
-        """Executes the evaluation for this use-case.
-
-        Responsible for comparing the input & expected output of a task to the
-        actually generated output.
-
-        Args:
-            input: The input that was passed to the :class:`Task` to produce the output.
-            expected_output: Output that is compared to the generated output.
-            output: Output of the :class:`Task` that shall be evaluated.
-
-        Returns:
-            The metrics that come from the evaluated :class:`Task`.
-        """
-        pass
-
     @final
     def evaluate(
         self,
@@ -515,10 +429,11 @@ class Evaluator(
         *example_outputs: SuccessfulExampleOutput[Output],
     ) -> None:
         try:
-            result: Evaluation | FailedExampleEvaluation = self.do_evaluate(
-                example.input,
-                example.expected_output,
-                *(example_output.output for example_output in example_outputs),
+            result: Evaluation | FailedExampleEvaluation = (
+                self._evaluation_logic.do_evaluate(
+                    example,
+                    *example_outputs,
+                )
             )
         except Exception as e:
             result = FailedExampleEvaluation.from_exception(e)
@@ -546,100 +461,3 @@ class Evaluator(
         """
         partial_evaluation_overview = self.evaluate_runs(*run_ids)
         return self.aggregate_evaluation(partial_evaluation_overview.id)
-
-
-class ArgillaEvaluator(
-    BaseEvaluator[
-        Input, Output, ExpectedOutput, ArgillaEvaluation, AggregatedEvaluation
-    ],
-    ABC,
-):
-    """Evaluator used to integrate with Argilla (https://github.com/argilla-io/argilla).
-
-    Use this evaluator if you would like to easily do human eval.
-    This evaluator runs a dataset and sends the input and output to Argilla to be evaluated.
-    After they have been evaluated, you can fetch the results by using the `aggregate_evaluation` method.
-
-    Args:
-        evaluation_repository: The repository that will be used to store evaluation results.
-        dataset_repository: The repository with the examples that will be taken for the evaluation
-        description: human-readable description for the evaluator
-        workspace_id: The workspace id to save the datasets in. Has to be created before in Argilla.
-        fields: The Argilla fields of the dataset.
-        questions: The questions that will be presented to the human evaluators.
-    """
-
-    def __init__(
-        self,
-        dataset_repository: DatasetRepository,
-        run_repository: RunRepository,
-        evaluation_repository: ArgillaEvaluationRepository,
-        aggregation_repository: AggregationRepository,
-        description: str,
-        workspace_id: str,
-        fields: Sequence[Field],
-        questions: Sequence[Question],
-    ) -> None:
-        super().__init__(
-            dataset_repository,
-            run_repository,
-            evaluation_repository,
-            aggregation_repository,
-            description,
-        )
-        self._workspace_id = workspace_id
-        self._fields = fields
-        self._questions = questions
-        self._client = evaluation_repository._client
-
-    def evaluation_type(self) -> type[ArgillaEvaluation]:
-        return ArgillaEvaluation
-
-    @final
-    def _create_evaluation_dataset(self) -> str:
-        return self._client.create_dataset(
-            self._workspace_id,
-            str(uuid4()),
-            self._fields,
-            self._questions,
-        )
-
-    @final
-    def partial_eval_and_aggregate_runs(self, *run_ids: str) -> EvaluationOverview:
-        """Evaluates an entire :class:`Dataset` in a threaded manner and pushes the results to Argilla.
-
-        Args:
-            dataset: Dataset that will be used to evaluate a :class:`Task`.
-            tracer: Optional tracer used for extra tracing.
-                Traces are always saved in the evaluation repository.
-
-        Returns:
-            An overview of how the run went (e.g. how many examples failed).
-        """
-        return self.evaluate_runs(*run_ids)
-
-    @abstractmethod
-    def _to_record(
-        self,
-        example: Example[Input, ExpectedOutput],
-        *example_outputs: SuccessfulExampleOutput[Output],
-    ) -> Sequence[RecordData]:
-        """This method is responsible for translating the `Example` and `Output` of the task to :class:`RecordData`
-
-
-        Args:
-            example: The example to be translated.
-            output: The output of the example that was run.
-        """
-        ...
-
-    @final
-    def evaluate(
-        self,
-        example: Example[Input, ExpectedOutput],
-        eval_id: str,
-        *example_outputs: SuccessfulExampleOutput[Output],
-    ) -> None:
-        records = self._to_record(example, *example_outputs)
-        for record in records:
-            self._client.add_record(eval_id, record)

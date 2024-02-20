@@ -6,19 +6,25 @@ from .classify.classify import (
 )
 from .classify.classify import ClassifyInput as ClassifyInput
 from .classify.classify import (
+    MultiLabelClassifyAggregationLogic as MultiLabelClassifyAggregationLogic,
+)
+from .classify.classify import (
     MultiLabelClassifyEvaluation as MultiLabelClassifyEvaluation,
 )
 from .classify.classify import (
-    MultiLabelClassifyEvaluator as MultiLabelClassifyEvaluator,
+    MultiLabelClassifyEvaluationLogic as MultiLabelClassifyEvaluationLogic,
 )
 from .classify.classify import MultiLabelClassifyMetrics as MultiLabelClassifyMetrics
 from .classify.classify import MultiLabelClassifyOutput as MultiLabelClassifyOutput
 from .classify.classify import Probability as Probability
 from .classify.classify import (
+    SingleLabelClassifyAggregationLogic as SingleLabelClassifyAggregationLogic,
+)
+from .classify.classify import (
     SingleLabelClassifyEvaluation as SingleLabelClassifyEvaluation,
 )
 from .classify.classify import (
-    SingleLabelClassifyEvaluator as SingleLabelClassifyEvaluator,
+    SingleLabelClassifyEvaluationLogic as SingleLabelClassifyEvaluationLogic,
 )
 from .classify.classify import SingleLabelClassifyOutput as SingleLabelClassifyOutput
 from .classify.embedding_based_classify import (

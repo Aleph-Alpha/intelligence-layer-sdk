@@ -19,6 +19,7 @@ from intelligence_layer.evaluation.data_storage.evaluation_repository import (
     FileEvaluationRepository,
 )
 from intelligence_layer.evaluation.data_storage.run_repository import FileRunRepository
+from intelligence_layer.evaluation.evaluator import Evaluator
 from intelligence_layer.evaluation.runner import Runner
 
 
@@ -38,14 +39,16 @@ def create_task(factory: Any) -> Any:
 def parse_args(cli_args: Sequence[str]) -> Namespace:
     parser = ArgumentParser(description="Runs the given evaluation")
     parser.add_argument(
-        "--evaluator",
+        "--eval-logic",
         required=True,
         type=function_from_string,
-        help="A factory function for the evaluator. "
-        "This function has to take 2 arguments: an instance of the Task to be evaluated and "
-        "an EvaluationRepository where the results are stored. "
-        "If this corresponds to the init-parameters of the Evaluator "
-        "the class-type can actually be provided as argument.",
+        help="A factory function for the evaluation logic. ",
+    )
+    parser.add_argument(
+        "--aggregation-logic",
+        required=True,
+        type=function_from_string,
+        help="A factory function for the aggregation logic. ",
     )
     parser.add_argument(
         "--task",
@@ -97,12 +100,17 @@ def main(cli_args: Sequence[str]) -> None:
     runner = Runner(task, dataset_repository, runner_repository, args.task.__name__)
     dataset_id = args.dataset_id
     run_overview_id = runner.run_dataset(dataset_id).id
-    evaluator = args.evaluator(
+    eval_logic = args.eval_logic()
+    aggregation_logic = args.aggregation_logic()
+
+    evaluator = Evaluator(
         dataset_repository,
         runner_repository,
         evaluation_repository,
         aggregation_repository,
         description,
+        eval_logic,
+        aggregation_logic,
     )
     evaluator.eval_and_aggregate_runs(run_overview_id)
 
