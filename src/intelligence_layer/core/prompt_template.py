@@ -1,5 +1,5 @@
 from collections import defaultdict
-from dataclasses import dataclass, replace
+from dataclasses import dataclass, field, replace
 from itertools import chain
 from re import finditer
 from sys import intern
@@ -84,7 +84,7 @@ class RichPrompt(Prompt):
       ranges: A mapping of range name to a `Sequence` of corresponding `PromptRange` instances.
     """
 
-    ranges: Mapping[str, Sequence[PromptRange]]
+    ranges: Mapping[str, Sequence[PromptRange]] = field(default_factory=dict)
 
 
 PROMPT_RANGE_TAG = intern("promptrange")
