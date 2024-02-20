@@ -3,7 +3,7 @@ from itertools import combinations
 from typing import Iterable, Sequence
 from uuid import uuid4
 
-from aleph_alpha_client import CompletionResponse, Prompt
+from aleph_alpha_client import CompletionResponse
 from aleph_alpha_client.completion import CompletionResult
 from faker import Faker
 from pytest import fixture
@@ -16,7 +16,7 @@ from intelligence_layer.connectors.argilla.argilla_client import (
     RecordData,
 )
 from intelligence_layer.core.complete import InstructInput, PromptOutput
-from intelligence_layer.core.prompt_template import PromptWithMetadata
+from intelligence_layer.core.prompt_template import RichPrompt
 from intelligence_layer.core.tracer import utc_now
 from intelligence_layer.evaluation import (
     ArgillaEvaluationRepository,
@@ -107,7 +107,7 @@ def any_instruct_output() -> PromptOutput:
             num_tokens_generated=0,
             num_tokens_prompt_total=0,
         ),
-        prompt_with_metadata=PromptWithMetadata(prompt=Prompt([]), ranges={}),
+        rich_prompt=RichPrompt(items=[], ranges={}),
     )
 
 

@@ -6,7 +6,7 @@ from pydantic import BaseModel, Field
 from intelligence_layer.connectors.limited_concurrency_client import (
     AlephAlphaClientProtocol,
 )
-from intelligence_layer.core.prompt_template import PromptTemplate, PromptWithMetadata
+from intelligence_layer.core.prompt_template import PromptTemplate, RichPrompt
 from intelligence_layer.core.task import Task
 from intelligence_layer.core.tracer import TaskSpan
 
@@ -90,14 +90,14 @@ class PromptOutput(CompleteOutput):
 
     Attributes:
         response: The generated response to the instruction.
-        prompt_with_metadata: To handle the instruction, a `PromptTemplate` is used.
+        rich_prompt: To handle the instruction, a `PromptTemplate` is used.
             The template defines two `PromptRange` instances:
             - "instruction": covering the instruction text.
             - "input": covering the input text.
             These can for example be used for downstream `TextHighlight` tasks.
     """
 
-    prompt_with_metadata: PromptWithMetadata
+    rich_prompt: RichPrompt
 
 
 class Instruct(Task[InstructInput, PromptOutput]):
@@ -147,22 +147,18 @@ class Instruct(Task[InstructInput, PromptOutput]):
         self._model = model
 
     def do_run(self, input: InstructInput, task_span: TaskSpan) -> PromptOutput:
-        prompt_with_metadata = PromptTemplate(
-            self.INSTRUCTION_PROMPT_TEMPLATE
-        ).to_prompt_with_metadata(
+        prompt = PromptTemplate(self.INSTRUCTION_PROMPT_TEMPLATE).to_rich_prompt(
             input=input.input,
             instruction=input.instruction,
             response_prefix=input.response_prefix,
         )
         response = self._complete(
-            prompt_with_metadata.prompt,
+            prompt,
             input.maximum_response_tokens,
             self._model,
             task_span,
         )
-        return PromptOutput(
-            response=response, prompt_with_metadata=prompt_with_metadata
-        )
+        return PromptOutput(response=response, rich_prompt=prompt)
 
     def _complete(
         self, prompt: Prompt, maximum_tokens: int, model: str, task_span: TaskSpan
@@ -274,9 +270,7 @@ class FewShot(Task[FewShotInput, PromptOutput]):
         self._model = model
 
     def do_run(self, input: FewShotInput, task_span: TaskSpan) -> PromptOutput:
-        prompt_with_metadata = PromptTemplate(
-            self.FEW_SHOT_PROMPT_TEMPLATE
-        ).to_prompt_with_metadata(
+        prompt = PromptTemplate(self.FEW_SHOT_PROMPT_TEMPLATE).to_rich_prompt(
             instruction=input.few_shot_config.instruction,
             input=input.input,
             few_shot_examples=[
@@ -286,15 +280,13 @@ class FewShot(Task[FewShotInput, PromptOutput]):
             response_prefix=input.few_shot_config.response_prefix,
         )
         response = self._complete(
-            prompt_with_metadata.prompt,
+            prompt,
             input.maximum_response_tokens,
             input.few_shot_config.additional_stop_sequences,
             self._model,
             task_span,
         )
-        return PromptOutput(
-            response=response, prompt_with_metadata=prompt_with_metadata
-        )
+        return PromptOutput(response=response, rich_prompt=prompt)
 
     def _complete(
         self,

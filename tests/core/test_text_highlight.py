@@ -22,11 +22,11 @@ The evidence, drawn from a unique spectral signature of organic compounds, hints
 This finding, while not complex extraterrestrial life, significantly raises the prospects of life's commonality in the universe.
 The international community is abuzz with plans for more focused research and potential interstellar missions.{% endpromptrange %}
 Answer:"""
-    prompt_with_metadata = PromptTemplate(prompt_template_str).to_prompt_with_metadata()
+    prompt_with_metadata = PromptTemplate(prompt_template_str).to_rich_prompt()
     model = "luminous-base-control"
 
     input = TextHighlightInput(
-        prompt_with_metadata=prompt_with_metadata,
+        rich_prompt=prompt_with_metadata,
         target=answer,
         model=model,
         focus_ranges=frozenset({"r1"}),
@@ -51,12 +51,12 @@ The evidence, drawn from a unique spectral signature of organic compounds, hints
 This finding, while not complex extraterrestrial life, significantly raises the prospects of life's commonality in the universe.
 The international community is abuzz with plans for more focused research and potential interstellar missions.{% endpromptrange %}
 Answer:"""
-    prompt_with_metadata = PromptTemplate(prompt_template_str).to_prompt_with_metadata(
+    prompt_with_metadata = PromptTemplate(prompt_template_str).to_rich_prompt(
         answer=answer
     )
 
     input = TextHighlightInput(
-        prompt_with_metadata=prompt_with_metadata,
+        rich_prompt=prompt_with_metadata,
         target=f" {answer}",
         model="luminous-base",
         focus_ranges=frozenset(["no_content"]),
@@ -69,12 +69,12 @@ def test_text_highlight_with_only_one_sentence(text_highlight: TextHighlight) ->
     prompt_template_str = """What is the Latin name of the brown bear? The answer is Ursus Arctos.{% promptrange r1 %} Explanation should not highlight anything.{% endpromptrange %}
 Answer:"""
     template = PromptTemplate(prompt_template_str)
-    prompt_with_metadata = template.to_prompt_with_metadata()
+    prompt_with_metadata = template.to_rich_prompt()
     completion = " Ursus Arctos"
     model = "luminous-base"
 
     input = TextHighlightInput(
-        prompt_with_metadata=prompt_with_metadata,
+        rich_prompt=prompt_with_metadata,
         target=completion,
         model=model,
         focus_ranges=frozenset({"r1"}),
@@ -93,14 +93,14 @@ Here is an image, just for LOLs: {{image}}{range}abc{{image}}{range}
 {% endpromptrange %}
 Answer:"""
     template = PromptTemplate(prompt_template_str)
-    prompt_with_metadata = template.to_prompt_with_metadata(
+    prompt_with_metadata = template.to_rich_prompt(
         image=template.placeholder(prompt_image)
     )
     completion = " The latin name of the brown bear is Ursus arctos."
     model = "luminous-base"
 
     input = TextHighlightInput(
-        prompt_with_metadata=prompt_with_metadata, target=completion, model=model
+        rich_prompt=prompt_with_metadata, target=completion, model=model
     )
     output = text_highlight.run(input, NoOpTracer())
 
@@ -116,14 +116,14 @@ Text: The brown bear (Ursus arctos) is a large bear species found across Eurasia
 Here is an image, just for LOLs: {{image}}
 Answer:"""
     template = PromptTemplate(prompt_template_str)
-    prompt_with_metadata = template.to_prompt_with_metadata(
+    prompt_with_metadata = template.to_rich_prompt(
         image=template.placeholder(prompt_image)
     )
     completion = " The latin name of the brown bear is Ursus arctos."
     model = "luminous-base"
 
     input = TextHighlightInput(
-        prompt_with_metadata=prompt_with_metadata, target=completion, model=model
+        rich_prompt=prompt_with_metadata, target=completion, model=model
     )
     output = text_highlight.run(input, NoOpTracer())
 
@@ -141,7 +141,7 @@ This finding, while not complex extraterrestrial life, significantly raises the 
 The international community is abuzz with plans for more focused research and potential interstellar missions.{% endpromptrange %}
 Answer:"""
     template = PromptTemplate(prompt_template_str)
-    prompt_with_metadata = template.to_prompt_with_metadata(
+    prompt_with_metadata = template.to_rich_prompt(
         image=template.placeholder(prompt_image)
     )
     answer = " Extreme conditions."
@@ -149,7 +149,7 @@ Answer:"""
     focus_ranges: frozenset[str] = frozenset()  # empty
 
     input = TextHighlightInput(
-        prompt_with_metadata=prompt_with_metadata,
+        rich_prompt=prompt_with_metadata,
         target=answer,
         model=model,
         focus_ranges=focus_ranges,
@@ -172,13 +172,13 @@ This finding, while not complex extraterrestrial life, significantly raises the 
 The international community is abuzz with plans for more focused research and potential interstellar missions.{% endpromptrange %}
 Answer:"""
     template = PromptTemplate(prompt_template_str)
-    prompt_with_metadata = template.to_prompt_with_metadata()
+    prompt_with_metadata = template.to_rich_prompt()
     answer = " Extreme conditions."
     model = "luminous-base"
 
     unknown_range_name = "bla"
     input = TextHighlightInput(
-        prompt_with_metadata=prompt_with_metadata,
+        rich_prompt=prompt_with_metadata,
         target=answer,
         model=model,
         focus_ranges=frozenset([unknown_range_name]),
