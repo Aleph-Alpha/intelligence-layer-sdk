@@ -122,7 +122,7 @@ def test_ids_are_set_in_concurrent_run() -> None:
     tracer = InMemoryTracer()
     task = DeadlockDetector()
 
-    task.run_concurrently([None] * MAX_CONCURRENCY, tracer, id="ID")
+    task.run_concurrently([None] * MAX_CONCURRENCY, tracer, trace_id="ID")
     assert tracer.entries
     assert tracer.entries[0].id() == "ID"
 

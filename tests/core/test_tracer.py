@@ -41,7 +41,7 @@ def test_composite_tracer_id_consistent_across_children(
 
 def test_tracer_id_exists_for_all_children_of_task_span() -> None:
     tracer = InMemoryTracer()
-    parent_span = tracer.task_span("child", "input", id="ID")
+    parent_span = tracer.task_span("child", "input", trace_id="ID")
     parent_span.span("child2")
 
     assert isinstance(tracer.entries[0], InMemorySpan)
@@ -55,7 +55,7 @@ def test_tracer_id_exists_for_all_children_of_task_span() -> None:
 
 def test_tracer_id_exists_for_all_children_of_span() -> None:
     tracer = InMemoryTracer()
-    parent_span = tracer.span("child", id="ID")
+    parent_span = tracer.span("child", trace_id="ID")
     parent_span.span("child2")
 
     assert isinstance(tracer.entries[0], InMemorySpan)
