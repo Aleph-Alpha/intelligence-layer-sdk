@@ -189,7 +189,7 @@ class PromptTemplate:
         ...     ''')
         >>> placeholder = template.placeholder(tokens)
         >>> names = ["World", "Rutger"]
-        >>> prompt = template.to_prompt(names=names, image=placeholder)
+        >>> prompt = template.to_rich_prompt(names=names, image=placeholder)
         >>> request = CompletionRequest(prompt=prompt)
     """
 
@@ -212,7 +212,7 @@ class PromptTemplate:
             ... Input: {% promptrange input %}{{text}}{% endpromptrange %}
             ... Question: {% promptrange question %}{{question}}{% endpromptrange %}
             ... Answer:''')
-            >>> prompt_data = template.to_prompt_with_metadata(text="Some text...", question="A question ...")
+            >>> prompt_data = template.to_rich_prompt(text="Some text...", question="A question ...")
             >>> input_range = prompt_data.ranges.get("input")
         """
         env = Environment()
@@ -260,7 +260,7 @@ class PromptTemplate:
             ... Text.from_text("cool"),
             ... ])
             >>> template = PromptTemplate("Question: {{user_prompt}}\\n Answer: ")
-            >>> prompt = template.to_prompt(user_prompt=template.embed_prompt(user_prompt))
+            >>> prompt = template.to_rich_prompt(user_prompt=template.embed_prompt(user_prompt))
         """
         prompt_text = ""
         last_item = None
