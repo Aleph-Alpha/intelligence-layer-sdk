@@ -13,8 +13,10 @@ from pydantic import BaseModel
 
 from intelligence_layer.connectors.limited_concurrency_client import (
     AlephAlphaClientProtocol,
+    LimitedConcurrencyClient,
 )
 from intelligence_layer.core.explain import Explain, ExplainInput
+from intelligence_layer.core.model import AlephAlphaModel
 from intelligence_layer.core.prompt_template import (
     Cursor,
     PromptRange,
@@ -32,7 +34,6 @@ class TextHighlightInput(BaseModel):
         rich_prompt: From client's PromptTemplate. Includes both the actual 'Prompt' as well as text range information.
             Supports liquid-template-language-style {% promptrange range_name %}/{% endpromptrange %} for range.
         target: The target that should be explained. Expected to follow the prompt.
-        model: A valid Aleph Alpha model name.
         focus_ranges: The ranges contained in `rich_prompt` the returned highlights stem from. That means that each returned
             highlight overlaps with at least one character with one of the ranges listed here.
             If this set is empty highlights of the entire prompt are returned.
@@ -40,7 +41,6 @@ class TextHighlightInput(BaseModel):
 
     rich_prompt: RichPrompt
     target: str
-    model: str
     focus_ranges: frozenset[str] = frozenset()
 
 
@@ -104,12 +104,12 @@ class TextHighlight(Task[TextHighlightInput, TextHighlightOutput]):
 
     def __init__(
         self,
-        client: AlephAlphaClientProtocol,
+        model: AlephAlphaModel,
         granularity: PromptGranularity = PromptGranularity.Sentence,
     ) -> None:
         super().__init__()
-        self._client = client
-        self._explain_task = Explain(client)
+        self._model = model
+        self._explain_task = Explain(model)
         self._granularity = granularity
 
     def do_run(
@@ -119,7 +119,6 @@ class TextHighlight(Task[TextHighlightInput, TextHighlightOutput]):
         explanation = self._explain(
             prompt=input.rich_prompt,
             target=input.target,
-            model=input.model,
             task_span=task_span,
         )
         prompt_ranges = self._flatten_prompt_ranges(
@@ -145,16 +144,14 @@ class TextHighlight(Task[TextHighlightInput, TextHighlightOutput]):
             raise ValueError(f"Unknown focus ranges: {', '.join(unknown_focus_ranges)}")
 
     def _explain(
-        self, prompt: Prompt, target: str, model: str, task_span: TaskSpan
+        self, prompt: Prompt, target: str, task_span: TaskSpan
     ) -> ExplanationResponse:
         request = ExplanationRequest(
             prompt,
             target,
             prompt_granularity=self._granularity,
         )
-        output = self._explain_task.run(
-            ExplainInput(request=request, model=model), task_span
-        )
+        output = self._explain_task.run(ExplainInput(request=request), task_span)
         return output.response
 
     def _flatten_prompt_ranges(

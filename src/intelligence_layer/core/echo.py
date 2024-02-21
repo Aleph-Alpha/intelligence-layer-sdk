@@ -8,7 +8,6 @@ from tokenizers import Encoding, Tokenizer  # type: ignore
 from intelligence_layer.connectors.limited_concurrency_client import (
     AlephAlphaClientProtocol,
 )
-from intelligence_layer.core.complete import Complete, CompleteInput
 from intelligence_layer.core.prompt_template import PromptTemplate
 from intelligence_layer.core.task import Task, Token
 from intelligence_layer.core.tracer import TaskSpan

@@ -4,6 +4,7 @@ from pydantic import BaseModel
 from intelligence_layer.connectors.limited_concurrency_client import (
     AlephAlphaClientProtocol,
 )
+from intelligence_layer.core.model import AlephAlphaModel
 from intelligence_layer.core.task import Task
 from intelligence_layer.core.tracer import TaskSpan
 
@@ -18,7 +19,6 @@ class ExplainInput(BaseModel):
     """
 
     request: ExplanationRequest
-    model: str
 
 
 class ExplainOutput(BaseModel):
@@ -42,10 +42,10 @@ class Explain(Task[ExplainInput, ExplainOutput]):
         client: Aleph Alpha client instance for running model related API calls.
     """
 
-    def __init__(self, client: AlephAlphaClientProtocol) -> None:
+    def __init__(self, model: AlephAlphaModel) -> None:
         super().__init__()
-        self._client = client
+        self._model = model
 
     def do_run(self, input: ExplainInput, task_span: TaskSpan) -> ExplainOutput:
-        response = self._client.explain(input.request, input.model)
+        response = self._model._client.explain(input.request, self._model.name)
         return ExplainOutput(response=response)

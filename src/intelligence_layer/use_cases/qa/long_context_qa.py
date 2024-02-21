@@ -9,6 +9,7 @@ from intelligence_layer.connectors.retrievers.qdrant_in_memory_retriever import 
 )
 from intelligence_layer.core.chunk import Chunk, ChunkInput, ChunkTask
 from intelligence_layer.core.detect_language import DetectLanguage, Language
+from intelligence_layer.core.model import AlephAlphaModel, LuminousControlModel
 from intelligence_layer.core.task import Task
 from intelligence_layer.core.tracer import TaskSpan
 from intelligence_layer.use_cases.qa.multiple_chunk_qa import (
@@ -71,16 +72,16 @@ class LongContextQa(Task[LongContextQaInput, MultipleChunkQaOutput]):
 
     def __init__(
         self,
-        client: AlephAlphaClientProtocol,
         max_tokens_per_chunk: int = 512,
         k: int = 4,
-        model: str = "luminous-supreme-control",
+        model: AlephAlphaModel = LuminousControlModel(
+            "luminous-supreme-control-20240215"
+        ),
     ):
         super().__init__()
-        self._client = client
         self._model = model
-        self._chunk_task = ChunkTask(client, model, max_tokens_per_chunk)
-        self._multi_chunk_qa = MultipleChunkQa(self._client, self._model)
+        self._chunk_task = ChunkTask(model, max_tokens_per_chunk)
+        self._multi_chunk_qa = MultipleChunkQa(model)
         self._k = k
         self._language_detector = DetectLanguage(threshold=0.5)
 
@@ -89,7 +90,7 @@ class LongContextQa(Task[LongContextQaInput, MultipleChunkQaOutput]):
     ) -> MultipleChunkQaOutput:
         chunk_output = self._chunk_task.run(ChunkInput(text=input.text), task_span)
         retriever = QdrantInMemoryRetriever(
-            self._client,
+            self._model._client,
             documents=[
                 Document(
                     text=c,

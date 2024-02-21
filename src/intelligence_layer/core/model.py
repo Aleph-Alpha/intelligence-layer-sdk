@@ -1,47 +1,46 @@
 from abc import ABC, abstractmethod
+from dataclasses import asdict
 from functools import lru_cache
-from typing import Optional
+from typing import Literal, Optional
 
 from aleph_alpha_client import CompletionRequest, CompletionResponse
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 from tokenizers import Encoding, Tokenizer  # type: ignore
 
 from intelligence_layer.connectors.limited_concurrency_client import (
     AlephAlphaClientProtocol,
+    LimitedConcurrencyClient,
 )
 from intelligence_layer.core.prompt_template import PromptTemplate, RichPrompt
 from intelligence_layer.core.task import Task
 from intelligence_layer.core.tracer import TaskSpan, Tracer
 
 
-class CompleteInput(BaseModel):
-    """The input for a `Complete` task.
+class CompleteInput(BaseModel, CompletionRequest, frozen=True):
+    """The input for a `Complete` task."""
 
-    Attributes:
-        request: Aleph Alpha `Client`'s `CompletionRequest`. This gives fine grained control
-            over all completion parameters that are supported by Aleph Alpha's inference API.
-    """
-
-    request: CompletionRequest
+    pass
 
 
-class CompleteOutput(BaseModel):
-    """The output of a `Complete` task.
+class CompleteOutput(BaseModel, CompletionResponse, frozen=True):
+    """The output of a `Complete` task."""
 
-    Attributes:
-        response: Aleph Alpha `Client`'s `CompletionResponse` containing all details
-            provided by Aleph Alpha's inference API.
-    """
+    # Base model protects namespace model_ but this is a field in the completion response
+    model_config = ConfigDict(protected_namespaces=())
 
-    response: CompletionResponse
+    @staticmethod
+    def from_completion_response(
+        completion_response: CompletionResponse,
+    ) -> "CompleteOutput":
+        return CompleteOutput(**asdict(completion_response))
 
     @property
     def completion(self) -> str:
-        return self.response.completions[0].completion or ""
+        return self.completions[0].completion or ""
 
     @property
     def generated_tokens(self) -> int:
-        return self.response.num_tokens_generated
+        return self.num_tokens_generated
 
 
 class _Complete(Task[CompleteInput, CompleteOutput]):
@@ -61,18 +60,23 @@ class _Complete(Task[CompleteInput, CompleteOutput]):
         self._model = model
 
     def do_run(self, input: CompleteInput, task_span: TaskSpan) -> CompleteOutput:
-        response = self._client.complete(
-            input.request,
-            model=self._model,
+        return CompleteOutput.from_completion_response(
+            self._client.complete(
+                request=input,
+                model=self._model,
+            )
         )
-        return CompleteOutput(response=response)
 
 
 class AlephAlphaModel(ABC):
-    def __init__(self, model: str, client: AlephAlphaClientProtocol) -> None:
+    def __init__(
+        self,
+        model_name: str,
+        client: AlephAlphaClientProtocol = LimitedConcurrencyClient.from_token(),
+    ) -> None:
         self._client = client
-        self._complete = _Complete(self._client, model)
-        self._model = model
+        self._complete = _Complete(self._client, model_name)
+        self.name = model_name
 
     def get_complete_task(self) -> Task[CompleteInput, CompleteOutput]:
         return self._complete
@@ -90,14 +94,14 @@ class AlephAlphaModel(ABC):
         ...
 
     @lru_cache(maxsize=1)
-    def _get_tokenizer(self) -> Tokenizer:
-        return self._client.tokenizer(self._model)
+    def get_tokenizer(self) -> Tokenizer:
+        return self._client.tokenizer(self.name)
 
     def tokenize(self, text: str) -> Encoding:
-        return self._get_tokenizer().encode(text)
+        return self.get_tokenizer().encode(text)
 
 
-class ControlModel(AlephAlphaModel):
+class LuminousControlModel(AlephAlphaModel):
     INSTRUCTION_PROMPT_TEMPLATE = PromptTemplate(
         """{% promptrange instruction %}{{instruction}}{% endpromptrange %}
 {% if input %}
@@ -105,6 +109,20 @@ class ControlModel(AlephAlphaModel):
 {% endif %}
 ### Response:{{response_prefix}}"""
     )
+
+    def __init__(
+        self,
+        model: Literal[
+            "luminous-base-control",
+            "luminous-extended-control",
+            "luminous-supreme-control",
+            "luminous-base-control-20240215",
+            "luminous-extended-control-20240215",
+            "luminous-supreme-control-20240215",
+        ],
+        client: AlephAlphaClientProtocol = LimitedConcurrencyClient.from_token(),
+    ) -> None:
+        super().__init__(model, client)
 
     def to_instruct_prompt(
         self,

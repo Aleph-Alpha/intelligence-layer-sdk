@@ -6,6 +6,7 @@ from semantic_text_splitter import HuggingFaceTextSplitter
 from intelligence_layer.connectors.limited_concurrency_client import (
     AlephAlphaClientProtocol,
 )
+from intelligence_layer.core.model import AlephAlphaModel
 from intelligence_layer.core.task import Task
 from intelligence_layer.core.tracer import TaskSpan
 
@@ -52,12 +53,9 @@ class ChunkTask(Task[ChunkInput, ChunkOutput]):
         max_tokens_per_chunk: The maximum number of tokens to fit into one chunk.
     """
 
-    def __init__(
-        self, client: AlephAlphaClientProtocol, model: str, max_tokens_per_chunk: int
-    ):
+    def __init__(self, model: AlephAlphaModel, max_tokens_per_chunk: int):
         super().__init__()
-        tokenizer = client.tokenizer(model)
-        self._splitter = HuggingFaceTextSplitter(tokenizer)
+        self._splitter = HuggingFaceTextSplitter(model.get_tokenizer())
         self._max_tokens_per_chunk = max_tokens_per_chunk
 
     def do_run(self, input: ChunkInput, task_span: TaskSpan) -> ChunkOutput:
@@ -84,8 +82,7 @@ class ChunkOverlapTask(Task[ChunkInput, ChunkOutput]):
 
     def __init__(
         self,
-        client: AlephAlphaClientProtocol,
-        model: str,
+        model: AlephAlphaModel,
         max_tokens_per_chunk: int,
         overlap_length_tokens: int,
     ):
@@ -96,8 +93,8 @@ class ChunkOverlapTask(Task[ChunkInput, ChunkOutput]):
                     overlap_length_tokens, max_tokens_per_chunk
                 )
             )
-        self.chunk_task = ChunkTask(client, model, overlap_length_tokens // 2)
-        self.tokenizer = client.tokenizer(model)
+        self.chunk_task = ChunkTask(model, overlap_length_tokens // 2)
+        self.tokenizer = model.get_tokenizer()
         self.max_tokens_per_chunk = max_tokens_per_chunk
         self.overlap_length_tokens = overlap_length_tokens
 

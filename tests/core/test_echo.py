@@ -8,7 +8,6 @@ from pytest import fixture
 from intelligence_layer.connectors.limited_concurrency_client import (
     AlephAlphaClientProtocol,
 )
-from intelligence_layer.core.complete import Complete, CompleteInput, CompleteOutput
 from intelligence_layer.core.echo import EchoInput, EchoTask, TokenWithLogProb
 from intelligence_layer.core.task import MAX_CONCURRENCY, Task, Token
 from intelligence_layer.core.tracer import NoOpTracer, TaskSpan

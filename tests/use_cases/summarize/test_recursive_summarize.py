@@ -8,11 +8,7 @@ from intelligence_layer.connectors.limited_concurrency_client import (
     AlephAlphaClientProtocol,
 )
 from intelligence_layer.core import NoOpTracer
-from intelligence_layer.use_cases import (
-    LongContextHighCompressionSummarize,
-    LongContextSummarizeInput,
-    RecursiveSummarize,
-)
+from intelligence_layer.use_cases import LongContextSummarizeInput, RecursiveSummarize
 from intelligence_layer.use_cases.summarize.steerable_long_context_summarize import (
     SteerableLongContextSummarize,
 )
@@ -46,11 +42,11 @@ def very_long_text() -> str:
 
 def test_recursive_summarize_stops_when_hitting_max_tokens(
     very_long_text: str,
-    long_context_high_compression_summarize: LongContextHighCompressionSummarize,
+    steerable_long_context_summarize: SteerableLongContextSummarize,
 ) -> None:
     max_tokens = 1000
     input = LongContextSummarizeInput(text=very_long_text, max_tokens=max_tokens)
-    task = RecursiveSummarize(long_context_high_compression_summarize)
+    task = RecursiveSummarize(steerable_long_context_summarize)
     output = task.run(input, NoOpTracer())
 
     assert len(output.summary) < len(very_long_text)
@@ -75,8 +71,11 @@ def test_recursive_summarize_stops_when_num_partial_summaries_stays_same(
 def test_recursive_summarize_stops_after_one_chunk(
     recursive_counting_client: RecursiveCountingClient,
 ) -> None:
-    long_context_high_compression_summarize = LongContextHighCompressionSummarize(
-        recursive_counting_client, model="luminous-base"
+    long_context_high_compression_summarize = SteerableLongContextSummarize(
+        recursive_counting_client,
+        model="luminous-base",
+        max_generated_tokens=128,
+        max_tokens_per_chunk=512,
     )
     input = LongContextSummarizeInput(text=short_text)
     task = RecursiveSummarize(long_context_high_compression_summarize)

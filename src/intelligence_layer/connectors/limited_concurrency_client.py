@@ -1,3 +1,4 @@
+from functools import lru_cache
 from os import getenv
 from threading import Semaphore
 from typing import Any, Mapping, Optional, Protocol, Sequence
@@ -111,6 +112,7 @@ class LimitedConcurrencyClient:
         self._concurrency_limit_semaphore = Semaphore(max_concurrency)
 
     @classmethod
+    @lru_cache(maxsize=1)
     def from_token(
         cls, token: Optional[str] = None, host: str = "https://api.aleph-alpha.com"
     ) -> "LimitedConcurrencyClient":

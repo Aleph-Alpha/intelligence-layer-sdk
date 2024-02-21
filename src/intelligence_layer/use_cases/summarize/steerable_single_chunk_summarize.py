@@ -4,7 +4,6 @@ from intelligence_layer.connectors.limited_concurrency_client import (
     AlephAlphaClientProtocol,
 )
 from intelligence_layer.core import Language, Task, TaskSpan
-from intelligence_layer.core.complete import Instruct, InstructInput, PromptOutput
 from intelligence_layer.use_cases.summarize.summarize import (
     SingleChunkSummarizeInput,
     SummarizeOutput,

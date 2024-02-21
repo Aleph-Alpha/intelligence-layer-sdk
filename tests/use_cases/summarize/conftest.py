@@ -4,19 +4,19 @@ from intelligence_layer.connectors.limited_concurrency_client import (
     AlephAlphaClientProtocol,
 )
 from intelligence_layer.core.chunk import Chunk
-from intelligence_layer.use_cases.summarize.long_context_high_compression_summarize import (
-    LongContextHighCompressionSummarize,
+from intelligence_layer.use_cases.summarize.steerable_long_context_summarize import (
+    SteerableLongContextSummarize,
 )
-from intelligence_layer.use_cases.summarize.single_chunk_few_shot_summarize import (
-    SingleChunkFewShotSummarize,
+from intelligence_layer.use_cases.summarize.steerable_single_chunk_summarize import (
+    SteerableSingleChunkSummarize,
 )
 
 
 @fixture
-def single_chunk_few_shot_summarize(
+def steerable_single_chunk_summarize(
     client: AlephAlphaClientProtocol,
-) -> SingleChunkFewShotSummarize:
-    return SingleChunkFewShotSummarize(client, "luminous-extended", 128)
+) -> SteerableSingleChunkSummarize:
+    return SteerableSingleChunkSummarize(client, "luminous-extended", 128)
 
 
 @fixture
@@ -27,10 +27,15 @@ def chunk() -> Chunk:
 
 
 @fixture
-def long_context_high_compression_summarize(
+def steerable_long_context_summarize(
     client: AlephAlphaClientProtocol,
-) -> LongContextHighCompressionSummarize:
-    return LongContextHighCompressionSummarize(client, model="luminous-base")
+) -> SteerableLongContextSummarize:
+    return SteerableLongContextSummarize(
+        client,
+        model="luminous-base",
+        max_generated_tokens=128,
+        max_tokens_per_chunk=512,
+    )
 
 
 @fixture

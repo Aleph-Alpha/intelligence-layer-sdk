@@ -11,9 +11,6 @@ from .chunk import ChunkTask as ChunkTask
 from .complete import Complete as Complete
 from .complete import CompleteInput as CompleteInput
 from .complete import CompleteOutput as CompleteOutput
-from .complete import Instruct as Instruct
-from .complete import InstructInput as InstructInput
-from .complete import PromptOutput as PromptOutput
 from .detect_language import DetectLanguage as DetectLanguage
 from .detect_language import DetectLanguageInput as DetectLanguageInput
 from .detect_language import DetectLanguageOutput as DetectLanguageOutput

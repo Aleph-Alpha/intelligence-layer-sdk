@@ -17,8 +17,8 @@ from intelligence_layer.use_cases.qa.long_context_qa import (
     LongContextQa,
     LongContextQaInput,
 )
-from intelligence_layer.use_cases.summarize.long_context_high_compression_summarize import (
-    LongContextHighCompressionSummarize,
+from intelligence_layer.use_cases.summarize.steerable_long_context_summarize import (
+    SteerableLongContextSummarize,
 )
 from intelligence_layer.use_cases.summarize.summarize import LongContextSummarizeInput
 
@@ -30,7 +30,9 @@ class IntelligenceStarterApp(IntelligenceApp):
         self.register_task(prompt_based_classify, ClassifyInput, "/classify")
         long_chunk_qa = LongContextQa(client)
         self.register_task(long_chunk_qa, LongContextQaInput, "/qa")
-        summarize = LongContextHighCompressionSummarize(client)
+        summarize = SteerableLongContextSummarize(
+            client, max_generated_tokens=128, max_tokens_per_chunk=512
+        )
         self.register_task(summarize, LongContextSummarizeInput, "/summarize")
 
 

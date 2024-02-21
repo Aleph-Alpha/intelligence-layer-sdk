@@ -1,17 +1,15 @@
 from aleph_alpha_client import Image
 from pytest import fixture, raises
 
-from intelligence_layer.connectors.limited_concurrency_client import (
-    AlephAlphaClientProtocol,
-)
+from intelligence_layer.core.model import LuminousControlModel
 from intelligence_layer.core.prompt_template import PromptTemplate
 from intelligence_layer.core.text_highlight import TextHighlight, TextHighlightInput
 from intelligence_layer.core.tracer import NoOpTracer
 
 
 @fixture
-def text_highlight(client: AlephAlphaClientProtocol) -> TextHighlight:
-    return TextHighlight(client)
+def text_highlight(luminous_control_model: LuminousControlModel) -> TextHighlight:
+    return TextHighlight(luminous_control_model)
 
 
 def test_text_highlight(text_highlight: TextHighlight) -> None:
@@ -28,7 +26,6 @@ Answer:"""
     input = TextHighlightInput(
         rich_prompt=prompt_with_metadata,
         target=answer,
-        model=model,
         focus_ranges=frozenset({"r1"}),
     )
     output = text_highlight.run(input, NoOpTracer())
@@ -58,7 +55,6 @@ Answer:"""
     input = TextHighlightInput(
         rich_prompt=prompt_with_metadata,
         target=f" {answer}",
-        model="luminous-base",
         focus_ranges=frozenset(["no_content"]),
     )
     output = text_highlight.run(input, NoOpTracer())
@@ -71,12 +67,10 @@ Answer:"""
     template = PromptTemplate(prompt_template_str)
     prompt_with_metadata = template.to_rich_prompt()
     completion = " Ursus Arctos"
-    model = "luminous-base"
 
     input = TextHighlightInput(
         rich_prompt=prompt_with_metadata,
         target=completion,
-        model=model,
         focus_ranges=frozenset({"r1"}),
     )
     output = text_highlight.run(input, NoOpTracer())
@@ -97,11 +91,8 @@ Answer:"""
         image=template.placeholder(prompt_image)
     )
     completion = " The latin name of the brown bear is Ursus arctos."
-    model = "luminous-base"
 
-    input = TextHighlightInput(
-        rich_prompt=prompt_with_metadata, target=completion, model=model
-    )
+    input = TextHighlightInput(rich_prompt=prompt_with_metadata, target=completion)
     output = text_highlight.run(input, NoOpTracer())
 
     assert output.highlights
@@ -120,11 +111,8 @@ Answer:"""
         image=template.placeholder(prompt_image)
     )
     completion = " The latin name of the brown bear is Ursus arctos."
-    model = "luminous-base"
 
-    input = TextHighlightInput(
-        rich_prompt=prompt_with_metadata, target=completion, model=model
-    )
+    input = TextHighlightInput(rich_prompt=prompt_with_metadata, target=completion)
     output = text_highlight.run(input, NoOpTracer())
 
     assert output.highlights
@@ -145,13 +133,11 @@ Answer:"""
         image=template.placeholder(prompt_image)
     )
     answer = " Extreme conditions."
-    model = "luminous-base"
     focus_ranges: frozenset[str] = frozenset()  # empty
 
     input = TextHighlightInput(
         rich_prompt=prompt_with_metadata,
         target=answer,
-        model=model,
         focus_ranges=focus_ranges,
     )
     output = text_highlight.run(input, NoOpTracer())
@@ -174,13 +160,11 @@ Answer:"""
     template = PromptTemplate(prompt_template_str)
     prompt_with_metadata = template.to_rich_prompt()
     answer = " Extreme conditions."
-    model = "luminous-base"
 
     unknown_range_name = "bla"
     input = TextHighlightInput(
         rich_prompt=prompt_with_metadata,
         target=answer,
-        model=model,
         focus_ranges=frozenset([unknown_range_name]),
     )
     with raises(ValueError) as e:
