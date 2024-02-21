@@ -11,10 +11,6 @@ from aleph_alpha_client import (
 from aleph_alpha_client.explanation import TextScoreWithRaw
 from pydantic import BaseModel
 
-from intelligence_layer.connectors.limited_concurrency_client import (
-    AlephAlphaClientProtocol,
-    LimitedConcurrencyClient,
-)
 from intelligence_layer.core.explain import Explain, ExplainInput
 from intelligence_layer.core.model import AlephAlphaModel
 from intelligence_layer.core.prompt_template import (

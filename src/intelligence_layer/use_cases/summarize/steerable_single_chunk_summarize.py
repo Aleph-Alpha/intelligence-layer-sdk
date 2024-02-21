@@ -1,14 +1,12 @@
 from typing import Mapping
 
-from intelligence_layer.connectors.limited_concurrency_client import (
-    AlephAlphaClientProtocol,
-)
-from intelligence_layer.core import Language, Task, TaskSpan
-from intelligence_layer.core.model import (
+from intelligence_layer.core import (
     AlephAlphaModel,
     CompleteInput,
-    CompleteOutput,
+    Language,
     LuminousControlModel,
+    Task,
+    TaskSpan,
 )
 from intelligence_layer.use_cases.summarize.summarize import (
     SingleChunkSummarizeInput,

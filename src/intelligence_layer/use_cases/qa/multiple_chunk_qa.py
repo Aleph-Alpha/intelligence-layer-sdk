@@ -2,9 +2,6 @@ from typing import Iterable, Mapping, Optional, Sequence
 
 from pydantic import BaseModel
 
-from intelligence_layer.connectors.limited_concurrency_client import (
-    AlephAlphaClientProtocol,
-)
 from intelligence_layer.core.chunk import Chunk
 from intelligence_layer.core.detect_language import Language, language_config
 from intelligence_layer.core.model import (
@@ -124,10 +121,8 @@ class MultipleChunkQa(Task[MultipleChunkQaInput, MultipleChunkQaOutput]):
 
     Args:
         client: Aleph Alpha client instance for running model related API calls.
-        model: A valid Aleph Alpha model name.
-
-    Attributes:
-        MERGE_ANSWERS_INSTRUCTION: The instruction template used for combining multiple answers into one.
+        model: A valid Aleph Alpha model.
+        merge_answers_instruct_configs: Mapping language used to prompt parameters.
 
     Example:
         >>> import os

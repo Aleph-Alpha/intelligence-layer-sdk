@@ -1,14 +1,19 @@
 from aleph_alpha_client import Image
 from pytest import fixture, raises
 
-from intelligence_layer.core.model import AlephAlphaModel, LuminousControlModel
+from intelligence_layer.core.model import AlephAlphaModel
 from intelligence_layer.core.prompt_template import PromptTemplate, RichPrompt
 from intelligence_layer.core.text_highlight import TextHighlight, TextHighlightInput
 from intelligence_layer.core.tracer import NoOpTracer
 
 
 class AlephAlphaVanillaModel(AlephAlphaModel):
-    def to_instruct_prompt(self, instruction: str, input: str | None = None, response_prefix: str | None = None) -> RichPrompt:
+    def to_instruct_prompt(
+        self,
+        instruction: str,
+        input: str | None = None,
+        response_prefix: str | None = None,
+    ) -> RichPrompt:
         raise NotImplementedError()
 
 
@@ -31,7 +36,6 @@ This finding, while not complex extraterrestrial life, significantly raises the 
 The international community is abuzz with plans for more focused research and potential interstellar missions.{% endpromptrange %}
 Answer:"""
     prompt_with_metadata = PromptTemplate(prompt_template_str).to_rich_prompt()
-    model = "luminous-base-control"
 
     input = TextHighlightInput(
         rich_prompt=prompt_with_metadata,

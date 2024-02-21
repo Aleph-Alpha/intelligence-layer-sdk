@@ -1,13 +1,9 @@
-from functools import lru_cache
 from typing import NewType, Sequence
 
-from aleph_alpha_client import CompletionRequest, Prompt, Tokens
+from aleph_alpha_client import Prompt, Tokens
 from pydantic import BaseModel
-from tokenizers import Encoding, Tokenizer  # type: ignore
+from tokenizers import Encoding  # type: ignore
 
-from intelligence_layer.connectors.limited_concurrency_client import (
-    AlephAlphaClientProtocol,
-)
 from intelligence_layer.core.model import AlephAlphaModel, CompleteInput
 from intelligence_layer.core.prompt_template import PromptTemplate
 from intelligence_layer.core.task import Task, Token

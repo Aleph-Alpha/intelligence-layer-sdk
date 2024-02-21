@@ -1,13 +1,9 @@
 from pathlib import Path
 
 from aleph_alpha_client import Prompt
-from aleph_alpha_client.completion import CompletionRequest
 from opentelemetry.trace import get_tracer
 from pytest import fixture, mark
 
-from intelligence_layer.connectors.limited_concurrency_client import (
-    AlephAlphaClientProtocol,
-)
 from intelligence_layer.core import (
     CompleteInput,
     CompositeTracer,
@@ -24,6 +20,7 @@ from intelligence_layer.core import (
 from intelligence_layer.core.model import LuminousControlModel, _Complete
 
 
+@fixture
 def complete(luminous_control_model: LuminousControlModel) -> _Complete:
     return luminous_control_model._complete
 
@@ -95,7 +92,7 @@ def test_task_automatically_logs_input_and_output(complete: _Complete) -> None:
     assert len(tracer.entries) == 1
     task_span = tracer.entries[0]
     assert isinstance(task_span, InMemoryTaskSpan)
-    assert task_span.name == "Complete"
+    assert task_span.name == type(complete).__name__
     assert task_span.input == input
     assert task_span.output == output
     assert task_span.start_timestamp and task_span.end_timestamp

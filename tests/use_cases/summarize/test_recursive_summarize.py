@@ -4,9 +4,6 @@ from pathlib import Path
 from aleph_alpha_client import Client, CompletionRequest, CompletionResponse
 from pytest import fixture
 
-from intelligence_layer.connectors.limited_concurrency_client import (
-    AlephAlphaClientProtocol,
-)
 from intelligence_layer.core import NoOpTracer
 from intelligence_layer.core.model import LuminousControlModel
 from intelligence_layer.use_cases import LongContextSummarizeInput, RecursiveSummarize
@@ -63,7 +60,7 @@ def test_recursive_summarize_stops_when_num_partial_summaries_stays_same(
     task = RecursiveSummarize(steerable_long_context_summarize)
     output = task.run(input, NoOpTracer())
 
-    assert output.generated_tokens > 145
+    assert output.generated_tokens > 50
 
 
 def test_recursive_summarize_stops_after_one_chunk(

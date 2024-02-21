@@ -17,7 +17,6 @@ from intelligence_layer.connectors.argilla.argilla_client import (
 )
 from intelligence_layer.core.instruct import InstructInput
 from intelligence_layer.core.model import CompleteOutput
-from intelligence_layer.core.prompt_template import RichPrompt
 from intelligence_layer.core.tracer import utc_now
 from intelligence_layer.evaluation import (
     ArgillaEvaluationRepository,

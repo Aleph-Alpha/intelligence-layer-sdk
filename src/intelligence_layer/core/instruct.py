@@ -1,7 +1,8 @@
 from typing import Optional
-from pydantic import BaseModel
-from intelligence_layer.core.model import AlephAlphaModel, CompleteInput, CompleteOutput
 
+from pydantic import BaseModel
+
+from intelligence_layer.core.model import AlephAlphaModel, CompleteInput, CompleteOutput
 from intelligence_layer.core.task import Task
 from intelligence_layer.core.tracer import TaskSpan
 
@@ -22,9 +23,8 @@ class Instruct(Task[InstructInput, CompleteOutput]):
         prompt = self._model.to_instruct_prompt(
             instruction=input.instruction,
             input=input.input,
-            response_prefix=input.response_prefix
+            response_prefix=input.response_prefix,
         )
-        return self._model.complete(CompleteInput(
-            prompt=prompt,
-            maximum_tokens=input.maximum_tokens
-        ), task_span)
+        return self._model.complete(
+            CompleteInput(prompt=prompt, maximum_tokens=input.maximum_tokens), task_span
+        )

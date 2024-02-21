@@ -1,7 +1,3 @@
-import os
-
-from aleph_alpha_client import Client
-from dotenv import load_dotenv
 from fastapi import FastAPI, testclient
 from pytest import fixture
 

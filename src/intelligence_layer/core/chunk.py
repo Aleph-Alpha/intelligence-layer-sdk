@@ -3,9 +3,6 @@ from typing import NewType, Sequence
 from pydantic import BaseModel
 from semantic_text_splitter import HuggingFaceTextSplitter
 
-from intelligence_layer.connectors.limited_concurrency_client import (
-    AlephAlphaClientProtocol,
-)
 from intelligence_layer.core.model import AlephAlphaModel
 from intelligence_layer.core.task import Task
 from intelligence_layer.core.tracer import TaskSpan

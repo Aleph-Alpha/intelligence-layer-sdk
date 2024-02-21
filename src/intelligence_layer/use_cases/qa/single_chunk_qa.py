@@ -185,4 +185,4 @@ class SingleChunkQa(Task[SingleChunkQaInput, SingleChunkQaOutput]):
         return [h.text for h in highlight_output.highlights if h.score > 0]
 
     def _no_answer_to_none(self, completion: str, no_answer_str: str) -> Optional[str]:
-        return completion if no_answer_str in completion else None
+        return completion if no_answer_str not in completion else None

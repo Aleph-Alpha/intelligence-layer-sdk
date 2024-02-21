@@ -2,12 +2,9 @@ import math
 import re
 from typing import Iterable, Mapping, Optional, Sequence
 
-from aleph_alpha_client import PromptTemplate, Tokens
+from aleph_alpha_client import Tokens
 from pydantic import BaseModel
 
-from intelligence_layer.connectors.limited_concurrency_client import (
-    AlephAlphaClientProtocol,
-)
 from intelligence_layer.core.echo import EchoInput, EchoTask, TokenWithLogProb
 from intelligence_layer.core.model import AlephAlphaModel, LuminousControlModel
 from intelligence_layer.core.prompt_template import RichPrompt

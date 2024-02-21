@@ -1,14 +1,7 @@
 """Fastapi server to run predictions."""
-
-import os
-
 from dotenv import load_dotenv
 from fastapi import Depends, FastAPI
 
-from intelligence_layer.connectors.limited_concurrency_client import (
-    AlephAlphaClientProtocol,
-    LimitedConcurrencyClient,
-)
 from intelligence_layer.core.model import AlephAlphaModel, LuminousControlModel
 from intelligence_layer.core.tracer import NoOpTracer
 from intelligence_layer.use_cases.classify.classify import (

@@ -10,7 +10,7 @@ from intelligence_layer.core.model import (
     LuminousControlModel,
 )
 from intelligence_layer.core.task import Task
-from intelligence_layer.core.tracer import NoOpTracer, TaskSpan
+from intelligence_layer.core.tracer import TaskSpan
 
 INSTRUCT_CONFIGS = {
     Language(

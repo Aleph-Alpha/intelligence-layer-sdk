@@ -1,4 +1,4 @@
-from aleph_alpha_client import CompletionRequest, Text
+from aleph_alpha_client import Text
 from pytest import fixture
 
 from intelligence_layer.connectors.limited_concurrency_client import (

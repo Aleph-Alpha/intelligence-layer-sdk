@@ -2,9 +2,6 @@ from typing import Sequence
 
 from pytest import fixture
 
-from intelligence_layer.connectors.limited_concurrency_client import (
-    AlephAlphaClientProtocol,
-)
 from intelligence_layer.core import Chunk, InMemoryTracer, NoOpTracer
 from intelligence_layer.core.model import LuminousControlModel
 from intelligence_layer.evaluation import (

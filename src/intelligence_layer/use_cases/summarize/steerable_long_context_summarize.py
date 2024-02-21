@@ -1,6 +1,5 @@
 from typing import Mapping
 
-from intelligence_layer.connectors import AlephAlphaClientProtocol
 from intelligence_layer.core import ChunkInput, ChunkTask, Task, TaskSpan
 from intelligence_layer.core.chunk import ChunkOutput, ChunkOverlapTask
 from intelligence_layer.core.detect_language import Language

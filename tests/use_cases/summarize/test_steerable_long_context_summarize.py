@@ -1,6 +1,3 @@
-from pytest import fixture, mark
-
-from intelligence_layer.connectors import AlephAlphaClientProtocol
 from intelligence_layer.core import Language, NoOpTracer
 from intelligence_layer.core.model import LuminousControlModel
 from intelligence_layer.use_cases import (

@@ -1,15 +1,6 @@
-import os
-
-from aleph_alpha_client import Client
-from dotenv import load_dotenv
 from fastapi import FastAPI
 
-from intelligence_layer.connectors import (
-    AlephAlphaClientProtocol,
-    LimitedConcurrencyClient,
-)
 from intelligence_layer.core import IntelligenceApp
-from intelligence_layer.core.model import LuminousControlModel
 from intelligence_layer.use_cases.classify.classify import ClassifyInput
 from intelligence_layer.use_cases.classify.prompt_based_classify import (
     PromptBasedClassify,

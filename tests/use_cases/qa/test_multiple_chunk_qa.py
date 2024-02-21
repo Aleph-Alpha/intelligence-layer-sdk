@@ -2,9 +2,6 @@ from typing import Sequence
 
 from pytest import fixture
 
-from intelligence_layer.connectors.limited_concurrency_client import (
-    AlephAlphaClientProtocol,
-)
 from intelligence_layer.core.chunk import Chunk
 from intelligence_layer.core.detect_language import Language
 from intelligence_layer.core.tracer import NoOpTracer

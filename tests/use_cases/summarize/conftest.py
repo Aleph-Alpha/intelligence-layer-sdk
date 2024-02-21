@@ -1,8 +1,5 @@
 from pytest import fixture
 
-from intelligence_layer.connectors.limited_concurrency_client import (
-    AlephAlphaClientProtocol,
-)
 from intelligence_layer.core.chunk import Chunk
 from intelligence_layer.core.model import LuminousControlModel
 from intelligence_layer.use_cases.summarize.steerable_long_context_summarize import (
