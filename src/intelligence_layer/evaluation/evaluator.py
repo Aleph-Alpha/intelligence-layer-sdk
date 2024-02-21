@@ -1,10 +1,8 @@
 from concurrent.futures import ThreadPoolExecutor
 from functools import lru_cache
 from typing import (
-    Callable,
     Generic,
     Iterable,
-    Iterator,
     Mapping,
     Optional,
     Sequence,
@@ -15,16 +13,12 @@ from typing import (
     get_args,
     get_origin,
 )
-from uuid import uuid4
 
 from tqdm import tqdm
 
 from intelligence_layer.core.task import Input, Output
 from intelligence_layer.core.tracer import utc_now
-from intelligence_layer.evaluation.base_logic import AggregationLogic, EvaluationLogic
-from intelligence_layer.evaluation.data_storage.aggregation_repository import (
-    AggregationRepository,
-)
+from intelligence_layer.evaluation.base_logic import EvaluationLogic
 from intelligence_layer.evaluation.data_storage.dataset_repository import (
     DatasetRepository,
 )
@@ -33,8 +27,6 @@ from intelligence_layer.evaluation.data_storage.evaluation_repository import (
 )
 from intelligence_layer.evaluation.data_storage.run_repository import RunRepository
 from intelligence_layer.evaluation.domain import (
-    AggregatedEvaluation,
-    AggregationOverview,
     Evaluation,
     EvaluationOverview,
     Example,
@@ -47,60 +39,26 @@ from intelligence_layer.evaluation.domain import (
     SuccessfulExampleOutput,
 )
 
-T = TypeVar("T")
 
-
-class CountingFilterIterable(Iterable[T]):
-    def __init__(
-        self, wrapped_iterable: Iterable[T], filter: Callable[[T], bool]
-    ) -> None:
-        self._wrapped_iterator = iter(wrapped_iterable)
-        self._filter = filter
-        self._included_count = 0
-        self._excluded_count = 0
-
-    def __next__(self) -> T:
-        e = next(self._wrapped_iterator)
-        while not self._filter(e):
-            self._excluded_count += 1
-            e = next(self._wrapped_iterator)
-        self._included_count += 1
-        return e
-
-    def __iter__(self) -> Iterator[T]:
-        return self
-
-    def included_count(self) -> int:
-        return self._included_count
-
-    def excluded_count(self) -> int:
-        return self._excluded_count
-
-
-class Evaluator(
-    Generic[Input, Output, ExpectedOutput, Evaluation, AggregatedEvaluation]
-):
+class Evaluator(Generic[Input, Output, ExpectedOutput, Evaluation]):
     """Evaluator that can handle automatic evaluation scenarios.
 
     This evaluator should be used for automatic eval. A user still has to implement
-    :class:`EvaluationLogic` and :class: `AggregationLogic`.
+    :class:`EvaluationLogic`.
 
 
     Arguments:
         dataset_repository: The repository with the examples that will be taken for the evaluation.
         run_repository: The repository of the runs to evaluate.
         evaluation_repository: The repository that will be used to store evaluation results.
-        aggregation_repository: The repository that will be used to store aggregation results.
         description: Human-readable description for the evaluator.
         evaluation_logic: The logic to use for evaluation.
-        aggregation_logic: The logic to aggregate the evaluations.
 
     Generics:
         Input: Interface to be passed to the :class:`Task` that shall be evaluated.
         Output: Type of the output of the :class:`Task` to be evaluated.
         ExpectedOutput: Output that is expected from the run with the supplied input.
         Evaluation: Interface of the metrics that come from the evaluated :class:`Task`.
-        AggregatedEvaluation: The aggregated results of an evaluation run with a :class:`Dataset`.
     """
 
     def __init__(
@@ -108,18 +66,13 @@ class Evaluator(
         dataset_repository: DatasetRepository,
         run_repository: RunRepository,
         evaluation_repository: EvaluationRepository,
-        aggregation_repository: AggregationRepository,
         description: str,
         evaluation_logic: EvaluationLogic[Input, Output, ExpectedOutput, Evaluation],
-        aggregation_logic: AggregationLogic[Evaluation, AggregatedEvaluation],
     ) -> None:
         self._dataset_repository = dataset_repository
         self._run_repository = run_repository
         self._evaluation_repository = evaluation_repository
-        self._aggregation_repository = aggregation_repository
-
         self._evaluation_logic = evaluation_logic
-        self._aggregation_logic = aggregation_logic
         self.description = description
 
     @lru_cache(maxsize=1)
@@ -152,8 +105,8 @@ class Evaluator(
                     num_types_set += 1
 
         # mypy does not know __orig_bases__
-        base_evaluator_bases = EvaluationLogic.__orig_bases__[1]  # type: ignore
-        type_list: list[type | TypeVar] = list(get_args(base_evaluator_bases))
+        base_types = EvaluationLogic.__orig_bases__[1]  # type: ignore
+        type_list: list[type | TypeVar] = list(get_args(base_types))
         possible_parent_classes = [
             p
             for p in reversed(type(self._evaluation_logic).__mro__)
@@ -171,7 +124,7 @@ class Evaluator(
         return {
             name: param_type
             for name, param_type in zip(
-                (a.__name__ for a in get_args(base_evaluator_bases)), type_list
+                (a.__name__ for a in get_args(base_types)), type_list
             )
             if type(param_type) is not TypeVar
         }
@@ -361,67 +314,6 @@ class Evaluator(
         return partial_overview
 
     @final
-    def aggregate_evaluation(
-        self, *eval_ids: str
-    ) -> AggregationOverview[AggregatedEvaluation]:
-        """Aggregates all evaluations into an overview that includes high-level statistics.
-
-        Aggregates :class:`Evaluation`s according to the implementation of :func:`BaseEvaluator.aggregate`.
-
-        Args:
-            evaluation_overview: An overview of the evaluation to be aggregated. Does not include
-                actual evaluations as these will be retrieved from the repository.
-
-        Returns:
-            An overview of the aggregated evaluation.
-        """
-
-        def load_eval_overview(eval_id: str) -> EvaluationOverview:
-            evaluation_overview = self._evaluation_repository.evaluation_overview(
-                eval_id
-            )
-            if not evaluation_overview:
-                raise ValueError(
-                    f"No PartialEvaluationOverview found for eval-id: {eval_id}"
-                )
-            return evaluation_overview
-
-        evaluation_overviews = frozenset(load_eval_overview(id) for id in set(eval_ids))
-
-        nested_evaluations = [
-            self._evaluation_repository.example_evaluations(
-                overview.id, self.evaluation_type()
-            )
-            for overview in evaluation_overviews
-        ]
-        example_evaluations = [
-            eval for sublist in nested_evaluations for eval in sublist
-        ]
-
-        successful_evaluations = CountingFilterIterable(
-            (example_eval.result for example_eval in example_evaluations),
-            lambda evaluation: not isinstance(evaluation, FailedExampleEvaluation),
-        )
-        id = str(uuid4())
-        start = utc_now()
-        statistics = self._aggregation_logic.aggregate(
-            cast(Iterable[Evaluation], successful_evaluations)
-        )
-
-        aggregation_overview = AggregationOverview(
-            evaluation_overviews=frozenset(evaluation_overviews),
-            id=id,
-            start=start,
-            end=utc_now(),
-            successful_evaluation_count=successful_evaluations.included_count(),
-            crashed_during_eval_count=successful_evaluations.excluded_count(),
-            description=self.description,
-            statistics=statistics,
-        )
-        self._aggregation_repository.store_aggregation_overview(aggregation_overview)
-        return aggregation_overview
-
-    @final
     def evaluate(
         self,
         example: Example[Input, ExpectedOutput],
@@ -440,24 +332,3 @@ class Evaluator(
         self._evaluation_repository.store_example_evaluation(
             ExampleEvaluation(eval_id=eval_id, example_id=example.id, result=result)
         )
-
-    @final
-    def eval_and_aggregate_runs(
-        self, *run_ids: str
-    ) -> AggregationOverview[AggregatedEvaluation]:
-        """Evaluates an entire dataset in a threaded manner and aggregates the results into an `AggregatedEvaluation`.
-
-        This will call the `run` method for each example in the dataset.
-        Finally, it will call the `aggregate` method and return the aggregated results.
-
-        Args:
-            dataset_id: id of the dataset that will be used to evaluate a :class:`Task`.
-                The actual data is loaded from the :class:`DatasetRepository` passed to `__init__`
-            tracer: Optional tracer used for extra tracing.
-                Traces are always saved in the evaluation repository.
-
-        Returns:
-            The aggregated results of an evaluation run with a dataset.
-        """
-        partial_evaluation_overview = self.evaluate_runs(*run_ids)
-        return self.aggregate_evaluation(partial_evaluation_overview.id)

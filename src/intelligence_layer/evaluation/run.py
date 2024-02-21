@@ -9,6 +9,7 @@ from dotenv import load_dotenv
 from intelligence_layer.connectors.limited_concurrency_client import (
     LimitedConcurrencyClient,
 )
+from intelligence_layer.evaluation import Aggregator
 from intelligence_layer.evaluation.data_storage.aggregation_repository import (
     FileAggregationRepository,
 )
@@ -107,12 +108,14 @@ def main(cli_args: Sequence[str]) -> None:
         dataset_repository,
         runner_repository,
         evaluation_repository,
-        aggregation_repository,
         description,
         eval_logic,
-        aggregation_logic,
     )
-    evaluator.eval_and_aggregate_runs(run_overview_id)
+    aggregator = Aggregator(
+        evaluation_repository, aggregation_repository, description, aggregation_logic
+    )
+    evaluation_overview = evaluator.evaluate_runs(run_overview_id)
+    aggregator.aggregate_evaluation(evaluation_overview.id)
 
 
 if __name__ == "__main__":

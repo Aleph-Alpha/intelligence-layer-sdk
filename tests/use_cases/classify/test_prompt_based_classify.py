@@ -7,15 +7,14 @@ from intelligence_layer.connectors.limited_concurrency_client import (
 )
 from intelligence_layer.core import Chunk, InMemoryTracer, NoOpTracer
 from intelligence_layer.evaluation import (
+    Aggregator,
     DatasetRepository,
     Example,
+    InMemoryAggregationRepository,
     InMemoryDatasetRepository,
     InMemoryEvaluationRepository,
     Runner,
     RunRepository,
-)
-from intelligence_layer.evaluation.data_storage.aggregation_repository import (
-    InMemoryAggregationRepository,
 )
 from intelligence_layer.evaluation.evaluator import Evaluator
 from intelligence_layer.use_cases.classify.classify import (
@@ -51,23 +50,35 @@ def classify_evaluator(
     in_memory_dataset_repository: DatasetRepository,
     in_memory_run_repository: RunRepository,
     in_memory_evaluation_repository: InMemoryEvaluationRepository,
-    in_memory_aggregation_repository: InMemoryAggregationRepository,
     single_label_classify_eval_logic: SingleLabelClassifyEvaluationLogic,
-    single_label_classify_aggregation_logic: SingleLabelClassifyAggregationLogic,
 ) -> Evaluator[
     ClassifyInput,
     SingleLabelClassifyOutput,
     Sequence[str],
     SingleLabelClassifyEvaluation,
-    AggregatedSingleLabelClassifyEvaluation,
 ]:
     return Evaluator(
         in_memory_dataset_repository,
         in_memory_run_repository,
         in_memory_evaluation_repository,
-        in_memory_aggregation_repository,
         "single-label-classify",
         single_label_classify_eval_logic,
+    )
+
+
+@fixture
+def classify_aggregator(
+    in_memory_evaluation_repository: InMemoryEvaluationRepository,
+    in_memory_aggregation_repository: InMemoryAggregationRepository,
+    single_label_classify_aggregation_logic: SingleLabelClassifyAggregationLogic,
+) -> Aggregator[
+    SingleLabelClassifyEvaluation,
+    AggregatedSingleLabelClassifyEvaluation,
+]:
+    return Aggregator(
+        in_memory_evaluation_repository,
+        in_memory_aggregation_repository,
+        "single-label-classify",
         single_label_classify_aggregation_logic,
     )
 
@@ -178,7 +189,6 @@ def test_can_evaluate_classify(
         SingleLabelClassifyOutput,
         Sequence[str],
         SingleLabelClassifyEvaluation,
-        AggregatedSingleLabelClassifyEvaluation,
     ],
     prompt_based_classify: PromptBasedClassify,
 ) -> None:
@@ -210,6 +220,9 @@ def test_can_aggregate_evaluations(
         SingleLabelClassifyOutput,
         Sequence[str],
         SingleLabelClassifyEvaluation,
+    ],
+    classify_aggregator: Aggregator[
+        SingleLabelClassifyEvaluation,
         AggregatedSingleLabelClassifyEvaluation,
     ],
     in_memory_dataset_repository: InMemoryDatasetRepository,
@@ -235,9 +248,12 @@ def test_can_aggregate_evaluations(
     )
 
     run_overview = classify_runner.run_dataset(dataset_name)
-    evaluation_overview = classify_evaluator.eval_and_aggregate_runs(run_overview.id)
+    evaluation_overview = classify_evaluator.evaluate_runs(run_overview.id)
+    aggregation_overview = classify_aggregator.aggregate_evaluation(
+        evaluation_overview.id
+    )
 
-    assert evaluation_overview.statistics.percentage_correct == 0.5
+    assert aggregation_overview.statistics.percentage_correct == 0.5
 
 
 def test_aggregating_evaluations_works_with_empty_list(
@@ -246,6 +262,9 @@ def test_aggregating_evaluations_works_with_empty_list(
         SingleLabelClassifyOutput,
         Sequence[str],
         SingleLabelClassifyEvaluation,
+    ],
+    classify_aggregator: Aggregator[
+        SingleLabelClassifyEvaluation,
         AggregatedSingleLabelClassifyEvaluation,
     ],
     classify_runner: Runner[ClassifyInput, SingleLabelClassifyOutput],
@@ -253,6 +272,9 @@ def test_aggregating_evaluations_works_with_empty_list(
 ) -> None:
     dataset_id = in_memory_dataset_repository.create_dataset([])
     run_overview = classify_runner.run_dataset(dataset_id)
-    evaluation_overview = classify_evaluator.eval_and_aggregate_runs(run_overview.id)
+    evaluation_overview = classify_evaluator.evaluate_runs(run_overview.id)
+    aggregation_overview = classify_aggregator.aggregate_evaluation(
+        evaluation_overview.id
+    )
 
-    assert evaluation_overview.statistics.percentage_correct == 0
+    assert aggregation_overview.statistics.percentage_correct == 0
