@@ -29,11 +29,11 @@ class TextHighlightInput(BaseModel):
     """The input for a text highlighting task.
 
     Attributes:
-        prompt_with_metadata: From client's PromptTemplate. Includes both the actual 'Prompt' as well as text range information.
+        rich_prompt: From client's PromptTemplate. Includes both the actual 'Prompt' as well as text range information.
             Supports liquid-template-language-style {% promptrange range_name %}/{% endpromptrange %} for range.
         target: The target that should be explained. Expected to follow the prompt.
         model: A valid Aleph Alpha model name.
-        focus_ranges: The ranges contained in `prompt_with_metadata` the returned highlights stem from. That means that each returned
+        focus_ranges: The ranges contained in `rich_prompt` the returned highlights stem from. That means that each returned
             highlight overlaps with at least one character with one of the ranges listed here.
             If this set is empty highlights of the entire prompt are returned.
     """
@@ -93,11 +93,11 @@ class TextHighlight(Task[TextHighlightInput, TextHighlightOutput]):
         ...		"{% promptrange r1 %}Question: What is 2 + 2?{% endpromptrange %}\\nAnswer:"
         ...	)
         >>> template = PromptTemplate(prompt_template_str)
-        >>> prompt_with_metadata = template.to_prompt_with_metadata()
+        >>> rich_prompt = template.to_rich_prompt()
         >>> completion = " 4."
         >>> model = "luminous-base"
         >>> input = TextHighlightInput(
-        ...	    prompt_with_metadata=prompt_with_metadata, target=completion, model=model
+        ...	    rich_prompt=rich_prompt, target=completion, model=model
         ... )
         >>> output = text_highlight.run(input, InMemoryTracer())
     """
