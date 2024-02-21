@@ -19,17 +19,21 @@ from intelligence_layer.core.complete import InstructInput, PromptOutput
 from intelligence_layer.core.prompt_template import RichPrompt
 from intelligence_layer.core.tracer import utc_now
 from intelligence_layer.evaluation import (
-    ArgillaEvaluationRepository,
+    ArgillaEvaluator,
     EloCalculator,
     Example,
     ExampleOutput,
     InMemoryDatasetRepository,
     InMemoryEvaluationRepository,
     InMemoryRunRepository,
-    InstructComparisonArgillaEvaluator,
+    InstructComparisonArgillaAggregationLogic,
     Payoff,
     PayoffMatrix,
     RunOverview,
+)
+from intelligence_layer.evaluation.argilla import (
+    AggregatedInstructComparison,
+    create_instruct_comparison_argilla_evaluation_classes,
 )
 from intelligence_layer.evaluation.data_storage.aggregation_repository import (
     InMemoryAggregationRepository,
@@ -58,9 +62,9 @@ class ArgillaFake(ArgillaClient):
                 example_id=r.example_id,
                 record_id=str(uuid4()),
                 responses={
-                    "winner": 1
-                    if int(r.metadata["first"]) < int(r.metadata["second"])
-                    else 2
+                    "winner": (
+                        1 if int(r.metadata["first"]) < int(r.metadata["second"]) else 2
+                    )
                 },
                 metadata=r.metadata,
             )
@@ -83,17 +87,22 @@ def evaluator(
     in_memory_evaluation_repository: InMemoryEvaluationRepository,
     in_memory_aggregation_repository: InMemoryAggregationRepository,
     argilla_fake: ArgillaClient,
-) -> InstructComparisonArgillaEvaluator:
-    eval_repository = ArgillaEvaluationRepository(
-        in_memory_evaluation_repository, argilla_fake
+    argilla_aggregation_logic: InstructComparisonArgillaAggregationLogic,
+) -> ArgillaEvaluator[InstructInput, PromptOutput, None, AggregatedInstructComparison]:
+    (
+        evaluation_logic,
+        evaluation_repository,
+    ) = create_instruct_comparison_argilla_evaluation_classes(
+        "workspace", in_memory_evaluation_repository, argilla_fake, None
     )
-    return InstructComparisonArgillaEvaluator(
+    return ArgillaEvaluator(
         in_memory_dataset_repository,
         in_memory_run_repository,
-        eval_repository,
+        evaluation_repository,
         in_memory_aggregation_repository,
         "instruct-evaluator",
-        "workspace",
+        evaluation_logic,
+        argilla_aggregation_logic,
     )
 
 
@@ -112,7 +121,12 @@ def any_instruct_output() -> PromptOutput:
 
 
 def test_evaluate_run_submits_pairwise_comparison_records(
-    evaluator: InstructComparisonArgillaEvaluator,
+    evaluator: ArgillaEvaluator[
+        InstructInput,
+        PromptOutput,
+        None,
+        AggregatedInstructComparison,
+    ],
     in_memory_dataset_repository: InMemoryDatasetRepository,
     in_memory_run_repository: InMemoryRunRepository,
     any_instruct_output: PromptOutput,
@@ -172,20 +186,21 @@ def test_evaluate_run_only_evaluates_high_priority(
     in_memory_evaluation_repository: InMemoryEvaluationRepository,
     in_memory_aggregation_repository: InMemoryAggregationRepository,
     any_instruct_output: PromptOutput,
+    argilla_aggregation_logic: InstructComparisonArgillaAggregationLogic,
     argilla_fake: ArgillaFake,
 ) -> None:
-    eval_repository = ArgillaEvaluationRepository(
-        in_memory_evaluation_repository, argilla_fake
-    )
     relevant_ids = frozenset({"1", "2"})
-    evaluator = InstructComparisonArgillaEvaluator(
+    eval_logic, eval_repository = create_instruct_comparison_argilla_evaluation_classes(
+        "workspace", in_memory_evaluation_repository, argilla_fake, relevant_ids
+    )
+    evaluator = ArgillaEvaluator(
         in_memory_dataset_repository,
         in_memory_run_repository,
         eval_repository,
         in_memory_aggregation_repository,
         "instruct-evaluator",
-        "workspace",
-        relevant_ids,
+        eval_logic,
+        argilla_aggregation_logic,
     )
 
     run_count = 10

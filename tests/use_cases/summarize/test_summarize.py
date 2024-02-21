@@ -14,6 +14,7 @@ from intelligence_layer.evaluation import (
 from intelligence_layer.evaluation.data_storage.aggregation_repository import (
     InMemoryAggregationRepository,
 )
+from intelligence_layer.evaluation.evaluator import Evaluator
 from intelligence_layer.use_cases.summarize.long_context_high_compression_summarize import (
     LongContextHighCompressionSummarize,
 )
@@ -21,14 +22,27 @@ from intelligence_layer.use_cases.summarize.single_chunk_few_shot_summarize impo
     SingleChunkFewShotSummarize,
 )
 from intelligence_layer.use_cases.summarize.summarize import (
-    LongContextSummarizeEvaluator,
+    AggregatedSummarizeEvaluation,
+    LongContextSummarizeAggregationLogic,
+    LongContextSummarizeEvaluationLogic,
     LongContextSummarizeInput,
     LongContextSummarizeOutput,
-    SingleChunkSummarizeEvaluator,
+    SingleChunkSummarizeAggregationLogic,
+    SingleChunkSummarizeEvaluationLogic,
     SingleChunkSummarizeInput,
     SummarizeEvaluation,
     SummarizeOutput,
 )
+
+
+@fixture
+def single_chunk_summarize_aggregation_logic() -> SingleChunkSummarizeAggregationLogic:
+    return SingleChunkSummarizeAggregationLogic()
+
+
+@fixture
+def single_chunk_summarize_eval_logic() -> SingleChunkSummarizeEvaluationLogic:
+    return SingleChunkSummarizeEvaluationLogic()
 
 
 @fixture
@@ -37,13 +51,23 @@ def single_chunk_summarize_evaluator(
     in_memory_run_repository: InMemoryRunRepository,
     in_memory_evaluation_repository: InMemoryEvaluationRepository,
     in_memory_aggregation_repository: InMemoryAggregationRepository,
-) -> SingleChunkSummarizeEvaluator:
-    return SingleChunkSummarizeEvaluator(
+    single_chunk_summarize_eval_logic: SingleChunkSummarizeEvaluationLogic,
+    single_chunk_summarize_aggregation_logic: SingleChunkSummarizeAggregationLogic,
+) -> Evaluator[
+    SingleChunkSummarizeInput,
+    SummarizeOutput,
+    str,
+    SummarizeEvaluation,
+    AggregatedSummarizeEvaluation,
+]:
+    return Evaluator(
         in_memory_dataset_repository,
         in_memory_run_repository,
         in_memory_evaluation_repository,
         in_memory_aggregation_repository,
         "single-chunk-summarize",
+        single_chunk_summarize_eval_logic,
+        single_chunk_summarize_aggregation_logic,
     )
 
 
@@ -62,18 +86,38 @@ def single_chunk_summarize_runner(
 
 
 @fixture
+def long_context_summarize_evaluation_logic() -> LongContextSummarizeEvaluationLogic:
+    return LongContextSummarizeEvaluationLogic()
+
+
+@fixture
+def long_context_summarize_aggregation_logic() -> LongContextSummarizeAggregationLogic:
+    return LongContextSummarizeAggregationLogic()
+
+
+@fixture
 def long_context_summarize_evaluator(
     in_memory_dataset_repository: DatasetRepository,
     in_memory_run_repository: RunRepository,
     in_memory_evaluation_repository: EvaluationRepository,
     in_memory_aggregation_repository: InMemoryAggregationRepository,
-) -> LongContextSummarizeEvaluator:
-    return LongContextSummarizeEvaluator(
+    long_context_summarize_evaluation_logic: LongContextSummarizeEvaluationLogic,
+    long_context_summarize_aggregation_logic: LongContextSummarizeAggregationLogic,
+) -> Evaluator[
+    LongContextSummarizeInput,
+    LongContextSummarizeOutput,
+    str,
+    SummarizeEvaluation,
+    AggregatedSummarizeEvaluation,
+]:
+    return Evaluator(
         in_memory_dataset_repository,
         in_memory_run_repository,
         in_memory_evaluation_repository,
         in_memory_aggregation_repository,
         "long-context-summarize",
+        long_context_summarize_evaluation_logic,
+        long_context_summarize_aggregation_logic,
     )
 
 
@@ -92,7 +136,13 @@ def long_context_summarize_runner(
 
 
 def test_single_chunk_summarize_evaluator(
-    single_chunk_summarize_evaluator: SingleChunkSummarizeEvaluator,
+    single_chunk_summarize_evaluator: Evaluator[
+        SingleChunkSummarizeInput,
+        SummarizeOutput,
+        str,
+        SummarizeEvaluation,
+        AggregatedSummarizeEvaluation,
+    ],
     single_chunk_summarize_runner: Runner[str, str],
     chunk: Chunk,
     no_op_tracer: NoOpTracer,
@@ -139,11 +189,16 @@ def test_single_chunk_summarize_evaluator(
 
 
 def test_long_context_summarize_evaluator(
-    long_context_summarize_evaluator: LongContextSummarizeEvaluator,
+    long_context_summarize_evaluator: Evaluator[
+        LongContextSummarizeInput,
+        LongContextSummarizeOutput,
+        str,
+        SummarizeEvaluation,
+        AggregatedSummarizeEvaluation,
+    ],
     long_context_summarize_runner: Runner[str, str],
     in_memory_dataset_repository: InMemoryDatasetRepository,
     long_text: str,
-    no_op_tracer: NoOpTracer,
 ) -> None:
     input = LongContextSummarizeInput(text=long_text, language=Language("en"))
     bad_example = Example(

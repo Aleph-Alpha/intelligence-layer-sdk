@@ -11,14 +11,17 @@ from intelligence_layer.connectors import (
     RecordData,
 )
 from intelligence_layer.evaluation import (
+    ArgillaEvaluationLogic,
     ArgillaEvaluationRepository,
     ArgillaEvaluator,
     Example,
     InMemoryDatasetRepository,
     InMemoryEvaluationRepository,
+    RecordDataSequence,
     Runner,
     SuccessfulExampleOutput,
 )
+from intelligence_layer.evaluation.base_logic import AggregationLogic
 from intelligence_layer.evaluation.data_storage.aggregation_repository import (
     InMemoryAggregationRepository,
 )
@@ -72,11 +75,9 @@ class StubArgillaClient(ArgillaClient):
         ]
 
 
-class DummyStringTaskArgillaEvaluator(
-    ArgillaEvaluator[
-        DummyStringInput,
-        DummyStringOutput,
-        DummyStringOutput,
+class DummyStringTaskArgillaAggregationLogic(
+    AggregationLogic[
+        ArgillaEvaluation,
         DummyAggregatedEvaluation,
     ]
 ):
@@ -92,25 +93,41 @@ class DummyStringTaskArgillaEvaluator(
             score=total_human_score / len(evaluations),
         )
 
-    # mypy expects *args where this method only uses one output
-    def _to_record(  # type: ignore
+
+class DummyStringTaskArgillaEvaluationLogic(
+    ArgillaEvaluationLogic[
+        DummyStringInput,
+        DummyStringOutput,
+        DummyStringOutput,
+    ]
+):
+    def _to_record(
         self,
         example: Example[DummyStringInput, DummyStringOutput],
-        output: SuccessfulExampleOutput[DummyStringOutput],
-    ) -> Sequence[RecordData]:
-        return [
-            RecordData(
-                content={
-                    "input": example.input.input,
-                    "output": output.output.output,
-                },
-                example_id=example.id,
-            )
-        ]
+        *output: SuccessfulExampleOutput[DummyStringOutput],
+    ) -> RecordDataSequence:
+        assert len(output) == 1
+        single_output = output[0].output
+        return RecordDataSequence(
+            records=[
+                RecordData(
+                    content={
+                        "input": example.input.input,
+                        "output": single_output.output,
+                    },
+                    example_id=example.id,
+                )
+            ]
+        )
 
 
 @fixture
 def stub_argilla_client() -> StubArgillaClient:
+    return StubArgillaClient()
+
+
+@fixture
+def arg() -> StubArgillaClient:
     return StubArgillaClient()
 
 
@@ -121,7 +138,12 @@ def string_argilla_evaluator(
     in_memory_evaluation_repository: InMemoryEvaluationRepository,
     in_memory_aggregation_repository: InMemoryAggregationRepository,
     stub_argilla_client: StubArgillaClient,
-) -> DummyStringTaskArgillaEvaluator:
+) -> ArgillaEvaluator[
+    DummyStringInput,
+    DummyStringOutput,
+    DummyStringOutput,
+    DummyAggregatedEvaluation,
+]:
     stub_argilla_client._expected_workspace_id = "workspace-id"
     questions = [
         Question(
@@ -135,17 +157,24 @@ def string_argilla_evaluator(
         Field(name="output", title="Output"),
         Field(name="input", title="Input"),
     ]
-    evaluator = DummyStringTaskArgillaEvaluator(
-        in_memory_dataset_repository,
-        in_memory_run_repository,
-        ArgillaEvaluationRepository(
-            in_memory_evaluation_repository, stub_argilla_client
-        ),
-        in_memory_aggregation_repository,
-        "dummy-string-task",
-        stub_argilla_client._expected_workspace_id,
+    workspace_id = stub_argilla_client._expected_workspace_id
+
+    eval_repository = ArgillaEvaluationRepository(
+        in_memory_evaluation_repository,
+        stub_argilla_client,
+        workspace_id,
         fields,
         questions,
+    )
+
+    evaluator = ArgillaEvaluator(
+        in_memory_dataset_repository,
+        in_memory_run_repository,
+        eval_repository,
+        in_memory_aggregation_repository,
+        "dummy-string-task",
+        DummyStringTaskArgillaEvaluationLogic(),
+        DummyStringTaskArgillaAggregationLogic(),
     )
     stub_argilla_client._expected_questions = questions
     stub_argilla_client._expected_fields = fields
@@ -167,16 +196,22 @@ def string_argilla_runner(
 
 
 def test_argilla_evaluator_can_do_sync_evaluation(
-    string_argilla_evaluator: DummyStringTaskArgillaEvaluator,
+    string_argilla_evaluator: ArgillaEvaluator[
+        DummyStringInput,
+        DummyStringOutput,
+        DummyStringOutput,
+        DummyAggregatedEvaluation,
+    ],
     string_argilla_runner: Runner[DummyStringInput, DummyStringOutput],
     string_dataset_id: str,
 ) -> None:
-    argilla_client = cast(StubArgillaClient, string_argilla_evaluator._client)
+    argilla_client = cast(
+        StubArgillaClient,
+        string_argilla_evaluator._evaluation_repository._client,  # type: ignore
+    )
 
     run_overview = string_argilla_runner.run_dataset(string_dataset_id)
-    eval_overview = string_argilla_evaluator.partial_eval_and_aggregate_runs(
-        run_overview.id
-    )
+    eval_overview = string_argilla_evaluator.evaluate_runs(run_overview.id)
     examples_iter = string_argilla_evaluator._dataset_repository.examples_by_id(
         string_dataset_id, DummyStringInput, DummyStringOutput
     )
@@ -191,17 +226,21 @@ def test_argilla_evaluator_can_do_sync_evaluation(
 
 
 def test_argilla_evaluator_can_aggregate_evaluation(
-    string_argilla_evaluator: DummyStringTaskArgillaEvaluator,
+    string_argilla_evaluator: ArgillaEvaluator[
+        DummyStringInput,
+        DummyStringOutput,
+        DummyStringOutput,
+        DummyAggregatedEvaluation,
+    ],
     string_argilla_runner: Runner[DummyStringInput, DummyStringOutput],
     string_dataset_id: str,
 ) -> None:
-    argilla_client = cast(StubArgillaClient, string_argilla_evaluator._client)
-    run_overview = string_argilla_runner.run_dataset(string_dataset_id)
-    eval_overview = string_argilla_evaluator.partial_eval_and_aggregate_runs(
-        run_overview.id
+    argilla_client = cast(
+        StubArgillaClient, string_argilla_evaluator._evaluation_repository._client  # type: ignore
     )
+    run_overview = string_argilla_runner.run_dataset(string_dataset_id)
+    eval_overview = string_argilla_evaluator.evaluate_runs(run_overview.id)
     aggregated_eval_overview = string_argilla_evaluator.aggregate_evaluation(
         eval_overview.id
     )
-
     assert aggregated_eval_overview.statistics.score == argilla_client._score

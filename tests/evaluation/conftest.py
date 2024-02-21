@@ -17,6 +17,7 @@ from intelligence_layer.evaluation import (
     FileRunRepository,
     InMemoryDatasetRepository,
     InMemoryRunRepository,
+    InstructComparisonArgillaAggregationLogic,
     Runner,
     RunOverview,
 )
@@ -165,3 +166,8 @@ def dummy_runner(
         in_memory_run_repository,
         "dummy-runner",
     )
+
+
+@fixture
+def argilla_aggregation_logic() -> InstructComparisonArgillaAggregationLogic:
+    return InstructComparisonArgillaAggregationLogic()

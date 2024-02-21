@@ -17,10 +17,13 @@ from intelligence_layer.evaluation import (
 from intelligence_layer.evaluation.data_storage.aggregation_repository import (
     InMemoryAggregationRepository,
 )
+from intelligence_layer.evaluation.evaluator import Evaluator
 from intelligence_layer.use_cases.classify.classify import (
+    AggregatedSingleLabelClassifyEvaluation,
     ClassifyInput,
+    SingleLabelClassifyAggregationLogic,
     SingleLabelClassifyEvaluation,
-    SingleLabelClassifyEvaluator,
+    SingleLabelClassifyEvaluationLogic,
     SingleLabelClassifyOutput,
 )
 from intelligence_layer.use_cases.classify.prompt_based_classify import (
@@ -34,18 +37,38 @@ def prompt_based_classify(client: AlephAlphaClientProtocol) -> PromptBasedClassi
 
 
 @fixture
+def single_label_classify_eval_logic() -> SingleLabelClassifyEvaluationLogic:
+    return SingleLabelClassifyEvaluationLogic()
+
+
+@fixture
+def single_label_classify_aggregation_logic() -> SingleLabelClassifyAggregationLogic:
+    return SingleLabelClassifyAggregationLogic()
+
+
+@fixture
 def classify_evaluator(
     in_memory_dataset_repository: DatasetRepository,
     in_memory_run_repository: RunRepository,
     in_memory_evaluation_repository: InMemoryEvaluationRepository,
     in_memory_aggregation_repository: InMemoryAggregationRepository,
-) -> SingleLabelClassifyEvaluator:
-    return SingleLabelClassifyEvaluator(
+    single_label_classify_eval_logic: SingleLabelClassifyEvaluationLogic,
+    single_label_classify_aggregation_logic: SingleLabelClassifyAggregationLogic,
+) -> Evaluator[
+    ClassifyInput,
+    SingleLabelClassifyOutput,
+    Sequence[str],
+    SingleLabelClassifyEvaluation,
+    AggregatedSingleLabelClassifyEvaluation,
+]:
+    return Evaluator(
         in_memory_dataset_repository,
         in_memory_run_repository,
         in_memory_evaluation_repository,
         in_memory_aggregation_repository,
         "single-label-classify",
+        single_label_classify_eval_logic,
+        single_label_classify_aggregation_logic,
     )
 
 
@@ -150,7 +173,13 @@ def test_can_evaluate_classify(
     in_memory_dataset_repository: InMemoryDatasetRepository,
     classify_runner: Runner[ClassifyInput, SingleLabelClassifyOutput],
     in_memory_evaluation_repository: InMemoryEvaluationRepository,
-    classify_evaluator: SingleLabelClassifyEvaluator,
+    classify_evaluator: Evaluator[
+        ClassifyInput,
+        SingleLabelClassifyOutput,
+        Sequence[str],
+        SingleLabelClassifyEvaluation,
+        AggregatedSingleLabelClassifyEvaluation,
+    ],
     prompt_based_classify: PromptBasedClassify,
 ) -> None:
     example = Example(
@@ -176,7 +205,13 @@ def test_can_evaluate_classify(
 
 
 def test_can_aggregate_evaluations(
-    classify_evaluator: SingleLabelClassifyEvaluator,
+    classify_evaluator: Evaluator[
+        ClassifyInput,
+        SingleLabelClassifyOutput,
+        Sequence[str],
+        SingleLabelClassifyEvaluation,
+        AggregatedSingleLabelClassifyEvaluation,
+    ],
     in_memory_dataset_repository: InMemoryDatasetRepository,
     classify_runner: Runner[ClassifyInput, SingleLabelClassifyOutput],
 ) -> None:
@@ -206,7 +241,13 @@ def test_can_aggregate_evaluations(
 
 
 def test_aggregating_evaluations_works_with_empty_list(
-    classify_evaluator: SingleLabelClassifyEvaluator,
+    classify_evaluator: Evaluator[
+        ClassifyInput,
+        SingleLabelClassifyOutput,
+        Sequence[str],
+        SingleLabelClassifyEvaluation,
+        AggregatedSingleLabelClassifyEvaluation,
+    ],
     classify_runner: Runner[ClassifyInput, SingleLabelClassifyOutput],
     in_memory_dataset_repository: DatasetRepository,
 ) -> None:

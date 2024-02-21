@@ -15,10 +15,13 @@ from intelligence_layer.evaluation import (
 from intelligence_layer.evaluation.data_storage.aggregation_repository import (
     InMemoryAggregationRepository,
 )
+from intelligence_layer.evaluation.evaluator import Evaluator
 from intelligence_layer.use_cases.classify.classify import (
+    AggregatedMultiLabelClassifyEvaluation,
     ClassifyInput,
+    MultiLabelClassifyAggregationLogic,
     MultiLabelClassifyEvaluation,
-    MultiLabelClassifyEvaluator,
+    MultiLabelClassifyEvaluationLogic,
     MultiLabelClassifyOutput,
 )
 from intelligence_layer.use_cases.classify.embedding_based_classify import (
@@ -129,18 +132,38 @@ def multiple_entries_dataset_name(
 
 
 @fixture
+def multi_label_classify_evaluation_logic() -> MultiLabelClassifyEvaluationLogic:
+    return MultiLabelClassifyEvaluationLogic()
+
+
+@fixture
+def multi_label_classify_aggregation_logic() -> MultiLabelClassifyAggregationLogic:
+    return MultiLabelClassifyAggregationLogic()
+
+
+@fixture
 def classify_evaluator(
     in_memory_dataset_repository: DatasetRepository,
     in_memory_run_repository: RunRepository,
     in_memory_evaluation_repository: InMemoryEvaluationRepository,
     in_memory_aggregation_repository: InMemoryAggregationRepository,
-) -> MultiLabelClassifyEvaluator:
-    return MultiLabelClassifyEvaluator(
+    multi_label_classify_evaluation_logic: MultiLabelClassifyEvaluationLogic,
+    multi_label_classify_aggregation_logic: MultiLabelClassifyAggregationLogic,
+) -> Evaluator[
+    ClassifyInput,
+    MultiLabelClassifyOutput,
+    Sequence[str],
+    MultiLabelClassifyEvaluation,
+    AggregatedMultiLabelClassifyEvaluation,
+]:
+    return Evaluator(
         in_memory_dataset_repository,
         in_memory_run_repository,
         in_memory_evaluation_repository,
         in_memory_aggregation_repository,
         "multi-label-classify",
+        multi_label_classify_evaluation_logic,
+        multi_label_classify_aggregation_logic,
     )
 
 
@@ -160,7 +183,13 @@ def classify_runner(
 
 def test_multi_label_classify_evaluator_single_example(
     single_entry_dataset_name: str,
-    classify_evaluator: MultiLabelClassifyEvaluator,
+    classify_evaluator: Evaluator[
+        ClassifyInput,
+        MultiLabelClassifyOutput,
+        Sequence[str],
+        MultiLabelClassifyEvaluation,
+        AggregatedMultiLabelClassifyEvaluation,
+    ],
     classify_runner: Runner[ClassifyInput, MultiLabelClassifyOutput],
 ) -> None:
     run_overview = classify_runner.run_dataset(single_entry_dataset_name)
@@ -180,7 +209,13 @@ def test_multi_label_classify_evaluator_single_example(
 
 def test_multi_label_classify_evaluator_full_dataset(
     multiple_entries_dataset_name: str,
-    classify_evaluator: MultiLabelClassifyEvaluator,
+    classify_evaluator: Evaluator[
+        ClassifyInput,
+        MultiLabelClassifyOutput,
+        Sequence[str],
+        MultiLabelClassifyEvaluation,
+        AggregatedMultiLabelClassifyEvaluation,
+    ],
     classify_runner: Runner[ClassifyInput, MultiLabelClassifyOutput],
 ) -> None:
     run_overview = classify_runner.run_dataset(multiple_entries_dataset_name)
