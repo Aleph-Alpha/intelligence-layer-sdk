@@ -1,15 +1,25 @@
 from aleph_alpha_client import Image
 from pytest import fixture, raises
 
-from intelligence_layer.core.model import LuminousControlModel
-from intelligence_layer.core.prompt_template import PromptTemplate
+from intelligence_layer.core.model import AlephAlphaModel, LuminousControlModel
+from intelligence_layer.core.prompt_template import PromptTemplate, RichPrompt
 from intelligence_layer.core.text_highlight import TextHighlight, TextHighlightInput
 from intelligence_layer.core.tracer import NoOpTracer
 
 
+class AlephAlphaVanillaModel(AlephAlphaModel):
+    def to_instruct_prompt(self, instruction: str, input: str | None = None, response_prefix: str | None = None) -> RichPrompt:
+        raise NotImplementedError()
+
+
 @fixture
-def text_highlight(luminous_control_model: LuminousControlModel) -> TextHighlight:
-    return TextHighlight(luminous_control_model)
+def aleph_alpha_vanilla_model() -> AlephAlphaVanillaModel:
+    return AlephAlphaVanillaModel("luminous-base")
+
+
+@fixture
+def text_highlight(aleph_alpha_vanilla_model: AlephAlphaVanillaModel) -> TextHighlight:
+    return TextHighlight(aleph_alpha_vanilla_model)
 
 
 def test_text_highlight(text_highlight: TextHighlight) -> None:
