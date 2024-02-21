@@ -25,7 +25,7 @@ class CompleteInput(BaseModel, CompletionRequest, frozen=True):
 class CompleteOutput(BaseModel, CompletionResponse, frozen=True):
     """The output of a `Complete` task."""
 
-    # Base model protects namespace model_ but this is a field in the completion response
+    # BaseModel protects namespace "model_" but this is a field in the CompletionResponse
     model_config = ConfigDict(protected_namespaces=())
 
     @staticmethod
@@ -46,12 +46,13 @@ class CompleteOutput(BaseModel, CompletionResponse, frozen=True):
 class _Complete(Task[CompleteInput, CompleteOutput]):
     """Performs a completion request with access to all possible request parameters.
 
-    Only use this task if non of the higher level tasks defined below works for
-    you, as your completion request does not fit to the use-cases the higher level ones represent or
-    you need to control request-parameters that are not exposed by them.
+    Only use this task for testing. Is wrapped by the AlephAlphaModel for sending
+    completion requests to the API.
 
     Args:
         client: Aleph Alpha client instance for running model related API calls.
+        model: The name of a valid model that can access an API using an implementation
+            of the AlephAlphaClientProtocol.
     """
 
     def __init__(self, client: AlephAlphaClientProtocol, model: str) -> None:
@@ -70,14 +71,27 @@ class _Complete(Task[CompleteInput, CompleteOutput]):
 
 
 class AlephAlphaModel(ABC):
+    """Abstract base class for the implementation of any model that uses the Aleph Alpha client.
+
+    Any class of Aleph Alpha model is implemented on top of this base class. Exposes methods that
+    are available to all models, such as `complete` and `tokenize`. It is the central place for
+    all things that are physically interconnected with a model, such as its tokenizer or prompt
+    format used during training.
+
+    Args:
+        name: The name of a valid model that can access an API using an implementation
+            of the AlephAlphaClientProtocol.
+        client: Aleph Alpha client instance for running model related API calls.
+    """
+
     def __init__(
         self,
-        model_name: str,
-        client: AlephAlphaClientProtocol = LimitedConcurrencyClient.from_token(),
+        name: str,
+        client: AlephAlphaClientProtocol,
     ) -> None:
+        self.name = name
         self._client = client
-        self._complete = _Complete(self._client, model_name)
-        self.name = model_name
+        self._complete = _Complete(self._client, name)
 
     def get_complete_task(self) -> Task[CompleteInput, CompleteOutput]:
         return self._complete
@@ -102,7 +116,19 @@ class AlephAlphaModel(ABC):
         return self.get_tokenizer().encode(text)
 
 
+@lru_cache(maxsize=1)
+def limited_concurrency_client_from_token() -> LimitedConcurrencyClient:
+    return LimitedConcurrencyClient.from_token()
+
+
 class LuminousControlModel(AlephAlphaModel):
+    """An Aleph Alpha control model of the second generation.
+
+    Args:
+        name: The name of a valid model second generation control model.
+        client: Aleph Alpha client instance for running model related API calls.
+    """
+
     INSTRUCTION_PROMPT_TEMPLATE = PromptTemplate(
         """{% promptrange instruction %}{{instruction}}{% endpromptrange %}
 {% if input %}
@@ -113,7 +139,7 @@ class LuminousControlModel(AlephAlphaModel):
 
     def __init__(
         self,
-        model: Literal[
+        name: Literal[
             "luminous-base-control",
             "luminous-extended-control",
             "luminous-supreme-control",
@@ -121,9 +147,9 @@ class LuminousControlModel(AlephAlphaModel):
             "luminous-extended-control-20240215",
             "luminous-supreme-control-20240215",
         ],
-        client: AlephAlphaClientProtocol = LimitedConcurrencyClient.from_token(),
+        client: AlephAlphaClientProtocol = limited_concurrency_client_from_token(),
     ) -> None:
-        super().__init__(model, client)
+        super().__init__(name, client)
 
     def to_instruct_prompt(
         self,

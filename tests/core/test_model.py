@@ -14,7 +14,7 @@ from intelligence_layer.core.tracer import NoOpTracer
 
 @fixture
 def model(client: AlephAlphaClientProtocol) -> AlephAlphaModel:
-    return LuminousControlModel(client=client, model="luminous-base-control-20240215")
+    return LuminousControlModel(client=client, name="luminous-base-control-20240215")
 
 
 def test_model_without_input(model: AlephAlphaModel, no_op_tracer: NoOpTracer) -> None:

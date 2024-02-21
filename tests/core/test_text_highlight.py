@@ -1,10 +1,8 @@
 from aleph_alpha_client import Image
 from pytest import fixture, raises
 
-from intelligence_layer.core.model import AlephAlphaModel
-from intelligence_layer.core.prompt_template import PromptTemplate, RichPrompt
-from intelligence_layer.core.text_highlight import TextHighlight, TextHighlightInput
-from intelligence_layer.core.tracer import NoOpTracer
+from intelligence_layer.connectors import AlephAlphaClientProtocol
+from intelligence_layer.core import AlephAlphaModel, PromptTemplate, RichPrompt, TextHighlight, TextHighlightInput, NoOpTracer
 
 
 class AlephAlphaVanillaModel(AlephAlphaModel):
@@ -18,8 +16,8 @@ class AlephAlphaVanillaModel(AlephAlphaModel):
 
 
 @fixture
-def aleph_alpha_vanilla_model() -> AlephAlphaVanillaModel:
-    return AlephAlphaVanillaModel("luminous-base")
+def aleph_alpha_vanilla_model(client: AlephAlphaClientProtocol) -> AlephAlphaVanillaModel:
+    return AlephAlphaVanillaModel("luminous-base", client)
 
 
 @fixture

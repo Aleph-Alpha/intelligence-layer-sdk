@@ -67,7 +67,7 @@ def test_recursive_summarize_stops_after_one_chunk(
     recursive_counting_client: RecursiveCountingClient,
 ) -> None:
     model = LuminousControlModel(
-        model="luminous-base-control-20240215", client=recursive_counting_client
+        name="luminous-base-control-20240215", client=recursive_counting_client
     )
 
     long_context_high_compression_summarize = SteerableLongContextSummarize(
