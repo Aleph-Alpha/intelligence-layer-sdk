@@ -1,7 +1,6 @@
 from typing import Iterable, Sequence
 
 from aleph_alpha_client import (
-    ExplanationRequest,
     ExplanationResponse,
     Prompt,
     PromptGranularity,
@@ -11,8 +10,7 @@ from aleph_alpha_client import (
 from aleph_alpha_client.explanation import TextScoreWithRaw
 from pydantic import BaseModel
 
-from intelligence_layer.core.explain import Explain, ExplainInput
-from intelligence_layer.core.model import AlephAlphaModel
+from intelligence_layer.core.model import AlephAlphaModel, ExplainInput
 from intelligence_layer.core.prompt_template import (
     Cursor,
     PromptRange,
@@ -105,7 +103,6 @@ class TextHighlight(Task[TextHighlightInput, TextHighlightOutput]):
     ) -> None:
         super().__init__()
         self._model = model
-        self._explain_task = Explain(model)
         self._granularity = granularity
 
     def do_run(
@@ -142,13 +139,13 @@ class TextHighlight(Task[TextHighlightInput, TextHighlightOutput]):
     def _explain(
         self, prompt: Prompt, target: str, task_span: TaskSpan
     ) -> ExplanationResponse:
-        request = ExplanationRequest(
+        input = ExplainInput(
             prompt,
             target,
             prompt_granularity=self._granularity,
         )
-        output = self._explain_task.run(ExplainInput(request=request), task_span)
-        return output.response
+        output = self._model.explain(input, task_span)
+        return output
 
     def _flatten_prompt_ranges(
         self, prompt_ranges: Iterable[Sequence[PromptRange]]

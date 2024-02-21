@@ -16,9 +16,6 @@ from .detect_language import Language as Language
 from .echo import EchoInput as EchoInput
 from .echo import EchoOutput as EchoOutput
 from .echo import EchoTask as EchoTask
-from .explain import Explain as Explain
-from .explain import ExplainInput as ExplainInput
-from .explain import ExplainOutput as ExplainOutput
 from .instruct import Instruct as Instruct
 from .instruct import InstructInput as InstructInput
 from .intelligence_app import (

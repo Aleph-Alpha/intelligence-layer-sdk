@@ -3,7 +3,12 @@ from dataclasses import asdict
 from functools import lru_cache
 from typing import Literal, Optional
 
-from aleph_alpha_client import CompletionRequest, CompletionResponse
+from aleph_alpha_client import (
+    CompletionRequest,
+    CompletionResponse,
+    ExplanationRequest,
+    ExplanationResponse,
+)
 from pydantic import BaseModel, ConfigDict
 from tokenizers import Encoding, Tokenizer  # type: ignore
 
@@ -70,6 +75,49 @@ class _Complete(Task[CompleteInput, CompleteOutput]):
         )
 
 
+class ExplainInput(BaseModel, ExplanationRequest, frozen=True):
+    """The input for a `Explain` task."""
+
+    pass
+
+
+class ExplainOutput(BaseModel, ExplanationResponse, frozen=True):
+    """The output of a `Explain` task."""
+
+    # BaseModel protects namespace "model_" but this is a field in the ExplanationResponse
+    model_config = ConfigDict(protected_namespaces=())
+
+    @staticmethod
+    def from_explanation_response(
+        explanation_response: ExplanationResponse,
+    ) -> "ExplainOutput":
+        return ExplainOutput(**asdict(explanation_response))
+
+
+class _Explain(Task[ExplainInput, ExplainOutput]):
+    """Performs an explanation request with access to all possible request parameters.
+
+    Only use this task for testing. Is wrapped by the AlephAlphaModel for sending
+    explanation requests to the API.
+
+    Args:
+        client: Aleph Alpha client instance for running model related API calls.
+        model: The name of a valid model that can access an API using an implementation
+            of the AlephAlphaClientProtocol.
+    """
+
+    def __init__(self, client: AlephAlphaClientProtocol, model: str) -> None:
+        super().__init__()
+        self._client = client
+        self._model = model
+
+    def do_run(self, input: ExplainInput, task_span: TaskSpan) -> ExplainOutput:
+        task_span.log("Model", self._model)
+        return ExplainOutput.from_explanation_response(
+            self._client.explain(request=input, model=self._model)
+        )
+
+
 class AlephAlphaModel(ABC):
     """Abstract base class for the implementation of any model that uses the Aleph Alpha client.
 
@@ -92,6 +140,7 @@ class AlephAlphaModel(ABC):
         self.name = name
         self._client = client
         self._complete = _Complete(self._client, name)
+        self._explain = _Explain(self._client, name)
 
     def get_complete_task(self) -> Task[CompleteInput, CompleteOutput]:
         return self._complete
@@ -107,6 +156,9 @@ class AlephAlphaModel(ABC):
         response_prefix: Optional[str] = None,
     ) -> RichPrompt:
         ...
+
+    def explain(self, input: ExplainInput, tracer: Tracer) -> ExplainOutput:
+        return self._explain.run(input, tracer)
 
     @lru_cache(maxsize=1)
     def get_tokenizer(self) -> Tokenizer:
