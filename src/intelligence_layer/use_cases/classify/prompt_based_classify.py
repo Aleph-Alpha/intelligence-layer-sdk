@@ -9,6 +9,7 @@ from intelligence_layer.connectors.limited_concurrency_client import (
     AlephAlphaClientProtocol,
 )
 from intelligence_layer.core.echo import EchoInput, EchoTask, TokenWithLogProb
+from intelligence_layer.core.model import AlephAlphaModel, LuminousControlModel
 from intelligence_layer.core.prompt_template import RichPrompt
 from intelligence_layer.core.task import Task, Token
 from intelligence_layer.core.tracer import TaskSpan
@@ -64,22 +65,16 @@ class PromptBasedClassify(Task[ClassifyInput, SingleLabelClassifyOutput]):
         >>> output = task.run(input, tracer)
     """
 
-    PROMPT_TEMPLATE: str = """### Instruction:
-Identify a class that describes the text adequately.
-Reply with only the class label.
-
-### Input:
-{{text}}
-
-### Response:"""
+    INSTRUCTION: str = """Identify a class that describes the text adequately.
+Reply with only the class label."""
 
     def __init__(
-        self, client: AlephAlphaClientProtocol, model: str = "luminous-base-control"
+        self,
+        model: AlephAlphaModel = LuminousControlModel("luminous-base-control-20240215"),
     ) -> None:
         super().__init__()
-        self._client = client
-        self._echo_task = EchoTask(client)
-        self.model = model
+        self._echo_task = EchoTask(model)
+        self._model = model
 
     def do_run(
         self, input: ClassifyInput, task_span: TaskSpan
@@ -87,7 +82,6 @@ Reply with only the class label.
         log_probs_per_label = self._log_probs_per_label(
             text_to_classify=input.chunk,
             labels=input.labels,
-            model=self.model,
             task_span=task_span,
         )
         task_span.log("Log probs per label", log_probs_per_label)
@@ -101,17 +95,15 @@ Reply with only the class label.
         self,
         text_to_classify: str,
         labels: frozenset[str],
-        model: str,
         task_span: TaskSpan,
     ) -> Mapping[str, Sequence[TokenWithLogProb]]:
-        prompt = PromptTemplate(template_str=self.PROMPT_TEMPLATE).to_prompt(
-            text=text_to_classify
+        prompt = self._model.to_instruct_prompt(
+            instruction=self.INSTRUCTION, input=text_to_classify
         )
         inputs = (
             EchoInput(
                 prompt=prompt,
                 expected_completion=self._prepare_label_for_echo_task(label),
-                model=model,
             )
             for label in labels
         )

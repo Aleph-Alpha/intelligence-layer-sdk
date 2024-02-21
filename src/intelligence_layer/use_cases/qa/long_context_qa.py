@@ -72,7 +72,7 @@ class LongContextQa(Task[LongContextQaInput, MultipleChunkQaOutput]):
 
     def __init__(
         self,
-        max_tokens_per_chunk: int = 512,
+        max_tokens_per_chunk: int = 1024,
         k: int = 4,
         model: AlephAlphaModel = LuminousControlModel(
             "luminous-supreme-control-20240215"

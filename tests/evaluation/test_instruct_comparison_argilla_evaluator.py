@@ -15,6 +15,8 @@ from intelligence_layer.connectors.argilla.argilla_client import (
     Question,
     RecordData,
 )
+from intelligence_layer.core.instruct import InstructInput
+from intelligence_layer.core.model import CompleteOutput
 from intelligence_layer.core.prompt_template import RichPrompt
 from intelligence_layer.core.tracer import utc_now
 from intelligence_layer.evaluation import (
@@ -101,7 +103,7 @@ def evaluator(
     in_memory_run_repository: InMemoryRunRepository,
     in_memory_evaluation_repository: InMemoryEvaluationRepository,
     argilla_fake: ArgillaClient,
-) -> ArgillaEvaluator[InstructInput, PromptOutput, None]:
+) -> ArgillaEvaluator[InstructInput, CompleteOutput, None]:
     (
         evaluation_logic,
         evaluation_repository,
@@ -132,25 +134,24 @@ def aggregator(
 
 
 @fixture
-def any_instruct_output() -> PromptOutput:
+def any_instruct_output() -> CompleteOutput:
     faker = Faker()
-    return PromptOutput(
-        response=CompletionResponse(
+    return CompleteOutput.from_completion_response(
+        CompletionResponse(
             model_version="",
             completions=[CompletionResult(completion=faker.text())],
             num_tokens_generated=0,
             num_tokens_prompt_total=0,
         ),
-        rich_prompt=RichPrompt(items=[], ranges={}),
     )
 
 
 def test_evaluate_run_submits_pairwise_comparison_records(
-    evaluator: ArgillaEvaluator[InstructInput, PromptOutput, None],
+    evaluator: ArgillaEvaluator[InstructInput, CompleteOutput, None],
     aggregator: ArgillaAggregator[AggregatedInstructComparison],
     in_memory_dataset_repository: InMemoryDatasetRepository,
     in_memory_run_repository: InMemoryRunRepository,
-    any_instruct_output: PromptOutput,
+    any_instruct_output: CompleteOutput,
     argilla_fake: ArgillaFake,
 ) -> None:
     run_count = 10
@@ -206,7 +207,7 @@ def test_evaluate_run_only_evaluates_high_priority(
     in_memory_run_repository: InMemoryRunRepository,
     in_memory_evaluation_repository: InMemoryEvaluationRepository,
     in_memory_aggregation_repository: InMemoryAggregationRepository,
-    any_instruct_output: PromptOutput,
+    any_instruct_output: CompleteOutput,
     argilla_aggregation_logic: InstructComparisonArgillaAggregationLogic,
     argilla_fake: ArgillaFake,
 ) -> None:

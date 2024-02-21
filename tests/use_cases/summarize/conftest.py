@@ -4,6 +4,7 @@ from intelligence_layer.connectors.limited_concurrency_client import (
     AlephAlphaClientProtocol,
 )
 from intelligence_layer.core.chunk import Chunk
+from intelligence_layer.core.model import LuminousControlModel
 from intelligence_layer.use_cases.summarize.steerable_long_context_summarize import (
     SteerableLongContextSummarize,
 )
@@ -14,9 +15,9 @@ from intelligence_layer.use_cases.summarize.steerable_single_chunk_summarize imp
 
 @fixture
 def steerable_single_chunk_summarize(
-    client: AlephAlphaClientProtocol,
+    luminous_control_model: LuminousControlModel,
 ) -> SteerableSingleChunkSummarize:
-    return SteerableSingleChunkSummarize(client, "luminous-extended", 128)
+    return SteerableSingleChunkSummarize(luminous_control_model)
 
 
 @fixture
@@ -28,13 +29,12 @@ def chunk() -> Chunk:
 
 @fixture
 def steerable_long_context_summarize(
-    client: AlephAlphaClientProtocol,
+    luminous_control_model: LuminousControlModel,
 ) -> SteerableLongContextSummarize:
     return SteerableLongContextSummarize(
-        client,
-        model="luminous-base",
+        model=luminous_control_model,
         max_generated_tokens=128,
-        max_tokens_per_chunk=512,
+        max_tokens_per_chunk=1024,
     )
 
 

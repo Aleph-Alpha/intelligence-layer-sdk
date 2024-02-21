@@ -27,7 +27,7 @@ from intelligence_layer.connectors.retrievers.qdrant_in_memory_retriever import 
     RetrieverType,
 )
 from intelligence_layer.core import NoOpTracer, Task, TaskSpan
-from intelligence_layer.core.model import AlephAlphaModel, LuminousControlModel
+from intelligence_layer.core.model import LuminousControlModel
 from intelligence_layer.evaluation import (
     InMemoryDatasetRepository,
     InMemoryEvaluationRepository,

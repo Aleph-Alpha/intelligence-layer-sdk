@@ -60,6 +60,7 @@ class _Complete(Task[CompleteInput, CompleteOutput]):
         self._model = model
 
     def do_run(self, input: CompleteInput, task_span: TaskSpan) -> CompleteOutput:
+        task_span.log("Model", self._model)
         return CompleteOutput.from_completion_response(
             self._client.complete(
                 request=input,

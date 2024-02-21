@@ -3,6 +3,7 @@ from pytest import fixture
 from intelligence_layer.connectors.limited_concurrency_client import (
     AlephAlphaClientProtocol,
 )
+from intelligence_layer.core.model import LuminousControlModel
 from intelligence_layer.core.tracer import NoOpTracer
 from intelligence_layer.use_cases.qa.long_context_qa import (
     LongContextQa,
@@ -48,35 +49,35 @@ Moses was a highly influential figure in the initiation of many of the reforms t
 
 
 @fixture
-def qa(client: AlephAlphaClientProtocol) -> LongContextQa:
-    return LongContextQa(client, model="luminous-base-control")
+def long_context_qa(luminous_control_model: LuminousControlModel) -> LongContextQa:
+    return LongContextQa(model=luminous_control_model)
 
 
-def test_qa_with_answer(qa: LongContextQa) -> None:
+def test_qa_with_answer(long_context_qa: LongContextQa) -> None:
     question = "What is the name of the book about Robert Moses?"
     input = LongContextQaInput(text=LONG_TEXT, question=question)
-    output = qa.run(input, NoOpTracer())
+    output = long_context_qa.run(input, NoOpTracer())
     assert output.answer
     assert "The Power Broker" in output.answer
     # highlights TODO
 
 
-def test_qa_with_no_answer(qa: LongContextQa) -> None:
+def test_qa_with_no_answer(long_context_qa: LongContextQa) -> None:
     question = "Who is the President of the united states?"
     input = LongContextQaInput(text=LONG_TEXT, question=question)
-    output = qa.run(input, NoOpTracer())
+    output = long_context_qa.run(input, NoOpTracer())
 
     assert output.answer is None
 
 
-def test_multiple_qa_on_single_task_instance(qa: LongContextQa) -> None:
+def test_multiple_qa_on_single_task_instance(long_context_qa: LongContextQa) -> None:
     question = "Where was Robert Moses born?"
     input = LongContextQaInput(text=LONG_TEXT, question=question)
-    output = qa.run(input, NoOpTracer())
+    output = long_context_qa.run(input, NoOpTracer())
 
     input = LongContextQaInput(
         text="This is some arbitrary text without content,", question=question
     )
-    output = qa.run(input, NoOpTracer())
+    output = long_context_qa.run(input, NoOpTracer())
 
     assert output.answer is None

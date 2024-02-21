@@ -9,7 +9,6 @@ from intelligence_layer.connectors.limited_concurrency_client import (
     AlephAlphaClientProtocol,
 )
 from intelligence_layer.core import (
-    Complete,
     CompleteInput,
     CompositeTracer,
     FileTracer,
@@ -22,6 +21,11 @@ from intelligence_layer.core import (
     TaskSpan,
     utc_now,
 )
+from intelligence_layer.core.model import LuminousControlModel, _Complete
+
+
+def complete(luminous_control_model: LuminousControlModel) -> _Complete:
+    return luminous_control_model._complete
 
 
 def test_composite_tracer_id_consistent_across_children(
@@ -83,15 +87,10 @@ def test_can_add_parent_and_child_entries() -> None:
     assert isinstance(parent.entries[0].entries[0], LogEntry)
 
 
-def test_task_automatically_logs_input_and_output(
-    client: AlephAlphaClientProtocol,
-) -> None:
+def test_task_automatically_logs_input_and_output(complete: _Complete) -> None:
     tracer = InMemoryTracer()
-    input = CompleteInput(
-        request=CompletionRequest(prompt=Prompt.from_text("test")),
-        model="luminous-base",
-    )
-    output = Complete(client=client).run(input=input, tracer=tracer)
+    input = CompleteInput(prompt=Prompt.from_text("test"))
+    output = complete.run(input=input, tracer=tracer)
 
     assert len(tracer.entries) == 1
     task_span = tracer.entries[0]
@@ -145,14 +144,11 @@ def test_span_only_updates_end_timestamp_once() -> None:
     assert span.end_timestamp == end
 
 
-def test_composite_tracer(client: AlephAlphaClientProtocol) -> None:
+def test_composite_tracer(complete: _Complete) -> None:
     tracer1 = InMemoryTracer()
     tracer2 = InMemoryTracer()
-    input = CompleteInput(
-        request=CompletionRequest(prompt=Prompt.from_text("test")),
-        model="luminous-base",
-    )
-    Complete(client=client).run(input=input, tracer=CompositeTracer([tracer1, tracer2]))
+    input = CompleteInput(prompt=Prompt.from_text("test"))
+    complete.run(input=input, tracer=CompositeTracer([tracer1, tracer2]))
 
     assert tracer1 == tracer2
 

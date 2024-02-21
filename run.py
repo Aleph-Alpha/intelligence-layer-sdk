@@ -9,6 +9,7 @@ from intelligence_layer.connectors.limited_concurrency_client import (
     AlephAlphaClientProtocol,
     LimitedConcurrencyClient,
 )
+from intelligence_layer.core.model import AlephAlphaModel
 from intelligence_layer.core.tracer import NoOpTracer
 from intelligence_layer.use_cases.classify.classify import (
     ClassifyInput,
@@ -31,8 +32,9 @@ def client() -> AlephAlphaClientProtocol:
 
 @app.post("/classify")
 async def classify(
-    classify_input: ClassifyInput, client: AlephAlphaClientProtocol = Depends(client)
+    classify_input: ClassifyInput,
+    luminous_control_model: AlephAlphaModel = Depends(client),
 ) -> SingleLabelClassifyOutput:
-    classify = PromptBasedClassify(client)
+    classify = PromptBasedClassify(luminous_control_model)
     classify_output = classify.run(classify_input, NoOpTracer())
     return classify_output

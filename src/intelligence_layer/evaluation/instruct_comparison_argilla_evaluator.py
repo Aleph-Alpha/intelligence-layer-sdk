@@ -10,6 +10,8 @@ from intelligence_layer.connectors.argilla.argilla_client import (
     Question,
     RecordData,
 )
+from intelligence_layer.core.instruct import InstructInput
+from intelligence_layer.core.model import CompleteOutput
 from intelligence_layer.evaluation import (
     ArgillaEvaluationRepository,
     DatasetRepository,
@@ -39,7 +41,7 @@ class AggregatedInstructComparison(BaseModel):
 class InstructComparisonArgillaEvaluator(
     ArgillaEvaluator[
         InstructInput,
-        PromptOutput,
+        CompleteOutput,
         None,
         AggregatedInstructComparison,
     ]
@@ -91,11 +93,11 @@ class InstructComparisonArgillaEvaluator(
     def _to_record(
         self,
         example: Example[InstructInput, None],
-        *example_outputs: SuccessfulExampleOutput[PromptOutput],
+        *example_outputs: SuccessfulExampleOutput[CompleteOutput],
     ) -> Sequence[RecordData]:
         def create_record_data(
-            first: SuccessfulExampleOutput[PromptOutput],
-            second: SuccessfulExampleOutput[PromptOutput],
+            first: SuccessfulExampleOutput[CompleteOutput],
+            second: SuccessfulExampleOutput[CompleteOutput],
         ) -> RecordData:
             if random.choice([True, False]):
                 first, second = second, first

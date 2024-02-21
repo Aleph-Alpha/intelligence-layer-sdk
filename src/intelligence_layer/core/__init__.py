@@ -7,10 +7,8 @@ from intelligence_layer.core.intelligence_app import IntelligenceApp as Intellig
 from .chunk import Chunk as Chunk
 from .chunk import ChunkInput as ChunkInput
 from .chunk import ChunkOutput as ChunkOutput
+from .chunk import ChunkOverlapTask as ChunkOverlapTask
 from .chunk import ChunkTask as ChunkTask
-from .complete import Complete as Complete
-from .complete import CompleteInput as CompleteInput
-from .complete import CompleteOutput as CompleteOutput
 from .detect_language import DetectLanguage as DetectLanguage
 from .detect_language import DetectLanguageInput as DetectLanguageInput
 from .detect_language import DetectLanguageOutput as DetectLanguageOutput
@@ -26,6 +24,10 @@ from .intelligence_app import (
 )
 from .intelligence_app import AuthService as AuthService
 from .intelligence_app import IntelligenceApp as IntelligenceApp
+from .model import AlephAlphaModel as AlephAlphaModel
+from .model import CompleteInput as CompleteInput
+from .model import CompleteOutput as CompleteOutput
+from .model import LuminousControlModel as LuminousControlModel
 from .prompt_template import Cursor as Cursor
 from .prompt_template import PromptItemCursor as PromptItemCursor
 from .prompt_template import PromptRange as PromptRange
