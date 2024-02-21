@@ -5,6 +5,7 @@ from intelligence_layer.evaluation import (
     Aggregator,
     DatasetRepository,
     EvaluationRepository,
+    Evaluator,
     Example,
     InMemoryDatasetRepository,
     InMemoryEvaluationRepository,
@@ -16,7 +17,9 @@ from intelligence_layer.evaluation.data_storage.aggregation_repository import (
     InMemoryAggregationRepository,
 )
 from intelligence_layer.use_cases import (
-    LongContextSummarizeEvaluator,
+    AggregatedSummarizeEvaluation,
+    LongContextSummarizeAggregationLogic,
+    LongContextSummarizeEvaluationLogic,
     LongContextSummarizeInput,
     LongContextSummarizeOutput,
     SingleChunkSummarizeAggregationLogic,
@@ -65,10 +68,7 @@ def single_chunk_summarize_aggregator(
     in_memory_evaluation_repository: InMemoryEvaluationRepository,
     in_memory_aggregation_repository: InMemoryAggregationRepository,
     single_chunk_summarize_aggregation_logic: SingleChunkSummarizeAggregationLogic,
-) -> Aggregator[
-    SummarizeEvaluation,
-    AggregatedSummarizeEvaluation,
-]:
+) -> Aggregator[SummarizeEvaluation, AggregatedSummarizeEvaluation]:
     return Aggregator(
         in_memory_evaluation_repository,
         in_memory_aggregation_repository,

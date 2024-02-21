@@ -63,7 +63,10 @@ from .summarize.summarize import (
     AggregatedSummarizeEvaluation as AggregatedSummarizeEvaluation,
 )
 from .summarize.summarize import (
-    LongContextSummarizeEvaluator as LongContextSummarizeEvaluator,
+    LongContextSummarizeAggregationLogic as LongContextSummarizeAggregationLogic,
+)
+from .summarize.summarize import (
+    LongContextSummarizeEvaluationLogic as LongContextSummarizeEvaluationLogic,
 )
 from .summarize.summarize import LongContextSummarizeInput as LongContextSummarizeInput
 from .summarize.summarize import (
@@ -71,7 +74,10 @@ from .summarize.summarize import (
 )
 from .summarize.summarize import PartialSummary as PartialSummary
 from .summarize.summarize import (
-    SingleChunkSummarizeEvaluator as SingleChunkSummarizeEvaluator,
+    SingleChunkSummarizeAggregationLogic as SingleChunkSummarizeAggregationLogic,
+)
+from .summarize.summarize import (
+    SingleChunkSummarizeEvaluationLogic as SingleChunkSummarizeEvaluationLogic,
 )
 from .summarize.summarize import SingleChunkSummarizeInput as SingleChunkSummarizeInput
 from .summarize.summarize import SummarizeEvaluation as SummarizeEvaluation

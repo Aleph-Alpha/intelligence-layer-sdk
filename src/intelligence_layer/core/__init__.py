@@ -19,6 +19,8 @@ from .echo import EchoTask as EchoTask
 from .explain import Explain as Explain
 from .explain import ExplainInput as ExplainInput
 from .explain import ExplainOutput as ExplainOutput
+from .instruct import Instruct as Instruct
+from .instruct import InstructInput as InstructInput
 from .intelligence_app import (
     AuthenticatedIntelligenceApp as AuthenticatedIntelligenceApp,
 )
