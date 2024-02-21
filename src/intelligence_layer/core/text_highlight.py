@@ -1,7 +1,6 @@
 from typing import Iterable, Sequence
 
 from aleph_alpha_client import (
-    ExplanationResponse,
     Prompt,
     PromptGranularity,
     Text,
@@ -10,7 +9,7 @@ from aleph_alpha_client import (
 from aleph_alpha_client.explanation import TextScoreWithRaw
 from pydantic import BaseModel
 
-from intelligence_layer.core.model import AlephAlphaModel, ExplainInput
+from intelligence_layer.core.model import AlephAlphaModel, ExplainInput, ExplainOutput
 from intelligence_layer.core.prompt_template import (
     Cursor,
     PromptRange,
@@ -138,10 +137,10 @@ class TextHighlight(Task[TextHighlightInput, TextHighlightOutput]):
 
     def _explain(
         self, prompt: Prompt, target: str, task_span: TaskSpan
-    ) -> ExplanationResponse:
+    ) -> ExplainOutput:
         input = ExplainInput(
-            prompt,
-            target,
+            prompt=prompt,
+            target=target,
             prompt_granularity=self._granularity,
         )
         output = self._model.explain(input, task_span)
@@ -155,7 +154,7 @@ class TextHighlight(Task[TextHighlightInput, TextHighlightOutput]):
     def _extract_text_prompt_item_explanations_and_item_index(
         self,
         prompt: Prompt,
-        explanation_response: ExplanationResponse,
+        explain_output: ExplainOutput,
     ) -> Sequence[tuple[TextPromptItemExplanation, int]]:
         prompt_texts_and_indices = [
             (prompt_text, idx)
@@ -164,7 +163,7 @@ class TextHighlight(Task[TextHighlightInput, TextHighlightOutput]):
         ]
         text_prompt_item_explanations = [
             explanation
-            for explanation in explanation_response.explanations[0].items
+            for explanation in explain_output.explanations[0].items
             if isinstance(explanation, TextPromptItemExplanation)
         ]  # explanations[0], because one explanation for each target
         assert len(prompt_texts_and_indices) == len(text_prompt_item_explanations)
