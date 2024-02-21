@@ -2,13 +2,14 @@ import math
 import re
 from typing import Iterable, Mapping, Optional, Sequence
 
-from aleph_alpha_client import Prompt, PromptTemplate
+from aleph_alpha_client import PromptTemplate, Tokens
 from pydantic import BaseModel
 
 from intelligence_layer.connectors.limited_concurrency_client import (
     AlephAlphaClientProtocol,
 )
 from intelligence_layer.core.echo import EchoInput, EchoTask, TokenWithLogProb
+from intelligence_layer.core.prompt_template import RichPrompt
 from intelligence_layer.core.task import Task, Token
 from intelligence_layer.core.tracer import TaskSpan
 from intelligence_layer.use_cases.classify.classify import (
@@ -23,8 +24,8 @@ class TokenWithProb(BaseModel):
     prob: Probability
 
 
-def to_aa_tokens_prompt(tokens: Sequence[Token]) -> Prompt:
-    return Prompt.from_tokens([token.token_id for token in tokens])
+def to_aa_tokens_prompt(tokens: Sequence[Token]) -> RichPrompt:
+    return RichPrompt([Tokens([token.token_id for token in tokens], [])])
 
 
 class PromptBasedClassify(Task[ClassifyInput, SingleLabelClassifyOutput]):
