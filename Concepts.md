@@ -73,15 +73,29 @@ that takes care of storing details on the steps of this workflow like the tasks 
 input and output and timing information. For this the tracing defines the following concepts:
 
 - A `Tracer` is passed to a Task's `run` method and provides methods for opening `Span`s or `TaskSpan`s.
-- A `Span` allows for grouping multiple logs and duration together as a single, logical step in the
+- A `Span` is a `Tracer` and allows for grouping multiple logs and duration together as a single, logical step in the
   workflow.
-- A `TaskSpan` allows for grouping multiple logs together, as well as the task's specific input, output,
-  and duration.
+- A `TaskSpan` is a `Span` and allows for grouping multiple logs together, as well as the task's specific input, output.
+  An opened `TaskSpan` is passed to `Task.do_run`. Since a `TaskSpan` is a `Tracer` a `do_run` implementation can pass
+  this instance on to `run` methods of sub-tasks.
+
+The following diagram illustrates their relationship:
+
+<img src="./assets/Tracer.drawio.svg">
 
 Each of these concepts is implemented in form of an abstract base class and the Intelligence Layer provides
-several implementations:
+several concrete implementations that store the actual traces in different backends. For each backend each of the
+three abstract classes `Tracer`, `Span` and `TaskSpan` needs to be implemented. Here only the top-level
+`Tracer`-implementations are listed:
 
 - The `NoOpTracer` can be used when tracing information shall not be stored at all.
+- The `InMemoryTracer` stores all traces in an in memory data structure and is most helpful in tests or
+  Jupyter notebooks.
+- The `FileTracer` stores all traces in a jsonl-file.
+- The `OpenTelemetryTracer` uses an OpenTelemetry
+  [`Tracer`](https://opentelemetry-python.readthedocs.io/en/latest/api/trace.html#opentelemetry.trace.Tracer)
+  to store the traces in an OpenTelemetry backend.
+
 
 ## Evaluation
 
