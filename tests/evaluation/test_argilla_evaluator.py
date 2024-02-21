@@ -21,6 +21,7 @@ from intelligence_layer.evaluation import (
     Runner,
     SuccessfulExampleOutput,
 )
+from intelligence_layer.evaluation.argilla import ArgillaAggregator
 from intelligence_layer.evaluation.base_logic import AggregationLogic
 from intelligence_layer.evaluation.data_storage.aggregation_repository import (
     InMemoryAggregationRepository,
@@ -131,21 +132,9 @@ def arg() -> StubArgillaClient:
     return StubArgillaClient()
 
 
-@fixture
-def string_argilla_evaluator(
-    in_memory_dataset_repository: InMemoryDatasetRepository,
-    in_memory_run_repository: InMemoryRunRepository,
-    in_memory_evaluation_repository: InMemoryEvaluationRepository,
-    in_memory_aggregation_repository: InMemoryAggregationRepository,
-    stub_argilla_client: StubArgillaClient,
-) -> ArgillaEvaluator[
-    DummyStringInput,
-    DummyStringOutput,
-    DummyStringOutput,
-    DummyAggregatedEvaluation,
-]:
-    stub_argilla_client._expected_workspace_id = "workspace-id"
-    questions = [
+@fixture()
+def argilla_questions() -> Sequence[Question]:
+    return [
         Question(
             name="question",
             title="title",
@@ -153,31 +142,81 @@ def string_argilla_evaluator(
             options=[1],
         )
     ]
-    fields = [
+
+
+@fixture()
+def argilla_fields() -> Sequence[Field]:
+    return [
         Field(name="output", title="Output"),
         Field(name="input", title="Input"),
     ]
+
+
+@fixture
+def argilla_evaluation_repository(
+    in_memory_evaluation_repository: InMemoryEvaluationRepository,
+    stub_argilla_client: StubArgillaClient,
+    argilla_questions: Sequence[Question],
+    argilla_fields: Sequence[Field],
+) -> ArgillaEvaluationRepository:
+    stub_argilla_client._expected_workspace_id = "workspace-id"
+    stub_argilla_client._expected_questions = argilla_questions
+    stub_argilla_client._expected_fields = argilla_fields
+
     workspace_id = stub_argilla_client._expected_workspace_id
 
-    eval_repository = ArgillaEvaluationRepository(
+    return ArgillaEvaluationRepository(
         in_memory_evaluation_repository,
         stub_argilla_client,
         workspace_id,
-        fields,
-        questions,
+        argilla_fields,
+        argilla_questions,
     )
 
+
+@fixture
+def string_argilla_evaluator(
+    in_memory_dataset_repository: InMemoryDatasetRepository,
+    in_memory_run_repository: InMemoryRunRepository,
+    argilla_evaluation_repository: ArgillaEvaluationRepository,
+    stub_argilla_client: StubArgillaClient,
+    argilla_questions: Sequence[Question],
+    argilla_fields: Sequence[Field],
+) -> ArgillaEvaluator[DummyStringInput, DummyStringOutput, DummyStringOutput,]:
     evaluator = ArgillaEvaluator(
         in_memory_dataset_repository,
         in_memory_run_repository,
+        argilla_evaluation_repository,
+        "dummy-string-task",
+        DummyStringTaskArgillaEvaluationLogic(),
+    )
+    return evaluator
+
+
+@fixture
+def string_argilla_aggregator(
+    argilla_evaluation_repository: ArgillaEvaluationRepository,
+    in_memory_aggregation_repository: InMemoryAggregationRepository,
+    stub_argilla_client: StubArgillaClient,
+    argilla_questions: Sequence[Question],
+    argilla_fields: Sequence[Field],
+) -> ArgillaAggregator[DummyAggregatedEvaluation,]:
+    workspace_id = stub_argilla_client._expected_workspace_id
+
+    eval_repository = ArgillaEvaluationRepository(
+        argilla_evaluation_repository,
+        stub_argilla_client,
+        workspace_id,
+        argilla_fields,
+        argilla_questions,
+    )
+
+    evaluator = ArgillaAggregator(
         eval_repository,
         in_memory_aggregation_repository,
         "dummy-string-task",
-        DummyStringTaskArgillaEvaluationLogic(),
         DummyStringTaskArgillaAggregationLogic(),
     )
-    stub_argilla_client._expected_questions = questions
-    stub_argilla_client._expected_fields = fields
     return evaluator
 
 
@@ -200,7 +239,6 @@ def test_argilla_evaluator_can_do_sync_evaluation(
         DummyStringInput,
         DummyStringOutput,
         DummyStringOutput,
-        DummyAggregatedEvaluation,
     ],
     string_argilla_runner: Runner[DummyStringInput, DummyStringOutput],
     string_dataset_id: str,
@@ -230,8 +268,8 @@ def test_argilla_evaluator_can_aggregate_evaluation(
         DummyStringInput,
         DummyStringOutput,
         DummyStringOutput,
-        DummyAggregatedEvaluation,
     ],
+    string_argilla_aggregator: ArgillaAggregator[DummyAggregatedEvaluation],
     string_argilla_runner: Runner[DummyStringInput, DummyStringOutput],
     string_dataset_id: str,
 ) -> None:
@@ -240,7 +278,7 @@ def test_argilla_evaluator_can_aggregate_evaluation(
     )
     run_overview = string_argilla_runner.run_dataset(string_dataset_id)
     eval_overview = string_argilla_evaluator.evaluate_runs(run_overview.id)
-    aggregated_eval_overview = string_argilla_evaluator.aggregate_evaluation(
+    aggregated_eval_overview = string_argilla_aggregator.aggregate_evaluation(
         eval_overview.id
     )
     assert aggregated_eval_overview.statistics.score == argilla_client._score

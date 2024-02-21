@@ -5,6 +5,7 @@ from pytest import fixture
 from intelligence_layer.connectors import AlephAlphaClientProtocol
 from intelligence_layer.core import Chunk, Task
 from intelligence_layer.evaluation import (
+    Aggregator,
     DatasetRepository,
     Example,
     InMemoryDatasetRepository,
@@ -146,23 +147,32 @@ def classify_evaluator(
     in_memory_dataset_repository: DatasetRepository,
     in_memory_run_repository: RunRepository,
     in_memory_evaluation_repository: InMemoryEvaluationRepository,
-    in_memory_aggregation_repository: InMemoryAggregationRepository,
     multi_label_classify_evaluation_logic: MultiLabelClassifyEvaluationLogic,
-    multi_label_classify_aggregation_logic: MultiLabelClassifyAggregationLogic,
 ) -> Evaluator[
     ClassifyInput,
     MultiLabelClassifyOutput,
     Sequence[str],
     MultiLabelClassifyEvaluation,
-    AggregatedMultiLabelClassifyEvaluation,
 ]:
     return Evaluator(
         in_memory_dataset_repository,
         in_memory_run_repository,
         in_memory_evaluation_repository,
-        in_memory_aggregation_repository,
         "multi-label-classify",
         multi_label_classify_evaluation_logic,
+    )
+
+
+@fixture
+def classify_aggregator(
+    in_memory_evaluation_repository: InMemoryEvaluationRepository,
+    in_memory_aggregation_repository: InMemoryAggregationRepository,
+    multi_label_classify_aggregation_logic: MultiLabelClassifyAggregationLogic,
+) -> Aggregator[MultiLabelClassifyEvaluation, AggregatedMultiLabelClassifyEvaluation,]:
+    return Aggregator(
+        in_memory_evaluation_repository,
+        in_memory_aggregation_repository,
+        "multi-label-classify",
         multi_label_classify_aggregation_logic,
     )
 
@@ -188,7 +198,6 @@ def test_multi_label_classify_evaluator_single_example(
         MultiLabelClassifyOutput,
         Sequence[str],
         MultiLabelClassifyEvaluation,
-        AggregatedMultiLabelClassifyEvaluation,
     ],
     classify_runner: Runner[ClassifyInput, MultiLabelClassifyOutput],
 ) -> None:
@@ -214,14 +223,19 @@ def test_multi_label_classify_evaluator_full_dataset(
         MultiLabelClassifyOutput,
         Sequence[str],
         MultiLabelClassifyEvaluation,
-        AggregatedMultiLabelClassifyEvaluation,
+    ],
+    classify_aggregator: Aggregator[
+        MultiLabelClassifyEvaluation, AggregatedMultiLabelClassifyEvaluation
     ],
     classify_runner: Runner[ClassifyInput, MultiLabelClassifyOutput],
 ) -> None:
     run_overview = classify_runner.run_dataset(multiple_entries_dataset_name)
 
-    evaluation = classify_evaluator.eval_and_aggregate_runs(run_overview.id)
+    evaluation_overview = classify_evaluator.evaluate_runs(run_overview.id)
+    aggregation_overview = classify_aggregator.aggregate_evaluation(
+        evaluation_overview.id
+    )
 
-    assert set(["positive", "negative", "finance", "school"]) == set(
-        evaluation.statistics.class_metrics.keys()
+    assert {"positive", "negative", "finance", "school"} == set(
+        aggregation_overview.statistics.class_metrics.keys()
     )
