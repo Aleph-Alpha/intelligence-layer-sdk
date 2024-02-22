@@ -94,6 +94,7 @@ class Runner(Generic[Input, Output]):
             try:
                 return example.id, self._task.run(example.input, evaluate_tracer)
             except Exception as e:
+                print(e)
                 return example.id, FailedExampleRun.from_exception(e)
 
         # mypy does not like union types

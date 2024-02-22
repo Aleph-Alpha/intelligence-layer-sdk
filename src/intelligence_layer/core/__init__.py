@@ -7,13 +7,8 @@ from intelligence_layer.core.intelligence_app import IntelligenceApp as Intellig
 from .chunk import Chunk as Chunk
 from .chunk import ChunkInput as ChunkInput
 from .chunk import ChunkOutput as ChunkOutput
+from .chunk import ChunkOverlapTask as ChunkOverlapTask
 from .chunk import ChunkTask as ChunkTask
-from .complete import Complete as Complete
-from .complete import CompleteInput as CompleteInput
-from .complete import CompleteOutput as CompleteOutput
-from .complete import Instruct as Instruct
-from .complete import InstructInput as InstructInput
-from .complete import PromptOutput as PromptOutput
 from .detect_language import DetectLanguage as DetectLanguage
 from .detect_language import DetectLanguageInput as DetectLanguageInput
 from .detect_language import DetectLanguageOutput as DetectLanguageOutput
@@ -21,14 +16,18 @@ from .detect_language import Language as Language
 from .echo import EchoInput as EchoInput
 from .echo import EchoOutput as EchoOutput
 from .echo import EchoTask as EchoTask
-from .explain import Explain as Explain
-from .explain import ExplainInput as ExplainInput
-from .explain import ExplainOutput as ExplainOutput
+from .instruct import Instruct as Instruct
+from .instruct import InstructInput as InstructInput
 from .intelligence_app import (
     AuthenticatedIntelligenceApp as AuthenticatedIntelligenceApp,
 )
 from .intelligence_app import AuthService as AuthService
 from .intelligence_app import IntelligenceApp as IntelligenceApp
+from .model import AlephAlphaModel as AlephAlphaModel
+from .model import CompleteInput as CompleteInput
+from .model import CompleteOutput as CompleteOutput
+from .model import ControlModel as ControlModel
+from .model import LuminousControlModel as LuminousControlModel
 from .prompt_template import Cursor as Cursor
 from .prompt_template import PromptItemCursor as PromptItemCursor
 from .prompt_template import PromptRange as PromptRange

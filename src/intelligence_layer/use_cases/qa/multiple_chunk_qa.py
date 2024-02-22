@@ -2,12 +2,14 @@ from typing import Iterable, Mapping, Optional, Sequence
 
 from pydantic import BaseModel
 
-from intelligence_layer.connectors.limited_concurrency_client import (
-    AlephAlphaClientProtocol,
-)
 from intelligence_layer.core.chunk import Chunk
-from intelligence_layer.core.complete import Instruct, InstructInput, PromptOutput
 from intelligence_layer.core.detect_language import Language, language_config
+from intelligence_layer.core.model import (
+    CompleteInput,
+    CompleteOutput,
+    ControlModel,
+    LuminousControlModel,
+)
 from intelligence_layer.core.task import Task
 from intelligence_layer.core.tracer import TaskSpan
 from intelligence_layer.use_cases.qa.single_chunk_qa import (
@@ -64,51 +66,40 @@ class MergeAnswersInstructConfig(BaseModel):
     question_label: str
     answers_label: str
     final_answer_label: str
+    maximum_tokens: int = 128
 
 
 MERGE_ANSWERS_INSTRUCT_CONFIGS = {
     Language("en"): MergeAnswersInstructConfig(
-        instruction="You will be given a number of Answers to a Question. Based on them, generate a single final answer. "
-        "Condense multiple answers into a single answer. Rely only on the provided answers. Don't use the world's knowledge. "
-        "The answer should combine the individual answers. If the answers contradict each other, e.g., one saying that the colour is green "
-        "and the other saying that the colour is black, say that there are contradicting answers saying the colour is green or the colour is black.",
+        instruction="You are tasked with combining multiple answers into a single answer. "
+        "If conflicting answers arise, acknowledge the discrepancies by presenting them collectively",
         question_label="Question",
         answers_label="Answers",
         final_answer_label="Final answer:",
     ),
     Language("it"): MergeAnswersInstructConfig(
-        instruction="Vi verranno fornite diverse risposte a una domanda. Sulla base di queste, generate una singola risposta finale. "
-        "Riunire più risposte in un'unica risposta. Basatevi solo sulle risposte fornite. Non utilizzate le conoscenze del mondo. "
-        "La risposta deve combinare le singole risposte. Se le risposte si contraddicono, ad esempio una dice che il colore è verde e "
-        "l'altra dice che il colore è nero, dire che ci sono risposte contraddittorie che dicono che il colore è verde o che il colore è nero.",
+        instruction="Il compito è quello di combinare più risposte in un'unica risposta. "
+        "Se emergono risposte contrastanti, riconoscete le discrepanze presentandole collettivamente.",
         question_label="Domanda",
         answers_label="Risposte",
         final_answer_label="Risposta finale:",
     ),
     Language("fr"): MergeAnswersInstructConfig(
-        instruction="Vous recevrez un certain nombre de réponses à une question. Sur la base de ces réponses, générez une seule réponse finale. "
-        "Condenser plusieurs réponses en une seule. Ne vous fiez qu'aux réponses fournies. N'utilisez pas les connaissances du monde entier. "
-        "La réponse doit combiner les différentes réponses. Si les réponses se contredisent, par exemple si l'une dit que la couleur est verte et "
-        "l'autre que la couleur est noire, dites qu'il y a des réponses contradictoires disant que la couleur est verte ou que la couleur est noire.",
+        instruction="Vous devez combiner plusieurs réponses en une seule. "
+        "Si des réponses contradictoires apparaissent, reconnaissez les divergences en les présentant collectivement",
         question_label="Question",
         answers_label="Réponses",
         final_answer_label="Réponse finale:",
     ),
     Language("de"): MergeAnswersInstructConfig(
-        instruction="Sie erhalten eine Reihe von Antworten auf eine Frage. Erstellen Sie auf dieser Grundlage eine einzige endgültige Antwort. "
-        "Fassen Sie mehrere Antworten zu einer einzigen Antwort zusammen. Verlassen Sie sich nur auf die vorgegebenen Antworten. "
-        "Verwenden Sie nicht das Wissen der Welt. Die Antwort sollte die einzelnen Antworten kombinieren. Wenn sich die Antworten widersprechen, "
-        "z. B. wenn eine Antwort besagt, dass die Farbe grün ist, und die andere, dass die Farbe schwarz ist, sagen Sie, "
-        "dass es widersprüchliche Antworten gibt, die besagen, dass die Farbe grün oder die Farbe schwarz ist.",
+        instruction="Fasse alle Antworten zu einer einzigen Antwort zusammen. Falls es Widersprüche gibt, präsentiere diese.",
         question_label="Frage",
         answers_label="Antworten",
         final_answer_label="Endgültige Antwort:",
     ),
     Language("es"): MergeAnswersInstructConfig(
-        instruction="Se le darán varias respuestas a una pregunta. A partir de ellas, genere una única respuesta final. "
-        "Condensar varias respuestas en una sola. Apóyate únicamente en las respuestas proporcionadas. No utilice el conocimiento del mundo. "
-        "La respuesta debe combinar las respuestas individuales. Si las respuestas se contradicen, por ejemplo, una dice que el color es verde "
-        "y la otra que el color es negro, di que hay respuestas contradictorias que dicen que el color es verde o que el color es negro.",
+        instruction="Su tarea consiste en combinar varias respuestas en una sola. "
+        "Si surgen respuestas contradictorias, reconozca las discrepancias presentándolas colectivamente",
         question_label="Pregunta",
         answers_label="Respuestas",
         final_answer_label="Respuesta final:",
@@ -129,11 +120,8 @@ class MultipleChunkQa(Task[MultipleChunkQaInput, MultipleChunkQaOutput]):
         `model` provided should be a control-type model.
 
     Args:
-        client: Aleph Alpha client instance for running model related API calls.
-        model: A valid Aleph Alpha model name.
-
-    Attributes:
-        MERGE_ANSWERS_INSTRUCTION: The instruction template used for combining multiple answers into one.
+        model: The model used throughout the task for model related API calls.
+        merge_answers_instruct_configs: Mapping language used to prompt parameters.
 
     Example:
         >>> import os
@@ -149,8 +137,7 @@ class MultipleChunkQa(Task[MultipleChunkQaInput, MultipleChunkQaOutput]):
         ... )
 
 
-        >>> client = LimitedConcurrencyClient.from_token(os.getenv("AA_TOKEN"))
-        >>> task = MultipleChunkQa(client)
+        >>> task = MultipleChunkQa()
         >>> input = MultipleChunkQaInput(
         ...     chunks=[Chunk("Tina does not like pizza."), Chunk("Mike is a big fan of pizza.")],
         ...     question="Who likes pizza?",
@@ -162,25 +149,17 @@ class MultipleChunkQa(Task[MultipleChunkQaInput, MultipleChunkQaOutput]):
         Mike likes pizza.
     """
 
-    MERGE_ANSWERS_INSTRUCTION = """You will be given a number of Answers to a Question. Based on them, generate a single final answer.
-Condense multiple answers into a single answer. Rely only on the provided answers. Don't use the world's knowledge. The answer should combine the individual answers. If the answers contradict each other, e.g., one saying that the colour is green and the other saying that the colour is black, say that there are contradicting answers saying the colour is green or the colour is black."""
-
     def __init__(
         self,
-        client: AlephAlphaClientProtocol,
-        model: str = "luminous-supreme-control",
-        merge_answers_instruct_configs: Optional[
-            Mapping[Language, MergeAnswersInstructConfig]
-        ] = None,
+        model: ControlModel = LuminousControlModel("luminous-supreme-control-20240215"),
+        merge_answers_instruct_configs: Mapping[
+            Language, MergeAnswersInstructConfig
+        ] = MERGE_ANSWERS_INSTRUCT_CONFIGS,
     ):
         super().__init__()
-        self._client = client
-        self._instruction = Instruct(client, model)
-        self._single_chunk_qa = SingleChunkQa(client, model)
+        self._single_chunk_qa = SingleChunkQa(model)
         self._model = model
-        self._merge_answers_instruct_configs = (
-            merge_answers_instruct_configs or MERGE_ANSWERS_INSTRUCT_CONFIGS
-        )
+        self._merge_answers_instruct_configs = merge_answers_instruct_configs
 
     def do_run(
         self, input: MultipleChunkQaInput, task_span: TaskSpan
@@ -243,12 +222,15 @@ Condense multiple answers into a single answer. Rely only on the provided answer
         input: str,
         instruction_config: MergeAnswersInstructConfig,
         task_span: TaskSpan,
-    ) -> PromptOutput:
-        return self._instruction.run(
-            InstructInput(
-                instruction=instruction_config.instruction,
-                input=input,
-                response_prefix=f"\n{instruction_config.final_answer_label}",
+    ) -> CompleteOutput:
+        prompt = self._model.to_instruct_prompt(
+            instruction_config.instruction,
+            input=input,
+            response_prefix=f" {instruction_config.final_answer_label}",
+        )
+        return self._model.complete(
+            CompleteInput(
+                prompt=prompt, maximum_tokens=instruction_config.maximum_tokens
             ),
             task_span,
         )

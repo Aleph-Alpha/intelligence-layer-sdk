@@ -1,14 +1,10 @@
-from functools import lru_cache
 from typing import NewType, Sequence
 
-from aleph_alpha_client import CompletionRequest, Prompt, Tokens
+from aleph_alpha_client import Prompt, Tokens
 from pydantic import BaseModel
-from tokenizers import Encoding, Tokenizer  # type: ignore
+from tokenizers import Encoding  # type: ignore
 
-from intelligence_layer.connectors.limited_concurrency_client import (
-    AlephAlphaClientProtocol,
-)
-from intelligence_layer.core.complete import Complete, CompleteInput
+from intelligence_layer.core.model import CompleteInput, ControlModel
 from intelligence_layer.core.prompt_template import PromptTemplate
 from intelligence_layer.core.task import Task, Token
 from intelligence_layer.core.tracer import TaskSpan
@@ -28,12 +24,10 @@ class EchoInput(BaseModel):
         prompt: The input text that serves as the starting point for the LLM.
         expected_completion: The desired completion based on the prompt.
             The likelihood of the tokens in this will be examined.
-        model: A valid Aleph Alpha model name.
     """
 
     prompt: Prompt
     expected_completion: str
-    model: str
 
 
 class EchoOutput(BaseModel):
@@ -55,20 +49,17 @@ class EchoTask(Task[EchoInput, EchoOutput]):
     a given prompt and model. Does not generate any tokens.
 
     Args:
-        client: Aleph Alpha client instance for running model related API calls.
+        model: Control model to use in the task.
 
     Example:
-        >>> import os
         >>> from aleph_alpha_client import Prompt
-        >>> from intelligence_layer.connectors import LimitedConcurrencyClient
-        >>> from intelligence_layer.core import EchoTask,EchoInput, InMemoryTracer
+        >>> from intelligence_layer.core import EchoTask,EchoInput, InMemoryTracer, LuminousControlModel
 
-        >>> client = LimitedConcurrencyClient.from_token(token=os.getenv("AA_TOKEN"))
-        >>> task = EchoTask(client)
+        >>> model = LuminousControlModel(name="luminous-base-control")
+        >>> task = EchoTask(model)
         >>> input = EchoInput(
         ...     prompt=Prompt.from_text("This is a "),
         ...     expected_completion="happy text",
-        ...     model="luminous-base",
         ... )
         >>> tracer = InMemoryTracer()
         >>> output = task.run(input, tracer)
@@ -76,17 +67,14 @@ class EchoTask(Task[EchoInput, EchoOutput]):
 
     PROMPT_TEMPLATE_STR: str = "{{prompt}}{{expected_completion}}"
 
-    def __init__(self, client: AlephAlphaClientProtocol) -> None:
+    def __init__(self, model: ControlModel) -> None:
         super().__init__()
-        self._client = client
-        self._completion = Complete(client=client)
+        self._model = model
 
     def do_run(self, input: EchoInput, task_span: TaskSpan) -> EchoOutput:
         # We tokenize the prompt separately so we don't have an overlap in the tokens.
         # If we don't do this, the end of the prompt and expected completion can be merged into unexpected tokens.
-        expected_completion_tokens = self._tokenize(
-            input.expected_completion, input.model
-        )
+        expected_completion_tokens = self._tokenize(input.expected_completion)
         prompt_template = PromptTemplate(self.PROMPT_TEMPLATE_STR)
         prompt = prompt_template.to_rich_prompt(
             prompt=prompt_template.embed_prompt(input.prompt),
@@ -96,13 +84,18 @@ class EchoTask(Task[EchoInput, EchoOutput]):
                 )
             ),
         )
-        completion_input = CompleteInput(
-            request=self._completion_request(prompt=prompt),
-            model=input.model,
+        output = self._model.complete(
+            CompleteInput(
+                prompt=prompt,
+                maximum_tokens=0,
+                log_probs=0,
+                tokens=True,
+                echo=True,
+            ),
+            task_span,
         )
-        output = self._completion.run(completion_input, task_span)
-        assert output.response.completions[0].log_probs
-        log_prob_dicts = output.response.completions[0].log_probs[
+        assert output.completions[0].log_probs
+        log_prob_dicts = output.completions[0].log_probs[
             -len(expected_completion_tokens) :
         ]
         tokens_with_prob = []
@@ -118,22 +111,10 @@ class EchoTask(Task[EchoInput, EchoOutput]):
             )
         return EchoOutput(tokens_with_log_probs=tokens_with_prob)
 
-    def _completion_request(
-        self,
-        prompt: Prompt,
-    ) -> CompletionRequest:
-        return CompletionRequest(
-            prompt=prompt,
-            maximum_tokens=0,
-            log_probs=0,
-            tokens=True,
-            echo=True,
-        )
-
-    def _tokenize(self, text: str, model: str) -> Sequence[Token]:
+    def _tokenize(self, text: str) -> Sequence[Token]:
         # Turns the expected output into list of token ids. Important so that we know how many tokens
         # the label is and can retrieve the last N log probs for the label
-        tokenizer = self.tokenizer(model)
+        tokenizer = self._model.get_tokenizer()
         if tokenizer.pre_tokenizer:
             tokenizer.pre_tokenizer.add_prefix_space = False
         encoding: Encoding = tokenizer.encode(text)
@@ -144,7 +125,3 @@ class EchoTask(Task[EchoInput, EchoOutput]):
             )
             for token_id in encoding.ids
         ]
-
-    @lru_cache
-    def tokenizer(self, model: str) -> Tokenizer:
-        return self._client.tokenizer(model)

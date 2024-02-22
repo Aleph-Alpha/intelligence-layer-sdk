@@ -1,22 +1,20 @@
 from pytest import fixture
 
-from intelligence_layer.connectors.limited_concurrency_client import (
-    AlephAlphaClientProtocol,
-)
 from intelligence_layer.core.chunk import Chunk
-from intelligence_layer.use_cases.summarize.long_context_high_compression_summarize import (
-    LongContextHighCompressionSummarize,
+from intelligence_layer.core.model import LuminousControlModel
+from intelligence_layer.use_cases.summarize.steerable_long_context_summarize import (
+    SteerableLongContextSummarize,
 )
-from intelligence_layer.use_cases.summarize.single_chunk_few_shot_summarize import (
-    SingleChunkFewShotSummarize,
+from intelligence_layer.use_cases.summarize.steerable_single_chunk_summarize import (
+    SteerableSingleChunkSummarize,
 )
 
 
 @fixture
-def single_chunk_few_shot_summarize(
-    client: AlephAlphaClientProtocol,
-) -> SingleChunkFewShotSummarize:
-    return SingleChunkFewShotSummarize(client, "luminous-extended", 128)
+def steerable_single_chunk_summarize(
+    luminous_control_model: LuminousControlModel,
+) -> SteerableSingleChunkSummarize:
+    return SteerableSingleChunkSummarize(luminous_control_model)
 
 
 @fixture
@@ -27,10 +25,14 @@ def chunk() -> Chunk:
 
 
 @fixture
-def long_context_high_compression_summarize(
-    client: AlephAlphaClientProtocol,
-) -> LongContextHighCompressionSummarize:
-    return LongContextHighCompressionSummarize(client, model="luminous-base")
+def steerable_long_context_summarize(
+    luminous_control_model: LuminousControlModel,
+) -> SteerableLongContextSummarize:
+    return SteerableLongContextSummarize(
+        model=luminous_control_model,
+        max_generated_tokens=128,
+        max_tokens_per_chunk=1024,
+    )
 
 
 @fixture

@@ -1,14 +1,12 @@
 from pydantic import BaseModel
 
-from intelligence_layer.connectors.limited_concurrency_client import (
-    AlephAlphaClientProtocol,
-)
 from intelligence_layer.connectors.retrievers.base_retriever import Document
 from intelligence_layer.connectors.retrievers.qdrant_in_memory_retriever import (
     QdrantInMemoryRetriever,
 )
 from intelligence_layer.core.chunk import Chunk, ChunkInput, ChunkTask
 from intelligence_layer.core.detect_language import DetectLanguage, Language
+from intelligence_layer.core.model import ControlModel, LuminousControlModel
 from intelligence_layer.core.task import Task
 from intelligence_layer.core.tracer import TaskSpan
 from intelligence_layer.use_cases.qa.multiple_chunk_qa import (
@@ -44,43 +42,33 @@ class LongContextQa(Task[LongContextQaInput, MultipleChunkQaOutput]):
         - `model` provided should be a control-type model.
 
     Args:
-        client: Aleph Alpha client instance for running model related API calls.
         max_tokens_in_chunk: The input text will be split into chunks to fit the context window.
             Used to tweak the length of the chunks.
         k: The number of top relevant chunks to retrieve.
-        model: A valid Aleph Alpha model name.
-        allowed_languages: List of languages to which the language detection is limited (ISO619).
-        fallback_language: The default language of the output.
-
+        model: The model used in the task.
 
     Example:
-        >>> import os
-        >>> from intelligence_layer.connectors import LimitedConcurrencyClient
         >>> from intelligence_layer.core import InMemoryTracer
         >>> from intelligence_layer.use_cases import LongContextQa, LongContextQaInput
 
 
-        >>> client = LimitedConcurrencyClient.from_token(os.getenv("AA_TOKEN"))
-        >>> task = LongContextQa(client)
-        >>> input = LongContextQaInput(
-        ...     text="Lengthy text goes here...", question="Where does the text go?"
-        ... )
+        >>> task = LongContextQa()
+        >>> input = LongContextQaInput(text="Lengthy text goes here...",
+        ...                             question="Where does the text go?")
         >>> tracer = InMemoryTracer()
         >>> output = task.run(input, tracer)
     """
 
     def __init__(
         self,
-        client: AlephAlphaClientProtocol,
-        max_tokens_per_chunk: int = 512,
+        max_tokens_per_chunk: int = 1024,
         k: int = 4,
-        model: str = "luminous-supreme-control",
+        model: ControlModel = LuminousControlModel("luminous-supreme-control-20240215"),
     ):
         super().__init__()
-        self._client = client
         self._model = model
-        self._chunk_task = ChunkTask(client, model, max_tokens_per_chunk)
-        self._multi_chunk_qa = MultipleChunkQa(self._client, self._model)
+        self._chunk_task = ChunkTask(model, max_tokens_per_chunk)
+        self._multi_chunk_qa = MultipleChunkQa(model)
         self._k = k
         self._language_detector = DetectLanguage(threshold=0.5)
 
@@ -89,7 +77,7 @@ class LongContextQa(Task[LongContextQaInput, MultipleChunkQaOutput]):
     ) -> MultipleChunkQaOutput:
         chunk_output = self._chunk_task.run(ChunkInput(text=input.text), task_span)
         retriever = QdrantInMemoryRetriever(
-            self._client,
+            self._model._client,
             documents=[
                 Document(
                     text=c,

@@ -4,15 +4,9 @@ from pathlib import Path
 from aleph_alpha_client import Client, CompletionRequest, CompletionResponse
 from pytest import fixture
 
-from intelligence_layer.connectors.limited_concurrency_client import (
-    AlephAlphaClientProtocol,
-)
 from intelligence_layer.core import NoOpTracer
-from intelligence_layer.use_cases import (
-    LongContextHighCompressionSummarize,
-    LongContextSummarizeInput,
-    RecursiveSummarize,
-)
+from intelligence_layer.core.model import LuminousControlModel
+from intelligence_layer.use_cases import LongContextSummarizeInput, RecursiveSummarize
 from intelligence_layer.use_cases.summarize.steerable_long_context_summarize import (
     SteerableLongContextSummarize,
 )
@@ -46,11 +40,11 @@ def very_long_text() -> str:
 
 def test_recursive_summarize_stops_when_hitting_max_tokens(
     very_long_text: str,
-    long_context_high_compression_summarize: LongContextHighCompressionSummarize,
+    steerable_long_context_summarize: SteerableLongContextSummarize,
 ) -> None:
     max_tokens = 1000
     input = LongContextSummarizeInput(text=very_long_text, max_tokens=max_tokens)
-    task = RecursiveSummarize(long_context_high_compression_summarize)
+    task = RecursiveSummarize(steerable_long_context_summarize)
     output = task.run(input, NoOpTracer())
 
     assert len(output.summary) < len(very_long_text)
@@ -59,24 +53,25 @@ def test_recursive_summarize_stops_when_hitting_max_tokens(
 
 
 def test_recursive_summarize_stops_when_num_partial_summaries_stays_same(
-    client: AlephAlphaClientProtocol,
+    steerable_long_context_summarize: SteerableLongContextSummarize,
 ) -> None:
     max_tokens = None
-    slcs = SteerableLongContextSummarize(
-        client, model="luminous-base", max_generated_tokens=75, max_tokens_per_chunk=145
-    )
     input = LongContextSummarizeInput(text=short_text, max_tokens=max_tokens)
-    task = RecursiveSummarize(slcs)
+    task = RecursiveSummarize(steerable_long_context_summarize)
     output = task.run(input, NoOpTracer())
 
-    assert output.generated_tokens > 145
+    assert output.generated_tokens > 50
 
 
 def test_recursive_summarize_stops_after_one_chunk(
     recursive_counting_client: RecursiveCountingClient,
 ) -> None:
-    long_context_high_compression_summarize = LongContextHighCompressionSummarize(
-        recursive_counting_client, model="luminous-base"
+    model = LuminousControlModel(
+        name="luminous-base-control-20240215", client=recursive_counting_client
+    )
+
+    long_context_high_compression_summarize = SteerableLongContextSummarize(
+        max_generated_tokens=128, max_tokens_per_chunk=1024, model=model
     )
     input = LongContextSummarizeInput(text=short_text)
     task = RecursiveSummarize(long_context_high_compression_summarize)

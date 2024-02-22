@@ -1,7 +1,8 @@
 import os
 
+import pytest
 from dotenv import load_dotenv
-from pytest import fixture
+from pytest import MarkDecorator, fixture
 
 from intelligence_layer.evaluation import Example, HuggingFaceDatasetRepository
 
@@ -31,6 +32,14 @@ def example2() -> Example[str, str]:
     return Example(input="ho", expected_output="hey", id="1")
 
 
+def requires_token() -> MarkDecorator:
+    return pytest.mark.skipif(
+        "HUGGING_FACE_TOKEN" in os.environ.keys(),
+        reason="HUGGING_FACE_TOKEN not set, necessary for for current test",
+    )
+
+
+@requires_token()
 def test_hf_database_non_existing(hf_repository: HuggingFaceDatasetRepository) -> None:
     assert hf_repository.examples_by_id("lol", str, str) is None
     assert hf_repository.example("lol", "abc", str, str) is None
@@ -41,6 +50,7 @@ def test_hf_database_non_existing(hf_repository: HuggingFaceDatasetRepository) -
     assert "README.md" not in datasets
 
 
+@requires_token()
 def test_hf_database_operations(
     hf_repository: HuggingFaceDatasetRepository,
     example1: Example[str, str],

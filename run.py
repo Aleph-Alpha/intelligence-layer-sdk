@@ -1,14 +1,9 @@
 """Fastapi server to run predictions."""
 
-import os
-
 from dotenv import load_dotenv
 from fastapi import Depends, FastAPI
 
-from intelligence_layer.connectors.limited_concurrency_client import (
-    AlephAlphaClientProtocol,
-    LimitedConcurrencyClient,
-)
+from intelligence_layer.core.model import ControlModel, LuminousControlModel
 from intelligence_layer.core.tracer import NoOpTracer
 from intelligence_layer.use_cases.classify.classify import (
     ClassifyInput,
@@ -23,16 +18,15 @@ app = FastAPI()
 load_dotenv()
 
 
-def client() -> AlephAlphaClientProtocol:
-    token = os.getenv("AA_TOKEN")
-    assert token is not None, "Define AA_TOKEN in your .env file"
-    return LimitedConcurrencyClient.from_token(token=token)
+def model() -> ControlModel:
+    return LuminousControlModel("luminous-base-control-20240215")
 
 
 @app.post("/classify")
 async def classify(
-    classify_input: ClassifyInput, client: AlephAlphaClientProtocol = Depends(client)
+    classify_input: ClassifyInput,
+    luminous_control_model: ControlModel = Depends(model),
 ) -> SingleLabelClassifyOutput:
-    classify = PromptBasedClassify(client)
+    classify = PromptBasedClassify(luminous_control_model)
     classify_output = classify.run(classify_input, NoOpTracer())
     return classify_output

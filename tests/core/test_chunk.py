@@ -1,8 +1,11 @@
 from pytest import fixture
 
-from intelligence_layer.connectors import AlephAlphaClientProtocol
-from intelligence_layer.core import InMemoryTracer
-from intelligence_layer.core.chunk import ChunkInput, ChunkOverlapTask
+from intelligence_layer.core import (
+    ChunkInput,
+    ChunkOverlapTask,
+    InMemoryTracer,
+    LuminousControlModel,
+)
 
 
 @fixture
@@ -15,22 +18,20 @@ def some_large_text() -> str:
 
 
 def test_overlapped_chunking(
-    client: AlephAlphaClientProtocol, some_large_text: str
+    luminous_control_model: LuminousControlModel, some_large_text: str
 ) -> None:
-    MODEL = "luminous-base"
     OVERLAP = 8
     MAX_TOKENS = 16
 
     tracer = InMemoryTracer()
     task = ChunkOverlapTask(
-        client,
-        model=MODEL,
+        model=luminous_control_model,
         max_tokens_per_chunk=MAX_TOKENS,
         overlap_length_tokens=OVERLAP,
     )
     output = task.run(ChunkInput(text=some_large_text), tracer)
 
-    tokenizer = client.tokenizer(MODEL)
+    tokenizer = luminous_control_model.get_tokenizer()
     output_tokenized = tokenizer.encode_batch(output.chunks)
     for chunk_index in range(len(output_tokenized) - 1):
         first = output_tokenized[chunk_index].tokens
@@ -50,9 +51,5 @@ def test_overlapped_chunking(
                 continue
             found = True
             break
-
-        if not found:
-            print("first = ", first)
-            print("next =  ", next)
 
         assert found

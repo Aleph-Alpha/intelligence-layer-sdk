@@ -1,8 +1,6 @@
 from typing import Iterable, Sequence
 
 from aleph_alpha_client import (
-    ExplanationRequest,
-    ExplanationResponse,
     Prompt,
     PromptGranularity,
     Text,
@@ -11,10 +9,7 @@ from aleph_alpha_client import (
 from aleph_alpha_client.explanation import TextScoreWithRaw
 from pydantic import BaseModel
 
-from intelligence_layer.connectors.limited_concurrency_client import (
-    AlephAlphaClientProtocol,
-)
-from intelligence_layer.core.explain import Explain, ExplainInput
+from intelligence_layer.core.model import ControlModel, ExplainInput, ExplainOutput
 from intelligence_layer.core.prompt_template import (
     Cursor,
     PromptRange,
@@ -32,7 +27,6 @@ class TextHighlightInput(BaseModel):
         rich_prompt: From client's PromptTemplate. Includes both the actual 'Prompt' as well as text range information.
             Supports liquid-template-language-style {% promptrange range_name %}/{% endpromptrange %} for range.
         target: The target that should be explained. Expected to follow the prompt.
-        model: A valid Aleph Alpha model name.
         focus_ranges: The ranges contained in `rich_prompt` the returned highlights stem from. That means that each returned
             highlight overlaps with at least one character with one of the ranges listed here.
             If this set is empty highlights of the entire prompt are returned.
@@ -40,7 +34,6 @@ class TextHighlightInput(BaseModel):
 
     rich_prompt: RichPrompt
     target: str
-    model: str
     focus_ranges: frozenset[str] = frozenset()
 
 
@@ -74,21 +67,21 @@ class TextHighlight(Task[TextHighlightInput, TextHighlightOutput]):
     In this case, the highlights will only refer to text within this range.
 
     Args:
-        client: Aleph Alpha client instance for running model related API calls.
+        model: The model used throughout the task for model related API calls.
 
     Example:
         >>> import os
 
-        >>> from intelligence_layer.connectors import LimitedConcurrencyClient
         >>> from intelligence_layer.core import (
         ... 	InMemoryTracer,
         ... 	PromptTemplate,
         ... 	TextHighlight,
         ... 	TextHighlightInput,
+        ...     AlephAlphaModel
         ... )
 
-        >>> client = LimitedConcurrencyClient.from_token(os.getenv("AA_TOKEN"))
-        >>> text_highlight = TextHighlight(client=client)
+        >>> model = AlephAlphaModel(name="luminous-base")
+        >>> text_highlight = TextHighlight(model=model)
         >>> prompt_template_str = (
         ...		"{% promptrange r1 %}Question: What is 2 + 2?{% endpromptrange %}\\nAnswer:"
         ...	)
@@ -104,12 +97,11 @@ class TextHighlight(Task[TextHighlightInput, TextHighlightOutput]):
 
     def __init__(
         self,
-        client: AlephAlphaClientProtocol,
+        model: ControlModel,
         granularity: PromptGranularity = PromptGranularity.Sentence,
     ) -> None:
         super().__init__()
-        self._client = client
-        self._explain_task = Explain(client)
+        self._model = model
         self._granularity = granularity
 
     def do_run(
@@ -119,7 +111,6 @@ class TextHighlight(Task[TextHighlightInput, TextHighlightOutput]):
         explanation = self._explain(
             prompt=input.rich_prompt,
             target=input.target,
-            model=input.model,
             task_span=task_span,
         )
         prompt_ranges = self._flatten_prompt_ranges(
@@ -145,17 +136,15 @@ class TextHighlight(Task[TextHighlightInput, TextHighlightOutput]):
             raise ValueError(f"Unknown focus ranges: {', '.join(unknown_focus_ranges)}")
 
     def _explain(
-        self, prompt: Prompt, target: str, model: str, task_span: TaskSpan
-    ) -> ExplanationResponse:
-        request = ExplanationRequest(
-            prompt,
-            target,
+        self, prompt: Prompt, target: str, task_span: TaskSpan
+    ) -> ExplainOutput:
+        input = ExplainInput(
+            prompt=prompt,
+            target=target,
             prompt_granularity=self._granularity,
         )
-        output = self._explain_task.run(
-            ExplainInput(request=request, model=model), task_span
-        )
-        return output.response
+        output = self._model.explain(input, task_span)
+        return output
 
     def _flatten_prompt_ranges(
         self, prompt_ranges: Iterable[Sequence[PromptRange]]
@@ -165,7 +154,7 @@ class TextHighlight(Task[TextHighlightInput, TextHighlightOutput]):
     def _extract_text_prompt_item_explanations_and_item_index(
         self,
         prompt: Prompt,
-        explanation_response: ExplanationResponse,
+        explain_output: ExplainOutput,
     ) -> Sequence[tuple[TextPromptItemExplanation, int]]:
         prompt_texts_and_indices = [
             (prompt_text, idx)
@@ -174,7 +163,7 @@ class TextHighlight(Task[TextHighlightInput, TextHighlightOutput]):
         ]
         text_prompt_item_explanations = [
             explanation
-            for explanation in explanation_response.explanations[0].items
+            for explanation in explain_output.explanations[0].items
             if isinstance(explanation, TextPromptItemExplanation)
         ]  # explanations[0], because one explanation for each target
         assert len(prompt_texts_and_indices) == len(text_prompt_item_explanations)

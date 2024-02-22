@@ -1,7 +1,3 @@
-import os
-
-from aleph_alpha_client import Client
-from dotenv import load_dotenv
 from fastapi import FastAPI, testclient
 from pytest import fixture
 
@@ -14,11 +10,7 @@ from intelligence_layer.use_cases.summarize.summarize import LongContextSummariz
 
 @fixture
 def starter_app() -> IntelligenceApp:
-    load_dotenv()
-    aa_token = os.getenv("AA_TOKEN")
-    assert aa_token
-    aa_client = Client(aa_token)
-    return IntelligenceStarterApp(FastAPI(), aa_client)
+    return IntelligenceStarterApp(FastAPI())
 
 
 def test_intelligence_starter_app_classify_works(starter_app: IntelligenceApp) -> None:

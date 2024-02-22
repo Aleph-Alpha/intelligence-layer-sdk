@@ -2,9 +2,6 @@ from typing import Sequence
 
 from pytest import fixture
 
-from intelligence_layer.connectors.limited_concurrency_client import (
-    AlephAlphaClientProtocol,
-)
 from intelligence_layer.core.chunk import Chunk
 from intelligence_layer.core.detect_language import Language
 from intelligence_layer.core.tracer import NoOpTracer
@@ -15,8 +12,8 @@ from intelligence_layer.use_cases.qa.multiple_chunk_qa import (
 
 
 @fixture
-def qa(client: AlephAlphaClientProtocol) -> MultipleChunkQa:
-    return MultipleChunkQa(client)
+def multiple_chunk_qa() -> MultipleChunkQa:
+    return MultipleChunkQa()
 
 
 CHUNK_CONTAINING_ANSWER = Chunk(
@@ -34,11 +31,13 @@ IMPORTANT_PART_OF_CORRECT_ANSWER = "Henri"
 UNRELATED_QUESTION = "What is the the capital of Germany?"
 
 
-def test_multiple_chunk_qa_with_mulitple_chunks(qa: MultipleChunkQa) -> None:
+def test_multiple_chunk_qa_with_mulitple_chunks(
+    multiple_chunk_qa: MultipleChunkQa,
+) -> None:
     chunks: Sequence[Chunk] = [CHUNK_CONTAINING_ANSWER, RELATED_CHUNK_WITHOUT_ANSWER]
 
     input = MultipleChunkQaInput(chunks=chunks, question=RELATED_QUESTION)
-    output = qa.run(input, NoOpTracer())
+    output = multiple_chunk_qa.run(input, NoOpTracer())
 
     assert output.answer
     assert IMPORTANT_PART_OF_CORRECT_ANSWER in output.answer
@@ -50,23 +49,25 @@ def test_multiple_chunk_qa_with_mulitple_chunks(qa: MultipleChunkQa) -> None:
     )
 
 
-def test_multiple_chunk_qa_without_answer(qa: MultipleChunkQa) -> None:
+def test_multiple_chunk_qa_without_answer(multiple_chunk_qa: MultipleChunkQa) -> None:
     chunks: Sequence[Chunk] = [CHUNK_CONTAINING_ANSWER]
 
     input = MultipleChunkQaInput(chunks=chunks, question=UNRELATED_QUESTION)
-    output = qa.run(input, NoOpTracer())
+    output = multiple_chunk_qa.run(input, NoOpTracer())
 
     assert output.answer is None
 
 
-def test_multiple_chunk_qa_with_spanish_question(qa: MultipleChunkQa) -> None:
+def test_multiple_chunk_qa_with_spanish_question(
+    multiple_chunk_qa: MultipleChunkQa,
+) -> None:
     question = "¿Cómo se llama el hermano de Paul Nicola?"
     chunks = [CHUNK_CONTAINING_ANSWER, CHUNK_CONTAINING_ANSWER]
 
     input = MultipleChunkQaInput(
         chunks=chunks, question=question, language=Language("es")
     )
-    output = qa.run(input, NoOpTracer())
+    output = multiple_chunk_qa.run(input, NoOpTracer())
 
     assert len(output.subanswers) == len(chunks)
     assert output.answer

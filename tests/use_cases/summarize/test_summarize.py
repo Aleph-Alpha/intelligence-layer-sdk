@@ -5,6 +5,7 @@ from intelligence_layer.evaluation import (
     Aggregator,
     DatasetRepository,
     EvaluationRepository,
+    Evaluator,
     Example,
     InMemoryDatasetRepository,
     InMemoryEvaluationRepository,
@@ -15,14 +16,7 @@ from intelligence_layer.evaluation import (
 from intelligence_layer.evaluation.data_storage.aggregation_repository import (
     InMemoryAggregationRepository,
 )
-from intelligence_layer.evaluation.evaluator import Evaluator
-from intelligence_layer.use_cases.summarize.long_context_high_compression_summarize import (
-    LongContextHighCompressionSummarize,
-)
-from intelligence_layer.use_cases.summarize.single_chunk_few_shot_summarize import (
-    SingleChunkFewShotSummarize,
-)
-from intelligence_layer.use_cases.summarize.summarize import (
+from intelligence_layer.use_cases import (
     AggregatedSummarizeEvaluation,
     LongContextSummarizeAggregationLogic,
     LongContextSummarizeEvaluationLogic,
@@ -31,6 +25,8 @@ from intelligence_layer.use_cases.summarize.summarize import (
     SingleChunkSummarizeAggregationLogic,
     SingleChunkSummarizeEvaluationLogic,
     SingleChunkSummarizeInput,
+    SteerableLongContextSummarize,
+    SteerableSingleChunkSummarize,
     SummarizeEvaluation,
     SummarizeOutput,
 )
@@ -72,10 +68,7 @@ def single_chunk_summarize_aggregator(
     in_memory_evaluation_repository: InMemoryEvaluationRepository,
     in_memory_aggregation_repository: InMemoryAggregationRepository,
     single_chunk_summarize_aggregation_logic: SingleChunkSummarizeAggregationLogic,
-) -> Aggregator[
-    SummarizeEvaluation,
-    AggregatedSummarizeEvaluation,
-]:
+) -> Aggregator[SummarizeEvaluation, AggregatedSummarizeEvaluation]:
     return Aggregator(
         in_memory_evaluation_repository,
         in_memory_aggregation_repository,
@@ -86,12 +79,12 @@ def single_chunk_summarize_aggregator(
 
 @fixture
 def single_chunk_summarize_runner(
-    single_chunk_few_shot_summarize: SingleChunkFewShotSummarize,
+    steerable_single_chunk_summarize: SteerableSingleChunkSummarize,
     in_memory_dataset_repository: InMemoryDatasetRepository,
     in_memory_run_repository: InMemoryRunRepository,
 ) -> Runner[SingleChunkSummarizeInput, SummarizeOutput]:
     return Runner(
-        single_chunk_few_shot_summarize,
+        steerable_single_chunk_summarize,
         in_memory_dataset_repository,
         in_memory_run_repository,
         "single-chunk-summarize",
@@ -148,12 +141,12 @@ def long_context_summarize_aggregator(
 
 @fixture
 def long_context_summarize_runner(
-    long_context_high_compression_summarize: LongContextHighCompressionSummarize,
+    steerable_long_context_summarize: SteerableLongContextSummarize,
     in_memory_dataset_repository: DatasetRepository,
     in_memory_run_repository: InMemoryRunRepository,
 ) -> Runner[LongContextSummarizeInput, LongContextSummarizeOutput]:
     return Runner(
-        long_context_high_compression_summarize,
+        steerable_long_context_summarize,
         in_memory_dataset_repository,
         in_memory_run_repository,
         "long-context-summarize",

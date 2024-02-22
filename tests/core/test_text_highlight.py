@@ -1,17 +1,37 @@
 from aleph_alpha_client import Image
 from pytest import fixture, raises
 
-from intelligence_layer.connectors.limited_concurrency_client import (
-    AlephAlphaClientProtocol,
+from intelligence_layer.connectors import AlephAlphaClientProtocol
+from intelligence_layer.core import (
+    ControlModel,
+    NoOpTracer,
+    PromptTemplate,
+    RichPrompt,
+    TextHighlight,
+    TextHighlightInput,
 )
-from intelligence_layer.core.prompt_template import PromptTemplate
-from intelligence_layer.core.text_highlight import TextHighlight, TextHighlightInput
-from intelligence_layer.core.tracer import NoOpTracer
+
+
+class AlephAlphaVanillaModel(ControlModel):
+    def to_instruct_prompt(
+        self,
+        instruction: str,
+        input: str | None = None,
+        response_prefix: str | None = None,
+    ) -> RichPrompt:
+        raise NotImplementedError()
 
 
 @fixture
-def text_highlight(client: AlephAlphaClientProtocol) -> TextHighlight:
-    return TextHighlight(client)
+def aleph_alpha_vanilla_model(
+    client: AlephAlphaClientProtocol,
+) -> AlephAlphaVanillaModel:
+    return AlephAlphaVanillaModel("luminous-base", client)
+
+
+@fixture
+def text_highlight(aleph_alpha_vanilla_model: AlephAlphaVanillaModel) -> TextHighlight:
+    return TextHighlight(aleph_alpha_vanilla_model)
 
 
 def test_text_highlight(text_highlight: TextHighlight) -> None:
@@ -23,12 +43,10 @@ This finding, while not complex extraterrestrial life, significantly raises the 
 The international community is abuzz with plans for more focused research and potential interstellar missions.{% endpromptrange %}
 Answer:"""
     prompt_with_metadata = PromptTemplate(prompt_template_str).to_rich_prompt()
-    model = "luminous-base-control"
 
     input = TextHighlightInput(
         rich_prompt=prompt_with_metadata,
         target=answer,
-        model=model,
         focus_ranges=frozenset({"r1"}),
     )
     output = text_highlight.run(input, NoOpTracer())
@@ -58,7 +76,6 @@ Answer:"""
     input = TextHighlightInput(
         rich_prompt=prompt_with_metadata,
         target=f" {answer}",
-        model="luminous-base",
         focus_ranges=frozenset(["no_content"]),
     )
     output = text_highlight.run(input, NoOpTracer())
@@ -71,12 +88,10 @@ Answer:"""
     template = PromptTemplate(prompt_template_str)
     prompt_with_metadata = template.to_rich_prompt()
     completion = " Ursus Arctos"
-    model = "luminous-base"
 
     input = TextHighlightInput(
         rich_prompt=prompt_with_metadata,
         target=completion,
-        model=model,
         focus_ranges=frozenset({"r1"}),
     )
     output = text_highlight.run(input, NoOpTracer())
@@ -97,11 +112,8 @@ Answer:"""
         image=template.placeholder(prompt_image)
     )
     completion = " The latin name of the brown bear is Ursus arctos."
-    model = "luminous-base"
 
-    input = TextHighlightInput(
-        rich_prompt=prompt_with_metadata, target=completion, model=model
-    )
+    input = TextHighlightInput(rich_prompt=prompt_with_metadata, target=completion)
     output = text_highlight.run(input, NoOpTracer())
 
     assert output.highlights
@@ -120,11 +132,8 @@ Answer:"""
         image=template.placeholder(prompt_image)
     )
     completion = " The latin name of the brown bear is Ursus arctos."
-    model = "luminous-base"
 
-    input = TextHighlightInput(
-        rich_prompt=prompt_with_metadata, target=completion, model=model
-    )
+    input = TextHighlightInput(rich_prompt=prompt_with_metadata, target=completion)
     output = text_highlight.run(input, NoOpTracer())
 
     assert output.highlights
@@ -145,13 +154,11 @@ Answer:"""
         image=template.placeholder(prompt_image)
     )
     answer = " Extreme conditions."
-    model = "luminous-base"
     focus_ranges: frozenset[str] = frozenset()  # empty
 
     input = TextHighlightInput(
         rich_prompt=prompt_with_metadata,
         target=answer,
-        model=model,
         focus_ranges=focus_ranges,
     )
     output = text_highlight.run(input, NoOpTracer())
@@ -174,13 +181,11 @@ Answer:"""
     template = PromptTemplate(prompt_template_str)
     prompt_with_metadata = template.to_rich_prompt()
     answer = " Extreme conditions."
-    model = "luminous-base"
 
     unknown_range_name = "bla"
     input = TextHighlightInput(
         rich_prompt=prompt_with_metadata,
         target=answer,
-        model=model,
         focus_ranges=frozenset([unknown_range_name]),
     )
     with raises(ValueError) as e:

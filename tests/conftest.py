@@ -27,6 +27,7 @@ from intelligence_layer.connectors.retrievers.qdrant_in_memory_retriever import 
     RetrieverType,
 )
 from intelligence_layer.core import NoOpTracer, Task, TaskSpan
+from intelligence_layer.core.model import LuminousControlModel
 from intelligence_layer.evaluation import (
     InMemoryDatasetRepository,
     InMemoryEvaluationRepository,
@@ -35,6 +36,11 @@ from intelligence_layer.evaluation import (
 from intelligence_layer.evaluation.data_storage.aggregation_repository import (
     InMemoryAggregationRepository,
 )
+
+
+@fixture
+def luminous_control_model() -> LuminousControlModel:
+    return LuminousControlModel("luminous-base-control-20240215")
 
 
 @fixture(scope="session")

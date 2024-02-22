@@ -12,7 +12,7 @@ from intelligence_layer.connectors.argilla.argilla_client import (
     Question,
     RecordData,
 )
-from intelligence_layer.core import Input, InstructInput, Output, PromptOutput
+from intelligence_layer.core import CompleteOutput, Input, InstructInput, Output
 from intelligence_layer.evaluation import Aggregator
 from intelligence_layer.evaluation.accumulator import MeanAccumulator
 from intelligence_layer.evaluation.base_logic import AggregationLogic, EvaluationLogic
@@ -200,7 +200,7 @@ class InstructComparisonArgillaAggregationLogic(
 
 
 class InstructComparisonArgillaEvaluationLogic(
-    ArgillaEvaluationLogic[InstructInput, PromptOutput, None]
+    ArgillaEvaluationLogic[InstructInput, CompleteOutput, None]
 ):
     def __init__(
         self,
@@ -215,11 +215,11 @@ class InstructComparisonArgillaEvaluationLogic(
     def _to_record(
         self,
         example: Example[InstructInput, None],
-        *outputs: SuccessfulExampleOutput[PromptOutput],
+        *outputs: SuccessfulExampleOutput[CompleteOutput],
     ) -> RecordDataSequence:
         def create_record_data(
-            first: SuccessfulExampleOutput[PromptOutput],
-            second: SuccessfulExampleOutput[PromptOutput],
+            first: SuccessfulExampleOutput[CompleteOutput],
+            second: SuccessfulExampleOutput[CompleteOutput],
         ) -> RecordData:
             if random.choice([True, False]):
                 first, second = second, first
