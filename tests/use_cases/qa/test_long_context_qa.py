@@ -56,7 +56,6 @@ def test_qa_with_answer(long_context_qa: LongContextQa) -> None:
     output = long_context_qa.run(input, NoOpTracer())
     assert output.answer
     assert "The Power Broker" in output.answer
-    # highlights TODO
 
 
 def test_qa_with_no_answer(long_context_qa: LongContextQa) -> None:
