@@ -71,7 +71,7 @@ def test_recursive_summarize_stops_after_one_chunk(
     )
 
     long_context_high_compression_summarize = SteerableLongContextSummarize(
-        max_generated_tokens=128, max_tokens_per_chunk=1024, model=model
+        max_generated_tokens=100, max_tokens_per_chunk=1500, model=model
     )
     input = LongContextSummarizeInput(text=short_text)
     task = RecursiveSummarize(long_context_high_compression_summarize)

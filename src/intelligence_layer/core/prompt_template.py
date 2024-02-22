@@ -176,7 +176,7 @@ class PromptTemplate:
     To embed the items in the template, pass the placeholder in the place(s) where you would like the items.
 
     Example:
-        >>> from aleph_alpha_client import CompletionRequest,  Tokens
+        >>> from aleph_alpha_client import CompletionRequest, Tokens
 
         >>> from intelligence_layer.core import PromptTemplate
 
