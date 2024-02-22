@@ -175,7 +175,7 @@ class ControlModel(ABC, AlephAlphaModel):
         input: Optional[str] = None,
         response_prefix: Optional[str] = None,
     ) -> RichPrompt:
-        ...
+        pass
 
 
 class LuminousControlModel(ControlModel):
