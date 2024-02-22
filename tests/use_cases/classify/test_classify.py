@@ -168,7 +168,10 @@ def classify_aggregator(
     in_memory_evaluation_repository: InMemoryEvaluationRepository,
     in_memory_aggregation_repository: InMemoryAggregationRepository,
     multi_label_classify_aggregation_logic: MultiLabelClassifyAggregationLogic,
-) -> Aggregator[MultiLabelClassifyEvaluation, AggregatedMultiLabelClassifyEvaluation,]:
+) -> Aggregator[
+    MultiLabelClassifyEvaluation,
+    AggregatedMultiLabelClassifyEvaluation,
+]:
     return Aggregator(
         in_memory_evaluation_repository,
         in_memory_aggregation_repository,

@@ -182,7 +182,11 @@ def string_argilla_evaluator(
     stub_argilla_client: StubArgillaClient,
     argilla_questions: Sequence[Question],
     argilla_fields: Sequence[Field],
-) -> ArgillaEvaluator[DummyStringInput, DummyStringOutput, DummyStringOutput,]:
+) -> ArgillaEvaluator[
+    DummyStringInput,
+    DummyStringOutput,
+    DummyStringOutput,
+]:
     evaluator = ArgillaEvaluator(
         in_memory_dataset_repository,
         in_memory_run_repository,

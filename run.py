@@ -1,4 +1,5 @@
 """Fastapi server to run predictions."""
+
 import os
 
 from dotenv import load_dotenv

@@ -150,7 +150,7 @@ class Span(Tracer, AbstractContextManager["Span"]):
 
     @abstractmethod
     def id(self) -> str:
-        ...
+        pass
 
     def __enter__(self) -> Self:
         return self
@@ -699,11 +699,11 @@ class PersistentTracer(Tracer, ABC):
 
     @abstractmethod
     def _log_entry(self, id: str, entry: BaseModel) -> None:
-        ...
+        pass
 
     @abstractmethod
     def trace(self, trace_id: str) -> InMemoryTracer:
-        ...
+        pass
 
     def _log_span(
         self, span: "PersistentSpan", name: str, timestamp: Optional[datetime] = None

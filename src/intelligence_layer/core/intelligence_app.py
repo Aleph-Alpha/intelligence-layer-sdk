@@ -19,7 +19,7 @@ class AuthService(ABC, Generic[T]):
         required_permissions: frozenset[str],
         credentials: Annotated[T, None],
     ) -> bool:
-        ...
+        pass
 
 
 class NoAuthService(AuthService[None]):
