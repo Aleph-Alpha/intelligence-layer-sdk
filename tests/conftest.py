@@ -38,7 +38,7 @@ from intelligence_layer.evaluation.data_storage.aggregation_repository import (
 )
 
 
-@fixture
+@fixture(scope="session")
 def luminous_control_model() -> LuminousControlModel:
     return LuminousControlModel("luminous-base-control-20240215")
 
