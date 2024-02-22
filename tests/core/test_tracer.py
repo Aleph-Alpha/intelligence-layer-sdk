@@ -6,23 +6,26 @@ from pytest import fixture, mark
 
 from intelligence_layer.core import (
     CompleteInput,
+    CompleteOutput,
     CompositeTracer,
     FileTracer,
     InMemorySpan,
     InMemoryTaskSpan,
     InMemoryTracer,
     LogEntry,
+    LuminousControlModel,
     OpenTelemetryTracer,
     Task,
     TaskSpan,
     utc_now,
 )
-from intelligence_layer.core.model import LuminousControlModel, _Complete
 
 
 @fixture
-def complete(luminous_control_model: LuminousControlModel) -> _Complete:
-    return luminous_control_model._complete
+def complete(
+    luminous_control_model: LuminousControlModel,
+) -> Task[CompleteInput, CompleteOutput]:
+    return luminous_control_model.complete_task()
 
 
 def test_composite_tracer_id_consistent_across_children(
@@ -84,7 +87,9 @@ def test_can_add_parent_and_child_entries() -> None:
     assert isinstance(parent.entries[0].entries[0], LogEntry)
 
 
-def test_task_automatically_logs_input_and_output(complete: _Complete) -> None:
+def test_task_automatically_logs_input_and_output(
+    complete: Task[CompleteInput, CompleteOutput]
+) -> None:
     tracer = InMemoryTracer()
     input = CompleteInput(prompt=Prompt.from_text("test"))
     output = complete.run(input=input, tracer=tracer)
@@ -141,7 +146,7 @@ def test_span_only_updates_end_timestamp_once() -> None:
     assert span.end_timestamp == end
 
 
-def test_composite_tracer(complete: _Complete) -> None:
+def test_composite_tracer(complete: Task[CompleteInput, CompleteOutput]) -> None:
     tracer1 = InMemoryTracer()
     tracer2 = InMemoryTracer()
     input = CompleteInput(prompt=Prompt.from_text("test"))

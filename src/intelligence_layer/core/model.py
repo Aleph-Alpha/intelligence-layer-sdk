@@ -23,7 +23,7 @@ from intelligence_layer.core.tracer import TaskSpan, Tracer
 class CompleteInput(BaseModel, CompletionRequest, frozen=True):
     """The input for a `Complete` task."""
 
-    def to_completion_response(self) -> CompletionRequest:
+    def to_completion_request(self) -> CompletionRequest:
         return CompletionRequest(**self.__dict__)
 
 
@@ -69,7 +69,7 @@ class _Complete(Task[CompleteInput, CompleteOutput]):
         task_span.log("Model", self._model)
         return CompleteOutput.from_completion_response(
             self._client.complete(
-                request=input.to_completion_response(),
+                request=input.to_completion_request(),
                 model=self._model,
             )
         )
@@ -147,10 +147,12 @@ class AlephAlphaModel:
     ) -> None:
         self.name = name
         self._client = client
-        self._complete = _Complete(self._client, name)
+        self._complete: Task[CompleteInput, CompleteOutput] = _Complete(
+            self._client, name
+        )
         self._explain = _Explain(self._client, name)
 
-    def get_complete_task(self) -> Task[CompleteInput, CompleteOutput]:
+    def complete_task(self) -> Task[CompleteInput, CompleteOutput]:
         return self._complete
 
     def complete(self, input: CompleteInput, tracer: Tracer) -> CompleteOutput:
