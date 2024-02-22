@@ -374,9 +374,10 @@ class ArgillaEvaluationRepository(EvaluationRepository):
         if isinstance(evaluation.result, RecordDataSequence):
             for record in evaluation.result.records:
                 self._client.add_record(evaluation.eval_id, record)
-        raise TypeError(
-            "ArgillaEvaluationRepository does not support storing non-RecordDataSequence evaluations."
-        )
+        else:
+            raise TypeError(
+                "ArgillaEvaluationRepository does not support storing non-RecordDataSequence evaluations."
+            )
 
     def example_evaluations(
         self, eval_id: str, eval_type: type[Evaluation]

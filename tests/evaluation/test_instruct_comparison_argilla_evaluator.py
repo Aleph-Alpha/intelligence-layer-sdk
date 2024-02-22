@@ -145,20 +145,14 @@ def any_instruct_output() -> CompleteOutput:
     )
 
 
-def test_evaluate_run_submits_pairwise_comparison_records(
-    evaluator: ArgillaEvaluator[InstructInput, CompleteOutput, None],
-    aggregator: ArgillaAggregator[AggregatedInstructComparison],
+def create_dummy_dataset(
     in_memory_dataset_repository: InMemoryDatasetRepository,
-    in_memory_run_repository: InMemoryRunRepository,
-    any_instruct_output: CompleteOutput,
-    argilla_fake: ArgillaFake,
-) -> None:
-    run_count = 10
-    run_ids = [f"{i}" for i in range(run_count)]
+) -> str:
     example_id = "example_id"
     instruction = "inst"
     instruction_input = "some text"
-    dataset_id = in_memory_dataset_repository.create_dataset(
+
+    return in_memory_dataset_repository.create_dataset(
         [
             Example(
                 id=example_id,
@@ -167,6 +161,14 @@ def test_evaluate_run_submits_pairwise_comparison_records(
             )
         ]
     )
+
+
+def create_dummy_runs(
+    in_memory_run_repository: InMemoryRunRepository,
+    any_instruct_output: CompleteOutput,
+    run_ids: Sequence[str],
+    dataset_id: str,
+) -> None:
     for run_id in run_ids:
         in_memory_run_repository.store_example_output(
             example_output=ExampleOutput(
@@ -180,10 +182,26 @@ def test_evaluate_run_submits_pairwise_comparison_records(
                 start=utc_now(),
                 end=utc_now(),
                 failed_example_count=0,
-                successful_example_count=0,
+                successful_example_count=1,
                 description="runner",
             )
         )
+
+
+def test_evaluate_run_submits_pairwise_comparison_records(
+    evaluator: ArgillaEvaluator[InstructInput, CompleteOutput, None],
+    aggregator: ArgillaAggregator[AggregatedInstructComparison],
+    in_memory_dataset_repository: InMemoryDatasetRepository,
+    in_memory_run_repository: InMemoryRunRepository,
+    any_instruct_output: CompleteOutput,
+    argilla_fake: ArgillaFake,
+) -> None:
+    run_count = 10
+    run_ids = [f"{i}" for i in range(run_count)]
+    dataset_id = create_dummy_dataset(in_memory_dataset_repository)
+    create_dummy_runs(
+        in_memory_run_repository, any_instruct_output, run_ids, dataset_id
+    )
 
     evaluation_overview = evaluator.evaluate_runs(*run_ids)
 
@@ -205,9 +223,7 @@ def test_evaluate_run_only_evaluates_high_priority(
     in_memory_dataset_repository: InMemoryDatasetRepository,
     in_memory_run_repository: InMemoryRunRepository,
     in_memory_evaluation_repository: InMemoryEvaluationRepository,
-    in_memory_aggregation_repository: InMemoryAggregationRepository,
     any_instruct_output: CompleteOutput,
-    argilla_aggregation_logic: InstructComparisonArgillaAggregationLogic,
     argilla_fake: ArgillaFake,
 ) -> None:
     relevant_ids = frozenset({"1", "2"})
@@ -224,35 +240,11 @@ def test_evaluate_run_only_evaluates_high_priority(
 
     run_count = 10
     run_ids = [f"{i}" for i in range(run_count)]
-    example_id = "example_id"
-    instruction = "inst"
-    instruction_input = "some text"
-    dataset_id = in_memory_dataset_repository.create_dataset(
-        [
-            Example(
-                id=example_id,
-                input=InstructInput(instruction=instruction, input=instruction_input),
-                expected_output=None,
-            )
-        ]
+    dataset_id = create_dummy_dataset(in_memory_dataset_repository)
+
+    create_dummy_runs(
+        in_memory_run_repository, any_instruct_output, run_ids, dataset_id
     )
-    for run_id in run_ids:
-        in_memory_run_repository.store_example_output(
-            example_output=ExampleOutput(
-                run_id=run_id, example_id="example_id", output=any_instruct_output
-            )
-        )
-        in_memory_run_repository.store_run_overview(
-            RunOverview(
-                dataset_id=dataset_id,
-                id=run_id,
-                start=utc_now(),
-                end=utc_now(),
-                failed_example_count=0,
-                successful_example_count=0,
-                description="runner",
-            )
-        )
 
     evaluation_overview = evaluator.evaluate_runs(*run_ids)
 
