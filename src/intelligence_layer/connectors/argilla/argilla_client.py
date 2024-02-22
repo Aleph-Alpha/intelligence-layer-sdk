@@ -227,17 +227,9 @@ class DefaultArgillaClient(ArgillaClient):
                 raise e
 
     def add_record(self, dataset_id: str, record: RecordData) -> None:
-        try:
-            self._create_record(
-                record.content, record.metadata, record.example_id, dataset_id
-            )
-        except HTTPError as e:
-            if e.response.status_code == HTTPStatus.INTERNAL_SERVER_ERROR:
-                records = self._list_records(dataset_id)
-                if not any(
-                    True for item in records if item["external_id"] == record.example_id
-                ):
-                    raise e
+        self._create_record(
+            record.content, record.metadata, record.example_id, dataset_id
+        )
 
     def evaluations(self, dataset_id: str) -> Iterable[ArgillaEvaluation]:
         def to_responses(
@@ -251,7 +243,7 @@ class DefaultArgillaClient(ArgillaClient):
 
         return (
             ArgillaEvaluation(
-                example_id=json_evaluation["external_id"],
+                example_id=json_evaluation["example_id"],
                 record_id=json_evaluation["id"],
                 responses=to_responses(json_evaluation["responses"]),
                 metadata=json_evaluation["metadata"],
@@ -274,20 +266,15 @@ class DefaultArgillaClient(ArgillaClient):
         return cast(Mapping[str, Any], response.json())
 
     def records(self, dataset_id: str) -> Iterable[Record]:
-        json_records = self._list_records(dataset_id)
-
-        def create_record(json_record: Mapping[str, Any]) -> Record:
-            metadata = json_record["metadata"]
-            example_id = json_record["metadata"]["example_id"]
-            del metadata["example_id"]
-            return Record(
+        return (
+            Record(
                 id=json_record["id"],
                 content=json_record["fields"],
-                example_id=example_id,
-                metadata=metadata,
+                example_id=json_record["example_id"],
+                metadata=json_record["metadata"],
             )
-
-        return (create_record(json_record) for json_record in json_records)
+            for json_record in self._list_records(dataset_id)
+        )
 
     def create_evaluation(self, evaluation: ArgillaEvaluation) -> None:
         response = self.session.post(
@@ -399,6 +386,11 @@ class DefaultArgillaClient(ArgillaClient):
             records = response.json()["items"]
             if not records:
                 break
+            for record in records:
+                metadata = record["metadata"]
+                example_id = record["metadata"]["example_id"]
+                del metadata["example_id"]
+                record["example_id"] = example_id
             yield from cast(Sequence[Mapping[str, Any]], records)
 
     def _create_record(
