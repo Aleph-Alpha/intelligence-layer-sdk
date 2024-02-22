@@ -2,7 +2,7 @@ from os import getenv
 from pathlib import Path
 from typing import Sequence, cast
 
-from aleph_alpha_client import Image
+from aleph_alpha_client import Client, Image
 from dotenv import load_dotenv
 from faker import Faker
 from pydantic import BaseModel
@@ -39,11 +39,6 @@ from intelligence_layer.evaluation.data_storage.aggregation_repository import (
 
 
 @fixture(scope="session")
-def luminous_control_model() -> LuminousControlModel:
-    return LuminousControlModel("luminous-base-control-20240215")
-
-
-@fixture(scope="session")
 def token() -> str:
     load_dotenv()
     token = getenv("AA_TOKEN")
@@ -54,7 +49,12 @@ def token() -> str:
 @fixture(scope="session")
 def client(token: str) -> AlephAlphaClientProtocol:
     """Provide fixture for api."""
-    return LimitedConcurrencyClient.from_token(token=token)
+    return LimitedConcurrencyClient(Client(token), max_concurrency=10)
+
+
+@fixture(scope="session")
+def luminous_control_model(client: AlephAlphaClientProtocol) -> LuminousControlModel:
+    return LuminousControlModel("luminous-base-control-20240215", client)
 
 
 @fixture
