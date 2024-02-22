@@ -182,9 +182,9 @@ class FileRunRepository(RunRepository, FileBasedRepository):
             example_output
             for example_output in sorted(
                 (load_example_output(file) for file in output_files),
-                key=lambda example_output: example_output.example_id
-                if example_output
-                else "",
+                key=lambda example_output: (
+                    example_output.example_id if example_output else ""
+                ),
             )
             if example_output
         )
@@ -213,9 +213,9 @@ class FileRunRepository(RunRepository, FileBasedRepository):
 
 class InMemoryRunRepository(RunRepository):
     def __init__(self) -> None:
-        self._example_outputs: dict[
-            str, list[ExampleOutput[PydanticSerializable]]
-        ] = defaultdict(list)
+        self._example_outputs: dict[str, list[ExampleOutput[PydanticSerializable]]] = (
+            defaultdict(list)
+        )
         self._example_traces: dict[str, InMemoryTracer] = dict()
         self._run_overviews: dict[str, RunOverview] = dict()
 

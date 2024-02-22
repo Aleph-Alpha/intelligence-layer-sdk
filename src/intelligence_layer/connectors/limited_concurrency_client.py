@@ -30,65 +30,65 @@ class AlephAlphaClientProtocol(Protocol):
         request: CompletionRequest,
         model: str,
     ) -> CompletionResponse:
-        ...
+        pass
 
     def get_version(self) -> str:
-        ...
+        pass
 
     def models(self) -> Sequence[Mapping[str, Any]]:
-        ...
+        pass
 
     def tokenize(
         self,
         request: TokenizationRequest,
         model: str,
     ) -> TokenizationResponse:
-        ...
+        pass
 
     def detokenize(
         self,
         request: DetokenizationRequest,
         model: str,
     ) -> DetokenizationResponse:
-        ...
+        pass
 
     def embed(
         self,
         request: EmbeddingRequest,
         model: str,
     ) -> EmbeddingResponse:
-        ...
+        pass
 
     def semantic_embed(
         self,
         request: SemanticEmbeddingRequest,
         model: str,
     ) -> SemanticEmbeddingResponse:
-        ...
+        pass
 
     def batch_semantic_embed(
         self,
         request: BatchSemanticEmbeddingRequest,
         model: Optional[str] = None,
     ) -> BatchSemanticEmbeddingResponse:
-        ...
+        pass
 
     def evaluate(
         self,
         request: EvaluationRequest,
         model: str,
     ) -> EvaluationResponse:
-        ...
+        pass
 
     def explain(
         self,
         request: ExplanationRequest,
         model: str,
     ) -> ExplanationResponse:
-        ...
+        pass
 
     def tokenizer(self, model: str) -> Tokenizer:
-        ...
+        pass
 
 
 class LimitedConcurrencyClient:

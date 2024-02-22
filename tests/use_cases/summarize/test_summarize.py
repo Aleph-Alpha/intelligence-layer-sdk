@@ -52,7 +52,12 @@ def single_chunk_summarize_evaluator(
     in_memory_run_repository: InMemoryRunRepository,
     in_memory_evaluation_repository: InMemoryEvaluationRepository,
     single_chunk_summarize_eval_logic: SingleChunkSummarizeEvaluationLogic,
-) -> Evaluator[SingleChunkSummarizeInput, SummarizeOutput, str, SummarizeEvaluation,]:
+) -> Evaluator[
+    SingleChunkSummarizeInput,
+    SummarizeOutput,
+    str,
+    SummarizeEvaluation,
+]:
     return Evaluator(
         in_memory_dataset_repository,
         in_memory_run_repository,
@@ -67,7 +72,10 @@ def single_chunk_summarize_aggregator(
     in_memory_evaluation_repository: InMemoryEvaluationRepository,
     in_memory_aggregation_repository: InMemoryAggregationRepository,
     single_chunk_summarize_aggregation_logic: SingleChunkSummarizeAggregationLogic,
-) -> Aggregator[SummarizeEvaluation, AggregatedSummarizeEvaluation,]:
+) -> Aggregator[
+    SummarizeEvaluation,
+    AggregatedSummarizeEvaluation,
+]:
     return Aggregator(
         in_memory_evaluation_repository,
         in_memory_aggregation_repository,
@@ -126,7 +134,10 @@ def long_context_summarize_aggregator(
     in_memory_evaluation_repository: EvaluationRepository,
     in_memory_aggregation_repository: InMemoryAggregationRepository,
     long_context_summarize_aggregation_logic: LongContextSummarizeAggregationLogic,
-) -> Aggregator[SummarizeEvaluation, AggregatedSummarizeEvaluation,]:
+) -> Aggregator[
+    SummarizeEvaluation,
+    AggregatedSummarizeEvaluation,
+]:
     return Aggregator(
         in_memory_evaluation_repository,
         in_memory_aggregation_repository,

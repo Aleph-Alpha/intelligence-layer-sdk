@@ -17,7 +17,7 @@ class DatasetRepository(ABC):
         self,
         examples: Iterable[Example[Input, ExpectedOutput]],
     ) -> str:
-        ...
+        pass
 
     @abstractmethod
     def examples_by_id(
@@ -26,7 +26,7 @@ class DatasetRepository(ABC):
         input_type: type[Input],
         expected_output_type: type[ExpectedOutput],
     ) -> Optional[Iterable[Example[Input, ExpectedOutput]]]:
-        ...
+        pass
 
     @abstractmethod
     def example(
@@ -36,15 +36,15 @@ class DatasetRepository(ABC):
         input_type: type[Input],
         expected_output_type: type[ExpectedOutput],
     ) -> Optional[Example[Input, ExpectedOutput]]:
-        ...
+        pass
 
     @abstractmethod
     def delete_dataset(self, dataset_id: str) -> None:
-        ...
+        pass
 
     @abstractmethod
     def list_datasets(self) -> Iterable[str]:
-        ...
+        pass
 
 
 class FileSystemDatasetRepository(DatasetRepository):

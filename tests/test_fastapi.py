@@ -1,4 +1,5 @@
 """Test prediction via api."""
+
 from http import HTTPStatus
 
 from dotenv import load_dotenv
