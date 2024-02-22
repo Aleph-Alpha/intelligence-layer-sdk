@@ -136,9 +136,11 @@ class SingleChunkQa(Task[SingleChunkQaInput, SingleChunkQaOutput]):
             input.chunk,
             task_span,
         )
+
         answer = self._no_answer_to_none(
             output.completion.strip(), qa_setup.no_answer_str
         )
+
         highlights = (
             self._get_highlights(
                 prompt,

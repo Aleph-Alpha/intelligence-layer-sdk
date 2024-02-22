@@ -1,5 +1,4 @@
 from abc import ABC, abstractmethod
-from dataclasses import asdict
 from functools import lru_cache
 from typing import Literal, Optional
 
@@ -24,7 +23,8 @@ from intelligence_layer.core.tracer import TaskSpan, Tracer
 class CompleteInput(BaseModel, CompletionRequest, frozen=True):
     """The input for a `Complete` task."""
 
-    pass
+    def to_completion_response(self) -> CompletionRequest:
+        return CompletionRequest(**self.__dict__)
 
 
 class CompleteOutput(BaseModel, CompletionResponse, frozen=True):
@@ -37,7 +37,7 @@ class CompleteOutput(BaseModel, CompletionResponse, frozen=True):
     def from_completion_response(
         completion_response: CompletionResponse,
     ) -> "CompleteOutput":
-        return CompleteOutput(**asdict(completion_response))
+        return CompleteOutput(**completion_response.__dict__)
 
     @property
     def completion(self) -> str:
@@ -69,7 +69,7 @@ class _Complete(Task[CompleteInput, CompleteOutput]):
         task_span.log("Model", self._model)
         return CompleteOutput.from_completion_response(
             self._client.complete(
-                request=input,
+                request=input.to_completion_response(),
                 model=self._model,
             )
         )
@@ -78,7 +78,8 @@ class _Complete(Task[CompleteInput, CompleteOutput]):
 class ExplainInput(BaseModel, ExplanationRequest, frozen=True):
     """The input for a `Explain` task."""
 
-    pass
+    def to_explanation_response(self) -> ExplanationRequest:
+        return ExplanationRequest(**self.__dict__)
 
 
 class ExplainOutput(BaseModel, ExplanationResponse, frozen=True):
@@ -91,7 +92,7 @@ class ExplainOutput(BaseModel, ExplanationResponse, frozen=True):
     def from_explanation_response(
         explanation_response: ExplanationResponse,
     ) -> "ExplainOutput":
-        return ExplainOutput(**asdict(explanation_response))
+        return ExplainOutput(**explanation_response.__dict__)
 
 
 class _Explain(Task[ExplainInput, ExplainOutput]):
@@ -114,7 +115,9 @@ class _Explain(Task[ExplainInput, ExplainOutput]):
     def do_run(self, input: ExplainInput, task_span: TaskSpan) -> ExplainOutput:
         task_span.log("Model", self._model)
         return ExplainOutput.from_explanation_response(
-            self._client.explain(request=input, model=self._model)
+            self._client.explain(
+                request=input.to_explanation_response(), model=self._model
+            )
         )
 
 
