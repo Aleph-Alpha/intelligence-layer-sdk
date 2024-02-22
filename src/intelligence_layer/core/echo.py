@@ -49,20 +49,17 @@ class EchoTask(Task[EchoInput, EchoOutput]):
     a given prompt and model. Does not generate any tokens.
 
     Args:
-        client: Aleph Alpha client instance for running model related API calls.
+        model: Control model to use in the task.
 
     Example:
-        >>> import os
         >>> from aleph_alpha_client import Prompt
-        >>> from intelligence_layer.connectors import LimitedConcurrencyClient
-        >>> from intelligence_layer.core import EchoTask,EchoInput, InMemoryTracer
+        >>> from intelligence_layer.core import EchoTask,EchoInput, InMemoryTracer, LuminousControlModel
 
-        >>> client = LimitedConcurrencyClient.from_token(token=os.getenv("AA_TOKEN"))
-        >>> task = EchoTask(client)
+        >>> model = LuminousControlModel(name="luminous-base-control")
+        >>> task = EchoTask(model)
         >>> input = EchoInput(
         ...     prompt=Prompt.from_text("This is a "),
         ...     expected_completion="happy text",
-        ...     model="luminous-base",
         ... )
         >>> tracer = InMemoryTracer()
         >>> output = task.run(input, tracer)

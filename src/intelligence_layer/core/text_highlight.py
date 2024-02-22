@@ -67,21 +67,21 @@ class TextHighlight(Task[TextHighlightInput, TextHighlightOutput]):
     In this case, the highlights will only refer to text within this range.
 
     Args:
-        client: Aleph Alpha client instance for running model related API calls.
+        model: The model used throughout the task for model related API calls.
 
     Example:
         >>> import os
 
-        >>> from intelligence_layer.connectors import LimitedConcurrencyClient
         >>> from intelligence_layer.core import (
         ... 	InMemoryTracer,
         ... 	PromptTemplate,
         ... 	TextHighlight,
         ... 	TextHighlightInput,
+        ...     AlephAlphaModel
         ... )
 
-        >>> client = LimitedConcurrencyClient.from_token(os.getenv("AA_TOKEN"))
-        >>> text_highlight = TextHighlight(client=client)
+        >>> model = AlephAlphaModel(name="luminous-base")
+        >>> text_highlight = TextHighlight(model=model)
         >>> prompt_template_str = (
         ...		"{% promptrange r1 %}Question: What is 2 + 2?{% endpromptrange %}\\nAnswer:"
         ...	)

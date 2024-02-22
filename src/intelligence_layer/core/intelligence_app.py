@@ -66,12 +66,13 @@ class IntelligenceApp:
             >>> import os
             >>> from aleph_alpha_client import Client
             >>> from fastapi import FastAPI
-            >>> from intelligence_layer.core import Complete, IntelligenceApp, CompleteInput
+            >>> from intelligence_layer.core import IntelligenceApp, CompleteInput, AlephAlphaModel
 
             >>> fast_api = FastAPI()
             >>> app = IntelligenceApp(fast_api)
             >>> aa_client = Client(os.getenv("AA_TOKEN"))
-            >>> app.register_task(Complete(aa_client), CompleteInput, "/complete")
+            >>> model = AlephAlphaModel("luminous-base", client=aa_client)
+            >>> app.register_task(model.get_complete_task(), CompleteInput, "/complete")
         """
         # mypy does not like the dynamic input_type as type-parameter
         if isinstance(task, Task):

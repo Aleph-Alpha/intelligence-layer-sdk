@@ -120,8 +120,7 @@ class MultipleChunkQa(Task[MultipleChunkQaInput, MultipleChunkQaOutput]):
         `model` provided should be a control-type model.
 
     Args:
-        client: Aleph Alpha client instance for running model related API calls.
-        model: A valid Aleph Alpha model.
+        model: The model used throughout the task for model related API calls.
         merge_answers_instruct_configs: Mapping language used to prompt parameters.
 
     Example:
@@ -138,8 +137,7 @@ class MultipleChunkQa(Task[MultipleChunkQaInput, MultipleChunkQaOutput]):
         ... )
 
 
-        >>> client = LimitedConcurrencyClient.from_token(os.getenv("AA_TOKEN"))
-        >>> task = MultipleChunkQa(client)
+        >>> task = MultipleChunkQa()
         >>> input = MultipleChunkQaInput(
         ...     chunks=[Chunk("Tina does not like pizza."), Chunk("Mike is a big fan of pizza.")],
         ...     question="Who likes pizza?",

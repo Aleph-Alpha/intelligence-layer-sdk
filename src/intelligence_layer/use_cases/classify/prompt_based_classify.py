@@ -37,7 +37,7 @@ class PromptBasedClassify(Task[ClassifyInput, SingleLabelClassifyOutput]):
     explanation or examples.
 
     Args:
-        client: Aleph Alpha client instance for running model related API calls.
+        model: The model used throughout the task for model related API calls.
 
     Attributes:
         PROMPT_TEMPLATE_STR: The prompt template used for answering the question.

@@ -69,17 +69,15 @@ class RetrieverBasedQa(
     Example:
         >>> import os
         >>> from intelligence_layer.connectors import DocumentIndexClient
-        >>> from intelligence_layer.connectors import LimitedConcurrencyClient
         >>> from intelligence_layer.connectors import DocumentIndexRetriever
         >>> from intelligence_layer.core import InMemoryTracer
         >>> from intelligence_layer.use_cases import RetrieverBasedQa, RetrieverBasedQaInput, SingleChunkQa
 
 
         >>> token = os.getenv("AA_TOKEN")
-        >>> client = LimitedConcurrencyClient.from_token(token)
         >>> document_index = DocumentIndexClient(token)
         >>> retriever = DocumentIndexRetriever(document_index, "aleph-alpha", "wikipedia-de", 3)
-        >>> qa_task = SingleChunkQa(client)
+        >>> qa_task = SingleChunkQa()
         >>> task = RetrieverBasedQa(retriever, qa_task)
         >>> input_data = RetrieverBasedQaInput(question="When was Rome founded?")
         >>> tracer = InMemoryTracer()

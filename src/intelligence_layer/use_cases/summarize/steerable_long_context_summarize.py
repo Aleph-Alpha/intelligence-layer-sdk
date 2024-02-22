@@ -27,14 +27,11 @@ class SteerableLongContextSummarize(
 
     Generate a summary given an instruction setup.
 
-    Note:
-        - `model` provided should be a vanilla model, such as "luminous-base".
-
     Args:
+        model: A valid Aleph Alpha model.
         max_generated_tokens: The maximum number of tokens per sub-summary.
         max_tokens_per_chunk: The maximum number of tokens per chunk that the long text
             is divided into.
-        model: A valid Aleph Alpha model.
         overlap_length_tokens: The overlap between the chunks.
         intruction_configs: Dictionary of the prompts for each language.
     """

@@ -42,27 +42,19 @@ class LongContextQa(Task[LongContextQaInput, MultipleChunkQaOutput]):
         - `model` provided should be a control-type model.
 
     Args:
-        client: Aleph Alpha client instance for running model related API calls.
         max_tokens_in_chunk: The input text will be split into chunks to fit the context window.
             Used to tweak the length of the chunks.
         k: The number of top relevant chunks to retrieve.
-        model: A valid Aleph Alpha model name.
-        allowed_languages: List of languages to which the language detection is limited (ISO619).
-        fallback_language: The default language of the output.
-
+        model: The model used in the task.
 
     Example:
-        >>> import os
-        >>> from intelligence_layer.connectors import LimitedConcurrencyClient
         >>> from intelligence_layer.core import InMemoryTracer
         >>> from intelligence_layer.use_cases import LongContextQa, LongContextQaInput
 
 
-        >>> client = LimitedConcurrencyClient.from_token(os.getenv("AA_TOKEN"))
-        >>> task = LongContextQa(client)
-        >>> input = LongContextQaInput(
-        ...     text="Lengthy text goes here...", question="Where does the text go?"
-        ... )
+        >>> task = LongContextQa()
+        >>> input = LongContextQaInput(text="Lengthy text goes here...",
+        ...                             question="Where does the text go?")
         >>> tracer = InMemoryTracer()
         >>> output = task.run(input, tracer)
     """
