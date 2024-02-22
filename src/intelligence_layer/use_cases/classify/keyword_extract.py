@@ -5,8 +5,8 @@ from pydantic import BaseModel
 from intelligence_layer.core.chunk import Chunk
 from intelligence_layer.core.detect_language import Language, language_config
 from intelligence_layer.core.model import (
-    AlephAlphaModel,
     CompleteInput,
+    ControlModel,
     LuminousControlModel,
 )
 from intelligence_layer.core.task import Task
@@ -43,7 +43,7 @@ class KeywordExtractOutput(BaseModel):
 class KeywordExtract(Task[KeywordExtractInput, KeywordExtractOutput]):
     def __init__(
         self,
-        model: AlephAlphaModel = LuminousControlModel("luminous-base-control-20240215"),
+        model: ControlModel = LuminousControlModel("luminous-base-control-20240215"),
         instruct_configs: Mapping[Language, str] = INSTRUCT_CONFIGS,
         maximum_tokens: int = 32,
     ) -> None:

@@ -9,7 +9,7 @@ from aleph_alpha_client import (
 from aleph_alpha_client.explanation import TextScoreWithRaw
 from pydantic import BaseModel
 
-from intelligence_layer.core.model import AlephAlphaModel, ExplainInput, ExplainOutput
+from intelligence_layer.core.model import ControlModel, ExplainInput, ExplainOutput
 from intelligence_layer.core.prompt_template import (
     Cursor,
     PromptRange,
@@ -97,7 +97,7 @@ class TextHighlight(Task[TextHighlightInput, TextHighlightOutput]):
 
     def __init__(
         self,
-        model: AlephAlphaModel,
+        model: ControlModel,
         granularity: PromptGranularity = PromptGranularity.Sentence,
     ) -> None:
         super().__init__()

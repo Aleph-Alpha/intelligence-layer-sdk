@@ -1,8 +1,8 @@
 from typing import Mapping
 
 from intelligence_layer.core import (
-    AlephAlphaModel,
     CompleteInput,
+    ControlModel,
     Language,
     LuminousControlModel,
     Task,
@@ -31,7 +31,7 @@ class SteerableSingleChunkSummarize(Task[SingleChunkSummarizeInput, SummarizeOut
 
     def __init__(
         self,
-        model: AlephAlphaModel = LuminousControlModel("luminous-base-control-20240215"),
+        model: ControlModel = LuminousControlModel("luminous-base-control-20240215"),
         max_generated_tokens: int = 256,
         instruction_configs: Mapping[Language, str] = INSTRUCTION_CONFIGS,
     ) -> None:

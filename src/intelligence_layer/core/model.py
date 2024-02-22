@@ -118,7 +118,12 @@ class _Explain(Task[ExplainInput, ExplainOutput]):
         )
 
 
-class AlephAlphaModel(ABC):
+@lru_cache(maxsize=1)
+def limited_concurrency_client_from_token() -> LimitedConcurrencyClient:
+    return LimitedConcurrencyClient.from_token()
+
+
+class AlephAlphaModel:
     """Abstract base class for the implementation of any model that uses the Aleph Alpha client.
 
     Any class of Aleph Alpha model is implemented on top of this base class. Exposes methods that
@@ -135,7 +140,7 @@ class AlephAlphaModel(ABC):
     def __init__(
         self,
         name: str,
-        client: AlephAlphaClientProtocol,
+        client: AlephAlphaClientProtocol = limited_concurrency_client_from_token(),
     ) -> None:
         self.name = name
         self._client = client
@@ -148,15 +153,6 @@ class AlephAlphaModel(ABC):
     def complete(self, input: CompleteInput, tracer: Tracer) -> CompleteOutput:
         return self._complete.run(input, tracer)
 
-    @abstractmethod
-    def to_instruct_prompt(
-        self,
-        instruction: str,
-        input: Optional[str] = None,
-        response_prefix: Optional[str] = None,
-    ) -> RichPrompt:
-        ...
-
     def explain(self, input: ExplainInput, tracer: Tracer) -> ExplainOutput:
         return self._explain.run(input, tracer)
 
@@ -168,12 +164,18 @@ class AlephAlphaModel(ABC):
         return self.get_tokenizer().encode(text)
 
 
-@lru_cache(maxsize=1)
-def limited_concurrency_client_from_token() -> LimitedConcurrencyClient:
-    return LimitedConcurrencyClient.from_token()
+class ControlModel(ABC, AlephAlphaModel):
+    @abstractmethod
+    def to_instruct_prompt(
+        self,
+        instruction: str,
+        input: Optional[str] = None,
+        response_prefix: Optional[str] = None,
+    ) -> RichPrompt:
+        ...
 
 
-class LuminousControlModel(AlephAlphaModel):
+class LuminousControlModel(ControlModel):
     """An Aleph Alpha control model of the second generation.
 
     Args:

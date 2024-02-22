@@ -23,9 +23,9 @@ from .intelligence_app import (
 )
 from .intelligence_app import AuthService as AuthService
 from .intelligence_app import IntelligenceApp as IntelligenceApp
-from .model import AlephAlphaModel as AlephAlphaModel
 from .model import CompleteInput as CompleteInput
 from .model import CompleteOutput as CompleteOutput
+from .model import ControlModel as ControlModel
 from .model import LuminousControlModel as LuminousControlModel
 from .prompt_template import Cursor as Cursor
 from .prompt_template import PromptItemCursor as PromptItemCursor

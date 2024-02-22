@@ -2,7 +2,7 @@ from typing import Optional
 
 from pydantic import BaseModel
 
-from intelligence_layer.core.model import AlephAlphaModel, CompleteInput, CompleteOutput
+from intelligence_layer.core.model import CompleteInput, CompleteOutput, ControlModel
 from intelligence_layer.core.task import Task
 from intelligence_layer.core.tracer import TaskSpan
 
@@ -15,7 +15,7 @@ class InstructInput(BaseModel):
 
 
 class Instruct(Task[InstructInput, CompleteOutput]):
-    def __init__(self, model: AlephAlphaModel) -> None:
+    def __init__(self, model: ControlModel) -> None:
         super().__init__()
         self._model = model
 

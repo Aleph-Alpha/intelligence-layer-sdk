@@ -7,9 +7,9 @@ from pytest import fixture
 
 from intelligence_layer.core.echo import EchoInput, EchoTask, TokenWithLogProb
 from intelligence_layer.core.model import (
-    AlephAlphaModel,
     CompleteInput,
     CompleteOutput,
+    ControlModel,
     LuminousControlModel,
     _Complete,
 )
@@ -55,7 +55,7 @@ class ExpectTextAndTokenItemPromptCompletion(Task[CompleteInput, CompleteOutput]
 
 
 def tokenize_completion(
-    expected_output: str, aleph_alpha_model: AlephAlphaModel
+    expected_output: str, aleph_alpha_model: ControlModel
 ) -> Sequence[Token]:
     tokenizer = aleph_alpha_model.get_tokenizer()
     assert tokenizer.pre_tokenizer

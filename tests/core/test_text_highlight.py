@@ -3,7 +3,7 @@ from pytest import fixture, raises
 
 from intelligence_layer.connectors import AlephAlphaClientProtocol
 from intelligence_layer.core import (
-    AlephAlphaModel,
+    ControlModel,
     NoOpTracer,
     PromptTemplate,
     RichPrompt,
@@ -12,7 +12,7 @@ from intelligence_layer.core import (
 )
 
 
-class AlephAlphaVanillaModel(AlephAlphaModel):
+class AlephAlphaVanillaModel(ControlModel):
     def to_instruct_prompt(
         self,
         instruction: str,

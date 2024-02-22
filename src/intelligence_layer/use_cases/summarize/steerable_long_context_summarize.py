@@ -3,7 +3,7 @@ from typing import Mapping
 from intelligence_layer.core import ChunkInput, ChunkTask, Task, TaskSpan
 from intelligence_layer.core.chunk import ChunkOutput, ChunkOverlapTask
 from intelligence_layer.core.detect_language import Language
-from intelligence_layer.core.model import AlephAlphaModel, LuminousControlModel
+from intelligence_layer.core.model import ControlModel, LuminousControlModel
 from intelligence_layer.use_cases.summarize.steerable_single_chunk_summarize import (
     SteerableSingleChunkSummarize,
 )
@@ -41,7 +41,7 @@ class SteerableLongContextSummarize(
 
     def __init__(
         self,
-        model: AlephAlphaModel = LuminousControlModel("luminous-base-control-20240215"),
+        model: ControlModel = LuminousControlModel("luminous-base-control-20240215"),
         max_generated_tokens: int = 512,
         max_tokens_per_chunk: int = 1024,
         overlap_length_tokens: int = 0,

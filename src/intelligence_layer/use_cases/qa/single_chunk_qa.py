@@ -6,9 +6,9 @@ from pydantic import BaseModel
 from intelligence_layer.core.chunk import Chunk
 from intelligence_layer.core.detect_language import Language, language_config
 from intelligence_layer.core.model import (
-    AlephAlphaModel,
     CompleteInput,
     CompleteOutput,
+    ControlModel,
     LuminousControlModel,
 )
 from intelligence_layer.core.prompt_template import RichPrompt
@@ -111,9 +111,7 @@ class SingleChunkQa(Task[SingleChunkQaInput, SingleChunkQaOutput]):
 
     def __init__(
         self,
-        model: AlephAlphaModel = LuminousControlModel(
-            "luminous-supreme-control-20240215"
-        ),
+        model: ControlModel = LuminousControlModel("luminous-supreme-control-20240215"),
         text_highlight: TextHighlight = TextHighlight(
             LuminousControlModel("luminous-base-control-20240215")
         ),
@@ -172,12 +170,12 @@ class SingleChunkQa(Task[SingleChunkQaInput, SingleChunkQaOutput]):
 
     def _get_highlights(
         self,
-        prompt_with_metadata: RichPrompt,
+        rich_prompt: RichPrompt,
         completion: str,
         task_span: TaskSpan,
     ) -> Sequence[str]:
         highlight_input = TextHighlightInput(
-            rich_prompt=prompt_with_metadata,
+            rich_prompt=rich_prompt,
             target=completion,
             focus_ranges=frozenset({"input"}),
         )

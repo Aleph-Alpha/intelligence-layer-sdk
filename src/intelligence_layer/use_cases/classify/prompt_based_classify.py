@@ -6,7 +6,7 @@ from aleph_alpha_client import Tokens
 from pydantic import BaseModel
 
 from intelligence_layer.core.echo import EchoInput, EchoTask, TokenWithLogProb
-from intelligence_layer.core.model import AlephAlphaModel, LuminousControlModel
+from intelligence_layer.core.model import ControlModel, LuminousControlModel
 from intelligence_layer.core.prompt_template import RichPrompt
 from intelligence_layer.core.task import Task, Token
 from intelligence_layer.core.tracer import TaskSpan
@@ -64,7 +64,7 @@ Reply with only the class label."""
 
     def __init__(
         self,
-        model: AlephAlphaModel = LuminousControlModel("luminous-base-control-20240215"),
+        model: ControlModel = LuminousControlModel("luminous-base-control-20240215"),
     ) -> None:
         super().__init__()
         self._echo_task = EchoTask(model)

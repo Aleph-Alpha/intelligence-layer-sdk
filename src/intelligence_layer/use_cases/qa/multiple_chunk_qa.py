@@ -5,9 +5,9 @@ from pydantic import BaseModel
 from intelligence_layer.core.chunk import Chunk
 from intelligence_layer.core.detect_language import Language, language_config
 from intelligence_layer.core.model import (
-    AlephAlphaModel,
     CompleteInput,
     CompleteOutput,
+    ControlModel,
     LuminousControlModel,
 )
 from intelligence_layer.core.task import Task
@@ -153,9 +153,7 @@ class MultipleChunkQa(Task[MultipleChunkQaInput, MultipleChunkQaOutput]):
 
     def __init__(
         self,
-        model: AlephAlphaModel = LuminousControlModel(
-            "luminous-supreme-control-20240215"
-        ),
+        model: ControlModel = LuminousControlModel("luminous-supreme-control-20240215"),
         merge_answers_instruct_configs: Mapping[
             Language, MergeAnswersInstructConfig
         ] = MERGE_ANSWERS_INSTRUCT_CONFIGS,

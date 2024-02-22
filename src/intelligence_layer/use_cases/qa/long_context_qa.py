@@ -6,7 +6,7 @@ from intelligence_layer.connectors.retrievers.qdrant_in_memory_retriever import 
 )
 from intelligence_layer.core.chunk import Chunk, ChunkInput, ChunkTask
 from intelligence_layer.core.detect_language import DetectLanguage, Language
-from intelligence_layer.core.model import AlephAlphaModel, LuminousControlModel
+from intelligence_layer.core.model import ControlModel, LuminousControlModel
 from intelligence_layer.core.task import Task
 from intelligence_layer.core.tracer import TaskSpan
 from intelligence_layer.use_cases.qa.multiple_chunk_qa import (
@@ -71,9 +71,7 @@ class LongContextQa(Task[LongContextQaInput, MultipleChunkQaOutput]):
         self,
         max_tokens_per_chunk: int = 1024,
         k: int = 4,
-        model: AlephAlphaModel = LuminousControlModel(
-            "luminous-supreme-control-20240215"
-        ),
+        model: ControlModel = LuminousControlModel("luminous-supreme-control-20240215"),
     ):
         super().__init__()
         self._model = model
