@@ -217,30 +217,10 @@ class InstructComparisonArgillaEvaluationLogic(
         example: Example[InstructInput, None],
         *outputs: SuccessfulExampleOutput[CompleteOutput],
     ) -> RecordDataSequence:
-        def create_record_data(
-            first: SuccessfulExampleOutput[CompleteOutput],
-            second: SuccessfulExampleOutput[CompleteOutput],
-        ) -> RecordData:
-            if random.choice([True, False]):
-                first, second = second, first
-            return RecordData(
-                content={
-                    self._fields["KEY_INSTRUCTION"].name: example.input.instruction,
-                    self._fields["KEY_INPUT"].name: example.input.input or "",
-                    self._fields["KEY_RESPONSE_1"].name: first.output.completion,
-                    self._fields["KEY_RESPONSE_2"].name: second.output.completion,
-                },
-                example_id=example.id,
-                metadata={
-                    self._fields["KEY_RESPONSE_1"].name: first.run_id,
-                    self._fields["KEY_RESPONSE_2"].name: second.run_id,
-                },
-            )
-
         pairs = combinations(outputs, 2)
         return RecordDataSequence(
             records=[
-                create_record_data(first, second)
+                self._create_record_data(example, first, second)
                 for [first, second] in pairs
                 if self._high_priority_runs is None
                 or any(
@@ -248,6 +228,28 @@ class InstructComparisonArgillaEvaluationLogic(
                     for run_id in [first.run_id, second.run_id]
                 )
             ]
+        )
+
+    def _create_record_data(
+        self,
+        example: Example[InstructInput, None],
+        first: SuccessfulExampleOutput[CompleteOutput],
+        second: SuccessfulExampleOutput[CompleteOutput],
+    ) -> RecordData:
+        if random.choice([True, False]):
+            first, second = second, first
+        return RecordData(
+            content={
+                self._fields["KEY_INSTRUCTION"].name: example.input.instruction,
+                self._fields["KEY_INPUT"].name: example.input.input or "",
+                self._fields["KEY_RESPONSE_1"].name: first.output.completion,
+                self._fields["KEY_RESPONSE_2"].name: second.output.completion,
+            },
+            example_id=example.id,
+            metadata={
+                self._fields["KEY_RESPONSE_1"].name: first.run_id,
+                self._fields["KEY_RESPONSE_2"].name: second.run_id,
+            },
         )
 
 

@@ -57,7 +57,7 @@ def workspace_id(argilla_client: DefaultArgillaClient) -> Iterable[str]:
 
 
 @fixture
-def qa_dataset_id(argilla_client: ArgillaClient, workspace_id: str) -> str:
+def qa_dataset_id(argilla_client: DefaultArgillaClient, workspace_id: str) -> str:
     dataset_name = "test-dataset"
     fields = [
         Field(name="question", title="Question"),
@@ -129,3 +129,52 @@ def test_evaluations_returns_evaluation_results(
     assert sorted(actual_evaluations, key=lambda e: e.record_id) == sorted(
         evaluations, key=lambda e: e.record_id
     )
+
+
+def test_setup_is_clean(
+    argilla_client: DefaultArgillaClient,
+    qa_dataset_id: str,
+) -> None:
+    assert len(list(argilla_client.records(qa_dataset_id))) == 0
+
+
+def test_add_record_adds_multiple_records_with_same_content(
+    argilla_client: DefaultArgillaClient,
+    qa_dataset_id: str,
+) -> None:
+    first_data = RecordData(
+        content={"question": "What is 1+1?", "answer": "1"},
+        example_id="0",
+        metadata={"first": "1", "second": "2"},
+    )
+    second_data = RecordData(
+        content={"question": "What is 1+1?", "answer": "2"},
+        example_id="0",
+        metadata={"first": "2", "second": "1"},
+    )
+
+    argilla_client.add_record(qa_dataset_id, first_data)
+    argilla_client.add_record(qa_dataset_id, second_data)
+    assert len(list(argilla_client.records(qa_dataset_id))) == 2
+
+
+def test_add_record_does_not_put_example_id_into_metadata(
+    argilla_client: DefaultArgillaClient,
+    qa_dataset_id: str,
+) -> None:
+    first_data = RecordData(
+        content={"question": "What is 1+1?", "answer": "1"},
+        example_id="0",
+        metadata={"first": "1", "second": "2"},
+    )
+    second_data = RecordData(
+        content={"question": "What is 1+1?", "answer": "2"},
+        example_id="0",
+        metadata={"first": "2", "second": "1"},
+    )
+
+    argilla_client.add_record(qa_dataset_id, first_data)
+    argilla_client.add_record(qa_dataset_id, second_data)
+    records = list(argilla_client.records(qa_dataset_id))
+    for record in records:
+        assert "example_id" not in record.metadata.keys()

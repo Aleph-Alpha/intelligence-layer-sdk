@@ -241,7 +241,7 @@ class DefaultArgillaClient(ArgillaClient):
 
     def evaluations(self, dataset_id: str) -> Iterable[ArgillaEvaluation]:
         def to_responses(
-            json_responses: Sequence[Mapping[str, Any]]
+            json_responses: Sequence[Mapping[str, Any]],
         ) -> Mapping[str, int | float | bool | str]:
             return {
                 question_name: json_response["value"]
@@ -275,15 +275,19 @@ class DefaultArgillaClient(ArgillaClient):
 
     def records(self, dataset_id: str) -> Iterable[Record]:
         json_records = self._list_records(dataset_id)
-        return (
-            Record(
+
+        def create_record(json_record: Mapping[str, Any]) -> Record:
+            metadata = json_record["metadata"]
+            example_id = json_record["metadata"]["example_id"]
+            del metadata["example_id"]
+            return Record(
                 id=json_record["id"],
                 content=json_record["fields"],
-                example_id=json_record["external_id"],
-                metadata=json_record["metadata"],
+                example_id=example_id,
+                metadata=metadata,
             )
-            for json_record in json_records
-        )
+
+        return (create_record(json_record) for json_record in json_records)
 
     def create_evaluation(self, evaluation: ArgillaEvaluation) -> None:
         response = self.session.post(
@@ -407,7 +411,7 @@ class DefaultArgillaClient(ArgillaClient):
         url = self.api_url + f"api/v1/datasets/{dataset_id}/records"
         data = {
             "items": [
-                {"fields": content, "metadata": metadata, "external_id": example_id}
+                {"fields": content, "metadata": {**metadata, "example_id": example_id}}
             ]
         }
         response = self.session.post(url, json=data)
