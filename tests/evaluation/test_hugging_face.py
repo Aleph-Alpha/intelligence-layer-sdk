@@ -1,8 +1,8 @@
 import os
 
-from dotenv import load_dotenv
 import pytest
-from pytest import fixture
+from dotenv import load_dotenv
+from pytest import MarkDecorator, fixture
 
 from intelligence_layer.evaluation import Example, HuggingFaceDatasetRepository
 
@@ -32,11 +32,12 @@ def example2() -> Example[str, str]:
     return Example(input="ho", expected_output="hey", id="1")
 
 
-def requires_token():
+def requires_token() -> MarkDecorator:
     return pytest.mark.skipif(
         "HUGGING_FACE_TOKEN" in os.environ.keys(),
         reason="HUGGING_FACE_TOKEN not set, necessary for for current test",
     )
+
 
 @requires_token()
 def test_hf_database_non_existing(hf_repository: HuggingFaceDatasetRepository) -> None:
@@ -47,6 +48,7 @@ def test_hf_database_non_existing(hf_repository: HuggingFaceDatasetRepository) -
     datasets = list(hf_repository.list_datasets())
     assert ".gitattributes" not in datasets
     assert "README.md" not in datasets
+
 
 @requires_token()
 def test_hf_database_operations(
