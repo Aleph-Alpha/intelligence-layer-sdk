@@ -47,9 +47,8 @@ class QdrantInMemoryRetriever(BaseRetriever[int]):
         distance_metric: The distance metric to be used for vector comparison.
 
     Example:
-        >>> import os
         >>> from intelligence_layer.connectors import LimitedConcurrencyClient, Document, QdrantInMemoryRetriever
-        >>> client = LimitedConcurrencyClient.from_env(os.getenv("AA_TOKEN"), os.getenv("CLIENT_URL"))
+        >>> client = LimitedConcurrencyClient.from_env()
         >>> documents = [Document(text=t) for t in ["I do not like rain.", "Summer is warm.", "We are so back."]]
         >>> retriever = QdrantInMemoryRetriever(client, documents, 5)
         >>> query = "Do you like summer?"
