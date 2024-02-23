@@ -4,4 +4,4 @@ ProjectRoot="$(cd $(dirname "$0")/.. && pwd -P)"
 
 cd "$ProjectRoot"
 
-(cd docs && poetry run make doctest)
+(set -a && source .env && set +a && cd docs && poetry run make doctest)

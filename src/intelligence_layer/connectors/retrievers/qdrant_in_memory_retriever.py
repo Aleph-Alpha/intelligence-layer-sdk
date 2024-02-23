@@ -49,7 +49,7 @@ class QdrantInMemoryRetriever(BaseRetriever[int]):
     Example:
         >>> import os
         >>> from intelligence_layer.connectors import LimitedConcurrencyClient, Document, QdrantInMemoryRetriever
-        >>> client = LimitedConcurrencyClient.from_token(os.getenv("AA_TOKEN"))
+        >>> client = LimitedConcurrencyClient.from_env(os.getenv("AA_TOKEN"), os.getenv("CLIENT_URL"))
         >>> documents = [Document(text=t) for t in ["I do not like rain.", "Summer is warm.", "We are so back."]]
         >>> retriever = QdrantInMemoryRetriever(client, documents, 5)
         >>> query = "Do you like summer?"

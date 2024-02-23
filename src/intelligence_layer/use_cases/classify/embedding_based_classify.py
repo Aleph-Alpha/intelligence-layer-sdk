@@ -60,7 +60,7 @@ class QdrantSearch(Task[QdrantSearchInput, SearchOutput[int]]):
         ... )
         >>> from qdrant_client.http.models import models
 
-        >>> client = LimitedConcurrencyClient.from_token(os.getenv("AA_TOKEN"))
+        >>> client = LimitedConcurrencyClient.from_env(os.getenv("AA_TOKEN"), os.getenv("CLIENT_URL"))
         >>> documents = [
         ...     Document(
         ...         text="West and East Germany reunited in 1990.", metadata={"title": "Germany"}
@@ -155,7 +155,7 @@ class EmbeddingBasedClassify(Task[ClassifyInput, MultiLabelClassifyOutput]):
         ...         ],
         ...     ),
         ... ]
-        >>> client = LimitedConcurrencyClient.from_token(getenv("AA_TOKEN"))
+        >>> client = LimitedConcurrencyClient.from_env(getenv("AA_TOKEN"))
         >>> task = EmbeddingBasedClassify(client, labels_with_examples)
         >>> input = ClassifyInput(chunk=Chunk("This is a happy text."), labels=frozenset({"positive", "negative"}))
         >>> tracer = InMemoryTracer()

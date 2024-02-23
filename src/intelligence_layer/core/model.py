@@ -122,8 +122,8 @@ class _Explain(Task[ExplainInput, ExplainOutput]):
 
 
 @lru_cache(maxsize=1)
-def limited_concurrency_client_from_token() -> LimitedConcurrencyClient:
-    return LimitedConcurrencyClient.from_token()
+def limited_concurrency_client_from_env() -> LimitedConcurrencyClient:
+    return LimitedConcurrencyClient.from_env()
 
 
 class AlephAlphaModel:
@@ -143,7 +143,7 @@ class AlephAlphaModel:
     def __init__(
         self,
         name: str,
-        client: AlephAlphaClientProtocol = limited_concurrency_client_from_token(),
+        client: AlephAlphaClientProtocol = limited_concurrency_client_from_env(),
     ) -> None:
         self.name = name
         self._client = client
@@ -206,7 +206,7 @@ class LuminousControlModel(ControlModel):
             "luminous-extended-control-20240215",
             "luminous-supreme-control-20240215",
         ],
-        client: AlephAlphaClientProtocol = limited_concurrency_client_from_token(),
+        client: AlephAlphaClientProtocol = limited_concurrency_client_from_env(),
     ) -> None:
         super().__init__(name, client)
 

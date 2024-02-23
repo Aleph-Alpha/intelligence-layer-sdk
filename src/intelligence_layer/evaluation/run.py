@@ -34,7 +34,7 @@ def create_task(factory: Any) -> Any:
     try:
         return factory()
     except TypeError:
-        return factory(LimitedConcurrencyClient.from_token())
+        return factory(LimitedConcurrencyClient.from_env())
 
 
 def parse_args(cli_args: Sequence[str]) -> Namespace:
