@@ -150,6 +150,19 @@ To support these techniques the Intelligence Layer differantiates between 3 cons
   metrics. Aggregating over several evaluation runs supports amending a previous comparison result with
   comparisons of new runs without the need to re-execute the previous comparisons again.
 
+The following table shows how these three steps are represented in code:
+
+| Step    | Executor | Custom Logic | Repository    |
+|---------|----------|--------------|---------------|
+| 1. Run  | `Runner` | `Task`       | `RunRepository` |
+| 2. Evaluate | `Evaluator` | `EvaluationLogic` | `EvaluationRepository` |
+| 3. Aggregate | `Aggregator` | `AggregationLogic` | `AggregationRepository` |
+
+The column
+- Executor lists concrete implementations provided by the Intelligence Layer
+- Custom Logic lists abstract classes that need to be implemented with the custom logic
+- Repositors lists abstracted classes for storing intermediate results. The Intelligence Layer provides
+  different implementations for these. See the next section for details.
 
 ### Data Storage
 
