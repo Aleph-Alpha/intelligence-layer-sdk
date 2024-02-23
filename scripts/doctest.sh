@@ -9,7 +9,5 @@ if [ -f .env ]; then
     set -a # automatically export all variables
     source .env
     set +a
-else
-    export CLIENT_URL="https://api.aleph-alpha.com"
 fi
 (cd docs && poetry run make doctest)
