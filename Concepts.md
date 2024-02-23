@@ -142,11 +142,11 @@ The Intelligence Layer supports different kinds of evaluation techniques. Most i
 
 To support these techniques the Intelligence Layer differantiates between 3 consecutive steps:
 
-- Run a task by feeding it all inputs of a dataset and collecting all outputs
-- Evaluate the outputs of one or several
+1. Run a task by feeding it all inputs of a dataset and collecting all outputs
+2. Evaluate the outputs of one or several
   runs and produce an evaluation result for each example. Typically a single run is evaluated if absolute
   metrics can be computed and several runs are evaluated when the outputs of runs shall be compared.
-- Aggregate the evaluation results of one or several evaluation runs into a single object containing the aggregated
+3. Aggregate the evaluation results of one or several evaluation runs into a single object containing the aggregated
   metrics. Aggregating over several evaluation runs supports amending a previous comparison result with
   comparisons of new runs without the need to re-execute the previous comparisons again.
 
@@ -159,14 +159,27 @@ The following table shows how these three steps are represented in code:
 | 3. Aggregate | `Aggregator` | `AggregationLogic` | `AggregationRepository` |
 
 The column
-- Executor lists concrete implementations provided by the Intelligence Layer
-- Custom Logic lists abstract classes that need to be implemented with the custom logic
-- Repositors lists abstracted classes for storing intermediate results. The Intelligence Layer provides
+- Executor lists concrete implementations provided by the Intelligence Layer.
+- Custom Logic lists abstract classes that need to be implemented with the custom logic.
+- Repository lists abstract classes for storing intermediate results. The Intelligence Layer provides
   different implementations for these. See the next section for details.
 
 ### Data Storage
 
-- DatasetRepository
-- RunRepository
-- EvaluationRepository
-- AggregationRepository
+During an evaluation process a lot of intermediate data is created before the final aggregated result can be produced.
+To avoid that expensive computations have to be repeated if new results should be produced based on previous ones
+all intermediate results are persisted. For this the different executor-classes make use of repositories.
+
+There are the following Repositories:
+
+- The `DatasetRepository` offers methods to manage datasets. The `Runner` uses it to read all examples of a dataset to feed
+  then to the `Task`.
+- The `RunRepository` is responsible for storing a task's output (in form of a `ExampleOutput`) for each example of a dataset
+  which are created when a `Runner`
+  runs a task using this dataset. At the end of a run a `RunOverview` is stored containing some metadata concerning the run.
+  The `Evaluator` reads these outputs given a list of runs it should evaluate to create an evaluation
+  result for each example of the dataset.
+- The `EvaluationRepository` enables the `Evaluator` to store the individual evaluation result (in form of an `ExampleEvaluation`)
+  for each example and an `EvaluationOverview`
+  and makes them available to the `Aggregator`.
+- The `AggregationRepository` stores the `AggregationOverview` containing the aggregated metrics on request of the `Aggregator`.
