@@ -91,6 +91,23 @@ def qa_records(
     return records
 
 
+@fixture
+def long_qa_records(
+    argilla_client: ArgillaClient, qa_dataset_id: str
+) -> Sequence[RecordData]:
+    records = [
+        RecordData(
+            content={"question": "?", "answer": str(i)},
+            example_id=str(i),
+            metadata={"model_1": "luminous-base"},
+        )
+        for i in range(1024)
+    ]
+    for record in records:
+        argilla_client.add_record(qa_dataset_id, record)
+    return records
+
+
 def test_records_returns_records_previously_added(
     argilla_client: DefaultArgillaClient,
     qa_dataset_id: str,
@@ -149,9 +166,9 @@ def test_split_dataset_works(
             == 12
         )
 
-    new_metadata = [record.metadata for record in all_records]
-    for old_metadata, new_metadata in zip(record_metadata, new_metadata):
-        del new_metadata["split"]
+    new_metadata_list = [record.metadata for record in all_records]
+    for old_metadata, new_metadata in zip(record_metadata, new_metadata_list):
+        del new_metadata["split"]  # type: ignore
         assert old_metadata == new_metadata
 
 
@@ -235,3 +252,27 @@ def test_add_record_does_not_put_example_id_into_metadata(
     for record in records:
         assert "example_id" not in record.metadata.keys()
         assert record.example_id == "0"
+
+
+def test_split_dataset_can_split_long_dataset(
+    argilla_client: DefaultArgillaClient,
+    qa_dataset_id: str,
+    long_qa_records: Sequence[RecordData],
+) -> None:
+    n_splits = 2
+    record_metadata = [
+        record.metadata for record in argilla_client.records(qa_dataset_id)
+    ]
+    argilla_client.split_dataset(qa_dataset_id, n_splits)
+
+    all_records = list(argilla_client.records(qa_dataset_id))
+    for split in range(n_splits):
+        assert (
+            sum([record.metadata["split"] == str(split) for record in all_records])
+            == 512
+        )
+
+    new_metadata_list = [record.metadata for record in all_records]
+    for old_metadata, new_metadata in zip(record_metadata, new_metadata_list):
+        del new_metadata["split"]  # type: ignore
+        assert old_metadata == new_metadata

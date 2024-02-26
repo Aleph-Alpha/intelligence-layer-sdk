@@ -75,6 +75,9 @@ class StubArgillaClient(ArgillaClient):
             for _ in dataset
         ]
 
+    def split_dataset(self, dataset_id: str, n_splits: int) -> None:
+        raise NotImplementedError
+
 
 class DummyStringTaskArgillaAggregationLogic(
     AggregationLogic[
