@@ -49,6 +49,7 @@ jobs:
         env:
           AA_TOKEN: ${{ secrets.AA_TOKEN }}
           HUGGING_FACE_TOKEN: ${{ secrets.HUGGING_FACE_TOKEN }}
+          CLIENT_URL: "https://api.aleph-alpha.com"
         run: ./scripts/doctest.sh
 
   lint:
@@ -145,6 +146,7 @@ jobs:
           HUGGING_FACE_TOKEN: ${{ secrets.HUGGING_FACE_TOKEN }}
           ARGILLA_API_URL: "http://localhost:6900/"
           ARGILLA_API_KEY: "argilla.apikey"
+          CLIENT_URL: "https://api.aleph-alpha.com"
         run: |
           ./scripts/test.sh
 
@@ -199,5 +201,6 @@ jobs:
           HUGGING_FACE_TOKEN: ${{ secrets.HUGGING_FACE_TOKEN }}
           ARGILLA_API_URL: "http://localhost:6900/"
           ARGILLA_API_KEY: "argilla.apikey"
+          CLIENT_URL: "https://api.aleph-alpha.com"
         run: |
           ./scripts/notebook_runner.sh

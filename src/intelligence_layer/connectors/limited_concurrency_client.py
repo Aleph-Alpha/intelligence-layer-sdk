@@ -113,22 +113,30 @@ class LimitedConcurrencyClient:
 
     @classmethod
     @lru_cache(maxsize=1)
-    def from_token(
-        cls, token: Optional[str] = None, host: str = "https://api.aleph-alpha.com"
+    def from_env(
+        cls, token: Optional[str] = None, host: Optional[str] = None
     ) -> "LimitedConcurrencyClient":
         """This is a helper method to construct your client with default settings from a token and host
 
         Args:
             token: An Aleph Alpha token to instantiate the client. If no token is provided,
                 this method tries to fetch it from the environment under the name of "AA_TOKEN".
-            host: The host that is used for requests. Defaults to the Aleph Alpha Api.
+            host: The host that is used for requests. If no token is provided,
+                this method tries to fetch it from the environment under the naem of "CLIENT_URL".
+                If this is not present, it defaults to the Aleph Alpha Api.
                 If you have an on premise setup, change this to your host URL.
         """
-        if not token:
+        if token is None:
             token = getenv("AA_TOKEN")
             assert (
                 token
             ), "Define environment variable AA_TOKEN with a valid token for the Aleph Alpha API"
+        if host is None:
+            host = getenv("CLIENT_URL")
+            if not host:
+                host = "https://api.aleph-alpha.com"
+                print(f"No CLIENT_URL specified in environment, using default: {host}.")
+
         return cls(Client(token, host=host))
 
     def complete(

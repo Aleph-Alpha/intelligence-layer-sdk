@@ -60,7 +60,7 @@ class QdrantSearch(Task[QdrantSearchInput, SearchOutput[int]]):
         ... )
         >>> from qdrant_client.http.models import models
 
-        >>> client = LimitedConcurrencyClient.from_token(os.getenv("AA_TOKEN"))
+        >>> client = LimitedConcurrencyClient.from_env()
         >>> documents = [
         ...     Document(
         ...         text="West and East Germany reunited in 1990.", metadata={"title": "Germany"}
@@ -128,7 +128,6 @@ class EmbeddingBasedClassify(Task[ClassifyInput, MultiLabelClassifyOutput]):
         METADATA_LABEL_NAME: The metadata field name for 'label' in the retriever.
 
     Example:
-        >>> from os import getenv
         >>> from intelligence_layer.connectors.limited_concurrency_client import (
         ...     LimitedConcurrencyClient,
         ... )
@@ -155,7 +154,7 @@ class EmbeddingBasedClassify(Task[ClassifyInput, MultiLabelClassifyOutput]):
         ...         ],
         ...     ),
         ... ]
-        >>> client = LimitedConcurrencyClient.from_token(getenv("AA_TOKEN"))
+        >>> client = LimitedConcurrencyClient.from_env()
         >>> task = EmbeddingBasedClassify(client, labels_with_examples)
         >>> input = ClassifyInput(chunk=Chunk("This is a happy text."), labels=frozenset({"positive", "negative"}))
         >>> tracer = InMemoryTracer()
