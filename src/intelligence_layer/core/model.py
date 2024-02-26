@@ -138,15 +138,18 @@ class AlephAlphaModel:
         name: The name of a valid model that can access an API using an implementation
             of the AlephAlphaClientProtocol.
         client: Aleph Alpha client instance for running model related API calls.
+            Defaults to the :class:`LimitedConcurrencyClient`
     """
 
     def __init__(
         self,
         name: str,
-        client: AlephAlphaClientProtocol = limited_concurrency_client_from_env(),
+        client: Optional[AlephAlphaClientProtocol] = None,
     ) -> None:
         self.name = name
-        self._client = client
+        self._client = (
+            limited_concurrency_client_from_env() if client is None else client
+        )
         self._complete: Task[CompleteInput, CompleteOutput] = _Complete(
             self._client, name
         )
@@ -186,6 +189,7 @@ class LuminousControlModel(ControlModel):
     Args:
         name: The name of a valid model second generation control model.
         client: Aleph Alpha client instance for running model related API calls.
+            Defaults to the :class:`LimitedConcurrencyClient`
     """
 
     INSTRUCTION_PROMPT_TEMPLATE = PromptTemplate(
@@ -206,7 +210,7 @@ class LuminousControlModel(ControlModel):
             "luminous-extended-control-20240215",
             "luminous-supreme-control-20240215",
         ],
-        client: AlephAlphaClientProtocol = limited_concurrency_client_from_env(),
+        client: Optional[AlephAlphaClientProtocol] = None,
     ) -> None:
         super().__init__(name, client)
 
