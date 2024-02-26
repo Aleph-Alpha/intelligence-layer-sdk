@@ -1,5 +1,14 @@
 # Concepts
 
+The main focus of the Intelligence Layer is to enable developers to
+
+- implement their LLM use cases by building upon existing and composing existing functionality and providing insights into
+  the runtime behavior of these
+- iteratively improve their implementations or compare them to existing implementations by evaluating them against
+  a given set of example
+
+Both focus points are described in more detail in the following sections.
+
 ## Task
 
 At the heart of the Intelligence Layer is a `Task`. A task is actually a pretty generic concept that just
