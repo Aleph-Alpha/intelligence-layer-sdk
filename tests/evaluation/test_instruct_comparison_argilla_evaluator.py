@@ -76,6 +76,9 @@ class ArgillaFake(ArgillaClient):
     def record_data(self, dataset_id: str) -> Sequence[RecordData]:
         return self.records.get(dataset_id, [])
 
+    def split_dataset(self, dataset_id: str, n_splits: int) -> None:
+        raise NotImplementedError
+
 
 @fixture
 def argilla_fake() -> ArgillaClient:

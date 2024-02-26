@@ -1,8 +1,10 @@
+import itertools
 import os
 from abc import ABC, abstractmethod
 from http import HTTPStatus
-from itertools import count
+from itertools import chain, count, islice
 from typing import Any, Callable, Iterable, Mapping, Optional, Sequence, Union, cast
+from uuid import uuid4
 
 from pydantic import BaseModel
 from pydantic import Field as PydanticField
@@ -133,6 +135,16 @@ class ArgillaClient(ABC):
         """
         ...
 
+    @abstractmethod
+    def split_dataset(self, dataset_id: str, n_splits: int) -> None:
+        """Adds a new metadata property to the dataset and assigns a split to each record.
+
+        Args:
+            dataset_id: the id of the dataset
+            n_splits: the number of splits to create
+        """
+        ...
+
 
 class DefaultArgillaClient(ArgillaClient):
     def __init__(
@@ -256,6 +268,72 @@ class DefaultArgillaClient(ArgillaClient):
                 },
             )
         )
+
+    def split_dataset(self, dataset_id: str, n_splits: int) -> None:
+        self._create_metadata_property(dataset_id, n_splits)
+        self._add_split_to_records(dataset_id, n_splits)
+
+    def _create_metadata_property(self, dataset_id: str, n_splits: int) -> None:
+        response = self.session.get(
+            f"http://localhost:6900/api/v1/me/datasets/{dataset_id}/metadata-properties"
+        )
+        response.raise_for_status()
+        existing_split_id = [
+            property["id"]
+            for property in response.json()["items"]
+            if property["name"] == "split"
+        ]
+        if len(existing_split_id) > 0:
+            self.session.delete(
+                f"http://localhost:6900/api/v1/metadata-properties/{existing_split_id[0]}"
+            )
+
+        data = {
+            "id": str(uuid4()),
+            "name": "split",
+            "title": "split",
+            "settings": {"type": "terms", "values": [str(i) for i in range(n_splits)]},
+            "visible_for_annotators": True,
+        }
+
+        response = self.session.post(
+            f"http://localhost:6900/api/v1/datasets/{dataset_id}/metadata-properties",
+            json=data,
+        )
+        response.raise_for_status()
+
+    def _add_split_to_records(self, dataset_id: str, n_splits: int) -> None:
+        records = self._list_records(dataset_id)
+        splits = itertools.cycle(range(n_splits))
+        records_and_splits = zip(records, splits)
+
+        def chunks(
+            iterator: Iterable[tuple[Mapping[str, Any], int]], size: int
+        ) -> Iterable[Iterable[tuple[Mapping[str, Any], int]]]:
+            for first in iterator:
+                yield chain([first], islice(iterator, size - 1))
+
+        for chunk in chunks(
+            records_and_splits, size=1000
+        ):  # argilla has a limit of 1000 records per request
+            data = {
+                "items": [
+                    {
+                        "id": record["id"],
+                        "metadata": {
+                            **record["metadata"],
+                            "example_id": record["example_id"],
+                            "split": str(split),
+                        },
+                    }
+                    for record, split in chunk
+                ]
+            }
+            response = self.session.patch(
+                f"http://localhost:6900/api/v1/datasets/{dataset_id}/records",
+                json=data,
+            )
+            response.raise_for_status()
 
     def _evaluations(self, dataset_id: str) -> Mapping[str, Any]:
         response = self.session.get(
@@ -403,7 +481,10 @@ class DefaultArgillaClient(ArgillaClient):
         url = self.api_url + f"api/v1/datasets/{dataset_id}/records"
         data = {
             "items": [
-                {"fields": content, "metadata": {**metadata, "example_id": example_id}}
+                {
+                    "fields": content,
+                    "metadata": {**metadata, "example_id": example_id},
+                }
             ]
         }
         response = self.session.post(url, json=data)
