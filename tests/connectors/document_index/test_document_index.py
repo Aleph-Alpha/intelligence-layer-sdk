@@ -6,6 +6,7 @@ from pytest import fixture, raises
 from intelligence_layer.connectors.document_index.document_index import (
     CollectionPath,
     DocumentContents,
+    DocumentFilterQueryParams,
     DocumentIndexClient,
     DocumentPath,
     ResourceNotFound,
@@ -118,7 +119,7 @@ def test_document_index_deletes_document(
 
     document_index.add_document(document_path, document_contents)
     document_index.delete_document(document_path)
-    document_paths = document_index.list_documents(document_path.collection_path)
+    document_paths = document_index.documents(document_path.collection_path)
 
     assert not any(d.document_path == document_path for d in document_paths)
 
@@ -145,3 +146,35 @@ def test_document_path_from_string() -> None:
     )
     with raises(AssertionError):
         DocumentPath.from_slash_separated_str("a/c")
+
+
+def test_document_list_all_documents(
+    document_index: DocumentIndexClient, collection_path: CollectionPath
+) -> None:
+    filter_result = document_index.documents(collection_path)
+
+    assert len(filter_result) == 2
+
+
+def test_document_list_max_n_documents(
+    document_index: DocumentIndexClient, collection_path: CollectionPath
+) -> None:
+    filter_query_params = DocumentFilterQueryParams(max_documents=1, starts_with=None)
+
+    filter_result = document_index.documents(collection_path, filter_query_params)
+
+    assert len(filter_result) == 1
+
+
+def test_document_list_documents_with_matching_prefix(
+    document_index: DocumentIndexClient, collection_path: CollectionPath
+) -> None:
+    prefix = "Example"
+    filter_query_params = DocumentFilterQueryParams(
+        max_documents=None, starts_with=prefix
+    )
+
+    filter_result = document_index.documents(collection_path, filter_query_params)
+
+    assert len(filter_result) == 1
+    assert filter_result[0].document_path.document_name.startswith(prefix)

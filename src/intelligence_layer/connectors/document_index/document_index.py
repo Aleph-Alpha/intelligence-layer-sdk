@@ -1,7 +1,7 @@
 from datetime import datetime
 from http import HTTPStatus
 from json import dumps
-from typing import Any, Mapping, Sequence
+from typing import Annotated, Any, Mapping, Optional, Sequence
 
 import requests
 from pydantic import BaseModel, Field
@@ -77,7 +77,7 @@ class DocumentPath(BaseModel):
     document_name: str
 
     @classmethod
-    def _from_json(cls, document_path_json: Mapping[str, str]) -> "DocumentPath":
+    def from_json(cls, document_path_json: Mapping[str, str]) -> "DocumentPath":
         return cls(
             collection_path=CollectionPath(
                 namespace=document_path_json["namespace"],
@@ -117,11 +117,11 @@ class DocumentInfo(BaseModel):
     version: int
 
     @classmethod
-    def _from_list_documents_response(
+    def from_list_documents_response(
         cls, list_documents_response: Mapping[str, Any]
     ) -> "DocumentInfo":
         return cls(
-            document_path=DocumentPath._from_json(list_documents_response["path"]),
+            document_path=DocumentPath.from_json(list_documents_response["path"]),
             created=datetime.strptime(
                 list_documents_response["created_timestamp"], "%Y-%m-%dT%H:%M:%S.%fZ"
             ),
@@ -145,6 +145,18 @@ class SearchQuery(BaseModel):
     min_score: float = Field(..., ge=0.0, le=1.0)
 
 
+class DocumentFilterQueryParams(BaseModel):
+    """Query to filter documents by
+
+    Args:
+        max_documents: Maximum number of documents to display.
+        starts_with: Document title prefix/substring to search by.
+    """
+
+    max_documents: Optional[Annotated[int, Field(default=25, ge=0)]]
+    starts_with: Optional[str]
+
+
 class DocumentSearchResult(BaseModel):
     """Result of a search query for one individual section.
 
@@ -165,7 +177,7 @@ class DocumentSearchResult(BaseModel):
         cls, search_response: Mapping[str, Any]
     ) -> "DocumentSearchResult":
         return cls(
-            document_path=DocumentPath._from_json(search_response["document_path"]),
+            document_path=DocumentPath.from_json(search_response["document_path"]),
             section=search_response["section"][0]["text"],
             score=search_response["score"],
         )
@@ -279,15 +291,6 @@ class DocumentIndexClient:
             **({"Authorization": f"Bearer {token}"} if token is not None else {}),
         }
 
-    def _raise_for_status(self, response: requests.Response) -> None:
-        try:
-            response.raise_for_status()
-        except HTTPError:
-            exception_factory = _status_code_to_exception.get(
-                HTTPStatus(response.status_code), InternalError
-            )
-            raise exception_factory(response.text, HTTPStatus(response.status_code))
-
     def list_namespaces(self) -> Sequence[str]:
         """Lists all available namespaces.
 
@@ -392,7 +395,13 @@ class DocumentIndexClient:
         self._raise_for_status(response)
         return DocumentContents._from_modalities_json(response.json())
 
-    def list_documents(self, collection_path: CollectionPath) -> Sequence[DocumentInfo]:
+    def documents(
+        self,
+        collection_path: CollectionPath,
+        filter_query_params: DocumentFilterQueryParams = DocumentFilterQueryParams(
+            max_documents=None, starts_with=None
+        ),
+    ) -> Sequence[DocumentInfo]:
         """List all documents within a collection.
 
         Note:
@@ -400,15 +409,22 @@ class DocumentIndexClient:
 
         Args:
             collection_path: Path to the collection of interest.
+            filter_query_params: Query parameters to filter the results.
 
         Returns:
             Overview of all documents within the collection.
         """
-
         url = f"{self._base_document_index_url}/collections/{collection_path.namespace}/{collection_path.collection}/docs"
-        response = requests.get(url, headers=self.headers)
+
+        query_params = {}
+        if filter_query_params.max_documents:
+            query_params["max_documents"] = str(filter_query_params.max_documents)
+        if filter_query_params.starts_with:
+            query_params["starts_with"] = filter_query_params.starts_with
+
+        response = requests.get(url=url, params=query_params, headers=self.headers)
         self._raise_for_status(response)
-        return [DocumentInfo._from_list_documents_response(r) for r in response.json()]
+        return [DocumentInfo.from_list_documents_response(r) for r in response.json()]
 
     def search(
         self,
@@ -455,3 +471,12 @@ class DocumentIndexClient:
         """
 
         return self.search(collection_path, "asymmetric", search_query)
+
+    def _raise_for_status(self, response: requests.Response) -> None:
+        try:
+            response.raise_for_status()
+        except HTTPError:
+            exception_factory = _status_code_to_exception.get(
+                HTTPStatus(response.status_code), InternalError
+            )
+            raise exception_factory(response.text, HTTPStatus(response.status_code))
