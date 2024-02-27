@@ -1,7 +1,12 @@
 from abc import ABC, abstractmethod
 from collections import defaultdict
+from os import getenv
 from pathlib import Path
 from typing import Iterable, Optional, Sequence, cast
+from uuid import uuid4
+from dotenv import load_dotenv
+
+import wandb
 
 from intelligence_layer.core.task import Output
 from intelligence_layer.core.tracer import (
@@ -213,9 +218,9 @@ class FileRunRepository(RunRepository, FileBasedRepository):
 
 class InMemoryRunRepository(RunRepository):
     def __init__(self) -> None:
-        self._example_outputs: dict[str, list[ExampleOutput[PydanticSerializable]]] = (
-            defaultdict(list)
-        )
+        self._example_outputs: dict[
+            str, list[ExampleOutput[PydanticSerializable]]
+        ] = defaultdict(list)
         self._example_traces: dict[str, InMemoryTracer] = dict()
         self._run_overviews: dict[str, RunOverview] = dict()
 
@@ -261,3 +266,91 @@ class InMemoryRunRepository(RunRepository):
 
     def store_run_overview(self, overview: RunOverview) -> None:
         self._run_overviews[overview.id] = overview
+
+
+class WandbRunRepository(RunRepository):
+    def __init__(self) -> None:
+        load_dotenv()
+        wandb.login(key=getenv("WANDB_API_KEY"))
+        self._artifact = None
+        self._table = None
+
+    def run_ids(self) -> Sequence[str]:
+        """Returns the ids of all stored runs.
+
+        Having the id of a run, its outputs can be retrieved with
+        :meth:`EvaluationRepository.example_outputs`.
+
+        Returns:
+            The ids of all stored runs.
+        """
+        pass
+
+    def example_outputs(
+        self, run_id: str, output_type: type[Output]
+    ) -> Iterable[ExampleOutput[Output]]:
+        """Returns all :class:`ExampleOutput` for a given run.
+
+        Args:
+            run_id: The unique identifier of the run.
+            output_type: Type of output that the `Task` returned
+                in :func:`Task.do_run`
+
+        Returns:
+            Iterable over all outputs.
+        """
+        pass
+
+    def store_example_output(self, example_output: ExampleOutput[Output]) -> None:
+        if self._table is None:
+            print("you have to init the table")
+        self._table.add_data(
+            example_output.run_id,
+            example_output.example_id,
+            example_output.output.model_dump_json(indent=2),
+        )
+
+    def example_trace(self, run_id: str, example_id: str) -> Optional[ExampleTrace]:
+        """Returns an :class:`ExampleTrace` for an example in a run.
+
+        Args:
+            run_id: The unique identifier of the run.
+            example_id: Example identifier, will match :class:`ExampleEvaluation` identifier.
+            example_output: The actual output.
+        """
+        pass
+
+    def example_tracer(self, run_id: str, example_id: str) -> Tracer:
+        """Returns a :class:`Tracer` to trace an individual example run.
+
+        Args:
+            run_id: The unique identifier of the run.
+            example_id: Example identifier, will match :class:`ExampleEvaluation` identifier.
+        """
+        pass
+
+    def run_overview(self, run_id: str) -> RunOverview | None:
+        """Returns an :class:`RunOverview` of a given run by its id.
+
+        Args:
+            run_id: Identifier of the eval run to obtain the overview for.
+
+        Returns:
+            :class:`RunOverview` if one was found, `None` otherwise.
+        """
+        pass
+
+    def store_run_overview(self, overview: RunOverview) -> None:
+        """Stores an :class:`RunOverview` in the repository.
+
+        Args:
+            overview: The overview to be persisted.
+        """
+        pass
+
+    def start_run(self, run_id):
+        self._artifact = wandb.Artifact(name=run_id, type="dataset")
+        self._table = wandb.Table(columns=["run_id", "example_id", "output"])
+
+    def finish(self, run):
+        run.log_artifact()
