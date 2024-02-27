@@ -1,10 +1,14 @@
 from abc import ABC, abstractmethod
+from os import getenv
 from pathlib import Path
 from typing import Dict, Iterable, Optional, Sequence, cast
 from uuid import uuid4
 
+import wandb
+from dotenv import load_dotenv
 from fsspec import AbstractFileSystem  # type: ignore
 from fsspec.implementations.local import LocalFileSystem  # type: ignore
+from wandb.data_types import Table
 
 from intelligence_layer.core import Input
 from intelligence_layer.core.tracer import JsonSerializer, PydanticSerializable
@@ -45,6 +49,54 @@ class DatasetRepository(ABC):
     @abstractmethod
     def list_datasets(self) -> Iterable[str]:
         pass
+
+
+class WandbDatasetRepository(DatasetRepository):
+    def __init__(self, run_id: str, wandb_project_name: str) -> None:
+        self._run_id = run_id
+        load_dotenv()
+        wandb.login(key=getenv("WANDB_API_KEY"))
+        self.wandb_project_name = wandb_project_name
+
+    def create_dataset(
+        self,
+        examples: Iterable[Example[Input, ExpectedOutput]],
+    ) -> str:
+        run = wandb.init(project=self.wandb_project_name, job_type="dataset_creation")
+        dataset_id = str(uuid4())
+        artifact = wandb.Artifact(name=dataset_id, type="dataset")
+        table = Table(columns=["id", "input", "expected_output"])
+        for example in examples:
+            table.add_data(
+                example.id,
+                JsonSerializer(example.input).model_dump_json(indent=2),
+                JsonSerializer(example.expected_output).model_dump_json(indent=2),
+            )
+        artifact.add(table, dataset_id)
+        run.log_artifact(artifact)
+
+    def examples_by_id(
+        self,
+        dataset_id: str,
+        input_type: type[Input],
+        expected_output_type: type[ExpectedOutput],
+    ) -> Optional[Iterable[Example[Input, ExpectedOutput]]]:
+        raise NotImplementedError
+
+    def example(
+        self,
+        dataset_id: str,
+        example_id: str,
+        input_type: type[Input],
+        expected_output_type: type[ExpectedOutput],
+    ) -> Optional[Example[Input, ExpectedOutput]]:
+        raise NotImplementedError
+
+    def delete_dataset(self, dataset_id: str) -> None:
+        raise NotImplementedError
+
+    def list_datasets(self) -> Iterable[str]:
+        raise NotImplementedError
 
 
 class FileSystemDatasetRepository(DatasetRepository):
