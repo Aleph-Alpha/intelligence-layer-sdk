@@ -25,7 +25,7 @@ autodoc_default_options = {
     "show-inheritance": True,
     "inherited-members": "BaseModel,RuntimeError",
     # BaseModel attributes where the documentation does not add a lot of value
-    "exclude-members": "model_config,model_fields",
+    "exclude-members": "model_config,model_fields,model_computed_fields",
 }
 
 templates_path = ["_templates"]
