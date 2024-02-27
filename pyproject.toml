@@ -4,12 +4,12 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.poetry]
 name = "intelligence-layer"
-version = "0.5.1"
+version = "0.6.0"
 description = ""
 authors = ["Aleph Alpha Engineering <engineering@aleph-alpha.com>"]
 readme = "README.md"
 license = "Aleph Alpha Licensed"
-packages = [{include = "intelligence_layer", from="src"}]
+packages = [{ include = "intelligence_layer", from = "src" }]
 
 [tool.poetry.dependencies]
 python = ">=3.10,<3.12"
@@ -28,7 +28,7 @@ requests = "^2.31.0"
 pytest-xdist = "^3.5.0"
 langdetect = "^1.0.9"
 nltk = "^3.8.1"
-pycountry = "23.12.11" #22.3.5 crushes the readthedocs
+pycountry = "23.12.11"
 rouge = "^1.0.1"
 opentelemetry-api = "^1.22.0"
 opentelemetry-sdk = "^1.22.0"
@@ -37,19 +37,19 @@ huggingface-hub = "^0.20.3"
 [tool.poetry.group.dev.dependencies]
 mypy = "^1.8.0"
 pytest = "*"
-black = {extras = ["jupyter"], version = "^24.2.0"}
+black = { extras = ["jupyter"], version = "^24.2.0" }
 pre-commit = "*"
 httpx = "*"
-types-Pygments="*"
-types-colorama="*"
-types-docutils="*"
-types-setuptools="*"
+types-Pygments = "*"
+types-colorama = "*"
+types-docutils = "*"
+types-setuptools = "*"
 types-decorator = "*"
 types-requests = "*"
 types-tqdm = "*"
 sphinx-rtd-theme = "^2.0.0"
 sphinx = "^7.2.6"
-pylama = {extras = ["all","toml"], version = "^8.4.1"}
+pylama = { extras = ["all", "toml"], version = "^8.4.1" }
 faker = "^23.2.1"
 
 [tool.mypy]
@@ -57,9 +57,13 @@ files = "src,tests"
 strict = "True"
 
 [tool.pytest.ini_options]
-markers = ["internal: marks tests as internal (deselect with '-k \"not internal\"')"]
+markers = [
+    "internal: marks tests as internal (deselect with '-k \"not internal\"')",
+]
 addopts = "--capture=tee-sys"
-filterwarnings = [ 'ignore:.*\`general_plain_validator_function\` is deprecated.*' ]
+filterwarnings = [
+    'ignore:.*\`general_plain_validator_function\` is deprecated.*',
+]
 
 [tool.pylama]
 skip = "*/__init__.py,.venv/*"

@@ -1,5 +1,46 @@
 # Changelog
 
+## 0.6.0
+
+### Breaking Changes
+
+- breaking change: The evaluation module is moved from core to evaluation .
+- breaking change: RetrieverBasedQa task answers now contain document ids in each subanswer
+- breaking change: LongcontextSummarize no longer supports the max_loops parameter
+- breaking change: Rich Mode Representation
+    - The LLM-based tasks no longer accept client, but rather an  AlephAlphaModel, which holds the client. The available model classes are  AlephAlphaModel and LuminousControlModel
+    - The AlephAlphaModel is responsible for its prompt format, tokenizers, complete task and explain task. These responsibilities were moved into the model classes.
+    - The default client url is now configurable via the environment variable CLIENT_URL
+- breaking change: PromptWithMetadata is removed in favor of RichPrompt . The semantics remain largely unchanged
+- breaking change: The compression-dependent long context summarize classes as well as the few-shot summarize class were removed. Use the better-performing steerable summary classes.
+- breaking change: Runner, Evaluator & Aggregation
+    - The EvaluationRepository has been split up. There is now a total of four repositories: dataset , run, evaluation and aggregation. These repositories save information from their respective steps
+    - The evaluation and evaluation aggregation have been split and are now provided by the classes Evaluator and Aggregator, respectively. These two classes have no abstract methods. The evaluation and aggregation logic is provided by implementing the abstract methods of the classes EvaluationLogic and AggregationLogic which are passed on to an instance of the Evaluator and Aggregator class, respectively. For an example, see the Jupyter notebook xxx.
+
+### New Features
+
+- Documentation
+    - feature: Added an intro to the Intelligence Layer concepts in Concepts.md
+    - feature: Added documentation on how to execute tasks in parallel. See the performance_tips notebook for more information.
+- QA
+    - feature: RetrieverBasedQa task no longer sources its final from all sources, but only the most relevant. This performed better in evaluation.
+    - feature: The notebooks for RetrieverBasedQa have been updated to use SingleChunkQa.
+    - feature: SingleChunkQa now supports a custom no-answer phrase
+    - feature: MultiChunkQA and LongContextQa allow for more configuration of the used qa-task.
+    - feature: Make the distance metric configurable in QdrantInMemoryRetriever.
+    - features: Added list_namespaces to DocumentIndexClient to list all available namespaces in DocumentIndex.
+- Evaluation
+    - feature: The argilla now supports splitting a dataset for multiple people via the split_dataset function
+    - feature: Utilities for ELO score/ranking calculation
+        - The build_tournaments utility function has been added to facilitate the computation of ELO scores when evaluating two models. See InstructComparisonArgillaEvaluator for an example how it can be used to compute the ELO scores.
+    - feature: The Evaluator can run multiple evaluation tasks in parallel.
+- Intelligence app
+    - feature: IntelligenceApp returns 204 if the output is None
+    - feature: Allow registering tasks with a task dependency in IntelligenceApp.
+- Others
+    - feature: Runner accepts in run_dataset a new parameter num_examples specifying how many of the first n examples should be run.
+    - feature: Support None as return type in Task
+    - feature: Added a new task: ChunkOverlapTask splits a longer text into overlapping chunks.
 
 ## 0.5.1
 
