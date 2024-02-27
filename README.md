@@ -5,12 +5,12 @@ With a unified framework for LLM-based workflows, it facilitates seamless AI pro
 
 The key features of the Intelligence Layer are:
 
-- **Best practices** We provide you with **state-of-the-art** methods tailored for prevalent LLM use cases.
+- **Best practices:** We provide you with **state-of-the-art** methods tailored for prevalent LLM use cases.
   Utilize our off-the-shelf techniques to swiftly prototype based on your primary data.
   Our approach integrates the best industry practices, allowing for optimal performance.
-- **Composability**: The Intelligence Layer streamlines your journey from prototyping to scalable deployment.
+- **Composability:** The Intelligence Layer streamlines your journey from prototyping to scalable deployment.
   It offers seamless integration with diverse evaluation methods, manages concurrency, and orchestrates smaller tasks into complex workflows.
-- **Auditability** At the core of the Intelligence Layer is the belief that all AI processes must be auditable and traceable.
+- **Auditability:** At the core of the Intelligence Layer is the belief that all AI processes must be auditable and traceable.
   To ensure this, we provide full comprehensibility, by seamlessly logging each step of every workflow.
   This enhances your debugging capabilities and offers greater control post-deployment when examining model responses.
 
@@ -20,11 +20,12 @@ The key features of the Intelligence Layer are:
 2. [Getting started with the Jupyter Notebooks](#getting-started-with-the-jupyter-notebooks)
 3. [How to use this in your project](#how-to-use-this-in-your-project)
 4. [Use-case index](#use-case-index)
-5. [How to make your own use case](#how-to-make-your-own-use-case)
-6. [Running the Trace Viewer](#running-the-trace-viewer)
-7. [Using the Intelligence Layer in Docker](#using-the-intelligence-layer-in-docker)
-8. [References](#references)
-9. [License](#license)
+5. [How to run the Intelligence Layer Starter App](#how-to-run-the-intelligence-layer-starter-app)
+6. [How to make your own use case](#how-to-make-your-own-use-case)
+7. [Running the Trace Viewer](#running-the-trace-viewer)
+8. [Using the Intelligence Layer in Docker](#using-the-intelligence-layer-in-docker)
+9. [References](#references)
+10. [License](#license)
 
 ## Getting started
 
@@ -45,20 +46,34 @@ If you prefer you can also read about the [concepts](Concepts.md) first.
 
 ## Getting started with the Jupyter Notebooks
 
-You will need an [Aleph Alpha](https://docs.aleph-alpha.com/docs/account/#create-a-new-token) access token to run the examples.
+Depending on your setup, there are two environment variables that have to be set before you can start running the examples.
+
+---
+### Using the Aleph-Alpha API:
+You will need an [Aleph Alpha access token](https://docs.aleph-alpha.com/docs/account/#create-a-new-token) to run the examples.
 First, set your access token:
 
 ```bash
 export AA_TOKEN=<YOUR TOKEN HERE>
 ```
 
-Then, install all the dependencies:
+### Using an on-prem setup:
+The default host url in the project is set to `https://api.aleph-alpha.com`. This can be changed by setting the `CLIENT_URL` environment variable:
+
+```bash
+export CLIENT_URL=<YOUR_ENDPOINT_URL_HERE>
+```
+
+The program will warn you if no `CLIENT_URL` is explicitly set.
+
+---
+After correctly setting up the environment variables, install all the dependencies:
 
 ```bash
 poetry install
 ```
 
-Run `jupytyer lab`, and go to the [examples](http://localhost:8888/lab/workspaces/auto-C/tree/src/examples) directory.
+Run `jupyter lab`, and go to the [examples](http://localhost:8888/lab/workspaces/auto-C/tree/src/examples) directory.
 
 ```bash
 cd src/examples && poetry run jupyter lab
