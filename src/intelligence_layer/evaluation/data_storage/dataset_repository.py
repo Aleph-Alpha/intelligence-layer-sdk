@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+from functools import lru_cache
 from os import getenv
 from pathlib import Path
 from typing import Dict, Iterable, Optional, Sequence, cast
@@ -9,6 +10,7 @@ from dotenv import load_dotenv
 from fsspec import AbstractFileSystem  # type: ignore
 from fsspec.implementations.local import LocalFileSystem  # type: ignore
 from wandb.data_types import Table
+from wandb.sdk.wandb_run import Run
 
 from intelligence_layer.core import Input
 from intelligence_layer.core.tracer import JsonSerializer, PydanticSerializable
@@ -52,28 +54,25 @@ class DatasetRepository(ABC):
 
 
 class WandbDatasetRepository(DatasetRepository):
-    def __init__(self, run_id: str, wandb_project_name: str) -> None:
-        self._run_id = run_id
-        load_dotenv()
-        wandb.login(key=getenv("WANDB_API_KEY"))
+    def __init__(self, wandb_project_name: str, run: Run) -> None:
         self.wandb_project_name = wandb_project_name
+        self.team_name = "aleph-alpha-intelligence-layer-trial"
+        self._run = run
 
     def create_dataset(
         self,
         examples: Iterable[Example[Input, ExpectedOutput]],
     ) -> str:
-        run = wandb.init(project=self.wandb_project_name, job_type="dataset_creation")
         dataset_id = str(uuid4())
         artifact = wandb.Artifact(name=dataset_id, type="dataset")
-        table = Table(columns=["id", "input", "expected_output"])
+        table = Table(columns=["example"])  # type: ignore
         for example in examples:
-            table.add_data(
-                example.id,
-                JsonSerializer(example.input).model_dump_json(indent=2),
-                JsonSerializer(example.expected_output).model_dump_json(indent=2),
+            table.add_data(  # type: ignore
+                JsonSerializer(example).model_dump_json(indent=2),
             )
-        artifact.add(table, dataset_id)
-        run.log_artifact(artifact)
+        artifact.add(table, f"{dataset_id}")
+        self._run.log_artifact(artifact)
+        return dataset_id
 
     def examples_by_id(
         self,
@@ -81,7 +80,20 @@ class WandbDatasetRepository(DatasetRepository):
         input_type: type[Input],
         expected_output_type: type[ExpectedOutput],
     ) -> Optional[Iterable[Example[Input, ExpectedOutput]]]:
-        raise NotImplementedError
+        table = self._get_table(dataset_id)
+        return [self._table_row_to_example(row, input_type, expected_output_type) for _, row in table.iterrows()]  # type: ignore
+
+    def _table_row_to_example(
+        self,
+        row: dict[str, str],
+        input_type: type[Input],
+        expected_output_type: type[ExpectedOutput],
+    ) -> Example[Input, ExpectedOutput]:
+        return Example[input_type, expected_output_type].model_validate_json(json_data=row)  # type: ignore
+
+    @lru_cache(maxsize=1)
+    def _get_table(self, dataset_id: str) -> Table:
+        return self._run.use_artifact(f"{self.team_name}/{self.wandb_project_name}/{dataset_id}:latest").get(dataset_id)  # type: ignore
 
     def example(
         self,
