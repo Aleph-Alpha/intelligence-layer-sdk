@@ -1,14 +1,10 @@
 from abc import ABC, abstractmethod
 from collections import defaultdict
 from functools import lru_cache
-from os import getenv
 from pathlib import Path
-from typing import Any, Iterable, Optional, Sequence, cast
-from uuid import uuid4
+from typing import Iterable, Optional, Sequence, cast
 
-import wandb
-from dotenv import load_dotenv
-from wandb import Table
+from wandb import Artifact, Table
 from wandb.sdk.wandb_run import Run
 
 from intelligence_layer.core.task import Output
@@ -274,8 +270,8 @@ class InMemoryRunRepository(RunRepository):
 
 class WandbRunRepository(RunRepository):
     def __init__(self) -> None:
-        self._example_outputs: dict[str, wandb.Table] = dict()
-        self._run_overviews: dict[str, wandb.Table] = dict()
+        self._example_outputs: dict[str, Table] = dict()
+        self._run_overviews: dict[str, Table] = dict()
         self._run: Run | None = None
         self.team_name: str = "aleph-alpha-intelligence-layer-trial"
 
@@ -307,7 +303,7 @@ class WandbRunRepository(RunRepository):
         return [ExampleOutput[output_type].model_validate_json(json_data=row[0]) for _, row in table.iterrows()]  # type: ignore
 
     @lru_cache(maxsize=2)
-    def _get_table(self, artifact_id: str, name: str) -> wandb.Table:
+    def _get_table(self, artifact_id: str, name: str) -> Table:
         if self._run is None:
             raise ValueError(
                 "The run has not been started, are you using a WandbRunner?"
@@ -373,7 +369,7 @@ class WandbRunRepository(RunRepository):
             raise ValueError(
                 "The run has not been started, are you using a WandbRunner?"
             )
-        artifact = wandb.Artifact(name=run_id, type="Run")
+        artifact = Artifact(name=run_id, type="Run")
         artifact.add(self._example_outputs[run_id], name="example_outputs")
         artifact.add(self._run_overviews[run_id], name="run_overview")
         self._run.log_artifact(artifact)  # maybe tables should be deleted after logging

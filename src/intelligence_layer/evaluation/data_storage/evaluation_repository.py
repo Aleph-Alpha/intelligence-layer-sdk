@@ -1,10 +1,13 @@
 from abc import ABC, abstractmethod
 from collections import defaultdict
+from functools import lru_cache
 from pathlib import Path
 from typing import Optional, Sequence, cast
 from uuid import uuid4
 
 from pydantic import BaseModel
+from wandb import Artifact, Table
+from wandb.sdk.wandb_run import Run
 
 from intelligence_layer.connectors.argilla.argilla_client import (
     ArgillaClient,
@@ -401,3 +404,80 @@ class ArgillaEvaluationRepository(EvaluationRepository):
 
     def store_evaluation_overview(self, overview: EvaluationOverview) -> None:
         return self._evaluation_repository.store_evaluation_overview(overview)
+
+
+class WandbEvaluationRepository(EvaluationRepository):
+    def __init__(self) -> None:
+        self._example_evaluations: dict[str, Table] = dict()
+        self._evaluation_overviews: dict[str, Table] = dict()
+        self._run: Run | None = None
+        self.team_name: str = "aleph-alpha-intelligence-layer-trial"
+
+    def eval_ids(self) -> Sequence[str]:
+        raise NotImplementedError
+
+    def example_evaluation(
+        self, eval_id: str, example_id: str, evaluation_type: type[Evaluation]
+    ) -> ExampleEvaluation[Evaluation] | None:
+        evaluations = self.example_evaluations(eval_id, evaluation_type)
+        if evaluations is None:
+            return None
+        for example in evaluations:
+            if example.eval_id == example_id:
+                return example
+        return None
+
+    def store_example_evaluation(
+        self, evaluation: ExampleEvaluation[Evaluation]
+    ) -> None:
+        self._example_evaluations[evaluation.eval_id].add_data(  # type: ignore
+            evaluation.model_dump_json(),
+        )
+
+    def example_evaluations(
+        self, eval_id: str, evaluation_type: type[Evaluation]
+    ) -> Sequence[ExampleEvaluation[Evaluation]]:
+        table = self._get_table(eval_id, "example_evaluations")
+        return [ExampleEvaluation[evaluation_type].model_validate_json(json_data=row[0]) for _, row in table.iterrows()]  # type: ignore
+
+    def failed_example_evaluations(
+        self, eval_id: str, evaluation_type: type[Evaluation]
+    ) -> Sequence[ExampleEvaluation[Evaluation]]:
+        results = self.example_evaluations(eval_id, evaluation_type)
+        return [r for r in results if isinstance(r.result, FailedExampleEvaluation)]
+
+    def evaluation_overview(self, eval_id: str) -> EvaluationOverview | None:
+        table = self._get_table(eval_id, "evaluation_overview")
+        return [EvaluationOverview.model_validate_json(json_data=row[0]) for _, row in table.iterrows()]  # type: ignore
+
+    @lru_cache(maxsize=2)
+    def _get_table(self, artifact_id: str, name: str) -> Table:
+        if self._run is None:
+            raise ValueError(
+                "The run has not been started, are you using a WandbEvaluator?"
+            )
+        artifact = self._run.use_artifact(
+            f"{self.team_name}/{self._run.project_name()}/{artifact_id}:latest"
+        )
+        return artifact.get(name)  # type: ignore
+
+    def store_evaluation_overview(self, overview: EvaluationOverview) -> None:
+        self._evaluation_overviews[overview.id].add_data(  # type: ignore
+            overview.model_dump_json(),
+        )
+
+    def start_run(self, run: Run, eval_id: str) -> None:
+        self._run = run
+        self._example_evaluations[eval_id] = Table(columns=["example_evaluations"])  # type: ignore
+        self._evaluation_overviews[eval_id] = Table(columns=["evaluation_overview"])  # type: ignore
+
+    def finish_run(self, eval_id: str) -> None:
+        if self._run is None:
+            raise ValueError(
+                "The run has not been started, are you using a WandbRunner?"
+            )
+        artifact = Artifact(name=eval_id, type="Run")
+        artifact.add(self._example_evaluations[eval_id], name="example_evaluations")
+        artifact.add(self._evaluation_overviews[eval_id], name="evaluation_overviews")
+        self._run.log_artifact(artifact)  # maybe tables should be deleted after logging
+        self._run = None

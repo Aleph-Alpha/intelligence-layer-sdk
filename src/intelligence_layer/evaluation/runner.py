@@ -13,6 +13,7 @@ from intelligence_layer.core.task import Input, Output, Task
 from intelligence_layer.core.tracer import CompositeTracer, Tracer, utc_now
 from intelligence_layer.evaluation.data_storage.dataset_repository import (
     DatasetRepository,
+    WandbDatasetRepository,
 )
 from intelligence_layer.evaluation.data_storage.run_repository import (
     RunRepository,
@@ -147,13 +148,14 @@ class WandbRunner(Runner[Input, Output]):
     def __init__(
         self,
         task: Task[Input, Output],
-        dataset_repository: DatasetRepository,
+        dataset_repository: WandbDatasetRepository,
         run_repository: WandbRunRepository,
         description: str,
         wandb_project_name: str,
     ) -> None:
         super().__init__(task, dataset_repository, run_repository, description)
         self._run_repository: WandbRunRepository = run_repository
+        self._dataset_repository: WandbDatasetRepository = dataset_repository
         self._wandb_project_name = wandb_project_name
 
     def run_dataset(
@@ -166,8 +168,10 @@ class WandbRunner(Runner[Input, Output]):
         run = wandb.init(project=self._wandb_project_name, job_type="Runner")
         run_id = str(uuid4())
         assert isinstance(run, Run)
+        self._dataset_repository.start_run(run)
         self._run_repository.start_run(run, run_id)
         run_overview = super().run_dataset(dataset_id, tracer, num_examples, run_id)
+        self._dataset_repository.finish_run()
         self._run_repository.finish_run(run_id)
         run.finish()
         return run_overview

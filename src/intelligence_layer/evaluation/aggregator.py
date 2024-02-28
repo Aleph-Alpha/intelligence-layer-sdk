@@ -5,6 +5,7 @@ from typing import (
     Iterable,
     Iterator,
     Mapping,
+    Optional,
     TypeVar,
     cast,
     final,
@@ -13,13 +14,18 @@ from typing import (
 )
 from uuid import uuid4
 
+import wandb
+from wandb.sdk.wandb_run import Run
+
 from intelligence_layer.core.tracer import utc_now
 from intelligence_layer.evaluation.base_logic import AggregationLogic
 from intelligence_layer.evaluation.data_storage.aggregation_repository import (
     AggregationRepository,
+    WandbAggregationRepository,
 )
 from intelligence_layer.evaluation.data_storage.evaluation_repository import (
     EvaluationRepository,
+    WandbEvaluationRepository,
 )
 from intelligence_layer.evaluation.domain import (
     AggregatedEvaluation,
@@ -163,7 +169,7 @@ class Aggregator(Generic[Evaluation, AggregatedEvaluation]):
 
     @final
     def aggregate_evaluation(
-        self, *eval_ids: str
+        self, *eval_ids: str, aggregation_id: Optional[str] = None
     ) -> AggregationOverview[AggregatedEvaluation]:
         """Aggregates all evaluations into an overview that includes high-level statistics.
 
@@ -203,7 +209,8 @@ class Aggregator(Generic[Evaluation, AggregatedEvaluation]):
             (example_eval.result for example_eval in example_evaluations),
             lambda evaluation: not isinstance(evaluation, FailedExampleEvaluation),
         )
-        id = str(uuid4())
+        if aggregation_id is None:
+            aggregation_id = str(uuid4())
         start = utc_now()
         statistics = self._aggregation_logic.aggregate(
             cast(Iterable[Evaluation], successful_evaluations)
@@ -211,7 +218,7 @@ class Aggregator(Generic[Evaluation, AggregatedEvaluation]):
 
         aggregation_overview = AggregationOverview(
             evaluation_overviews=frozenset(evaluation_overviews),
-            id=id,
+            id=aggregation_id,
             start=start,
             end=utc_now(),
             successful_evaluation_count=successful_evaluations.included_count(),
@@ -220,4 +227,40 @@ class Aggregator(Generic[Evaluation, AggregatedEvaluation]):
             statistics=statistics,
         )
         self._aggregation_repository.store_aggregation_overview(aggregation_overview)
+        return aggregation_overview
+
+
+class WandbAggregator(Aggregator[Evaluation, AggregatedEvaluation]):
+    def __init__(
+        self,
+        evaluation_repository: WandbEvaluationRepository,
+        aggregation_repository: WandbAggregationRepository,
+        description: str,
+        aggregation_logic: AggregationLogic[Evaluation, AggregatedEvaluation],
+        wandb_project_name: str,
+    ) -> None:
+        super().__init__(
+            evaluation_repository,
+            aggregation_repository,
+            description,
+            aggregation_logic,
+        )
+        self._evaluation_repository: WandbEvaluationRepository = evaluation_repository
+        self._aggregation_repository: WandbAggregationRepository = (
+            aggregation_repository
+        )
+        self._wandb_project_name = wandb_project_name
+
+    def wandb_aggregate_evaluation(
+        self, *eval_ids: str
+    ) -> AggregationOverview[AggregatedEvaluation]:
+        run = wandb.init(project=self._wandb_project_name, job_type="Runner")
+        aggregation_id = str(uuid4())
+        assert isinstance(run, Run)
+        self._evaluation_repository.start_run(run, aggregation_id)
+        self._aggregation_repository.start_run(run, aggregation_id)
+        aggregation_overview = super().aggregate_evaluation(*eval_ids, aggregation_id)
+        self._evaluation_repository.finish_run(aggregation_id)
+        self._aggregation_repository.finish_run()
+        run.finish()
         return aggregation_overview

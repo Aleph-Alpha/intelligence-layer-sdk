@@ -13,19 +13,27 @@ from typing import (
     get_args,
     get_origin,
 )
+from uuid import uuid4
 
+import wandb
 from tqdm import tqdm
+from wandb.sdk.wandb_run import Run
 
 from intelligence_layer.core.task import Input, Output
 from intelligence_layer.core.tracer import utc_now
 from intelligence_layer.evaluation.base_logic import EvaluationLogic
 from intelligence_layer.evaluation.data_storage.dataset_repository import (
     DatasetRepository,
+    WandbDatasetRepository,
 )
 from intelligence_layer.evaluation.data_storage.evaluation_repository import (
     EvaluationRepository,
+    WandbEvaluationRepository,
 )
-from intelligence_layer.evaluation.data_storage.run_repository import RunRepository
+from intelligence_layer.evaluation.data_storage.run_repository import (
+    RunRepository,
+    WandbRunRepository,
+)
 from intelligence_layer.evaluation.domain import (
     Evaluation,
     EvaluationOverview,
@@ -179,7 +187,10 @@ class Evaluator(Generic[Input, Output, ExpectedOutput, Evaluation]):
 
     @final
     def evaluate_runs(
-        self, *run_ids: str, num_examples: Optional[int] = None
+        self,
+        *run_ids: str,
+        num_examples: Optional[int] = None,
+        eval_id: Optional[str] = None,
     ) -> EvaluationOverview:
         """Evaluates all generated outputs in the run.
 
@@ -202,6 +213,10 @@ class Evaluator(Generic[Input, Output, ExpectedOutput, Evaluation]):
             returned but instead stored in the :class:`EvaluationRepository` provided in the
             __init__.
         """
+        if eval_id is None:
+            eval_id = (
+                self._evaluation_repository.create_evaluation_dataset()
+            )  # TODO this needs to be fixed
 
         def load_run_overview(run_id: str) -> RunOverview:
             run_overview = self._run_repository.run_overview(run_id)
@@ -219,7 +234,7 @@ class Evaluator(Generic[Input, Output, ExpectedOutput, Evaluation]):
             raise ValueError(
                 f"All run-overviews must reference the same dataset: {run_overviews}"
             )
-        eval_id = self._evaluation_repository.create_evaluation_dataset()
+
         dataset_id = next(iter(run_overviews)).dataset_id
         examples = self._dataset_repository.examples_by_id(
             dataset_id,
@@ -330,3 +345,44 @@ class Evaluator(Generic[Input, Output, ExpectedOutput, Evaluation]):
         self._evaluation_repository.store_example_evaluation(
             ExampleEvaluation(eval_id=eval_id, example_id=example.id, result=result)
         )
+
+
+class WandbEvaluator(Evaluator[Input, Output, ExpectedOutput, Evaluation]):
+    def __init__(
+        self,
+        dataset_repository: WandbDatasetRepository,
+        run_repository: WandbRunRepository,
+        evaluation_repository: WandbEvaluationRepository,
+        description: str,
+        evaluation_logic: EvaluationLogic[Input, Output, ExpectedOutput, Evaluation],
+        wandb_project_name: str,
+    ) -> None:
+        super().__init__(
+            dataset_repository,
+            run_repository,
+            evaluation_repository,
+            description,
+            evaluation_logic,
+        )
+        self._run_repository: WandbRunRepository = run_repository
+        self._evaluation_repository: WandbEvaluationRepository = evaluation_repository
+        self._dataset_repository: WandbDatasetRepository = dataset_repository
+        self._wandb_project_name = wandb_project_name
+
+    def wandb_evaluate_runs(
+        self, *run_ids: str, num_examples: Optional[int] = None
+    ) -> EvaluationOverview:
+        run = wandb.init(project=self._wandb_project_name, job_type="Runner")
+        assert isinstance(run, Run)
+        eval_id = str(uuid4())
+        self._dataset_repository.start_run(run)
+        self._run_repository.start_run(run, eval_id)
+        self._evaluation_repository.start_run(run, eval_id)
+        eval_overview = super().evaluate_runs(
+            *run_ids, num_examples=num_examples, eval_id=eval_id
+        )
+        self._dataset_repository.finish_run()
+        self._run_repository.finish_run(eval_id)
+        self._evaluation_repository.finish_run(eval_id)
+        run.finish()
+        return eval_overview

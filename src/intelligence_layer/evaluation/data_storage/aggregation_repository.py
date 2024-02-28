@@ -1,6 +1,10 @@
 from abc import ABC, abstractmethod
+from functools import lru_cache
 from pathlib import Path
 from typing import Any, Sequence
+
+from wandb import Table
+from wandb.sdk.wandb_run import Run
 
 from intelligence_layer.evaluation.data_storage.utils import FileBasedRepository
 from intelligence_layer.evaluation.domain import (
@@ -89,3 +93,40 @@ class InMemoryAggregationRepository(AggregationRepository):
         self, overview: AggregationOverview[AggregatedEvaluation]
     ) -> None:
         self._aggregation_overviews[overview.id] = overview
+
+
+class WandbAggregationRepository(AggregationRepository):
+    def __init__(self) -> None:
+        super().__init__()
+        self._aggregation_overviews: dict[str, Table] = dict()
+        self._run: Run | None = None
+        self.team_name: str = "aleph-alpha-intelligence-layer-trial"
+
+    def aggregation_overview(
+        self, id: str, stat_type: type[AggregatedEvaluation]
+    ) -> AggregationOverview[AggregatedEvaluation] | None:
+        table = self._get_table(id, "aggregation_overview")
+        return [AggregationOverview.model_validate_json(json_data=row[0]) for _, row in table.iterrows()]  # type: ignore
+
+    def store_aggregation_overview(
+        self, overview: AggregationOverview[AggregatedEvaluation]
+    ) -> None:
+        self._aggregation_overviews[overview.id].add_data(  # type: ignore
+            overview.model_dump_json(),
+        )
+
+    @lru_cache(maxsize=1)
+    def _get_table(self, id: str, name: str) -> Table:
+        if self._run is None:
+            raise ValueError("Run not started")
+        artifact = self._run.use_artifact(
+            f"{self.team_name}/{self._run.project_name()}/{id}:latest"
+        )
+        return artifact.get(name)  # type: ignore
+
+    def start_run(self, run: Run, id: str) -> None:
+        self._run = run
+        self._aggregation_overviews[id] = Table(columns=["aggregation_overview"])  # type: ignore
+
+    def finish_run(self) -> None:
+        self._run = None
