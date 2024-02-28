@@ -1,5 +1,7 @@
 from pathlib import Path
+from unittest.mock import Mock
 
+import pytest
 from aleph_alpha_client import Prompt
 from opentelemetry.trace import get_tracer
 from pytest import fixture, mark
@@ -19,6 +21,7 @@ from intelligence_layer.core import (
     TaskSpan,
     utc_now,
 )
+from intelligence_layer.core.tracer.persistent_tracer import TracerLogEntryFailed
 
 
 @fixture
@@ -195,6 +198,31 @@ def test_file_tracer_retrieves_correct_trace(file_tracer: FileTracer) -> None:
     TestTask().run(input, file_tracer, "ID2")
     log_tree = file_tracer.trace("ID1")
     assert log_tree == expected
+
+
+def test_file_tracer_handles_tracer_log_entry_failed_exception(
+    file_tracer: FileTracer,
+) -> None:
+    file_tracer._log_entry = Mock(  # type: ignore[method-assign]
+        side_effect=[TracerLogEntryFailed("Hi I am an error", "21"), None]
+    )
+
+    try:
+        file_tracer.task_span(
+            task_name="mock_task_name", input="42", timestamp=None, trace_id="21"
+        )
+    except Exception as exc:
+        assert False, f"'bla {exc}"
+
+
+def test_file_tracer_raises_non_log_entry_failed_exceptions(
+    file_tracer: FileTracer,
+) -> None:
+    file_tracer._log_entry = Mock(side_effect=[Exception("Hi I am an error", "21")])  # type: ignore[method-assign]
+    with pytest.raises(Exception):
+        file_tracer.task_span(
+            task_name="mock_task_name", input="42", timestamp=None, trace_id="21"
+        )
 
 
 @mark.skip(
