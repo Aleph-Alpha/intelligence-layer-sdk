@@ -4,7 +4,7 @@ from pydantic import BaseModel
 
 from intelligence_layer.core.model import CompleteInput, CompleteOutput, ControlModel
 from intelligence_layer.core.task import Task
-from intelligence_layer.core.tracer import TaskSpan
+from intelligence_layer.core.tracer.tracer import TaskSpan
 
 
 class InstructInput(BaseModel):

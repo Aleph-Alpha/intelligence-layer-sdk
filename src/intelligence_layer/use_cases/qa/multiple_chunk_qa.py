@@ -2,6 +2,7 @@ from typing import Iterable, Mapping, Optional, Sequence
 
 from pydantic import BaseModel
 
+from intelligence_layer.core import Task, TaskSpan
 from intelligence_layer.core.chunk import Chunk
 from intelligence_layer.core.detect_language import Language, language_config
 from intelligence_layer.core.model import (
@@ -10,8 +11,6 @@ from intelligence_layer.core.model import (
     ControlModel,
     LuminousControlModel,
 )
-from intelligence_layer.core.task import Task
-from intelligence_layer.core.tracer import TaskSpan
 from intelligence_layer.use_cases.qa.single_chunk_qa import (
     SingleChunkQa,
     SingleChunkQaInput,
@@ -128,8 +127,7 @@ class MultipleChunkQa(Task[MultipleChunkQaInput, MultipleChunkQaOutput]):
         >>> from intelligence_layer.connectors import (
         ...     LimitedConcurrencyClient,
         ... )
-        >>> from intelligence_layer.core import Language
-        >>> from intelligence_layer.core import InMemoryTracer
+        >>> from intelligence_layer.core import Language, InMemoryTracer
         >>> from intelligence_layer.core.chunk import Chunk
         >>> from intelligence_layer.use_cases import (
         ...     MultipleChunkQa,

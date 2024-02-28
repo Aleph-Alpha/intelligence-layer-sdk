@@ -6,7 +6,7 @@ from pycountry import languages
 from pydantic import BaseModel
 
 from intelligence_layer.core.task import Task
-from intelligence_layer.core.tracer import TaskSpan
+from intelligence_layer.core.tracer.tracer import TaskSpan
 
 
 class LanguageNotSupportedError(ValueError):

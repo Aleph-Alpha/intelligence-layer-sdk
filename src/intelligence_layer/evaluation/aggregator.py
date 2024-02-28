@@ -13,7 +13,7 @@ from typing import (
 )
 from uuid import uuid4
 
-from intelligence_layer.core.tracer import utc_now
+from intelligence_layer.core import utc_now
 from intelligence_layer.evaluation.base_logic import AggregationLogic
 from intelligence_layer.evaluation.data_storage.aggregation_repository import (
     AggregationRepository,

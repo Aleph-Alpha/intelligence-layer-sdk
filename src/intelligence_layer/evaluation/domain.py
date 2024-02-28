@@ -9,12 +9,13 @@ from rich.syntax import Syntax
 from rich.tree import Tree
 
 from intelligence_layer.connectors import JsonSerializable
-from intelligence_layer.core.task import Input, Output
-from intelligence_layer.core.tracer import (
+from intelligence_layer.core import (
     InMemorySpan,
     InMemoryTaskSpan,
+    Input,
     JsonSerializer,
     LogEntry,
+    Output,
     PydanticSerializable,
 )
 

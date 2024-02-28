@@ -10,7 +10,7 @@ from intelligence_layer.connectors.retrievers.document_index_retriever import (
 from intelligence_layer.connectors.retrievers.qdrant_in_memory_retriever import (
     QdrantInMemoryRetriever,
 )
-from intelligence_layer.core.tracer import NoOpTracer
+from intelligence_layer.core import NoOpTracer
 from intelligence_layer.use_cases.qa.retriever_based_qa import (
     RetrieverBasedQa,
     RetrieverBasedQaInput,

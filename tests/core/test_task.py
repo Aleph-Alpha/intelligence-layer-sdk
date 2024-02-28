@@ -4,13 +4,8 @@ from threading import Lock
 from time import sleep
 from typing import Callable
 
+from intelligence_layer.core import InMemorySpan, InMemoryTracer, NoOpTracer, TaskSpan
 from intelligence_layer.core.task import MAX_CONCURRENCY, Task
-from intelligence_layer.core.tracer import (
-    InMemorySpan,
-    InMemoryTracer,
-    NoOpTracer,
-    TaskSpan,
-)
 
 
 class ConcurrencyCounter(Task[None, None]):

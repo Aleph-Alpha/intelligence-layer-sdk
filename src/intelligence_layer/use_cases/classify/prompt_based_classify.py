@@ -5,11 +5,17 @@ from typing import Iterable, Mapping, Optional, Sequence
 from aleph_alpha_client import Tokens
 from pydantic import BaseModel
 
-from intelligence_layer.core.echo import EchoInput, EchoTask, TokenWithLogProb
-from intelligence_layer.core.model import ControlModel, LuminousControlModel
-from intelligence_layer.core.prompt_template import RichPrompt
-from intelligence_layer.core.task import Task, Token
-from intelligence_layer.core.tracer import TaskSpan
+from intelligence_layer.core import (
+    ControlModel,
+    EchoInput,
+    EchoTask,
+    LuminousControlModel,
+    RichPrompt,
+    Task,
+    TaskSpan,
+    Token,
+    TokenWithLogProb,
+)
 from intelligence_layer.use_cases.classify.classify import (
     ClassifyInput,
     Probability,

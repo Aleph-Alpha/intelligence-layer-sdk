@@ -3,8 +3,7 @@
 from dotenv import load_dotenv
 from fastapi import Depends, FastAPI
 
-from intelligence_layer.core.model import ControlModel, LuminousControlModel
-from intelligence_layer.core.tracer import NoOpTracer
+from intelligence_layer.core import ControlModel, LuminousControlModel, NoOpTracer
 from intelligence_layer.use_cases.classify.classify import (
     ClassifyInput,
     SingleLabelClassifyOutput,

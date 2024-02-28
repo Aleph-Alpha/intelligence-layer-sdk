@@ -1,5 +1,4 @@
-from intelligence_layer.core.task import Task
-from intelligence_layer.core.tracer import TaskSpan
+from intelligence_layer.core import Task, TaskSpan
 from intelligence_layer.use_cases.summarize.summarize import (
     LongContextSummarizeInput,
     LongContextSummarizeOutput,

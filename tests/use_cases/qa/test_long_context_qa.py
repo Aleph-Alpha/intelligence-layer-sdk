@@ -1,7 +1,7 @@
 from pytest import fixture
 
+from intelligence_layer.core import NoOpTracer
 from intelligence_layer.core.model import LuminousControlModel
-from intelligence_layer.core.tracer import NoOpTracer
 from intelligence_layer.use_cases.qa.long_context_qa import (
     LongContextQa,
     LongContextQaInput,

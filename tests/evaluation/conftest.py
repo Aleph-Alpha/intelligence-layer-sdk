@@ -5,8 +5,8 @@ from typing import Iterable, Sequence
 from pydantic import BaseModel
 from pytest import fixture
 
+from intelligence_layer.core import Tracer
 from intelligence_layer.core.task import Task
-from intelligence_layer.core.tracer import Tracer
 from intelligence_layer.evaluation import (
     AggregationOverview,
     DatasetRepository,
