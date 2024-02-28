@@ -1,9 +1,9 @@
-from intelligence_layer.core.detect_language import (
+from intelligence_layer.core import (
     DetectLanguage,
     DetectLanguageInput,
     Language,
+    NoOpTracer,
 )
-from intelligence_layer.core.tracer import NoOpTracer
 
 
 def test_detect_language_returns_correct_language() -> None:

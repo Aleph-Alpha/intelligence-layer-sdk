@@ -6,7 +6,7 @@ from intelligence_layer.connectors.retrievers.base_retriever import Document
 from intelligence_layer.connectors.retrievers.qdrant_in_memory_retriever import (
     QdrantInMemoryRetriever,
 )
-from intelligence_layer.core.tracer import NoOpTracer
+from intelligence_layer.core import NoOpTracer
 from intelligence_layer.use_cases.search.search import Search, SearchInput
 from tests.conftest import to_document
 

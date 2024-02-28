@@ -7,7 +7,7 @@ from fastapi import Body, Depends, FastAPI, HTTPException, Response, status
 from uvicorn import run
 
 from intelligence_layer.core.task import Input, Output, Task
-from intelligence_layer.core.tracer import NoOpTracer, Tracer
+from intelligence_layer.core.tracer.tracer import NoOpTracer, Tracer
 
 T = TypeVar("T")
 

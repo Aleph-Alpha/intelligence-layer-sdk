@@ -4,11 +4,17 @@ from intelligence_layer.connectors.retrievers.base_retriever import Document
 from intelligence_layer.connectors.retrievers.qdrant_in_memory_retriever import (
     QdrantInMemoryRetriever,
 )
-from intelligence_layer.core.chunk import Chunk, ChunkInput, ChunkTask
-from intelligence_layer.core.detect_language import DetectLanguage, Language
-from intelligence_layer.core.model import ControlModel, LuminousControlModel
-from intelligence_layer.core.task import Task
-from intelligence_layer.core.tracer import TaskSpan
+from intelligence_layer.core import (
+    Chunk,
+    ChunkInput,
+    ChunkTask,
+    ControlModel,
+    DetectLanguage,
+    Language,
+    LuminousControlModel,
+    Task,
+    TaskSpan,
+)
 from intelligence_layer.use_cases.qa.multiple_chunk_qa import (
     MultipleChunkQa,
     MultipleChunkQaInput,

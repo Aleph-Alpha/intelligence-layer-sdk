@@ -31,7 +31,7 @@ class Task(ABC, Generic[Input, Output]):
 
 `Input` and `Output` are normal Python datatypes that can be serialized from and to JSON. For this the Intelligence
 Layer relies on [Pydantic](https://docs.pydantic.dev/). The types that can actually be used are defined in form
-of the type-alias [`PydanticSerializable`](src/intelligence_layer/core/tracer.py#L44).
+of the type-alias [`PydanticSerializable`](src/intelligence_layer/core/tracer/tracer.py#L44).
 
 The second parameter `task_span` is used for [tracing](#Trace) which is described below.
 

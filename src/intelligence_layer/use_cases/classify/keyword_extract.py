@@ -2,6 +2,7 @@ from typing import Mapping
 
 from pydantic import BaseModel
 
+from intelligence_layer.core import Task, TaskSpan
 from intelligence_layer.core.chunk import Chunk
 from intelligence_layer.core.detect_language import Language, language_config
 from intelligence_layer.core.model import (
@@ -9,8 +10,6 @@ from intelligence_layer.core.model import (
     ControlModel,
     LuminousControlModel,
 )
-from intelligence_layer.core.task import Task
-from intelligence_layer.core.tracer import TaskSpan
 
 INSTRUCT_CONFIGS = {
     Language(

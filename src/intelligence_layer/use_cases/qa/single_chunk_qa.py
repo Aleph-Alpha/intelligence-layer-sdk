@@ -3,6 +3,7 @@ from typing import Mapping, Optional, Sequence
 from liquid import Template
 from pydantic import BaseModel
 
+from intelligence_layer.core import Task, TaskSpan
 from intelligence_layer.core.chunk import Chunk
 from intelligence_layer.core.detect_language import Language, language_config
 from intelligence_layer.core.model import (
@@ -12,9 +13,7 @@ from intelligence_layer.core.model import (
     LuminousControlModel,
 )
 from intelligence_layer.core.prompt_template import RichPrompt
-from intelligence_layer.core.task import Task
 from intelligence_layer.core.text_highlight import TextHighlight, TextHighlightInput
-from intelligence_layer.core.tracer import TaskSpan
 
 
 class QaSetup(BaseModel):
@@ -89,8 +88,7 @@ class SingleChunkQa(Task[SingleChunkQaInput, SingleChunkQaOutput]):
 
     Example:
         >>> import os
-        >>> from intelligence_layer.core import Language
-        >>> from intelligence_layer.core import InMemoryTracer
+        >>> from intelligence_layer.core import Language, InMemoryTracer
         >>> from intelligence_layer.core import Chunk
         >>> from intelligence_layer.use_cases import SingleChunkQa, SingleChunkQaInput
         >>>

@@ -1,7 +1,6 @@
 from pytest import raises
 
-from intelligence_layer.core import InMemorySpan, InMemoryTaskSpan, LogEntry
-from intelligence_layer.core.tracer import utc_now
+from intelligence_layer.core import InMemorySpan, InMemoryTaskSpan, LogEntry, utc_now
 from intelligence_layer.evaluation import (
     AggregationOverview,
     EvaluationFailed,

@@ -17,7 +17,7 @@ from intelligence_layer.connectors.limited_concurrency_client import (
 )
 from intelligence_layer.core.prompt_template import PromptTemplate, RichPrompt
 from intelligence_layer.core.task import Task
-from intelligence_layer.core.tracer import TaskSpan, Tracer
+from intelligence_layer.core.tracer.tracer import TaskSpan, Tracer
 
 
 class CompleteInput(BaseModel, CompletionRequest, frozen=True):

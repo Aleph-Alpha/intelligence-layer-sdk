@@ -7,7 +7,7 @@ from tokenizers import Encoding  # type: ignore
 from intelligence_layer.core.model import CompleteInput, ControlModel
 from intelligence_layer.core.prompt_template import PromptTemplate
 from intelligence_layer.core.task import Task, Token
-from intelligence_layer.core.tracer import TaskSpan
+from intelligence_layer.core.tracer.tracer import TaskSpan
 
 LogProb = NewType("LogProb", float)
 

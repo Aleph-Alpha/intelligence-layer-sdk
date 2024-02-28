@@ -16,8 +16,7 @@ from typing import (
 
 from tqdm import tqdm
 
-from intelligence_layer.core.task import Input, Output
-from intelligence_layer.core.tracer import utc_now
+from intelligence_layer.core import Input, Output, utc_now
 from intelligence_layer.evaluation.base_logic import EvaluationLogic
 from intelligence_layer.evaluation.data_storage.dataset_repository import (
     DatasetRepository,

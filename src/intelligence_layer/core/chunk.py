@@ -5,7 +5,7 @@ from semantic_text_splitter import HuggingFaceTextSplitter
 
 from intelligence_layer.core.model import ControlModel
 from intelligence_layer.core.task import Task
-from intelligence_layer.core.tracer import TaskSpan
+from intelligence_layer.core.tracer.tracer import TaskSpan
 
 Chunk = NewType("Chunk", str)
 """Segment of a larger text.

@@ -1,11 +1,7 @@
 from datetime import datetime
 from typing import cast
 
-from intelligence_layer.core.tracer import (
-    CompositeTracer,
-    InMemoryTaskSpan,
-    InMemoryTracer,
-)
+from intelligence_layer.core import CompositeTracer, InMemoryTaskSpan, InMemoryTracer
 from intelligence_layer.evaluation import ExampleTrace, TaskSpanTrace
 from intelligence_layer.evaluation.data_storage.run_repository import (
     FileRunRepository,

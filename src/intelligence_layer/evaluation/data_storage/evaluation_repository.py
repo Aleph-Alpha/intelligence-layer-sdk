@@ -13,7 +13,7 @@ from intelligence_layer.connectors.argilla.argilla_client import (
     Question,
     RecordData,
 )
-from intelligence_layer.core.tracer import JsonSerializer
+from intelligence_layer.core import JsonSerializer
 from intelligence_layer.evaluation.data_storage.utils import FileBasedRepository
 from intelligence_layer.evaluation.domain import (
     Evaluation,

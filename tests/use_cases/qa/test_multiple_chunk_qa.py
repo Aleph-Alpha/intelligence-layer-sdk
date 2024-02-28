@@ -2,9 +2,9 @@ from typing import Sequence
 
 from pytest import fixture
 
+from intelligence_layer.core import NoOpTracer
 from intelligence_layer.core.chunk import Chunk
 from intelligence_layer.core.detect_language import Language
-from intelligence_layer.core.tracer import NoOpTracer
 from intelligence_layer.use_cases.qa.multiple_chunk_qa import (
     MultipleChunkQa,
     MultipleChunkQaInput,

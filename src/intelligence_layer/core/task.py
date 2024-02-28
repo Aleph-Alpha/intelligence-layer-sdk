@@ -4,7 +4,7 @@ from typing import Generic, Iterable, Optional, Sequence, TypeVar, final
 
 from pydantic import BaseModel
 
-from intelligence_layer.core.tracer import PydanticSerializable, TaskSpan, Tracer
+from intelligence_layer.core.tracer.tracer import PydanticSerializable, TaskSpan, Tracer
 
 
 class Token(BaseModel):

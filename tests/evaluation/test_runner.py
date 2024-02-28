@@ -1,4 +1,4 @@
-from intelligence_layer.core.tracer import InMemoryTracer
+from intelligence_layer.core import InMemoryTracer
 from intelligence_layer.evaluation import (
     Example,
     InMemoryDatasetRepository,
