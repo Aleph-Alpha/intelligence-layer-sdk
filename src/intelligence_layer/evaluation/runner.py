@@ -7,6 +7,7 @@ from uuid import uuid4
 import wandb
 from pydantic import JsonValue
 from tqdm import tqdm
+from wandb.sdk.wandb_run import Run
 
 from intelligence_layer.core.task import Input, Output, Task
 from intelligence_layer.core.tracer import CompositeTracer, Tracer, utc_now
@@ -89,6 +90,7 @@ class Runner(Generic[Input, Output]):
             An overview of the run. Outputs will not be returned but instead stored in the
             :class:`RunRepository` provided in the __init__.
         """
+        run_id = str(uuid4()) if run_id is None else run_id
 
         def run(
             example: Example[Input, ExpectedOutput]
@@ -112,7 +114,6 @@ class Runner(Generic[Input, Output]):
         if num_examples:
             examples = islice(examples, num_examples)
 
-        run_id = str(uuid4()) if run_id is None else run_id
         start = utc_now()
         with ThreadPoolExecutor(max_workers=10) as executor:
             ids_and_outputs = tqdm(executor.map(run, examples), desc="Evaluating")
@@ -142,7 +143,7 @@ class Runner(Generic[Input, Output]):
         return run_overview
 
 
-class WandbRunner(Runner):
+class WandbRunner(Runner[Input, Output]):
     def __init__(
         self,
         task: Task[Input, Output],
@@ -152,6 +153,7 @@ class WandbRunner(Runner):
         wandb_project_name: str,
     ) -> None:
         super().__init__(task, dataset_repository, run_repository, description)
+        self._run_repository: WandbRunRepository = run_repository
         self._wandb_project_name = wandb_project_name
 
     def run_dataset(
@@ -163,7 +165,9 @@ class WandbRunner(Runner):
     ) -> RunOverview:
         run = wandb.init(project=self._wandb_project_name, job_type="Runner")
         run_id = str(uuid4())
+        assert isinstance(run, Run)
         self._run_repository.start_run(run, run_id)
         run_overview = super().run_dataset(dataset_id, tracer, num_examples, run_id)
         self._run_repository.finish_run(run_id)
+        run.finish()
         return run_overview

@@ -3,11 +3,12 @@ from collections import defaultdict
 from functools import lru_cache
 from os import getenv
 from pathlib import Path
-from typing import Iterable, Optional, Sequence, cast
+from typing import Any, Iterable, Optional, Sequence, cast
 from uuid import uuid4
 
 import wandb
 from dotenv import load_dotenv
+from wandb import Table
 from wandb.sdk.wandb_run import Run
 
 from intelligence_layer.core.task import Output
@@ -273,10 +274,10 @@ class InMemoryRunRepository(RunRepository):
 
 class WandbRunRepository(RunRepository):
     def __init__(self) -> None:
-        self._example_outputs = dict()
-        self._run_overviews = dict()
-        self._run = None
-        self.team_name = "aleph-alpha-intelligence-layer-trial"
+        self._example_outputs: dict[str, wandb.Table] = dict()
+        self._run_overviews: dict[str, wandb.Table] = dict()
+        self._run: Run | None = None
+        self.team_name: str = "aleph-alpha-intelligence-layer-trial"
 
     def run_ids(self) -> Sequence[str]:
         """Returns the ids of all stored runs.
@@ -287,7 +288,7 @@ class WandbRunRepository(RunRepository):
         Returns:
             The ids of all stored runs.
         """
-        pass
+        raise NotImplementedError
 
     def example_outputs(
         self, run_id: str, output_type: type[Output]
@@ -307,13 +308,17 @@ class WandbRunRepository(RunRepository):
 
     @lru_cache(maxsize=2)
     def _get_table(self, artifact_id: str, name: str) -> wandb.Table:
+        if self._run is None:
+            raise ValueError(
+                "The run has not been started, are you using a WandbRunner?"
+            )
         artifact = self._run.use_artifact(
             f"{self.team_name}/{self._run.project_name()}/{artifact_id}:latest"
         )
         return artifact.get(name)  # type: ignore
 
     def store_example_output(self, example_output: ExampleOutput[Output]) -> None:
-        self._example_outputs[example_output.run_id].add_data(
+        self._example_outputs[example_output.run_id].add_data(  # type: ignore
             example_output.model_dump_json(),
         )
 
@@ -354,16 +359,20 @@ class WandbRunRepository(RunRepository):
         Args:
             overview: The overview to be persisted.
         """
-        self._run_overviews[overview.id].add_data(
+        self._run_overviews[overview.id].add_data(  # type: ignore
             overview.model_dump_json(),
         )
 
     def start_run(self, run: Run, run_id: str) -> None:
         self._run = run
-        self._example_outputs[run_id] = wandb.Table(columns=["example_output"])
-        self._run_overviews[run_id] = wandb.Table(columns=["run_overview"])
+        self._example_outputs[run_id] = Table(columns=["example_output"])  # type: ignore
+        self._run_overviews[run_id] = Table(columns=["run_overview"])  # type: ignore
 
     def finish_run(self, run_id: str) -> None:
+        if self._run is None:
+            raise ValueError(
+                "The run has not been started, are you using a WandbRunner?"
+            )
         artifact = wandb.Artifact(name=run_id, type="Run")
         artifact.add(self._example_outputs[run_id], name="example_outputs")
         artifact.add(self._run_overviews[run_id], name="run_overview")

@@ -56,12 +56,14 @@ class DatasetRepository(ABC):
 class WandbDatasetRepository(DatasetRepository):
     def __init__(self) -> None:
         self.team_name = "aleph-alpha-intelligence-layer-trial"
-        self._run = None
+        self._run: Run | None = None
 
     def create_dataset(
         self,
         examples: Iterable[Example[Input, ExpectedOutput]],
     ) -> str:
+        if self._run is None:
+            raise ValueError("Run not started")
         dataset_id = str(uuid4())
         artifact = wandb.Artifact(name=dataset_id, type="dataset")
         table = Table(columns=["example"])  # type: ignore
@@ -90,6 +92,8 @@ class WandbDatasetRepository(DatasetRepository):
 
     @lru_cache(maxsize=1)
     def _get_dataset(self, id: str) -> Table:
+        if self._run is None:
+            raise ValueError("Run not started")
         artifact = self._run.use_artifact(
             f"{self.team_name}/{self._run.project_name()}/{id}:latest"
         )
@@ -103,9 +107,12 @@ class WandbDatasetRepository(DatasetRepository):
         expected_output_type: type[ExpectedOutput],
     ) -> Optional[Example[Input, ExpectedOutput]]:
         examples = self.examples_by_id(dataset_id, input_type, expected_output_type)
+        if examples is None:
+            return None
         for example in examples:
             if example.id == example_id:
                 return example
+        return None
 
     def delete_dataset(self, dataset_id: str) -> None:
         raise NotImplementedError
