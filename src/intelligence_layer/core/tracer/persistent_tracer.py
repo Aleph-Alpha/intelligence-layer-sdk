@@ -98,7 +98,7 @@ class PersistentTracer(Tracer, ABC):
         return tree_builder.root
 
 
-class PersistentSpan(Span, PersistentTracer):
+class PersistentSpan(Span, PersistentTracer, ABC):
     end_timestamp: Optional[datetime] = None
 
     def log(
@@ -136,7 +136,7 @@ class PersistentSpan(Span, PersistentTracer):
             self._log_entry(self.id(), EndSpan(uuid=self.uuid, end=self.end_timestamp))
 
 
-class PersistentTaskSpan(TaskSpan, PersistentSpan):
+class PersistentTaskSpan(TaskSpan, PersistentSpan, ABC):
     output: Optional[PydanticSerializable] = None
 
     def record_output(self, output: PydanticSerializable) -> None:
