@@ -54,17 +54,30 @@ class PersistentTracer(Tracer, ABC):
         input: PydanticSerializable,
         timestamp: Optional[datetime] = None,
     ) -> None:
-        self._log_entry(
-            task_span.id(),
-            StartTask(
-                uuid=task_span.uuid,
-                parent=self.uuid,
-                name=task_name,
-                start=timestamp or utc_now(),
-                input=input,
-                trace_id=task_span.id(),
-            ),
-        )
+        try:
+            self._log_entry(
+                task_span.id(),
+                StartTask(
+                    uuid=task_span.uuid,
+                    parent=self.uuid,
+                    name=task_name,
+                    start=timestamp or utc_now(),
+                    input=input,
+                    trace_id=task_span.id(),
+                ),
+            )
+        except TracerLogEntryFailed as error:
+            self._log_entry(
+                task_span.id(),
+                StartTask(
+                    uuid=task_span.uuid,
+                    parent=self.uuid,
+                    name=task_name,
+                    start=timestamp or utc_now(),
+                    input=error.description,
+                    trace_id=task_span.id(),
+                ),
+            )
 
     def _parse_log(self, log_entries: Iterable[LogLine]) -> InMemoryTracer:
         tree_builder = TreeBuilder()
@@ -94,16 +107,28 @@ class PersistentSpan(Span, PersistentTracer):
         value: PydanticSerializable,
         timestamp: Optional[datetime] = None,
     ) -> None:
-        self._log_entry(
-            self.id(),
-            PlainEntry(
-                message=message,
-                value=value,
-                timestamp=timestamp or utc_now(),
-                parent=self.uuid,
-                trace_id=self.id(),
-            ),
-        )
+        try:
+            self._log_entry(
+                self.id(),
+                PlainEntry(
+                    message=message,
+                    value=value,
+                    timestamp=timestamp or utc_now(),
+                    parent=self.uuid,
+                    trace_id=self.id(),
+                ),
+            )
+        except TracerLogEntryFailed as error:
+            self._log_entry(
+                self.id(),
+                PlainEntry(
+                    message="log entry failed",
+                    value=error.description,
+                    timestamp=timestamp or utc_now(),
+                    parent=self.uuid,
+                    trace_id=self.id(),
+                ),
+            )
 
     def end(self, timestamp: Optional[datetime] = None) -> None:
         if not self.end_timestamp:
@@ -124,3 +149,11 @@ class PersistentTaskSpan(TaskSpan, PersistentSpan):
                 self.id(),
                 EndTask(uuid=self.uuid, end=self.end_timestamp, output=self.output),
             )
+
+
+class TracerLogEntryFailed(Exception):
+    def __init__(self, error_message: str, id: str) -> None:
+        super().__init__(
+            f"Log entry with id {id} failed with error message {error_message}."
+        )
+        self.description = error_message
