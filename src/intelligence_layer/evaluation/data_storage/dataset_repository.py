@@ -54,10 +54,9 @@ class DatasetRepository(ABC):
 
 
 class WandbDatasetRepository(DatasetRepository):
-    def __init__(self, wandb_project_name: str, run: Run) -> None:
-        self.wandb_project_name = wandb_project_name
+    def __init__(self) -> None:
         self.team_name = "aleph-alpha-intelligence-layer-trial"
-        self._run = run
+        self._run = None
 
     def create_dataset(
         self,
@@ -68,11 +67,17 @@ class WandbDatasetRepository(DatasetRepository):
         table = Table(columns=["example"])  # type: ignore
         for example in examples:
             table.add_data(  # type: ignore
-                JsonSerializer(example).model_dump_json(indent=2),
+                example.model_dump_json(),
             )
-        artifact.add(table, f"{dataset_id}")
+        artifact.add(table, "dataset")
         self._run.log_artifact(artifact)
         return dataset_id
+
+    def start_run(self, run: Run) -> None:
+        self._run = run
+
+    def finish_run(self) -> None:
+        self._run = None
 
     def examples_by_id(
         self,
@@ -80,20 +85,15 @@ class WandbDatasetRepository(DatasetRepository):
         input_type: type[Input],
         expected_output_type: type[ExpectedOutput],
     ) -> Optional[Iterable[Example[Input, ExpectedOutput]]]:
-        table = self._get_table(dataset_id)
-        return [self._table_row_to_example(row, input_type, expected_output_type) for _, row in table.iterrows()]  # type: ignore
-
-    def _table_row_to_example(
-        self,
-        row: dict[str, str],
-        input_type: type[Input],
-        expected_output_type: type[ExpectedOutput],
-    ) -> Example[Input, ExpectedOutput]:
-        return Example[input_type, expected_output_type].model_validate_json(json_data=row)  # type: ignore
+        table = self._get_dataset(dataset_id)
+        return [Example[input_type, expected_output_type].model_validate_json(json_data=row[0]) for _, row in table.iterrows()]  # type: ignore
 
     @lru_cache(maxsize=1)
-    def _get_table(self, dataset_id: str) -> Table:
-        return self._run.use_artifact(f"{self.team_name}/{self.wandb_project_name}/{dataset_id}:latest").get(dataset_id)  # type: ignore
+    def _get_dataset(self, id: str) -> Table:
+        artifact = self._run.use_artifact(
+            f"{self.team_name}/{self._run.project_name()}/{id}:latest"
+        )
+        return artifact.get("dataset")  # type: ignore
 
     def example(
         self,
@@ -102,7 +102,10 @@ class WandbDatasetRepository(DatasetRepository):
         input_type: type[Input],
         expected_output_type: type[ExpectedOutput],
     ) -> Optional[Example[Input, ExpectedOutput]]:
-        raise NotImplementedError
+        examples = self.examples_by_id(dataset_id, input_type, expected_output_type)
+        for example in examples:
+            if example.id == example_id:
+                return example
 
     def delete_dataset(self, dataset_id: str) -> None:
         raise NotImplementedError

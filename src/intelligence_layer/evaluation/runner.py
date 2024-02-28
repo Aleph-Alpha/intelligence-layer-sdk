@@ -4,6 +4,7 @@ from itertools import islice
 from typing import Generic, Optional, cast
 from uuid import uuid4
 
+import wandb
 from pydantic import JsonValue
 from tqdm import tqdm
 
@@ -12,7 +13,10 @@ from intelligence_layer.core.tracer import CompositeTracer, Tracer, utc_now
 from intelligence_layer.evaluation.data_storage.dataset_repository import (
     DatasetRepository,
 )
-from intelligence_layer.evaluation.data_storage.run_repository import RunRepository
+from intelligence_layer.evaluation.data_storage.run_repository import (
+    RunRepository,
+    WandbRunRepository,
+)
 from intelligence_layer.evaluation.domain import (
     Example,
     ExampleOutput,
@@ -68,6 +72,7 @@ class Runner(Generic[Input, Output]):
         dataset_id: str,
         tracer: Optional[Tracer] = None,
         num_examples: Optional[int] = None,
+        run_id: Optional[str] = None,
     ) -> RunOverview:
         """Generates all outputs for the provided dataset.
 
@@ -106,7 +111,8 @@ class Runner(Generic[Input, Output]):
             raise ValueError(f"Dataset with id {dataset_id} not found")
         if num_examples:
             examples = islice(examples, num_examples)
-        run_id = str(uuid4())
+
+        run_id = str(uuid4()) if run_id is None else run_id
         start = utc_now()
         with ThreadPoolExecutor(max_workers=10) as executor:
             ids_and_outputs = tqdm(executor.map(run, examples), desc="Evaluating")
@@ -133,4 +139,31 @@ class Runner(Generic[Input, Output]):
             description=self.description,
         )
         self._run_repository.store_run_overview(run_overview)
+        return run_overview
+
+
+class WandbRunner(Runner):
+    def __init__(
+        self,
+        task: Task[Input, Output],
+        dataset_repository: DatasetRepository,
+        run_repository: WandbRunRepository,
+        description: str,
+        wandb_project_name: str,
+    ) -> None:
+        super().__init__(task, dataset_repository, run_repository, description)
+        self._wandb_project_name = wandb_project_name
+
+    def run_dataset(
+        self,
+        dataset_id: str,
+        tracer: Optional[Tracer] = None,
+        num_examples: Optional[int] = None,
+        run_id: Optional[str] = None,
+    ) -> RunOverview:
+        run = wandb.init(project=self._wandb_project_name, job_type="Runner")
+        run_id = str(uuid4())
+        self._run_repository.start_run(run, run_id)
+        run_overview = super().run_dataset(dataset_id, tracer, num_examples, run_id)
+        self._run_repository.finish_run(run_id)
         return run_overview
