@@ -3,7 +3,7 @@ from typing import NewType, Sequence
 from pydantic import BaseModel
 from semantic_text_splitter import HuggingFaceTextSplitter
 
-from intelligence_layer.core.model import ControlModel
+from intelligence_layer.core.model import ControlModel, LuminousControlModel
 from intelligence_layer.core.task import Task
 from intelligence_layer.core.tracer.tracer import TaskSpan
 
@@ -50,8 +50,11 @@ class ChunkTask(Task[ChunkInput, ChunkOutput]):
         max_tokens_per_chunk: The maximum number of tokens to fit into one chunk.
     """
 
-    def __init__(self, model: ControlModel, max_tokens_per_chunk: int):
+    def __init__(
+        self, model: ControlModel | None = None, max_tokens_per_chunk: int = 512
+    ):
         super().__init__()
+        model = model or LuminousControlModel()
         self._splitter = HuggingFaceTextSplitter(model.get_tokenizer())
         self._max_tokens_per_chunk = max_tokens_per_chunk
 
