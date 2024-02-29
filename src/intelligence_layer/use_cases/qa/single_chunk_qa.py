@@ -26,7 +26,7 @@ QA_INSTRUCTIONS = {
     Language("en"): QaSetup(
         unformatted_instruction='Question: {{question}}\nAnswer the question on the basis of the text. If there is no answer within the text, respond "{{no_answer_text}}".',
         no_answer_str="no answer in text",
-        no_answer_logit_bias=2.0,
+        no_answer_logit_bias=1.0,
     ),
     Language("de"): QaSetup(
         unformatted_instruction='Beantworte die Frage anhand des Textes. Wenn sich die Frage nicht mit dem Text beantworten lässt, antworte "{{no_answer_text}}".\nFrage: {{question}}',
