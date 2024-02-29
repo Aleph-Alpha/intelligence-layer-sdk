@@ -66,7 +66,7 @@ class Chunk(Task[ChunkInput, ChunkOutput]):
         return ChunkOutput(chunks=chunks)
 
 
-class ChunkOverlapTask(Task[ChunkInput, ChunkOutput]):
+class ChunkOverlap(Task[ChunkInput, ChunkOutput]):
     """Splits a longer text into smaller text chunks, where every chunk overlaps
     with the previous chunk by `overlap_length_tokens` number of tokens.
 

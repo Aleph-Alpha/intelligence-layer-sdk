@@ -1,7 +1,7 @@
 from typing import Mapping
 
 from intelligence_layer.core import Chunk, ChunkInput, Task, TaskSpan
-from intelligence_layer.core.chunk import ChunkOutput, ChunkOverlapTask
+from intelligence_layer.core.chunk import ChunkOutput, ChunkOverlap
 from intelligence_layer.core.detect_language import Language
 from intelligence_layer.core.model import ControlModel, LuminousControlModel
 from intelligence_layer.use_cases.summarize.steerable_single_chunk_summarize import (
@@ -52,7 +52,7 @@ class SteerableLongContextSummarize(
         if overlap_length_tokens == 0:
             self._chunk_task = Chunk(model, max_tokens_per_chunk)
         else:
-            self._chunk_task = ChunkOverlapTask(
+            self._chunk_task = ChunkOverlap(
                 model,
                 max_tokens_per_chunk,
                 overlap_length_tokens,

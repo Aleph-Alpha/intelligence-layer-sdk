@@ -2,7 +2,7 @@ from pytest import fixture
 
 from intelligence_layer.core import (
     ChunkInput,
-    ChunkOverlapTask,
+    ChunkOverlap,
     InMemoryTracer,
     LuminousControlModel,
 )
@@ -24,7 +24,7 @@ def test_overlapped_chunking(
     MAX_TOKENS = 16
 
     tracer = InMemoryTracer()
-    task = ChunkOverlapTask(
+    task = ChunkOverlap(
         model=luminous_control_model,
         max_tokens_per_chunk=MAX_TOKENS,
         overlap_length_tokens=OVERLAP,

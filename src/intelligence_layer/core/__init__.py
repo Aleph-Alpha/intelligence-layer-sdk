@@ -7,7 +7,7 @@ from intelligence_layer.core.intelligence_app import IntelligenceApp as Intellig
 from .chunk import Chunk as Chunk
 from .chunk import ChunkInput as ChunkInput
 from .chunk import ChunkOutput as ChunkOutput
-from .chunk import ChunkOverlapTask as ChunkOverlapTask
+from .chunk import ChunkOverlap as ChunkOverlap
 from .chunk import TextChunk as TextChunk
 from .detect_language import DetectLanguage as DetectLanguage
 from .detect_language import DetectLanguageInput as DetectLanguageInput
