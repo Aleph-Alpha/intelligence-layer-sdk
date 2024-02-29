@@ -7,8 +7,8 @@ from intelligence_layer.connectors.retrievers.qdrant_in_memory_retriever import 
 from intelligence_layer.core import (
     Chunk,
     ChunkInput,
+    ChunkOutput,
     ControlModel,
-    DetectLanguage,
     Language,
     LuminousControlModel,
     Task,
@@ -48,8 +48,9 @@ class LongContextQa(Task[LongContextQaInput, MultipleChunkQaOutput]):
         - `model` provided should be a control-type model.
 
     Args:
-        max_tokens_in_chunk: The input text will be split into chunks to fit the context window.
-            Used to tweak the length of the chunks.
+        multi_chunk_qa: task used to produce answers for each relevant chunk generated
+            by the chunk-task for the given input
+        chunk: task used to chunk the input
         k: The number of top relevant chunks to retrieve.
         model: The model used in the task.
 
@@ -68,16 +69,15 @@ class LongContextQa(Task[LongContextQaInput, MultipleChunkQaOutput]):
     def __init__(
         self,
         multi_chunk_qa: Task[MultipleChunkQaInput, MultipleChunkQaOutput] | None = None,
-        max_tokens_per_chunk: int = 1024,
+        chunk: Task[ChunkInput, ChunkOutput] | None = None,
         k: int = 4,
-        model: ControlModel = LuminousControlModel("luminous-supreme-control-20240215"),
+        model: ControlModel | None = None,
     ):
         super().__init__()
-        self._model = model
-        self._chunk_task = Chunk(model, max_tokens_per_chunk)
-        self._multi_chunk_qa = multi_chunk_qa or MultipleChunkQa(model=model)
+        self._model = model or LuminousControlModel("luminous-supreme-control-20240215")
+        self._chunk_task = chunk or Chunk(self._model, 1024)
+        self._multi_chunk_qa = multi_chunk_qa or MultipleChunkQa(model=self._model)
         self._k = k
-        self._language_detector = DetectLanguage(threshold=0.5)
 
     def do_run(
         self, input: LongContextQaInput, task_span: TaskSpan
