@@ -31,11 +31,11 @@ class SteerableSingleChunkSummarize(Task[SingleChunkSummarizeInput, SummarizeOut
 
     def __init__(
         self,
-        model: ControlModel = LuminousControlModel("luminous-base-control-20240215"),
+        model: ControlModel | None = None,
         max_generated_tokens: int = 256,
         instruction_configs: Mapping[Language, str] = INSTRUCTION_CONFIGS,
     ) -> None:
-        self._model = model
+        self._model = model or LuminousControlModel("luminous-base-control-20240215")
         self._max_generated_tokens = max_generated_tokens
         self._instruction_configs = instruction_configs
 
