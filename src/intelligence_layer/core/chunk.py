@@ -82,9 +82,9 @@ class ChunkOverlapTask(Task[ChunkInput, ChunkOutput]):
 
     def __init__(
         self,
-        model: ControlModel,
-        max_tokens_per_chunk: int,
-        overlap_length_tokens: int,
+        model: ControlModel | None = None,
+        max_tokens_per_chunk: int = 512,
+        overlap_length_tokens: int = 0,
     ):
         super().__init__()
         if overlap_length_tokens >= max_tokens_per_chunk:
@@ -93,8 +93,10 @@ class ChunkOverlapTask(Task[ChunkInput, ChunkOutput]):
                     overlap_length_tokens, max_tokens_per_chunk
                 )
             )
-        self.chunk_task = ChunkTask(model, overlap_length_tokens // 2)
+
+        model = model or LuminousControlModel()
         self.tokenizer = model.get_tokenizer()
+        self.chunk_task = ChunkTask(model, overlap_length_tokens // 2)
         self.max_tokens_per_chunk = max_tokens_per_chunk
         self.overlap_length_tokens = overlap_length_tokens
 
