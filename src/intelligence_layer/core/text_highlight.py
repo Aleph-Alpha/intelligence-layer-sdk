@@ -64,7 +64,7 @@ class TextHighlightOutput(BaseModel):
     highlights: Sequence[ScoredTextHighlight]
 
 
-class TextHighlightTask(Task[TextHighlightInput, TextHighlightOutput]):
+class TextHighlight(Task[TextHighlightInput, TextHighlightOutput]):
     """Generates text highlights given a prompt and completion.
 
     For a given prompt and target (completion), extracts the parts of the prompt responsible for generation.
@@ -80,13 +80,13 @@ class TextHighlightTask(Task[TextHighlightInput, TextHighlightOutput]):
         >>> from intelligence_layer.core import (
         ... 	InMemoryTracer,
         ... 	PromptTemplate,
-        ... 	TextHighlightTask,
+        ... 	TextHighlight,
         ... 	TextHighlightInput,
         ...     AlephAlphaModel
         ... )
 
         >>> model = AlephAlphaModel(name="luminous-base")
-        >>> text_highlight = TextHighlightTask(model=model)
+        >>> text_highlight = TextHighlight(model=model)
         >>> prompt_template_str = (
         ...		"{% promptrange r1 %}Question: What is 2 + 2?{% endpromptrange %}\\nAnswer:"
         ...	)
