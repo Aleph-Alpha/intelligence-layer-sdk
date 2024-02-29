@@ -209,7 +209,7 @@ class LuminousControlModel(ControlModel):
             "luminous-base-control-20240215",
             "luminous-extended-control-20240215",
             "luminous-supreme-control-20240215",
-        ],
+        ] = "luminous-base-control",
         client: Optional[AlephAlphaClientProtocol] = None,
     ) -> None:
         super().__init__(name, client)
