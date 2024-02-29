@@ -40,14 +40,15 @@ class KeywordExtractOutput(BaseModel):
 
 
 class KeywordExtract(Task[KeywordExtractInput, KeywordExtractOutput]):
+
     def __init__(
         self,
-        model: ControlModel = LuminousControlModel("luminous-base-control-20240215"),
+        model: ControlModel | None = None,
         instruct_configs: Mapping[Language, str] = INSTRUCT_CONFIGS,
         maximum_tokens: int = 32,
     ) -> None:
         self._instruct_configs = instruct_configs
-        self._model = model
+        self._model = model or LuminousControlModel("luminous-base-control-20240215")
         self._maximum_tokens = maximum_tokens
 
     def do_run(
