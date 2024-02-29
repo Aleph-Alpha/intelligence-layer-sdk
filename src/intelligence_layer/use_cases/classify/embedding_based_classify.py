@@ -12,7 +12,7 @@ from intelligence_layer.connectors.retrievers.qdrant_in_memory_retriever import 
     QdrantInMemoryRetriever,
     RetrieverType,
 )
-from intelligence_layer.core import Chunk, Task, TaskSpan
+from intelligence_layer.core import Task, TaskSpan, TextChunk
 from intelligence_layer.use_cases.classify.classify import (
     ClassifyInput,
     MultiLabelClassifyOutput,
@@ -129,7 +129,7 @@ class EmbeddingBasedClassify(Task[ClassifyInput, MultiLabelClassifyOutput]):
         >>> from intelligence_layer.connectors.limited_concurrency_client import (
         ...     LimitedConcurrencyClient,
         ... )
-        >>> from intelligence_layer.core import Chunk, InMemoryTracer
+        >>> from intelligence_layer.core import TextChunk, InMemoryTracer
         >>> from intelligence_layer.use_cases.classify.classify import ClassifyInput
         >>> from intelligence_layer.use_cases.classify.embedding_based_classify import (
         ...     EmbeddingBasedClassify,
@@ -153,7 +153,7 @@ class EmbeddingBasedClassify(Task[ClassifyInput, MultiLabelClassifyOutput]):
         ... ]
         >>> client = LimitedConcurrencyClient.from_env()
         >>> task = EmbeddingBasedClassify(client, labels_with_examples)
-        >>> input = ClassifyInput(chunk=Chunk("This is a happy text."), labels=frozenset({"positive", "negative"}))
+        >>> input = ClassifyInput(chunk=TextChunk("This is a happy text."), labels=frozenset({"positive", "negative"}))
         >>> tracer = InMemoryTracer()
         >>> output = task.run(input, tracer)
     """
@@ -212,7 +212,7 @@ class EmbeddingBasedClassify(Task[ClassifyInput, MultiLabelClassifyOutput]):
             raise ValueError(f"Got unexpected labels: {', '.join(unknown_labels)}.")
 
     def _label_search(
-        self, chunk: Chunk, label: str, task_span: TaskSpan
+        self, chunk: TextChunk, label: str, task_span: TaskSpan
     ) -> SearchOutput[int]:
         search_input = QdrantSearchInput(
             query=chunk,

@@ -3,7 +3,7 @@ from typing import Mapping
 from pydantic import BaseModel
 
 from intelligence_layer.core import Task, TaskSpan
-from intelligence_layer.core.chunk import Chunk
+from intelligence_layer.core.chunk import TextChunk
 from intelligence_layer.core.detect_language import Language, language_config
 from intelligence_layer.core.model import (
     CompleteInput,
@@ -31,7 +31,7 @@ INSTRUCT_CONFIGS = {
 
 
 class KeywordExtractInput(BaseModel):
-    chunk: Chunk
+    chunk: TextChunk
     language: Language
 
 

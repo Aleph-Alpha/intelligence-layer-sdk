@@ -52,14 +52,14 @@ class PromptBasedClassify(Task[ClassifyInput, SingleLabelClassifyOutput]):
 
     Example:
         >>> from intelligence_layer.core import InMemoryTracer
-        >>> from intelligence_layer.core import Chunk
+        >>> from intelligence_layer.core import TextChunk
         >>> from intelligence_layer.use_cases import ClassifyInput
         >>> from intelligence_layer.use_cases import PromptBasedClassify
 
 
         >>> task = PromptBasedClassify()
         >>> input = ClassifyInput(
-        ...     chunk=Chunk("This is a happy text."), labels=frozenset({"positive", "negative"})
+        ...     chunk=TextChunk("This is a happy text."), labels=frozenset({"positive", "negative"})
         ... )
         >>> tracer = InMemoryTracer()
         >>> output = task.run(input, tracer)

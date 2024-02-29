@@ -3,7 +3,7 @@ from typing import Generic, Optional, Sequence
 from pydantic import BaseModel
 
 from intelligence_layer.connectors.retrievers.base_retriever import ID, BaseRetriever
-from intelligence_layer.core import Chunk, Language, Task, TaskSpan
+from intelligence_layer.core import Language, Task, TaskSpan, TextChunk
 from intelligence_layer.use_cases.qa.multiple_chunk_qa import Subanswer
 from intelligence_layer.use_cases.qa.single_chunk_qa import (
     SingleChunkQaInput,
@@ -105,7 +105,7 @@ class RetrieverBasedQa(
 
         sorted_qa_inputs = [
             SingleChunkQaInput(
-                chunk=Chunk(output.document_chunk.text),
+                chunk=TextChunk(output.document_chunk.text),
                 question=input.question,
                 language=input.language,
             )
@@ -117,7 +117,7 @@ class RetrieverBasedQa(
         enriched_answers = [
             EnrichedSubanswer(
                 answer=answer.answer,
-                chunk=Chunk(input.document_chunk.text),
+                chunk=TextChunk(input.document_chunk.text),
                 highlights=answer.highlights,
                 id=input.id,
             )

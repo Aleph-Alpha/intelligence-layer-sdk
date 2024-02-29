@@ -11,7 +11,7 @@ from intelligence_layer.connectors.retrievers.qdrant_in_memory_retriever import 
     QdrantInMemoryRetriever,
 )
 from intelligence_layer.core import NoOpTracer
-from intelligence_layer.core.chunk import Chunk
+from intelligence_layer.core.chunk import TextChunk
 from intelligence_layer.use_cases.classify.classify import (
     ClassifyInput,
     MultiLabelClassifyOutput,
@@ -101,7 +101,7 @@ def test_embedding_based_classify_returns_score_for_all_labels(
     embedding_based_classify: EmbeddingBasedClassify,
 ) -> None:
     classify_input = ClassifyInput(
-        chunk=Chunk("This is good"),
+        chunk=TextChunk("This is good"),
         labels=frozenset({"positive", "negative"}),
     )
     classify_output = embedding_based_classify.run(classify_input, NoOpTracer())
@@ -116,7 +116,7 @@ def test_embedding_based_classify_raises_for_unknown_label(
 ) -> None:
     unknown_label = "neutral"
     classify_input = ClassifyInput(
-        chunk=Chunk("This is good"),
+        chunk=TextChunk("This is good"),
         labels=frozenset({"positive", "negative", unknown_label}),
     )
     with raises(ValueError) as _:
@@ -127,7 +127,7 @@ def test_embedding_based_classify_works_for_empty_labels_in_request(
     embedding_based_classify: EmbeddingBasedClassify,
 ) -> None:
     classify_input = ClassifyInput(
-        chunk=Chunk("This is good"),
+        chunk=TextChunk("This is good"),
         labels=frozenset(),
     )
     result = embedding_based_classify.run(classify_input, NoOpTracer())
@@ -149,7 +149,7 @@ def test_embedding_based_classify_works_without_examples(
     ]
     embedding_based_classify = EmbeddingBasedClassify(client, labels_with_examples)
     classify_input = ClassifyInput(
-        chunk=Chunk("This is good"),
+        chunk=TextChunk("This is good"),
         labels=frozenset(),
     )
     result = embedding_based_classify.run(classify_input, NoOpTracer())

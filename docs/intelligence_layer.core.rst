@@ -6,4 +6,4 @@ Module contents
 
 .. automodule:: intelligence_layer.core
 
-    .. autoclass:: Chunk
+    .. autoclass:: TextChunk

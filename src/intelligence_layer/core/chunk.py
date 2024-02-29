@@ -7,7 +7,7 @@ from intelligence_layer.core.model import ControlModel, LuminousControlModel
 from intelligence_layer.core.task import Task
 from intelligence_layer.core.tracer.tracer import TaskSpan
 
-Chunk = NewType("Chunk", str)
+TextChunk = NewType("TextChunk", str)
 """Segment of a larger text.
 
 This type infers that the string is smaller than the context size of the model where it is used.
@@ -35,7 +35,7 @@ class ChunkOutput(BaseModel):
         chunks: A list of smaller sections of the input text.
     """
 
-    chunks: Sequence[Chunk]
+    chunks: Sequence[TextChunk]
 
 
 class ChunkTask(Task[ChunkInput, ChunkOutput]):
@@ -60,7 +60,7 @@ class ChunkTask(Task[ChunkInput, ChunkOutput]):
 
     def do_run(self, input: ChunkInput, task_span: TaskSpan) -> ChunkOutput:
         chunks = [
-            Chunk(t)
+            TextChunk(t)
             for t in self._splitter.chunks(input.text, self._max_tokens_per_chunk)
         ]
         return ChunkOutput(chunks=chunks)

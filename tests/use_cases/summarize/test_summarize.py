@@ -1,6 +1,6 @@
 from pytest import fixture
 
-from intelligence_layer.core import Chunk, Language, NoOpTracer
+from intelligence_layer.core import Language, NoOpTracer, TextChunk
 from intelligence_layer.evaluation import (
     Aggregator,
     DatasetRepository,
@@ -165,7 +165,7 @@ def test_single_chunk_summarize_evaluator(
         AggregatedSummarizeEvaluation,
     ],
     single_chunk_summarize_runner: Runner[str, str],
-    chunk: Chunk,
+    chunk: TextChunk,
     no_op_tracer: NoOpTracer,
     in_memory_dataset_repository: InMemoryDatasetRepository,
 ) -> None:

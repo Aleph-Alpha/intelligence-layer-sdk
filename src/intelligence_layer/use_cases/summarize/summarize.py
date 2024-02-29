@@ -2,7 +2,7 @@ from typing import Iterable, Optional, Sequence, Union
 
 from pydantic import BaseModel
 
-from intelligence_layer.core import Chunk, Language
+from intelligence_layer.core import Language, TextChunk
 from intelligence_layer.evaluation import (
     BleuGrader,
     Example,
@@ -38,7 +38,7 @@ class PartialSummary(BaseModel):
     """
 
     summary: str
-    chunk: Chunk
+    chunk: TextChunk
     generated_tokens: int
 
 
@@ -60,7 +60,7 @@ class SingleChunkSummarizeInput(BaseModel):
         language: The desired language of the summary. ISO 619 str with language e.g. en, fr, etc.
     """
 
-    chunk: Chunk
+    chunk: TextChunk
     language: Language = Language("en")
 
 

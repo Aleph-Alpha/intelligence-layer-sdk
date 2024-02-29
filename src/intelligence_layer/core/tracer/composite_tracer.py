@@ -21,14 +21,14 @@ class CompositeTracer(Tracer, Generic[TracerVar]):
         tracers: tracers that will be forwarded all subsequent log and span calls.
 
     Example:
-        >>> from intelligence_layer.core import InMemoryTracer, FileTracer, CompositeTracer, Chunk
+        >>> from intelligence_layer.core import InMemoryTracer, FileTracer, CompositeTracer, TextChunk
         >>> from intelligence_layer.use_cases import PromptBasedClassify, ClassifyInput
 
         >>> tracer_1 = InMemoryTracer()
         >>> tracer_2 = InMemoryTracer()
         >>> tracer = CompositeTracer([tracer_1, tracer_2])
         >>> task = PromptBasedClassify()
-        >>> response = task.run(ClassifyInput(chunk=Chunk("Cool"), labels=frozenset({"label", "other label"})), tracer)
+        >>> response = task.run(ClassifyInput(chunk=TextChunk("Cool"), labels=frozenset({"label", "other label"})), tracer)
     """
 
     def __init__(self, tracers: Sequence[TracerVar]) -> None:

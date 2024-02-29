@@ -4,7 +4,7 @@ from liquid import Template
 from pydantic import BaseModel
 
 from intelligence_layer.core import Task, TaskSpan
-from intelligence_layer.core.chunk import Chunk
+from intelligence_layer.core.chunk import TextChunk
 from intelligence_layer.core.detect_language import Language, language_config
 from intelligence_layer.core.model import (
     CompleteInput,
@@ -57,7 +57,7 @@ class SingleChunkQaInput(BaseModel):
         language: The desired language of the answer. ISO 619 str with language e.g. en, fr, etc.
     """
 
-    chunk: Chunk
+    chunk: TextChunk
     question: str
     language: Language = Language("en")
 
@@ -91,12 +91,12 @@ class SingleChunkQa(Task[SingleChunkQaInput, SingleChunkQaOutput]):
     Example:
         >>> import os
         >>> from intelligence_layer.core import Language, InMemoryTracer
-        >>> from intelligence_layer.core import Chunk
+        >>> from intelligence_layer.core import TextChunk
         >>> from intelligence_layer.use_cases import SingleChunkQa, SingleChunkQaInput
         >>>
         >>> task = SingleChunkQa()
         >>> input = SingleChunkQaInput(
-        ...     chunk=Chunk("Tina does not like pizza. However, Mike does."),
+        ...     chunk=TextChunk("Tina does not like pizza. However, Mike does."),
         ...     question="Who likes pizza?",
         ...     language=Language("en"),
         ... )

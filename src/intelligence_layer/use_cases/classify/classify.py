@@ -3,7 +3,7 @@ from typing import Iterable, Mapping, NewType, Sequence
 
 from pydantic import BaseModel
 
-from intelligence_layer.core import Chunk
+from intelligence_layer.core import TextChunk
 from intelligence_layer.evaluation import Example, MeanAccumulator
 from intelligence_layer.evaluation.base_logic import (
     AggregationLogic,
@@ -21,7 +21,7 @@ class ClassifyInput(BaseModel):
         labels: Possible labels the model will choose a label from
     """
 
-    chunk: Chunk
+    chunk: TextChunk
     labels: frozenset[str]
 
 

@@ -1,7 +1,7 @@
 from fastapi import FastAPI, testclient
 from pytest import fixture
 
-from intelligence_layer.core import Chunk, IntelligenceApp
+from intelligence_layer.core import IntelligenceApp, TextChunk
 from intelligence_layer.use_cases.classify.classify import ClassifyInput
 from intelligence_layer.use_cases.intelligence_starter_app import IntelligenceStarterApp
 from intelligence_layer.use_cases.qa.long_context_qa import LongContextQaInput
@@ -17,7 +17,7 @@ def test_intelligence_starter_app_classify_works(starter_app: IntelligenceApp) -
     client = testclient.TestClient(starter_app._fast_api_app)
 
     path = "/classify"
-    input = ClassifyInput(chunk=Chunk("chunk"), labels=frozenset({"cool"}))
+    input = ClassifyInput(chunk=TextChunk("chunk"), labels=frozenset({"cool"}))
     response = client.post(path, json=input.model_dump(mode="json"))
     response.raise_for_status()
 

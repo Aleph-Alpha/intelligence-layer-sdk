@@ -3,7 +3,7 @@ from typing import Iterable, Mapping, Optional, Sequence
 from pydantic import BaseModel
 
 from intelligence_layer.core import Task, TaskSpan
-from intelligence_layer.core.chunk import Chunk
+from intelligence_layer.core.chunk import TextChunk
 from intelligence_layer.core.detect_language import Language, language_config
 from intelligence_layer.core.model import (
     CompleteInput,
@@ -28,7 +28,7 @@ class MultipleChunkQaInput(BaseModel):
         language: The desired language of the answer. ISO 619 str with language e.g. en, fr, etc.
     """
 
-    chunks: Sequence[Chunk]
+    chunks: Sequence[TextChunk]
     question: str
     language: Language = Language("en")
 
@@ -44,7 +44,7 @@ class Subanswer(BaseModel):
     """
 
     answer: Optional[str]
-    chunk: Chunk
+    chunk: TextChunk
     highlights: Sequence[str]
 
 
@@ -128,7 +128,7 @@ class MultipleChunkQa(Task[MultipleChunkQaInput, MultipleChunkQaOutput]):
         ...     LimitedConcurrencyClient,
         ... )
         >>> from intelligence_layer.core import Language, InMemoryTracer
-        >>> from intelligence_layer.core.chunk import Chunk
+        >>> from intelligence_layer.core.chunk import TextChunk
         >>> from intelligence_layer.use_cases import (
         ...     MultipleChunkQa,
         ...     MultipleChunkQaInput,
@@ -137,7 +137,7 @@ class MultipleChunkQa(Task[MultipleChunkQaInput, MultipleChunkQaOutput]):
 
         >>> task = MultipleChunkQa()
         >>> input = MultipleChunkQaInput(
-        ...     chunks=[Chunk("Tina does not like pizza."), Chunk("Mike is a big fan of pizza.")],
+        ...     chunks=[TextChunk("Tina does not like pizza."), TextChunk("Mike is a big fan of pizza.")],
         ...     question="Who likes pizza?",
         ...     language=Language("en"),
         ... )

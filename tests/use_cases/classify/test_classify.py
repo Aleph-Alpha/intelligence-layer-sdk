@@ -3,7 +3,7 @@ from typing import Iterable, List, Sequence
 from pytest import fixture
 
 from intelligence_layer.connectors import AlephAlphaClientProtocol
-from intelligence_layer.core import Chunk, Task
+from intelligence_layer.core import Task, TextChunk
 from intelligence_layer.evaluation import (
     Aggregator,
     DatasetRepository,
@@ -77,7 +77,7 @@ def embedding_based_classify_example() -> List[Example[ClassifyInput, Sequence[s
     return [
         Example(
             input=ClassifyInput(
-                chunk=Chunk("My university biology class really sucks."),
+                chunk=TextChunk("My university biology class really sucks."),
                 labels=frozenset(["positive", "negative", "finance", "school"]),
             ),
             expected_output=["positive", "school"],
@@ -92,21 +92,21 @@ def embedding_based_classify_examples(
     return embedding_based_classify_example + [
         Example(
             input=ClassifyInput(
-                chunk=Chunk("My university banking class really sucks."),
+                chunk=TextChunk("My university banking class really sucks."),
                 labels=frozenset(["positive", "negative", "finance", "school"]),
             ),
             expected_output=["negative", "finance", "school"],
         ),
         Example(
             input=ClassifyInput(
-                chunk=Chunk("I did great on the recent exam."),
+                chunk=TextChunk("I did great on the recent exam."),
                 labels=frozenset(["positive", "negative", "finance", "school"]),
             ),
             expected_output=["positive", "school"],
         ),
         Example(
             input=ClassifyInput(
-                chunk=Chunk("Dogs are animals"),
+                chunk=TextChunk("Dogs are animals"),
                 labels=frozenset(["positive", "negative", "finance", "school"]),
             ),
             expected_output=[],

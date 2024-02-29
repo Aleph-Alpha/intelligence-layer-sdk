@@ -2,7 +2,7 @@ from typing import Sequence
 
 from pytest import fixture
 
-from intelligence_layer.core import Chunk, InMemoryTracer, NoOpTracer
+from intelligence_layer.core import InMemoryTracer, NoOpTracer, TextChunk
 from intelligence_layer.core.model import LuminousControlModel
 from intelligence_layer.evaluation import (
     Aggregator,
@@ -101,7 +101,7 @@ def test_prompt_based_classify_returns_score_for_all_labels(
     prompt_based_classify: PromptBasedClassify,
 ) -> None:
     classify_input = ClassifyInput(
-        chunk=Chunk("This is good"),
+        chunk=TextChunk("This is good"),
         labels=frozenset({"positive", "negative"}),
     )
 
@@ -116,7 +116,7 @@ def test_prompt_based_classify_accomodates_labels_starting_with_spaces(
     prompt_based_classify: PromptBasedClassify,
 ) -> None:
     classify_input = ClassifyInput(
-        chunk=Chunk("This is good"), labels=frozenset({" positive", "negative"})
+        chunk=TextChunk("This is good"), labels=frozenset({" positive", "negative"})
     )
 
     tracer = InMemoryTracer()
@@ -130,7 +130,7 @@ def test_prompt_based_classify_accomodates_labels_starting_with_different_spaces
     prompt_based_classify: PromptBasedClassify,
 ) -> None:
     classify_input = ClassifyInput(
-        chunk=Chunk("This is good"), labels=frozenset({" positive", "  positive"})
+        chunk=TextChunk("This is good"), labels=frozenset({" positive", "  positive"})
     )
 
     classify_output = prompt_based_classify.run(classify_input, NoOpTracer())
@@ -144,7 +144,7 @@ def test_prompt_based_classify_sentiment_classification(
     prompt_based_classify: PromptBasedClassify,
 ) -> None:
     classify_input = ClassifyInput(
-        chunk=Chunk("This is good"), labels=frozenset({"positive", "negative"})
+        chunk=TextChunk("This is good"), labels=frozenset({"positive", "negative"})
     )
 
     classify_output = prompt_based_classify.run(classify_input, NoOpTracer())
@@ -157,7 +157,7 @@ def test_prompt_based_classify_emotion_classification(
     prompt_based_classify: PromptBasedClassify,
 ) -> None:
     classify_input = ClassifyInput(
-        chunk=Chunk("I love my job"),
+        chunk=TextChunk("I love my job"),
         labels=frozenset({"happy", "sad", "frustrated", "angry"}),
     )
 
@@ -171,7 +171,7 @@ def test_prompt_based_classify_handles_labels_starting_with_same_token(
     prompt_based_classify: PromptBasedClassify,
 ) -> None:
     classify_input = ClassifyInput(
-        chunk=Chunk("This is good"),
+        chunk=TextChunk("This is good"),
         labels=frozenset({"positive", "positive positive"}),
     )
 
@@ -194,7 +194,7 @@ def test_can_evaluate_classify(
 ) -> None:
     example = Example(
         input=ClassifyInput(
-            chunk=Chunk("This is good"),
+            chunk=TextChunk("This is good"),
             labels=frozenset({"positive", "negative"}),
         ),
         expected_output=["positive"],
@@ -231,14 +231,14 @@ def test_can_aggregate_evaluations(
     positive_lst: Sequence[str] = ["positive"]
     correct_example = Example(
         input=ClassifyInput(
-            chunk=Chunk("This is good"),
+            chunk=TextChunk("This is good"),
             labels=frozenset({"positive", "negative"}),
         ),
         expected_output=positive_lst,
     )
     incorrect_example = Example(
         input=ClassifyInput(
-            chunk=Chunk("This is extremely bad"),
+            chunk=TextChunk("This is extremely bad"),
             labels=frozenset({"positive", "negative"}),
         ),
         expected_output=positive_lst,

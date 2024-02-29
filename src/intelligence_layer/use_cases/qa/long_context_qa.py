@@ -5,7 +5,6 @@ from intelligence_layer.connectors.retrievers.qdrant_in_memory_retriever import 
     QdrantInMemoryRetriever,
 )
 from intelligence_layer.core import (
-    Chunk,
     ChunkInput,
     ChunkTask,
     ControlModel,
@@ -14,6 +13,7 @@ from intelligence_layer.core import (
     LuminousControlModel,
     Task,
     TaskSpan,
+    TextChunk,
 )
 from intelligence_layer.use_cases.qa.multiple_chunk_qa import (
     MultipleChunkQa,
@@ -101,7 +101,8 @@ class LongContextQa(Task[LongContextQaInput, MultipleChunkQaOutput]):
 
         multi_chunk_qa_input = MultipleChunkQaInput(
             chunks=[
-                Chunk(result.document_chunk.text) for result in search_output.results
+                TextChunk(result.document_chunk.text)
+                for result in search_output.results
             ],
             question=input.question,
             language=input.language,
