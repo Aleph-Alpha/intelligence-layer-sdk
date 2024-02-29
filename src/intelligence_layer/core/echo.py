@@ -4,7 +4,8 @@ from aleph_alpha_client import Prompt, Tokens
 from pydantic import BaseModel
 from tokenizers import Encoding  # type: ignore
 
-from intelligence_layer.core.model import CompleteInput, ControlModel
+from intelligence_layer.core.model import CompleteInput, ControlModel, \
+    LuminousControlModel
 from intelligence_layer.core.prompt_template import PromptTemplate
 from intelligence_layer.core.task import Task, Token
 from intelligence_layer.core.tracer.tracer import TaskSpan
@@ -67,9 +68,9 @@ class EchoTask(Task[EchoInput, EchoOutput]):
 
     PROMPT_TEMPLATE_STR: str = "{{prompt}}{{expected_completion}}"
 
-    def __init__(self, model: ControlModel) -> None:
+    def __init__(self, model: ControlModel | None = None) -> None:
         super().__init__()
-        self._model = model
+        self._model = model or LuminousControlModel()
 
     def do_run(self, input: EchoInput, task_span: TaskSpan) -> EchoOutput:
         # We tokenize the prompt separately so we don't have an overlap in the tokens.
