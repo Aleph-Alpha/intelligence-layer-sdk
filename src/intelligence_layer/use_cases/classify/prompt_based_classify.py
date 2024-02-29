@@ -9,6 +9,7 @@ from intelligence_layer.core import (
     ControlModel,
     Echo,
     EchoInput,
+    EchoOutput,
     LuminousControlModel,
     RichPrompt,
     Task,
@@ -44,6 +45,7 @@ class PromptBasedClassify(Task[ClassifyInput, SingleLabelClassifyOutput]):
 
     Args:
         model: The model used throughout the task for model related API calls.
+        echo: echo-task used to compute the score for each label.
 
     Attributes:
         PROMPT_TEMPLATE_STR: The prompt template used for answering the question.
@@ -70,11 +72,12 @@ Reply with only the class label."""
 
     def __init__(
         self,
-        model: ControlModel = LuminousControlModel("luminous-base-control-20240215"),
+        model: ControlModel | None = None,
+        echo: Task[EchoInput, EchoOutput] | None = None,
     ) -> None:
         super().__init__()
-        self._echo_task = Echo(model)
-        self._model = model
+        self._model = model or LuminousControlModel("luminous-base-control-20240215")
+        self._echo_task = echo or Echo(self._model)
 
     def do_run(
         self, input: ClassifyInput, task_span: TaskSpan
