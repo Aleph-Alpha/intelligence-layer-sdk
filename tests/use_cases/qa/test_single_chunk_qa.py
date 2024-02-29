@@ -77,5 +77,8 @@ def test_qa_with_logit_bias_for_no_answer(
     # on CI, this is tokenized as "nonononono" rather than "no no no no no"
     # Likely, this is because some test changes the tokenizer state to remove the whitespace
     # We should fix this, but for now, I'll assert both
-    acceptable_answers = [" ".join([first_token] * max_tokens), first_token*max_tokens]
+    acceptable_answers = [
+        " ".join([first_token] * max_tokens),
+        first_token * max_tokens,
+    ]
     assert any(output.answer == a for a in acceptable_answers)
