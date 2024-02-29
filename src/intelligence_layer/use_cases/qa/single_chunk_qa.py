@@ -13,7 +13,7 @@ from intelligence_layer.core.model import (
     LuminousControlModel,
 )
 from intelligence_layer.core.prompt_template import RichPrompt
-from intelligence_layer.core.text_highlight import TextHighlight, TextHighlightInput
+from intelligence_layer.core.text_highlight import TextHighlightTask, TextHighlightInput
 
 
 class QaSetup(BaseModel):
@@ -107,7 +107,7 @@ class SingleChunkQa(Task[SingleChunkQaInput, SingleChunkQaOutput]):
     def __init__(
         self,
         model: ControlModel = LuminousControlModel("luminous-supreme-control-20240215"),
-        text_highlight: TextHighlight = TextHighlight(
+        text_highlight: TextHighlightTask = TextHighlightTask(
             LuminousControlModel("luminous-base-control-20240215")
         ),
         instruction_config: Mapping[Language, QaSetup] = QA_INSTRUCTIONS,

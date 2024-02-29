@@ -7,7 +7,7 @@ from intelligence_layer.core import (
     NoOpTracer,
     PromptTemplate,
     RichPrompt,
-    TextHighlight,
+    TextHighlightTask,
     TextHighlightInput,
 )
 
@@ -30,11 +30,11 @@ def aleph_alpha_vanilla_model(
 
 
 @fixture
-def text_highlight(aleph_alpha_vanilla_model: AlephAlphaVanillaModel) -> TextHighlight:
-    return TextHighlight(aleph_alpha_vanilla_model)
+def text_highlight(aleph_alpha_vanilla_model: AlephAlphaVanillaModel) -> TextHighlightTask:
+    return TextHighlightTask(aleph_alpha_vanilla_model)
 
 
-def test_text_highlight(text_highlight: TextHighlight) -> None:
+def test_text_highlight(text_highlight: TextHighlightTask) -> None:
     answer = " Extreme conditions."
     prompt_template_str = """Question: What is the ecosystem adapted to?
 Text: {% promptrange r1 %}Scientists at the European Southern Observatory announced a groundbreaking discovery today: microbial life detected in the water-rich atmosphere of Proxima Centauri b, our closest neighboring exoplanet.
@@ -59,7 +59,7 @@ Answer:"""
 
 
 def test_text_highlight_with_range_without_highlight(
-    text_highlight: TextHighlight,
+    text_highlight: TextHighlightTask,
 ) -> None:
     answer = " Extreme conditions."
     prompt_template_str = """Question: What is the ecosystem adapted to?
@@ -82,7 +82,7 @@ Answer:"""
     assert not any(h.score > 0 for h in output.highlights)
 
 
-def test_text_highlight_with_only_one_sentence(text_highlight: TextHighlight) -> None:
+def test_text_highlight_with_only_one_sentence(text_highlight: TextHighlightTask) -> None:
     prompt_template_str = """What is the Latin name of the brown bear? The answer is Ursus Arctos.{% promptrange r1 %} Explanation should not highlight anything.{% endpromptrange %}
 Answer:"""
     template = PromptTemplate(prompt_template_str)
@@ -100,7 +100,7 @@ Answer:"""
 
 
 def test_text_highlight_with_image_prompt(
-    text_highlight: TextHighlight, prompt_image: Image
+    text_highlight: TextHighlightTask, prompt_image: Image
 ) -> None:
     prompt_template_str = """Question: {% promptrange question %}What is the Latin name of the brown bear?{% endpromptrange %}
 Text: {% promptrange text %}The brown bear (Ursus arctos) is a large bear species found across Eurasia and North America.
@@ -121,7 +121,7 @@ Answer:"""
 
 
 def test_text_highlight_without_range(
-    text_highlight: TextHighlight, prompt_image: Image
+    text_highlight: TextHighlightTask, prompt_image: Image
 ) -> None:
     prompt_template_str = """Question: What is the Latin name of the brown bear?
 Text: The brown bear (Ursus arctos) is a large bear species found across Eurasia and North America.
@@ -141,7 +141,7 @@ Answer:"""
 
 
 def test_text_highlight_without_focus_range_highlights_entire_prompt(
-    text_highlight: TextHighlight, prompt_image: Image
+    text_highlight: TextHighlightTask, prompt_image: Image
 ) -> None:
     prompt_template_str = """Question: What is the ecosystem adapted to?
 Text: {% promptrange r1 %}Scientists at the European Southern Observatory announced a groundbreaking discovery today: microbial life detected in the water-rich atmosphere of Proxima Centauri b, our closest neighboring exoplanet.
@@ -170,7 +170,7 @@ Answer:"""
 
 
 def test_text_highlight_with_unknown_range_raises(
-    text_highlight: TextHighlight,
+    text_highlight: TextHighlightTask,
 ) -> None:
     prompt_template_str = """Question: What is the ecosystem adapted to?
 Text: {% promptrange r1 %}Scientists at the European Southern Observatory announced a groundbreaking discovery today: microbial life detected in the water-rich atmosphere of Proxima Centauri b, our closest neighboring exoplanet.

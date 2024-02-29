@@ -9,7 +9,8 @@ from aleph_alpha_client import (
 from aleph_alpha_client.explanation import TextScoreWithRaw
 from pydantic import BaseModel
 
-from intelligence_layer.core.model import ControlModel, ExplainInput, ExplainOutput
+from intelligence_layer.core.model import ControlModel, ExplainInput, \
+    ExplainOutput, LuminousControlModel
 from intelligence_layer.core.prompt_template import (
     Cursor,
     PromptRange,
@@ -59,7 +60,7 @@ class TextHighlightOutput(BaseModel):
     highlights: Sequence[ScoredTextHighlight]
 
 
-class TextHighlight(Task[TextHighlightInput, TextHighlightOutput]):
+class TextHighlightTask(Task[TextHighlightInput, TextHighlightOutput]):
     """Generates text highlights given a prompt and completion.
 
     For a given prompt and target (completion), extracts the parts of the prompt responsible for generation.
@@ -75,13 +76,13 @@ class TextHighlight(Task[TextHighlightInput, TextHighlightOutput]):
         >>> from intelligence_layer.core import (
         ... 	InMemoryTracer,
         ... 	PromptTemplate,
-        ... 	TextHighlight,
+        ... 	TextHighlightTask,
         ... 	TextHighlightInput,
         ...     AlephAlphaModel
         ... )
 
         >>> model = AlephAlphaModel(name="luminous-base")
-        >>> text_highlight = TextHighlight(model=model)
+        >>> text_highlight = TextHighlightTask(model=model)
         >>> prompt_template_str = (
         ...		"{% promptrange r1 %}Question: What is 2 + 2?{% endpromptrange %}\\nAnswer:"
         ...	)
@@ -97,11 +98,11 @@ class TextHighlight(Task[TextHighlightInput, TextHighlightOutput]):
 
     def __init__(
         self,
-        model: ControlModel,
+        model: ControlModel | None = None,
         granularity: PromptGranularity = PromptGranularity.Sentence,
     ) -> None:
         super().__init__()
-        self._model = model
+        self._model = model or LuminousControlModel()
         self._granularity = granularity
 
     def do_run(
