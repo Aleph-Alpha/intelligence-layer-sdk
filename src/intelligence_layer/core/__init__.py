@@ -41,9 +41,9 @@ from .task import Output as Output
 from .task import Task as Task
 from .task import Token as Token
 from .text_highlight import ScoredTextHighlight as ScoredTextHighlight
-from .text_highlight import TextHighlightTask as TextHighlightTask
 from .text_highlight import TextHighlightInput as TextHighlightInput
 from .text_highlight import TextHighlightOutput as TextHighlightOutput
+from .text_highlight import TextHighlightTask as TextHighlightTask
 from .tracer.composite_tracer import CompositeTracer as CompositeTracer
 from .tracer.file_tracer import FileSpan as FileSpan
 from .tracer.file_tracer import FileTaskSpan as FileTaskSpan

@@ -7,8 +7,8 @@ from intelligence_layer.core import (
     NoOpTracer,
     PromptTemplate,
     RichPrompt,
-    TextHighlightTask,
     TextHighlightInput,
+    TextHighlightTask,
 )
 
 
@@ -30,7 +30,9 @@ def aleph_alpha_vanilla_model(
 
 
 @fixture
-def text_highlight(aleph_alpha_vanilla_model: AlephAlphaVanillaModel) -> TextHighlightTask:
+def text_highlight(
+    aleph_alpha_vanilla_model: AlephAlphaVanillaModel,
+) -> TextHighlightTask:
     return TextHighlightTask(aleph_alpha_vanilla_model)
 
 
@@ -82,7 +84,9 @@ Answer:"""
     assert not any(h.score > 0 for h in output.highlights)
 
 
-def test_text_highlight_with_only_one_sentence(text_highlight: TextHighlightTask) -> None:
+def test_text_highlight_with_only_one_sentence(
+    text_highlight: TextHighlightTask,
+) -> None:
     prompt_template_str = """What is the Latin name of the brown bear? The answer is Ursus Arctos.{% promptrange r1 %} Explanation should not highlight anything.{% endpromptrange %}
 Answer:"""
     template = PromptTemplate(prompt_template_str)

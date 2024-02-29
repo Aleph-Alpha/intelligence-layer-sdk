@@ -4,8 +4,11 @@ from aleph_alpha_client import Prompt, Tokens
 from pydantic import BaseModel
 from tokenizers import Encoding  # type: ignore
 
-from intelligence_layer.core.model import CompleteInput, ControlModel, \
-    LuminousControlModel
+from intelligence_layer.core.model import (
+    CompleteInput,
+    ControlModel,
+    LuminousControlModel,
+)
 from intelligence_layer.core.prompt_template import PromptTemplate
 from intelligence_layer.core.task import Task, Token
 from intelligence_layer.core.tracer.tracer import TaskSpan

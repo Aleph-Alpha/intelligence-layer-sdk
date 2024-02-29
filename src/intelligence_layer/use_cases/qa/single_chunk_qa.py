@@ -13,7 +13,7 @@ from intelligence_layer.core.model import (
     LuminousControlModel,
 )
 from intelligence_layer.core.prompt_template import RichPrompt
-from intelligence_layer.core.text_highlight import TextHighlightTask, TextHighlightInput
+from intelligence_layer.core.text_highlight import TextHighlightInput, TextHighlightTask
 
 
 class QaSetup(BaseModel):

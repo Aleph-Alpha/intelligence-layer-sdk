@@ -9,8 +9,12 @@ from aleph_alpha_client import (
 from aleph_alpha_client.explanation import TextScoreWithRaw
 from pydantic import BaseModel
 
-from intelligence_layer.core.model import ControlModel, ExplainInput, \
-    ExplainOutput, LuminousControlModel
+from intelligence_layer.core.model import (
+    ControlModel,
+    ExplainInput,
+    ExplainOutput,
+    LuminousControlModel,
+)
 from intelligence_layer.core.prompt_template import (
     Cursor,
     PromptRange,
