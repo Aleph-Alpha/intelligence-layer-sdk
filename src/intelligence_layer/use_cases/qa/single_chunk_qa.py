@@ -19,16 +19,18 @@ from intelligence_layer.core.text_highlight import TextHighlight, TextHighlightI
 class QaSetup(BaseModel):
     unformatted_instruction: str
     no_answer_str: str
+    no_answer_logit_bias: Optional[float] = None
 
 
 QA_INSTRUCTIONS = {
     Language("en"): QaSetup(
-        unformatted_instruction='{{question}}\nIf there\'s no answer, say "{{no_answer_text}}". Only answer the question based on the text.',
+        unformatted_instruction='Question: {{question}}\nAnswer the question on the basis of the text. If there is no answer within the text, respond "{{no_answer_text}}".',
         no_answer_str="no answer in text",
+        no_answer_logit_bias=2.0,
     ),
     Language("de"): QaSetup(
-        unformatted_instruction='{{question}}\nWenn es keine Antwort gibt, gib "{{no_answer_text}}" aus. Beantworte die Frage nur anhand des Textes.',
-        no_answer_str="keine Antwort im Text",
+        unformatted_instruction='Beantworte die Frage anhand des Textes. Wenn sich die Frage nicht mit dem Text beantworten lässt, antworte "{{no_answer_text}}".\nFrage: {{question}}',
+        no_answer_str="Unbeantwortbar",
     ),
     Language("fr"): QaSetup(
         unformatted_instruction="{{question}}\nS'il n'y a pas de réponse, dites \"{{no_answer_text}}\". Ne répondez à la question qu'en vous basant sur le texte.",
@@ -122,11 +124,20 @@ class SingleChunkQa(Task[SingleChunkQaInput, SingleChunkQaOutput]):
     ) -> SingleChunkQaOutput:
         qa_setup = language_config(input.language, self._instruction_config)
 
+        instruction = Template(qa_setup.unformatted_instruction).render(
+            question=input.question, no_answer_text=qa_setup.no_answer_str
+        )
+        no_answer_logit_bias = (
+            self._get_no_answer_logit_bias(
+                qa_setup.no_answer_str, qa_setup.no_answer_logit_bias
+            )
+            if qa_setup.no_answer_logit_bias
+            else None
+        )
         output, prompt = self._generate_answer(
-            Template(qa_setup.unformatted_instruction).render(
-                question=input.question, no_answer_text=qa_setup.no_answer_str
-            ),
+            instruction,
             input.chunk,
+            no_answer_logit_bias,
             task_span,
         )
 
@@ -148,8 +159,17 @@ class SingleChunkQa(Task[SingleChunkQaInput, SingleChunkQaOutput]):
             highlights=highlights,
         )
 
+    def _get_no_answer_logit_bias(
+        self, no_answer_str: str, no_answer_logit_bias: float
+    ) -> dict[int, float]:
+        return {self._model.tokenize(no_answer_str).ids[0]: no_answer_logit_bias}
+
     def _generate_answer(
-        self, instruction: str, input: str, task_span: TaskSpan
+        self,
+        instruction: str,
+        input: str,
+        no_answer_logit_bias: Optional[dict[int, float]],
+        task_span: TaskSpan,
     ) -> tuple[CompleteOutput, RichPrompt]:
         prompt = self._model.to_instruct_prompt(instruction, input)
         return (
@@ -157,6 +177,7 @@ class SingleChunkQa(Task[SingleChunkQaInput, SingleChunkQaOutput]):
                 CompleteInput(
                     prompt=prompt,
                     maximum_tokens=self._maximum_tokens,
+                    logit_bias=no_answer_logit_bias,
                 ),
                 task_span,
             ),

@@ -1,8 +1,9 @@
 from pytest import fixture
 
-from intelligence_layer.use_cases.qa.single_chunk_qa import SingleChunkQa
+from intelligence_layer.core import LuminousControlModel
+from intelligence_layer.use_cases import SingleChunkQa
 
 
 @fixture
-def single_chunk_qa() -> SingleChunkQa:
-    return SingleChunkQa()
+def single_chunk_qa(luminous_control_model: LuminousControlModel) -> SingleChunkQa:
+    return SingleChunkQa(luminous_control_model)

@@ -67,10 +67,11 @@ class IntelligenceApp:
             >>> from aleph_alpha_client import Client
             >>> from fastapi import FastAPI
             >>> from intelligence_layer.core import IntelligenceApp, CompleteInput, AlephAlphaModel
+            >>> from intelligence_layer.connectors import LimitedConcurrencyClient
 
             >>> fast_api = FastAPI()
             >>> app = IntelligenceApp(fast_api)
-            >>> aa_client = Client(os.getenv("AA_TOKEN"), os.getenv("CLIENT_URL"))
+            >>> aa_client = LimitedConcurrencyClient.from_env()
             >>> model = AlephAlphaModel("luminous-base", client=aa_client)
             >>> app.register_task(model.complete_task(), CompleteInput, "/complete")
         """
