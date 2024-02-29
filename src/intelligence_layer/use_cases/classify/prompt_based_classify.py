@@ -7,8 +7,8 @@ from pydantic import BaseModel
 
 from intelligence_layer.core import (
     ControlModel,
+    Echo,
     EchoInput,
-    EchoTask,
     LuminousControlModel,
     RichPrompt,
     Task,
@@ -73,7 +73,7 @@ Reply with only the class label."""
         model: ControlModel = LuminousControlModel("luminous-base-control-20240215"),
     ) -> None:
         super().__init__()
-        self._echo_task = EchoTask(model)
+        self._echo_task = Echo(model)
         self._model = model
 
     def do_run(

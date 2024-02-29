@@ -9,7 +9,7 @@ from intelligence_layer.connectors.limited_concurrency_client import (
     AlephAlphaClientProtocol,
 )
 from intelligence_layer.core import MAX_CONCURRENCY, NoOpTracer, Task, TaskSpan, Token
-from intelligence_layer.core.echo import EchoInput, EchoTask, TokenWithLogProb
+from intelligence_layer.core.echo import Echo, EchoInput, TokenWithLogProb
 from intelligence_layer.core.model import (
     CompleteInput,
     CompleteOutput,
@@ -19,8 +19,8 @@ from intelligence_layer.core.model import (
 
 
 @fixture
-def echo_task(luminous_control_model: LuminousControlModel) -> EchoTask:
-    return EchoTask(luminous_control_model)
+def echo_task(luminous_control_model: LuminousControlModel) -> Echo:
+    return Echo(luminous_control_model)
 
 
 @fixture
@@ -89,7 +89,7 @@ def tokenize_completion(
     ]
 
 
-def test_can_run_echo_task(echo_task: EchoTask, echo_input: EchoInput) -> None:
+def test_can_run_echo_task(echo_task: Echo, echo_input: EchoInput) -> None:
     result = echo_task.run(echo_input, tracer=NoOpTracer())
 
     tokens = tokenize_completion(echo_input.expected_completion, echo_task._model)
@@ -100,7 +100,7 @@ def test_can_run_echo_task(echo_task: EchoTask, echo_input: EchoInput) -> None:
 
 
 def test_echo_works_with_whitespaces_in_expected_completion(
-    echo_task: EchoTask,
+    echo_task: Echo,
 ) -> None:
     expected_completion = " good."
     input = EchoInput(
@@ -117,7 +117,7 @@ def test_echo_works_with_whitespaces_in_expected_completion(
         assert token == result_token.token
 
 
-def test_overlapping_tokens_generate_correct_tokens(echo_task: EchoTask) -> None:
+def test_overlapping_tokens_generate_correct_tokens(echo_task: Echo) -> None:
     """This test checks if the echo task correctly tokenizes the expected completion separately
     The two tokens when tokenized together will result in a combination of the end of the first token
     and the start of the second token. This is not the expected behaviour.
@@ -145,8 +145,6 @@ def test_overlapping_tokens_generate_correct_tokens(echo_task: EchoTask) -> None
 def test_run_concurrently_produces_proper_completion_prompts(
     client: AlephAlphaClientProtocol, echo_input: EchoInput
 ) -> None:
-    echo_task = EchoTask(
-        FakeCompleteTaskModel("luminous-base-control-20240215", client)
-    )
+    echo_task = Echo(FakeCompleteTaskModel("luminous-base-control-20240215", client))
     # if this test fails in CI you may need to increase the 50 to 1000 to reproduce this locally
     echo_task.run_concurrently([echo_input] * MAX_CONCURRENCY * 50, NoOpTracer())

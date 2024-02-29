@@ -13,9 +13,9 @@ from .detect_language import DetectLanguage as DetectLanguage
 from .detect_language import DetectLanguageInput as DetectLanguageInput
 from .detect_language import DetectLanguageOutput as DetectLanguageOutput
 from .detect_language import Language as Language
+from .echo import Echo as Echo
 from .echo import EchoInput as EchoInput
 from .echo import EchoOutput as EchoOutput
-from .echo import EchoTask as EchoTask
 from .echo import TokenWithLogProb as TokenWithLogProb
 from .instruct import Instruct as Instruct
 from .instruct import InstructInput as InstructInput

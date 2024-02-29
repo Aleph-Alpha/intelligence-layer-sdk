@@ -22,7 +22,7 @@ class TokenWithLogProb(BaseModel):
 
 
 class EchoInput(BaseModel):
-    """The input for an `EchoTask`.
+    """The input for an `Echo` task.
 
     Attributes:
         prompt: The input text that serves as the starting point for the LLM.
@@ -35,7 +35,7 @@ class EchoInput(BaseModel):
 
 
 class EchoOutput(BaseModel):
-    """The output of an `EchoTask`.
+    """The output of an `Echo` task.
 
     Attributes:
         tokens_with_log_probs: Every token of the `expected_completion` of the
@@ -46,7 +46,7 @@ class EchoOutput(BaseModel):
     tokens_with_log_probs: Sequence[TokenWithLogProb]
 
 
-class EchoTask(Task[EchoInput, EchoOutput]):
+class Echo(Task[EchoInput, EchoOutput]):
     """Task that returns probabilities of a completion given a prompt.
 
     Analyzes the likelihood of generating tokens in the expected completion based on
@@ -57,10 +57,10 @@ class EchoTask(Task[EchoInput, EchoOutput]):
 
     Example:
         >>> from aleph_alpha_client import Prompt
-        >>> from intelligence_layer.core import EchoTask,EchoInput, InMemoryTracer, LuminousControlModel
+        >>> from intelligence_layer.core import Echo, EchoInput, InMemoryTracer, LuminousControlModel
 
         >>> model = LuminousControlModel(name="luminous-base-control")
-        >>> task = EchoTask(model)
+        >>> task = Echo(model)
         >>> input = EchoInput(
         ...     prompt=Prompt.from_text("This is a "),
         ...     expected_completion="happy text",
