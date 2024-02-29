@@ -6,6 +6,7 @@ from intelligence_layer.connectors.retrievers.base_retriever import ID, BaseRetr
 from intelligence_layer.core import Language, Task, TaskSpan, TextChunk
 from intelligence_layer.use_cases.qa.multiple_chunk_qa import Subanswer
 from intelligence_layer.use_cases.qa.single_chunk_qa import (
+    SingleChunkQa,
     SingleChunkQaInput,
     SingleChunkQaOutput,
 )
@@ -87,11 +88,11 @@ class RetrieverBasedQa(
     def __init__(
         self,
         retriever: BaseRetriever[ID],
-        qa_task: Task[SingleChunkQaInput, SingleChunkQaOutput],
+        qa_task: Task[SingleChunkQaInput, SingleChunkQaOutput] | None = None,
     ):
         super().__init__()
         self._search = Search(retriever)
-        self._qa_task = qa_task
+        self._qa_task = qa_task or SingleChunkQa()
 
     def do_run(
         self, input: RetrieverBasedQaInput, task_span: TaskSpan
