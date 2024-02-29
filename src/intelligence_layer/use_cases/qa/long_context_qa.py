@@ -5,8 +5,8 @@ from intelligence_layer.connectors.retrievers.qdrant_in_memory_retriever import 
     QdrantInMemoryRetriever,
 )
 from intelligence_layer.core import (
+    Chunk,
     ChunkInput,
-    ChunkTask,
     ControlModel,
     DetectLanguage,
     Language,
@@ -74,7 +74,7 @@ class LongContextQa(Task[LongContextQaInput, MultipleChunkQaOutput]):
     ):
         super().__init__()
         self._model = model
-        self._chunk_task = ChunkTask(model, max_tokens_per_chunk)
+        self._chunk_task = Chunk(model, max_tokens_per_chunk)
         self._multi_chunk_qa = multi_chunk_qa or MultipleChunkQa(model=model)
         self._k = k
         self._language_detector = DetectLanguage(threshold=0.5)

@@ -38,7 +38,7 @@ class ChunkOutput(BaseModel):
     chunks: Sequence[TextChunk]
 
 
-class ChunkTask(Task[ChunkInput, ChunkOutput]):
+class Chunk(Task[ChunkInput, ChunkOutput]):
     """Splits a longer text into smaller text chunks.
 
     Provide a text of any length and chunk it into smaller pieces using a
@@ -96,7 +96,7 @@ class ChunkOverlapTask(Task[ChunkInput, ChunkOutput]):
 
         model = model or LuminousControlModel()
         self.tokenizer = model.get_tokenizer()
-        self.chunk_task = ChunkTask(model, overlap_length_tokens // 2)
+        self.chunk_task = Chunk(model, overlap_length_tokens // 2)
         self.max_tokens_per_chunk = max_tokens_per_chunk
         self.overlap_length_tokens = overlap_length_tokens
 

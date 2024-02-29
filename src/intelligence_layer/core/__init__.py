@@ -4,10 +4,10 @@ from intelligence_layer.core.intelligence_app import (
 from intelligence_layer.core.intelligence_app import AuthService as AuthService
 from intelligence_layer.core.intelligence_app import IntelligenceApp as IntelligenceApp
 
+from .chunk import Chunk as Chunk
 from .chunk import ChunkInput as ChunkInput
 from .chunk import ChunkOutput as ChunkOutput
 from .chunk import ChunkOverlapTask as ChunkOverlapTask
-from .chunk import ChunkTask as ChunkTask
 from .chunk import TextChunk as TextChunk
 from .detect_language import DetectLanguage as DetectLanguage
 from .detect_language import DetectLanguageInput as DetectLanguageInput
