@@ -13,6 +13,9 @@ class LanguageNotSupportedError(ValueError):
     """Raised in case language in the input is not compatible with the languages supported in the task"""
 
 
+Config = TypeVar("Config")
+
+
 @dataclass(frozen=True)
 class Language:
     """A language identified by its `ISO 639-1 code <https://en.wikipedia.org/wiki/List_of_ISO_639-1_codes>`_."""
@@ -23,17 +26,13 @@ class Language:
         language = languages.get(alpha_2=self.iso_639_1)
         return language.name if language else None
 
-
-Config = TypeVar("Config")
-
-
-def language_config(language: Language, configs: Mapping[Language, Config]) -> Config:
-    config = configs.get(language)
-    if config is None:
-        raise LanguageNotSupportedError(
-            f"{language.iso_639_1} not in ({', '.join(lang.iso_639_1 for lang in configs.keys())})"
-        )
-    return config
+    def language_config(self, configs: Mapping["Language", Config]) -> Config:
+        config = configs.get(self)
+        if config is None:
+            raise LanguageNotSupportedError(
+                f"{self.iso_639_1} not in ({', '.join(lang.iso_639_1 for lang in configs.keys())})"
+            )
+        return config
 
 
 class DetectLanguageInput(BaseModel):

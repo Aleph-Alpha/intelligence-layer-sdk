@@ -3,17 +3,20 @@ from typing import Mapping, Optional, Sequence
 from liquid import Template
 from pydantic import BaseModel
 
-from intelligence_layer.core import Task, TaskSpan
-from intelligence_layer.core.chunk import TextChunk
-from intelligence_layer.core.detect_language import Language, language_config
-from intelligence_layer.core.model import (
+from intelligence_layer.core import (
     CompleteInput,
     CompleteOutput,
     ControlModel,
+    Language,
     LuminousControlModel,
+    RichPrompt,
+    Task,
+    TaskSpan,
+    TextChunk,
+    TextHighlight,
+    TextHighlightInput,
+    TextHighlightOutput,
 )
-from intelligence_layer.core.prompt_template import RichPrompt
-from intelligence_layer.core.text_highlight import TextHighlight, TextHighlightInput
 
 
 class QaSetup(BaseModel):
@@ -106,23 +109,23 @@ class SingleChunkQa(Task[SingleChunkQaInput, SingleChunkQaOutput]):
 
     def __init__(
         self,
-        model: ControlModel = LuminousControlModel("luminous-supreme-control-20240215"),
-        text_highlight: TextHighlight = TextHighlight(
-            LuminousControlModel("luminous-base-control-20240215")
-        ),
+        model: ControlModel | None = None,
+        text_highlight: Task[TextHighlightInput, TextHighlightOutput] | None = None,
         instruction_config: Mapping[Language, QaSetup] = QA_INSTRUCTIONS,
         maximum_tokens: int = 64,
     ):
         super().__init__()
-        self._model = model
-        self._text_highlight = text_highlight
+        self._model = model or LuminousControlModel("luminous-supreme-control-20240215")
+        self._text_highlight = text_highlight or TextHighlight(
+            LuminousControlModel("luminous-base-control-20240215")
+        )
         self._instruction_config = instruction_config
         self._maximum_tokens = maximum_tokens
 
     def do_run(
         self, input: SingleChunkQaInput, task_span: TaskSpan
     ) -> SingleChunkQaOutput:
-        qa_setup = language_config(input.language, self._instruction_config)
+        qa_setup = input.language.language_config(self._instruction_config)
 
         instruction = Template(qa_setup.unformatted_instruction).render(
             question=input.question, no_answer_text=qa_setup.no_answer_str

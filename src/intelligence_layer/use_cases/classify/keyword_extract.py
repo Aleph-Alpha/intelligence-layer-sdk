@@ -2,13 +2,14 @@ from typing import Mapping
 
 from pydantic import BaseModel
 
-from intelligence_layer.core import Task, TaskSpan
-from intelligence_layer.core.chunk import TextChunk
-from intelligence_layer.core.detect_language import Language, language_config
-from intelligence_layer.core.model import (
+from intelligence_layer.core import (
     CompleteInput,
     ControlModel,
+    Language,
     LuminousControlModel,
+    Task,
+    TaskSpan,
+    TextChunk,
 )
 
 INSTRUCT_CONFIGS = {
@@ -54,7 +55,7 @@ class KeywordExtract(Task[KeywordExtractInput, KeywordExtractOutput]):
     def do_run(
         self, input: KeywordExtractInput, task_span: TaskSpan
     ) -> KeywordExtractOutput:
-        instruction = language_config(input.language, self._instruct_configs)
+        instruction = input.language.language_config(self._instruct_configs)
         result = self._model.complete(
             CompleteInput(
                 prompt=self._model.to_instruct_prompt(

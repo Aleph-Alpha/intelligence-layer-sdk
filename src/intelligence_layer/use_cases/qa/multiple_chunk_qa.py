@@ -2,14 +2,15 @@ from typing import Iterable, Mapping, Optional, Sequence
 
 from pydantic import BaseModel
 
-from intelligence_layer.core import Task, TaskSpan
-from intelligence_layer.core.chunk import TextChunk
-from intelligence_layer.core.detect_language import Language, language_config
-from intelligence_layer.core.model import (
+from intelligence_layer.core import (
     CompleteInput,
     CompleteOutput,
     ControlModel,
+    Language,
     LuminousControlModel,
+    Task,
+    TaskSpan,
+    TextChunk,
 )
 from intelligence_layer.use_cases.qa.single_chunk_qa import (
     SingleChunkQa,
@@ -163,8 +164,8 @@ class MultipleChunkQa(Task[MultipleChunkQaInput, MultipleChunkQaOutput]):
     def do_run(
         self, input: MultipleChunkQaInput, task_span: TaskSpan
     ) -> MultipleChunkQaOutput:
-        instruct_config = language_config(
-            input.language, self._merge_answers_instruct_configs
+        instruct_config = input.language.language_config(
+            self._merge_answers_instruct_configs
         )
 
         qa_outputs = self._single_chunk_qa.run_concurrently(
