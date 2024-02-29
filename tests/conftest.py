@@ -74,8 +74,8 @@ def asymmetric_in_memory_retriever(
     in_memory_retriever_documents: Sequence[Document],
 ) -> QdrantInMemoryRetriever:
     return QdrantInMemoryRetriever(
-        client,
         in_memory_retriever_documents,
+        client=client,
         k=2,
         retriever_type=RetrieverType.ASYMMETRIC,
     )
@@ -87,8 +87,8 @@ def symmetric_in_memory_retriever(
     in_memory_retriever_documents: Sequence[Document],
 ) -> QdrantInMemoryRetriever:
     return QdrantInMemoryRetriever(
-        client,
         in_memory_retriever_documents,
+        client=client,
         k=2,
         retriever_type=RetrieverType.SYMMETRIC,
     )

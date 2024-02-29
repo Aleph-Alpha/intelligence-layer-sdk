@@ -4,13 +4,13 @@ from typing import Sequence
 from pydantic import BaseModel
 from qdrant_client.http.models import models
 
-from intelligence_layer.connectors.limited_concurrency_client import (
-    AlephAlphaClientProtocol,
-)
-from intelligence_layer.connectors.retrievers.base_retriever import Document
-from intelligence_layer.connectors.retrievers.qdrant_in_memory_retriever import (
+from intelligence_layer.connectors import (
+    Document,
     QdrantInMemoryRetriever,
     RetrieverType,
+)
+from intelligence_layer.connectors.limited_concurrency_client import (
+    AlephAlphaClientProtocol,
 )
 from intelligence_layer.core import Task, TaskSpan, TextChunk
 from intelligence_layer.use_cases.classify.classify import (
@@ -64,7 +64,7 @@ class QdrantSearch(Task[QdrantSearchInput, SearchOutput[int]]):
         ...         text="West and East Germany reunited in 1990.", metadata={"title": "Germany"}
         ...     )
         ... ]
-        >>> retriever = QdrantInMemoryRetriever(client, documents, 3)
+        >>> retriever = QdrantInMemoryRetriever(documents, 3, client=client)
         >>> task = QdrantSearch(retriever)
         >>> input = QdrantSearchInput(
         ...     query="When did East and West Germany reunite?",
@@ -152,7 +152,7 @@ class EmbeddingBasedClassify(Task[ClassifyInput, MultiLabelClassifyOutput]):
         ...     ),
         ... ]
         >>> client = LimitedConcurrencyClient.from_env()
-        >>> task = EmbeddingBasedClassify(client, labels_with_examples)
+        >>> task = EmbeddingBasedClassify(labels_with_examples, client=client)
         >>> input = ClassifyInput(chunk=TextChunk("This is a happy text."), labels=frozenset({"positive", "negative"}))
         >>> tracer = InMemoryTracer()
         >>> output = task.run(input, tracer)
@@ -162,8 +162,8 @@ class EmbeddingBasedClassify(Task[ClassifyInput, MultiLabelClassifyOutput]):
 
     def __init__(
         self,
-        client: AlephAlphaClientProtocol,
         labels_with_examples: Sequence[LabelWithExamples],
+        client: AlephAlphaClientProtocol | None = None,
         top_k_per_label: int = 5,
     ) -> None:
         super().__init__()
@@ -171,7 +171,7 @@ class EmbeddingBasedClassify(Task[ClassifyInput, MultiLabelClassifyOutput]):
         documents = self._labels_with_examples_to_documents(labels_with_examples)
         self._scoring = top_k_per_label
         retriever = QdrantInMemoryRetriever(
-            client,
+            client=client,
             documents=documents,
             k=top_k_per_label,
             retriever_type=RetrieverType.SYMMETRIC,

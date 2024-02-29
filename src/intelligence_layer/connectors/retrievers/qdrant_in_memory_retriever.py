@@ -9,6 +9,7 @@ from qdrant_client.http.models import Distance, PointStruct, VectorParams, model
 
 from intelligence_layer.connectors.limited_concurrency_client import (
     AlephAlphaClientProtocol,
+    LimitedConcurrencyClient,
 )
 from intelligence_layer.connectors.retrievers.base_retriever import (
     BaseRetriever,
@@ -50,7 +51,7 @@ class QdrantInMemoryRetriever(BaseRetriever[int]):
         >>> from intelligence_layer.connectors import LimitedConcurrencyClient, Document, QdrantInMemoryRetriever
         >>> client = LimitedConcurrencyClient.from_env()
         >>> documents = [Document(text=t) for t in ["I do not like rain.", "Summer is warm.", "We are so back."]]
-        >>> retriever = QdrantInMemoryRetriever(client, documents, 5)
+        >>> retriever = QdrantInMemoryRetriever(documents, 5, client=client)
         >>> query = "Do you like summer?"
         >>> documents = retriever.get_relevant_documents_with_scores(query)
     """
@@ -59,14 +60,14 @@ class QdrantInMemoryRetriever(BaseRetriever[int]):
 
     def __init__(
         self,
-        client: AlephAlphaClientProtocol,
         documents: Sequence[Document],
         k: int,
+        client: AlephAlphaClientProtocol | None = None,
         threshold: float = 0.5,
         retriever_type: RetrieverType = RetrieverType.ASYMMETRIC,
         distance_metric: Distance = Distance.COSINE,
     ) -> None:
-        self._client = client
+        self._client = client or LimitedConcurrencyClient.from_env()
         self._search_client = QdrantClient(":memory:")
         self._collection_name = "in_memory_collection"
         self._k = k

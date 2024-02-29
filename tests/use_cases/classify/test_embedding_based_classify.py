@@ -72,7 +72,7 @@ def embedding_based_classify(
             ],
         ),
     ]
-    return EmbeddingBasedClassify(client, labels_with_examples)
+    return EmbeddingBasedClassify(labels_with_examples, client=client)
 
 
 def test_qdrant_search(
@@ -147,7 +147,9 @@ def test_embedding_based_classify_works_without_examples(
             examples=[],
         ),
     ]
-    embedding_based_classify = EmbeddingBasedClassify(client, labels_with_examples)
+    embedding_based_classify = EmbeddingBasedClassify(
+        labels_with_examples, client=client
+    )
     classify_input = ClassifyInput(
         chunk=TextChunk("This is good"),
         labels=frozenset(),

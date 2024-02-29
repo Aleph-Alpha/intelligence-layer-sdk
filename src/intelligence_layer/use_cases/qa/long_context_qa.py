@@ -84,7 +84,7 @@ class LongContextQa(Task[LongContextQaInput, MultipleChunkQaOutput]):
     ) -> MultipleChunkQaOutput:
         chunk_output = self._chunk_task.run(ChunkInput(text=input.text), task_span)
         retriever = QdrantInMemoryRetriever(
-            self._model._client,
+            client=self._model._client,
             documents=[
                 Document(
                     text=c,

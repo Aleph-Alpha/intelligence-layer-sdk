@@ -69,7 +69,7 @@ def embedding_based_classify(
             ],
         ),
     ]
-    return EmbeddingBasedClassify(client, labels_with_examples)
+    return EmbeddingBasedClassify(labels_with_examples, client=client)
 
 
 @fixture
