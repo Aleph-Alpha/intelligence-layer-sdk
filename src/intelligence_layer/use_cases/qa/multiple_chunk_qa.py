@@ -150,14 +150,14 @@ class MultipleChunkQa(Task[MultipleChunkQaInput, MultipleChunkQaOutput]):
     def __init__(
         self,
         single_chunk_qa: Task[SingleChunkQaInput, SingleChunkQaOutput] | None = None,
-        model: ControlModel = LuminousControlModel("luminous-supreme-control-20240215"),
+        model: ControlModel | None = None,
         merge_answers_instruct_configs: Mapping[
             Language, MergeAnswersInstructConfig
         ] = MERGE_ANSWERS_INSTRUCT_CONFIGS,
     ):
         super().__init__()
-        self._single_chunk_qa = single_chunk_qa or SingleChunkQa(model)
-        self._model = model
+        self._model = model or LuminousControlModel("luminous-supreme-control-20240215")
+        self._single_chunk_qa = single_chunk_qa or SingleChunkQa(self._model)
         self._merge_answers_instruct_configs = merge_answers_instruct_configs
 
     def do_run(
