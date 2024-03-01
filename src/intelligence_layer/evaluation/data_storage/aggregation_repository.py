@@ -1,8 +1,10 @@
+import json
 from abc import ABC, abstractmethod
 from functools import lru_cache
 from pathlib import Path
 from typing import Any, Sequence
 
+from flatten_json import flatten, unflatten_list  # type: ignore
 from wandb import Artifact, Table
 from wandb.sdk.wandb_run import Run
 
@@ -106,14 +108,22 @@ class WandbAggregationRepository(AggregationRepository):
         self, id: str, stat_type: type[AggregatedEvaluation]
     ) -> AggregationOverview[AggregatedEvaluation] | None:
         table = self._get_table(id, "aggregation_overview")
-        return AggregationOverview.model_validate_json(json_data=table.get_column("aggregation_overview")[0])  # type: ignore
+        return AggregationOverview.model_validate_json(
+            json_data=self._unflatten_table_row(next(table.iterrows())[1], table.columns)  # type: ignore
+        )
 
     def store_aggregation_overview(
         self, overview: AggregationOverview[AggregatedEvaluation]
     ) -> None:
+        flat_overview = flatten(json.loads(overview.model_dump_json()), separator="|")
+        if overview.id not in self._aggregation_overviews:
+            self._aggregation_overviews[overview.id] = Table(columns=list(flat_overview.keys()))  # type: ignore
         self._aggregation_overviews[overview.id].add_data(  # type: ignore
-            overview.model_dump_json(),
+            *flat_overview.values()
         )
+
+    def _unflatten_table_row(self, row: list[str], columns: str) -> str:
+        return json.dumps(unflatten_list(dict(zip(columns, row)), separator="|"))
 
     @lru_cache(maxsize=1)
     def _get_table(self, id: str, name: str) -> Table:
@@ -129,9 +139,6 @@ class WandbAggregationRepository(AggregationRepository):
 
     def finish_run(self) -> None:
         self._run = None
-
-    def init_table(self, id: str) -> None:
-        self._aggregation_overviews[id] = Table(columns=["aggregation_overview"])  # type: ignore
 
     def sync_table(self, id: str) -> None:
         if self._run is None:

@@ -378,7 +378,6 @@ class WandbEvaluator(Evaluator[Input, Output, ExpectedOutput, Evaluation]):
         self._dataset_repository.start_run(run)
         self._run_repository.start_run(run)
         self._evaluation_repository.start_run(run)
-        self._evaluation_repository.init_table(eval_id)
         eval_overview = super().evaluate_runs(
             *run_ids, num_examples=num_examples, eval_id=eval_id
         )

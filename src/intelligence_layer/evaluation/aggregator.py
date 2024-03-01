@@ -259,7 +259,6 @@ class WandbAggregator(Aggregator[Evaluation, AggregatedEvaluation]):
         assert isinstance(run, Run)
         self._evaluation_repository.start_run(run)
         self._aggregation_repository.start_run(run)
-        self._aggregation_repository.init_table(aggregation_id)
         aggregation_overview = super().aggregate_evaluation(
             *eval_ids, aggregation_id=aggregation_id
         )

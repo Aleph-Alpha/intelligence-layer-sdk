@@ -1,3 +1,4 @@
+import json
 from abc import ABC, abstractmethod
 from collections import defaultdict
 from functools import lru_cache
@@ -5,6 +6,7 @@ from pathlib import Path
 from typing import Optional, Sequence, cast
 from uuid import uuid4
 
+from flatten_json import flatten, unflatten_list  # type: ignore
 from pydantic import BaseModel
 from wandb import Artifact, Table
 from wandb.sdk.wandb_run import Run
@@ -430,15 +432,20 @@ class WandbEvaluationRepository(EvaluationRepository):
     def store_example_evaluation(
         self, evaluation: ExampleEvaluation[Evaluation]
     ) -> None:
+        flat_evaluation = flatten(
+            json.loads(evaluation.model_dump_json()), separator="|"
+        )
+        if evaluation.eval_id not in self._example_evaluations:
+            self._example_evaluations[evaluation.eval_id] = Table(columns=list(flat_evaluation.keys()))  # type: ignore
         self._example_evaluations[evaluation.eval_id].add_data(  # type: ignore
-            evaluation.model_dump_json(),
+            *flatten(json.loads(evaluation.model_dump_json()), separator="|").values()
         )
 
     def example_evaluations(
         self, eval_id: str, evaluation_type: type[Evaluation]
     ) -> Sequence[ExampleEvaluation[Evaluation]]:
         table = self._get_table(eval_id, "example_evaluations")
-        return [ExampleEvaluation[evaluation_type].model_validate_json(json_data=row[0]) for _, row in table.iterrows()]  # type: ignore
+        return [ExampleEvaluation[evaluation_type].model_validate_json(json_data=self._unflatten_table_row(row, table.columns)) for _, row in table.iterrows()]  # type: ignore
 
     def failed_example_evaluations(
         self, eval_id: str, evaluation_type: type[Evaluation]
@@ -447,7 +454,22 @@ class WandbEvaluationRepository(EvaluationRepository):
 
     def evaluation_overview(self, eval_id: str) -> EvaluationOverview | None:
         table = self._get_table(eval_id, "evaluation_overview")
-        return EvaluationOverview.model_validate_json(json_data=table.get_column("evaluation_overview")[0])  # type: ignore
+        return EvaluationOverview.model_validate_json(
+            json_data=self._unflatten_table_row(next(table.iterrows())[1], table.columns)  # type: ignore
+        )
+
+    def store_evaluation_overview(self, overview: EvaluationOverview) -> None:
+        flat_overview = flat_overview = flatten(
+            json.loads(overview.model_dump_json()), separator="|"
+        )
+        if overview.id not in self._evaluation_overviews:
+            self._evaluation_overviews[overview.id] = Table(columns=list(flat_overview.keys()))  # type: ignore
+        self._evaluation_overviews[overview.id].add_data(  # type: ignore
+            *flat_overview.values(),
+        )
+
+    def _unflatten_table_row(self, row: list[str], columns: str) -> str:
+        return json.dumps(unflatten_list(dict(zip(columns, row)), separator="|"))
 
     @lru_cache(maxsize=2)
     def _get_table(self, artifact_id: str, name: str) -> Table:
@@ -460,17 +482,8 @@ class WandbEvaluationRepository(EvaluationRepository):
         )
         return artifact.get(name)  # type: ignore
 
-    def store_evaluation_overview(self, overview: EvaluationOverview) -> None:
-        self._evaluation_overviews[overview.id].add_data(  # type: ignore
-            overview.model_dump_json(),
-        )
-
     def start_run(self, run: Run) -> None:
         self._run = run
-
-    def init_table(self, eval_id: str) -> None:
-        self._example_evaluations[eval_id] = Table(columns=["example_evaluations"])  # type: ignore
-        self._evaluation_overviews[eval_id] = Table(columns=["evaluation_overview"])  # type: ignore
 
     def sync_table(self, eval_id: str) -> None:
         if self._run is None:

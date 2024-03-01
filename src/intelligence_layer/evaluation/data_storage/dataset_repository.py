@@ -213,18 +213,20 @@ class WandbDatasetRepository(DatasetRepository):
         assert run is not None
         dataset_id = str(uuid4())
         artifact = wandb.Artifact(name=dataset_id, type="dataset")
-        flat_first_example = flatten(
-            json.loads(list(examples)[0].model_dump_json()), separator="|"
-        )
-        columns = list(flat_first_example.keys())
+
+        def get_columns(
+            examples: Iterable[Example[Input, ExpectedOutput]]
+        ) -> list[str]:
+            flat_first_example = flatten(
+                json.loads(list(examples)[0].model_dump_json()), separator="|"
+            )
+            return list(flat_first_example.keys())
+
+        columns = get_columns(examples)
         table = Table(columns=columns)  # type: ignore
         for example in examples:
             table.add_data(  # type: ignore
-                *list(
-                    flatten(
-                        json.loads(example.model_dump_json()), separator="|"
-                    ).values()
-                ),
+                *flatten(json.loads(example.model_dump_json()), separator="|").values()
             )
         artifact.add(table, "dataset")
         run.log_artifact(artifact)
@@ -237,17 +239,23 @@ class WandbDatasetRepository(DatasetRepository):
         input_type: type[Input],
         expected_output_type: type[ExpectedOutput],
     ) -> Optional[Iterable[Example[Input, ExpectedOutput]]]:
-        table = self._get_dataset(dataset_id)
-        return [Example[input_type, expected_output_type].model_validate_json(json.dumps(unflatten_list(row[0], separator="|"))) for _, row in table.iterrows()]  # type: ignore
+        table = self._get_table(dataset_id, "dataset")
 
-    @lru_cache(maxsize=1)
-    def _get_dataset(self, id: str) -> Table:
+        def unflatten_table_row(row: list[str], columns: str) -> str:
+            return json.dumps(unflatten_list(dict(zip(columns, row)), separator="|"))
+
+        return [Example[input_type, expected_output_type].model_validate_json(unflatten_table_row(row, table.columns)) for _, row in table.iterrows()]  # type: ignore
+
+    @lru_cache(maxsize=2)
+    def _get_table(self, artifact_id: str, name: str) -> Table:
         if self._run is None:
-            raise ValueError("Run not started")
+            raise ValueError(
+                "The run has not been started, are you using a WandbEvaluator?"
+            )
         artifact = self._run.use_artifact(
-            f"{self.team_name}/{self._run.project_name()}/{id}:latest"
+            f"{self.team_name}/{self._run.project_name()}/{artifact_id}:latest"
         )
-        return artifact.get("dataset")  # type: ignore
+        return artifact.get(name)  # type: ignore
 
     def example(
         self,
