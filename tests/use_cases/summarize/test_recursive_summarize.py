@@ -4,11 +4,13 @@ from pathlib import Path
 from aleph_alpha_client import Client, CompletionRequest, CompletionResponse
 from pytest import fixture
 
-from intelligence_layer.core import NoOpTracer
-from intelligence_layer.core.model import LuminousControlModel
+from intelligence_layer.core import Chunk, LuminousControlModel, NoOpTracer
 from intelligence_layer.use_cases import LongContextSummarizeInput, RecursiveSummarize
 from intelligence_layer.use_cases.summarize.steerable_long_context_summarize import (
     SteerableLongContextSummarize,
+)
+from intelligence_layer.use_cases.summarize.steerable_single_chunk_summarize import (
+    SteerableSingleChunkSummarize,
 )
 
 
@@ -71,7 +73,8 @@ def test_recursive_summarize_stops_after_one_chunk(
     )
 
     long_context_high_compression_summarize = SteerableLongContextSummarize(
-        max_generated_tokens=100, max_tokens_per_chunk=1500, model=model
+        summarize=SteerableSingleChunkSummarize(model, max_generated_tokens=100),
+        chunk=Chunk(model, max_tokens_per_chunk=1500),
     )
     input = LongContextSummarizeInput(text=short_text)
     task = RecursiveSummarize(long_context_high_compression_summarize)

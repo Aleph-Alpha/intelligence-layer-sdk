@@ -22,9 +22,7 @@ class IntelligenceStarterApp(IntelligenceApp):
         self.register_task(prompt_based_classify, ClassifyInput, "/classify")
         long_chunk_qa = LongContextQa()
         self.register_task(long_chunk_qa, LongContextQaInput, "/qa")
-        summarize = SteerableLongContextSummarize(
-            max_generated_tokens=512, max_tokens_per_chunk=1024
-        )
+        summarize = SteerableLongContextSummarize()
         self.register_task(summarize, LongContextSummarizeInput, "/summarize")
 
 

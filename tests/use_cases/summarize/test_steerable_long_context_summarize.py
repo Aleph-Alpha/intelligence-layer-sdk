@@ -1,8 +1,10 @@
-from intelligence_layer.core import Language, NoOpTracer
-from intelligence_layer.core.model import LuminousControlModel
+from intelligence_layer.core import Chunk, Language, LuminousControlModel, NoOpTracer
 from intelligence_layer.use_cases import (
     LongContextSummarizeInput,
     SteerableLongContextSummarize,
+)
+from intelligence_layer.use_cases.summarize.steerable_single_chunk_summarize import (
+    SteerableSingleChunkSummarize,
 )
 
 
@@ -31,10 +33,12 @@ def test_steerable_long_context_summarize_adapts_to_instruction(
 ) -> None:
     input = LongContextSummarizeInput(text=long_text)
     steerable_long_context_summarize_keyword = SteerableLongContextSummarize(
-        max_generated_tokens=128,
-        max_tokens_per_chunk=512,
-        model=luminous_control_model,
-        instruction_configs={Language("en"): "Summarize using bullet points."},
+        summarize=SteerableSingleChunkSummarize(
+            luminous_control_model,
+            max_generated_tokens=128,
+            instruction_configs={Language("en"): "Summarize using bullet points."},
+        ),
+        chunk=Chunk(luminous_control_model, max_tokens_per_chunk=512),
     )
 
     output = steerable_long_context_summarize_keyword.run(input, NoOpTracer())

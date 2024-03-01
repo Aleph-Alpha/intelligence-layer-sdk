@@ -1,9 +1,12 @@
-from typing import Mapping
-
-from intelligence_layer.core import Chunk, ChunkInput, Task, TaskSpan
-from intelligence_layer.core.chunk import ChunkOutput, ChunkOverlap
-from intelligence_layer.core.detect_language import Language
-from intelligence_layer.core.model import ControlModel, LuminousControlModel
+from intelligence_layer.core import (
+    Chunk,
+    ChunkInput,
+    ChunkOutput,
+    ControlModel,
+    LuminousControlModel,
+    Task,
+    TaskSpan,
+)
 from intelligence_layer.use_cases.summarize.steerable_single_chunk_summarize import (
     SteerableSingleChunkSummarize,
 )
@@ -12,12 +15,8 @@ from intelligence_layer.use_cases.summarize.summarize import (
     LongContextSummarizeOutput,
     PartialSummary,
     SingleChunkSummarizeInput,
+    SummarizeOutput,
 )
-
-INSTRUCTION_CONFIGS = {
-    Language("en"): "Summarize the text in a single paragraph.",
-    Language("de"): "Fasse den Text in einem Paragraphen zusammen.",
-}
 
 
 class SteerableLongContextSummarize(
@@ -28,35 +27,31 @@ class SteerableLongContextSummarize(
     Generate a summary given an instruction setup.
 
     Args:
-        model: A valid Aleph Alpha model.
-        max_generated_tokens: The maximum number of tokens per sub-summary.
-        max_tokens_per_chunk: The maximum number of tokens per chunk that the long text
-            is divided into.
-        overlap_length_tokens: The overlap between the chunks.
-        intruction_configs: Dictionary of the prompts for each language.
+        summarize: The summarize task that is used to summarize a single chunk.
+            Make sure that this and the chunk task use the same model.
+            Defaults to :class:`SteerableSingleChunkSummarize` .
+        chunk: The chunk task that is used to chunk the long text into smaller pieces
+            such that a single chunk fits into the context of the model.
+            Make sure that this and the summarize task use the same model.
+            Defaults to :class:`Chunk` .
+        model: A valid Aleph Alpha control model. This is passed on to the
+            default summarize and chunk tasks. So it is ignored when the
+            defaults for both tasks are overwritten.
+            Defaults to luminous-base-control-20240215.
     """
 
     def __init__(
         self,
-        model: ControlModel = LuminousControlModel("luminous-base-control-20240215"),
-        max_generated_tokens: int = 512,
-        max_tokens_per_chunk: int = 1024,
-        overlap_length_tokens: int = 0,
-        instruction_configs: Mapping[Language, str] = INSTRUCTION_CONFIGS,
+        summarize: Task[SingleChunkSummarizeInput, SummarizeOutput] | None = None,
+        chunk: Task[ChunkInput, ChunkOutput] | None = None,
+        model: ControlModel | None = None,
     ) -> None:
         super().__init__()
-        self._summarize = SteerableSingleChunkSummarize(
-            model, max_generated_tokens, instruction_configs
+        model = model or LuminousControlModel("luminous-base-control-20240215")
+        self._summarize = summarize or SteerableSingleChunkSummarize(
+            model, max_generated_tokens=512
         )
-        self._chunk_task: Task[ChunkInput, ChunkOutput]
-        if overlap_length_tokens == 0:
-            self._chunk_task = Chunk(model, max_tokens_per_chunk)
-        else:
-            self._chunk_task = ChunkOverlap(
-                model,
-                max_tokens_per_chunk,
-                overlap_length_tokens,
-            )
+        self._chunk_task = chunk or Chunk(model, max_tokens_per_chunk=1024)
 
     def do_run(
         self, input: LongContextSummarizeInput, task_span: TaskSpan
