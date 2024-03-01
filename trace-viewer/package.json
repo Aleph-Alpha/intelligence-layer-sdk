@@ -24,7 +24,7 @@
 		"@tailwindcss/typography": "^0.5.10",
 		"@typescript-eslint/eslint-plugin": "^7.1.0",
 		"@typescript-eslint/parser": "^7.1.0",
-		"autoprefixer": "^10.4.17",
+		"autoprefixer": "^10.4.18",
 		"class-variance-authority": "^0.7.0",
 		"codemirror": "^6.0.1",
 		"date-fns": "^3.3.1",
