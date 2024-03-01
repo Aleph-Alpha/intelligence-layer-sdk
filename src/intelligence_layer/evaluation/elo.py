@@ -51,8 +51,8 @@ class EloCalculator:
     def calculate(self, matches: Sequence[Match]) -> None:
         difs = {p: 0.0 for p in self.ratings.keys()}
 
-        for match in matches:
-            dif_map = self._get_difs(match)
+        for match_ in matches:
+            dif_map = self._get_difs(match_)
             self._update_dict_keys(difs, dif_map)
 
         self._update_dict_keys(self.ratings, difs)
@@ -96,11 +96,11 @@ class WinRateCalculator:
         self.win_count: dict[str, float] = {p: 0 for p in players}
 
     def calculate(self, matches: Sequence[Match]) -> Mapping[str, float]:
-        for result in matches:
-            self.match_count[result.player_a] += 1
-            self.match_count[result.player_b] += 1
-            self.win_count[result.player_a] += result.outcome.payoff[0]
-            self.win_count[result.player_b] += result.outcome.payoff[1]
+        for match_ in matches:
+            self.match_count[match_.player_a] += 1
+            self.match_count[match_.player_b] += 1
+            self.win_count[match_.player_a] += match_.outcome.payoff[0]
+            self.win_count[match_.player_b] += match_.outcome.payoff[1]
 
         return {
             player: self.win_count[player] / match_count
