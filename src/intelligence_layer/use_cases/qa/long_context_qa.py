@@ -49,8 +49,8 @@ class LongContextQa(Task[LongContextQaInput, MultipleChunkQaOutput]):
 
     Args:
         multi_chunk_qa: task used to produce answers for each relevant chunk generated
-            by the chunk-task for the given input
-        chunk: task used to chunk the input
+            by the chunk-task for the given input. Defaults to :class:`MultipleChunkQa` .
+        chunk: task used to chunk the input. Defaults to :class:`Chunk` .
         k: The number of top relevant chunks to retrieve.
         model: The model used in the task.
 

@@ -120,13 +120,14 @@ class EmbeddingBasedClassify(Task[ClassifyInput, MultiLabelClassifyOutput]):
     Args:
         labels_with_examples: Examples to be used for classification.
         client: Aleph Alpha client instance for running model related API calls.
-        scoring: Configure how to calculate the final score.
+            :meth:`intelligence_layer.connectors.LimitedConcurrencyClient.from_env`
+        top_k_per_label: number of labels to assign to the input text.
 
     Attributes:
         METADATA_LABEL_NAME: The metadata field name for 'label' in the retriever.
 
     Example:
-        >>> from intelligence_layer.connectors.limited_concurrency_client import (
+        >>> from intelligence_layer.connectors import (
         ...     LimitedConcurrencyClient,
         ... )
         >>> from intelligence_layer.core import TextChunk, InMemoryTracer

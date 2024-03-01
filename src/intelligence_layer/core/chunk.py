@@ -3,7 +3,7 @@ from typing import NewType, Sequence
 from pydantic import BaseModel
 from semantic_text_splitter import HuggingFaceTextSplitter
 
-from intelligence_layer.core.model import ControlModel, LuminousControlModel
+from intelligence_layer.core.model import AlephAlphaModel, LuminousControlModel
 from intelligence_layer.core.task import Task
 from intelligence_layer.core.tracer.tracer import TaskSpan
 
@@ -45,13 +45,12 @@ class Chunk(Task[ChunkInput, ChunkOutput]):
     tokenizer that is available within the Aleph Alpha client.
 
     Args:
-        client: Aleph Alpha client instance for running model related API calls.
-        model: A valid Aleph Alpha model name.
+        model: A valid Aleph Alpha model.
         max_tokens_per_chunk: The maximum number of tokens to fit into one chunk.
     """
 
     def __init__(
-        self, model: ControlModel | None = None, max_tokens_per_chunk: int = 512
+        self, model: AlephAlphaModel | None = None, max_tokens_per_chunk: int = 512
     ):
         super().__init__()
         model = model or LuminousControlModel()
@@ -74,15 +73,14 @@ class ChunkOverlap(Task[ChunkInput, ChunkOutput]):
     tokenizer that is available within the Aleph Alpha client.
 
     Args:
-        client: Aleph Alpha client instance for running model related API calls.
-        model: A valid Aleph Alpha model name.
+        model: A valid Aleph Alpha model.
         max_tokens_per_chunk: The maximum number of tokens to fit into one chunk.
         overlap_length_tokens: The number of tokens every chunk overlaps with the previous chunk.
     """
 
     def __init__(
         self,
-        model: ControlModel | None = None,
+        model: AlephAlphaModel | None = None,
         max_tokens_per_chunk: int = 512,
         overlap_length_tokens: int = 0,
     ):

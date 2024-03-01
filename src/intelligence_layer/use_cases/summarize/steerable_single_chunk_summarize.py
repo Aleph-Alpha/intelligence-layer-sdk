@@ -23,7 +23,7 @@ class SteerableSingleChunkSummarize(Task[SingleChunkSummarizeInput, SummarizeOut
     """Summarises a text given an instruction.
 
     Args:
-        model: A valid Aleph Alpha model.
+        model: A valid Aleph Alpha control model.
         maximum_tokens: The maximum number of tokens to be generated.
         instruction_configs: A mapping of valid `Language` to `str` for each
             supported language.

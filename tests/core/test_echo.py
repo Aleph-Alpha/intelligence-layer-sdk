@@ -11,9 +11,9 @@ from intelligence_layer.connectors.limited_concurrency_client import (
 from intelligence_layer.core import MAX_CONCURRENCY, NoOpTracer, Task, TaskSpan, Token
 from intelligence_layer.core.echo import Echo, EchoInput, TokenWithLogProb
 from intelligence_layer.core.model import (
+    AlephAlphaModel,
     CompleteInput,
     CompleteOutput,
-    ControlModel,
     LuminousControlModel,
 )
 
@@ -74,7 +74,7 @@ class FakeCompleteTaskModel(LuminousControlModel):
 
 
 def tokenize_completion(
-    expected_output: str, aleph_alpha_model: ControlModel
+    expected_output: str, aleph_alpha_model: AlephAlphaModel
 ) -> Sequence[Token]:
     tokenizer = aleph_alpha_model.get_tokenizer()
     assert tokenizer.pre_tokenizer

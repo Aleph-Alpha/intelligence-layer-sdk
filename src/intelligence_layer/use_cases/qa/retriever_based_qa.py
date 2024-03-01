@@ -65,7 +65,8 @@ class RetrieverBasedQa(
 
     Args:
         retriever: Used to access and return a set of texts.
-        qa_task: Any single chunk QA task.
+        qa_task: The task that is used to generate an answer for a single chunk (retrieved through
+            the retriever). Defaults to :class:`SingleChunkQa` .
 
     Example:
         >>> import os

@@ -10,7 +10,7 @@ from aleph_alpha_client.explanation import TextScoreWithRaw
 from pydantic import BaseModel
 
 from intelligence_layer.core.model import (
-    ControlModel,
+    AlephAlphaModel,
     ExplainInput,
     ExplainOutput,
     LuminousControlModel,
@@ -73,6 +73,7 @@ class TextHighlight(Task[TextHighlightInput, TextHighlightOutput]):
 
     Args:
         model: The model used throughout the task for model related API calls.
+        granularity: At which granularity should the target be explained in terms of the prompt.
 
     Example:
         >>> import os
@@ -95,14 +96,14 @@ class TextHighlight(Task[TextHighlightInput, TextHighlightOutput]):
         >>> completion = " 4."
         >>> model = "luminous-base"
         >>> input = TextHighlightInput(
-        ...	    rich_prompt=rich_prompt, target=completion, model=model
+        ...	    rich_prompt=rich_prompt, target=completion, focus_ranges=frozenset({"r1"})
         ... )
         >>> output = text_highlight.run(input, InMemoryTracer())
     """
 
     def __init__(
         self,
-        model: ControlModel | None = None,
+        model: AlephAlphaModel | None = None,
         granularity: PromptGranularity = PromptGranularity.Sentence,
     ) -> None:
         super().__init__()

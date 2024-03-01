@@ -5,8 +5,8 @@ from pydantic import BaseModel
 from tokenizers import Encoding  # type: ignore
 
 from intelligence_layer.core.model import (
+    AlephAlphaModel,
     CompleteInput,
-    ControlModel,
     LuminousControlModel,
 )
 from intelligence_layer.core.prompt_template import PromptTemplate
@@ -53,7 +53,7 @@ class Echo(Task[EchoInput, EchoOutput]):
     a given prompt and model. Does not generate any tokens.
 
     Args:
-        model: Control model to use in the task.
+        model: A model to use in the task.
 
     Example:
         >>> from aleph_alpha_client import Prompt
@@ -71,7 +71,7 @@ class Echo(Task[EchoInput, EchoOutput]):
 
     PROMPT_TEMPLATE_STR: str = "{{prompt}}{{expected_completion}}"
 
-    def __init__(self, model: ControlModel | None = None) -> None:
+    def __init__(self, model: AlephAlphaModel | None = None) -> None:
         super().__init__()
         self._model = model or LuminousControlModel()
 

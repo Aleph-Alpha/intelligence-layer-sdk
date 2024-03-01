@@ -120,7 +120,10 @@ class MultipleChunkQa(Task[MultipleChunkQaInput, MultipleChunkQaOutput]):
         `model` provided should be a control-type model.
 
     Args:
+        single_chunk_qa: The task that is used to generate an answer based on a single chunk.
+            Defaults to :class:`SingleChunkQa` .
         model: The model used throughout the task for model related API calls.
+            Defaults to luminous-supreme-control.
         merge_answers_instruct_configs: Mapping language used to prompt parameters.
 
     Example:
