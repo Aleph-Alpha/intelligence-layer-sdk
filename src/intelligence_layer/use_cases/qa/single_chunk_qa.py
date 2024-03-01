@@ -31,6 +31,7 @@ QA_INSTRUCTIONS = {
     Language("de"): QaSetup(
         unformatted_instruction='Beantworte die Frage anhand des Textes. Wenn sich die Frage nicht mit dem Text beantworten lässt, antworte "{{no_answer_text}}".\nFrage: {{question}}',
         no_answer_str="Unbeantwortbar",
+        no_answer_logit_bias=0.5,
     ),
     Language("fr"): QaSetup(
         unformatted_instruction="{{question}}\nS'il n'y a pas de réponse, dites \"{{no_answer_text}}\". Ne répondez à la question qu'en vous basant sur le texte.",
