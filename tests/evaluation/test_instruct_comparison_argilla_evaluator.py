@@ -28,8 +28,8 @@ from intelligence_layer.evaluation import (
     InMemoryEvaluationRepository,
     InMemoryRunRepository,
     InstructComparisonArgillaAggregationLogic,
-    Payoff,
-    PayoffMatrix,
+    Match,
+    MatchOutcome,
     RunOverview,
 )
 from intelligence_layer.evaluation.argilla import (
@@ -264,27 +264,27 @@ def test_elo_calculating_works_as_expected() -> None:
     player1 = "player1"
     player2 = "player2"
     matches = [
-        Payoff(
-            player1=player1,
-            player2=player2,
-            matrix=PayoffMatrix.PLAYER_1_WINS,
+        Match(
+            player_a=player1,
+            player_b=player2,
+            outcome=MatchOutcome.A_WINS,
         )
-        for i in range(10)
+        for _ in range(10)
     ]
     elo = EloCalculator([player1, player2])
-    elo.calculate_tournament(matches)
+    elo.calculate(matches)
 
     assert elo.ratings[player1] == 1600
     assert elo.ratings[player2] == 1400
 
     comeback_matches = [
-        Payoff(
-            player1=player1,
-            player2=player2,
-            matrix=PayoffMatrix.PLAYER_2_WINS,
+        Match(
+            player_a=player1,
+            player_b=player2,
+            outcome=MatchOutcome.B_WINS,
         )
         for i in range(10)
     ]
-    elo.calculate_tournament(comeback_matches)
+    elo.calculate(comeback_matches)
 
     assert elo.ratings[player2] > elo.ratings[player1]
