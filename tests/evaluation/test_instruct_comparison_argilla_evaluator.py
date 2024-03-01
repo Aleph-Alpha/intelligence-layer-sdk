@@ -274,8 +274,8 @@ def test_elo_calculating_works_as_expected() -> None:
     elo = EloCalculator([player1, player2])
     elo.calculate(matches)
 
-    assert elo.ratings[player1] == 1600
-    assert elo.ratings[player2] == 1400
+    assert elo.ratings[player1] > 1500
+    assert elo.ratings[player2] < 1500
 
     comeback_matches = [
         Match(

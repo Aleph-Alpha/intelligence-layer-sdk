@@ -44,13 +44,8 @@ class FileAggregationRepository(AggregationRepository, FileBasedRepository):
         path.mkdir(exist_ok=True)
         return path
 
-    def _aggregation_directory(self, eval_id: str) -> Path:
-        path = self._aggregation_root_directory() / eval_id
-        path.mkdir(exist_ok=True)
-        return path
-
     def _aggregation_overview_path(self, id: str) -> Path:
-        return self._aggregation_directory(id).with_suffix(".json")
+        return (self._aggregation_root_directory() / id).with_suffix(".json")
 
     def aggregation_overview(
         self, id: str, stat_type: type[AggregatedEvaluation]
