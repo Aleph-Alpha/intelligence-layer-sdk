@@ -6,6 +6,11 @@
 - `Payoff` from the elo package has been renamed to `Match`
 - `PayoffMatrix` from the elo package has been renamed to `MatchOutcome` and is now pydantic (de)-serializable
 - `SingleChunkQa` now uses a logit_bias to promote not answering for German
+- `__init__`-parameters of all tasks are streamlined:
+    - Sub-tasks are typically exposed as `__init__`-parameters with sensible defaults.
+    - Defaults for non-trivial parameters like models or tasks are defined in `__init__` while the default parameter is `None`.
+    - Instead of exposing parameters that are passed on to sub-tasks the sub-task themselves are exposed.
+
 
 ## 0.6.0
 
