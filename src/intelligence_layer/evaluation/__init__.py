@@ -1,5 +1,6 @@
 from .accumulator import MeanAccumulator as MeanAccumulator
 from .aggregator import Aggregator as Aggregator
+from .argilla import AggregatedInstructComparison as AggregatedInstructComparison
 from .argilla import ArgillaEvaluationLogic as ArgillaEvaluationLogic
 from .argilla import ArgillaEvaluator as ArgillaEvaluator
 from .argilla import (
@@ -8,6 +9,7 @@ from .argilla import (
 from .argilla import (
     InstructComparisonArgillaEvaluationLogic as InstructComparisonArgillaEvaluationLogic,
 )
+from .argilla import PlayerScore as PlayerScore
 from .base_logic import AggregationLogic as AggregationLogic
 from .base_logic import EvaluationLogic as EvaluationLogic
 from .data_storage.aggregation_repository import (
@@ -57,9 +59,8 @@ from .domain import SpanTrace as SpanTrace
 from .domain import SuccessfulExampleOutput as SuccessfulExampleOutput
 from .domain import TaskSpanTrace as TaskSpanTrace
 from .elo import EloCalculator as EloCalculator
-from .elo import Payoff as Payoff
-from .elo import PayoffMatrix as PayoffMatrix
-from .elo import PlayerScore as PlayerScore
+from .elo import Match as Match
+from .elo import MatchOutcome as MatchOutcome
 from .elo import WinRateCalculator as WinRateCalculator
 from .evaluator import Evaluator as Evaluator
 from .graders import BleuGrader as BleuGrader

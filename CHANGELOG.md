@@ -1,5 +1,12 @@
 # Changelog
 
+## Unreleased
+
+- The elo-calculation logic has been heavily simplified
+- `Payoff` from the elo package has been renamed to `Match`
+- `PayoffMatrix` from the elo package has been renamed to `MatchOutcome` and is now pydantic (de)-serializable
+- `SingleChunkQa` now uses a logit_bias to promote not answering for German
+
 ## 0.6.0
 
 ### Breaking Changes

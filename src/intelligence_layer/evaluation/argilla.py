@@ -35,12 +35,10 @@ from intelligence_layer.evaluation.domain import (
     SuccessfulExampleOutput,
 )
 from intelligence_layer.evaluation.elo import (
-    AutomatedEloComparison,
     EloCalculator,
-    EloComparison,
-    PlayerScore,
+    Match,
+    MatchOutcome,
     WinRateCalculator,
-    build_tournaments,
 )
 from intelligence_layer.evaluation.evaluator import Evaluator
 
@@ -151,6 +149,11 @@ class ArgillaAggregator(
         )
 
 
+class PlayerScore(BaseModel):
+    elo: float
+    win_rate: float
+
+
 class AggregatedInstructComparison(BaseModel):
     scores: Mapping[str, PlayerScore]
 
@@ -161,35 +164,32 @@ class InstructComparisonArgillaAggregationLogic(
     def aggregate(
         self, evaluations: Iterable[ArgillaEvaluation]
     ) -> AggregatedInstructComparison:
-        elo_evaluations = [
-            AutomatedEloComparison(
-                outputs=[
-                    EloComparison(
-                        example_id=evaluation.example_id,
-                        winner=int(evaluation.responses["winner"]),
-                        first_run_id=evaluation.metadata["first"],
-                        second_run_id=evaluation.metadata["second"],
-                    )
-                ]
+        flattened_evaluations = [
+            Match(
+                player_a=evaluation.metadata["first"],
+                player_b=evaluation.metadata["second"],
+                outcome=MatchOutcome.from_rank_literal(
+                    int(evaluation.responses["winner"])
+                ),
             )
             for evaluation in evaluations
         ]
-        tournaments, players = build_tournaments(elo_evaluations)
+        players = set(
+            player
+            for match in flattened_evaluations
+            for player in [match.player_a, match.player_b]
+        )
 
         accumulators = {p: MeanAccumulator() for p in players}
-        tournaments_list = list(tournaments.items())
         for _ in range(100):
             elo_calc = EloCalculator(players)
-            random.shuffle(tournaments_list)
-            for _, tournament in tournaments_list:
-                elo_calc.calculate_tournament(tournament)
+            random.shuffle(flattened_evaluations)
+            elo_calc.calculate(flattened_evaluations)
             for p in players:
                 accumulators[p].add(elo_calc.ratings[p])
 
         win_rate_calc = WinRateCalculator(players)
-        win_rate = win_rate_calc.calculate(
-            [battle for tournament in tournaments.values() for battle in tournament]
-        )
+        win_rate = win_rate_calc.calculate(flattened_evaluations)
 
         return AggregatedInstructComparison(
             scores={
