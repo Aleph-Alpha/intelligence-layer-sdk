@@ -1,4 +1,7 @@
 from intelligence_layer.core import Task, TaskSpan
+from intelligence_layer.use_cases.summarize.steerable_long_context_summarize import (
+    SteerableLongContextSummarize,
+)
 from intelligence_layer.use_cases.summarize.summarize import (
     LongContextSummarizeInput,
     LongContextSummarizeOutput,
@@ -13,15 +16,18 @@ class RecursiveSummarize(Task[LongContextSummarizeInput, SummarizeOutput]):
 
     Args:
         long_context_summarize_task: Any task that satifies the interface Input: LongContextSummarizeInput and Output: LongContextSummarizeOutput.
+            Defaults to :class:`SteerableLongContextSummarize`
     """
 
     def __init__(
         self,
-        long_context_summarize_task: Task[
-            LongContextSummarizeInput, LongContextSummarizeOutput
-        ],
+        long_context_summarize_task: (
+            Task[LongContextSummarizeInput, LongContextSummarizeOutput] | None
+        ) = None,
     ) -> None:
-        self.long_context_summarize_task = long_context_summarize_task
+        self.long_context_summarize_task = (
+            long_context_summarize_task or SteerableLongContextSummarize()
+        )
 
     def do_run(
         self, input: LongContextSummarizeInput, task_span: TaskSpan
