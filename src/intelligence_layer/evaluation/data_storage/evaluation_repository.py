@@ -443,12 +443,11 @@ class WandbEvaluationRepository(EvaluationRepository):
     def failed_example_evaluations(
         self, eval_id: str, evaluation_type: type[Evaluation]
     ) -> Sequence[ExampleEvaluation[Evaluation]]:
-        results = self.example_evaluations(eval_id, evaluation_type)
-        return [r for r in results if isinstance(r.result, FailedExampleEvaluation)]
+        raise NotImplementedError
 
     def evaluation_overview(self, eval_id: str) -> EvaluationOverview | None:
         table = self._get_table(eval_id, "evaluation_overview")
-        return [EvaluationOverview.model_validate_json(json_data=row[0]) for _, row in table.iterrows()]  # type: ignore
+        return EvaluationOverview.model_validate_json(json_data=table.get_column("evaluation_overview")[0])  # type: ignore
 
     @lru_cache(maxsize=2)
     def _get_table(self, artifact_id: str, name: str) -> Table:
@@ -466,18 +465,22 @@ class WandbEvaluationRepository(EvaluationRepository):
             overview.model_dump_json(),
         )
 
-    def start_run(self, run: Run, eval_id: str) -> None:
+    def start_run(self, run: Run) -> None:
         self._run = run
+
+    def init_table(self, eval_id: str) -> None:
         self._example_evaluations[eval_id] = Table(columns=["example_evaluations"])  # type: ignore
         self._evaluation_overviews[eval_id] = Table(columns=["evaluation_overview"])  # type: ignore
 
-    def finish_run(self, eval_id: str) -> None:
+    def sync_table(self, eval_id: str) -> None:
         if self._run is None:
             raise ValueError(
-                "The run has not been started, are you using a WandbRunner?"
+                "The run has not been started, are you using a WandbEvaluator?"
             )
-        artifact = Artifact(name=eval_id, type="Run")
+        artifact = Artifact(name=eval_id, type="Evaluation")
         artifact.add(self._example_evaluations[eval_id], name="example_evaluations")
-        artifact.add(self._evaluation_overviews[eval_id], name="evaluation_overviews")
+        artifact.add(self._evaluation_overviews[eval_id], name="evaluation_overview")
         self._run.log_artifact(artifact)  # maybe tables should be deleted after logging
+
+    def finish_run(self) -> None:
         self._run = None

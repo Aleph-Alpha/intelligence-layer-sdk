@@ -372,17 +372,19 @@ class WandbEvaluator(Evaluator[Input, Output, ExpectedOutput, Evaluation]):
     def wandb_evaluate_runs(
         self, *run_ids: str, num_examples: Optional[int] = None
     ) -> EvaluationOverview:
-        run = wandb.init(project=self._wandb_project_name, job_type="Runner")
+        run = wandb.init(project=self._wandb_project_name, job_type="Evaluator")
         assert isinstance(run, Run)
         eval_id = str(uuid4())
         self._dataset_repository.start_run(run)
-        self._run_repository.start_run(run, eval_id)
-        self._evaluation_repository.start_run(run, eval_id)
+        self._run_repository.start_run(run)
+        self._evaluation_repository.start_run(run)
+        self._evaluation_repository.init_table(eval_id)
         eval_overview = super().evaluate_runs(
             *run_ids, num_examples=num_examples, eval_id=eval_id
         )
+        self._evaluation_repository.sync_table(eval_id)
         self._dataset_repository.finish_run()
-        self._run_repository.finish_run(eval_id)
-        self._evaluation_repository.finish_run(eval_id)
+        self._run_repository.finish_run()
+        self._evaluation_repository.finish_run()
         run.finish()
         return eval_overview

@@ -169,9 +169,11 @@ class WandbRunner(Runner[Input, Output]):
         run_id = str(uuid4())
         assert isinstance(run, Run)
         self._dataset_repository.start_run(run)
-        self._run_repository.start_run(run, run_id)
+        self._run_repository.start_run(run)
+        self._run_repository.init_table(run_id)
         run_overview = super().run_dataset(dataset_id, tracer, num_examples, run_id)
+        self._run_repository.sync_table(run_id)
         self._dataset_repository.finish_run()
-        self._run_repository.finish_run(run_id)
+        self._run_repository.finish_run()
         run.finish()
         return run_overview

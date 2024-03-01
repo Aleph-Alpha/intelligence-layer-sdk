@@ -1,3 +1,4 @@
+import json
 from abc import ABC, abstractmethod
 from functools import lru_cache
 from pathlib import Path
@@ -5,6 +6,7 @@ from typing import Dict, Iterable, Optional, Sequence, cast
 from uuid import uuid4
 
 import wandb
+from flatten_json import flatten, unflatten_list  # type: ignore
 from fsspec import AbstractFileSystem  # type: ignore
 from fsspec.implementations.local import LocalFileSystem  # type: ignore
 from wandb.data_types import Table
@@ -196,25 +198,37 @@ class FileDatasetRepository(FileSystemDatasetRepository):
 
 
 class WandbDatasetRepository(DatasetRepository):
-    def __init__(self) -> None:
+    def __init__(self, wandb_project_name: str) -> None:
         self.team_name = "aleph-alpha-intelligence-layer-trial"
         self._run: Run | None = None
+        self._wandb_project_name: str = wandb_project_name
 
     def create_dataset(
         self,
         examples: Iterable[Example[Input, ExpectedOutput]],
     ) -> str:
-        if self._run is None:
-            raise ValueError("Run not started")
+        run = wandb.init(
+            project=self._wandb_project_name, job_type="Dataset Creator"
+        )  # dataset creation should always have its own run since this takes over the logic handled by the runner/evaluator/aggregator in other repositories
+        assert run is not None
         dataset_id = str(uuid4())
         artifact = wandb.Artifact(name=dataset_id, type="dataset")
-        table = Table(columns=["example"])  # type: ignore
+        flat_first_example = flatten(
+            json.loads(list(examples)[0].model_dump_json()), separator="|"
+        )
+        columns = list(flat_first_example.keys())
+        table = Table(columns=columns)  # type: ignore
         for example in examples:
             table.add_data(  # type: ignore
-                example.model_dump_json(),
+                *list(
+                    flatten(
+                        json.loads(example.model_dump_json()), separator="|"
+                    ).values()
+                ),
             )
         artifact.add(table, "dataset")
-        self._run.log_artifact(artifact)
+        run.log_artifact(artifact)
+        run.finish()
         return dataset_id
 
     def examples_by_id(
@@ -224,7 +238,7 @@ class WandbDatasetRepository(DatasetRepository):
         expected_output_type: type[ExpectedOutput],
     ) -> Optional[Iterable[Example[Input, ExpectedOutput]]]:
         table = self._get_dataset(dataset_id)
-        return [Example[input_type, expected_output_type].model_validate_json(json_data=row[0]) for _, row in table.iterrows()]  # type: ignore
+        return [Example[input_type, expected_output_type].model_validate_json(json.dumps(unflatten_list(row[0], separator="|"))) for _, row in table.iterrows()]  # type: ignore
 
     @lru_cache(maxsize=1)
     def _get_dataset(self, id: str) -> Table:

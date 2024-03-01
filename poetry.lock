@@ -996,6 +996,20 @@ testing = ["covdefaults (>=2.3)", "coverage (>=7.3.2)", "diff-cover (>=8)", "pyt
 typing = ["typing-extensions (>=4.8)"]
 
 [[package]]
+name = "flatten-json"
+version = "0.1.14"
+description = "Flatten JSON objects"
+optional = false
+python-versions = "*"
+files = [
+    {file = "flatten_json-0.1.14-py3-none-any.whl", hash = "sha256:75e455dbbb5be2431546024039cac094a8ed1dfedcf36ab1e7c9d01459fa410c"},
+    {file = "flatten_json-0.1.14.tar.gz", hash = "sha256:4008b1bd81743e6fcdc29ddbb640f5c1589376116e0c8f36cb4a0003d41fe102"},
+]
+
+[package.dependencies]
+six = "*"
+
+[[package]]
 name = "fqdn"
 version = "1.5.1"
 description = "Validates fully-qualified domain names against RFC 1123, so that they are acceptable to modern bowsers"
@@ -5409,4 +5423,4 @@ testing = ["big-O", "jaraco.functools", "jaraco.itertools", "more-itertools", "p
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.10,<3.12"
-content-hash = "b8f4166c32358e7c9d1625564ee9410e33eedce118715ff08a786aaa0a0ab765"
+content-hash = "a123463a9568c2e7592e530a5508f1703a0997516f26edc1378bd20c1fb16f85"

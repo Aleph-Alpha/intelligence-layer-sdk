@@ -254,13 +254,17 @@ class WandbAggregator(Aggregator[Evaluation, AggregatedEvaluation]):
     def wandb_aggregate_evaluation(
         self, *eval_ids: str
     ) -> AggregationOverview[AggregatedEvaluation]:
-        run = wandb.init(project=self._wandb_project_name, job_type="Runner")
+        run = wandb.init(project=self._wandb_project_name, job_type="Aggregator")
         aggregation_id = str(uuid4())
         assert isinstance(run, Run)
-        self._evaluation_repository.start_run(run, aggregation_id)
-        self._aggregation_repository.start_run(run, aggregation_id)
-        aggregation_overview = super().aggregate_evaluation(*eval_ids, aggregation_id)
-        self._evaluation_repository.finish_run(aggregation_id)
+        self._evaluation_repository.start_run(run)
+        self._aggregation_repository.start_run(run)
+        self._aggregation_repository.init_table(aggregation_id)
+        aggregation_overview = super().aggregate_evaluation(
+            *eval_ids, aggregation_id=aggregation_id
+        )
+        self._aggregation_repository.sync_table(aggregation_id)
+        self._evaluation_repository.finish_run()
         self._aggregation_repository.finish_run()
         run.finish()
         return aggregation_overview

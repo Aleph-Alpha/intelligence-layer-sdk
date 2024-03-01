@@ -1,9 +1,11 @@
+import json
 from abc import ABC, abstractmethod
 from collections import defaultdict
 from functools import lru_cache
 from pathlib import Path
 from typing import Iterable, Optional, Sequence, cast
 
+from flatten_json import flatten, unflatten_list  # type: ignore
 from wandb import Artifact, Table
 from wandb.sdk.wandb_run import Run
 
@@ -300,7 +302,7 @@ class WandbRunRepository(RunRepository):
             Iterable over all outputs.
         """
         table = self._get_table(run_id, "example_outputs")
-        return [ExampleOutput[output_type].model_validate_json(json_data=row[0]) for _, row in table.iterrows()]  # type: ignore
+        return [ExampleOutput[output_type].model_validate_json(json.dumps(unflatten_list(row[0], separator="|"))) for _, row in table.iterrows()]  # type: ignore
 
     @lru_cache(maxsize=2)
     def _get_table(self, artifact_id: str, name: str) -> Table:
@@ -315,7 +317,7 @@ class WandbRunRepository(RunRepository):
 
     def store_example_output(self, example_output: ExampleOutput[Output]) -> None:
         self._example_outputs[example_output.run_id].add_data(  # type: ignore
-            example_output.model_dump_json(),
+            flatten(json.loads(example_output.model_dump_json()), separator="|"),
         )
 
     def example_trace(self, run_id: str, example_id: str) -> Optional[ExampleTrace]:
@@ -347,7 +349,11 @@ class WandbRunRepository(RunRepository):
             :class:`RunOverview` if one was found, `None` otherwise.
         """
         table = self._get_table(run_id, "run_overview")
-        return [RunOverview.model_validate_json(json_data=row[0]) for _, row in table.iterrows()]  # type: ignore
+        return RunOverview.model_validate_json(
+            json_data=json.dumps(
+                unflatten_list(table.get_column("run_overview")[0], separator="|")  # type: ignore
+            )
+        )
 
     def store_run_overview(self, overview: RunOverview) -> None:
         """Stores an :class:`RunOverview` in the repository.
@@ -355,16 +361,23 @@ class WandbRunRepository(RunRepository):
         Args:
             overview: The overview to be persisted.
         """
-        self._run_overviews[overview.id].add_data(  # type: ignore
-            overview.model_dump_json(),
-        )
+        # check whether the overviews id is already in saved _run_overviews
+        flat_overview = flatten(json.loads(overview.model_dump_json()), separator="|")
+        if overview.id not in self._run_overviews:
+            self._run_overviews[overview.id] = Table(columns=[flat_overview.keys()])  # type: ignore
+        self._run_overviews[overview.id].add_data(flat_overview)  # type: ignore
 
-    def start_run(self, run: Run, run_id: str) -> None:
+    def start_run(self, run: Run) -> None:
         self._run = run
+
+    def finish_run(self) -> None:
+        self._run = None
+
+    def init_table(self, run_id: str) -> None:
         self._example_outputs[run_id] = Table(columns=["example_output"])  # type: ignore
         self._run_overviews[run_id] = Table(columns=["run_overview"])  # type: ignore
 
-    def finish_run(self, run_id: str) -> None:
+    def sync_table(self, run_id: str) -> None:
         if self._run is None:
             raise ValueError(
                 "The run has not been started, are you using a WandbRunner?"
@@ -372,5 +385,4 @@ class WandbRunRepository(RunRepository):
         artifact = Artifact(name=run_id, type="Run")
         artifact.add(self._example_outputs[run_id], name="example_outputs")
         artifact.add(self._run_overviews[run_id], name="run_overview")
-        self._run.log_artifact(artifact)  # maybe tables should be deleted after logging
-        self._run = None
+        self._run.log_artifact(artifact)

@@ -3,7 +3,7 @@ from functools import lru_cache
 from pathlib import Path
 from typing import Any, Sequence
 
-from wandb import Table
+from wandb import Artifact, Table
 from wandb.sdk.wandb_run import Run
 
 from intelligence_layer.evaluation.data_storage.utils import FileBasedRepository
@@ -106,7 +106,7 @@ class WandbAggregationRepository(AggregationRepository):
         self, id: str, stat_type: type[AggregatedEvaluation]
     ) -> AggregationOverview[AggregatedEvaluation] | None:
         table = self._get_table(id, "aggregation_overview")
-        return [AggregationOverview.model_validate_json(json_data=row[0]) for _, row in table.iterrows()]  # type: ignore
+        return AggregationOverview.model_validate_json(json_data=table.get_column("aggregation_overview")[0])  # type: ignore
 
     def store_aggregation_overview(
         self, overview: AggregationOverview[AggregatedEvaluation]
@@ -124,9 +124,20 @@ class WandbAggregationRepository(AggregationRepository):
         )
         return artifact.get(name)  # type: ignore
 
-    def start_run(self, run: Run, id: str) -> None:
+    def start_run(self, run: Run) -> None:
         self._run = run
-        self._aggregation_overviews[id] = Table(columns=["aggregation_overview"])  # type: ignore
 
     def finish_run(self) -> None:
         self._run = None
+
+    def init_table(self, id: str) -> None:
+        self._aggregation_overviews[id] = Table(columns=["aggregation_overview"])  # type: ignore
+
+    def sync_table(self, id: str) -> None:
+        if self._run is None:
+            raise ValueError(
+                "The run has not been started, are you using a WandbAggregator?"
+            )
+        artifact = Artifact(id, "Aggregation")
+        artifact.add(self._aggregation_overviews[id], "aggregation_overview")
+        self._run.log_artifact(artifact)
