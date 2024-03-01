@@ -49,20 +49,9 @@ class EloCalculator:
             to_be_updated[key] += val
 
     def calculate(self, matches: Sequence[Match]) -> None:
-        difs = {p: 0.0 for p in self.ratings.keys()}
-
         for match_ in matches:
             dif_map = self._get_difs(match_)
-            self._update_dict_keys(difs, dif_map)
-
-        self._update_dict_keys(self.ratings, difs)
-
-    def _calc_expected_win_rates(
-        self, player_a: str, player_b: str
-    ) -> tuple[float, float]:
-        rating_a, rating_b = self.ratings[player_a], self.ratings[player_b]
-        expected_win_rate_a = 1 / (1 + 10 ** ((rating_b - rating_a) / 400))
-        return expected_win_rate_a, 1 - expected_win_rate_a
+            self._update_dict_keys(self.ratings, dif_map)
 
     def _get_difs(self, preference_result: Match) -> Mapping[str, float]:
         expected_win_rate_a, expected_win_rate_b = self._calc_expected_win_rates(
@@ -74,6 +63,13 @@ class EloCalculator:
             expected_win_rate_b,
         )
         return {preference_result.player_a: dif_a, preference_result.player_b: dif_b}
+
+    def _calc_expected_win_rates(
+        self, player_a: str, player_b: str
+    ) -> tuple[float, float]:
+        rating_a, rating_b = self.ratings[player_a], self.ratings[player_b]
+        expected_win_rate_a = 1 / (1 + 10 ** ((rating_b - rating_a) / 400))
+        return expected_win_rate_a, 1 - expected_win_rate_a
 
     def _calc_difs(
         self,
