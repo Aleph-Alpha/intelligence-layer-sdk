@@ -188,10 +188,8 @@ class InstructComparisonArgillaAggregationLogic(
         accumulators = {p: MeanAccumulator() for p in players}
         for _ in range(100):
             elo_calc = EloCalculator(players)
-            sampled = random.sample(
-                flattened_evaluations, k=int(len(flattened_evaluations) / 5)
-            )
-            elo_calc.calculate(sampled)
+            random.shuffle(flattened_evaluations)
+            elo_calc.calculate(flattened_evaluations)
             for p in players:
                 accumulators[p].add(elo_calc.ratings[p])
 

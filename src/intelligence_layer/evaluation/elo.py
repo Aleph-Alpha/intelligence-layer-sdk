@@ -43,7 +43,7 @@ class EloCalculator:
         self,
         players: Iterable[str],
         k_start: float = 20.0,
-        k_floor: float = 5.0,
+        k_floor: float = 10.0,
         decay_factor: float = 0.0005,
     ) -> None:
         self.ratings: dict[str, float] = {player: 1500.0 for player in players}
