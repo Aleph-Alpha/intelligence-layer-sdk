@@ -33,14 +33,31 @@ class MeanAccumulator(Accumulator[float, float]):
     def __init__(self) -> None:
         self._n = 0
         self._acc = 0.0
+        self._squares_acc = 0.0  # Sum of squares of the values
 
     def add(self, value: float) -> None:
         self._n += 1
         self._acc += value
+        self._squares_acc += value**2
 
     def extract(self) -> float:
         """Accumulates the mean
 
-        :return: 0.0 if no values were added before, else the mean
-        """
+        :return: 0.0 if no values were added before, else the mean"""
         return 0.0 if self._n == 0 else self._acc / self._n
+
+    def standard_deviation(self) -> float:
+        """Calculates the standard deviation"""
+        if self._n == 0:
+            return 0.0
+        mean = self.extract()
+        variance = (self._squares_acc / self._n) - (mean**2)
+        # not recognized as float by VSCode or mypy
+        return variance**0.5  # type: ignore
+
+    def standard_error(self) -> float:
+        """Calculates the standard error of the mean"""
+        if self._n <= 1:
+            return 0.0
+        # not recognized as float by VSCode or mypy
+        return self.standard_deviation() / (self._n**0.5)  # type: ignore
