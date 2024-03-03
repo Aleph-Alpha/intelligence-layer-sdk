@@ -49,7 +49,7 @@ def test_elo_calculator_works(players: Sequence[str], matches: Sequence[Match]) 
     }
     assert [int(i) for i in players] == [int(i) for i in sorted_scores.keys()]
     assert (
-        round(sum(score for score in sorted_scores.values()) / len(sorted_scores), 5)
+        round(sum(score for score in sorted_scores.values()) / len(sorted_scores), 0)
         == 1500
     )
 

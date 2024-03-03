@@ -1,3 +1,4 @@
+import random
 from typing import Iterable, Sequence, cast
 from uuid import uuid4
 
@@ -11,23 +12,20 @@ from intelligence_layer.connectors import (
     RecordData,
 )
 from intelligence_layer.evaluation import (
+    AggregationLogic,
+    ArgillaAggregator,
     ArgillaEvaluationLogic,
     ArgillaEvaluationRepository,
     ArgillaEvaluator,
     Example,
+    InMemoryAggregationRepository,
     InMemoryDatasetRepository,
     InMemoryEvaluationRepository,
+    InMemoryRunRepository,
+    InstructComparisonArgillaAggregationLogic,
     RecordDataSequence,
     Runner,
     SuccessfulExampleOutput,
-)
-from intelligence_layer.evaluation.argilla import ArgillaAggregator
-from intelligence_layer.evaluation.base_logic import AggregationLogic
-from intelligence_layer.evaluation.data_storage.aggregation_repository import (
-    InMemoryAggregationRepository,
-)
-from intelligence_layer.evaluation.data_storage.run_repository import (
-    InMemoryRunRepository,
 )
 from tests.conftest import DummyStringInput, DummyStringOutput, DummyStringTask
 from tests.evaluation.conftest import DummyAggregatedEvaluation
@@ -289,3 +287,25 @@ def test_argilla_evaluator_can_aggregate_evaluation(
         eval_overview.id
     )
     assert aggregated_eval_overview.statistics.score == argilla_client._score
+
+
+def test_argilla_aggregation_logic_works() -> None:
+    argilla_aggregation_logic = InstructComparisonArgillaAggregationLogic()
+    evaluations = (
+        ArgillaEvaluation(
+            example_id=str(i),
+            record_id=str(i),
+            responses={"winner": random.choices([1, 2, 3], [0.5, 0.25, 0.25], k=1)[0]},
+            metadata={
+                "first": "player_1",
+                "second": "player_2" if i < 9000 else "player_3",
+            },
+        )
+        for i in range(10000)
+    )
+    aggregation = argilla_aggregation_logic.aggregate(evaluations)
+    assert aggregation.scores["player_1"].elo > aggregation.scores["player_2"].elo
+    assert (
+        aggregation.scores["player_3"].elo_standard_error
+        > aggregation.scores["player_1"].elo_standard_error
+    )
