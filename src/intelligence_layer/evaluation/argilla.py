@@ -1,5 +1,6 @@
 import random
 from abc import ABC, abstractmethod
+from collections import Counter
 from itertools import combinations
 from typing import Iterable, Mapping, Optional
 
@@ -151,7 +152,9 @@ class ArgillaAggregator(
 
 class PlayerScore(BaseModel):
     elo: float
+    elo_standard_error: float
     win_rate: float
+    num_matches: int
 
 
 class AggregatedInstructComparison(BaseModel):
@@ -174,17 +177,21 @@ class InstructComparisonArgillaAggregationLogic(
             )
             for evaluation in evaluations
         ]
-        players = set(
+        player_counter = Counter(
             player
             for match in flattened_evaluations
             for player in [match.player_a, match.player_b]
         )
+        player_counts = dict(player_counter)
+        players = player_counts.keys()
 
         accumulators = {p: MeanAccumulator() for p in players}
         for _ in range(100):
             elo_calc = EloCalculator(players)
-            random.shuffle(flattened_evaluations)
-            elo_calc.calculate(flattened_evaluations)
+            sampled = random.sample(
+                flattened_evaluations, k=int(len(flattened_evaluations) / 5)
+            )
+            elo_calc.calculate(sampled)
             for p in players:
                 accumulators[p].add(elo_calc.ratings[p])
 
@@ -193,7 +200,12 @@ class InstructComparisonArgillaAggregationLogic(
 
         return AggregatedInstructComparison(
             scores={
-                p: PlayerScore(elo=acc.extract(), win_rate=win_rate[p])
+                p: PlayerScore(
+                    elo=acc.extract(),
+                    elo_standard_error=acc.standard_error(),
+                    win_rate=win_rate[p],
+                    num_matches=player_counts[p],
+                )
                 for p, acc in accumulators.items()
             },
         )

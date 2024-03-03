@@ -1,6 +1,8 @@
+from collections import defaultdict
 from enum import Enum
 from typing import Iterable, Mapping, Sequence
 
+import numpy as np
 from pydantic import BaseModel
 
 
@@ -37,53 +39,50 @@ class Match(BaseModel):
 
 
 class EloCalculator:
-    def __init__(self, players: Iterable[str], k_factor: int = 20) -> None:
-        self.ratings: dict[str, float] = {p: 1500 for p in players}
-        self._k_factor = k_factor
-
-    @staticmethod
-    def _update_dict_keys(
-        to_be_updated: dict[str, float], update_with: Mapping[str, float]
+    def __init__(
+        self,
+        players: Iterable[str],
+        k_start: float = 20.0,
+        k_floor: float = 5.0,
+        decay_factor: float = 0.0005,
     ) -> None:
-        for key, val in update_with.items():
-            to_be_updated[key] += val
+        self.ratings: dict[str, float] = {player: 1500.0 for player in players}
+        self._match_counts: dict[str, int] = defaultdict(int)
+        self._k_ceiling = k_start - k_floor
+        self._k_floor = k_floor
+        self._decay_factor = decay_factor
 
-    def calculate(self, matches: Sequence[Match]) -> None:
-        for match_ in matches:
-            dif_map = self._get_difs(match_)
-            self._update_dict_keys(self.ratings, dif_map)
-
-    def _get_difs(self, preference_result: Match) -> Mapping[str, float]:
-        expected_win_rate_a, expected_win_rate_b = self._calc_expected_win_rates(
-            preference_result.player_a, preference_result.player_b
-        )
-        dif_a, dif_b = self._calc_difs(
-            preference_result.outcome,
-            expected_win_rate_a,
-            expected_win_rate_b,
-        )
-        return {preference_result.player_a: dif_a, preference_result.player_b: dif_b}
+    def _calc_k_factor(self, player: str) -> float:
+        n = self._match_counts.get(player) or 0
+        # Mypy thinks this is Any
+        return self._k_ceiling * np.exp(-self._decay_factor * n) + self._k_floor  # type: ignore
 
     def _calc_expected_win_rates(
         self, player_a: str, player_b: str
     ) -> tuple[float, float]:
         rating_a, rating_b = self.ratings[player_a], self.ratings[player_b]
-        expected_win_rate_a = 1 / (1 + 10 ** ((rating_b - rating_a) / 400))
-        return expected_win_rate_a, 1 - expected_win_rate_a
+        exp_a = 1 / (1 + 10 ** ((rating_b - rating_a) / 400))
+        return exp_a, 1 - exp_a
 
     def _calc_difs(
-        self,
-        match_outcome: MatchOutcome,
-        expected_win_rate_a: float,
-        expected_win_rate_b: float,
+        self, match_outcome: MatchOutcome, player_a: str, player_b: str
     ) -> tuple[float, float]:
-        def calc_dif(actual: float, expected_win_rate: float) -> float:
-            return self._k_factor * (actual - expected_win_rate)
-
+        expected_win_rate_a, expected_win_rate_b = self._calc_expected_win_rates(
+            player_a, player_b
+        )
         actual_a, actual_b = match_outcome.payoff
-        dif_a = calc_dif(actual_a, expected_win_rate_a)
-        dif_b = calc_dif(actual_b, expected_win_rate_b)
-        return dif_a, dif_b
+        k_a, k_b = self._calc_k_factor(player_a), self._calc_k_factor(player_b)
+        return k_a * (actual_a - expected_win_rate_a), k_b * (
+            actual_b - expected_win_rate_b
+        )
+
+    def calculate(self, matches: Sequence[Match]) -> None:
+        for m in matches:
+            dif_a, dif_b = self._calc_difs(m.outcome, m.player_a, m.player_b)
+            self.ratings[m.player_a] += dif_a
+            self.ratings[m.player_b] += dif_b
+            self._match_counts[m.player_a] += 1
+            self._match_counts[m.player_b] += 1
 
 
 class WinRateCalculator:

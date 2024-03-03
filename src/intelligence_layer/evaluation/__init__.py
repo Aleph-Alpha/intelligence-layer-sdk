@@ -1,6 +1,7 @@
 from .accumulator import MeanAccumulator as MeanAccumulator
 from .aggregator import Aggregator as Aggregator
 from .argilla import AggregatedInstructComparison as AggregatedInstructComparison
+from .argilla import ArgillaAggregator as ArgillaAggregator
 from .argilla import ArgillaEvaluationLogic as ArgillaEvaluationLogic
 from .argilla import ArgillaEvaluator as ArgillaEvaluator
 from .argilla import (

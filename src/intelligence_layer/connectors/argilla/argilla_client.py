@@ -51,6 +51,7 @@ class ArgillaEvaluation(BaseModel):
         example_id: the id of the example that was evaluated.
         record_id: the id of the record that is evaluated.
         responses: Maps question-names (:attr:`Question.name` ) to response values.
+        metadata: Metadata belonging to the evaluation, for example ids of completions.
     """
 
     example_id: str
