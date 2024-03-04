@@ -3,7 +3,6 @@ from enum import Enum
 from typing import Iterable, Mapping, Sequence
 
 import numpy as np
-from pydantic import BaseModel
 
 
 class MatchOutcome(str, Enum):
@@ -30,12 +29,6 @@ class MatchOutcome(str, Enum):
                 return MatchOutcome.DRAW
             case _:
                 raise ValueError(f"Got unexpected rank {rank}")
-
-
-class Match(BaseModel):
-    player_a: str
-    player_b: str
-    outcome: MatchOutcome
 
 
 class EloCalculator:
@@ -76,13 +69,13 @@ class EloCalculator:
             actual_b - expected_win_rate_b
         )
 
-    def calculate(self, matches: Sequence[Match]) -> None:
-        for m in matches:
-            dif_a, dif_b = self._calc_difs(m.outcome, m.player_a, m.player_b)
-            self.ratings[m.player_a] += dif_a
-            self.ratings[m.player_b] += dif_b
-            self._match_counts[m.player_a] += 1
-            self._match_counts[m.player_b] += 1
+    def calculate(self, matches: Sequence[tuple[str, str, MatchOutcome]]) -> None:
+        for a, b, o in matches:
+            dif_a, dif_b = self._calc_difs(o, a, b)
+            self.ratings[a] += dif_a
+            self.ratings[b] += dif_b
+            self._match_counts[a] += 1
+            self._match_counts[b] += 1
 
 
 class WinRateCalculator:
@@ -90,12 +83,14 @@ class WinRateCalculator:
         self.match_count: dict[str, int] = {p: 0 for p in players}
         self.win_count: dict[str, float] = {p: 0 for p in players}
 
-    def calculate(self, matches: Sequence[Match]) -> Mapping[str, float]:
-        for match_ in matches:
-            self.match_count[match_.player_a] += 1
-            self.match_count[match_.player_b] += 1
-            self.win_count[match_.player_a] += match_.outcome.payoff[0]
-            self.win_count[match_.player_b] += match_.outcome.payoff[1]
+    def calculate(
+        self, matches: Sequence[tuple[str, str, MatchOutcome]]
+    ) -> Mapping[str, float]:
+        for a, b, o in matches:
+            self.match_count[a] += 1
+            self.match_count[b] += 1
+            self.win_count[a] += o.payoff[0]
+            self.win_count[b] += o.payoff[1]
 
         return {
             player: self.win_count[player] / match_count
