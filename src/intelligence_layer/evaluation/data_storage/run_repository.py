@@ -1,12 +1,10 @@
 import json
 from abc import ABC, abstractmethod
 from collections import defaultdict
-from functools import lru_cache
 from pathlib import Path
 from typing import Iterable, Optional, Sequence, cast
 
 from flatten_json import flatten, unflatten_list  # type: ignore
-from wandb import Artifact, Table
 from wandb.sdk.wandb_run import Run
 
 from intelligence_layer.core.task import Output
@@ -26,6 +24,7 @@ from intelligence_layer.evaluation.domain import (
     RunOverview,
     TaskSpanTrace,
 )
+from wandb import Artifact, Table
 
 
 class RunRepository(ABC):

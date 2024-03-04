@@ -1,11 +1,9 @@
 import json
 from abc import ABC, abstractmethod
-from functools import lru_cache
 from pathlib import Path
 from typing import Any, Sequence
 
 from flatten_json import flatten, unflatten_list  # type: ignore
-from wandb import Artifact, Table
 from wandb.sdk.wandb_run import Run
 
 from intelligence_layer.evaluation.data_storage.utils import FileBasedRepository
@@ -13,6 +11,7 @@ from intelligence_layer.evaluation.domain import (
     AggregatedEvaluation,
     AggregationOverview,
 )
+from wandb import Artifact, Table
 
 
 class AggregationRepository(ABC):

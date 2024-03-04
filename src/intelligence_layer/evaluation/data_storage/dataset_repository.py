@@ -1,17 +1,16 @@
 import json
 from abc import ABC, abstractmethod
-from functools import lru_cache
 from pathlib import Path
 from typing import Dict, Iterable, Optional, Sequence, cast
 from uuid import uuid4
 
-import wandb
 from flatten_json import flatten, unflatten_list  # type: ignore
 from fsspec import AbstractFileSystem  # type: ignore
 from fsspec.implementations.local import LocalFileSystem  # type: ignore
 from wandb.data_types import Table
 from wandb.sdk.wandb_run import Run
 
+import wandb
 from intelligence_layer.core import Input
 from intelligence_layer.core.tracer import JsonSerializer, PydanticSerializable
 from intelligence_layer.evaluation.domain import Example, ExpectedOutput

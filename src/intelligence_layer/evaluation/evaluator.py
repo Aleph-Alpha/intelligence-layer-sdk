@@ -15,10 +15,10 @@ from typing import (
 )
 from uuid import uuid4
 
-import wandb
 from tqdm import tqdm
 from wandb.sdk.wandb_run import Run
 
+import wandb
 from intelligence_layer.core.task import Input, Output
 from intelligence_layer.core.tracer import utc_now
 from intelligence_layer.evaluation.base_logic import EvaluationLogic

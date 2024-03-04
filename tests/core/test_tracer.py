@@ -1,3 +1,4 @@
+import time
 from pathlib import Path
 
 from aleph_alpha_client import Prompt
@@ -19,6 +20,7 @@ from intelligence_layer.core import (
     TaskSpan,
     utc_now,
 )
+from intelligence_layer.core.tracer import WandBTracer
 
 
 @fixture
@@ -26,6 +28,12 @@ def complete(
     luminous_control_model: LuminousControlModel,
 ) -> Task[CompleteInput, CompleteOutput]:
     return luminous_control_model.complete_task()
+
+
+def test_wandb_tracer_smoke() -> None:
+    with WandBTracer("tracer", "test-tracer") as tracer:
+        input = "input"
+        TestTask().run(input, tracer)
 
 
 def test_composite_tracer_id_consistent_across_children(
@@ -88,7 +96,7 @@ def test_can_add_parent_and_child_entries() -> None:
 
 
 def test_task_automatically_logs_input_and_output(
-    complete: Task[CompleteInput, CompleteOutput]
+    complete: Task[CompleteInput, CompleteOutput],
 ) -> None:
     tracer = InMemoryTracer()
     input = CompleteInput(prompt=Prompt.from_text("test"))
@@ -157,6 +165,7 @@ def test_composite_tracer(complete: Task[CompleteInput, CompleteOutput]) -> None
 
 class TestSubTask(Task[None, None]):
     def do_run(self, input: None, task_span: TaskSpan) -> None:
+        time.sleep(0.1)
         task_span.log("subtask", "value")
 
 
@@ -166,6 +175,7 @@ class TestTask(Task[str, str]):
     def do_run(self, input: str, task_span: TaskSpan) -> str:
         with task_span.span("span") as sub_span:
             sub_span.log("message", "a value")
+            time.sleep(0.1)
             self.sub_task.run(None, sub_span)
         self.sub_task.run(None, task_span)
 

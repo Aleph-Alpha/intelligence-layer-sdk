@@ -1,14 +1,12 @@
 import json
 from abc import ABC, abstractmethod
 from collections import defaultdict
-from functools import lru_cache
 from pathlib import Path
 from typing import Optional, Sequence, cast
 from uuid import uuid4
 
 from flatten_json import flatten, unflatten_list  # type: ignore
 from pydantic import BaseModel
-from wandb import Artifact, Table
 from wandb.sdk.wandb_run import Run
 
 from intelligence_layer.connectors.argilla.argilla_client import (
@@ -26,6 +24,7 @@ from intelligence_layer.evaluation.domain import (
     ExampleEvaluation,
     FailedExampleEvaluation,
 )
+from wandb import Artifact, Table
 
 
 class SerializedExampleEvaluation(BaseModel):
