@@ -445,7 +445,8 @@ class WandbEvaluationRepository(EvaluationRepository, WandBRepository):
     def example_evaluations(
         self, eval_id: str, evaluation_type: type[Evaluation]
     ) -> Sequence[ExampleEvaluation[Evaluation]]:
-        table = self._use_artifact(eval_id).get("example_evaluations")
+        artifact = self._use_artifact(eval_id)
+        table = self._get_table(artifact, "example_evaluations")
         return [ExampleEvaluation[evaluation_type].model_validate(row[0]) for _, row in table.iterrows()]  # type: ignore
 
     def failed_example_evaluations(

@@ -304,12 +304,7 @@ class WandbRunRepository(RunRepository, WandBRepository):
             Iterable over all outputs.
         """
         table = self._use_artifact(run_id).get("example_outputs")
-        if table is None:
-            raise ValueError("Run id not found")
-        return [
-            ExampleOutput[output_type].model_validate(row[0])  # type: ignore
-            for _, row in table.iterrows()
-        ]
+        return [ExampleOutput[output_type].model_validate(row[0]) for _, row in table.iterrows()]  # type: ignore
 
     def example_trace(self, run_id: str, example_id: str) -> Optional[ExampleTrace]:
         """Returns an :class:`ExampleTrace` for an example in a run.
