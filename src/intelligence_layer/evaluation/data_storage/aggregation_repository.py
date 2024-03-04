@@ -3,14 +3,13 @@ from abc import ABC, abstractmethod
 from pathlib import Path
 from typing import Any, Sequence
 
-from wandb import Artifact
-
 from intelligence_layer.evaluation.data_storage.utils import FileBasedRepository
 from intelligence_layer.evaluation.data_storage.wandb_repository import WandBRepository
 from intelligence_layer.evaluation.domain import (
     AggregatedEvaluation,
     AggregationOverview,
 )
+from wandb import Artifact
 
 
 class AggregationRepository(ABC):

@@ -4,15 +4,12 @@ from collections import defaultdict
 from pathlib import Path
 from typing import Iterable, Optional, Sequence, cast
 
-from wandb import Artifact, Table
-
 from intelligence_layer.core.task import Output
 from intelligence_layer.core.tracer import (
     FileTracer,
     InMemoryTaskSpan,
     InMemoryTracer,
     JsonSerializer,
-    NoOpTracer,
     PydanticSerializable,
     Tracer,
     WandBTracer,
@@ -25,6 +22,7 @@ from intelligence_layer.evaluation.domain import (
     RunOverview,
     TaskSpanTrace,
 )
+from wandb import Artifact, Table
 
 
 class RunRepository(ABC):
@@ -325,7 +323,7 @@ class WandbRunRepository(RunRepository, WandBRepository):
             run_id: The unique identifier of the run.
             example_id: Example identifier, will match :class:`ExampleEvaluation` identifier.
         """
-        return WandBTracer(name=f"{run_id}/{example_id}")
+        return WandBTracer()
 
     def store_run_overview(self, overview: RunOverview) -> None:
         """Stores an :class:`RunOverview` in the repository.

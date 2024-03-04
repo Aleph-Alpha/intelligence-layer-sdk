@@ -5,6 +5,7 @@ from aleph_alpha_client import Prompt
 from opentelemetry.trace import get_tracer
 from pytest import fixture, mark
 
+import wandb
 from intelligence_layer.core import (
     CompleteInput,
     CompleteOutput,
@@ -31,9 +32,9 @@ def complete(
 
 
 def test_wandb_tracer_smoke() -> None:
-    with WandBTracer("tracer", "test-tracer") as tracer:
-        input = "input"
-        TestTask().run(input, tracer)
+    input = "input"
+    wandb.init(project="test")
+    TestTask().run(input, WandBTracer())
 
 
 def test_composite_tracer_id_consistent_across_children(

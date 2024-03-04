@@ -4,11 +4,11 @@ from pathlib import Path
 from typing import Dict, Iterable, Optional, Sequence, cast
 from uuid import uuid4
 
-import wandb
 from fsspec import AbstractFileSystem  # type: ignore
 from fsspec.implementations.local import LocalFileSystem  # type: ignore
 from wandb.data_types import Table
 
+import wandb
 from intelligence_layer.core import Input
 from intelligence_layer.core.tracer import JsonSerializer, PydanticSerializable
 from intelligence_layer.evaluation.data_storage.wandb_repository import WandBRepository

@@ -10,14 +10,12 @@ from typing import (
     Iterable,
     Mapping,
     Optional,
-    Protocol,
     Sequence,
     TypeVar,
     Union,
 )
 from uuid import UUID, uuid4
 
-import wandb
 from opentelemetry.context import attach, detach
 from opentelemetry.trace import Span as OpenTSpan
 from opentelemetry.trace import Tracer as OpenTTracer
@@ -28,6 +26,8 @@ from rich.syntax import Syntax
 from rich.tree import Tree
 from typing_extensions import Self, TypeAliasType
 from wandb.sdk.data_types.trace_tree import Trace
+
+import wandb
 
 if TYPE_CHECKING:
     PydanticSerializable = (
@@ -995,15 +995,13 @@ class OpenTelemetryTaskSpan(TaskSpan, OpenTelemetrySpan):
         self.open_ts_span.set_attribute("output", _serialize(output))
 
 
-class HasTrace(Protocol):
-    @property
-    def trace(self) -> Trace:
-        pass
+class WandBTracer(Tracer):
+    def __init__(self) -> None:
+        super().__init__()
+        self.trace: Optional[Trace] = None
 
-
-class WandBTracerMixin:
     def span(
-        self: HasTrace,
+        self,
         name: str,
         timestamp: Optional[datetime] = None,
         trace_id: Optional[str] = None,
@@ -1011,62 +1009,36 @@ class WandBTracerMixin:
         return WandBSpan(name, self.trace, timestamp, trace_id)
 
     def task_span(
-        self: HasTrace,
+        self,
         task_name: str,
-        input: PydanticSerializable,
+        _input: PydanticSerializable,
         timestamp: Optional[datetime] = None,
         trace_id: Optional[str] = None,
     ) -> "WandBTaskSpan":
-        return WandBTaskSpan(task_name, self.trace, input, timestamp, trace_id)
+        return WandBTaskSpan(task_name, _input, self.trace, timestamp, trace_id)
 
     def _timestamp(self) -> int:
         return int((utc_now()).timestamp() * 1000)
 
 
-class WandBTracer(WandBTracerMixin, Tracer, AbstractContextManager["WandBTracer"]):
-    def __init__(self, name: str, wandb_project: Optional[str] = None) -> None:
-        super().__init__()
-        self._owns_run = wandb.run is None
-        if self._owns_run:
-            assert wandb_project is not None
-            self._run = wandb.init(
-                project=wandb_project
-            )  # Check if a run is already existing
-
-        self.trace = Trace(name, kind="chain", start_time_ms=self._timestamp())
-
-    def __enter__(self) -> "WandBTracer":
-        return self
-
-    def __exit__(
-        self,
-        __exc_type: type[BaseException] | None,
-        __exc_value: BaseException | None,
-        __traceback: TracebackType | None,
-    ) -> bool | None:
-        self.trace._span.end_time_ms = self._timestamp()
-        self.trace.log("Trace")
-        if self._owns_run:
-            assert self._run
-            # wandb.run has inconsistent type hints
-            return self._run.__exit__(__exc_type, __exc_value, __traceback)  # type: ignore
-        return True
-
-
-class WandBSpan(WandBTracerMixin, Span):
+class WandBSpan(WandBTracer, Span):
     def __init__(
         self,
         name: str,
-        parent: Trace,
+        parent: Optional[Trace] = None,
         timestamp: Optional[datetime] = None,
         trace_id: Optional[str] = None,
     ) -> None:
-        self.trace = Trace(
+        self.trace: Trace = Trace(
             name=name,
             kind="llm",
             start_time_ms=self._timestamp(),
         )
-        parent.add_child(self.trace)
+        self._parent = parent
+        if wandb.run is None:
+            raise ValueError("WandB Run has to be initialized for the WandBTracer")
+        if parent is not None:
+            parent.add_child(self.trace)
         self.trace_id = self.ensure_id(trace_id)
 
     def log(
@@ -1075,12 +1047,19 @@ class WandBSpan(WandBTracerMixin, Span):
         value: PydanticSerializable,
         timestamp: Optional[datetime] = None,
     ) -> None:
-        pass  # wandb.log(LogEntry(message=message, value=value, trace_id=self.id()).model_dump(mode="json"))
+        # wandb.log(
+        #     LogEntry(message=message, value=value, trace_id=self.id()).model_dump(
+        #         mode="json"
+        #     )
+        # )
+        pass
 
     def end(self, timestamp: Optional[datetime] = None) -> None:
         self.trace._span.end_time_ms = (
             int(timestamp.timestamp() * 1000) if timestamp else self._timestamp()
         )
+        if self._parent is None:
+            self.trace.log("Trace")
 
     def id(self) -> str:
         return str(uuid4())
@@ -1090,13 +1069,13 @@ class WandBTaskSpan(WandBSpan, TaskSpan):
     def __init__(
         self,
         name: str,
-        parent: Trace,
-        input: PydanticSerializable,
+        _input: PydanticSerializable,
+        parent: Optional[Trace] = None,
         timestamp: Optional[datetime] = None,
         trace_id: Optional[str] = None,
     ) -> None:
         super().__init__(name, parent, timestamp, trace_id)
-        self.trace.inputs = loads(JsonSerializer(root=input).model_dump_json())
+        self.trace.inputs = loads(JsonSerializer(root=_input).model_dump_json())
 
     def record_output(self, output: PydanticSerializable) -> None:
         self.trace.outputs = loads(JsonSerializer(root=output).model_dump_json())
