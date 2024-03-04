@@ -7,6 +7,7 @@ from uuid import uuid4
 
 from pydantic import BaseModel
 
+import wandb
 from intelligence_layer.connectors.argilla.argilla_client import (
     ArgillaClient,
     ArgillaEvaluation,
@@ -412,7 +413,14 @@ class WandbEvaluationRepository(EvaluationRepository, WandBRepository):
         self._example_evaluations: dict[str, Table] = dict()
 
     def eval_ids(self) -> Sequence[str]:
-        raise NotImplementedError
+        if self._run is None:
+            raise ValueError("Run is not yet set.")
+        return [
+            artifact.name
+            for artifact in wandb.Api().artifact_collections(
+                f"{self._team_name}/{self._run.project}", "Evaluation"
+            )
+        ]
 
     def store_example_evaluation(
         self, evaluation: ExampleEvaluation[Evaluation]

@@ -4,6 +4,7 @@ from collections import defaultdict
 from pathlib import Path
 from typing import Iterable, Optional, Sequence, cast
 
+import wandb
 from intelligence_layer.core.task import Output
 from intelligence_layer.core.tracer import (
     FileTracer,
@@ -273,15 +274,14 @@ class WandbRunRepository(RunRepository, WandBRepository):
         self._example_outputs: dict[str, Table] = dict()
 
     def run_ids(self) -> Sequence[str]:
-        """Returns the ids of all stored runs.
-
-        Having the id of a run, its outputs can be retrieved with
-        :meth:`EvaluationRepository.example_outputs`.
-
-        Returns:
-            The ids of all stored runs.
-        """
-        raise NotImplementedError
+        if self._run is None:
+            raise ValueError("Run not initialized")
+        return (
+            artifact.name
+            for artifact in wandb.Api().artifact_collections(
+                f"{self._team_name}/{self._run.project}", "Run"
+            )  # type: ignore
+        )
 
     def store_example_output(self, example_output: ExampleOutput[Output]) -> None:
         if example_output.run_id not in self._example_outputs:
@@ -304,7 +304,12 @@ class WandbRunRepository(RunRepository, WandBRepository):
             Iterable over all outputs.
         """
         table = self._use_artifact(run_id).get("example_outputs")
-        return [ExampleOutput[output_type].model_validate(row[0]) for _, row in table.iterrows()]  # type: ignore
+        if table is None:
+            raise ValueError("Run id not found")
+        return [
+            ExampleOutput[output_type].model_validate(row[0])  # type: ignore
+            for _, row in table.iterrows()
+        ]
 
     def example_trace(self, run_id: str, example_id: str) -> Optional[ExampleTrace]:
         """Returns an :class:`ExampleTrace` for an example in a run.

@@ -247,4 +247,9 @@ class WandbDatasetRepository(DatasetRepository, WandBRepository):
         raise NotImplementedError
 
     def list_datasets(self) -> Iterable[str]:
-        raise NotImplementedError
+        return (
+            artifact.name
+            for artifact in wandb.Api().artifact_collections(
+                f"{self._team_name}/{self._wandb_project_name}", "dataset"
+            )
+        )
