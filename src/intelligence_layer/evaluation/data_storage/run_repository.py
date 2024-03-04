@@ -4,6 +4,8 @@ from collections import defaultdict
 from pathlib import Path
 from typing import Iterable, Optional, Sequence, cast
 
+from wandb import Artifact, Table
+
 from intelligence_layer.core.task import Output
 from intelligence_layer.core.tracer import (
     FileTracer,
@@ -13,6 +15,7 @@ from intelligence_layer.core.tracer import (
     NoOpTracer,
     PydanticSerializable,
     Tracer,
+    WandBTracer,
 )
 from intelligence_layer.evaluation.data_storage.utils import FileBasedRepository
 from intelligence_layer.evaluation.data_storage.wandb_repository import WandBRepository
@@ -22,7 +25,6 @@ from intelligence_layer.evaluation.domain import (
     RunOverview,
     TaskSpanTrace,
 )
-from wandb import Artifact, Table
 
 
 class RunRepository(ABC):
@@ -269,6 +271,7 @@ class InMemoryRunRepository(RunRepository):
 
 class WandbRunRepository(RunRepository, WandBRepository):
     def __init__(self) -> None:
+        super().__init__()
         self._example_outputs: dict[str, Table] = dict()
 
     def run_ids(self) -> Sequence[str]:
@@ -322,7 +325,7 @@ class WandbRunRepository(RunRepository, WandBRepository):
             run_id: The unique identifier of the run.
             example_id: Example identifier, will match :class:`ExampleEvaluation` identifier.
         """
-        return NoOpTracer()
+        return WandBTracer(name=f"{run_id}/{example_id}")
 
     def store_run_overview(self, overview: RunOverview) -> None:
         """Stores an :class:`RunOverview` in the repository.

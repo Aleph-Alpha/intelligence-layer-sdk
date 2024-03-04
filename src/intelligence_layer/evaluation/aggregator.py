@@ -14,9 +14,9 @@ from typing import (
 )
 from uuid import uuid4
 
+import wandb
 from wandb.sdk.wandb_run import Run
 
-import wandb
 from intelligence_layer.core.tracer import utc_now
 from intelligence_layer.evaluation.base_logic import AggregationLogic
 from intelligence_layer.evaluation.data_storage.aggregation_repository import (

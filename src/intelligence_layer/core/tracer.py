@@ -17,6 +17,7 @@ from typing import (
 )
 from uuid import UUID, uuid4
 
+import wandb
 from opentelemetry.context import attach, detach
 from opentelemetry.trace import Span as OpenTSpan
 from opentelemetry.trace import Tracer as OpenTTracer
@@ -27,8 +28,6 @@ from rich.syntax import Syntax
 from rich.tree import Tree
 from typing_extensions import Self, TypeAliasType
 from wandb.sdk.data_types.trace_tree import Trace
-
-import wandb
 
 if TYPE_CHECKING:
     PydanticSerializable = (
@@ -1021,11 +1020,11 @@ class WandBTracerMixin:
         return WandBTaskSpan(task_name, self.trace, input, timestamp, trace_id)
 
     def _timestamp(self) -> int:
-        return int((datetime.utcnow()).timestamp() * 1000)
+        return int((utc_now()).timestamp() * 1000)
 
 
 class WandBTracer(WandBTracerMixin, Tracer, AbstractContextManager["WandBTracer"]):
-    def __init__(self, name: str, wandb_project: Optional[str]) -> None:
+    def __init__(self, name: str, wandb_project: Optional[str] = None) -> None:
         super().__init__()
         self._owns_run = wandb.run is None
         if self._owns_run:

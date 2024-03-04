@@ -4,11 +4,11 @@ from itertools import islice
 from typing import Generic, Optional, cast
 from uuid import uuid4
 
+import wandb
 from pydantic import JsonValue
 from tqdm import tqdm
 from wandb.sdk.wandb_run import Run
 
-import wandb
 from intelligence_layer.core.task import Input, Output, Task
 from intelligence_layer.core.tracer import CompositeTracer, Tracer, utc_now
 from intelligence_layer.evaluation.data_storage.dataset_repository import (
@@ -97,10 +97,11 @@ class Runner(Generic[Input, Output]):
             example: Example[Input, ExpectedOutput]
         ) -> tuple[str, Output | FailedExampleRun]:
             evaluate_tracer = self._run_repository.example_tracer(run_id, example.id)
-            if tracer:
+            if False:
                 evaluate_tracer = CompositeTracer([evaluate_tracer, tracer])
             try:
-                return example.id, self._task.run(example.input, evaluate_tracer)
+                with evaluate_tracer as _tracer:
+                    return example.id, self._task.run(example.input, _tracer)
             except Exception as e:
                 print(e)
                 return example.id, FailedExampleRun.from_exception(e)
