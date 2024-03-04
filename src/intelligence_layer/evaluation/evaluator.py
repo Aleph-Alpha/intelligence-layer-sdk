@@ -248,41 +248,44 @@ class Evaluator(Generic[Input, Output, ExpectedOutput, Evaluation]):
         ]:
             current_example = 0
             for example_outputs in examples_zipped:
-                if not any(
-                    isinstance(output.output, FailedExampleRun)
+                successful_example_outputs = [
+                    output
                     for output in example_outputs
-                ):
-                    example_id = example_outputs[0].example_id
-                    assert all(
-                        example_output.example_id == example_id
-                        for example_output in example_outputs
-                    )
+                    if not isinstance(output.output, FailedExampleRun)
+                ]
+                if not successful_example_outputs:
+                    continue
+                example_id = successful_example_outputs[0].example_id
+                assert all(
+                    example_output.example_id == example_id
+                    for example_output in successful_example_outputs
+                )
 
-                    example = self._dataset_repository.example(
-                        dataset_id,
-                        example_id,
-                        self.input_type(),
-                        self.expected_output_type(),
-                    )
-                    assert example is not None
+                example = self._dataset_repository.example(
+                    dataset_id,
+                    example_id,
+                    self.input_type(),
+                    self.expected_output_type(),
+                )
+                assert example is not None
 
-                    if num_examples and current_example >= num_examples:
-                        break
-                    current_example += 1
+                if num_examples and current_example >= num_examples:
+                    break
+                current_example += 1
 
-                    yield (
-                        example,
-                        eval_id,
-                        [
-                            SuccessfulExampleOutput(
-                                run_id=example_output.run_id,
-                                example_id=example_output.example_id,
-                                output=example_output.output,
-                            )
-                            for example_output in example_outputs
-                            if not isinstance(example_output.output, FailedExampleRun)
-                        ],
-                    )
+                yield (
+                    example,
+                    eval_id,
+                    [
+                        SuccessfulExampleOutput(
+                            run_id=example_output.run_id,
+                            example_id=example_output.example_id,
+                            output=example_output.output,
+                        )
+                        for example_output in successful_example_outputs
+                        if not isinstance(example_output.output, FailedExampleRun)
+                    ],
+                )
 
         def evaluate(
             args: Tuple[
