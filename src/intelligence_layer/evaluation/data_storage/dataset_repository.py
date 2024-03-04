@@ -246,7 +246,7 @@ class WandbDatasetRepository(DatasetRepository):
 
         return [Example[input_type, expected_output_type].model_validate_json(unflatten_table_row(row, table.columns)) for _, row in table.iterrows()]  # type: ignore
 
-    @lru_cache(maxsize=2)
+    # @lru_cache(maxsize=2) If we want the wandb lineage to work, we cannot cache the table
     def _get_table(self, artifact_id: str, name: str) -> Table:
         if self._run is None:
             raise ValueError(

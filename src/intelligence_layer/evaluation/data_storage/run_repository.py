@@ -364,7 +364,7 @@ class WandbRunRepository(RunRepository):
     def _unflatten_table_row(self, row: list[str], columns: str) -> str:
         return json.dumps(unflatten_list(dict(zip(columns, row)), separator="|"))
 
-    @lru_cache(maxsize=2)
+    # @lru_cache(maxsize=2) If we want the wandb lineage to work, we cannot cache the table
     def _get_table(self, artifact_id: str, name: str) -> Table:
         if self._run is None:
             raise ValueError(
