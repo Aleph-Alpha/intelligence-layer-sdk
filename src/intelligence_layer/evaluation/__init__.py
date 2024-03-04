@@ -60,7 +60,6 @@ from .domain import SpanTrace as SpanTrace
 from .domain import SuccessfulExampleOutput as SuccessfulExampleOutput
 from .domain import TaskSpanTrace as TaskSpanTrace
 from .elo import EloCalculator as EloCalculator
-from .elo import Match as Match
 from .elo import MatchOutcome as MatchOutcome
 from .elo import WinRateCalculator as WinRateCalculator
 from .evaluator import Evaluator as Evaluator

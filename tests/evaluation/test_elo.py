@@ -4,12 +4,7 @@ from typing import Sequence
 from pydantic import BaseModel
 from pytest import fixture
 
-from intelligence_layer.evaluation import (
-    EloCalculator,
-    Match,
-    MatchOutcome,
-    WinRateCalculator,
-)
+from intelligence_layer.evaluation import EloCalculator, MatchOutcome, WinRateCalculator
 
 
 @fixture
@@ -18,9 +13,9 @@ def players() -> Sequence[str]:
 
 
 @fixture
-def matches(players: Sequence[str]) -> Sequence[Match]:
+def matches(players: Sequence[str]) -> Sequence[tuple[str, str, MatchOutcome]]:
     return [
-        Match(player_a=player_a, player_b=player_b, outcome=MatchOutcome.A_WINS)
+        (player_a, player_b, MatchOutcome.A_WINS)
         for player_a, player_b in combinations(players, 2)
     ]
 
@@ -37,7 +32,9 @@ def test_match_outcome_serializes() -> None:
     assert loaded == match_outcome_model
 
 
-def test_elo_calculator_works(players: Sequence[str], matches: Sequence[Match]) -> None:
+def test_elo_calculator_works(
+    players: Sequence[str], matches: Sequence[tuple[str, str, MatchOutcome]]
+) -> None:
     elo_calculator = EloCalculator(players)
     elo_calculator.calculate(matches)
 
@@ -55,7 +52,7 @@ def test_elo_calculator_works(players: Sequence[str], matches: Sequence[Match]) 
 
 
 def test_win_rate_calculator_works(
-    players: Sequence[str], matches: Sequence[Match]
+    players: Sequence[str], matches: Sequence[tuple[str, str, MatchOutcome]]
 ) -> None:
     win_rate_calculator = WinRateCalculator(players)
     scores = win_rate_calculator.calculate(matches)

@@ -37,7 +37,6 @@ from intelligence_layer.evaluation.domain import (
 )
 from intelligence_layer.evaluation.elo import (
     EloCalculator,
-    Match,
     MatchOutcome,
     WinRateCalculator,
 )
@@ -168,19 +167,15 @@ class InstructComparisonArgillaAggregationLogic(
         self, evaluations: Iterable[ArgillaEvaluation]
     ) -> AggregatedInstructComparison:
         flattened_evaluations = [
-            Match(
-                player_a=evaluation.metadata["first"],
-                player_b=evaluation.metadata["second"],
-                outcome=MatchOutcome.from_rank_literal(
-                    int(evaluation.responses["winner"])
-                ),
+            (
+                evaluation.metadata["first"],
+                evaluation.metadata["second"],
+                MatchOutcome.from_rank_literal(int(evaluation.responses["winner"])),
             )
             for evaluation in evaluations
         ]
         player_counter = Counter(
-            player
-            for match in flattened_evaluations
-            for player in [match.player_a, match.player_b]
+            player for match in flattened_evaluations for player in [match[0], match[1]]
         )
         player_counts = dict(player_counter)
         players = player_counts.keys()

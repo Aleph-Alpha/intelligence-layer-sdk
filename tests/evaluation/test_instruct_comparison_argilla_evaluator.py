@@ -28,7 +28,6 @@ from intelligence_layer.evaluation import (
     InMemoryEvaluationRepository,
     InMemoryRunRepository,
     InstructComparisonArgillaAggregationLogic,
-    Match,
     MatchOutcome,
     RunOverview,
 )
@@ -264,10 +263,10 @@ def test_elo_calculating_works_as_expected() -> None:
     player1 = "player1"
     player2 = "player2"
     matches = [
-        Match(
-            player_a=player1,
-            player_b=player2,
-            outcome=MatchOutcome.A_WINS,
+        (
+            player1,
+            player2,
+            MatchOutcome.A_WINS,
         )
         for _ in range(10)
     ]
@@ -278,10 +277,10 @@ def test_elo_calculating_works_as_expected() -> None:
     assert elo.ratings[player2] < 1500
 
     comeback_matches = [
-        Match(
-            player_a=player1,
-            player_b=player2,
-            outcome=MatchOutcome.B_WINS,
+        (
+            player1,
+            player2,
+            MatchOutcome.B_WINS,
         )
         for i in range(10)
     ]
