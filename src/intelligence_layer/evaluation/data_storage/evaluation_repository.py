@@ -6,6 +6,7 @@ from typing import Optional, Sequence, cast
 from uuid import uuid4
 
 from pydantic import BaseModel
+from wandb import Artifact, Table
 
 from intelligence_layer.connectors.argilla.argilla_client import (
     ArgillaClient,
@@ -23,7 +24,6 @@ from intelligence_layer.evaluation.domain import (
     ExampleEvaluation,
     FailedExampleEvaluation,
 )
-from wandb import Artifact, Table
 
 
 class SerializedExampleEvaluation(BaseModel):
@@ -437,7 +437,8 @@ class WandbEvaluationRepository(EvaluationRepository, WandBRepository):
     def example_evaluations(
         self, eval_id: str, evaluation_type: type[Evaluation]
     ) -> Sequence[ExampleEvaluation[Evaluation]]:
-        table = self._use_artifact(eval_id).get("example_evaluations")
+        artifact = self._use_artifact(eval_id)
+        table = self._get_table(artifact, "example_evaluations")
         return [ExampleEvaluation[evaluation_type].model_validate(row[0]) for _, row in table.iterrows()]  # type: ignore
 
     def failed_example_evaluations(

@@ -1,14 +1,15 @@
 import json
 from abc import ABC, abstractmethod
+from functools import lru_cache
 from pathlib import Path
 from typing import Dict, Iterable, Optional, Sequence, cast
 from uuid import uuid4
 
+import wandb
 from fsspec import AbstractFileSystem  # type: ignore
 from fsspec.implementations.local import LocalFileSystem  # type: ignore
-from wandb.data_types import Table
+from wandb import Artifact, Table
 
-import wandb
 from intelligence_layer.core import Input
 from intelligence_layer.core.tracer import JsonSerializer, PydanticSerializable
 from intelligence_layer.evaluation.data_storage.wandb_repository import WandBRepository
@@ -199,6 +200,7 @@ class WandbDatasetRepository(DatasetRepository, WandBRepository):
     def __init__(self, wandb_project_name: str) -> None:
         super().__init__()
         self._wandb_project_name: str = wandb_project_name
+        self._tables: dict[str, Table] = dict()
 
     def create_dataset(
         self,
@@ -225,8 +227,10 @@ class WandbDatasetRepository(DatasetRepository, WandBRepository):
         input_type: type[Input],
         expected_output_type: type[ExpectedOutput],
     ) -> Optional[Iterable[Example[Input, ExpectedOutput]]]:
-        table = self._use_artifact(dataset_id).get("dataset")
-        return [Example[input_type, expected_output_type].model_validate(row[0]) for _, row in table.iterrows()]  # type: ignore
+        artifact = self._use_artifact(dataset_id)
+        if dataset_id not in self._tables:
+            self._tables[dataset_id] = self._get_table(artifact, "dataset")
+        return [Example[input_type, expected_output_type].model_validate(row[0]) for _, row in self._tables[dataset_id].iterrows()]  # type: ignore
 
     def example(
         self,

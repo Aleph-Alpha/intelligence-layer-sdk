@@ -4,6 +4,8 @@ from collections import defaultdict
 from pathlib import Path
 from typing import Iterable, Optional, Sequence, cast
 
+from wandb import Artifact, Table
+
 from intelligence_layer.core.task import Output
 from intelligence_layer.core.tracer import (
     FileTracer,
@@ -22,7 +24,6 @@ from intelligence_layer.evaluation.domain import (
     RunOverview,
     TaskSpanTrace,
 )
-from wandb import Artifact, Table
 
 
 class RunRepository(ABC):
@@ -303,7 +304,8 @@ class WandbRunRepository(RunRepository, WandBRepository):
         Returns:
             Iterable over all outputs.
         """
-        table = self._use_artifact(run_id).get("example_outputs")
+        artifact = self._use_artifact(run_id)
+        table = self._get_table(artifact, "example_outputs")
         return [ExampleOutput[output_type].model_validate(row[0]) for _, row in table.iterrows()]  # type: ignore
 
     def example_trace(self, run_id: str, example_id: str) -> Optional[ExampleTrace]:

@@ -16,6 +16,7 @@ from typing import (
 )
 from uuid import UUID, uuid4
 
+import wandb
 from opentelemetry.context import attach, detach
 from opentelemetry.trace import Span as OpenTSpan
 from opentelemetry.trace import Tracer as OpenTTracer
@@ -26,8 +27,6 @@ from rich.syntax import Syntax
 from rich.tree import Tree
 from typing_extensions import Self, TypeAliasType
 from wandb.sdk.data_types.trace_tree import Trace
-
-import wandb
 
 if TYPE_CHECKING:
     PydanticSerializable = (
@@ -1059,7 +1058,12 @@ class WandBSpan(WandBTracer, Span):
             int(timestamp.timestamp() * 1000) if timestamp else self._timestamp()
         )
         if self._parent is None:
-            temp_trace = Trace("required-parent", kind="chain", start_time_ms=self.trace.start_time_ms, end_time_ms=self.trace.end_time_ms)
+            temp_trace = Trace(
+                "required-parent",
+                kind="chain",
+                start_time_ms=self.trace.start_time_ms,
+                end_time_ms=self.trace.end_time_ms,
+            )
             temp_trace.add_child(self.trace)
             temp_trace.log("Trace")
 

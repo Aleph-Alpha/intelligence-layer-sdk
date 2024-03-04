@@ -1,8 +1,8 @@
 from abc import ABC
+from functools import lru_cache
 
+from wandb import Artifact, Table
 from wandb.sdk.wandb_run import Run
-
-from wandb import Artifact
 
 
 class WandBRepository(ABC):
@@ -11,7 +11,6 @@ class WandBRepository(ABC):
         self._run: Run | None = None
         self._team_name: str = "aleph-alpha-intelligence-layer-trial"
 
-    # @lru_cache(maxsize=2) If we want the wandb lineage to work, we cannot cache the table
     def _use_artifact(self, artifact_id: str) -> Artifact:
         if self._run is None:
             raise ValueError(
@@ -21,6 +20,15 @@ class WandBRepository(ABC):
             f"{self._team_name}/{self._run.project_name()}/{artifact_id}:latest"
         )
         return artifact
+
+    def _get_table(self, artifact: Artifact, table_name: str) -> Table:
+        table = artifact.get(table_name)
+        if isinstance(table, Table):
+            return table
+        else:
+            raise ValueError(
+                f"Table {table_name} not found in artifact {artifact.name}"
+            )
 
     def start_run(self, run: Run) -> None:
         self._run = run
