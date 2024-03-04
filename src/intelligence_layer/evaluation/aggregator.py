@@ -262,7 +262,6 @@ class WandbAggregator(Aggregator[Evaluation, AggregatedEvaluation]):
         aggregation_overview = super().aggregate_evaluation(
             *eval_ids, aggregation_id=aggregation_id
         )
-        self._aggregation_repository.sync_table(aggregation_id)
         self._evaluation_repository.finish_run()
         self._aggregation_repository.finish_run()
         run.finish()

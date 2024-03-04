@@ -381,7 +381,6 @@ class WandbEvaluator(Evaluator[Input, Output, ExpectedOutput, Evaluation]):
         eval_overview = super().evaluate_runs(
             *run_ids, num_examples=num_examples, eval_id=eval_id
         )
-        self._evaluation_repository.sync_table(eval_id)
         self._dataset_repository.finish_run()
         self._run_repository.finish_run()
         self._evaluation_repository.finish_run()

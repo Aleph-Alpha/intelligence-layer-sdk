@@ -1,13 +1,10 @@
 import json
 from abc import ABC, abstractmethod
 from collections import defaultdict
-from functools import lru_cache
 from pathlib import Path
 from typing import Iterable, Optional, Sequence, cast
 
-from flatten_json import flatten, unflatten_list  # type: ignore
 from wandb import Artifact, Table
-from wandb.sdk.wandb_run import Run
 
 from intelligence_layer.core.task import Output
 from intelligence_layer.core.tracer import (
@@ -20,6 +17,7 @@ from intelligence_layer.core.tracer import (
     Tracer,
 )
 from intelligence_layer.evaluation.data_storage.utils import FileBasedRepository
+from intelligence_layer.evaluation.data_storage.wandb_repository import WandBRepository
 from intelligence_layer.evaluation.domain import (
     ExampleOutput,
     ExampleTrace,
@@ -270,12 +268,9 @@ class InMemoryRunRepository(RunRepository):
         self._run_overviews[overview.id] = overview
 
 
-class WandbRunRepository(RunRepository):
+class WandbRunRepository(RunRepository, WandBRepository):
     def __init__(self) -> None:
         self._example_outputs: dict[str, Table] = dict()
-        self._run_overviews: dict[str, Table] = dict()
-        self._run: Run | None = None
-        self.team_name: str = "aleph-alpha-intelligence-layer-trial"
 
     def run_ids(self) -> Sequence[str]:
         """Returns the ids of all stored runs.
@@ -287,6 +282,13 @@ class WandbRunRepository(RunRepository):
             The ids of all stored runs.
         """
         raise NotImplementedError
+
+    def store_example_output(self, example_output: ExampleOutput[Output]) -> None:
+        if example_output.run_id not in self._example_outputs:
+            self._example_outputs[example_output.run_id] = Table(columns=[""])  # type: ignore
+        self._example_outputs[example_output.run_id].add_data(  # type: ignore
+            json.loads(example_output.model_dump_json())
+        )
 
     def example_outputs(
         self, run_id: str, output_type: type[Output]
@@ -301,20 +303,8 @@ class WandbRunRepository(RunRepository):
         Returns:
             Iterable over all outputs.
         """
-        table = self._get_table(run_id, "example_outputs")
-        return [ExampleOutput[output_type].model_validate_json(self._unflatten_table_row(row, table.columns)) for _, row in table.iterrows()]  # type: ignore
-
-    def store_example_output(self, example_output: ExampleOutput[Output]) -> None:
-        flat_example_output = flatten(
-            json.loads(example_output.model_dump_json()), separator="|"
-        )
-        if example_output.run_id not in self._example_outputs:
-            self._example_outputs[example_output.run_id] = Table(columns=list(flat_example_output.keys()))  # type: ignore
-        self._example_outputs[example_output.run_id].add_data(  # type: ignore
-            *flatten(
-                json.loads(example_output.model_dump_json()), separator="|"
-            ).values()
-        )
+        table = self._use_artifact(run_id).get("example_outputs")
+        return [ExampleOutput[output_type].model_validate(row[0]) for _, row in table.iterrows()]  # type: ignore
 
     def example_trace(self, run_id: str, example_id: str) -> Optional[ExampleTrace]:
         """Returns an :class:`ExampleTrace` for an example in a run.
@@ -335,6 +325,24 @@ class WandbRunRepository(RunRepository):
         """
         return NoOpTracer()
 
+    def store_run_overview(self, overview: RunOverview) -> None:
+        """Stores an :class:`RunOverview` in the repository.
+
+        Args:
+            overview: The overview to be persisted.
+        """
+        if self._run is None:
+            raise ValueError(
+                "The run has not been started, are you using a WandbRunner?"
+            )
+        artifact = Artifact(
+            name=overview.id,
+            type="Run",
+            metadata=json.loads(overview.model_dump_json()),
+        )
+        artifact.add(self._example_outputs[overview.id], name="example_outputs")
+        self._run.log_artifact(artifact)
+
     def run_overview(self, run_id: str) -> RunOverview | None:
         """Returns an :class:`RunOverview` of a given run by its id.
 
@@ -344,49 +352,5 @@ class WandbRunRepository(RunRepository):
         Returns:
             :class:`RunOverview` if one was found, `None` otherwise.
         """
-        table = self._get_table(run_id, "run_overview")
-        return RunOverview.model_validate_json(
-            json_data=self._unflatten_table_row(next(table.iterrows())[1], table.columns)  # type: ignore
-        )
-
-    def store_run_overview(self, overview: RunOverview) -> None:
-        """Stores an :class:`RunOverview` in the repository.
-
-        Args:
-            overview: The overview to be persisted.
-        """
-
-        flat_overview = flatten(json.loads(overview.model_dump_json()), separator="|")
-        if overview.id not in self._run_overviews:
-            self._run_overviews[overview.id] = Table(columns=list(flat_overview.keys()))  # type: ignore
-        self._run_overviews[overview.id].add_data(*flat_overview.values())  # type: ignore
-
-    def _unflatten_table_row(self, row: list[str], columns: str) -> str:
-        return json.dumps(unflatten_list(dict(zip(columns, row)), separator="|"))
-
-    # @lru_cache(maxsize=2) If we want the wandb lineage to work, we cannot cache the table
-    def _get_table(self, artifact_id: str, name: str) -> Table:
-        if self._run is None:
-            raise ValueError(
-                "The run has not been started, are you using a WandbEvaluator?"
-            )
-        artifact = self._run.use_artifact(
-            f"{self.team_name}/{self._run.project_name()}/{artifact_id}:latest"
-        )
-        return artifact.get(name)  # type: ignore
-
-    def start_run(self, run: Run) -> None:
-        self._run = run
-
-    def finish_run(self) -> None:
-        self._run = None
-
-    def sync_table(self, run_id: str) -> None:
-        if self._run is None:
-            raise ValueError(
-                "The run has not been started, are you using a WandbRunner?"
-            )
-        artifact = Artifact(name=run_id, type="Run")
-        artifact.add(self._example_outputs[run_id], name="example_outputs")
-        artifact.add(self._run_overviews[run_id], name="run_overview")
-        self._run.log_artifact(artifact)
+        metadata = self._use_artifact(run_id).metadata
+        return RunOverview.model_validate(metadata)
