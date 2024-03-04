@@ -1059,7 +1059,9 @@ class WandBSpan(WandBTracer, Span):
             int(timestamp.timestamp() * 1000) if timestamp else self._timestamp()
         )
         if self._parent is None:
-            self.trace.log("Trace")
+            temp_trace = Trace("required-parent", kind="chain", start_time_ms=self.trace.start_time_ms, end_time_ms=self.trace.end_time_ms)
+            temp_trace.add_child(self.trace)
+            temp_trace.log("Trace")
 
     def id(self) -> str:
         return str(uuid4())
