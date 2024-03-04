@@ -442,7 +442,12 @@ class WandbEvaluationRepository(EvaluationRepository, WandBRepository):
     def failed_example_evaluations(
         self, eval_id: str, evaluation_type: type[Evaluation]
     ) -> Sequence[ExampleEvaluation[Evaluation]]:
-        raise NotImplementedError
+        evaluations = self.example_evaluations(eval_id, evaluation_type)
+        return [
+            evaluation
+            for evaluation in evaluations
+            if isinstance(evaluation.result, FailedExampleEvaluation)
+        ]
 
     def store_evaluation_overview(self, overview: EvaluationOverview) -> None:
         if self._run is None:
