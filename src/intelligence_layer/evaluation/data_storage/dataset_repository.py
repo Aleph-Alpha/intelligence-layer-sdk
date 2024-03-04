@@ -4,15 +4,14 @@ from pathlib import Path
 from typing import Dict, Iterable, Optional, Sequence, cast
 from uuid import uuid4
 
-from flatten_json import flatten, unflatten_list  # type: ignore
 from fsspec import AbstractFileSystem  # type: ignore
 from fsspec.implementations.local import LocalFileSystem  # type: ignore
 from wandb.data_types import Table
-from wandb.sdk.wandb_run import Run
 
 import wandb
 from intelligence_layer.core import Input
 from intelligence_layer.core.tracer import JsonSerializer, PydanticSerializable
+from intelligence_layer.evaluation.data_storage.wandb_repository import WandBRepository
 from intelligence_layer.evaluation.domain import Example, ExpectedOutput
 
 
@@ -196,10 +195,8 @@ class FileDatasetRepository(FileSystemDatasetRepository):
         root_directory.mkdir(parents=True, exist_ok=True)
 
 
-class WandbDatasetRepository(DatasetRepository):
+class WandbDatasetRepository(DatasetRepository, WandBRepository):
     def __init__(self, wandb_project_name: str) -> None:
-        self.team_name = "aleph-alpha-intelligence-layer-trial"
-        self._run: Run | None = None
         self._wandb_project_name: str = wandb_project_name
 
     def create_dataset(
@@ -212,21 +209,10 @@ class WandbDatasetRepository(DatasetRepository):
         assert run is not None
         dataset_id = str(uuid4())
         artifact = wandb.Artifact(name=dataset_id, type="dataset")
-
-        def get_columns(
-            examples: Iterable[Example[Input, ExpectedOutput]]
-        ) -> list[str]:
-            flat_first_example = flatten(
-                json.loads(list(examples)[0].model_dump_json()), separator="|"
-            )
-            return list(flat_first_example.keys())
-
-        columns = get_columns(examples)
-        table = Table(columns=columns)  # type: ignore
+        # We put a dict of our pydantic model into a single unnamed column. Column labels are then inferred from the keys of the dict
+        table = Table(columns=[""])  # type: ignore
         for example in examples:
-            table.add_data(  # type: ignore
-                *flatten(json.loads(example.model_dump_json()), separator="|").values()
-            )
+            table.add_data(json.loads(example.model_dump_json()))  # type: ignore
         artifact.add(table, "dataset")
         run.log_artifact(artifact)
         run.finish()
@@ -238,23 +224,8 @@ class WandbDatasetRepository(DatasetRepository):
         input_type: type[Input],
         expected_output_type: type[ExpectedOutput],
     ) -> Optional[Iterable[Example[Input, ExpectedOutput]]]:
-        table = self._get_table(dataset_id, "dataset")
-
-        def unflatten_table_row(row: list[str], columns: str) -> str:
-            return json.dumps(unflatten_list(dict(zip(columns, row)), separator="|"))
-
-        return [Example[input_type, expected_output_type].model_validate_json(unflatten_table_row(row, table.columns)) for _, row in table.iterrows()]  # type: ignore
-
-    # @lru_cache(maxsize=2) If we want the wandb lineage to work, we cannot cache the table
-    def _get_table(self, artifact_id: str, name: str) -> Table:
-        if self._run is None:
-            raise ValueError(
-                "The run has not been started, are you using a WandbEvaluator?"
-            )
-        artifact = self._run.use_artifact(
-            f"{self.team_name}/{self._run.project_name()}/{artifact_id}:latest"
-        )
-        return artifact.get(name)  # type: ignore
+        table = self._use_artifact(dataset_id).get("dataset")
+        return [Example[input_type, expected_output_type].model_validate(row[0]) for _, row in table.iterrows()]  # type: ignore
 
     def example(
         self,
@@ -276,9 +247,3 @@ class WandbDatasetRepository(DatasetRepository):
 
     def list_datasets(self) -> Iterable[str]:
         raise NotImplementedError
-
-    def start_run(self, run: Run) -> None:
-        self._run = run
-
-    def finish_run(self) -> None:
-        self._run = None

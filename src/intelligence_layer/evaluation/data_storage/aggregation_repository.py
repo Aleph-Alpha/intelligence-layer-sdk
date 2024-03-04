@@ -3,15 +3,13 @@ from abc import ABC, abstractmethod
 from pathlib import Path
 from typing import Any, Sequence
 
-from flatten_json import flatten, unflatten_list  # type: ignore
-from wandb.sdk.wandb_run import Run
-
 from intelligence_layer.evaluation.data_storage.utils import FileBasedRepository
+from intelligence_layer.evaluation.data_storage.wandb_repository import WandBRepository
 from intelligence_layer.evaluation.domain import (
     AggregatedEvaluation,
     AggregationOverview,
 )
-from wandb import Artifact, Table
+from wandb import Artifact
 
 
 class AggregationRepository(ABC):
@@ -96,54 +94,26 @@ class InMemoryAggregationRepository(AggregationRepository):
         self._aggregation_overviews[overview.id] = overview
 
 
-class WandbAggregationRepository(AggregationRepository):
+class WandbAggregationRepository(AggregationRepository, WandBRepository):
     def __init__(self) -> None:
         super().__init__()
-        self._aggregation_overviews: dict[str, Table] = dict()
-        self._run: Run | None = None
-        self.team_name: str = "aleph-alpha-intelligence-layer-trial"
-
-    def aggregation_overview(
-        self, id: str, stat_type: type[AggregatedEvaluation]
-    ) -> AggregationOverview[AggregatedEvaluation] | None:
-        table = self._get_table(id, "aggregation_overview")
-        return AggregationOverview.model_validate_json(
-            json_data=self._unflatten_table_row(next(table.iterrows())[1], table.columns)  # type: ignore
-        )
 
     def store_aggregation_overview(
         self, overview: AggregationOverview[AggregatedEvaluation]
     ) -> None:
-        flat_overview = flatten(json.loads(overview.model_dump_json()), separator="|")
-        if overview.id not in self._aggregation_overviews:
-            self._aggregation_overviews[overview.id] = Table(columns=list(flat_overview.keys()))  # type: ignore
-        self._aggregation_overviews[overview.id].add_data(  # type: ignore
-            *flat_overview.values()
-        )
-
-    def _unflatten_table_row(self, row: list[str], columns: str) -> str:
-        return json.dumps(unflatten_list(dict(zip(columns, row)), separator="|"))
-
-    # @lru_cache(maxsize=2) If we want the wandb lineage to work, we cannot cache the table
-    def _get_table(self, id: str, name: str) -> Table:
-        if self._run is None:
-            raise ValueError("Run not started")
-        artifact = self._run.use_artifact(
-            f"{self.team_name}/{self._run.project_name()}/{id}:latest"
-        )
-        return artifact.get(name)  # type: ignore
-
-    def start_run(self, run: Run) -> None:
-        self._run = run
-
-    def finish_run(self) -> None:
-        self._run = None
-
-    def sync_table(self, id: str) -> None:
         if self._run is None:
             raise ValueError(
                 "The run has not been started, are you using a WandbAggregator?"
             )
-        artifact = Artifact(id, "Aggregation")
-        artifact.add(self._aggregation_overviews[id], "aggregation_overview")
+        artifact = Artifact(
+            overview.id,
+            type="Aggregation",
+            metadata=json.loads(overview.model_dump_json()),
+        )
         self._run.log_artifact(artifact)
+
+    def aggregation_overview(
+        self, id: str, stat_type: type[AggregatedEvaluation]
+    ) -> AggregationOverview[AggregatedEvaluation] | None:
+        metadata = self._use_artifact(id).metadata
+        return AggregationOverview.model_validate(metadata)

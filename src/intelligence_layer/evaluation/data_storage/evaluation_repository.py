@@ -5,9 +5,7 @@ from pathlib import Path
 from typing import Optional, Sequence, cast
 from uuid import uuid4
 
-from flatten_json import flatten, unflatten_list  # type: ignore
 from pydantic import BaseModel
-from wandb.sdk.wandb_run import Run
 
 from intelligence_layer.connectors.argilla.argilla_client import (
     ArgillaClient,
@@ -18,6 +16,7 @@ from intelligence_layer.connectors.argilla.argilla_client import (
 )
 from intelligence_layer.core.tracer import JsonSerializer
 from intelligence_layer.evaluation.data_storage.utils import FileBasedRepository
+from intelligence_layer.evaluation.data_storage.wandb_repository import WandBRepository
 from intelligence_layer.evaluation.domain import (
     Evaluation,
     EvaluationOverview,
@@ -407,15 +406,21 @@ class ArgillaEvaluationRepository(EvaluationRepository):
         return self._evaluation_repository.store_evaluation_overview(overview)
 
 
-class WandbEvaluationRepository(EvaluationRepository):
+class WandbEvaluationRepository(EvaluationRepository, WandBRepository):
     def __init__(self) -> None:
         self._example_evaluations: dict[str, Table] = dict()
-        self._evaluation_overviews: dict[str, Table] = dict()
-        self._run: Run | None = None
-        self.team_name: str = "aleph-alpha-intelligence-layer-trial"
 
     def eval_ids(self) -> Sequence[str]:
         raise NotImplementedError
+
+    def store_example_evaluation(
+        self, evaluation: ExampleEvaluation[Evaluation]
+    ) -> None:
+        if evaluation.eval_id not in self._example_evaluations:
+            self._example_evaluations[evaluation.eval_id] = Table(columns=[""])  # type: ignore
+        self._example_evaluations[evaluation.eval_id].add_data(  # type: ignore
+            json.loads(evaluation.model_dump_json())
+        )
 
     def example_evaluation(
         self, eval_id: str, example_id: str, evaluation_type: type[Evaluation]
@@ -428,71 +433,35 @@ class WandbEvaluationRepository(EvaluationRepository):
                 return example
         return None
 
-    def store_example_evaluation(
-        self, evaluation: ExampleEvaluation[Evaluation]
-    ) -> None:
-        flat_evaluation = flatten(
-            json.loads(evaluation.model_dump_json()), separator="|"
-        )
-        if evaluation.eval_id not in self._example_evaluations:
-            self._example_evaluations[evaluation.eval_id] = Table(columns=list(flat_evaluation.keys()))  # type: ignore
-        self._example_evaluations[evaluation.eval_id].add_data(  # type: ignore
-            *flatten(json.loads(evaluation.model_dump_json()), separator="|").values()
-        )
-
     def example_evaluations(
         self, eval_id: str, evaluation_type: type[Evaluation]
     ) -> Sequence[ExampleEvaluation[Evaluation]]:
-        table = self._get_table(eval_id, "example_evaluations")
-        return [ExampleEvaluation[evaluation_type].model_validate_json(json_data=self._unflatten_table_row(row, table.columns)) for _, row in table.iterrows()]  # type: ignore
+        table = self._use_artifact(eval_id).get("example_evaluations")
+        return [ExampleEvaluation[evaluation_type].model_validate(row[0]) for _, row in table.iterrows()]  # type: ignore
 
     def failed_example_evaluations(
         self, eval_id: str, evaluation_type: type[Evaluation]
     ) -> Sequence[ExampleEvaluation[Evaluation]]:
-        raise NotImplementedError
-
-    def evaluation_overview(self, eval_id: str) -> EvaluationOverview | None:
-        table = self._get_table(eval_id, "evaluation_overview")
-        return EvaluationOverview.model_validate_json(
-            json_data=self._unflatten_table_row(next(table.iterrows())[1], table.columns)  # type: ignore
-        )
+        evaluations = self.example_evaluations(eval_id, evaluation_type)
+        return [
+            evaluation
+            for evaluation in evaluations
+            if isinstance(evaluation.result, FailedExampleEvaluation)
+        ]
 
     def store_evaluation_overview(self, overview: EvaluationOverview) -> None:
-        flat_overview = flat_overview = flatten(
-            json.loads(overview.model_dump_json()), separator="|"
-        )
-        if overview.id not in self._evaluation_overviews:
-            self._evaluation_overviews[overview.id] = Table(columns=list(flat_overview.keys()))  # type: ignore
-        self._evaluation_overviews[overview.id].add_data(  # type: ignore
-            *flat_overview.values(),
-        )
-
-    def _unflatten_table_row(self, row: list[str], columns: str) -> str:
-        return json.dumps(unflatten_list(dict(zip(columns, row)), separator="|"))
-
-    # @lru_cache(maxsize=2) If we want the wandb lineage to work, we cannot cache the table
-    def _get_table(self, artifact_id: str, name: str) -> Table:
         if self._run is None:
             raise ValueError(
                 "The run has not been started, are you using a WandbEvaluator?"
             )
-        artifact = self._run.use_artifact(
-            f"{self.team_name}/{self._run.project_name()}/{artifact_id}:latest"
+        artifact = Artifact(
+            name=overview.id,
+            type="Evaluation",
+            metadata=json.loads(overview.model_dump_json()),
         )
-        return artifact.get(name)  # type: ignore
+        artifact.add(self._example_evaluations[overview.id], name="example_evaluations")
+        self._run.log_artifact(artifact)
 
-    def start_run(self, run: Run) -> None:
-        self._run = run
-
-    def sync_table(self, eval_id: str) -> None:
-        if self._run is None:
-            raise ValueError(
-                "The run has not been started, are you using a WandbEvaluator?"
-            )
-        artifact = Artifact(name=eval_id, type="Evaluation")
-        artifact.add(self._example_evaluations[eval_id], name="example_evaluations")
-        artifact.add(self._evaluation_overviews[eval_id], name="evaluation_overview")
-        self._run.log_artifact(artifact)  # maybe tables should be deleted after logging
-
-    def finish_run(self) -> None:
-        self._run = None
+    def evaluation_overview(self, eval_id: str) -> EvaluationOverview | None:
+        metadata = self._use_artifact(eval_id).metadata
+        return EvaluationOverview.model_validate(metadata)
