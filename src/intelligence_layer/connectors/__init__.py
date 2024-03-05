@@ -29,6 +29,7 @@ from .limited_concurrency_client import (
 )
 from .retrievers.base_retriever import BaseRetriever
 from .retrievers.base_retriever import Document as Document
+from .retrievers.base_retriever import DocumentChunk as DocumentChunk
 from .retrievers.base_retriever import SearchResult
 from .retrievers.document_index_retriever import (
     DocumentIndexRetriever as DocumentIndexRetriever,
