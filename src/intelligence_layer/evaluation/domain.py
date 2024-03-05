@@ -317,7 +317,7 @@ class AggregationOverview(BaseModel, Generic[AggregatedEvaluation], frozen=True)
     start: datetime
     end: datetime
     successful_evaluation_count: int
-    crashed_during_eval_count: int
+    crashed_during_eval_count: int  # TODO: why not "failed_*"?
     description: str
     statistics: SerializeAsAny[AggregatedEvaluation]
 

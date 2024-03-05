@@ -13,7 +13,7 @@ from intelligence_layer.evaluation.domain import Example, ExpectedOutput
 class DatasetRepository(ABC):
     """Base dataset repository interface.
 
-    Provides methods to store and load datasets and their examples.
+    Provides methods to store and load datasets and their linked examples (:class:`Example`s).
     """
 
     @abstractmethod
@@ -21,13 +21,13 @@ class DatasetRepository(ABC):
         self,
         examples: Iterable[Example[Input, ExpectedOutput]],
     ) -> str:
-        """Creates a dataset from given examples and returns the ID of that dataset.
+        """Creates a dataset from given :class:`Example`s and returns the ID of that dataset.
 
         Args:
-            examples: An iterable of examples to be saved together under the same dataset ID.
+            examples: An :class:`Iterable` of :class:`Example`s to be saved in the same dataset.
 
         Returns:
-            Returns the ID of the created dataset.
+            The ID of the created dataset.
         """
         pass
 
@@ -45,7 +45,7 @@ class DatasetRepository(ABC):
         """Returns all sorted dataset IDs.
 
         Returns:
-            :class:`Iterable` of strings.
+            :class:`Iterable` of dataset IDs.
         """
         pass
 
@@ -57,16 +57,16 @@ class DatasetRepository(ABC):
         input_type: type[Input],
         expected_output_type: type[ExpectedOutput],
     ) -> Optional[Example[Input, ExpectedOutput]]:
-        """Returns an :class:`Example` identified by the given dataset ID and example ID.
+        """Returns an :class:`Example` for the given dataset ID and example ID.
 
         Args:
-            dataset_id: Dataset ID.
-            example_id: Example ID.
+            dataset_id: Dataset ID of the linked dataset.
+            example_id: ID of the example to retrieve.
             input_type: Input type of the example.
             expected_output_type: Expected output type of the example.
 
         Returns:
-            :class:`Example` if one was found, `None` otherwise.
+            :class:`Example` if it was found, `None` otherwise.
         """
         pass
 
@@ -77,10 +77,10 @@ class DatasetRepository(ABC):
         input_type: type[Input],
         expected_output_type: type[ExpectedOutput],
     ) -> Iterable[Example[Input, ExpectedOutput]]:
-        """Returns all :class:`Example`s identified by the given dataset ID sorted by their ID.
+        """Returns all :class:`Example`s for the given dataset ID sorted by their ID.
 
         Args:
-            dataset_id: Dataset ID.
+            dataset_id: Dataset ID whose examples should be retrieved.
             input_type: Input type of the example.
             expected_output_type: Expected output type of the example.
 
