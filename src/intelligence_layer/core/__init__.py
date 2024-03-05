@@ -1,6 +1,3 @@
-from intelligence_layer.core.auth_service import AuthService as AuthService
-
-from .auth_service import AuthService as AuthService
 from .chunk import Chunk as Chunk
 from .chunk import ChunkInput as ChunkInput
 from .chunk import ChunkOutput as ChunkOutput
