@@ -220,7 +220,7 @@ class Evaluator(Generic[Input, Output, ExpectedOutput, Evaluation]):
             )
         eval_id = self._evaluation_repository.create_evaluation_dataset()
         dataset_id = next(iter(run_overviews)).dataset_id
-        examples = self._dataset_repository.examples_by_id(
+        examples = self._dataset_repository.examples(
             dataset_id,
             self.input_type(),
             self.expected_output_type(),
@@ -317,7 +317,7 @@ class Evaluator(Generic[Input, Output, ExpectedOutput, Evaluation]):
     def evaluate(
         self,
         example: Example[Input, ExpectedOutput],
-        eval_id: str,
+        evaluation_id: str,
         *example_outputs: SuccessfulExampleOutput[Output],
     ) -> None:
         try:
@@ -330,5 +330,7 @@ class Evaluator(Generic[Input, Output, ExpectedOutput, Evaluation]):
         except Exception as e:
             result = FailedExampleEvaluation.from_exception(e)
         self._evaluation_repository.store_example_evaluation(
-            ExampleEvaluation(eval_id=eval_id, example_id=example.id, result=result)
+            ExampleEvaluation(
+                evaluation_id=evaluation_id, example_id=example.id, result=result
+            )
         )

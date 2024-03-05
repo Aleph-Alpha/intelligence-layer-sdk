@@ -276,8 +276,8 @@ def test_eval_and_aggregate_runs_stores_example_evaluations(
 ) -> None:
     evaluation_repository = dummy_evaluator._evaluation_repository
     dataset_repository = dummy_evaluator._dataset_repository
-    dataset_id = list(dataset_repository.list_datasets())[0]
-    dataset: Optional[Iterable[Example[str, None]]] = dataset_repository.examples_by_id(
+    dataset_id = list(dataset_repository.dataset_ids())[0]
+    dataset: Optional[Iterable[Example[str, None]]] = dataset_repository.examples(
         dataset_id, str, type(None)
     )
     assert dataset is not None
@@ -321,7 +321,7 @@ def test_eval_and_aggregate_runs_stores_example_traces(
 ) -> None:
     run_repository = dummy_evaluator._run_repository
     dataset_repository = dummy_evaluator._dataset_repository
-    dataset: Optional[Iterable[Example[str, None]]] = dataset_repository.examples_by_id(
+    dataset: Optional[Iterable[Example[str, None]]] = dataset_repository.examples(
         dataset_id, str, type(None)
     )
     assert dataset is not None

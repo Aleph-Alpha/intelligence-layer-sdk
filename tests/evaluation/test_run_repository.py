@@ -40,7 +40,7 @@ def test_file_repository_run_id_returns_run_ids(
         ExampleOutput(run_id=run_id, example_id="example_id", output=None)
     )
 
-    assert file_run_repository.run_ids() == [run_id]
+    assert file_run_repository.example_output_ids() == [run_id]
 
 
 # def test_in_memory_evaluation_repository_returns_examples_in_same_order_for_two_runs(

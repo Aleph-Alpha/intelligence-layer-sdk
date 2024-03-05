@@ -256,7 +256,7 @@ class ExampleEvaluation(BaseModel, Generic[Evaluation]):
     Created to persist the evaluation result in the repository.
 
     Attributes:
-        eval_id: Identifier of the run the evaluated example belongs to.
+        evaluation_id: Identifier of the run the evaluated example belongs to.
         example_id: Identifier of the :class:`Example` evaluated.
         result: If the evaluation was successful, evaluation's result,
             otherwise the exception raised during running or evaluating
@@ -266,7 +266,7 @@ class ExampleEvaluation(BaseModel, Generic[Evaluation]):
         Evaluation: Interface of the metrics that come from the evaluated :class:`Task`.
     """
 
-    eval_id: str
+    evaluation_id: str
     example_id: str
     result: SerializeAsAny[Evaluation | FailedExampleEvaluation]
 

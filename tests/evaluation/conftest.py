@@ -52,23 +52,23 @@ class DummyAggregatedEvaluationWithResultList(BaseModel):
 
 
 @fixture
-def eval_id() -> str:
+def evaluation_id() -> str:
     return "eval_id"
 
 
 @fixture
-def failed_example_result(eval_id: str) -> ExampleEvaluation[DummyEvaluation]:
+def failed_example_result(evaluation_id: str) -> ExampleEvaluation[DummyEvaluation]:
     return ExampleEvaluation(
-        eval_id=eval_id,
+        evaluation_id=evaluation_id,
         example_id="failed_example",
         result=FailedExampleEvaluation(error_message="error"),
     )
 
 
 @fixture
-def successful_example_result(eval_id: str) -> ExampleEvaluation[DummyEvaluation]:
+def successful_example_result(evaluation_id: str) -> ExampleEvaluation[DummyEvaluation]:
     return ExampleEvaluation(
-        eval_id=eval_id,
+        evaluation_id=evaluation_id,
         example_id="successful_example",
         result=DummyEvaluation(result="result"),
     )
@@ -99,11 +99,11 @@ def dummy_aggregated_evaluation() -> DummyAggregatedEvaluation:
 
 @fixture
 def evaluation_overview(
-    eval_id: str,
+    evaluation_id: str,
 ) -> EvaluationOverview:
     now = datetime.now()
     return EvaluationOverview(
-        id=eval_id,
+        id=evaluation_id,
         run_overviews=frozenset(
             [
                 RunOverview(
@@ -124,13 +124,13 @@ def evaluation_overview(
 
 @fixture
 def aggregation_overview(
-    eval_id: str,
+    evaluation_id: str,
     evaluation_overview: EvaluationOverview,
     dummy_aggregated_evaluation: DummyAggregatedEvaluation,
 ) -> AggregationOverview[DummyAggregatedEvaluation]:
     now = datetime.now()
     return AggregationOverview(
-        id=eval_id,
+        id=evaluation_id,
         evaluation_overviews=frozenset([evaluation_overview]),
         start=now,
         end=now,

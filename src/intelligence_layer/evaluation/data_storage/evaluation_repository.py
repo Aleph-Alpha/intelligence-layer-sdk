@@ -27,13 +27,13 @@ class SerializedExampleEvaluation(BaseModel):
     """A json-serialized evaluation of a single example in a dataset.
 
     Attributes:
-        eval_id: Identifier of the run the evaluated example belongs to.
+        evaluation_id: Identifier of the run the evaluated example belongs to.
         example_id: Unique identifier of the example this evaluation was created for.
-        is_exception: qill be `True` if an exception occurred during evaluation.
-        json_result: The actrual serialized evaluation result.
+        is_exception: Will be `True` if an exception occurred during evaluation.
+        json_result: The actual serialized evaluation result.
     """
 
-    eval_id: str
+    evaluation_id: str
     example_id: str
     is_exception: bool
     json_result: str
@@ -43,7 +43,7 @@ class SerializedExampleEvaluation(BaseModel):
         cls, result: ExampleEvaluation[Evaluation]
     ) -> "SerializedExampleEvaluation":
         return cls(
-            eval_id=result.eval_id,
+            evaluation_id=result.evaluation_id,
             json_result=JsonSerializer(root=result.result).model_dump_json(),
             is_exception=isinstance(result.result, FailedExampleEvaluation),
             example_id=result.example_id,
@@ -54,13 +54,13 @@ class SerializedExampleEvaluation(BaseModel):
     ) -> ExampleEvaluation[Evaluation]:
         if self.is_exception:
             return ExampleEvaluation(
-                eval_id=self.eval_id,
+                evaluation_id=self.evaluation_id,
                 example_id=self.example_id,
                 result=FailedExampleEvaluation.model_validate_json(self.json_result),
             )
         else:
             return ExampleEvaluation(
-                eval_id=self.eval_id,
+                evaluation_id=self.evaluation_id,
                 example_id=self.example_id,
                 result=evaluation_type.model_validate_json(self.json_result),
             )
@@ -69,8 +69,7 @@ class SerializedExampleEvaluation(BaseModel):
 class EvaluationRepository(ABC):
     """Base evaluation repository interface.
 
-    Provides methods to store and load evaluation results for individual examples
-    of a run and the aggregated evaluation of said run.
+    Provides methods to store and load results of an evaluation run (evaluation overview).
     """
 
     def create_evaluation_dataset(self) -> str:
@@ -82,31 +81,57 @@ class EvaluationRepository(ABC):
         this method is responsible for implementing this logic and returning the ID.
 
         Returns:
-            The ID of the dataset used for retrieval.
+            The ID of the dataset.
         """
         return str(uuid4())
 
     @abstractmethod
-    def eval_ids(self) -> Sequence[str]:
-        """Returns the ids of all stored evaluation runs.
+    def store_evaluation_overview(self, overview: EvaluationOverview) -> None:
+        """Stores an :class:`EvaluationOverview` in the repository.
 
-        Having the id of an evaluation run, its overview can be retrieved with
-        :meth:`EvaluationRepository.evaluation_run_overview`.
-
-        Returns:
-            The ids of all stored evaluation runs.
+        Args:
+            overview: The overview to be persisted.
         """
         ...
 
     @abstractmethod
-    def example_evaluation(
-        self, eval_id: str, example_id: str, evaluation_type: type[Evaluation]
-    ) -> Optional[ExampleEvaluation[Evaluation]]:
-        """Returns an :class:`ExampleEvaluation` of a given run by its id.
+    def evaluation_overview(self, evaluation_id: str) -> EvaluationOverview | None:
+        """Returns an :class:`EvaluationOverview` of a given run by its id.
 
         Args:
-            eval_id: Identifier of the run to obtain the results for.
-            example_id: Example identifier, will match :class:`ExampleEvaluation` identifier.
+            evaluation_id: Identifier of the eval run to obtain the overview for.
+
+        Returns:
+            :class:`EvaluationOverview` if one was found, `None` otherwise.
+        """
+        ...
+
+    @abstractmethod
+    def evaluation_overview_ids(self) -> Sequence[str]:
+        """Returns IDs of all stored evaluation overviews.
+
+        Returns:
+            The IDs of all stored evaluation overviews.
+        """
+        ...
+
+    @abstractmethod
+    def store_example_evaluation(self, result: ExampleEvaluation[Evaluation]) -> None:
+        """Stores an :class:`ExampleEvaluation` in the repository.
+
+        Args:
+            result: The result to be persisted.
+        """
+
+    @abstractmethod
+    def example_evaluation(
+        self, evaluation_id: str, example_id: str, evaluation_type: type[Evaluation]
+    ) -> Optional[ExampleEvaluation[Evaluation]]:
+        """Returns an :class:`ExampleEvaluation` for the given evaluation overview and example ID.
+
+        Args:
+            evaluation_id: ID of the evaluation overview to obtain the results for.
+            example_id: Example ID: will match :class:`ExampleEvaluation` ID.
             evaluation_type: Type of evaluations that the `Evaluator` returned
                 in :func:`Evaluator.do_evaluate`
 
@@ -116,65 +141,34 @@ class EvaluationRepository(ABC):
         ...
 
     @abstractmethod
-    def store_example_evaluation(self, result: ExampleEvaluation[Evaluation]) -> None:
-        """Stores an :class:`ExampleEvaluation` for a run in the repository.
-
-        Args:
-            eval_id: Identifier of the eval run.
-            result: The result to be persisted.
-        """
-        ...
-
-    @abstractmethod
     def example_evaluations(
-        self, eval_id: str, evaluation_type: type[Evaluation]
+        self, evaluation_id: str, evaluation_type: type[Evaluation]
     ) -> Sequence[ExampleEvaluation[Evaluation]]:
-        """Returns all :class:`ExampleResult` instances of a given run
+        """Returns all :class:`ExampleEvaluation`s for the given evaluation overview ID.
 
         Args:
-            eval_id: Identifier of the eval run to obtain the results for.
+            evaluation_id: ID of the evaluation overview to obtain the results for.
             evaluation_type: Type of evaluations that the :class:`Evaluator` returned
-                in :func:`Evaluator.do_evaluate`
+                in :func:`Evaluator.do_evaluate`.
 
         Returns:
-            All :class:`ExampleResult` of the run. Will return an empty list if there's none.
+            Sorted sequence of all :class:`ExampleEvaluations`.
         """
         ...
 
     @abstractmethod
     def failed_example_evaluations(
-        self, eval_id: str, evaluation_type: type[Evaluation]
+        self, evaluation_id: str, evaluation_type: type[Evaluation]
     ) -> Sequence[ExampleEvaluation[Evaluation]]:
-        """Returns all failed :class:`ExampleResult` instances of a given run
+        """Returns all failed :class:`ExampleEvaluation`s for the given evaluation overview ID.
 
         Args:
-            eval_id: Identifier of the eval run to obtain the results for.
+            evaluation_id: Identifier of the evaluation run to obtain the results for.
             evaluation_type: Type of evaluations that the :class:`Evaluator` returned
-                in :func:`Evaluator.do_evaluate`
+                in :func:`Evaluator.do_evaluate`.
 
         Returns:
-            All failed :class:`ExampleResult` of the run. Will return an empty list if there's none.
-        """
-        ...
-
-    @abstractmethod
-    def evaluation_overview(self, eval_id: str) -> EvaluationOverview | None:
-        """Returns an :class:`EvaluationOverview` of a given run by its id.
-
-        Args:
-            eval_id: Identifier of the eval run to obtain the overview for.
-
-        Returns:
-            :class:`EvaluationOverview` if one was found, `None` otherwise.
-        """
-        ...
-
-    @abstractmethod
-    def store_evaluation_overview(self, overview: EvaluationOverview) -> None:
-        """Stores an :class:`EvaluationOverview` in the repository.
-
-        Args:
-            overview: The overview to be persisted.
+            Sequence of all :class:`ExampleEvaluations`.
         """
         ...
 
@@ -187,32 +181,53 @@ class FileEvaluationRepository(EvaluationRepository, FileBasedRepository):
             will be created if it does not exist yet.
     """
 
-    def _eval_root_directory(self) -> Path:
-        path = self._root_directory / "evals"
-        path.mkdir(exist_ok=True)
-        return path
+    def store_evaluation_overview(self, overview: EvaluationOverview) -> None:
+        self.write_utf8(
+            self._evaluation_run_overview_path(overview.id),
+            overview.model_dump_json(indent=2),
+        )
 
-    def _eval_directory(self, eval_id: str) -> Path:
-        path = self._eval_root_directory() / eval_id
-        path.mkdir(exist_ok=True)
-        return path
+    def evaluation_overview(self, evaluation_id: str) -> Optional[EvaluationOverview]:
+        file_path = self._evaluation_run_overview_path(evaluation_id)
+        if not file_path.exists():
+            return None
+        content = self.read_utf8(file_path)
+        return EvaluationOverview.model_validate_json(content)
 
-    def _example_result_path(self, eval_id: str, example_id: str) -> Path:
-        return (self._eval_directory(eval_id) / example_id).with_suffix(".json")
+    def evaluation_overview_ids(self) -> Sequence[str]:
+        overviews = (
+            self.evaluation_overview(path.stem)
+            for path in self._eval_root_directory().glob("*.json")
+        )
+        return [overview.id for overview in overviews if overview is not None]
 
-    def _evaluation_run_overview_path(self, eval_id: str) -> Path:
-        return self._eval_directory(eval_id).with_suffix(".json")
+    def store_example_evaluation(self, result: ExampleEvaluation[Evaluation]) -> None:
+        serialized_result = SerializedExampleEvaluation.from_example_result(result)
+        self.write_utf8(
+            self._example_result_path(result.evaluation_id, result.example_id),
+            serialized_result.model_dump_json(indent=2),
+        )
+
+    def example_evaluation(
+        self, evaluation_id: str, example_id: str, evaluation_type: type[Evaluation]
+    ) -> Optional[ExampleEvaluation[Evaluation]]:
+        file_path = self._example_result_path(evaluation_id, example_id)
+        if not file_path.exists():
+            return None
+        content = self.read_utf8(file_path)
+        serialized_example = SerializedExampleEvaluation.model_validate_json(content)
+        return serialized_example.to_example_result(evaluation_type)
 
     def example_evaluations(
-        self, eval_id: str, evaluation_type: type[Evaluation]
+        self, evaluation_id: str, evaluation_type: type[Evaluation]
     ) -> Sequence[ExampleEvaluation[Evaluation]]:
         def fetch_result_from_file_name(
             path: Path,
         ) -> Optional[ExampleEvaluation[Evaluation]]:
             id = path.with_suffix("").name
-            return self.example_evaluation(eval_id, id, evaluation_type)
+            return self.example_evaluation(evaluation_id, id, evaluation_type)
 
-        path = self._eval_directory(eval_id)
+        path = self._eval_directory(evaluation_id)
         logs = path.glob("*.json")
         return [
             example_result
@@ -221,47 +236,26 @@ class FileEvaluationRepository(EvaluationRepository, FileBasedRepository):
         ]
 
     def failed_example_evaluations(
-        self, eval_id: str, evaluation_type: type[Evaluation]
+        self, evaluation_id: str, evaluation_type: type[Evaluation]
     ) -> Sequence[ExampleEvaluation[Evaluation]]:
-        results = self.example_evaluations(eval_id, evaluation_type)
+        results = self.example_evaluations(evaluation_id, evaluation_type)
         return [r for r in results if isinstance(r.result, FailedExampleEvaluation)]
 
-    def example_evaluation(
-        self, eval_id: str, example_id: str, evaluation_type: type[Evaluation]
-    ) -> Optional[ExampleEvaluation[Evaluation]]:
-        file_path = self._example_result_path(eval_id, example_id)
-        if not file_path.exists():
-            return None
-        content = self.read_utf8(file_path)
-        serialized_example = SerializedExampleEvaluation.model_validate_json(content)
-        return serialized_example.to_example_result(evaluation_type)
+    def _eval_root_directory(self) -> Path:
+        path = self._root_directory / "evals"
+        path.mkdir(exist_ok=True)
+        return path
 
-    def store_example_evaluation(self, result: ExampleEvaluation[Evaluation]) -> None:
-        serialized_result = SerializedExampleEvaluation.from_example_result(result)
-        self.write_utf8(
-            self._example_result_path(result.eval_id, result.example_id),
-            serialized_result.model_dump_json(indent=2),
-        )
+    def _eval_directory(self, evaluation_id: str) -> Path:
+        path = self._eval_root_directory() / evaluation_id
+        path.mkdir(exist_ok=True)
+        return path
 
-    def evaluation_overview(self, eval_id: str) -> EvaluationOverview | None:
-        file_path = self._evaluation_run_overview_path(eval_id)
-        if not file_path.exists():
-            return None
-        content = self.read_utf8(file_path)
-        return EvaluationOverview.model_validate_json(content)
+    def _example_result_path(self, evaluation_id: str, example_id: str) -> Path:
+        return (self._eval_directory(evaluation_id) / example_id).with_suffix(".json")
 
-    def store_evaluation_overview(self, overview: EvaluationOverview) -> None:
-        self.write_utf8(
-            self._evaluation_run_overview_path(overview.id),
-            overview.model_dump_json(indent=2),
-        )
-
-    def eval_ids(self) -> Sequence[str]:
-        overviews = (
-            self.evaluation_overview(path.stem)
-            for path in self._eval_root_directory().glob("*.json")
-        )
-        return [overview.id for overview in overviews if overview is not None]
+    def _evaluation_run_overview_path(self, evaluation_id: str) -> Path:
+        return self._eval_directory(evaluation_id).with_suffix(".json")
 
 
 class InMemoryEvaluationRepository(EvaluationRepository):
@@ -276,45 +270,45 @@ class InMemoryEvaluationRepository(EvaluationRepository):
         )
         self._evaluation_run_overviews: dict[str, EvaluationOverview] = dict()
 
-    def eval_ids(self) -> Sequence[str]:
+    def store_evaluation_overview(self, overview: EvaluationOverview) -> None:
+        self._evaluation_run_overviews[overview.id] = overview
+
+    def evaluation_overview(self, evaluation_id: str) -> Optional[EvaluationOverview]:
+        return self._evaluation_run_overviews.get(evaluation_id, None)
+
+    def evaluation_overview_ids(self) -> Sequence[str]:
         return list(self._evaluation_run_overviews.keys())
 
+    def store_example_evaluation(
+        self, evaluation: ExampleEvaluation[Evaluation]
+    ) -> None:
+        self._example_evaluations[evaluation.evaluation_id].append(evaluation)
+
     def example_evaluation(
-        self, eval_id: str, example_id: str, evaluation_type: type[Evaluation]
-    ) -> ExampleEvaluation[Evaluation] | None:
+        self, evaluation_id: str, example_id: str, evaluation_type: type[Evaluation]
+    ) -> Optional[ExampleEvaluation[Evaluation]]:
         return next(
             (
                 result
-                for result in self.example_evaluations(eval_id, evaluation_type)
+                for result in self.example_evaluations(evaluation_id, evaluation_type)
                 if result.example_id == example_id
             ),
             None,
         )
 
-    def store_example_evaluation(
-        self, evaluation: ExampleEvaluation[Evaluation]
-    ) -> None:
-        self._example_evaluations[evaluation.eval_id].append(evaluation)
-
     def example_evaluations(
-        self, eval_id: str, evaluation_type: type[Evaluation]
+        self, evaluation_id: str, evaluation_type: type[Evaluation]
     ) -> Sequence[ExampleEvaluation[Evaluation]]:
         return [
             cast(ExampleEvaluation[Evaluation], example_evaluation)
-            for example_evaluation in self._example_evaluations[eval_id]
+            for example_evaluation in self._example_evaluations[evaluation_id]
         ]
 
     def failed_example_evaluations(
-        self, eval_id: str, evaluation_type: type[Evaluation]
+        self, evaluation_id: str, evaluation_type: type[Evaluation]
     ) -> Sequence[ExampleEvaluation[Evaluation]]:
-        results = self.example_evaluations(eval_id, evaluation_type)
+        results = self.example_evaluations(evaluation_id, evaluation_type)
         return [r for r in results if isinstance(r.result, FailedExampleEvaluation)]
-
-    def evaluation_overview(self, eval_id: str) -> EvaluationOverview | None:
-        return self._evaluation_run_overviews[eval_id]
-
-    def store_evaluation_overview(self, overview: EvaluationOverview) -> None:
-        self._evaluation_run_overviews[overview.id] = overview
 
 
 class RecordDataSequence(BaseModel):
@@ -358,46 +352,46 @@ class ArgillaEvaluationRepository(EvaluationRepository):
             self._questions,
         )
 
-    def eval_ids(self) -> Sequence[str]:
-        return self._evaluation_repository.eval_ids()
+    def store_evaluation_overview(self, overview: EvaluationOverview) -> None:
+        return self._evaluation_repository.store_evaluation_overview(overview)
 
-    def example_evaluation(
-        self, eval_id: str, example_id: str, evaluation_type: type[Evaluation]
-    ) -> Optional[ExampleEvaluation[Evaluation]]:
-        return self._evaluation_repository.example_evaluation(
-            eval_id, example_id, evaluation_type
-        )
+    def evaluation_overview(self, evaluation_id: str) -> Optional[EvaluationOverview]:
+        return self._evaluation_repository.evaluation_overview(evaluation_id)
+
+    def evaluation_overview_ids(self) -> Sequence[str]:
+        return self._evaluation_repository.evaluation_overview_ids()
 
     def store_example_evaluation(
         self, evaluation: ExampleEvaluation[Evaluation]
     ) -> None:
         if isinstance(evaluation.result, RecordDataSequence):
             for record in evaluation.result.records:
-                self._client.add_record(evaluation.eval_id, record)
+                self._client.add_record(evaluation.evaluation_id, record)
         else:
             raise TypeError(
                 "ArgillaEvaluationRepository does not support storing non-RecordDataSequence evaluations."
             )
 
+    def example_evaluation(
+        self, evaluation_id: str, example_id: str, evaluation_type: type[Evaluation]
+    ) -> Optional[ExampleEvaluation[Evaluation]]:
+        return self._evaluation_repository.example_evaluation(
+            evaluation_id, example_id, evaluation_type
+        )
+
     def example_evaluations(
-        self, eval_id: str, eval_type: type[Evaluation]
+        self, evaluation_id: str, eval_type: type[Evaluation]
     ) -> Sequence[ExampleEvaluation[Evaluation]]:
         assert eval_type == ArgillaEvaluation
         # Mypy does not derive that the return type is always ExampleEvaluation with ArgillaEvaluation
         return [
-            ExampleEvaluation(eval_id=eval_id, example_id=e.example_id, result=e)  # type: ignore
-            for e in self._client.evaluations(eval_id)
+            ExampleEvaluation(evaluation_id=evaluation_id, example_id=e.example_id, result=e)  # type: ignore
+            for e in self._client.evaluations(evaluation_id)
         ]
 
     def failed_example_evaluations(
-        self, eval_id: str, evaluation_type: type[Evaluation]
+        self, evaluation_id: str, evaluation_type: type[Evaluation]
     ) -> Sequence[ExampleEvaluation[Evaluation]]:
         return self._evaluation_repository.failed_example_evaluations(
-            eval_id, evaluation_type
+            evaluation_id, evaluation_type
         )
-
-    def evaluation_overview(self, eval_id: str) -> EvaluationOverview | None:
-        return self._evaluation_repository.evaluation_overview(eval_id)
-
-    def store_evaluation_overview(self, overview: EvaluationOverview) -> None:
-        return self._evaluation_repository.store_evaluation_overview(overview)

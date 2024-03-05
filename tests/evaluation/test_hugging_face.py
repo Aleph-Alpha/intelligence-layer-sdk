@@ -41,11 +41,11 @@ def requires_token() -> MarkDecorator:
 
 @requires_token()
 def test_hf_database_non_existing(hf_repository: HuggingFaceDatasetRepository) -> None:
-    assert hf_repository.examples_by_id("lol", str, str) is None
+    assert hf_repository.examples("lol", str, str) == []
     assert hf_repository.example("lol", "abc", str, str) is None
     hf_repository.delete_dataset("lol")
     # make sure random files are not actually datasets
-    datasets = list(hf_repository.list_datasets())
+    datasets = list(hf_repository.dataset_ids())
     assert ".gitattributes" not in datasets
     assert "README.md" not in datasets
 
@@ -59,13 +59,13 @@ def test_hf_database_operations(
     original_examples = [example1, example2]
     dataset_id = hf_repository.create_dataset(original_examples)
     try:
-        assert dataset_id in list(hf_repository.list_datasets())
-        examples = hf_repository.examples_by_id(dataset_id, str, str)
+        assert dataset_id in list(hf_repository.dataset_ids())
+        examples = hf_repository.examples(dataset_id, str, str)
         assert examples is not None
         assert list(examples) == original_examples
         assert hf_repository.example(dataset_id, example1.id, str, str) == example1
         assert hf_repository.example(dataset_id, "abc", str, str) is None
         hf_repository.delete_dataset(dataset_id)
-        assert hf_repository.examples_by_id(dataset_id, str, str) is None
+        assert hf_repository.examples(dataset_id, str, str) is None
     finally:
         hf_repository.delete_dataset(dataset_id)
