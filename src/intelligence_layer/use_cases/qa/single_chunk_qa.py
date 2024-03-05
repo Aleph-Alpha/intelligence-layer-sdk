@@ -17,6 +17,7 @@ from intelligence_layer.core import (
     TextHighlightInput,
     TextHighlightOutput,
 )
+from intelligence_layer.core.prompt_template import TextCursor
 from intelligence_layer.core.text_highlight import ScoredTextHighlight
 
 
@@ -136,6 +137,7 @@ class SingleChunkQa(Task[SingleChunkQaInput, SingleChunkQaOutput]):
         instruction = Template(qa_setup.unformatted_instruction).render(
             question=input.question, no_answer_text=qa_setup.no_answer_str
         )
+
         no_answer_logit_bias = (
             self._get_no_answer_logit_bias(
                 qa_setup.no_answer_str, qa_setup.no_answer_logit_bias
@@ -154,7 +156,7 @@ class SingleChunkQa(Task[SingleChunkQaInput, SingleChunkQaOutput]):
             output.completion.strip(), qa_setup.no_answer_str
         )
 
-        highlights = (
+        raw_highlights = (
             self._get_highlights(
                 prompt,
                 output.completion,
@@ -163,6 +165,18 @@ class SingleChunkQa(Task[SingleChunkQaInput, SingleChunkQaOutput]):
             if answer
             else []
         )
+        input_cursor = prompt.ranges["input"][0].start
+        assert isinstance(input_cursor, TextCursor)
+        input_offset = input_cursor.position
+        highlights = [
+            ScoredTextHighlight(
+                start=raw.start - input_offset,
+                end=raw.end - input_offset,
+                score=raw.score,
+            )
+            for raw in raw_highlights
+        ]
+
         return SingleChunkQaOutput(
             answer=answer,
             highlights=highlights,
@@ -181,6 +195,7 @@ class SingleChunkQa(Task[SingleChunkQaInput, SingleChunkQaOutput]):
         task_span: TaskSpan,
     ) -> tuple[CompleteOutput, RichPrompt]:
         prompt = self._model.to_instruct_prompt(instruction, input)
+
         return (
             self._model.complete(
                 CompleteInput(
