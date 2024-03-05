@@ -1,10 +1,12 @@
-from typing import Iterable, Sequence
+import itertools
+from typing import Iterable, Mapping, Sequence
 
 from aleph_alpha_client import (
     Prompt,
     PromptGranularity,
     Text,
     TextPromptItemExplanation,
+    TextScore,
 )
 from aleph_alpha_client.explanation import TextScoreWithRaw
 from pydantic import BaseModel
@@ -46,11 +48,13 @@ class ScoredTextHighlight(BaseModel):
     """A substring of the input prompt scored for relevance with regard to the output.
 
     Attributes:
-        text: The highlighted part of the prompt.
+        start: The start index of the highlight.
+        end: The end index of the highlight.
         score: The z-score of the highlight. Depicts relevance of this highlight in relation to all other highlights. Can be positive (support) or negative (contradiction).
     """
 
-    text: str
+    start: int
+    end: int
     score: float
 
 
@@ -104,7 +108,7 @@ class TextHighlight(Task[TextHighlightInput, TextHighlightOutput]):
     def __init__(
         self,
         model: AlephAlphaModel | None = None,
-        granularity: PromptGranularity = PromptGranularity.Sentence,
+        granularity: PromptGranularity | None = None,
     ) -> None:
         super().__init__()
         self._model = model or LuminousControlModel()
@@ -119,11 +123,10 @@ class TextHighlight(Task[TextHighlightInput, TextHighlightOutput]):
             target=input.target,
             task_span=task_span,
         )
-        prompt_ranges = self._flatten_prompt_ranges(
-            range
-            for name, range in input.rich_prompt.ranges.items()
-            if name in input.focus_ranges
+        prompt_ranges = self._filter_and_flatten_prompt_ranges(
+            input.focus_ranges, input.rich_prompt.ranges
         )
+
         text_prompt_item_explanations_and_indices = (
             self._extract_text_prompt_item_explanations_and_item_index(
                 input.rich_prompt, explanation
@@ -152,78 +155,71 @@ class TextHighlight(Task[TextHighlightInput, TextHighlightOutput]):
         output = self._model.explain(input, task_span)
         return output
 
-    def _flatten_prompt_ranges(
-        self, prompt_ranges: Iterable[Sequence[PromptRange]]
-    ) -> Sequence[PromptRange]:
-        return [pr for prs in prompt_ranges for pr in prs]
+    def _filter_and_flatten_prompt_ranges(
+        self,
+        focus_ranges: frozenset[str],
+        input_ranges: Mapping[str, Sequence[PromptRange]],
+    ) -> Iterable[PromptRange]:
+        relevant_ranges = (
+            range for name, range in input_ranges.items() if name in focus_ranges
+        )
+        return itertools.chain.from_iterable(relevant_ranges)
 
     def _extract_text_prompt_item_explanations_and_item_index(
         self,
         prompt: Prompt,
         explain_output: ExplainOutput,
-    ) -> Sequence[tuple[TextPromptItemExplanation, int]]:
-        prompt_texts_and_indices = [
-            (prompt_text, idx)
-            for idx, prompt_text in enumerate(prompt.items)
-            if isinstance(prompt_text, Text)
-        ]
-        text_prompt_item_explanations = [
-            explanation
-            for explanation in explain_output.explanations[0].items
+    ) -> Iterable[tuple[TextPromptItemExplanation, int]]:
+        return (
+            (explanation, index)
+            for index, explanation in enumerate(explain_output.explanations[0].items)
             if isinstance(explanation, TextPromptItemExplanation)
-        ]  # explanations[0], because one explanation for each target
-        assert len(prompt_texts_and_indices) == len(text_prompt_item_explanations)
-        return [
-            (
-                text_prompt_item_explanation.with_text(prompt_text_and_index[0]),
-                prompt_text_and_index[1],
-            )
-            for prompt_text_and_index, text_prompt_item_explanation in zip(
-                prompt_texts_and_indices, text_prompt_item_explanations
-            )
-        ]
+        )
 
     def _to_highlights(
         self,
-        prompt_ranges: Sequence[PromptRange],
-        text_prompt_item_explanations_and_indices: Sequence[
+        prompt_ranges: Iterable[PromptRange],
+        text_prompt_item_explanations_and_indices: Iterable[
             tuple[TextPromptItemExplanation, int]
         ],
         task_span: TaskSpan,
     ) -> Sequence[ScoredTextHighlight]:
-        overlapping_and_flat = [
-            text_score
-            for text_prompt_item_explanation, explanation_idx in text_prompt_item_explanations_and_indices
-            for text_score in text_prompt_item_explanation.scores
-            if isinstance(text_score, TextScoreWithRaw)
-            and self._is_relevant_explanation(
-                explanation_idx, text_score, prompt_ranges
+        overlapping_and_flat = []
+        for (
+            text_prompt_item_explanation,
+            explanation_idx,
+        ) in text_prompt_item_explanations_and_indices:
+            for text_score in text_prompt_item_explanation.scores:
+                assert isinstance(text_score, TextScore)
+                if self._is_relevant_explanation(
+                    explanation_idx, text_score, prompt_ranges
+                ):
+                    overlapping_and_flat.append(text_score)
+        # task_span.log(
+        #     "Raw explanation scores",
+        #     [
+        #         {
+        #             "text": text_score.text,
+        #             "score": text_score.score,
+        #         }
+        #         for text_score in overlapping_and_flat
+        #     ],
+        # ) We should not need this anymore, since we do not modify the scores anymore
+
+        return [
+            ScoredTextHighlight(
+                start=text_score.start,
+                end=text_score.start + text_score.length,
+                score=text_score.score,
             )
+            for text_score in overlapping_and_flat
         ]
-        task_span.log(
-            "Raw explanation scores",
-            [
-                {
-                    "text": text_score.text,
-                    "score": text_score.score,
-                }
-                for text_score in overlapping_and_flat
-            ],
-        )
-        if not overlapping_and_flat:
-            return []
-        z_scores = self._z_scores([s.score for s in overlapping_and_flat])
-        scored_highlights = [
-            ScoredTextHighlight(text=text_score.text, score=z_score)
-            for text_score, z_score in zip(overlapping_and_flat, z_scores)
-        ]
-        return self._filter_highlights(scored_highlights)
 
     def _is_relevant_explanation(
         self,
         explanation_idx: int,
-        text_score: TextScoreWithRaw,
-        prompt_ranges: Sequence[PromptRange],
+        text_score: TextScore,
+        prompt_ranges: Iterable[PromptRange],
     ) -> bool:
         return (
             any(
@@ -239,7 +235,7 @@ class TextHighlight(Task[TextHighlightInput, TextHighlightOutput]):
     def _prompt_range_overlaps_with_text_score(
         cls,
         prompt_range: PromptRange,
-        text_score: TextScoreWithRaw,
+        text_score: TextScore,
         explanation_item_idx: int,
     ) -> bool:
         return (
@@ -260,7 +256,7 @@ class TextHighlight(Task[TextHighlightInput, TextHighlightOutput]):
 
     @staticmethod
     def _is_within_text_score(
-        text_score: TextScoreWithRaw,
+        text_score: TextScore,
         text_score_item: int,
         prompt_range_cursor: Cursor,
     ) -> bool:
@@ -291,20 +287,3 @@ class TextHighlight(Task[TextHighlightInput, TextHighlightOutput]):
             if pos_check > prompt_range.end.position:
                 return False
         return True
-
-    @staticmethod
-    def _z_scores(data: Sequence[float]) -> Sequence[float]:
-        mean = 0  # assuming a mean of 0 (population mean), therefore also assuming n instead of n-1 (population df)
-        stdev = (
-            (sum((x - mean) ** 2 for x in data) / len(data)) ** 0.5
-            if len(data) > 1
-            else 0
-        )
-        return [((x - mean) / stdev if stdev > 0 else 0) for x in data]
-
-    def _filter_highlights(
-        self,
-        scored_highlights: Sequence[ScoredTextHighlight],
-        z_score_limit: float = 1.0,
-    ) -> Sequence[ScoredTextHighlight]:
-        return [h for h in scored_highlights if abs(h.score) >= z_score_limit]
