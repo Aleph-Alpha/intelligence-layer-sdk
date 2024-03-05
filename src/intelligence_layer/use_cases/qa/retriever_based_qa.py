@@ -4,11 +4,11 @@ from pydantic import BaseModel
 
 from intelligence_layer.connectors.retrievers.base_retriever import ID, BaseRetriever
 from intelligence_layer.core import Language, Task, TaskSpan, TextChunk
-from intelligence_layer.use_cases.qa.multiple_chunk_qa import Subanswer
-from intelligence_layer.use_cases.qa.single_chunk_qa import (
-    SingleChunkQa,
-    SingleChunkQaInput,
-    SingleChunkQaOutput,
+from intelligence_layer.use_cases.qa.multiple_chunk_qa import (
+    MultipleChunkQa,
+    MultipleChunkQaInput,
+    MultipleChunkQaOutput,
+    Subanswer,
 )
 from intelligence_layer.use_cases.search.search import Search, SearchInput
 
@@ -89,11 +89,11 @@ class RetrieverBasedQa(
     def __init__(
         self,
         retriever: BaseRetriever[ID],
-        qa_task: Task[SingleChunkQaInput, SingleChunkQaOutput] | None = None,
+        multi_chunk_qa: Task[MultipleChunkQaInput, MultipleChunkQaOutput] | None = None,
     ):
         super().__init__()
         self._search = Search(retriever)
-        self._qa_task = qa_task or SingleChunkQa()
+        self._multi_chunk_qa = multi_chunk_qa or MultipleChunkQa()
 
     def do_run(
         self, input: RetrieverBasedQaInput, task_span: TaskSpan
@@ -105,16 +105,17 @@ class RetrieverBasedQa(
             search_output, key=lambda output: output.score, reverse=True
         )
 
-        sorted_qa_inputs = [
-            SingleChunkQaInput(
-                chunk=TextChunk(output.document_chunk.text),
-                question=input.question,
-                language=input.language,
-            )
-            for output in sorted_search_output
-        ]
+        multi_chunk_qa_input = MultipleChunkQaInput(
+            chunks=[
+                TextChunk(output.document_chunk.text) for output in sorted_search_output
+            ],
+            question=input.question,
+            language=input.language,
+        )
 
-        sorted_qa_outputs = self._qa_task.run_concurrently(sorted_qa_inputs, task_span)
+        multi_chunk_qa_output = self._multi_chunk_qa.run(
+            multi_chunk_qa_input, task_span
+        )
 
         enriched_answers = [
             EnrichedSubanswer(
@@ -123,17 +124,12 @@ class RetrieverBasedQa(
                 highlights=answer.highlights,
                 id=input.id,
             )
-            for answer, input in zip(sorted_qa_outputs, sorted_search_output)
+            for answer, input in zip(
+                multi_chunk_qa_output.subanswers, sorted_search_output
+            )
         ]
         correctly_formatted_output = RetrieverBasedQaOutput(
-            answer=next(
-                (
-                    qa_output.answer
-                    for qa_output in sorted_qa_outputs
-                    if qa_output.answer
-                ),
-                None,
-            ),
+            answer=multi_chunk_qa_output.answer,
             subanswers=enriched_answers,
         )
         return correctly_formatted_output

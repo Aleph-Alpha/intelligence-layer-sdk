@@ -37,7 +37,7 @@ class SteerableLongContextSummarize(
         model: A valid Aleph Alpha control model. This is passed on to the
             default summarize and chunk tasks. So it is ignored when the
             defaults for both tasks are overwritten.
-            Defaults to luminous-base-control-20240215.
+            Defaults to luminous-base-control.
     """
 
     def __init__(
@@ -47,7 +47,7 @@ class SteerableLongContextSummarize(
         model: ControlModel | None = None,
     ) -> None:
         super().__init__()
-        model = model or LuminousControlModel("luminous-base-control-20240215")
+        model = model or LuminousControlModel("luminous-base-control")
         self._summarize = summarize or SteerableSingleChunkSummarize(
             model, max_generated_tokens=512
         )

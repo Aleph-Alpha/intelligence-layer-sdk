@@ -49,7 +49,7 @@ class KeywordExtract(Task[KeywordExtractInput, KeywordExtractOutput]):
         maximum_tokens: int = 32,
     ) -> None:
         self._instruct_configs = instruct_configs
-        self._model = model or LuminousControlModel("luminous-base-control-20240215")
+        self._model = model or LuminousControlModel("luminous-base-control")
         self._maximum_tokens = maximum_tokens
 
     def do_run(

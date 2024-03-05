@@ -62,9 +62,9 @@ class FakeCompleteTaskModel(LuminousControlModel):
             "luminous-base-control",
             "luminous-extended-control",
             "luminous-supreme-control",
-            "luminous-base-control-20240215",
-            "luminous-extended-control-20240215",
-            "luminous-supreme-control-20240215",
+            "luminous-base-control",
+            "luminous-extended-control",
+            "luminous-supreme-control",
         ],
         client: AlephAlphaClientProtocol,
     ) -> None:
@@ -145,6 +145,6 @@ def test_overlapping_tokens_generate_correct_tokens(echo_task: Echo) -> None:
 def test_run_concurrently_produces_proper_completion_prompts(
     client: AlephAlphaClientProtocol, echo_input: EchoInput
 ) -> None:
-    echo_task = Echo(FakeCompleteTaskModel("luminous-base-control-20240215", client))
+    echo_task = Echo(FakeCompleteTaskModel("luminous-base-control", client))
     # if this test fails in CI you may need to increase the 50 to 1000 to reproduce this locally
     echo_task.run_concurrently([echo_input] * MAX_CONCURRENCY * 50, NoOpTracer())
