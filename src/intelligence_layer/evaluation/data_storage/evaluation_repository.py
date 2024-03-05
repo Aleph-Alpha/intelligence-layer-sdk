@@ -96,10 +96,10 @@ class EvaluationRepository(ABC):
 
     @abstractmethod
     def evaluation_overview(self, evaluation_id: str) -> EvaluationOverview | None:
-        """Returns an :class:`EvaluationOverview` of a given run by its id.
+        """Returns an :class:`EvaluationOverview` for the given evaluation overview ID.
 
         Args:
-            evaluation_id: Identifier of the eval run to obtain the overview for.
+            evaluation_id: ID of the evaluation overview to obtain the overview for.
 
         Returns:
             :class:`EvaluationOverview` if one was found, `None` otherwise.
@@ -108,7 +108,7 @@ class EvaluationRepository(ABC):
 
     @abstractmethod
     def evaluation_overview_ids(self) -> Sequence[str]:
-        """Returns IDs of all stored evaluation overviews.
+        """Returns IDs of all stored sorted evaluation overviews.
 
         Returns:
             The IDs of all stored evaluation overviews.
@@ -144,7 +144,7 @@ class EvaluationRepository(ABC):
     def example_evaluations(
         self, evaluation_id: str, evaluation_type: type[Evaluation]
     ) -> Sequence[ExampleEvaluation[Evaluation]]:
-        """Returns all :class:`ExampleEvaluation`s for the given evaluation overview ID.
+        """Returns all :class:`ExampleEvaluation`s for the given evaluation overview ID sorted by their example ID.
 
         Args:
             evaluation_id: ID of the evaluation overview to obtain the results for.
@@ -162,7 +162,7 @@ class EvaluationRepository(ABC):
         """Returns all failed :class:`ExampleEvaluation`s for the given evaluation overview ID sorted by their example ID.
 
         Args:
-            evaluation_id: Identifier of the evaluation run to obtain the results for.
+            evaluation_id: ID of the evaluation run to obtain the results for.
             evaluation_type: Type of evaluations that the :class:`Evaluator` returned
                 in :func:`Evaluator.do_evaluate`
 
@@ -174,7 +174,7 @@ class EvaluationRepository(ABC):
 
 
 class FileEvaluationRepository(EvaluationRepository, FileBasedRepository):
-    """An :class:`EvaluationRepository` that stores evaluation results in json-files.
+    """An :class:`EvaluationRepository` that stores evaluation results in JSON files.
 
     Args:
         root_directory: The folder where the json-files are stored. The folder (along with its parents)
@@ -191,6 +191,7 @@ class FileEvaluationRepository(EvaluationRepository, FileBasedRepository):
         file_path = self._evaluation_run_overview_path(evaluation_id)
         if not file_path.exists():
             return None
+
         content = self.read_utf8(file_path)
         return EvaluationOverview.model_validate_json(content)
 
@@ -199,7 +200,7 @@ class FileEvaluationRepository(EvaluationRepository, FileBasedRepository):
             self.evaluation_overview(path.stem)
             for path in self._eval_root_directory().glob("*.json")
         )
-        return [overview.id for overview in overviews if overview is not None]
+        return sorted([overview.id for overview in overviews if overview is not None])
 
     def store_example_evaluation(self, result: ExampleEvaluation[Evaluation]) -> None:
         serialized_result = SerializedExampleEvaluation.from_example_result(result)
@@ -214,6 +215,7 @@ class FileEvaluationRepository(EvaluationRepository, FileBasedRepository):
         file_path = self._example_result_path(evaluation_id, example_id)
         if not file_path.exists():
             return None
+
         content = self.read_utf8(file_path)
         serialized_example = SerializedExampleEvaluation.model_validate_json(content)
         return serialized_example.to_example_result(evaluation_type)
@@ -221,19 +223,22 @@ class FileEvaluationRepository(EvaluationRepository, FileBasedRepository):
     def example_evaluations(
         self, evaluation_id: str, evaluation_type: type[Evaluation]
     ) -> Sequence[ExampleEvaluation[Evaluation]]:
-        def fetch_result_from_file_name(
-            path: Path,
+        def load_example_evaluation_from_file_name(
+            file_path: Path,
         ) -> Optional[ExampleEvaluation[Evaluation]]:
-            id = path.with_suffix("").name
-            return self.example_evaluation(evaluation_id, id, evaluation_type)
+            example_id = file_path.with_suffix("").name
+            return self.example_evaluation(evaluation_id, example_id, evaluation_type)
 
         path = self._eval_directory(evaluation_id)
-        logs = path.glob("*.json")
-        return [
+        json_files = path.glob("*.json")
+        example_evaluations = [
             example_result
-            for example_result in (fetch_result_from_file_name(file) for file in logs)
-            if example_result
+            for example_result in (
+                load_example_evaluation_from_file_name(file) for file in json_files
+            )
+            if example_result is not None
         ]
+        return sorted(example_evaluations, key=lambda i: i.example_id)
 
     def _eval_root_directory(self) -> Path:
         path = self._root_directory / "evals"
@@ -271,7 +276,7 @@ class InMemoryEvaluationRepository(EvaluationRepository):
         return self._evaluation_run_overviews.get(evaluation_id, None)
 
     def evaluation_overview_ids(self) -> Sequence[str]:
-        return list(self._evaluation_run_overviews.keys())
+        return sorted(list(self._evaluation_run_overviews.keys()))
 
     def store_example_evaluation(
         self, evaluation: ExampleEvaluation[Evaluation]
@@ -281,22 +286,18 @@ class InMemoryEvaluationRepository(EvaluationRepository):
     def example_evaluation(
         self, evaluation_id: str, example_id: str, evaluation_type: type[Evaluation]
     ) -> Optional[ExampleEvaluation[Evaluation]]:
-        return next(
-            (
-                result
-                for result in self.example_evaluations(evaluation_id, evaluation_type)
-                if result.example_id == example_id
-            ),
-            None,
-        )
+        results = self.example_evaluations(evaluation_id, evaluation_type)
+        filtered = (result for result in results if result.example_id == example_id)
+        return next(filtered, None)
 
     def example_evaluations(
         self, evaluation_id: str, evaluation_type: type[Evaluation]
     ) -> Sequence[ExampleEvaluation[Evaluation]]:
-        return [
+        example_evaluations = [
             cast(ExampleEvaluation[Evaluation], example_evaluation)
             for example_evaluation in self._example_evaluations[evaluation_id]
         ]
+        return sorted(example_evaluations, key=lambda i: i.example_id)
 
 
 class RecordDataSequence(BaseModel):
@@ -347,7 +348,7 @@ class ArgillaEvaluationRepository(EvaluationRepository):
         return self._evaluation_repository.evaluation_overview(evaluation_id)
 
     def evaluation_overview_ids(self) -> Sequence[str]:
-        return self._evaluation_repository.evaluation_overview_ids()
+        return sorted(self._evaluation_repository.evaluation_overview_ids())
 
     def store_example_evaluation(
         self, evaluation: ExampleEvaluation[Evaluation]
@@ -368,14 +369,19 @@ class ArgillaEvaluationRepository(EvaluationRepository):
         )
 
     def example_evaluations(
-        self, evaluation_id: str, eval_type: type[Evaluation]
+        self, evaluation_id: str, evaluation_type: type[Evaluation]
     ) -> Sequence[ExampleEvaluation[Evaluation]]:
-        assert eval_type == ArgillaEvaluation
-        # Mypy does not derive that the return type is always ExampleEvaluation with ArgillaEvaluation
-        return [
-            ExampleEvaluation(evaluation_id=evaluation_id, example_id=e.example_id, result=e)  # type: ignore
+        assert evaluation_type == ArgillaEvaluation
+        example_evaluations = [
+            ExampleEvaluation(
+                evaluation_id=evaluation_id,
+                example_id=e.example_id,
+                # cast to Evaluation because mypy thinks ArgillaEvaluation cannot be Evaluation
+                result=cast(Evaluation, e),
+            )
             for e in self._client.evaluations(evaluation_id)
         ]
+        return sorted(example_evaluations, key=lambda i: i.example_id)
 
     def failed_example_evaluations(
         self, evaluation_id: str, evaluation_type: type[Evaluation]
