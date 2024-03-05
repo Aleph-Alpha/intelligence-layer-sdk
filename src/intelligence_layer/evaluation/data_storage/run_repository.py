@@ -5,6 +5,8 @@ from pathlib import Path
 from typing import Iterable, Optional, Sequence, cast
 
 import wandb
+from wandb import Artifact, Table
+
 from intelligence_layer.core.task import Output
 from intelligence_layer.core.tracer import (
     FileTracer,
@@ -23,7 +25,6 @@ from intelligence_layer.evaluation.domain import (
     RunOverview,
     TaskSpanTrace,
 )
-from wandb import Artifact, Table
 
 
 class RunRepository(ABC):

@@ -5,9 +5,10 @@ from pathlib import Path
 from typing import Optional, Sequence, cast
 from uuid import uuid4
 
-from pydantic import BaseModel
-
 import wandb
+from pydantic import BaseModel
+from wandb import Artifact, Table
+
 from intelligence_layer.connectors.argilla.argilla_client import (
     ArgillaClient,
     ArgillaEvaluation,
@@ -24,7 +25,6 @@ from intelligence_layer.evaluation.domain import (
     ExampleEvaluation,
     FailedExampleEvaluation,
 )
-from wandb import Artifact, Table
 
 
 class SerializedExampleEvaluation(BaseModel):

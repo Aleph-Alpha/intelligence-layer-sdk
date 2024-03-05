@@ -1,8 +1,7 @@
 from abc import ABC
 
-from wandb.sdk.wandb_run import Run
-
 from wandb import Artifact, Table
+from wandb.sdk.wandb_run import Run
 
 
 class WandBRepository(ABC):

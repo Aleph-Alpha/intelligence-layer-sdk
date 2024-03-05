@@ -4,11 +4,11 @@ from itertools import islice
 from typing import Generic, Optional, cast
 from uuid import uuid4
 
+import wandb
 from pydantic import JsonValue
 from tqdm import tqdm
 from wandb.sdk.wandb_run import Run
 
-import wandb
 from intelligence_layer.core.task import Input, Output, Task
 from intelligence_layer.core.tracer import CompositeTracer, Tracer, utc_now
 from intelligence_layer.evaluation.data_storage.dataset_repository import (

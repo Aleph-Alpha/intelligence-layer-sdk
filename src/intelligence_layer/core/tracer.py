@@ -16,6 +16,7 @@ from typing import (
 )
 from uuid import UUID, uuid4
 
+import wandb
 from opentelemetry.context import attach, detach
 from opentelemetry.trace import Span as OpenTSpan
 from opentelemetry.trace import Tracer as OpenTTracer
@@ -26,8 +27,6 @@ from rich.syntax import Syntax
 from rich.tree import Tree
 from typing_extensions import Self, TypeAliasType
 from wandb.sdk.data_types.trace_tree import Trace
-
-import wandb
 
 if TYPE_CHECKING:
     PydanticSerializable = (

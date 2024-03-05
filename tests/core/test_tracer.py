@@ -1,11 +1,11 @@
 import time
 from pathlib import Path
 
+import wandb
 from aleph_alpha_client import Prompt
 from opentelemetry.trace import get_tracer
 from pytest import fixture, mark
 
-import wandb
 from intelligence_layer.core import (
     CompleteInput,
     CompleteOutput,
