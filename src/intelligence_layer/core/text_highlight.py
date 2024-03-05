@@ -107,8 +107,10 @@ class TextHighlight(Task[TextHighlightInput, TextHighlightOutput]):
         self,
         model: AlephAlphaModel | None = None,
         granularity: PromptGranularity | None = None,
+        threshold: float = 0.1,
     ) -> None:
         super().__init__()
+        self._threshold = threshold
         self._model = model or LuminousControlModel()
         self._granularity = granularity
 
@@ -216,9 +218,9 @@ class TextHighlight(Task[TextHighlightInput, TextHighlightOutput]):
             for text_score in relevant_text_scores
         ]
 
-        return self._normalize(text_highlights)
+        return self._normalize_and_filter(text_highlights)
 
-    def _normalize(
+    def _normalize_and_filter(
         self, text_highlights: Sequence[ScoredTextHighlight]
     ) -> Sequence[ScoredTextHighlight]:
         max_score = max(highlight.score for highlight in text_highlights)
@@ -226,14 +228,19 @@ class TextHighlight(Task[TextHighlightInput, TextHighlightOutput]):
         # We only normalize if the max score is above a threshold to avoid noisy attribution in case where
         # nothing is particularly important to the output and all values are low
         if max_score < 1:
-            # TODO maybe zero everything in this case?
-            return text_highlights
+            # TODO maybe we should zero all in this case?
+            for highlight in text_highlights:
+                highlight.score = max(highlight.score, 0)
+        else:
+            # apply normalization, discard any negative values as we are looking for positive contributions
+            for highlight in text_highlights:
+                highlight.score = max(highlight.score / max_score, 0)
 
-        # apply normalization, discard any negative values as we are looking for positive contributions
-        for highlight in text_highlights:
-            highlight.score = max(highlight.score / max_score, 0)
-
-        return text_highlights
+        return [
+            highlight
+            for highlight in text_highlights
+            if highlight.score >= self._threshold
+        ]
 
     def _is_relevant_explanation(
         self,
