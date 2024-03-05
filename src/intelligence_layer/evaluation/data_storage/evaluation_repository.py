@@ -156,21 +156,21 @@ class EvaluationRepository(ABC):
         """
         ...
 
-    @abstractmethod
     def failed_example_evaluations(
         self, evaluation_id: str, evaluation_type: type[Evaluation]
     ) -> Sequence[ExampleEvaluation[Evaluation]]:
-        """Returns all failed :class:`ExampleEvaluation`s for the given evaluation overview ID.
+        """Returns all failed :class:`ExampleEvaluation`s for the given evaluation overview ID sorted by their example ID.
 
         Args:
             evaluation_id: Identifier of the evaluation run to obtain the results for.
             evaluation_type: Type of evaluations that the :class:`Evaluator` returned
-                in :func:`Evaluator.do_evaluate`.
+                in :func:`Evaluator.do_evaluate`
 
         Returns:
-            Sequence of all :class:`ExampleEvaluations`.
+            Sorted sequence of all :class:`ExampleEvaluations`.
         """
-        ...
+        results = self.example_evaluations(evaluation_id, evaluation_type)
+        return [r for r in results if isinstance(r.result, FailedExampleEvaluation)]
 
 
 class FileEvaluationRepository(EvaluationRepository, FileBasedRepository):
@@ -235,12 +235,6 @@ class FileEvaluationRepository(EvaluationRepository, FileBasedRepository):
             if example_result
         ]
 
-    def failed_example_evaluations(
-        self, evaluation_id: str, evaluation_type: type[Evaluation]
-    ) -> Sequence[ExampleEvaluation[Evaluation]]:
-        results = self.example_evaluations(evaluation_id, evaluation_type)
-        return [r for r in results if isinstance(r.result, FailedExampleEvaluation)]
-
     def _eval_root_directory(self) -> Path:
         path = self._root_directory / "evals"
         path.mkdir(exist_ok=True)
@@ -303,12 +297,6 @@ class InMemoryEvaluationRepository(EvaluationRepository):
             cast(ExampleEvaluation[Evaluation], example_evaluation)
             for example_evaluation in self._example_evaluations[evaluation_id]
         ]
-
-    def failed_example_evaluations(
-        self, evaluation_id: str, evaluation_type: type[Evaluation]
-    ) -> Sequence[ExampleEvaluation[Evaluation]]:
-        results = self.example_evaluations(evaluation_id, evaluation_type)
-        return [r for r in results if isinstance(r.result, FailedExampleEvaluation)]
 
 
 class RecordDataSequence(BaseModel):
