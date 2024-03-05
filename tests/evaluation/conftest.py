@@ -1,10 +1,18 @@
 from datetime import datetime
 from pathlib import Path
 from typing import Iterable, Sequence
+from uuid import uuid4
 
 from pydantic import BaseModel
 from pytest import fixture
 
+from intelligence_layer.connectors.argilla.argilla_client import (
+    ArgillaClient,
+    ArgillaEvaluation,
+    Field,
+    Question,
+    RecordData,
+)
 from intelligence_layer.core import Tracer, utc_now
 from intelligence_layer.core.task import Task
 from intelligence_layer.evaluation import (
@@ -12,7 +20,6 @@ from intelligence_layer.evaluation import (
     DatasetRepository,
     Example,
     ExampleEvaluation,
-    FailedExampleEvaluation,
     FileAggregationRepository,
     FileEvaluationRepository,
     FileRunRepository,
@@ -58,16 +65,9 @@ def evaluation_id() -> str:
 
 
 @fixture
-def failed_example_result(evaluation_id: str) -> ExampleEvaluation[DummyEvaluation]:
-    return ExampleEvaluation(
-        evaluation_id=evaluation_id,
-        example_id="failed-example",
-        result=FailedExampleEvaluation(error_message="error"),
-    )
-
-
-@fixture
-def successful_example_result(evaluation_id: str) -> ExampleEvaluation[DummyEvaluation]:
+def successful_example_evaluation(
+    evaluation_id: str,
+) -> ExampleEvaluation[DummyEvaluation]:
     return ExampleEvaluation(
         evaluation_id=evaluation_id,
         example_id="successful_example",
@@ -176,3 +176,54 @@ def dummy_runner(
 @fixture
 def argilla_aggregation_logic() -> InstructComparisonArgillaAggregationLogic:
     return InstructComparisonArgillaAggregationLogic()
+
+
+class StubArgillaClient(ArgillaClient):
+    _expected_workspace_id: str
+    _expected_fields: Sequence[Field]
+    _expected_questions: Sequence[Question]
+    _datasets: dict[str, list[RecordData]] = {}
+    _score = 3.0
+
+    def create_dataset(
+        self,
+        workspace_id: str,
+        _: str,
+        fields: Sequence[Field],
+        questions: Sequence[Question],
+    ) -> str:
+        if workspace_id != self._expected_workspace_id:
+            raise Exception("Incorrect workspace id")
+        elif fields != self._expected_fields:
+            raise Exception("Incorrect fields")
+        elif questions != self._expected_questions:
+            raise Exception("Incorrect questions")
+        dataset_id = str(uuid4())
+        self._datasets[dataset_id] = []
+        return dataset_id
+
+    def add_record(self, dataset_id: str, record: RecordData) -> None:
+        if dataset_id not in self._datasets:
+            raise Exception("Add record: dataset not found")
+        self._datasets[dataset_id].append(record)
+
+    def evaluations(self, dataset_id: str) -> Iterable[ArgillaEvaluation]:
+        dataset = self._datasets.get(dataset_id)
+        assert dataset
+        return [
+            ArgillaEvaluation(
+                example_id=record.example_id,
+                record_id="ignored",
+                responses={"human-score": self._score},
+                metadata=dict(),
+            )
+            for record in dataset
+        ]
+
+    def split_dataset(self, dataset_id: str, n_splits: int) -> None:
+        raise NotImplementedError
+
+
+@fixture
+def stub_argilla_client() -> StubArgillaClient:
+    return StubArgillaClient()

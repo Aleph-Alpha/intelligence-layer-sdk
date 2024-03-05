@@ -172,7 +172,7 @@ def test_split_dataset_works(
         assert old_metadata == new_metadata
 
 
-def test_resplit_works(
+def test_split_dataset_twice_works(
     argilla_client: DefaultArgillaClient,
     qa_dataset_id: str,
     qa_records: Sequence[RecordData],
@@ -194,7 +194,7 @@ def test_resplit_works(
     assert len(metadata_properties["settings"]["values"]) == 1
 
 
-def test_split_dataset_works_uneven_splits(
+def test_split_dataset_works_with_uneven_splits(
     argilla_client: DefaultArgillaClient,
     qa_dataset_id: str,
     qa_records: Sequence[RecordData],

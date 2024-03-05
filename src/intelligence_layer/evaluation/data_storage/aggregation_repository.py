@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from pathlib import Path
-from typing import Any, Optional, Sequence
+from typing import Any, Iterable, Optional, Sequence
 
 from intelligence_layer.evaluation.data_storage.utils import FileBasedRepository
 from intelligence_layer.evaluation.domain import (
@@ -12,17 +12,17 @@ from intelligence_layer.evaluation.domain import (
 class AggregationRepository(ABC):
     """Base aggregation repository interface.
 
-    Provides methods to store and load aggregated evaluation results (i.e., aggregation overviews).
+    Provides methods to store and load aggregated evaluation results: :class:`AggregationOverview`.
     """
 
     @abstractmethod
     def store_aggregation_overview(
         self, aggregation_overview: AggregationOverview[AggregatedEvaluation]
     ) -> None:
-        """Stores an :class:`AggregationOverview` in the repository.
+        """Stores an :class:`AggregationOverview`.
 
         Args:
-            aggregation_overview: The overview to be persisted.
+            aggregation_overview: The aggregated results to be persisted.
         """
         ...
 
@@ -30,23 +30,41 @@ class AggregationRepository(ABC):
     def aggregation_overview(
         self, aggregation_id: str, aggregation_type: type[AggregatedEvaluation]
     ) -> Optional[AggregationOverview[AggregatedEvaluation]]:
-        """Returns a specific instance of :class:`AggregationOverview` of a given run
+        """Returns an :class:`AggregationOverview` for the given ID.
 
         Args:
-            aggregation_id: ID of the aggregation overview
-            aggregation_type: Type of the aggregation
+            aggregation_id: ID of the aggregation overview to retrieve.
+            aggregation_type: Type of the aggregation.
 
         Returns:
-            :class:`EvaluationOverview` if one was found, `None` otherwise.
+            :class:`EvaluationOverview` if it was found, `None` otherwise.
         """
         ...
 
-    @abstractmethod
-    def aggregation_overview_ids(self) -> Sequence[str]:
-        """Returns sorted IDs of all stored aggregation overviews.
+    def aggregation_overviews(
+        self, aggregation_type: type[AggregatedEvaluation]
+    ) -> Iterable[AggregationOverview[AggregatedEvaluation]]:
+        """Returns all :class:`AggregationOverview`s sorted by their ID.
+
+        Args:
+            aggregation_type: Type of the aggregation.
 
         Returns:
-            The IDs of all stored aggregation runs.
+            An :class:`Iterable` of :class:`AggregationOverview`s.
+        """
+        for aggregation_id in self.aggregation_overview_ids():
+            aggregation_overview = self.aggregation_overview(
+                aggregation_id, aggregation_type
+            )
+            if aggregation_overview is not None:
+                yield aggregation_overview
+
+    @abstractmethod
+    def aggregation_overview_ids(self) -> Sequence[str]:
+        """Returns sorted IDs of all stored :class:`AggregationOverview`s.
+
+        Returns:
+            A :class:`Sequence` of the :class:`AggregationOverview` IDs.
         """
         pass
 

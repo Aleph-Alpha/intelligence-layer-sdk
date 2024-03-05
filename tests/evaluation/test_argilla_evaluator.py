@@ -1,16 +1,9 @@
 import random
 from typing import Iterable, Sequence, cast
-from uuid import uuid4
 
 from pytest import fixture
 
-from intelligence_layer.connectors import (
-    ArgillaClient,
-    ArgillaEvaluation,
-    Field,
-    Question,
-    RecordData,
-)
+from intelligence_layer.connectors import ArgillaEvaluation, Field, Question, RecordData
 from intelligence_layer.evaluation import (
     AggregationLogic,
     ArgillaAggregator,
@@ -28,53 +21,7 @@ from intelligence_layer.evaluation import (
     SuccessfulExampleOutput,
 )
 from tests.conftest import DummyStringInput, DummyStringOutput, DummyStringTask
-from tests.evaluation.conftest import DummyAggregatedEvaluation
-
-
-class StubArgillaClient(ArgillaClient):
-    _expected_workspace_id: str
-    _expected_fields: Sequence[Field]
-    _expected_questions: Sequence[Question]
-    _datasets: dict[str, list[RecordData]] = {}
-    _score = 3.0
-
-    def create_dataset(
-        self,
-        workspace_id: str,
-        _: str,
-        fields: Sequence[Field],
-        questions: Sequence[Question],
-    ) -> str:
-        if workspace_id != self._expected_workspace_id:
-            raise Exception("Incorrect workspace id")
-        elif fields != self._expected_fields:
-            raise Exception("Incorrect fields")
-        elif questions != self._expected_questions:
-            raise Exception("Incorrect questions")
-        id = str(uuid4())
-        self._datasets[id] = []
-        return id
-
-    def add_record(self, dataset_id: str, record: RecordData) -> None:
-        if dataset_id not in self._datasets:
-            raise Exception("Add record: dataset not found")
-        self._datasets[dataset_id].append(record)
-
-    def evaluations(self, dataset_id: str) -> Iterable[ArgillaEvaluation]:
-        dataset = self._datasets.get(dataset_id)
-        assert dataset
-        return [
-            ArgillaEvaluation(
-                example_id="something",
-                record_id="ignored",
-                responses={"human-score": self._score},
-                metadata=dict(),
-            )
-            for _ in dataset
-        ]
-
-    def split_dataset(self, dataset_id: str, n_splits: int) -> None:
-        raise NotImplementedError
+from tests.evaluation.conftest import DummyAggregatedEvaluation, StubArgillaClient
 
 
 class DummyStringTaskArgillaAggregationLogic(
@@ -121,11 +68,6 @@ class DummyStringTaskArgillaEvaluationLogic(
                 )
             ]
         )
-
-
-@fixture
-def stub_argilla_client() -> StubArgillaClient:
-    return StubArgillaClient()
 
 
 @fixture

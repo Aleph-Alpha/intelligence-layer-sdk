@@ -1,7 +1,8 @@
 from abc import ABC, abstractmethod
 from collections import defaultdict
+from itertools import chain
 from pathlib import Path
-from typing import Optional, Sequence, cast
+from typing import Iterable, Optional, Sequence, cast
 from uuid import uuid4
 
 from pydantic import BaseModel
@@ -27,9 +28,9 @@ class SerializedExampleEvaluation(BaseModel):
     """A json-serialized evaluation of a single example in a dataset.
 
     Attributes:
-        evaluation_id: Identifier of the run the evaluated example belongs to.
-        example_id: Unique identifier of the example this evaluation was created for.
-        is_exception: Will be `True` if an exception occurred during evaluation.
+        evaluation_id: ID of the linked :class:`EvaluationOverview`.
+        example_id: ID of the :class:`ExampleEvaluation` this evaluation was created for.
+        is_exception: Will be `True` if an exception occurred during the evaluation.
         json_result: The actual serialized evaluation result.
     """
 
@@ -69,74 +70,91 @@ class SerializedExampleEvaluation(BaseModel):
 class EvaluationRepository(ABC):
     """Base evaluation repository interface.
 
-    Provides methods to store and load results of an evaluation run (evaluation overview).
+    Provides methods to store and load evaluation results:
+        :class:`EvaluationOverview`s and :class:`ExampleEvaluation`.
+    An :class:`EvaluationOverview` is created from and is linked (by its ID)
+        to multiple :class:`ExampleEvaluation`s.
     """
 
-    def create_evaluation_dataset(self) -> str:
-        """Generates an ID for the dataset and creates it if necessary.
+    def initialize_evaluation(self) -> str:
+        """Initializes an :class:`EvaluationOverview` and returns its ID.
 
-        If no extra logic is required to create the dataset for the run,
-        this function just returns a UUID as string.
-        In other cases (like when the dataset has to be created in an external repository),
-        this method is responsible for implementing this logic and returning the ID.
+        If no extra logic is required for the initialization, this function just returns a UUID as string.
+        In other cases (e.g., when a dataset has to be created in an external repository),
+        this method is responsible for implementing this logic and returning the created ID.
 
         Returns:
-            The ID of the dataset.
+            The created ID.
         """
         return str(uuid4())
 
     @abstractmethod
-    def store_evaluation_overview(self, overview: EvaluationOverview) -> None:
-        """Stores an :class:`EvaluationOverview` in the repository.
+    def store_evaluation_overview(
+        self, evaluation_overview: EvaluationOverview
+    ) -> None:
+        """Stores an :class:`EvaluationOverview`.
 
         Args:
-            overview: The overview to be persisted.
+            evaluation_overview: The overview to be persisted.
         """
         ...
 
     @abstractmethod
-    def evaluation_overview(self, evaluation_id: str) -> EvaluationOverview | None:
-        """Returns an :class:`EvaluationOverview` for the given evaluation overview ID.
+    def evaluation_overview(self, evaluation_id: str) -> Optional[EvaluationOverview]:
+        """Returns an :class:`EvaluationOverview` for the given ID.
 
         Args:
-            evaluation_id: ID of the evaluation overview to obtain the overview for.
+            evaluation_id: ID of the evaluation overview to retrieve.
 
         Returns:
-            :class:`EvaluationOverview` if one was found, `None` otherwise.
+            :class:`EvaluationOverview` if it was found, `None` otherwise.
         """
         ...
+
+    def evaluation_overviews(self) -> Iterable[EvaluationOverview]:
+        """Returns all :class:`EvaluationOverview`s sorted by their ID.
+
+        Returns:
+            :class:`Iterable` of :class:`EvaluationOverview`s.
+        """
+        for eval_id in self.evaluation_overview_ids():
+            evaluation_overview = self.evaluation_overview(eval_id)
+            if evaluation_overview is not None:
+                yield evaluation_overview
 
     @abstractmethod
     def evaluation_overview_ids(self) -> Sequence[str]:
-        """Returns IDs of all stored sorted evaluation overviews.
+        """Returns sorted IDs of all stored :class:`EvaluationOverview`s.
 
         Returns:
-            The IDs of all stored evaluation overviews.
+            A :class:`Sequence` of the :class:`EvaluationOverview` IDs.
         """
         ...
 
     @abstractmethod
-    def store_example_evaluation(self, result: ExampleEvaluation[Evaluation]) -> None:
-        """Stores an :class:`ExampleEvaluation` in the repository.
+    def store_example_evaluation(
+        self, example_evaluation: ExampleEvaluation[Evaluation]
+    ) -> None:
+        """Stores an :class:`ExampleEvaluation`.
 
         Args:
-            result: The result to be persisted.
+            example_evaluation: The example evaluation to be persisted.
         """
 
     @abstractmethod
     def example_evaluation(
         self, evaluation_id: str, example_id: str, evaluation_type: type[Evaluation]
     ) -> Optional[ExampleEvaluation[Evaluation]]:
-        """Returns an :class:`ExampleEvaluation` for the given evaluation overview and example ID.
+        """Returns an :class:`ExampleEvaluation` for the given evaluation overview ID and example ID.
 
         Args:
-            evaluation_id: ID of the evaluation overview to obtain the results for.
-            example_id: Example ID: will match :class:`ExampleEvaluation` ID.
-            evaluation_type: Type of evaluations that the `Evaluator` returned
+            evaluation_id: ID of the linked evaluation overview.
+            example_id: ID of the example evaluation to retrieve.
+            evaluation_type: Type of example evaluations that the `Evaluator` returned
                 in :func:`Evaluator.do_evaluate`
 
         Returns:
-            :class:`ExampleEvaluation` if one was found, `None` otherwise.
+            :class:`ExampleEvaluation` if it was found, `None` otherwise.
         """
         ...
 
@@ -147,14 +165,30 @@ class EvaluationRepository(ABC):
         """Returns all :class:`ExampleEvaluation`s for the given evaluation overview ID sorted by their example ID.
 
         Args:
-            evaluation_id: ID of the evaluation overview to obtain the results for.
+            evaluation_id: ID of the corresponding evaluation overview.
             evaluation_type: Type of evaluations that the :class:`Evaluator` returned
                 in :func:`Evaluator.do_evaluate`.
 
         Returns:
-            Sorted sequence of all :class:`ExampleEvaluations`.
+            A :class:`Sequence` of :class:`ExampleEvaluation`s.
         """
         ...
+
+    def successful_example_evaluations(
+        self, evaluation_id: str, evaluation_type: type[Evaluation]
+    ) -> Sequence[ExampleEvaluation[Evaluation]]:
+        """Returns all successful :class:`ExampleEvaluation`s for the given evaluation overview ID sorted by their example ID.
+
+        Args:
+            evaluation_id: ID of the corresponding evaluation overview.
+            evaluation_type: Type of evaluations that the :class:`Evaluator` returned
+                in :func:`Evaluator.do_evaluate`.
+
+        Returns:
+            A :class:`Sequence` of successful :class:`ExampleEvaluation`s.
+        """
+        results = self.example_evaluations(evaluation_id, evaluation_type)
+        return [r for r in results if not isinstance(r.result, FailedExampleEvaluation)]
 
     def failed_example_evaluations(
         self, evaluation_id: str, evaluation_type: type[Evaluation]
@@ -162,33 +196,28 @@ class EvaluationRepository(ABC):
         """Returns all failed :class:`ExampleEvaluation`s for the given evaluation overview ID sorted by their example ID.
 
         Args:
-            evaluation_id: ID of the evaluation run to obtain the results for.
+            evaluation_id: ID of the corresponding evaluation overview.
             evaluation_type: Type of evaluations that the :class:`Evaluator` returned
-                in :func:`Evaluator.do_evaluate`
+                in :func:`Evaluator.do_evaluate`.
 
         Returns:
-            Sorted sequence of all :class:`ExampleEvaluations`.
+            A :class:`Sequence` of failed :class:`ExampleEvaluation`s.
         """
         results = self.example_evaluations(evaluation_id, evaluation_type)
         return [r for r in results if isinstance(r.result, FailedExampleEvaluation)]
 
 
 class FileEvaluationRepository(EvaluationRepository, FileBasedRepository):
-    """An :class:`EvaluationRepository` that stores evaluation results in JSON files.
-
-    Args:
-        root_directory: The folder where the json-files are stored. The folder (along with its parents)
-            will be created if it does not exist yet.
-    """
+    """An :class:`EvaluationRepository` that stores evaluation results in JSON files."""
 
     def store_evaluation_overview(self, overview: EvaluationOverview) -> None:
         self.write_utf8(
-            self._evaluation_run_overview_path(overview.id),
+            self._evaluation_overview_path(overview.id),
             overview.model_dump_json(indent=2),
         )
 
     def evaluation_overview(self, evaluation_id: str) -> Optional[EvaluationOverview]:
-        file_path = self._evaluation_run_overview_path(evaluation_id)
+        file_path = self._evaluation_overview_path(evaluation_id)
         if not file_path.exists():
             return None
 
@@ -202,10 +231,16 @@ class FileEvaluationRepository(EvaluationRepository, FileBasedRepository):
         )
         return sorted([overview.id for overview in overviews if overview is not None])
 
-    def store_example_evaluation(self, result: ExampleEvaluation[Evaluation]) -> None:
-        serialized_result = SerializedExampleEvaluation.from_example_result(result)
+    def store_example_evaluation(
+        self, example_evaluation: ExampleEvaluation[Evaluation]
+    ) -> None:
+        serialized_result = SerializedExampleEvaluation.from_example_result(
+            example_evaluation
+        )
         self.write_utf8(
-            self._example_result_path(result.evaluation_id, result.example_id),
+            self._example_result_path(
+                example_evaluation.evaluation_id, example_evaluation.example_id
+            ),
             serialized_result.model_dump_json(indent=2),
         )
 
@@ -253,30 +288,30 @@ class FileEvaluationRepository(EvaluationRepository, FileBasedRepository):
     def _example_result_path(self, evaluation_id: str, example_id: str) -> Path:
         return (self._eval_directory(evaluation_id) / example_id).with_suffix(".json")
 
-    def _evaluation_run_overview_path(self, evaluation_id: str) -> Path:
+    def _evaluation_overview_path(self, evaluation_id: str) -> Path:
         return self._eval_directory(evaluation_id).with_suffix(".json")
 
 
 class InMemoryEvaluationRepository(EvaluationRepository):
     """An :class:`EvaluationRepository` that stores evaluation results in memory.
 
-    Preferred for quick testing or notebook use.
+    Preferred for quick testing or to be used in Jupyter Notebooks.
     """
 
     def __init__(self) -> None:
         self._example_evaluations: dict[str, list[ExampleEvaluation[BaseModel]]] = (
             defaultdict(list)
         )
-        self._evaluation_run_overviews: dict[str, EvaluationOverview] = dict()
+        self._evaluation_overviews: dict[str, EvaluationOverview] = dict()
 
     def store_evaluation_overview(self, overview: EvaluationOverview) -> None:
-        self._evaluation_run_overviews[overview.id] = overview
+        self._evaluation_overviews[overview.id] = overview
 
     def evaluation_overview(self, evaluation_id: str) -> Optional[EvaluationOverview]:
-        return self._evaluation_run_overviews.get(evaluation_id, None)
+        return self._evaluation_overviews.get(evaluation_id, None)
 
     def evaluation_overview_ids(self) -> Sequence[str]:
-        return sorted(list(self._evaluation_run_overviews.keys()))
+        return sorted(list(self._evaluation_overviews.keys()))
 
     def store_example_evaluation(
         self, evaluation: ExampleEvaluation[Evaluation]
@@ -305,17 +340,18 @@ class RecordDataSequence(BaseModel):
 
 
 class ArgillaEvaluationRepository(EvaluationRepository):
-    """Evaluation repository used for the :class:`ArgillaEvaluator`.
+    """Evaluation repository used in the :class:`ArgillaEvaluator`.
 
-    Wraps an :class:`Evaluator`.
-    Does not support storing evaluations, since the ArgillaEvaluator does not do automated evaluations.
+    Does not support storing evaluations,
+    since the ArgillaEvaluator does not do automated evaluations.
 
     Args:
-        evaluation_repository: repository to wrap.
-        argilla_client: client used to connect to Argilla.
-        workspace_id: The workspace id to save the datasets in. Has to be created before in Argilla.
+        evaluation_repository: The evaluation repository to use internally.
+        argilla_client: Client to be used to connect to Argilla.
+        workspace_id: The workspace ID to save the results in.
+            Has to be created in Argilla beforehand.
         fields: The Argilla fields of the dataset.
-        questions: The questions that will be presented to the human evaluators.
+        questions: The questions that will be presented to the human evaluators in Argilla.
     """
 
     def __init__(
@@ -333,7 +369,7 @@ class ArgillaEvaluationRepository(EvaluationRepository):
         self._fields = fields
         self._questions = questions
 
-    def create_evaluation_dataset(self) -> str:
+    def initialize_evaluation(self) -> str:
         return self._client.create_dataset(
             self._workspace_id,
             str(uuid4()),
@@ -372,6 +408,32 @@ class ArgillaEvaluationRepository(EvaluationRepository):
         self, evaluation_id: str, evaluation_type: type[Evaluation]
     ) -> Sequence[ExampleEvaluation[Evaluation]]:
         assert evaluation_type == ArgillaEvaluation
+        successful_example_evaluations = self.successful_example_evaluations(
+            evaluation_id, evaluation_type
+        )
+        failed_example_evaluations = self.failed_example_evaluations(
+            evaluation_id, evaluation_type
+        )
+
+        return sorted(
+            chain(successful_example_evaluations, failed_example_evaluations),
+            key=lambda evaluation: evaluation.example_id,
+        )
+
+    def successful_example_evaluations(
+        self, evaluation_id: str, evaluation_type: type[Evaluation]
+    ) -> Sequence[ExampleEvaluation[Evaluation]]:
+        """Returns all successfully stored :class:`ExampleEvaluation`s for the given evaluation overview ID sorted by their example ID.
+
+        Args:
+            evaluation_id: ID of the corresponding evaluation overview.
+            evaluation_type: Type of evaluations that the :class:`Evaluator` returned
+                in :func:`Evaluator.do_evaluate`.
+
+        Returns:
+            A :class:`Sequence` of successful :class:`ExampleEvaluation`s.
+        """
+        assert evaluation_type == ArgillaEvaluation
         example_evaluations = [
             ExampleEvaluation(
                 evaluation_id=evaluation_id,
@@ -386,6 +448,20 @@ class ArgillaEvaluationRepository(EvaluationRepository):
     def failed_example_evaluations(
         self, evaluation_id: str, evaluation_type: type[Evaluation]
     ) -> Sequence[ExampleEvaluation[Evaluation]]:
+        """Returns all failed :class:`ExampleEvaluation`s sorted by their example ID.
+
+        A failed example evaluation is an :class:`ExampleEvaluation` for
+        which the storage process failed, e.g., because the Argilla service
+        was unresponsive.
+
+        Args:
+            evaluation_id: ID of the corresponding evaluation overview.
+            evaluation_type: Type of evaluations that the :class:`Evaluator` returned
+                in :func:`Evaluator.do_evaluate`
+
+        Returns:
+            A :class:`Sequence` of failed :class:`ExampleEvaluation`s.
+        """
         return self._evaluation_repository.failed_example_evaluations(
             evaluation_id, evaluation_type
         )
