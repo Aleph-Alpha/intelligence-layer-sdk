@@ -162,24 +162,6 @@ To give you a starting point for using the Intelligence Layer, we provide some p
 | Summarize | [RecursiveSummarize](https://aleph-alpha-intelligence-layer.readthedocs-hosted.com/en/latest/intelligence_layer.use_cases.html#intelligence_layer.use_cases.RecursiveSummarize)                                       | Recursively condense a text into a summary.                                                                                                                                                                                                |
 
 
-## How to run the Intelligence Layer Starter App
-
-The Starter App contains some of the core use-cases we offer out of the box.
-
-To run it, run the following command:
-
-```python
-python3 src/intelligence_layer/use_cases/intelligence_starter_app.py
-```
-
-Now your app is running and you can start sending requests!
-
-```bash
-curl localhost:8000/openapi.json
-```
-
-To learn more about this, have a look at the [`IntelligenceLayerApp`](https://aleph-alpha-intelligence-layer.readthedocs-hosted.com/en/latest/intelligence_layer.core.html#intelligence_layer.core.IntelligenceApp).
-
 ## How to make your own use case
 
 Note that we do not expect the above use cases to solve all of your issues.

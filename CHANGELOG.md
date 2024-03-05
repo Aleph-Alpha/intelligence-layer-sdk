@@ -10,6 +10,7 @@
     - Sub-tasks are typically exposed as `__init__`-parameters with sensible defaults.
     - Defaults for non-trivial parameters like models or tasks are defined in `__init__` while the default parameter is `None`.
     - Instead of exposing parameters that are passed on to sub-tasks the sub-task themselves are exposed.
+- `IntelligenceApp` and `IntelligenceStarterApp` have been removed.
 
 
 ## 0.6.0
