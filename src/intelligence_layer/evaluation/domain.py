@@ -288,9 +288,9 @@ class EvaluationOverview(BaseModel, frozen=True):
 
 
 class EvaluationFailed(Exception):
-    def __init__(self, eval_id: str, failed_count: int) -> None:
+    def __init__(self, evaluation_id: str, failed_count: int) -> None:
         super().__init__(
-            f"Evaluation {eval_id} failed with {failed_count} failed examples."
+            f"Evaluation {evaluation_id} failed with {failed_count} failed examples."
         )
 
     end: datetime
