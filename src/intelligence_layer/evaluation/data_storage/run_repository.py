@@ -59,7 +59,7 @@ class RunRepository(ABC):
 
     @abstractmethod
     def example_output_ids(self) -> Sequence[str]:
-        """Returns the run IDs of all stored :class:`ExampleOutput`s.
+        """Returns the sorted IDs of all stored :class:`ExampleOutput`s.
 
         Returns:
             The IDs of all stored runs.
@@ -136,9 +136,9 @@ class FileRunRepository(RunRepository, FileBasedRepository):
         )
 
     def example_output_ids(self) -> Sequence[str]:
-        return [
-            path.parent.name for path in self._run_root_directory().glob("*/output")
-        ]
+        return sorted(
+            [path.parent.name for path in self._run_root_directory().glob("*/output")]
+        )
 
     def example_outputs(
         self, run_id: str, output_type: type[Output]
@@ -151,15 +151,14 @@ class FileRunRepository(RunRepository, FileBasedRepository):
 
         path = self._output_directory(run_id)
         output_files = path.glob("*.json")
-        return (
-            example_output
-            for example_output in sorted(
-                (load_example_output(file) for file in output_files),
-                key=lambda example_output: (
-                    example_output.example_id if example_output else ""
-                ),
-            )
-            if example_output
+        example_output = [load_example_output(file) for file in output_files]
+        return sorted(
+            [
+                example_output
+                for example_output in example_output
+                if example_output is not None
+            ],
+            key=lambda _example_output: _example_output.example_id,
         )
 
     def example_trace(self, run_id: str, example_id: str) -> Optional[ExampleTrace]:
@@ -232,7 +231,7 @@ class InMemoryRunRepository(RunRepository):
         )
 
     def example_output_ids(self) -> Sequence[str]:
-        return list(self._example_outputs.keys())
+        return sorted(list(self._example_outputs.keys()))
 
     def example_outputs(
         self, run_id: str, output_type: type[Output]
