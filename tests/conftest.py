@@ -8,33 +8,22 @@ from faker import Faker
 from pydantic import BaseModel
 from pytest import fixture
 
-from intelligence_layer.connectors.document_index.document_index import (
-    DocumentIndexClient,
-)
-from intelligence_layer.connectors.limited_concurrency_client import (
+from intelligence_layer.connectors import (
     AlephAlphaClientProtocol,
-    LimitedConcurrencyClient,
-)
-from intelligence_layer.connectors.retrievers.base_retriever import (
     Document,
     DocumentChunk,
-)
-from intelligence_layer.connectors.retrievers.document_index_retriever import (
+    DocumentIndexClient,
     DocumentIndexRetriever,
-)
-from intelligence_layer.connectors.retrievers.qdrant_in_memory_retriever import (
+    LimitedConcurrencyClient,
     QdrantInMemoryRetriever,
     RetrieverType,
 )
-from intelligence_layer.core import NoOpTracer, Task, TaskSpan
-from intelligence_layer.core.model import LuminousControlModel
+from intelligence_layer.core import LuminousControlModel, NoOpTracer, Task, TaskSpan
 from intelligence_layer.evaluation import (
+    InMemoryAggregationRepository,
     InMemoryDatasetRepository,
     InMemoryEvaluationRepository,
     InMemoryRunRepository,
-)
-from intelligence_layer.evaluation.data_storage.aggregation_repository import (
-    InMemoryAggregationRepository,
 )
 
 
