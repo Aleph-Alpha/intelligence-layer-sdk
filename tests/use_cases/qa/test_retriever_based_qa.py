@@ -11,11 +11,11 @@ from intelligence_layer.connectors.retrievers.qdrant_in_memory_retriever import 
     QdrantInMemoryRetriever,
 )
 from intelligence_layer.core import NoOpTracer
+from intelligence_layer.use_cases import MultipleChunkQa
 from intelligence_layer.use_cases.qa.retriever_based_qa import (
     RetrieverBasedQa,
     RetrieverBasedQaInput,
 )
-from intelligence_layer.use_cases.qa.single_chunk_qa import SingleChunkQa
 
 
 @fixture
@@ -38,19 +38,21 @@ def in_memory_retriever_documents() -> Sequence[Document]:
 
 @fixture
 def retriever_based_qa_with_in_memory_retriever(
-    single_chunk_qa: SingleChunkQa,
+    multiple_chunk_qa: MultipleChunkQa,
     asymmetric_in_memory_retriever: QdrantInMemoryRetriever,
 ) -> RetrieverBasedQa[int]:
     return RetrieverBasedQa(
-        retriever=asymmetric_in_memory_retriever, qa_task=single_chunk_qa
+        retriever=asymmetric_in_memory_retriever, multi_chunk_qa=multiple_chunk_qa
     )
 
 
 @fixture
 def retriever_based_qa_with_document_index(
-    single_chunk_qa: SingleChunkQa, document_index_retriever: DocumentIndexRetriever
+    multiple_chunk_qa: MultipleChunkQa, document_index_retriever: DocumentIndexRetriever
 ) -> RetrieverBasedQa[DocumentPath]:
-    return RetrieverBasedQa(retriever=document_index_retriever, qa_task=single_chunk_qa)
+    return RetrieverBasedQa(
+        retriever=document_index_retriever, multi_chunk_qa=multiple_chunk_qa
+    )
 
 
 def test_retriever_based_qa_using_in_memory_retriever(

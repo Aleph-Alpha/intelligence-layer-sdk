@@ -15,7 +15,7 @@ from intelligence_layer.core import (
 
 @fixture
 def model(client: AlephAlphaClientProtocol) -> ControlModel:
-    return LuminousControlModel(client=client, name="luminous-base-control-20240215")
+    return LuminousControlModel(client=client, name="luminous-base-control")
 
 
 @fixture

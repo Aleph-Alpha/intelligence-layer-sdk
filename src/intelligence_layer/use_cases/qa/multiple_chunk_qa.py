@@ -72,34 +72,40 @@ class MergeAnswersInstructConfig(BaseModel):
 MERGE_ANSWERS_INSTRUCT_CONFIGS = {
     Language("en"): MergeAnswersInstructConfig(
         instruction="You are tasked with combining multiple answers into a single answer. "
-        "If conflicting answers arise, acknowledge the discrepancies by presenting them collectively",
+        "If conflicting answers arise, acknowledge the discrepancies by presenting them collectively. "
+        "Your answer should not be lomnger than 5 sentences.",
         question_label="Question",
         answers_label="Answers",
         final_answer_label="Final answer:",
     ),
     Language("it"): MergeAnswersInstructConfig(
         instruction="Il compito è quello di combinare più risposte in un'unica risposta. "
-        "Se emergono risposte contrastanti, riconoscete le discrepanze presentandole collettivamente.",
+        "Se emergono risposte contrastanti, riconoscete le discrepanze presentandole collettivamente. "
+        "La risposta non deve essere più lunga di 5 frasi.",
         question_label="Domanda",
         answers_label="Risposte",
         final_answer_label="Risposta finale:",
     ),
     Language("fr"): MergeAnswersInstructConfig(
         instruction="Vous devez combiner plusieurs réponses en une seule. "
-        "Si des réponses contradictoires apparaissent, reconnaissez les divergences en les présentant collectivement",
+        "Si des réponses contradictoires apparaissent, reconnaissez les divergences en les présentant collectivement. "
+        "Votre réponse ne doit pas dépasser 5 phrases.",
         question_label="Question",
         answers_label="Réponses",
         final_answer_label="Réponse finale:",
     ),
     Language("de"): MergeAnswersInstructConfig(
-        instruction="Fasse alle Antworten zu einer einzigen Antwort zusammen. Falls es Widersprüche gibt, präsentiere diese.",
+        instruction="Fasse alle Antworten zu einer einzigen Antwort zusammen. "
+        "Falls es Widersprüche gibt, präsentiere diese. "
+        "Deine Antwort sollte nicht länger als 5 Sätze sein.",
         question_label="Frage",
         answers_label="Antworten",
         final_answer_label="Endgültige Antwort:",
     ),
     Language("es"): MergeAnswersInstructConfig(
         instruction="Su tarea consiste en combinar varias respuestas en una sola. "
-        "Si surgen respuestas contradictorias, reconozca las discrepancias presentándolas colectivamente",
+        "Si surgen respuestas contradictorias, reconozca las discrepancias presentándolas colectivamente. "
+        "Su respuesta no debe superar las 5 frases.",
         question_label="Pregunta",
         answers_label="Respuestas",
         final_answer_label="Respuesta final:",
@@ -154,13 +160,15 @@ class MultipleChunkQa(Task[MultipleChunkQaInput, MultipleChunkQaOutput]):
     def __init__(
         self,
         single_chunk_qa: Task[SingleChunkQaInput, SingleChunkQaOutput] | None = None,
-        model: ControlModel | None = None,
+        merge_answers_model: ControlModel | None = None,
         merge_answers_instruct_configs: Mapping[
             Language, MergeAnswersInstructConfig
         ] = MERGE_ANSWERS_INSTRUCT_CONFIGS,
     ):
         super().__init__()
-        self._model = model or LuminousControlModel("luminous-supreme-control-20240215")
+        self._model = merge_answers_model or LuminousControlModel(
+            "luminous-supreme-control"
+        )
         self._single_chunk_qa = single_chunk_qa or SingleChunkQa(self._model)
         self._merge_answers_instruct_configs = merge_answers_instruct_configs
 

@@ -54,7 +54,7 @@ def client(token: str) -> AlephAlphaClientProtocol:
 
 @fixture(scope="session")
 def luminous_control_model(client: AlephAlphaClientProtocol) -> LuminousControlModel:
-    return LuminousControlModel("luminous-base-control-20240215", client)
+    return LuminousControlModel("luminous-base-control", client)
 
 
 @fixture

@@ -18,7 +18,7 @@ load_dotenv()
 
 
 def model() -> ControlModel:
-    return LuminousControlModel("luminous-base-control-20240215")
+    return LuminousControlModel("luminous-base-control")
 
 
 @app.post("/classify")

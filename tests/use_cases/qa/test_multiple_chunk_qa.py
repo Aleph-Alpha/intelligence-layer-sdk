@@ -1,7 +1,5 @@
 from typing import Sequence
 
-from pytest import fixture
-
 from intelligence_layer.core import NoOpTracer
 from intelligence_layer.core.chunk import TextChunk
 from intelligence_layer.core.detect_language import Language
@@ -9,12 +7,6 @@ from intelligence_layer.use_cases.qa.multiple_chunk_qa import (
     MultipleChunkQa,
     MultipleChunkQaInput,
 )
-
-
-@fixture
-def multiple_chunk_qa() -> MultipleChunkQa:
-    return MultipleChunkQa()
-
 
 CHUNK_CONTAINING_ANSWER = TextChunk(
     "Paul Nicolas lost his mother at the age of 3, and then his father in 1914.[3] He was raised by his mother-in-law together with his brother Henri. "

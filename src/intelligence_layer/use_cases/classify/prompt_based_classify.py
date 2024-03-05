@@ -77,7 +77,7 @@ Reply with only the class label."""
         echo: Task[EchoInput, EchoOutput] | None = None,
     ) -> None:
         super().__init__()
-        self._model = model or LuminousControlModel("luminous-base-control-20240215")
+        self._model = model or LuminousControlModel("luminous-base-control")
         self._echo_task = echo or Echo(self._model)
 
     def do_run(

@@ -74,9 +74,11 @@ class LongContextQa(Task[LongContextQaInput, MultipleChunkQaOutput]):
         model: ControlModel | None = None,
     ):
         super().__init__()
-        self._model = model or LuminousControlModel("luminous-supreme-control-20240215")
+        self._model = model or LuminousControlModel("luminous-supreme-control")
         self._chunk_task = chunk or Chunk(self._model, 1024)
-        self._multi_chunk_qa = multi_chunk_qa or MultipleChunkQa(model=self._model)
+        self._multi_chunk_qa = multi_chunk_qa or MultipleChunkQa(
+            merge_answers_model=self._model
+        )
         self._k = k
 
     def do_run(
