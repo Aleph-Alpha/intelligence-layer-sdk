@@ -1,9 +1,6 @@
-from intelligence_layer.core.intelligence_app import (
-    AuthenticatedIntelligenceApp as AuthenticatedIntelligenceApp,
-)
-from intelligence_layer.core.intelligence_app import AuthService as AuthService
-from intelligence_layer.core.intelligence_app import IntelligenceApp as IntelligenceApp
+from intelligence_layer.core.auth_service import AuthService as AuthService
 
+from .auth_service import AuthService as AuthService
 from .chunk import Chunk as Chunk
 from .chunk import ChunkInput as ChunkInput
 from .chunk import ChunkOutput as ChunkOutput
@@ -19,11 +16,6 @@ from .echo import EchoOutput as EchoOutput
 from .echo import TokenWithLogProb as TokenWithLogProb
 from .instruct import Instruct as Instruct
 from .instruct import InstructInput as InstructInput
-from .intelligence_app import (
-    AuthenticatedIntelligenceApp as AuthenticatedIntelligenceApp,
-)
-from .intelligence_app import AuthService as AuthService
-from .intelligence_app import IntelligenceApp as IntelligenceApp
 from .model import AlephAlphaModel as AlephAlphaModel
 from .model import CompleteInput as CompleteInput
 from .model import CompleteOutput as CompleteOutput

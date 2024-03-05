@@ -61,7 +61,7 @@ def test_hf_database_operations(
     try:
         assert dataset_id in list(hf_repository.dataset_ids())
         examples = hf_repository.examples(dataset_id, str, str)
-        assert examples is not None
+        assert examples != []
         assert list(examples) == original_examples
         assert hf_repository.example(dataset_id, example1.id, str, str) == example1
         assert hf_repository.example(dataset_id, "abc", str, str) is None
