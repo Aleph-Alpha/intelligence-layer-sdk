@@ -89,7 +89,7 @@ def test_run_evaluation(
             "dummy-evaluator",
         ]
     )
-    ids = aggregation_repository.aggregation_ids()
+    ids = aggregation_repository.aggregation_overview_ids()
     assert len(ids) == 1
     overview = aggregation_repository.aggregation_overview(ids[0], DummyAggregation)
     assert overview
