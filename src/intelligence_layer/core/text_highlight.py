@@ -50,7 +50,7 @@ class ScoredTextHighlight(BaseModel):
     Attributes:
         start: The start index of the highlight.
         end: The end index of the highlight.
-        score: The z-score of the highlight. Depicts relevance of this highlight in relation to all other highlights. Can be positive (support) or negative (contradiction).
+        score: The score of the highlight. Normalized to be between zero and one, with higher being more important.
     """
 
     start: int
@@ -132,6 +132,7 @@ class TextHighlight(Task[TextHighlightInput, TextHighlightOutput]):
                 input.rich_prompt, explanation
             )
         )
+
         highlights = self._to_highlights(
             prompt_ranges,
             text_prompt_item_explanations_and_indices,
@@ -159,11 +160,11 @@ class TextHighlight(Task[TextHighlightInput, TextHighlightOutput]):
         self,
         focus_ranges: frozenset[str],
         input_ranges: Mapping[str, Sequence[PromptRange]],
-    ) -> Iterable[PromptRange]:
+    ) -> Sequence[PromptRange]:
         relevant_ranges = (
             range for name, range in input_ranges.items() if name in focus_ranges
         )
-        return itertools.chain.from_iterable(relevant_ranges)
+        return list(itertools.chain.from_iterable(relevant_ranges))
 
     def _extract_text_prompt_item_explanations_and_item_index(
         self,
@@ -178,40 +179,63 @@ class TextHighlight(Task[TextHighlightInput, TextHighlightOutput]):
 
     def _to_highlights(
         self,
-        prompt_ranges: Iterable[PromptRange],
+        prompt_ranges: Sequence[PromptRange],
         text_prompt_item_explanations_and_indices: Iterable[
             tuple[TextPromptItemExplanation, int]
         ],
         task_span: TaskSpan,
     ) -> Sequence[ScoredTextHighlight]:
-        overlapping_and_flat = [
-            text_score
-            for text_prompt_item_explanation, explanation_idx in text_prompt_item_explanations_and_indices
-            for text_score in text_prompt_item_explanation.scores
-            if isinstance(text_score, TextScore)
-            and self._is_relevant_explanation(
-                explanation_idx, text_score, prompt_ranges
-            )
-        ]
-        # task_span.log(
-        #     "Raw explanation scores",
-        #     [
-        #         {
-        #             "text": text_score.text,
-        #             "score": text_score.score,
-        #         }
-        #         for text_score in overlapping_and_flat
-        #     ],
-        # ) We should not need this anymore, since we do not modify the scores anymore
+        relevant_text_scores: list[TextScore] = []
+        for (
+            text_prompt_item_explanation,
+            explanation_idx,
+        ) in text_prompt_item_explanations_and_indices:
+            for text_score in text_prompt_item_explanation.scores:
+                assert isinstance(text_score, TextScore)  # for typing
+                if self._is_relevant_explanation(
+                    explanation_idx, text_score, prompt_ranges
+                ):
+                    relevant_text_scores.append(text_score)
 
-        return [
+        task_span.log(
+            "Raw explanation scores",
+            [
+                {
+                    "start": text_score.start,
+                    "end": text_score.start + text_score.length,
+                    "score": text_score.score,
+                }
+                for text_score in relevant_text_scores
+            ],
+        )
+
+        text_highlights = [
             ScoredTextHighlight(
                 start=text_score.start,
                 end=text_score.start + text_score.length,
                 score=text_score.score,
             )
-            for text_score in overlapping_and_flat
+            for text_score in relevant_text_scores
         ]
+
+        return self._normalize(text_highlights)
+
+    def _normalize(
+        self, text_highlights: Sequence[ScoredTextHighlight]
+    ) -> Sequence[ScoredTextHighlight]:
+        max_score = max(highlight.score for highlight in text_highlights)
+
+        # We only normalize if the max score is above a threshold to avoid noisy attribution in case where
+        # nothing is particularly important to the output and all values are low
+        if max_score < 1:
+            # TODO maybe zero everything in this case?
+            return text_highlights
+
+        # apply normalization, discard any negative values as we are looking for positive contributions
+        for highlight in text_highlights:
+            highlight.score = max(highlight.score / max_score, 0)
+
+        return text_highlights
 
     def _is_relevant_explanation(
         self,
