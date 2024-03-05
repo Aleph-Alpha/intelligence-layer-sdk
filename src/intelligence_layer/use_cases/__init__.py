@@ -44,6 +44,7 @@ from .qa.long_context_qa import LongContextQaInput as LongContextQaInput
 from .qa.multiple_chunk_qa import MultipleChunkQa as MultipleChunkQa
 from .qa.multiple_chunk_qa import MultipleChunkQaInput as MultipleChunkQaInput
 from .qa.multiple_chunk_qa import MultipleChunkQaOutput as MultipleChunkQaOutput
+from .qa.multiple_chunk_qa import Subanswer as Subanswer
 from .qa.retriever_based_qa import EnrichedSubanswer as EnrichedSubanswer
 from .qa.retriever_based_qa import RetrieverBasedQa as RetrieverBasedQa
 from .qa.retriever_based_qa import RetrieverBasedQaInput as RetrieverBasedQaInput
