@@ -177,13 +177,13 @@ class Aggregator(Generic[Evaluation, AggregatedEvaluation]):
             An overview of the aggregated evaluation.
         """
 
-        def load_eval_overview(eval_id: str) -> EvaluationOverview:
+        def load_eval_overview(evaluation_id: str) -> EvaluationOverview:
             evaluation_overview = self._evaluation_repository.evaluation_overview(
-                eval_id
+                evaluation_id
             )
             if not evaluation_overview:
                 raise ValueError(
-                    f"No PartialEvaluationOverview found for eval-id: {eval_id}"
+                    f"No PartialEvaluationOverview found for eval-id: {evaluation_id}"
                 )
             return evaluation_overview
 
