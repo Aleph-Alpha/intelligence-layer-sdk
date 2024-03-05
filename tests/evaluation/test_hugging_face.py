@@ -66,6 +66,6 @@ def test_hf_database_operations(
         assert hf_repository.example(dataset_id, example1.id, str, str) == example1
         assert hf_repository.example(dataset_id, "abc", str, str) is None
         hf_repository.delete_dataset(dataset_id)
-        assert hf_repository.examples(dataset_id, str, str) is None
+        assert hf_repository.examples(dataset_id, str, str) == []
     finally:
         hf_repository.delete_dataset(dataset_id)
