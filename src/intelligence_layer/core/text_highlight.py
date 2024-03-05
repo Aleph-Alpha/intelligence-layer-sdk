@@ -4,11 +4,9 @@ from typing import Iterable, Mapping, Sequence
 from aleph_alpha_client import (
     Prompt,
     PromptGranularity,
-    Text,
     TextPromptItemExplanation,
     TextScore,
 )
-from aleph_alpha_client.explanation import TextScoreWithRaw
 from pydantic import BaseModel
 
 from intelligence_layer.core.model import (

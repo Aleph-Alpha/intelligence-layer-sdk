@@ -1,7 +1,6 @@
 from aleph_alpha_client import Image, Text
 from pytest import fixture, mark, raises
 
-from intelligence_layer.connectors import AlephAlphaClientProtocol
 from intelligence_layer.core import (
     AlephAlphaModel,
     ControlModel,

@@ -12,6 +12,7 @@ from intelligence_layer.core import (
     TaskSpan,
     TextChunk,
 )
+from intelligence_layer.core.text_highlight import ScoredTextHighlight
 from intelligence_layer.use_cases.qa.single_chunk_qa import (
     SingleChunkQa,
     SingleChunkQaInput,
@@ -46,7 +47,7 @@ class Subanswer(BaseModel):
 
     answer: Optional[str]
     chunk: TextChunk
-    highlights: Sequence[str]
+    highlights: Sequence[ScoredTextHighlight]
 
 
 class MultipleChunkQaOutput(BaseModel):
