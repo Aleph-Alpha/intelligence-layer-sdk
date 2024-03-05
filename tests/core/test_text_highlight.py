@@ -12,28 +12,11 @@ from intelligence_layer.core import (
 )
 
 
-class AlephAlphaVanillaModel(ControlModel):
-    def to_instruct_prompt(
-        self,
-        instruction: str,
-        input: str | None = None,
-        response_prefix: str | None = None,
-    ) -> RichPrompt:
-        raise NotImplementedError()
-
-
-@fixture
-def aleph_alpha_vanilla_model(
-    client: AlephAlphaClientProtocol,
-) -> AlephAlphaVanillaModel:
-    return AlephAlphaVanillaModel("luminous-base", client)
-
-
 @fixture
 def text_highlight(
-    aleph_alpha_vanilla_model: AlephAlphaVanillaModel,
+    luminous_control_model: ControlModel,
 ) -> TextHighlight:
-    return TextHighlight(aleph_alpha_vanilla_model)
+    return TextHighlight(luminous_control_model)
 
 
 def test_text_highlight(text_highlight: TextHighlight) -> None:

@@ -184,17 +184,15 @@ class TextHighlight(Task[TextHighlightInput, TextHighlightOutput]):
         ],
         task_span: TaskSpan,
     ) -> Sequence[ScoredTextHighlight]:
-        overlapping_and_flat = []
-        for (
-            text_prompt_item_explanation,
-            explanation_idx,
-        ) in text_prompt_item_explanations_and_indices:
-            for text_score in text_prompt_item_explanation.scores:
-                assert isinstance(text_score, TextScore)
-                if self._is_relevant_explanation(
-                    explanation_idx, text_score, prompt_ranges
-                ):
-                    overlapping_and_flat.append(text_score)
+        overlapping_and_flat = [
+            text_score
+            for text_prompt_item_explanation, explanation_idx in text_prompt_item_explanations_and_indices
+            for text_score in text_prompt_item_explanation.scores
+            if isinstance(text_score, TextScore)
+            and self._is_relevant_explanation(
+                explanation_idx, text_score, prompt_ranges
+            )
+        ]
         # task_span.log(
         #     "Raw explanation scores",
         #     [
@@ -278,7 +276,7 @@ class TextHighlight(Task[TextHighlightInput, TextHighlightOutput]):
         if item_check < prompt_range.start.item or item_check > prompt_range.end.item:
             return False
         if item_check == prompt_range.start.item:
-            # must be a text cursor, because has same index as TextScoreWithRaw
+            # must be a text cursor, because has same index as TextScore
             assert isinstance(prompt_range.start, TextCursor)
             if pos_check < prompt_range.start.position:
                 return False
