@@ -203,12 +203,15 @@ class LuminousControlModel(ControlModel):
     def __init__(
         self,
         name: Literal[
+            "luminous-base-control-20230501",
+            "luminous-extended-control-20230501",
+            "luminous-supreme-control-20230501",
             "luminous-base-control",
             "luminous-extended-control",
             "luminous-supreme-control",
-            "luminous-base-control",
-            "luminous-extended-control",
-            "luminous-supreme-control",
+            "luminous-base-control-20240215",
+            "luminous-extended-control-20240215",
+            "luminous-supreme-control-20240215",
         ] = "luminous-base-control",
         client: Optional[AlephAlphaClientProtocol] = None,
     ) -> None:
