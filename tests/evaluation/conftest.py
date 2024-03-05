@@ -13,6 +13,7 @@ from intelligence_layer.evaluation import (
     Example,
     ExampleEvaluation,
     FailedExampleEvaluation,
+    FileAggregationRepository,
     FileEvaluationRepository,
     FileRunRepository,
     InMemoryDatasetRepository,
@@ -72,6 +73,11 @@ def successful_example_result(evaluation_id: str) -> ExampleEvaluation[DummyEval
         example_id="successful_example",
         result=DummyEvaluation(result="result"),
     )
+
+
+@fixture
+def file_aggregation_repository(tmp_path: Path) -> FileAggregationRepository:
+    return FileAggregationRepository(tmp_path)
 
 
 @fixture
