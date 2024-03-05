@@ -5,7 +5,7 @@ from typing import Iterable, Sequence
 from pydantic import BaseModel
 from pytest import fixture
 
-from intelligence_layer.core import Tracer
+from intelligence_layer.core import Tracer, utc_now
 from intelligence_layer.core.task import Task
 from intelligence_layer.evaluation import (
     AggregationOverview,
@@ -53,14 +53,14 @@ class DummyAggregatedEvaluationWithResultList(BaseModel):
 
 @fixture
 def evaluation_id() -> str:
-    return "eval_id"
+    return "evaluation-id-1"
 
 
 @fixture
 def failed_example_result(evaluation_id: str) -> ExampleEvaluation[DummyEvaluation]:
     return ExampleEvaluation(
         evaluation_id=evaluation_id,
-        example_id="failed_example",
+        example_id="failed-example",
         result=FailedExampleEvaluation(error_message="error"),
     )
 
@@ -98,46 +98,45 @@ def dummy_aggregated_evaluation() -> DummyAggregatedEvaluation:
 
 
 @fixture
+def run_overview() -> RunOverview:
+    return RunOverview(
+        dataset_id="dataset-id",
+        id="run-id-1",
+        start=utc_now(),
+        end=utc_now(),
+        failed_example_count=0,
+        successful_example_count=3,
+        description="test run overview 1",
+    )
+
+
+@fixture
 def evaluation_overview(
-    evaluation_id: str,
+    evaluation_id: str, run_overview: RunOverview
 ) -> EvaluationOverview:
-    now = datetime.now()
     return EvaluationOverview(
         id=evaluation_id,
-        run_overviews=frozenset(
-            [
-                RunOverview(
-                    dataset_id="dataset",
-                    id="run-id",
-                    start=now,
-                    end=now,
-                    failed_example_count=0,
-                    successful_example_count=0,
-                    description="dummy-run-id",
-                )
-            ]
-        ),
-        start=now,
-        description="dummy-evaluator",
+        start=utc_now(),
+        run_overviews=frozenset([run_overview]),
+        description="test evaluation overview 1",
     )
 
 
 @fixture
 def aggregation_overview(
-    evaluation_id: str,
     evaluation_overview: EvaluationOverview,
     dummy_aggregated_evaluation: DummyAggregatedEvaluation,
 ) -> AggregationOverview[DummyAggregatedEvaluation]:
     now = datetime.now()
     return AggregationOverview(
-        id=evaluation_id,
         evaluation_overviews=frozenset([evaluation_overview]),
+        id="aggregation-id",
         start=now,
         end=now,
-        crashed_during_eval_count=3,
         successful_evaluation_count=5,
-        statistics=dummy_aggregated_evaluation,
+        crashed_during_eval_count=3,
         description="dummy-evaluator",
+        statistics=dummy_aggregated_evaluation,
     )
 
 
