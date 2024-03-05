@@ -14,7 +14,7 @@ The key features of the Intelligence Layer are:
   To ensure this, we provide full comprehensibility, by seamlessly logging each step of every workflow.
   This enhances your debugging capabilities and offers greater control post-deployment when examining model responses.
 
-### Table of contents
+## Table of contents
 
 1. [Getting Started](#getting-started)
 2. [Getting started with the Jupyter Notebooks](#getting-started-with-the-jupyter-notebooks)
@@ -24,8 +24,9 @@ The key features of the Intelligence Layer are:
 6. [How to make your own use case](#how-to-make-your-own-use-case)
 7. [Running the Trace Viewer](#running-the-trace-viewer)
 8. [Using the Intelligence Layer in Docker](#using-the-intelligence-layer-in-docker)
-9. [References](#references)
-10. [License](#license)
+9. [For Developers](#for-developers)
+10. [References](#references)
+11. [License](#license)
 
 ## Getting started
 
@@ -250,6 +251,18 @@ secrets:
 ```
 
 You can read more about this in the [official documentation](https://docs.docker.com/engine/swarm/secrets/).
+
+## For Developers
+
+### Python: Naming Conventions
+
+We follow the [PEP 8 – Style Guide for Python Code](https://peps.python.org/pep-0008/).
+In addition, there are the following naming conventions:
+* Class method names:
+  * Use only substantives for a method name having no side effects and returning some objects
+    * E.g., `evaluation_overview` which returns an evaluation overview object
+  * Use a verb for a method name if it has side effects and return nothing
+    * E.g., `store_evaluation_overview` which saves a given evaluation overview (and returns nothing)
 
 ## References
 
