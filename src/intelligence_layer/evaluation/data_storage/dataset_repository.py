@@ -11,20 +11,42 @@ from intelligence_layer.evaluation.domain import Example, ExpectedOutput
 
 
 class DatasetRepository(ABC):
+    """Base dataset repository interface.
+
+    Provides methods to store and load datasets and their examples.
+    """
+
     @abstractmethod
     def create_dataset(
         self,
         examples: Iterable[Example[Input, ExpectedOutput]],
     ) -> str:
+        """Creates a dataset from given examples and returns the ID of that dataset.
+
+        Args:
+            examples: An iterable of examples to be saved together under the same dataset ID.
+
+        Returns:
+            Returns the ID of the created dataset.
+        """
         pass
 
     @abstractmethod
-    def examples_by_id(
-        self,
-        dataset_id: str,
-        input_type: type[Input],
-        expected_output_type: type[ExpectedOutput],
-    ) -> Optional[Iterable[Example[Input, ExpectedOutput]]]:
+    def delete_dataset(self, dataset_id: str) -> None:
+        """Deletes a dataset identified by the given dataset ID.
+
+        Args:
+            dataset_id: Dataset ID of the dataset to delete.
+        """
+        pass
+
+    @abstractmethod
+    def dataset_ids(self) -> Iterable[str]:
+        """Returns all dataset IDs.
+
+        Returns:
+            :class:`Iterable` of strings.
+        """
         pass
 
     @abstractmethod
@@ -35,14 +57,36 @@ class DatasetRepository(ABC):
         input_type: type[Input],
         expected_output_type: type[ExpectedOutput],
     ) -> Optional[Example[Input, ExpectedOutput]]:
+        """Returns an :class:`Example` identified by the given dataset ID and example ID.
+
+        Args:
+            dataset_id: Dataset ID.
+            example_id: Example ID.
+            input_type: Input type of the example.
+            expected_output_type: Expected output type of the example.
+
+        Returns:
+            :class:`Example` if one was found, `None` otherwise.
+        """
         pass
 
     @abstractmethod
-    def delete_dataset(self, dataset_id: str) -> None:
-        pass
+    def examples(
+        self,
+        dataset_id: str,
+        input_type: type[Input],
+        expected_output_type: type[ExpectedOutput],
+    ) -> Iterable[Example[Input, ExpectedOutput]]:
+        """Returns all :class:`Example`s identified by the given dataset ID.
 
-    @abstractmethod
-    def list_datasets(self) -> Iterable[str]:
+        Args:
+            dataset_id: Dataset ID.
+            input_type: Input type of the example.
+            expected_output_type: Expected output type of the example.
+
+        Returns:
+            :class:`Iterable` of :class`Example`s.
+        """
         pass
 
 
@@ -55,8 +99,32 @@ class FileSystemDatasetRepository(DatasetRepository):
         self._fs = fs
         self._root_directory = root_directory
 
-    def _dataset_path(self, dataset_id: str) -> str:
-        return self._root_directory + f"/{dataset_id}.jsonl"
+    def create_dataset(self, examples: Iterable[Example[Input, ExpectedOutput]]) -> str:
+        dataset_id = str(uuid4())
+        dataset_path = self._dataset_path(dataset_id)
+        if self._fs.exists(dataset_path):
+            raise ValueError(f"Dataset name {dataset_id} already taken")
+
+        with self._fs.open(dataset_path, "w", encoding="utf-8") as examples_file:
+            for example in examples:
+                serialized_result = JsonSerializer(root=example)
+                text = serialized_result.model_dump_json() + "\n"
+                examples_file.write(text)
+        return dataset_id
+
+    def delete_dataset(self, dataset_id: str) -> None:
+        dataset_path = self._dataset_path(dataset_id)
+        try:
+            self._fs.rm(dataset_path, recursive=True)
+        except FileNotFoundError:
+            pass
+
+    def dataset_ids(self) -> Iterable[str]:
+        return [
+            Path(f["name"]).stem
+            for f in self._fs.ls(self._root_directory, detail=True)
+            if isinstance(f, Dict) and Path(f["name"]).suffix == ".jsonl"
+        ]
 
     def example(
         self,
@@ -77,28 +145,15 @@ class FileSystemDatasetRepository(DatasetRepository):
                     return validated_example
         return None
 
-    def create_dataset(self, examples: Iterable[Example[Input, ExpectedOutput]]) -> str:
-        dataset_id = str(uuid4())
-        dataset_path = self._dataset_path(dataset_id)
-        if self._fs.exists(dataset_path):
-            raise ValueError(f"Dataset name {dataset_id} already taken")
-
-        with self._fs.open(dataset_path, "w", encoding="utf-8") as examples_file:
-            for example in examples:
-                serialized_result = JsonSerializer(root=example)
-                text = serialized_result.model_dump_json() + "\n"
-                examples_file.write(text)
-        return dataset_id
-
-    def examples_by_id(
+    def examples(
         self,
         dataset_id: str,
         input_type: type[Input],
         expected_output_type: type[ExpectedOutput],
-    ) -> Optional[Iterable[Example[Input, ExpectedOutput]]]:
+    ) -> Iterable[Example[Input, ExpectedOutput]]:
         example_path = self._dataset_path(dataset_id)
         if not self._fs.exists(example_path):
-            return None
+            return []
 
         with self._fs.open(example_path, "r", encoding="utf-8") as examples_file:
             # Mypy does not accept dynamic types
@@ -113,24 +168,11 @@ class FileSystemDatasetRepository(DatasetRepository):
             if example
         )
 
-    def delete_dataset(self, dataset_id: str) -> None:
-        dataset_path = self._dataset_path(dataset_id)
-        try:
-            self._fs.rm(dataset_path, recursive=True)
-        except FileNotFoundError:
-            pass
-
-    def list_datasets(self) -> Iterable[str]:
-        return [
-            Path(f["name"]).stem
-            for f in self._fs.ls(self._root_directory, detail=True)
-            if isinstance(f, Dict) and Path(f["name"]).suffix == ".jsonl"
-        ]
+    def _dataset_path(self, dataset_id: str) -> str:
+        return self._root_directory + f"/{dataset_id}.jsonl"
 
 
 class InMemoryDatasetRepository(DatasetRepository):
-    """A repository to store datasets for evaluation."""
-
     def __init__(self) -> None:
         self._datasets: dict[
             str, Sequence[Example[PydanticSerializable, PydanticSerializable]]
@@ -153,16 +195,11 @@ class InMemoryDatasetRepository(DatasetRepository):
         self._datasets[name] = in_memory_examples
         return name
 
-    def examples_by_id(
-        self,
-        dataset_id: str,
-        input_type: type[Input],
-        expected_output_type: type[ExpectedOutput],
-    ) -> Optional[Iterable[Example[Input, ExpectedOutput]]]:
-        return cast(
-            Optional[Iterable[Example[Input, ExpectedOutput]]],
-            self._datasets.get(dataset_id),
-        )
+    def delete_dataset(self, dataset_id: str) -> None:
+        self._datasets.pop(dataset_id, None)
+
+    def dataset_ids(self) -> Iterable[str]:
+        return list(self._datasets.keys())
 
     def example(
         self,
@@ -170,18 +207,21 @@ class InMemoryDatasetRepository(DatasetRepository):
         example_id: str,
         input_type: type[Input],
         expected_output_type: type[ExpectedOutput],
-    ) -> Example[Input, ExpectedOutput] | None:
-        examples = self.examples_by_id(dataset_id, input_type, expected_output_type)
-        if examples is None:
-            return None
+    ) -> Optional[Example[Input, ExpectedOutput]]:
+        examples = self.examples(dataset_id, input_type, expected_output_type)
         filtered = (e for e in examples if e.id == example_id)
         return next(filtered, None)
 
-    def delete_dataset(self, dataset_id: str) -> None:
-        self._datasets.pop(dataset_id, None)
-
-    def list_datasets(self) -> Iterable[str]:
-        return list(self._datasets.keys())
+    def examples(
+        self,
+        dataset_id: str,
+        input_type: type[Input],
+        expected_output_type: type[ExpectedOutput],
+    ) -> Iterable[Example[Input, ExpectedOutput]]:
+        return cast(
+            Iterable[Example[Input, ExpectedOutput]],
+            self._datasets.get(dataset_id, []),
+        )
 
 
 class FileDatasetRepository(FileSystemDatasetRepository):

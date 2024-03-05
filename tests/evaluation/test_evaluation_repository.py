@@ -42,13 +42,13 @@ def example_trace(
 def test_can_store_example_results_in_file(
     file_evaluation_repository: FileEvaluationRepository,
     successful_example_result: ExampleEvaluation[DummyEvaluation],
-    eval_id: str,
+    evaluation_id: str,
 ) -> None:
     file_evaluation_repository.store_example_evaluation(successful_example_result)
 
     assert (
         file_evaluation_repository.example_evaluation(
-            eval_id,
+            evaluation_id,
             successful_example_result.example_id,
             DummyEvaluation,
         )
@@ -59,9 +59,9 @@ def test_can_store_example_results_in_file(
 def test_storing_exception_with_same_structure_as_type_still_deserializes_exception(
     file_evaluation_repository: FileEvaluationRepository,
 ) -> None:
-    eval_id = "eval_id"
+    evaluation_id = "eval_id"
     exception: ExampleEvaluation[DummyEvaluation] = ExampleEvaluation(
-        eval_id=eval_id,
+        evaluation_id=evaluation_id,
         example_id="example_id",
         result=FailedExampleEvaluation(error_message="error"),
     )
@@ -70,7 +70,7 @@ def test_storing_exception_with_same_structure_as_type_still_deserializes_except
 
     assert (
         file_evaluation_repository.example_evaluation(
-            eval_id, exception.example_id, DummyEvaluationWithExceptionStructure
+            evaluation_id, exception.example_id, DummyEvaluationWithExceptionStructure
         )
         == exception
     )
@@ -89,7 +89,7 @@ def test_file_repository_can_fetch_full_evaluation_runs(
     file_evaluation_repository: FileEvaluationRepository,
     successful_example_result: ExampleEvaluation[DummyEvaluation],
     failed_example_result: ExampleEvaluation[DummyEvaluation],
-    eval_id: str,
+    evaluation_id: str,
 ) -> None:
     results: Sequence[ExampleEvaluation[DummyEvaluation]] = [
         successful_example_result,
@@ -99,7 +99,7 @@ def test_file_repository_can_fetch_full_evaluation_runs(
         file_evaluation_repository.store_example_evaluation(result)
 
     run_results = file_evaluation_repository.example_evaluations(
-        eval_id, DummyEvaluation
+        evaluation_id, DummyEvaluation
     )
 
     assert sorted(results, key=lambda i: i.example_id) == sorted(
@@ -111,7 +111,7 @@ def test_file_repository_can_fetch_failed_examples_from_evaluation_run(
     file_evaluation_repository: FileEvaluationRepository,
     successful_example_result: ExampleEvaluation[DummyEvaluation],
     failed_example_result: ExampleEvaluation[DummyEvaluation],
-    eval_id: str,
+    evaluation_id: str,
 ) -> None:
     results: Sequence[ExampleEvaluation[DummyEvaluation]] = [
         successful_example_result,
@@ -121,7 +121,7 @@ def test_file_repository_can_fetch_failed_examples_from_evaluation_run(
         file_evaluation_repository.store_example_evaluation(result)
 
     run_results = file_evaluation_repository.failed_example_evaluations(
-        eval_id, DummyEvaluation
+        evaluation_id, DummyEvaluation
     )
 
     assert run_results == [failed_example_result]
@@ -131,7 +131,7 @@ def test_in_memory_repository_can_fetch_failed_examples_from_evaluation_run(
     in_memory_evaluation_repository: InMemoryEvaluationRepository,
     successful_example_result: ExampleEvaluation[DummyEvaluation],
     failed_example_result: ExampleEvaluation[DummyEvaluation],
-    eval_id: str,
+    evaluation_id: str,
 ) -> None:
     results: Sequence[ExampleEvaluation[DummyEvaluation]] = [
         successful_example_result,
@@ -141,7 +141,7 @@ def test_in_memory_repository_can_fetch_failed_examples_from_evaluation_run(
         in_memory_evaluation_repository.store_example_evaluation(result)
 
     run_results = in_memory_evaluation_repository.failed_example_evaluations(
-        eval_id, DummyEvaluation
+        evaluation_id, DummyEvaluation
     )
 
     assert run_results == [failed_example_result]

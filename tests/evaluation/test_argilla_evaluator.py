@@ -255,7 +255,7 @@ def test_argilla_evaluator_can_do_sync_evaluation(
 
     run_overview = string_argilla_runner.run_dataset(string_dataset_id)
     eval_overview = string_argilla_evaluator.evaluate_runs(run_overview.id)
-    examples_iter = string_argilla_evaluator._dataset_repository.examples_by_id(
+    examples_iter = string_argilla_evaluator._dataset_repository.examples(
         string_dataset_id, DummyStringInput, DummyStringOutput
     )
     assert examples_iter is not None

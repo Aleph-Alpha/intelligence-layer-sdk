@@ -105,7 +105,7 @@ class Runner(Generic[Input, Output]):
 
         # mypy does not like union types
 
-        examples = self._dataset_repository.examples_by_id(
+        examples = self._dataset_repository.examples(
             dataset_id, self.input_type(), JsonValue  # type: ignore
         )
         if examples is None:
