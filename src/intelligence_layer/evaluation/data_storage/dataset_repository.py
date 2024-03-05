@@ -42,7 +42,7 @@ class DatasetRepository(ABC):
 
     @abstractmethod
     def dataset_ids(self) -> Iterable[str]:
-        """Returns all dataset IDs.
+        """Returns all sorted dataset IDs.
 
         Returns:
             :class:`Iterable` of strings.
@@ -77,7 +77,7 @@ class DatasetRepository(ABC):
         input_type: type[Input],
         expected_output_type: type[ExpectedOutput],
     ) -> Iterable[Example[Input, ExpectedOutput]]:
-        """Returns all :class:`Example`s identified by the given dataset ID.
+        """Returns all :class:`Example`s identified by the given dataset ID sorted by their ID.
 
         Args:
             dataset_id: Dataset ID.
@@ -120,11 +120,13 @@ class FileSystemDatasetRepository(DatasetRepository):
             pass
 
     def dataset_ids(self) -> Iterable[str]:
-        return [
-            Path(f["name"]).stem
-            for f in self._fs.ls(self._root_directory, detail=True)
-            if isinstance(f, Dict) and Path(f["name"]).suffix == ".jsonl"
-        ]
+        return sorted(
+            [
+                Path(f["name"]).stem
+                for f in self._fs.ls(self._root_directory, detail=True)
+                if isinstance(f, Dict) and Path(f["name"]).suffix == ".jsonl"
+            ]
+        )
 
     def example(
         self,
@@ -138,8 +140,8 @@ class FileSystemDatasetRepository(DatasetRepository):
             return None
 
         with self._fs.open(example_path, "r", encoding="utf-8") as examples_file:
-            # Mypy does not accept dynamic types
             for example in examples_file:
+                # mypy does not accept dynamic types
                 validated_example = Example[input_type, expected_output_type].model_validate_json(json_data=example)  # type: ignore
                 if validated_example.id == example_id:
                     return validated_example
@@ -159,14 +161,7 @@ class FileSystemDatasetRepository(DatasetRepository):
             # Mypy does not accept dynamic types
             examples = [Example[input_type, expected_output_type].model_validate_json(json_data=example) for example in examples_file]  # type: ignore
 
-        return (
-            example
-            for example in sorted(
-                examples,
-                key=lambda example: example.id if example else "",
-            )
-            if example
-        )
+        return sorted(examples, key=lambda example: example.id)
 
     def _dataset_path(self, dataset_id: str) -> str:
         return self._root_directory + f"/{dataset_id}.jsonl"
@@ -182,9 +177,10 @@ class InMemoryDatasetRepository(DatasetRepository):
         self,
         examples: Iterable[Example[Input, ExpectedOutput]],
     ) -> str:
-        name = str(uuid4())
-        if name in self._datasets:
-            raise ValueError(f"Dataset name {name} already taken")
+        dataset_id = str(uuid4())
+        if dataset_id in self._datasets:
+            raise ValueError(f"Dataset name {dataset_id} already taken")
+
         in_memory_examples = [
             cast(
                 Example[PydanticSerializable, PydanticSerializable],
@@ -192,14 +188,14 @@ class InMemoryDatasetRepository(DatasetRepository):
             )
             for example in examples
         ]
-        self._datasets[name] = in_memory_examples
-        return name
+        self._datasets[dataset_id] = in_memory_examples
+        return dataset_id
 
     def delete_dataset(self, dataset_id: str) -> None:
         self._datasets.pop(dataset_id, None)
 
     def dataset_ids(self) -> Iterable[str]:
-        return list(self._datasets.keys())
+        return sorted(list(self._datasets.keys()))
 
     def example(
         self,
@@ -220,7 +216,7 @@ class InMemoryDatasetRepository(DatasetRepository):
     ) -> Iterable[Example[Input, ExpectedOutput]]:
         return cast(
             Iterable[Example[Input, ExpectedOutput]],
-            self._datasets.get(dataset_id, []),
+            sorted(self._datasets.get(dataset_id, []), key=lambda example: example.id),
         )
 
 

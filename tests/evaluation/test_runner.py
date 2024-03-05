@@ -45,14 +45,13 @@ def test_runner_runs_n_examples(
         task, in_memory_dataset_repository, in_memory_run_repository, "dummy-runner"
     )
     examples = [
-        Example(input="success", expected_output=None),
-        Example(input=FAIL_IN_TASK_INPUT, expected_output=None),
-        Example(input=FAIL_IN_EVAL_INPUT, expected_output=None),
+        Example(input="success", expected_output=None, id="example-1"),
+        Example(input=FAIL_IN_TASK_INPUT, expected_output=None, id="example-2"),
     ]
 
     dataset_id = in_memory_dataset_repository.create_dataset(examples=examples)
-    overview = runner.run_dataset(dataset_id, num_examples=2)
-    overview_with_tracer = runner.run_dataset(dataset_id, tracer, 1)
+    overview = runner.run_dataset(dataset_id)
+    overview_with_tracer = runner.run_dataset(dataset_id, tracer, num_examples=1)
 
     assert overview.failed_example_count == 1
     assert overview.successful_example_count == 1
