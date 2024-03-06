@@ -18,9 +18,9 @@ The key features of the Intelligence Layer are:
 
 1. [Getting Started](#getting-started)
 2. [Getting started with the Jupyter Notebooks](#getting-started-with-the-jupyter-notebooks)
-3. [How to use this in your project](#how-to-use-this-in-your-project)
-4. [Use-case index](#use-case-index)
-5. [How to run the Intelligence Layer Starter App](#how-to-run-the-intelligence-layer-starter-app)
+3. [Tutorials](#tutorials)
+4. [How to use this in your project](#how-to-use-this-in-your-project)
+5. [Use-case index](#use-case-index)
 6. [How to make your own use case](#how-to-make-your-own-use-case)
 7. [Running the Trace Viewer](#running-the-trace-viewer)
 8. [Using the Intelligence Layer in Docker](#using-the-intelligence-layer-in-docker)
@@ -48,6 +48,13 @@ If you prefer you can also read about the [concepts](Concepts.md) first.
 ## Getting started with the Jupyter Notebooks
 
 Depending on your setup, there are two environment variables that have to be set before you can start running the examples.
+
+## Tutorials
+
+| Tutorial                                                  | Description | Source Files                                            |
+|-----------------------------------------------------------|-------------|---------------------------------------------------------|
+| [fastapi_tutorial.md](./src/examples/fastapi_tutorial.md) | Add a `Task` to a minimal FastAPI app. | [fastapi_example.py](./src/examples/fastapi_example.py) |
+
 
 ---
 ### Using the Aleph-Alpha API:
@@ -235,6 +242,8 @@ secrets:
 You can read more about this in the [official documentation](https://docs.docker.com/engine/swarm/secrets/).
 
 ## For Developers
+
+## How to set up a basic
 
 ### Python: Naming Conventions
 
