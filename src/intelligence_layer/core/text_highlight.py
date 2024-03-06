@@ -225,16 +225,12 @@ class TextHighlight(Task[TextHighlightInput, TextHighlightOutput]):
         self, text_highlights: Sequence[ScoredTextHighlight]
     ) -> Sequence[ScoredTextHighlight]:
         max_score = max(highlight.score for highlight in text_highlights)
+        divider = max(
+            1, max_score
+        )  # We only normalize if the max score is above a threshold to avoid noisy attribution in case where
 
-        # We only normalize if the max score is above a threshold to avoid noisy attribution in case where
-        # nothing is particularly important to the output and all values are low
-        if max_score < 1:
-            for highlight in text_highlights:
-                highlight.score = max(highlight.score, 0)
-        else:
-            # apply normalization, discard any negative values as we are looking for positive contributions
-            for highlight in text_highlights:
-                highlight.score = max(highlight.score / max_score, 0)
+        for highlight in text_highlights:
+            highlight.score = max(highlight.score / divider, 0)
 
         return [
             highlight

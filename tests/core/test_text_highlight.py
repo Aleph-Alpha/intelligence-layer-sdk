@@ -20,6 +20,7 @@ def text_highlight(
     return TextHighlight(luminous_control_model)
 
 
+# To test with multimodal input, we also need a base model.
 @fixture
 def text_highlight_base() -> TextHighlight:
     return TextHighlight(AlephAlphaModel("luminous-base"))
@@ -80,12 +81,12 @@ Answer:"""
 
 
 def test_text_highlight_with_range_without_highlight(
-    text_highlight_base: TextHighlight,
+    text_highlight: TextHighlight,
 ) -> None:
     answer = " Extreme conditions."
     prompt_template_str = """Question: What is the ecosystem adapted to?
-Text 1: {% promptrange no_content %}This is an unrelated sentence. And here is another one.{% endpromptrange %}
-Text 2: {% promptrange content %}Scientists at the European Southern Observatory announced a groundbreaking discovery today: microbial life detected in the water-rich atmosphere of Proxima Centauri b, our closest neighboring exoplanet.
+{% promptrange no_content %}Mozart was a musician born on 27th january of 1756. He lived in Wien, Österreich. {% endpromptrange %}
+{% promptrange content %}Scientists at the European Southern Observatory announced a groundbreaking discovery today: microbial life detected in the water-rich atmosphere of Proxima Centauri b, our closest neighboring exoplanet.
 The evidence, drawn from a unique spectral signature of organic compounds, hints at an ecosystem adapted to extreme conditions.
 This finding, while not complex extraterrestrial life, significantly raises the prospects of life's commonality in the universe.
 The international community is abuzz with plans for more focused research and potential interstellar missions.{% endpromptrange %}
@@ -97,14 +98,14 @@ Answer:"""
         target=answer,
         focus_ranges=frozenset(["no_content"]),
     )
-    output = text_highlight_base.run(input, NoOpTracer())
+    output = text_highlight.run(input, NoOpTracer())
     target_sentence = "The evidence, drawn from a unique spectral signature of organic compounds, hints at an ecosystem adapted to extreme conditions."
     assert not any(
         target_sentence in map_to_prompt(rich_prompt, highlight)
         for highlight in output.highlights
     )
     # highlights should have a low score as they are not relevant to the answer.
-    assert all(highlight.score < 1 for highlight in output.highlights)
+    assert len(output.highlights) == 0
 
 
 @mark.skip()  # TODO this test does not make any sense to us

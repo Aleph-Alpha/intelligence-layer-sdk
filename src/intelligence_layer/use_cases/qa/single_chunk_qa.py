@@ -165,10 +165,21 @@ class SingleChunkQa(Task[SingleChunkQaInput, SingleChunkQaOutput]):
             if answer
             else []
         )
+        highlights = self._shift_highlight_ranges_to_input(prompt, raw_highlights)
+
+        return SingleChunkQaOutput(
+            answer=answer,
+            highlights=highlights,
+        )
+
+    def _shift_highlight_ranges_to_input(
+        self, prompt: RichPrompt, raw_highlights: Sequence[ScoredTextHighlight]
+    ) -> Sequence[ScoredTextHighlight]:
+        # This only works with models that have an 'input' range, e.g. control models.
         input_cursor = prompt.ranges["input"][0].start
         assert isinstance(input_cursor, TextCursor)
         input_offset = input_cursor.position
-        highlights = [
+        return [
             ScoredTextHighlight(
                 start=raw.start - input_offset,
                 end=raw.end - input_offset,
@@ -176,11 +187,6 @@ class SingleChunkQa(Task[SingleChunkQaInput, SingleChunkQaOutput]):
             )
             for raw in raw_highlights
         ]
-
-        return SingleChunkQaOutput(
-            answer=answer,
-            highlights=highlights,
-        )
 
     def _get_no_answer_logit_bias(
         self, no_answer_str: str, no_answer_logit_bias: float
