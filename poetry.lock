@@ -1357,6 +1357,31 @@ torch = ["safetensors", "torch"]
 typing = ["types-PyYAML", "types-requests", "types-simplejson", "types-toml", "types-tqdm", "types-urllib3", "typing-extensions (>=4.8.0)"]
 
 [[package]]
+name = "hypercorn"
+version = "0.16.0"
+description = "A ASGI Server based on Hyper libraries and inspired by Gunicorn"
+optional = false
+python-versions = ">=3.8"
+files = [
+    {file = "hypercorn-0.16.0-py3-none-any.whl", hash = "sha256:929e45c4acde3fbf7c58edf55336d30a009d2b4cb1f1eb96e6a515d61b663f58"},
+    {file = "hypercorn-0.16.0.tar.gz", hash = "sha256:3b17d1dcf4992c1f262d9f9dd799c374125d0b9a8e40e1e2d11e2938b0adfe03"},
+]
+
+[package.dependencies]
+h11 = "*"
+h2 = ">=3.1.0"
+priority = "*"
+taskgroup = {version = "*", markers = "python_version < \"3.11\""}
+tomli = {version = "*", markers = "python_version < \"3.11\""}
+wsproto = ">=0.14.0"
+
+[package.extras]
+docs = ["pydata_sphinx_theme", "sphinxcontrib_mermaid"]
+h3 = ["aioquic (>=0.9.0,<1.0)"]
+trio = ["exceptiongroup (>=1.1.0)", "trio (>=0.22.0)"]
+uvloop = ["uvloop"]
+
+[[package]]
 name = "hyperframe"
 version = "6.0.1"
 description = "HTTP/2 framing layer for Python"
@@ -2846,6 +2871,17 @@ pyyaml = ">=5.1"
 virtualenv = ">=20.10.0"
 
 [[package]]
+name = "priority"
+version = "2.0.0"
+description = "A pure-Python implementation of the HTTP/2 priority tree"
+optional = false
+python-versions = ">=3.6.1"
+files = [
+    {file = "priority-2.0.0-py3-none-any.whl", hash = "sha256:6f8eefce5f3ad59baf2c080a664037bb4725cd0a790d53d59ab4059288faf6aa"},
+    {file = "priority-2.0.0.tar.gz", hash = "sha256:c965d54f1b8d0d0b19479db3924c7c36cf672dbf2aec92d43fbdaf4492ba18c0"},
+]
+
+[[package]]
 name = "prometheus-client"
 version = "0.20.0"
 description = "Python client for the Prometheus monitoring system."
@@ -4316,6 +4352,20 @@ anyio = ">=3.4.0,<5"
 full = ["httpx (>=0.22.0)", "itsdangerous", "jinja2", "python-multipart (>=0.0.7)", "pyyaml"]
 
 [[package]]
+name = "taskgroup"
+version = "0.0.0a4"
+description = "backport of asyncio.TaskGroup, asyncio.Runner and asyncio.timeout"
+optional = false
+python-versions = "*"
+files = [
+    {file = "taskgroup-0.0.0a4-py2.py3-none-any.whl", hash = "sha256:5c1bd0e4c06114e7a4128583ab75c987597d5378a33948a3b74c662b90f61277"},
+    {file = "taskgroup-0.0.0a4.tar.gz", hash = "sha256:eb08902d221e27661950f2a0320ddf3f939f579279996f81fe30779bca3a159c"},
+]
+
+[package.dependencies]
+exceptiongroup = "*"
+
+[[package]]
 name = "terminado"
 version = "0.18.0"
 description = "Tornado websocket backend for the Xterm.js Javascript terminal emulator library."
@@ -4925,6 +4975,20 @@ files = [
 ]
 
 [[package]]
+name = "wsproto"
+version = "1.2.0"
+description = "WebSockets state-machine based protocol implementation"
+optional = false
+python-versions = ">=3.7.0"
+files = [
+    {file = "wsproto-1.2.0-py3-none-any.whl", hash = "sha256:b9acddd652b585d75b20477888c56642fdade28bdfd3579aa24a4d2c037dd736"},
+    {file = "wsproto-1.2.0.tar.gz", hash = "sha256:ad565f26ecb92588a3e43bc3d96164de84cd9902482b130d0ddbaa9664a85065"},
+]
+
+[package.dependencies]
+h11 = ">=0.9.0,<1"
+
+[[package]]
 name = "xxhash"
 version = "3.4.1"
 description = "Python binding for xxHash"
@@ -5162,4 +5226,4 @@ testing = ["big-O", "jaraco.functools", "jaraco.itertools", "more-itertools", "p
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.10,<3.12"
-content-hash = "62ad6e339c95638d29d0936e794c8e1b1048c9fdfda41a1d30e86d6b71ea91ca"
+content-hash = "3b345fe8ac810398114d560e666c1ebcccfda8df2868236e1a1f5f0f905eef81"
