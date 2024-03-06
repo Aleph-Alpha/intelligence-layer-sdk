@@ -108,26 +108,6 @@ Answer:"""
     assert len(output.highlights) == 0
 
 
-@mark.skip()  # TODO this test does not make any sense to us
-def test_text_highlight_with_only_one_sentence(
-    text_highlight: TextHighlight,
-) -> None:
-    prompt_template_str = """What is the Latin name of the brown bear? The answer is Ursus Arctos.{% promptrange r1 %} Explanation should not highlight anything.{% endpromptrange %}
-Answer:"""
-    template = PromptTemplate(prompt_template_str)
-    rich_prompt = template.to_rich_prompt()
-    completion = " Ursus Arctos"
-
-    input = TextHighlightInput(
-        rich_prompt=rich_prompt,
-        target=completion,
-        focus_ranges=frozenset({"r1"}),
-    )
-    output = text_highlight.run(input, NoOpTracer())
-
-    assert not output.highlights
-
-
 def test_text_highlight_with_image_prompt(
     text_highlight_base: TextHighlight, prompt_image: Image
 ) -> None:

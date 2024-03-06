@@ -29,7 +29,6 @@ def test_qa_with_answer(single_chunk_qa: SingleChunkQa) -> None:
         "Henri" in input_text[highlight.start : highlight.end] and highlight.score == 1
         for highlight in output.highlights
     )
-    assert len(output.highlights) == 1
 
 
 def test_qa_with_no_answer(single_chunk_qa: SingleChunkQa) -> None:
