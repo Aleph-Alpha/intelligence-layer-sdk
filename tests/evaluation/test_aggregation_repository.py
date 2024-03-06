@@ -30,8 +30,8 @@ def aggregation_overviews(
                 evaluation_overviews=frozenset([evaluation_overview]),
                 start=now,
                 end=now,
-                crashed_during_eval_count=3,
                 successful_evaluation_count=5,
+                crashed_during_evaluation_count=3,
                 statistics=dummy_aggregated_evaluation,
                 description="dummy-aggregator",
             )

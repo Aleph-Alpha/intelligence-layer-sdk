@@ -524,11 +524,11 @@ def test_eval_and_aggregate_runs_only_runs_n_examples(
 
     assert (
         aggregation_overview.successful_evaluation_count
-        + aggregation_overview.crashed_during_eval_count
+        + aggregation_overview.crashed_during_evaluation_count
         == 3
     )
     assert (
         aggregation_overview_n.successful_evaluation_count
-        + aggregation_overview_n.crashed_during_eval_count
+        + aggregation_overview_n.crashed_during_evaluation_count
         == 2
     )

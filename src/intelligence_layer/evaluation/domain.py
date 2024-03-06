@@ -272,7 +272,7 @@ class ExampleEvaluation(BaseModel, Generic[Evaluation]):
 
 
 class EvaluationOverview(BaseModel, frozen=True):
-    """Overview of the unaggregated results of evaluating a :class:`Task` on a dataset.
+    """Overview of the un-aggregated results of evaluating a :class:`Task` on a dataset.
 
     Attributes:
         run_overviews: Overviews of the runs that were evaluated.
@@ -305,11 +305,18 @@ class AggregationOverview(BaseModel, Generic[AggregatedEvaluation], frozen=True)
     Created when running :meth:`Evaluator.eval_and_aggregate_runs`. Contains high-level information and statistics.
 
     Attributes:
-        statistics: Aggregated statistics of the run. Whatever is returned by :meth:`Evaluator.aggregate`
+        evaluation_overviews: :class:`EvaluationOverview`s used for aggregation.
+        id: Aggregation overview ID.
+        start: Start timestamp of the aggregation.
+        end: End timestamp of the aggregation.
         end: The time when the evaluation run ended
-        failed_evaluation_count: The number of examples where an exception was raised when evaluating the output.
-        successful_count: The number of examples that where successfully evaluated.
-        individual_evaluation_overview_set: All individual overviews contributing to the aggregated overview.
+        successful_evaluation_count: The number of examples that where successfully evaluated.
+        crashed_during_evaluation_count: The number of examples that crashed during evaluation.
+        failed_evaluation_count: The number of examples that crashed during evaluation
+            plus the number of examples that failed to produce an output for evaluation.
+        run_ids: IDs of all :class:`RunOverview`s from all linked :class:`EvaluationOverview`s.
+        description: A short description.
+        statistics: Aggregated statistics of the run. Whatever is returned by :meth:`Evaluator.aggregate`
     """
 
     evaluation_overviews: frozenset[EvaluationOverview]
@@ -317,7 +324,7 @@ class AggregationOverview(BaseModel, Generic[AggregatedEvaluation], frozen=True)
     start: datetime
     end: datetime
     successful_evaluation_count: int
-    crashed_during_eval_count: int  # TODO: why not "failed_*"?
+    crashed_during_evaluation_count: int
     description: str
     statistics: SerializeAsAny[AggregatedEvaluation]
 
@@ -334,13 +341,13 @@ class AggregationOverview(BaseModel, Generic[AggregatedEvaluation], frozen=True)
 
     @property
     def failed_evaluation_count(self) -> int:
-        return self.crashed_during_eval_count + sum(
+        return self.crashed_during_evaluation_count + sum(
             run_overview.failed_example_count for run_overview in self.run_overviews()
         )
 
     def raise_on_evaluation_failure(self) -> None:
-        if self.crashed_during_eval_count > 0:
-            raise EvaluationFailed(self.id, self.crashed_during_eval_count)
+        if self.crashed_during_evaluation_count > 0:
+            raise EvaluationFailed(self.id, self.crashed_during_evaluation_count)
 
 
 class Example(BaseModel, Generic[Input, ExpectedOutput]):

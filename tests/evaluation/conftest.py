@@ -140,7 +140,7 @@ def aggregation_overview(
         start=now,
         end=now,
         successful_evaluation_count=5,
-        crashed_during_eval_count=3,
+        crashed_during_evaluation_count=3,
         description="dummy-evaluator",
         statistics=dummy_aggregated_evaluation,
     )
