@@ -76,6 +76,7 @@ class TextHighlight(Task[TextHighlightInput, TextHighlightOutput]):
     Args:
         model: The model used throughout the task for model related API calls.
         granularity: At which granularity should the target be explained in terms of the prompt.
+        threshold: After normalization, everything highlight below this value will be dropped.
 
     Example:
         >>> import os
@@ -228,7 +229,6 @@ class TextHighlight(Task[TextHighlightInput, TextHighlightOutput]):
         # We only normalize if the max score is above a threshold to avoid noisy attribution in case where
         # nothing is particularly important to the output and all values are low
         if max_score < 1:
-            # TODO maybe we should zero all in this case?
             for highlight in text_highlights:
                 highlight.score = max(highlight.score, 0)
         else:
