@@ -17,6 +17,8 @@ from intelligence_layer.core import (
     TextHighlightInput,
     TextHighlightOutput,
 )
+from intelligence_layer.core.prompt_template import TextCursor
+from intelligence_layer.core.text_highlight import ScoredTextHighlight
 
 
 class QaSetup(BaseModel):
@@ -76,7 +78,7 @@ class SingleChunkQaOutput(BaseModel):
     """
 
     answer: Optional[str]
-    highlights: Sequence[str]
+    highlights: Sequence[ScoredTextHighlight]
 
 
 class SingleChunkQa(Task[SingleChunkQaInput, SingleChunkQaOutput]):
@@ -135,6 +137,7 @@ class SingleChunkQa(Task[SingleChunkQaInput, SingleChunkQaOutput]):
         instruction = Template(qa_setup.unformatted_instruction).render(
             question=input.question, no_answer_text=qa_setup.no_answer_str
         )
+
         no_answer_logit_bias = (
             self._get_no_answer_logit_bias(
                 qa_setup.no_answer_str, qa_setup.no_answer_logit_bias
@@ -153,7 +156,7 @@ class SingleChunkQa(Task[SingleChunkQaInput, SingleChunkQaOutput]):
             output.completion.strip(), qa_setup.no_answer_str
         )
 
-        highlights = (
+        raw_highlights = (
             self._get_highlights(
                 prompt,
                 output.completion,
@@ -162,10 +165,28 @@ class SingleChunkQa(Task[SingleChunkQaInput, SingleChunkQaOutput]):
             if answer
             else []
         )
+        highlights = self._shift_highlight_ranges_to_input(prompt, raw_highlights)
+
         return SingleChunkQaOutput(
             answer=answer,
             highlights=highlights,
         )
+
+    def _shift_highlight_ranges_to_input(
+        self, prompt: RichPrompt, raw_highlights: Sequence[ScoredTextHighlight]
+    ) -> Sequence[ScoredTextHighlight]:
+        # This only works with models that have an 'input' range, e.g. control models.
+        input_cursor = prompt.ranges["input"][0].start
+        assert isinstance(input_cursor, TextCursor)
+        input_offset = input_cursor.position
+        return [
+            ScoredTextHighlight(
+                start=raw.start - input_offset,
+                end=raw.end - input_offset,
+                score=raw.score,
+            )
+            for raw in raw_highlights
+        ]
 
     def _get_no_answer_logit_bias(
         self, no_answer_str: str, no_answer_logit_bias: float
@@ -180,6 +201,7 @@ class SingleChunkQa(Task[SingleChunkQaInput, SingleChunkQaOutput]):
         task_span: TaskSpan,
     ) -> tuple[CompleteOutput, RichPrompt]:
         prompt = self._model.to_instruct_prompt(instruction, input)
+
         return (
             self._model.complete(
                 CompleteInput(
@@ -197,14 +219,14 @@ class SingleChunkQa(Task[SingleChunkQaInput, SingleChunkQaOutput]):
         rich_prompt: RichPrompt,
         completion: str,
         task_span: TaskSpan,
-    ) -> Sequence[str]:
+    ) -> Sequence[ScoredTextHighlight]:
         highlight_input = TextHighlightInput(
             rich_prompt=rich_prompt,
             target=completion,
             focus_ranges=frozenset({"input"}),
         )
         highlight_output = self._text_highlight.run(highlight_input, task_span)
-        return [h.text for h in highlight_output.highlights if h.score > 0]
+        return [h for h in highlight_output.highlights if h.score > 0]
 
     def _no_answer_to_none(self, completion: str, no_answer_str: str) -> Optional[str]:
         return completion if no_answer_str not in completion else None

@@ -39,7 +39,8 @@ def test_multiple_chunk_qa_with_mulitple_chunks(
     assert len(output.subanswers) == 1
     assert output.subanswers[0].chunk == chunks[0]
     assert any(
-        IMPORTANT_PART_OF_CORRECT_ANSWER in highlight
+        IMPORTANT_PART_OF_CORRECT_ANSWER
+        in CHUNK_CONTAINING_ANSWER[highlight.start : highlight.end]
         for highlight in output.subanswers[0].highlights
     )
 

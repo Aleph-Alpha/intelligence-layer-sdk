@@ -1,4 +1,4 @@
-from aleph_alpha_client import Prompt, Text
+from aleph_alpha_client import Prompt, PromptGranularity, Text
 from pytest import fixture
 
 from intelligence_layer.connectors.limited_concurrency_client import (
@@ -11,6 +11,7 @@ from intelligence_layer.core import (
     LuminousControlModel,
     NoOpTracer,
 )
+from intelligence_layer.core.model import ExplainInput
 
 
 @fixture
@@ -42,3 +43,13 @@ def test_aa_model(base_model: AlephAlphaModel, no_op_tracer: NoOpTracer) -> None
 
     output = base_model.complete(input, no_op_tracer)
     assert "Berlin" in output.completion
+
+
+def test_explain(model: ControlModel, no_op_tracer: NoOpTracer) -> None:
+    prompt = Prompt.from_text("What is the capital of Germany?")
+    target = "Berlin."
+    explain_input = ExplainInput(
+        prompt=prompt, target=target, prompt_granularity=PromptGranularity.Word
+    )
+    output = model.explain(explain_input, no_op_tracer)
+    assert output.explanations[0].items[0].scores[5].score > 1

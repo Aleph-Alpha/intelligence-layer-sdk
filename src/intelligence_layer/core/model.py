@@ -78,7 +78,7 @@ class _Complete(Task[CompleteInput, CompleteOutput]):
 class ExplainInput(BaseModel, ExplanationRequest, frozen=True):
     """The input for a `Explain` task."""
 
-    def to_explanation_response(self) -> ExplanationRequest:
+    def to_explanation_request(self) -> ExplanationRequest:
         return ExplanationRequest(**self.__dict__)
 
 
@@ -116,7 +116,7 @@ class _Explain(Task[ExplainInput, ExplainOutput]):
         task_span.log("Model", self._model)
         return ExplainOutput.from_explanation_response(
             self._client.explain(
-                request=input.to_explanation_response(), model=self._model
+                request=input.to_explanation_request(), model=self._model
             )
         )
 
