@@ -79,7 +79,11 @@ task:
 A task implements a workflow. It processes its input, passes it on to sub-tasks, processes the outputs of sub-tasks
 to build its own output. This workflow can be represented in a trace. For this a task's `run` method takes a `Tracer`
 that takes care of storing details on the steps of this workflow like the tasks that have been invoked along with their
-input and output and timing information. For this the tracing defines the following concepts:
+input and output and timing information. The following illustration shows the trace of an MultiChunkQa-task:
+
+<img src="./assets/Tracing.drawio.svg">
+
+To represent this tracing defines the following concepts:
 
 - A `Tracer` is passed to a task's `run` method and provides methods for opening `Span`s or `TaskSpan`s.
 - A `Span` is a `Tracer` and allows for grouping multiple logs and duration together as a single, logical step in the
@@ -192,3 +196,36 @@ There are the following Repositories:
   for each example and an `EvaluationOverview`
   and makes them available to the `Aggregator`.
 - The `AggregationRepository` stores the `AggregationOverview` containing the aggregated metrics on request of the `Aggregator`.
+
+The following diagramms illustrate how the different concepts play together in case of the different types of evaluations.
+
+<figure>
+<img src="./assets/AbsoluteEvaluation.drawio.svg">
+<figcaption>Process of an absolute Evaluation</figcaption>
+</figure>
+
+1. The `Runner` reads the `Example`s of a dataset from the `DatasetRepository` and runs a `Task` for each `Example.input` to produce `Output`s.
+2. Each `Output` is wrapped in an `ExampleOutput` and stored in the `RunRepository`.
+3. The `Evaluator` reads the `ExampleOutput`s for a given run from the
+   `RunRepository` and the corresponding `Example` from the `DatasetRepository` and uses the `EvaluationLogic` to compute an `Evaluation`.
+4. Each `Evaluation` gets wrapped in an `ExampleEvaluation` and stored in the `EvaluationRepository`.
+5. The `Aggregator` reads all `ExampleEvaluation`s for a given evaluation and feeds them to the `AggregationLogic` to produce a `AggregatedEvaluation`.
+6. The `AggregatedEvalution` is wrapped in an `AggregationOverview` and stoed in the `AggregationRepository`.
+
+The next diagram illustrates the more complex case of a relative evaluation.
+
+<figure>
+<img src="./assets/RelativeEvaluation.drawio.svg">
+<figcaption>Process of a relative Evaluation</figcaption>
+</figure>
+
+1. Multiple `Runner`s read the same dataset and produce for different `Task`s corresponding `Output`s.
+2. For each run all `Output`s are stored in the `RunRepository`.
+3. The `Evaluator` gets as input previous evaluations (that were produced on basis of the same dataset, but different `Task`s) and the new runs of the previous step.
+4. Given the previous evaluations and the new runs the `Evaluator` can read the `ExampleOutput`s of both the new runs
+   and the runs associated to previous evaluations, collect all that belong to a single `Example` and pass them
+   along with the `Example` to the `EvaluationLogic` to compute an `Evaluation`.
+5. Each `Evaluation` gets wrapped in an `ExampleEvaluation` and is stored in the `EvaluationRepository`.
+6. The `Aggregator` reads all `ExampleEvaluation` from all involved evaluations
+   and feeds them to the `AggregationLogic` to produce a `AggregatedEvaluation`.
+7. The `AggregatedEvalution` is wrapped in an `AggregationOverview` and stoed in the `AggregationRepository`.
