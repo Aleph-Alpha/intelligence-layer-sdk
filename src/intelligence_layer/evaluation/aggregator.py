@@ -187,7 +187,9 @@ class Aggregator(Generic[Evaluation, AggregatedEvaluation]):
                 )
             return evaluation_overview
 
-        evaluation_overviews = frozenset(load_eval_overview(id) for id in set(eval_ids))
+        evaluation_overviews = frozenset(
+            load_eval_overview(evaluation_id) for evaluation_id in set(eval_ids)
+        )
 
         nested_evaluations = [
             self._evaluation_repository.example_evaluations(
@@ -196,14 +198,13 @@ class Aggregator(Generic[Evaluation, AggregatedEvaluation]):
             for overview in evaluation_overviews
         ]
         example_evaluations = [
-            eval for sublist in nested_evaluations for eval in sublist
+            evaluation for sublist in nested_evaluations for evaluation in sublist
         ]
 
         successful_evaluations = CountingFilterIterable(
             (example_eval.result for example_eval in example_evaluations),
             lambda evaluation: not isinstance(evaluation, FailedExampleEvaluation),
         )
-        id = str(uuid4())
         start = utc_now()
         statistics = self._aggregation_logic.aggregate(
             cast(Iterable[Evaluation], successful_evaluations)
@@ -211,11 +212,11 @@ class Aggregator(Generic[Evaluation, AggregatedEvaluation]):
 
         aggregation_overview = AggregationOverview(
             evaluation_overviews=frozenset(evaluation_overviews),
-            id=id,
+            id=str(uuid4()),
             start=start,
             end=utc_now(),
             successful_evaluation_count=successful_evaluations.included_count(),
-            crashed_during_eval_count=successful_evaluations.excluded_count(),
+            crashed_during_evaluation_count=successful_evaluations.excluded_count(),
             description=self.description,
             statistics=statistics,
         )

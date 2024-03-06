@@ -218,7 +218,7 @@ class Evaluator(Generic[Input, Output, ExpectedOutput, Evaluation]):
             raise ValueError(
                 f"All run-overviews must reference the same dataset: {run_overviews}"
             )
-        eval_id = self._evaluation_repository.create_evaluation_dataset()
+        eval_id = self._evaluation_repository.initialize_evaluation()
         dataset_id = next(iter(run_overviews)).dataset_id
         examples = self._dataset_repository.examples(
             dataset_id,
