@@ -121,8 +121,26 @@ class RunRepository(ABC):
         """
         ...
 
-    @abstractmethod
     def example_outputs(
+        self, output_type: type[Output]
+    ) -> Iterable[ExampleOutput[Output]]:
+        """Returns all :class:`ExampleOutput`s sorted by their run ID and example ID.
+
+        Args:
+            output_type: Type of output that the `Task` returned in :func:`Task.do_run`
+
+        Returns:
+            :class:`Iterable` of :class:`ExampleOutput`s.
+        """
+        run_ids = self.run_overview_ids()
+        for run_id in run_ids:
+            for example_id in self.run_example_output_ids(run_id):
+                example_output = self.example_output(run_id, example_id, output_type)
+                if example_output is not None:
+                    yield example_output
+
+    @abstractmethod
+    def run_example_outputs(
         self, run_id: str, output_type: type[Output]
     ) -> Iterable[ExampleOutput[Output]]:
         """Returns all :class:`ExampleOutput` for a given run ID sorted by their example ID.
@@ -137,8 +155,11 @@ class RunRepository(ABC):
         ...
 
     @abstractmethod
-    def example_output_ids(self) -> Sequence[str]:
-        """Returns the sorted IDs of all :class:`ExampleOutput`s.
+    def run_example_output_ids(self, run_id: str) -> Sequence[str]:
+        """Returns the sorted IDs of all :class:`ExampleOutput`s for a given run ID.
+
+        Args:
+            run_id: The ID of the run overview.
 
         Returns:
             A :class:`Sequence` of all :class:`ExampleOutput` IDs.
@@ -196,7 +217,7 @@ class FileRunRepository(RunRepository, FileBasedRepository):
         file_path = self._example_trace_path(run_id, example_id)
         return FileTracer(file_path)
 
-    def example_outputs(
+    def run_example_outputs(
         self, run_id: str, output_type: type[Output]
     ) -> Iterable[ExampleOutput[Output]]:
         def load_example_output(
@@ -205,7 +226,7 @@ class FileRunRepository(RunRepository, FileBasedRepository):
             example_id = file_path.with_suffix("").name
             return self.example_output(run_id, example_id, output_type)
 
-        path = self._output_directory(run_id)
+        path = self._run_output_directory(run_id)
         output_files = path.glob("*.json")
         example_output = [load_example_output(file) for file in output_files]
         return sorted(
@@ -217,13 +238,10 @@ class FileRunRepository(RunRepository, FileBasedRepository):
             key=lambda _example_output: _example_output.example_id,
         )
 
-    def example_output_ids(self) -> Sequence[str]:
+    def run_example_output_ids(self, run_id: str) -> Sequence[str]:
         return sorted(
-            [path.parent.name for path in self._run_root_directory().glob("*/output")]
+            [path.stem for path in self._run_output_directory(run_id).glob("*.json")]
         )
-
-    def _example_trace_path(self, run_id: str, example_id: str) -> Path:
-        return (self._trace_directory(run_id) / example_id).with_suffix(".jsonl")
 
     def _run_root_directory(self) -> Path:
         path = self._root_directory / "runs"
@@ -235,25 +253,28 @@ class FileRunRepository(RunRepository, FileBasedRepository):
         path.mkdir(exist_ok=True)
         return path
 
-    def _trace_directory(self, run_id: str) -> Path:
-        path = self._run_directory(run_id) / "trace"
+    def _run_output_directory(self, run_id: str) -> Path:
+        path = self._run_directory(run_id) / "output"
         path.mkdir(exist_ok=True)
         return path
 
     def _run_overview_path(self, run_id: str) -> Path:
         return self._run_directory(run_id).with_suffix(".json")
 
-    def _output_directory(self, run_id: str) -> Path:
-        path = self._run_directory(run_id) / "output"
+    def _trace_directory(self, run_id: str) -> Path:
+        path = self._run_directory(run_id) / "trace"
         path.mkdir(exist_ok=True)
         return path
+
+    def _example_trace_path(self, run_id: str, example_id: str) -> Path:
+        return (self._trace_directory(run_id) / example_id).with_suffix(".jsonl")
 
     @staticmethod
     def _parse_log(log_path: Path) -> InMemoryTracer:
         return FileTracer(log_path).trace()
 
     def _example_output_path(self, run_id: str, example_id: str) -> Path:
-        return (self._output_directory(run_id) / example_id).with_suffix(".json")
+        return (self._run_output_directory(run_id) / example_id).with_suffix(".json")
 
 
 class InMemoryRunRepository(RunRepository):
@@ -307,7 +328,7 @@ class InMemoryRunRepository(RunRepository):
         self._example_traces[f"{run_id}/{example_id}"] = tracer
         return tracer
 
-    def example_outputs(
+    def run_example_outputs(
         self, run_id: str, output_type: type[Output]
     ) -> Iterable[ExampleOutput[Output]]:
         return (
@@ -318,5 +339,10 @@ class InMemoryRunRepository(RunRepository):
             )
         )
 
-    def example_output_ids(self) -> Sequence[str]:
-        return sorted(list(self._example_outputs.keys()))
+    def run_example_output_ids(self, run_id: str) -> Sequence[str]:
+        return sorted(
+            [
+                example_output.example_id
+                for example_output in self._example_outputs[run_id]
+            ]
+        )

@@ -231,7 +231,7 @@ class Evaluator(Generic[Input, Output, ExpectedOutput, Evaluation]):
 
         examples_zipped: Iterable[tuple[ExampleOutput[Output], ...]] = zip(
             *(
-                self._run_repository.example_outputs(
+                self._run_repository.run_example_outputs(
                     run_overview.id, self.output_type()
                 )
                 for run_overview in run_overviews

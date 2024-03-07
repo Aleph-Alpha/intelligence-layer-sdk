@@ -25,7 +25,7 @@ def test_runner_runs_dataset(
     dataset_id = in_memory_dataset_repository.create_dataset(examples=examples)
     overview = runner.run_dataset(dataset_id)
     outputs = list(
-        in_memory_run_repository.example_outputs(
+        in_memory_run_repository.run_example_outputs(
             overview.id, output_type=runner.output_type()
         )
     )
