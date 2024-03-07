@@ -1,7 +1,10 @@
+import json
 from datetime import datetime
 from typing import Optional, Union
 from uuid import UUID
 
+import requests
+import rich
 from pydantic import BaseModel, Field, SerializeAsAny
 from rich.tree import Tree
 
@@ -77,9 +80,18 @@ class InMemoryTracer(BaseModel, Tracer):
 
     def _ipython_display_(self) -> None:
         """Default rendering for Jupyter notebooks"""
-        from rich import print
 
-        print(self._rich_render_())
+        self.submit_to_trace_viewer()
+        rich.print(self._rich_render_())
+
+    def submit_to_trace_viewer(self) -> None:
+        """Submits the trace to the UI for visualization"""
+        requests.post(
+            "http://localhost:3000/trace", json=json.loads(self.model_dump_json())
+        )
+        rich.print(
+            "Open the [link=http://localhost:3000]Trace Viewer[/link] to view the trace."
+        )
 
 
 class InMemorySpan(InMemoryTracer, Span):

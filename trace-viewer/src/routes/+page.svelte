@@ -8,7 +8,7 @@
 
 <div class="flex h-screen flex-col gap-2 p-2">
 	<h1 class="font-extrabold">Aleph Alpha Intelligence Layer</h1>
-	{#if $activeTrace}
+	{#if data.trace}
 		<TraceViewer trace={data.trace} />
 	{:else}
 		<TracePicker />

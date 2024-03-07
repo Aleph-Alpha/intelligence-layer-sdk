@@ -35,21 +35,25 @@ export type Span = Tracer & {
 	end_timestamp: string | null;
 	trace_id: string;
 };
-const span: z.ZodType<Span> = tracer.and(z.object({
-	name: z.string(),
-	start_timestamp: z.string(),
-	end_timestamp: z.string().nullable(),
-	trace_id: z.string()
-}));
+const span: z.ZodType<Span> = tracer.and(
+	z.object({
+		name: z.string(),
+		start_timestamp: z.string(),
+		end_timestamp: z.string().nullable(),
+		trace_id: z.string()
+	})
+);
 
 export type TaskSpan = Span & {
 	input: JSONValue;
 	output: JSONValue;
 };
-const taskSpan: z.ZodType<TaskSpan> = span.and(z.object({
-	input: jsonSchema,
-	output: jsonSchema
-}));
+const taskSpan: z.ZodType<TaskSpan> = span.and(
+	z.object({
+		input: jsonSchema,
+		output: jsonSchema
+	})
+);
 
 export function isLogEntry(entry: Entry): entry is LogEntry {
 	return 'message' in entry;
