@@ -11,14 +11,15 @@ const jsonSchema: z.ZodType<JSONValue> = z.lazy(() =>
 const logEntry = z.object({
 	message: z.string(),
 	value: jsonSchema,
-	timestamp: z.string()
+	timestamp: z.string(),
+	trace_id: z.string()
 });
 export type LogEntry = z.infer<typeof logEntry>;
 
-export type Entry = LogEntry | Span | TaskSpan;
+export type Entry = TaskSpan | Span | LogEntry;
 export type SpanEntry = Span | TaskSpan;
 
-const entry: z.ZodType<Entry> = z.lazy(() => z.union([logEntry, taskSpan, span]));
+const entry: z.ZodType<Entry> = z.lazy(() => z.union([taskSpan, logEntry, span]));
 
 // eslint-disable-next-line @typescript-eslint/consistent-type-definitions
 export type Tracer = {
@@ -31,27 +32,24 @@ export const tracer: z.ZodType<Tracer> = z.object({
 export type Span = Tracer & {
 	name: string;
 	start_timestamp: string;
-	end_timestamp: string;
+	end_timestamp: string | null;
+	trace_id: string;
 };
-const span: z.ZodType<Span> = z.object({
-	entries: z.array(entry),
+const span: z.ZodType<Span> = tracer.and(z.object({
 	name: z.string(),
 	start_timestamp: z.string(),
-	end_timestamp: z.string()
-});
+	end_timestamp: z.string().nullable(),
+	trace_id: z.string()
+}));
 
 export type TaskSpan = Span & {
 	input: JSONValue;
 	output: JSONValue;
 };
-const taskSpan: z.ZodType<TaskSpan> = z.object({
-	entries: z.array(entry),
-	name: z.string(),
-	start_timestamp: z.string(),
-	end_timestamp: z.string(),
+const taskSpan: z.ZodType<TaskSpan> = span.and(z.object({
 	input: jsonSchema,
 	output: jsonSchema
-});
+}));
 
 export function isLogEntry(entry: Entry): entry is LogEntry {
 	return 'message' in entry;
