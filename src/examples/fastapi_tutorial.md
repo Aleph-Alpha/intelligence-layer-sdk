@@ -1,6 +1,6 @@
 # Tutorial: Extending a FastAPI App with the Aleph-Alpha Intelligence Layer
 
-In this tutorial, a basic [FastAPI](https://fastapi.tiangolo.com) app is extended with new route at which a summary for a given text can be retrieved, using the _Aleph-Alpha Intelligence Layer_ and it's _Luminous_ control models.
+In this tutorial, a basic [FastAPI](https://fastapi.tiangolo.com) app is extended with new route at which a summary for a given text can be retrieved, using the _Aleph-Alpha Intelligence Layer_, and it's _Luminous_ control models.
 
 The full source code for this tutorial app can be found at the end and in [src/examples/fastapi_example.py](./fastapi_example.py).
 
@@ -115,9 +115,7 @@ def summary_task_route(
             Depends(summary_task)
         ],
 ) -> SummarizeOutput:
-
-    return task.run(input, NoOpTracer()) or \
-        Response(status_code=HTTPStatus.NO_CONTENT)
+    return task.run(input, NoOpTracer())
 ```
 
 This concludes the refactoring to add an Intelligence-Layer task to the FastAPI app. After restarting the server, we can call our endpoint via a command such as the following (`<your text here>` with the text you want to summarize):
@@ -129,7 +127,7 @@ curl -X POST http://localhost:8000/summary -H "Content-Type: application/json" -
 ## Add Authorization to the Routes
 
 Typically, authorization is needed to control access to endpoints.
-Here, we will give a minimal example of how an per-route authorization system could be implemented in the minimal example app.
+Here, we will give a minimal example of how a per-route authorization system could be implemented in the minimal example app.
 
 The authorization system makes use of two parts: An `AuthService` that checks whether the user is allowed to access a given site, and a `PermissionsChecker` that is called on each route access and in turn calls the `AuthService`.
 
@@ -163,7 +161,7 @@ class PermissionChecker:
     def __call__(
         self,
         request: Request,
-        auth_service=AuthService(),
+        auth_service:Annotated[AuthService, Depends(AuthService)],
     ) -> None:
         token = request.headers.get("Authorization")
         try:
@@ -190,8 +188,7 @@ def summary_task_route(
         Depends(summary_task)
     ],
 ) -> SummarizeOutput:
-    return task.run(input, NoOpTracer()) or \
-        Response(status_code=HTTPStatus.NO_CONTENT)
+    return task.run(input, NoOpTracer())
 
 ```
 
@@ -199,6 +196,7 @@ def summary_task_route(
 ## Complete Source
 
 ```python
+import http
 import os
 from http import HTTPStatus
 from typing import Annotated, Sequence
@@ -241,9 +239,9 @@ class PermissionChecker:
         self.permissions = permissions
 
     def __call__(
-        self,
-        request: Request,
-        auth_service: AuthService = AuthService(),
+            self,
+            request: Request,
+            auth_service: Annotated[AuthService, Depends(AuthService)],
     ) -> None:
         token = request.headers.get("Authorization") or ""
         try:
@@ -257,6 +255,7 @@ permission_checker_for_user = PermissionChecker(["User"])
 
 
 # Intelligence Layer Task ######################################################
+
 load_dotenv()
 
 
@@ -268,24 +267,28 @@ def client() -> Client:
 
 
 def default_model(
-    app_client: Annotated[AlephAlphaClientProtocol, Depends(client)]
+        app_client: Annotated[AlephAlphaClientProtocol, Depends(client)]
 ) -> LuminousControlModel:
     return LuminousControlModel(client=app_client)
 
 
 def summary_task(
-    model: Annotated[LuminousControlModel, Depends(default_model)],
+        model: Annotated[LuminousControlModel, Depends(default_model)],
 ) -> SteerableSingleChunkSummarize:
     return SteerableSingleChunkSummarize(model)
 
 
-@app.post("/summary", dependencies=[Depends(permission_checker_for_user)])
+@app.post(
+    "/summary",
+    dependencies=[Depends(PermissionChecker(["User"]))],
+    status_code=http.HTTPStatus.OK,
+)
 def summary_task_route(
-    input: SingleChunkSummarizeInput,
-    task: Annotated[
-        Task[SingleChunkSummarizeInput, SummarizeOutput], Depends(summary_task)
-    ],
-) -> SummarizeOutput | Response:
-    return task.run(input, NoOpTracer()) or Response(status_code=HTTPStatus.NO_CONTENT)
+        input: SingleChunkSummarizeInput,
+        task: Annotated[
+            Task[SingleChunkSummarizeInput, SummarizeOutput], Depends(summary_task)
+        ],
+) -> SummarizeOutput:
+    return task.run(input, NoOpTracer())
 
 ```
