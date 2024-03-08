@@ -87,10 +87,10 @@ class InMemoryTracer(BaseModel, Tracer):
     def submit_to_trace_viewer(self) -> None:
         """Submits the trace to the UI for visualization"""
         requests.post(
-            "http://localhost:3000/trace", json=json.loads(self.model_dump_json())
+            "http://localhost:5173/trace", json=json.loads(self.model_dump_json())
         )
         rich.print(
-            "Open the [link=http://localhost:3000]Trace Viewer[/link] to view the trace."
+            "Open the [link=http://localhost:5173]Trace Viewer[/link] to view the trace."
         )
 
 

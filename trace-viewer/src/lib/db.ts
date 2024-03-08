@@ -7,9 +7,6 @@ export function set(value: Tracer | null): void {
 }
 
 export function get(): Tracer | null {
-	if (db === null) {
-		throw new Error('Database is not set.');
-	}
 	return db;
 }
 

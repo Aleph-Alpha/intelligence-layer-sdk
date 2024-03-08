@@ -1,6 +1,12 @@
-import { get } from '$lib/db';
+import { clear, get } from '$lib/db';
+import { activeTrace } from '$lib/active';
 import type { PageServerLoad } from './$types';
 export const load: PageServerLoad = () => {
-	const trace = get();
-	return { trace: trace };
+	return { trace: get() };
+};
+
+export const actions = {
+	default: async (event) => {
+		clear();
+	}
 };
