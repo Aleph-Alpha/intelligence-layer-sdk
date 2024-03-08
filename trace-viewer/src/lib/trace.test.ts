@@ -12,6 +12,7 @@ describe('trace', () => {
 	test('parser works for span', () => {
 		const basicTrace =
 			'{"entries":[{"entries":[],"name":"test","start_timestamp":"2024-03-07T15:08:11.069884Z","end_timestamp":"2024-03-07T15:08:11.069884Z","trace_id":"7771aee4-b305-4504-850d-ebabed761eea"}]}';
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 		const parsedTrace = JSON.parse(basicTrace);
 		const serializedTrace = tracer.parse(parsedTrace);
 		expect(serializedTrace).toEqual(parsedTrace);
@@ -20,6 +21,7 @@ describe('trace', () => {
 	test('parser works for task span', () => {
 		const basicTrace =
 			'{"entries":[{"entries":[],"name":"test","start_timestamp":"2024-03-07T15:18:30.377538Z","end_timestamp":null,"trace_id":"89e151f1-2379-47fc-954b-56e1953edd03","input":"input","output":null}]}';
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 		const parsedTrace = JSON.parse(basicTrace);
 		const serializedTrace = tracer.parse(parsedTrace);
 		expect(serializedTrace).toEqual(parsedTrace);
@@ -27,6 +29,7 @@ describe('trace', () => {
 	test('parser works for span with log', () => {
 		const basicTrace =
 			'{"entries":[{"entries":[{"message":"test","value":"value","timestamp":"2024-03-07T15:19:38.977970Z","trace_id":"697a9e44-47b4-4dfe-8c61-f65e676f1de7"}],"name":"test","start_timestamp":"2024-03-07T15:19:38.977896Z","end_timestamp":null,"trace_id":"697a9e44-47b4-4dfe-8c61-f65e676f1de7"}]}';
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 		const parsedTrace = JSON.parse(basicTrace);
 		const serializedTrace = tracer.parse(parsedTrace);
 		expect(serializedTrace).toEqual(parsedTrace);
@@ -34,6 +37,7 @@ describe('trace', () => {
 	test('parser works for nested spans', () => {
 		const basicTrace =
 			'{"entries":[{"entries":[],"name":"test","start_timestamp":"2024-03-07T15:18:30.377538Z","end_timestamp":null,"trace_id":"89e151f1-2379-47fc-954b-56e1953edd03","input":"input","output":null}]}';
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 		const parsedTrace = JSON.parse(basicTrace);
 		const serializedTrace = tracer.parse(parsedTrace);
 		expect(serializedTrace).toEqual(parsedTrace);

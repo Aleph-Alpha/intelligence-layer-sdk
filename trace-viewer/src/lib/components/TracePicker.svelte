@@ -1,8 +1,7 @@
 <script lang="ts">
-	import { activeTrace } from '$lib/active';
 	import { tracer } from '$lib/trace';
 	import { parseTraceFile } from '$lib/tracefile.parser';
-
+	import { set } from '$lib/db';
 	let files: FileList;
 	// Reset on refresh
 	let value = '';
@@ -24,7 +23,7 @@
 			name="trace-file"
 			bind:value
 			on:change={(e) => {
-				activeTrace.set(tracer.parse(JSON.parse(e.currentTarget.value)));
+				set(tracer.parse(JSON.parse(e.currentTarget.value)));
 			}}
 		/>
 
@@ -37,7 +36,7 @@
 			bind:files
 			on:change={async (file) => {
 				const firstFile = file.currentTarget?.files?.item(0);
-				firstFile && activeTrace.set(await parseTraceFile(firstFile));
+				firstFile && set(await parseTraceFile(firstFile));
 			}}
 		/>
 	</div>

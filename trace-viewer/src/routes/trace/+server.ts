@@ -1,15 +1,10 @@
 import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import { set } from '$lib/db';
-import { get } from '$lib/db';
+import { tracer } from '$lib/trace';
 
-export const POST: RequestHandler = async ({ request, locals }) => {
-	const trace = await request.json();
-	set('trace', trace); // Store the trace in the database
+export const POST: RequestHandler = async ({ request }) => {
+	const trace = tracer.parse(JSON.parse((await request.json()) as string));
+	set(trace);
 	return json({ status: 'success', message: 'Trace successfully parsed and set.' });
 };
-
-// export const GET: RequestHandler = async () => {
-// 	const trace = get('trace');
-// 	return json({ trace });
-// };

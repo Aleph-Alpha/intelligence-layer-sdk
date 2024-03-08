@@ -1,5 +1,4 @@
 <script lang="ts">
-	import { activeTrace } from '$lib/active';
 	import TracePicker from '$lib/components/TracePicker.svelte';
 	import TraceViewer from '$lib/components/TraceViewer.svelte';
 	import type { PageData } from './$types';

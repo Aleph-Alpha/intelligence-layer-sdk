@@ -6,11 +6,7 @@ declare global {
 		// interface Locals {}
 		// interface PageData {}
 		// interface Platform {}
-		interface Locals {
-			globalTrace: number = 1;
-			//
-		}
 	}
 }
 
-export { };
+export {};
