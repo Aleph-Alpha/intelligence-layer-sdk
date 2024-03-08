@@ -1,5 +1,4 @@
 from datetime import datetime
-from itertools import product
 from typing import Iterable, Sequence, cast
 from uuid import uuid4
 
@@ -117,40 +116,6 @@ def test_can_store_and_return_example_evaluation_tracer_and_trace(
     assert example_trace == expected_trace
 
 
-@mark.parametrize(
-    "repository_fixture",
-    test_repository_fixtures,
-)
-def test_example_outputs_returns_sorted_example_outputs(
-    repository_fixture: str,
-    request: FixtureRequest,
-    run_overviews: Sequence[RunOverview],
-) -> None:
-    run_repository: RunRepository = request.getfixturevalue(repository_fixture)
-    some_run_overviews = run_overviews[:2]
-
-    for run_overview in some_run_overviews:
-        run_repository.store_run_overview(run_overview)
-
-    example_ids = [str(uuid4()) for _ in range(10)]
-    expected_example_outputs = []
-    for run_id, example_id in product(
-        [run_overview.id for run_overview in some_run_overviews], example_ids
-    ):
-        example_output = ExampleOutput(
-            run_id=run_id, example_id=example_id, output=None
-        )
-        run_repository.store_example_output(example_output)
-        expected_example_outputs.append(example_output)
-
-    example_outputs = list(run_repository.example_outputs(type(None)))
-
-    assert example_outputs == sorted(
-        expected_example_outputs,
-        key=lambda example: (example.run_id, example.example_id),
-    )
-
-
 @mark.parametrize("repository_fixture", test_repository_fixtures)
 def test_run_example_output_ids_returns_all_sorted_ids(
     repository_fixture: str, request: FixtureRequest, run_overview: RunOverview
@@ -164,7 +129,7 @@ def test_run_example_output_ids_returns_all_sorted_ids(
         )
         run_repository.store_example_output(example_output)
 
-    example_output_ids = run_repository.run_example_output_ids(run_overview.id)
+    example_output_ids = run_repository.example_output_ids(run_overview.id)
 
     assert example_output_ids == sorted(example_ids)
 
@@ -187,9 +152,7 @@ def test_run_example_outputs_returns_sorted_run_example_outputs(
         run_repository.store_example_output(example_output)
         expected_example_outputs.append(example_output)
 
-    example_outputs = list(
-        run_repository.run_example_outputs(run_overview.id, type(None))
-    )
+    example_outputs = list(run_repository.example_outputs(run_overview.id, type(None)))
 
     assert example_outputs == sorted(
         expected_example_outputs,

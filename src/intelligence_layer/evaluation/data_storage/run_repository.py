@@ -121,26 +121,8 @@ class RunRepository(ABC):
         """
         ...
 
-    def example_outputs(
-        self, output_type: type[Output]
-    ) -> Iterable[ExampleOutput[Output]]:
-        """Returns all :class:`ExampleOutput`s sorted by their run ID and example ID.
-
-        Args:
-            output_type: Type of output that the `Task` returned in :func:`Task.do_run`
-
-        Returns:
-            :class:`Iterable` of :class:`ExampleOutput`s.
-        """
-        run_ids = self.run_overview_ids()
-        for run_id in run_ids:
-            for example_id in self.run_example_output_ids(run_id):
-                example_output = self.example_output(run_id, example_id, output_type)
-                if example_output is not None:
-                    yield example_output
-
     @abstractmethod
-    def run_example_outputs(
+    def example_outputs(
         self, run_id: str, output_type: type[Output]
     ) -> Iterable[ExampleOutput[Output]]:
         """Returns all :class:`ExampleOutput` for a given run ID sorted by their example ID.
@@ -155,7 +137,7 @@ class RunRepository(ABC):
         ...
 
     @abstractmethod
-    def run_example_output_ids(self, run_id: str) -> Sequence[str]:
+    def example_output_ids(self, run_id: str) -> Sequence[str]:
         """Returns the sorted IDs of all :class:`ExampleOutput`s for a given run ID.
 
         Args:
@@ -217,7 +199,7 @@ class FileRunRepository(RunRepository, FileBasedRepository):
         file_path = self._example_trace_path(run_id, example_id)
         return FileTracer(file_path)
 
-    def run_example_outputs(
+    def example_outputs(
         self, run_id: str, output_type: type[Output]
     ) -> Iterable[ExampleOutput[Output]]:
         def load_example_output(
@@ -238,7 +220,7 @@ class FileRunRepository(RunRepository, FileBasedRepository):
             key=lambda _example_output: _example_output.example_id,
         )
 
-    def run_example_output_ids(self, run_id: str) -> Sequence[str]:
+    def example_output_ids(self, run_id: str) -> Sequence[str]:
         return sorted(
             [path.stem for path in self._run_output_directory(run_id).glob("*.json")]
         )
@@ -328,7 +310,7 @@ class InMemoryRunRepository(RunRepository):
         self._example_traces[f"{run_id}/{example_id}"] = tracer
         return tracer
 
-    def run_example_outputs(
+    def example_outputs(
         self, run_id: str, output_type: type[Output]
     ) -> Iterable[ExampleOutput[Output]]:
         return (
@@ -339,7 +321,7 @@ class InMemoryRunRepository(RunRepository):
             )
         )
 
-    def run_example_output_ids(self, run_id: str) -> Sequence[str]:
+    def example_output_ids(self, run_id: str) -> Sequence[str]:
         return sorted(
             [
                 example_output.example_id
