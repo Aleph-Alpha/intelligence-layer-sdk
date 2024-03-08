@@ -75,10 +75,12 @@ Reply with only the class label."""
         self,
         model: ControlModel | None = None,
         echo: Task[EchoInput, EchoOutput] | None = None,
+        instruction: str = INSTRUCTION,
     ) -> None:
         super().__init__()
         self._model = model or LuminousControlModel("luminous-base-control")
         self._echo_task = echo or Echo(self._model)
+        self.instruction = instruction
 
     def do_run(
         self, input: ClassifyInput, task_span: TaskSpan
@@ -102,7 +104,7 @@ Reply with only the class label."""
         task_span: TaskSpan,
     ) -> Mapping[str, Sequence[TokenWithLogProb]]:
         prompt = self._model.to_instruct_prompt(
-            instruction=self.INSTRUCTION, input=text_to_classify
+            instruction=self.instruction, input=text_to_classify
         )
         inputs = (
             EchoInput(
