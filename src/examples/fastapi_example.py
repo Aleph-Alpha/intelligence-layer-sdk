@@ -1,3 +1,4 @@
+import http
 import os
 from http import HTTPStatus
 from typing import Annotated, Sequence
@@ -42,7 +43,7 @@ class PermissionChecker:
     def __call__(
         self,
         request: Request,
-        auth_service: AuthService = AuthService(),
+        auth_service: Annotated[AuthService, Depends(AuthService)],
     ) -> None:
         token = request.headers.get("Authorization") or ""
         try:
@@ -55,7 +56,7 @@ class PermissionChecker:
 permission_checker_for_user = PermissionChecker(["User"])
 
 
-# Intelligence Layer Task ######################################################
+# # Intelligence Layer Task ######################################################
 load_dotenv()
 
 
@@ -78,11 +79,15 @@ def summary_task(
     return SteerableSingleChunkSummarize(model)
 
 
-@app.post("/summary", dependencies=[Depends(permission_checker_for_user)])
+@app.post(
+    "/summary",
+    dependencies=[Depends(PermissionChecker(["User"]))],
+    status_code=http.HTTPStatus.OK,
+)
 def summary_task_route(
     input: SingleChunkSummarizeInput,
     task: Annotated[
         Task[SingleChunkSummarizeInput, SummarizeOutput], Depends(summary_task)
     ],
-) -> SummarizeOutput | Response:
-    return task.run(input, NoOpTracer()) or Response(status_code=HTTPStatus.NO_CONTENT)
+) -> SummarizeOutput:
+    return task.run(input, NoOpTracer())
