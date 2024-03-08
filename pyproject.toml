@@ -35,7 +35,7 @@ opentelemetry-sdk = "^1.22.0"
 huggingface-hub = "^0.21.4"
 
 [tool.poetry.group.dev.dependencies]
-mypy = "^1.8.0"
+mypy = "^1.9.0"
 pytest = "*"
 black = { extras = ["jupyter"], version = "^24.2.0" }
 pre-commit = "*"
@@ -50,7 +50,7 @@ types-tqdm = "*"
 sphinx-rtd-theme = "^2.0.0"
 sphinx = "^7.2.6"
 pylama = { extras = ["all", "toml"], version = "^8.4.1" }
-faker = "^24.0.0"
+faker = "^24.1.0"
 hypercorn = "0.16.0"
 
 [tool.mypy]
