@@ -38,6 +38,12 @@ from .classify.keyword_extract import KeywordExtractInput as KeywordExtractInput
 from .classify.keyword_extract import KeywordExtractOutput as KeywordExtractOutput
 from .classify.prompt_based_classify import PromptBasedClassify as PromptBasedClassify
 from .classify.prompt_based_classify import TreeNode as TreeNode
+from .classify.prompt_based_classify_with_definitions import (
+    LabelWithDefinition as LabelWithDefinition,
+)
+from .classify.prompt_based_classify_with_definitions import (
+    PromptBasedClassifyWithDefinitions as PromptBasedClassifyWithDefinitions,
+)
 from .qa.long_context_qa import LongContextQa as LongContextQa
 from .qa.long_context_qa import LongContextQaInput as LongContextQaInput
 from .qa.multiple_chunk_qa import MultipleChunkQa as MultipleChunkQa

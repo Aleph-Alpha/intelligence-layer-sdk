@@ -6,7 +6,6 @@ from aleph_alpha_client import Tokens
 from pydantic import BaseModel
 
 from intelligence_layer.core import (
-    ControlModel,
     Echo,
     EchoInput,
     EchoOutput,
@@ -73,7 +72,9 @@ Reply with only the class label."""
 
     def __init__(
         self,
-        model: ControlModel | None = None,
+        model: (
+            LuminousControlModel | None
+        ) = None,  # Must use LuminousControl model due to custom logic
         echo: Task[EchoInput, EchoOutput] | None = None,
         instruction: str = INSTRUCTION,
     ) -> None:
