@@ -329,6 +329,19 @@ class EvaluationOverview(BaseModel, frozen=True):
     start: Optional[datetime]
     description: str
 
+    def __str__(self) -> str:
+        run_overview_str: str = "Run Overviews={\n"
+        for overview in self.run_overviews:
+            run_overview_str += f"{overview}"
+        run_overview_str += "}\n"
+
+        return (
+            f"Evaluation Overview ID={self.id}\n"
+            f"Start time={self.start}\n"
+            f'Description="{self.description}"\n'
+            f"{run_overview_str}"
+        )
+
 
 class EvaluationFailed(Exception):
     def __init__(self, evaluation_id: str, failed_count: int) -> None:
