@@ -32,8 +32,9 @@ def test_dataset_repository_can_create_and_store_a_dataset(
     request: FixtureRequest,
 ) -> None:
     dataset_repository: DatasetRepository = request.getfixturevalue(repository_fixture)
+
     dataset_id = dataset_repository.create_dataset(examples=[dummy_string_example])
-    examples = list(
+    stored_examples = list(
         dataset_repository.examples(
             dataset_id,
             input_type=DummyStringInput,
@@ -41,9 +42,54 @@ def test_dataset_repository_can_create_and_store_a_dataset(
         )
     )
 
-    assert len(examples) == 1
-    assert examples[0].input == dummy_string_example.input
-    assert examples[0].expected_output == dummy_string_example.expected_output
+    assert len(stored_examples) == 1
+    assert stored_examples[0] == dummy_string_example
+
+
+@mark.parametrize(
+    "repository_fixture",
+    test_repository_fixtures,
+)
+def test_delete_dataset_deletes_a_dataset(
+    repository_fixture: str,
+    dummy_string_examples: Iterable[Example[DummyStringInput, DummyStringOutput]],
+    request: FixtureRequest,
+) -> None:
+    dataset_repository: DatasetRepository = request.getfixturevalue(repository_fixture)
+    dataset_id = dataset_repository.create_dataset(dummy_string_examples)
+
+    dataset_repository.delete_dataset(dataset_id)
+    dataset_ids = dataset_repository.dataset_ids()
+    examples = list(
+        dataset_repository.examples(dataset_id, DummyStringInput, DummyStringOutput)
+    )
+
+    assert dataset_id not in dataset_ids
+    assert len(examples) == 0
+
+    dataset_repository.delete_dataset(
+        dataset_id
+    )  # tests whether function is idempotent
+
+
+@mark.parametrize(
+    "repository_fixture",
+    test_repository_fixtures,
+)
+def test_dataset_ids_returns_all_sorted_ids(
+    repository_fixture: str,
+    request: FixtureRequest,
+    dummy_string_examples: Iterable[Example[DummyStringInput, DummyStringOutput]],
+) -> None:
+    dataset_repository: DatasetRepository = request.getfixturevalue(repository_fixture)
+    dataset_ids = [
+        dataset_repository.create_dataset(examples=dummy_string_examples)
+        for _ in range(10)
+    ]
+
+    stored_dataset_ids = dataset_repository.dataset_ids()
+
+    assert stored_dataset_ids == sorted(dataset_ids)
 
 
 @mark.parametrize(
@@ -136,58 +182,3 @@ def test_example_returns_none_for_not_existing_dataset_id_or_example_id(
     ]
 
     assert examples == [None, None, None]
-
-
-@mark.parametrize(
-    "repository_fixture",
-    test_repository_fixtures,
-)
-def test_delete_dataset_deletes_a_dataset(
-    repository_fixture: str,
-    dummy_string_examples: Iterable[Example[DummyStringInput, DummyStringOutput]],
-    request: FixtureRequest,
-) -> None:
-    dataset_repository: DatasetRepository = request.getfixturevalue(repository_fixture)
-    dataset_id = dataset_repository.create_dataset(dummy_string_examples)
-
-    dataset_repository.delete_dataset(dataset_id)
-
-    dataset_ids = dataset_repository.dataset_ids()
-    examples = list(
-        dataset_repository.examples(dataset_id, DummyStringInput, DummyStringOutput)
-    )
-
-    assert dataset_id not in dataset_ids
-    assert len(examples) == 0
-
-    dataset_repository.delete_dataset(
-        dataset_id
-    )  # tests whether function is idempotent
-
-
-@mark.parametrize(
-    "repository_fixture",
-    test_repository_fixtures,
-)
-def test_dataset_ids_returns_all_sorted_ids(
-    repository_fixture: str,
-    request: FixtureRequest,
-) -> None:
-    dataset_repository: DatasetRepository = request.getfixturevalue(repository_fixture)
-    dataset_ids = []
-
-    for i in range(0, 10):
-        dataset_ids.append(
-            dataset_repository.create_dataset(
-                examples=[
-                    Example(
-                        input=DummyStringInput.any(),
-                        expected_output=DummyStringOutput.any(),
-                    )
-                ]
-            )
-        )
-
-    saved_dataset_ids = dataset_repository.dataset_ids()
-
-    assert saved_dataset_ids == sorted(dataset_ids)
