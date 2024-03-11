@@ -379,3 +379,10 @@ class Example(BaseModel, Generic[Input, ExpectedOutput]):
     input: Input
     expected_output: ExpectedOutput
     id: str = Field(default_factory=lambda: str(uuid4()))
+
+    def __str__(self) -> str:
+        return (
+            f"Example ID={self.id}\n"
+            f"Input={self.input}\n"
+            f'Expected output="{self.expected_output}"\n'
+        )
