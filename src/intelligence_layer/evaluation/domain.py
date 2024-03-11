@@ -300,6 +300,16 @@ class ExampleEvaluation(BaseModel, Generic[Evaluation]):
     example_id: str
     result: SerializeAsAny[Evaluation | FailedExampleEvaluation]
 
+    def __repr__(self) -> str:
+        return self.__str__()
+
+    def __str__(self) -> str:
+        return (
+            f"Evaluation ID={self.evaluation_id}\n"
+            f"Example ID={self.example_id}\n"
+            f"Result={self.result}\n"
+        )
+
 
 class EvaluationOverview(BaseModel, frozen=True):
     """Overview of the un-aggregated results of evaluating a :class:`Task` on a dataset.
