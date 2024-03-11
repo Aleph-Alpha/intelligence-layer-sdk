@@ -205,6 +205,13 @@ class ExampleOutput(BaseModel, Generic[Output]):
     example_id: str
     output: Output | FailedExampleRun
 
+    def __str__(self) -> str:
+        return (
+            f"Run ID={self.run_id}\n"
+            f"Example ID={self.example_id}\n"
+            f'Output="{self.output}"\n'
+        )
+
 
 class SuccessfulExampleOutput(BaseModel, Generic[Output]):
     """Successful output of a single evaluated :class:`Example`
