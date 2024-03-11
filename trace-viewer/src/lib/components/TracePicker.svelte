@@ -1,8 +1,8 @@
 <script lang="ts">
 	import { activeTrace } from '$lib/active';
 	import { tracer, type Tracer } from '$lib/trace';
-	import { randomTracer } from '$lib/trace.test_utils';
 	import { parseTraceFile } from '$lib/tracefile.parser';
+	import { enhance } from '$app/forms';
 
 	let files: FileList;
 	// Reset on refresh
@@ -22,7 +22,7 @@
 			>JSON output from InMemoryTracer
 		</label>
 		<textarea
-			class="focus:border-accent appearance-none border-0 bg-white font-mono font-medium text-gray-950 shadow outline-none ring-1 ring-gray-950/20 placeholder:text-gray-400 focus:ring-gray-950"
+			class="appearance-none border-0 bg-white font-mono font-medium text-gray-950 shadow outline-none ring-1 ring-gray-950/20 placeholder:text-gray-400 focus:border-accent focus:ring-gray-950"
 			id="trace-json"
 			name="trace-file"
 			bind:value
@@ -47,11 +47,22 @@
 			}}
 		/>
 
-		<form method="POST" action={submitAction}>
-			<button
-				class="rounded bg-blue-500 px-4 py-2 font-bold text-white hover:bg-blue-700"
-				on:click={() => activeTrace.set(trace)}>Submit</button
+		<form
+			method="POST"
+			action={submitAction}
+			use:enhance={() => {
+				return ({ result }) => {
+					if (result.type === 'success') {
+						activeTrace.set(trace);
+					}
+				};
+			}}
+		>
+			<input type="hidden" name="trace" value={JSON.stringify(trace)} required />
+			<button class="rounded bg-blue-500 px-4 py-2 font-bold text-white hover:bg-blue-700"
+				>Submit</button
 			>
+			<!--on:click={() =>activeTrace.set(trace)}-->
 		</form>
 	</div>
 </div>
