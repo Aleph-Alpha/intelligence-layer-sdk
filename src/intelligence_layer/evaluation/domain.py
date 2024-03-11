@@ -268,6 +268,9 @@ class RunOverview(BaseModel, frozen=True):
     successful_example_count: int
     description: str
 
+    def __repr__(self) -> str:
+        return self.__str__()
+
     def __str__(self) -> str:
         return (
             f"Run Overview ID={self.id}\n"
