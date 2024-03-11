@@ -261,6 +261,17 @@ class RunOverview(BaseModel, frozen=True):
     successful_example_count: int
     description: str
 
+    def __str__(self) -> str:
+        return (
+            f"Run Overview ID={self.id}\n"
+            f"Dataset ID={self.dataset_id}\n"
+            f"Start time={self.start}\n"
+            f"End time={self.end}\n"
+            f"Failed example count={self.failed_example_count}\n"
+            f"Successful example count={self.successful_example_count}\n"
+            f'Description="{self.description}"\n'
+        )
+
 
 class ExampleEvaluation(BaseModel, Generic[Evaluation]):
     """Evaluation of a single evaluated :class:`Example`
