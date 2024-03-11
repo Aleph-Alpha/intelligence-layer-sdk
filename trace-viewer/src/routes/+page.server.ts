@@ -1,4 +1,4 @@
-import { clear, get } from '$lib/db';
+import { clear, get, set } from '$lib/db';
 import { activeTrace } from '$lib/active';
 import type { PageServerLoad } from './$types';
 export const load: PageServerLoad = () => {
@@ -6,7 +6,11 @@ export const load: PageServerLoad = () => {
 };
 
 export const actions = {
-	default: async (event) => {
+	clearTrace: () => {
+		clear();
+	},
+	setTrace: () => {
+		console.log("Set")
 		clear();
 	}
 };

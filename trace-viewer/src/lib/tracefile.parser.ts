@@ -69,6 +69,12 @@ const logLine = z.discriminatedUnion('entry_type', [
 
 export type LogLine = z.infer<typeof logLine>;
 
+export async function readFile(file: File): Promise<string> {
+	return (await file.text())
+		.split(/\r?\n/)
+		.filter(Boolean)
+}
+
 export async function parseTraceFile(file: File): Promise<Tracer> {
 	return parseLogLines(
 		(await file.text())

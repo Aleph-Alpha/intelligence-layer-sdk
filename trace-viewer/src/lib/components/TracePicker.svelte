@@ -1,11 +1,14 @@
 <script lang="ts">
 	import { activeTrace } from '$lib/active';
-	import { tracer } from '$lib/trace';
+	import { tracer, type Tracer } from '$lib/trace';
+	import { randomTracer } from '$lib/trace.test_utils';
 	import { parseTraceFile } from '$lib/tracefile.parser';
 
 	let files: FileList;
 	// Reset on refresh
 	let value = '';
+	let trace: Tracer;
+	export let submitAction = '?/setTrace';
 </script>
 
 <!--
@@ -19,12 +22,13 @@
 			>JSON output from InMemoryTracer
 		</label>
 		<textarea
-			class="appearance-none border-0 bg-white font-mono font-medium text-gray-950 shadow outline-none ring-1 ring-gray-950/20 placeholder:text-gray-400 focus:border-accent focus:ring-gray-950"
+			class="focus:border-accent appearance-none border-0 bg-white font-mono font-medium text-gray-950 shadow outline-none ring-1 ring-gray-950/20 placeholder:text-gray-400 focus:ring-gray-950"
 			id="trace-json"
 			name="trace-file"
 			bind:value
 			on:change={(e) => {
-				activeTrace.set(tracer.parse(JSON.parse(e.currentTarget.value)));
+				const newTrace = tracer.parse(JSON.parse(e.currentTarget.value));
+				trace = newTrace ?? trace;
 			}}
 		/>
 
@@ -37,8 +41,17 @@
 			bind:files
 			on:change={async (file) => {
 				const firstFile = file.currentTarget?.files?.item(0);
-				firstFile && activeTrace.set(await parseTraceFile(firstFile));
+				if (firstFile) {
+					trace = await parseTraceFile(firstFile);
+				}
 			}}
 		/>
+
+		<form method="POST" action={submitAction}>
+			<button
+				class="rounded bg-blue-500 px-4 py-2 font-bold text-white hover:bg-blue-700"
+				on:click={() => activeTrace.set(trace)}>Submit</button
+			>
+		</form>
 	</div>
 </div>
