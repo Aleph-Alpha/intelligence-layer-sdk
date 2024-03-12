@@ -84,7 +84,7 @@ class FileSystemAggregationRepository(AggregationRepository, FileSystemBasedRepo
         self, aggregation_id: str, aggregation_type: type[AggregatedEvaluation]
     ) -> Optional[AggregationOverview[AggregatedEvaluation]]:
         file_path = self._aggregation_overview_path(aggregation_id)
-        if not file_path.exists():
+        if file_path is None:
             return None
 
         content = self.read_utf8(file_path)

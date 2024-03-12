@@ -219,7 +219,7 @@ class FileSystemEvaluationRepository(EvaluationRepository, FileSystemBasedReposi
 
     def evaluation_overview(self, evaluation_id: str) -> Optional[EvaluationOverview]:
         file_path = self._evaluation_overview_path(evaluation_id)
-        if not file_path.exists():
+        if file_path is None:
             return None
 
         content = self.read_utf8(file_path)

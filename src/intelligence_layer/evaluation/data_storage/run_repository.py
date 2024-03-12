@@ -159,7 +159,7 @@ class FileSystemRunRepository(RunRepository, FileSystemBasedRepository):
 
     def run_overview(self, run_id: str) -> Optional[RunOverview]:
         file_path = self._run_overview_path(run_id)
-        if not file_path.exists():
+        if file_path is None:
             return None
 
         content = self.read_utf8(file_path)
