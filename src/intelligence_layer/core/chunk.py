@@ -1,7 +1,7 @@
 from typing import NewType, Sequence
 
 from pydantic import BaseModel
-from semantic_text_splitter import HuggingFaceTextSplitter
+from semantic_text_splitter import TextSplitter
 
 from intelligence_layer.core.model import AlephAlphaModel
 from intelligence_layer.core.task import Task
@@ -51,7 +51,7 @@ class Chunk(Task[ChunkInput, ChunkOutput]):
 
     def __init__(self, model: AlephAlphaModel, max_tokens_per_chunk: int = 512):
         super().__init__()
-        self._splitter = HuggingFaceTextSplitter(model.get_tokenizer())
+        self._splitter = TextSplitter.from_huggingface_tokenizer(model.get_tokenizer())
         self._max_tokens_per_chunk = max_tokens_per_chunk
 
     def do_run(self, input: ChunkInput, task_span: TaskSpan) -> ChunkOutput:
