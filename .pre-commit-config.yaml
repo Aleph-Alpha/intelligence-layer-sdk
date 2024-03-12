@@ -1,6 +1,6 @@
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v3.4.0
+    rev: v4.5.0
     hooks:
       - id: check-json
         exclude: trace-viewer/
@@ -21,22 +21,26 @@ repos:
         args: ["--profile", "black", "--filter-files"]
         verbose: true
   - repo: https://github.com/psf/black
-    rev: 24.2.0
+    rev: 24.3.0
     hooks:
       - id: black
   # https://black.readthedocs.io/en/stable/integrations/source_version_control.html#version-control-integration
   - repo: https://github.com/psf/black-pre-commit-mirror
-    rev: 24.2.0
+    rev: 24.3.0
     hooks:
       - id: black-jupyter
   - repo: https://github.com/kynan/nbstripout
-    rev: 0.4.0
+    rev: 0.7.1
     hooks:
       - id: nbstripout
         files: ".ipynb"
   - repo: https://github.com/codespell-project/codespell
-    rev: v2.2.4
+    rev: v2.2.6
     hooks:
       - id: codespell
-        args: ["-L", "newyorker,te,responde,ist,als,oder,technik,sie,rouge,unter,juli,fiel,couldn,mke"]
+        args: ["-L", "newyorker,te,responde,ist,als,oder,technik,sie,rouge,unter,juli,fiel,couldn,mke, vor"]
         exclude: '^(poetry\.lock|trace-viewer/.*|tests/connectors/retrievers/test_document_index_retriever\.py|src/intelligence_layer/use_cases/qa/multiple_chunk_qa.py|src/intelligence_layer/use_cases/summarize/.*|tests/connectors/retrievers/test_document_index_retriever\.py|src/intelligence_layer/use_cases/classify/keyword_extract.py|tests/use_cases/summarize/test_single_chunk_few_shot_summarize.py|tests/use_cases/summarize/very_long_text.txt)$'
+  - repo: https://github.com/akaihola/darglint2
+    rev: v1.8.2
+    hooks:
+      - id: darglint2

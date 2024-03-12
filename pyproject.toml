@@ -72,6 +72,8 @@ filterwarnings = [
 skip = "*/__init__.py,.venv/*,*/node_modules/*"
 ignore = "E501,E203"
 
+[tool.darglint2]
+
 
 [tool.pylama.linter.mccabe]
 max-complexity = "11"
