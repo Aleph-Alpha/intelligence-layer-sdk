@@ -96,7 +96,7 @@ class FileSystemAggregationRepository(AggregationRepository, FileSystemBasedRepo
         return sorted(
             [
                 Path(f["name"]).stem
-                for f in self._fs.ls(self._aggregation_root_directory().as_posix(), detail=True)
+                for f in self._fs.ls(self.path_to_str(self._aggregation_root_directory()), detail=True)
                 if isinstance(f, Dict) and Path(f["name"]).suffix == ".json"
             ]
         )
