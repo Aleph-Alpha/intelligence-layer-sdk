@@ -34,7 +34,7 @@ class HuggingFaceDatasetRepository(FileSystemDatasetRepository):
 
 
 class HuggingFaceAggregationRepository(FileSystemAggregationRepository):
-    _REPO_TYPE = "space"
+    _REPO_TYPE = "dataset"
 
     def __init__(self, database_name: str, token: str, private: bool) -> None:
         assert database_name[-1] != "/"
@@ -44,11 +44,10 @@ class HuggingFaceAggregationRepository(FileSystemAggregationRepository):
             repo_type=HuggingFaceAggregationRepository._REPO_TYPE,
             exist_ok=True,
             private=private,
-            space_sdk='gradio'
         )
         self._database_name = database_name
         fs = HfFileSystem(token=token)
-        root_directory = Path(f"spaces/{database_name}")
+        root_directory = Path(f"datasets/{database_name}")
         super().__init__(fs, root_directory)
 
     def delete_repository(self) -> None:
@@ -58,3 +57,7 @@ class HuggingFaceAggregationRepository(FileSystemAggregationRepository):
             repo_type=HuggingFaceAggregationRepository._REPO_TYPE,
             missing_ok=True,
         )
+
+    @staticmethod
+    def path_to_str(path: Path) -> str:
+        return path.as_posix()

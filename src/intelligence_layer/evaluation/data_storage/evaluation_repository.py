@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 from collections import defaultdict
 from itertools import chain
 from pathlib import Path
-from typing import Iterable, Optional, Sequence, cast
+from typing import Dict, Iterable, Optional, Sequence, cast
 from uuid import uuid4
 from fsspec.implementations.local import LocalFileSystem  # type: ignore
 
@@ -226,11 +226,13 @@ class FileSystemEvaluationRepository(EvaluationRepository, FileSystemBasedReposi
         return EvaluationOverview.model_validate_json(content)
 
     def evaluation_overview_ids(self) -> Sequence[str]:
-        overviews = (
-            self.evaluation_overview(path.stem)
-            for path in self._eval_root_directory().glob("*.json")
+        return sorted(
+            [
+                Path(f["name"]).stem
+                for f in self._fs.ls(self._eval_root_directory().as_posix(), detail=True)
+                if isinstance(f, Dict) and Path(f["name"]).suffix == ".json"
+            ]
         )
-        return sorted([overview.id for overview in overviews if overview is not None])
 
     def store_example_evaluation(
         self, example_evaluation: ExampleEvaluation[Evaluation]
@@ -338,7 +340,10 @@ class InMemoryEvaluationRepository(EvaluationRepository):
 class FileEvaluationRepository(FileSystemEvaluationRepository):
     def __init__(self, root_directory: Path) -> None:
         super().__init__(LocalFileSystem(), root_directory)
-        root_directory.mkdir(parents=True, exist_ok=True)
+
+    @staticmethod
+    def path_to_str(path: Path) -> str:
+        return str(path)
 
 
 class RecordDataSequence(BaseModel):

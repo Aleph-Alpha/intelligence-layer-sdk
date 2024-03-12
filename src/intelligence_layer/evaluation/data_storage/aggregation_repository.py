@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from pathlib import Path
-from typing import Any, Iterable, Optional, Sequence
+from typing import Any, Dict, Iterable, Optional, Sequence
 from fsspec.implementations.local import LocalFileSystem  # type: ignore
 
 
@@ -94,7 +94,11 @@ class FileSystemAggregationRepository(AggregationRepository, FileSystemBasedRepo
 
     def aggregation_overview_ids(self) -> Sequence[str]:
         return sorted(
-            [path.stem for path in self._aggregation_root_directory().glob("*.json")]
+            [
+                Path(f["name"]).stem
+                for f in self._fs.ls(self._aggregation_root_directory().as_posix(), detail=True)
+                if isinstance(f, Dict) and Path(f["name"]).suffix == ".json"
+            ]
         )
 
     def _aggregation_root_directory(self) -> Path:
@@ -130,7 +134,11 @@ class InMemoryAggregationRepository(AggregationRepository):
         return sorted(list(self._aggregation_overviews.keys()))
     
     
+    
 class FileAggregationRepository(FileSystemAggregationRepository):
     def __init__(self, root_directory: Path) -> None:
         super().__init__(LocalFileSystem(), root_directory)
-        root_directory.mkdir(parents=True, exist_ok=True)
+
+    @staticmethod
+    def path_to_str(path: Path) -> str:
+        return str(path)
