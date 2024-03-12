@@ -9,12 +9,7 @@ from aleph_alpha_client import (
 )
 from pydantic import BaseModel
 
-from intelligence_layer.core.model import (
-    AlephAlphaModel,
-    ExplainInput,
-    ExplainOutput,
-    LuminousControlModel,
-)
+from intelligence_layer.core.model import AlephAlphaModel, ExplainInput, ExplainOutput
 from intelligence_layer.core.prompt_template import (
     Cursor,
     PromptRange,
@@ -106,13 +101,13 @@ class TextHighlight(Task[TextHighlightInput, TextHighlightOutput]):
 
     def __init__(
         self,
-        model: AlephAlphaModel | None = None,
+        model: AlephAlphaModel,
         granularity: PromptGranularity | None = None,
         threshold: float = 0.1,
     ) -> None:
         super().__init__()
         self._threshold = threshold
-        self._model = model or LuminousControlModel()
+        self._model = model
         self._granularity = granularity
 
     def do_run(

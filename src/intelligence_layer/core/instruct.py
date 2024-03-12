@@ -2,12 +2,7 @@ from typing import Optional
 
 from pydantic import BaseModel
 
-from intelligence_layer.core.model import (
-    CompleteInput,
-    CompleteOutput,
-    ControlModel,
-    LuminousControlModel,
-)
+from intelligence_layer.core.model import CompleteInput, CompleteOutput, ControlModel
 from intelligence_layer.core.task import Task
 from intelligence_layer.core.tracer.tracer import TaskSpan
 
@@ -21,9 +16,9 @@ class InstructInput(BaseModel):
 
 class Instruct(Task[InstructInput, CompleteOutput]):
 
-    def __init__(self, model: ControlModel | None = None) -> None:
+    def __init__(self, model: ControlModel) -> None:
         super().__init__()
-        self._model = model or LuminousControlModel()
+        self._model = model
 
     def do_run(self, input: InstructInput, task_span: TaskSpan) -> CompleteOutput:
         prompt = self._model.to_instruct_prompt(

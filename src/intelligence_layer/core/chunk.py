@@ -3,7 +3,7 @@ from typing import NewType, Sequence
 from pydantic import BaseModel
 from semantic_text_splitter import HuggingFaceTextSplitter
 
-from intelligence_layer.core.model import AlephAlphaModel, LuminousControlModel
+from intelligence_layer.core.model import AlephAlphaModel
 from intelligence_layer.core.task import Task
 from intelligence_layer.core.tracer.tracer import TaskSpan
 
@@ -49,11 +49,8 @@ class Chunk(Task[ChunkInput, ChunkOutput]):
         max_tokens_per_chunk: The maximum number of tokens to fit into one chunk.
     """
 
-    def __init__(
-        self, model: AlephAlphaModel | None = None, max_tokens_per_chunk: int = 512
-    ):
+    def __init__(self, model: AlephAlphaModel, max_tokens_per_chunk: int = 512):
         super().__init__()
-        model = model or LuminousControlModel()
         self._splitter = HuggingFaceTextSplitter(model.get_tokenizer())
         self._max_tokens_per_chunk = max_tokens_per_chunk
 
@@ -80,7 +77,7 @@ class ChunkOverlap(Task[ChunkInput, ChunkOutput]):
 
     def __init__(
         self,
-        model: AlephAlphaModel | None = None,
+        model: AlephAlphaModel,
         max_tokens_per_chunk: int = 512,
         overlap_length_tokens: int = 0,
     ):
@@ -92,7 +89,6 @@ class ChunkOverlap(Task[ChunkInput, ChunkOutput]):
                 )
             )
 
-        model = model or LuminousControlModel()
         self.tokenizer = model.get_tokenizer()
         self.chunk_task = Chunk(model, overlap_length_tokens // 2)
         self.max_tokens_per_chunk = max_tokens_per_chunk
