@@ -12,7 +12,7 @@ const preview: Preview = {
 				date: /Date$/i
 			}
 		}
-	},
+	}
 };
 
 export default preview;
