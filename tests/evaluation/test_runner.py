@@ -22,7 +22,9 @@ def test_runner_runs_dataset(
         Example(input=FAIL_IN_EVAL_INPUT, expected_output=None),
     ]
 
-    dataset_id = in_memory_dataset_repository.create_dataset(examples=examples)
+    dataset_id = in_memory_dataset_repository.create_dataset(
+        examples=examples, dataset_name="test-dataset"
+    ).id
     overview = runner.run_dataset(dataset_id)
     outputs = list(
         in_memory_run_repository.example_outputs(
@@ -49,7 +51,9 @@ def test_runner_runs_n_examples(
         Example(input=FAIL_IN_TASK_INPUT, expected_output=None, id="example-2"),
     ]
 
-    dataset_id = in_memory_dataset_repository.create_dataset(examples=examples)
+    dataset_id = in_memory_dataset_repository.create_dataset(
+        examples=examples, dataset_name="test-dataset"
+    ).id
     overview = runner.run_dataset(dataset_id)
     overview_with_tracer = runner.run_dataset(dataset_id, tracer, num_examples=1)
 

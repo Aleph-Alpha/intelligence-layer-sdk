@@ -65,7 +65,9 @@ def test_run_evaluation(
 ) -> None:
     dataset_path = tmp_path / "dataset"
     dataset_repository = FileDatasetRepository(dataset_path)
-    dataset_id = dataset_repository.create_dataset(examples)
+    dataset_id = dataset_repository.create_dataset(
+        examples=examples, dataset_name="test-dataset"
+    ).id
 
     aggregation_path = tmp_path / "eval"
     aggregation_repository = FileAggregationRepository(aggregation_path)
@@ -101,7 +103,9 @@ def test_run_evaluation_with_task_with_client(
 ) -> None:
     dataset_path = tmp_path / "dataset"
     dataset_repository = FileDatasetRepository(dataset_path)
-    dataset_id = dataset_repository.create_dataset(examples)
+    dataset_id = dataset_repository.create_dataset(
+        examples=examples, dataset_name="test-dataset"
+    ).id
 
     eval_path = tmp_path / "eval"
 
