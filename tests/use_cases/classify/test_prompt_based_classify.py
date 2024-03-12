@@ -200,9 +200,11 @@ def test_can_evaluate_classify(
         expected_output=["positive"],
     )
 
-    dataset_name = in_memory_dataset_repository.create_dataset([example])
+    dataset_id = in_memory_dataset_repository.create_dataset(
+        examples=[example], dataset_name="test-dataset"
+    ).id
 
-    run_overview = classify_runner.run_dataset(dataset_name)
+    run_overview = classify_runner.run_dataset(dataset_id)
     evaluation_overview = classify_evaluator.evaluate_runs(run_overview.id)
 
     evaluation = in_memory_evaluation_repository.example_evaluations(
@@ -243,11 +245,11 @@ def test_can_aggregate_evaluations(
         ),
         expected_output=positive_lst,
     )
-    dataset_name = in_memory_dataset_repository.create_dataset(
-        [correct_example, incorrect_example]
-    )
+    dataset_id = in_memory_dataset_repository.create_dataset(
+        examples=[correct_example, incorrect_example], dataset_name="test-dataset"
+    ).id
 
-    run_overview = classify_runner.run_dataset(dataset_name)
+    run_overview = classify_runner.run_dataset(dataset_id)
     evaluation_overview = classify_evaluator.evaluate_runs(run_overview.id)
     aggregation_overview = classify_aggregator.aggregate_evaluation(
         evaluation_overview.id
@@ -270,7 +272,9 @@ def test_aggregating_evaluations_works_with_empty_list(
     classify_runner: Runner[ClassifyInput, SingleLabelClassifyOutput],
     in_memory_dataset_repository: DatasetRepository,
 ) -> None:
-    dataset_id = in_memory_dataset_repository.create_dataset([])
+    dataset_id = in_memory_dataset_repository.create_dataset(
+        examples=[], dataset_name="test-dataset"
+    ).id
     run_overview = classify_runner.run_dataset(dataset_id)
     evaluation_overview = classify_evaluator.evaluate_runs(run_overview.id)
     aggregation_overview = classify_aggregator.aggregate_evaluation(

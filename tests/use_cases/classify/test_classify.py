@@ -119,7 +119,9 @@ def single_entry_dataset_name(
     in_memory_dataset_repository: InMemoryDatasetRepository,
     embedding_based_classify_example: Iterable[Example[ClassifyInput, Sequence[str]]],
 ) -> str:
-    return in_memory_dataset_repository.create_dataset(embedding_based_classify_example)
+    return in_memory_dataset_repository.create_dataset(
+        examples=embedding_based_classify_example, dataset_name="test-dataset"
+    ).id
 
 
 @fixture
@@ -128,8 +130,8 @@ def multiple_entries_dataset_name(
     embedding_based_classify_examples: Iterable[Example[ClassifyInput, Sequence[str]]],
 ) -> str:
     return in_memory_dataset_repository.create_dataset(
-        embedding_based_classify_examples
-    )
+        examples=embedding_based_classify_examples, dataset_name="test-dataset"
+    ).id
 
 
 @fixture

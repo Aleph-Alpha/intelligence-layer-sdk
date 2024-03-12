@@ -95,7 +95,9 @@ def string_dataset_id(
     dummy_string_examples: Iterable[Example[DummyStringInput, DummyStringOutput]],
     in_memory_dataset_repository: DatasetRepository,
 ) -> str:
-    return in_memory_dataset_repository.create_dataset(dummy_string_examples)
+    return in_memory_dataset_repository.create_dataset(
+        examples=dummy_string_examples, dataset_name="test-dataset"
+    ).id
 
 
 @fixture

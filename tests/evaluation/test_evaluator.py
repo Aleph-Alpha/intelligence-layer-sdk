@@ -180,7 +180,9 @@ def dataset_id(
     sequence_examples: Iterable[Example[str, None]],
     in_memory_dataset_repository: InMemoryDatasetRepository,
 ) -> str:
-    return in_memory_dataset_repository.create_dataset(sequence_examples)
+    return in_memory_dataset_repository.create_dataset(
+        examples=sequence_examples, dataset_name="test-dataset"
+    ).id
 
 
 @fixture
@@ -188,7 +190,9 @@ def good_dataset_id(
     sequence_good_examples: Iterable[Example[str, None]],
     in_memory_dataset_repository: InMemoryDatasetRepository,
 ) -> str:
-    return in_memory_dataset_repository.create_dataset(sequence_good_examples)
+    return in_memory_dataset_repository.create_dataset(
+        examples=sequence_good_examples, dataset_name="test-dataset"
+    ).id
 
 
 @fixture

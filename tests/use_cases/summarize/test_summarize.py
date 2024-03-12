@@ -178,10 +178,10 @@ def test_single_chunk_summarize_evaluator(
         expected_output="The brown bear is a large mammal that lives in Eurasia and North America.",
         id="good",
     )
-    dataset_name = in_memory_dataset_repository.create_dataset(
-        [good_example, bad_example]
-    )
-    run_overview = single_chunk_summarize_runner.run_dataset(dataset_name)
+    dataset_id = in_memory_dataset_repository.create_dataset(
+        examples=[good_example, bad_example], dataset_name="test-dataset"
+    ).id
+    run_overview = single_chunk_summarize_runner.run_dataset(dataset_id)
 
     evaluation_overview = single_chunk_summarize_evaluator.evaluate_runs(
         run_overview.id
@@ -236,10 +236,10 @@ def test_long_context_summarize_evaluator(
         expected_output="The brown bear is a large mammal that lives in Eurasia and North America.",
         id="good",
     )
-    dataset_name = in_memory_dataset_repository.create_dataset(
-        [good_example, bad_example]
-    )
-    run_overview = long_context_summarize_runner.run_dataset(dataset_name)
+    dataset_id = in_memory_dataset_repository.create_dataset(
+        examples=[good_example, bad_example], dataset_name="test-dataset"
+    ).id
+    run_overview = long_context_summarize_runner.run_dataset(dataset_id)
 
     evaluation_overview = long_context_summarize_evaluator.evaluate_runs(
         run_overview.id

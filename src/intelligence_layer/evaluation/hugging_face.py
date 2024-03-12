@@ -1,3 +1,5 @@
+from pathlib import Path
+
 import huggingface_hub  # type: ignore
 from huggingface_hub import HfFileSystem, create_repo
 
@@ -19,14 +21,12 @@ class HuggingFaceDatasetRepository(FileSystemDatasetRepository):
             private=private,
         )
         self._database_name = database_name
-        fs = HfFileSystem(token=token)
-        root_directory = f"datasets/{database_name}"
-        super().__init__(fs, root_directory)
+        super().__init__(HfFileSystem(token=token), Path(f"datasets/{database_name}"))
 
     def delete_repository(self) -> None:
         huggingface_hub.delete_repo(
             database_name=self._database_name,
-            token=self._fs.token,
+            token=self._file_system.token,
             repo_type=HuggingFaceDatasetRepository._REPO_TYPE,
             missing_ok=True,
         )

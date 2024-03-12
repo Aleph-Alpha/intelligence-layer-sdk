@@ -24,6 +24,18 @@ Evaluation = TypeVar("Evaluation", bound=BaseModel, covariant=True)
 AggregatedEvaluation = TypeVar("AggregatedEvaluation", bound=BaseModel, covariant=True)
 
 
+class Dataset(BaseModel):
+    """Represents a dataset linked to multiple examples
+
+    Attributes:
+        id: Dataset ID.
+        name: A short name of the dataset.
+    """
+
+    id: str = Field(default_factory=lambda: str(uuid4()))
+    name: str
+
+
 class FailedExampleRun(BaseModel):
     """Captures an exception raised when running a single example with a :class:`Task`.
 

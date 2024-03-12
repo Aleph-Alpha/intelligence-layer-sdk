@@ -155,14 +155,15 @@ def create_dummy_dataset(
     instruction_input = "some text"
 
     return in_memory_dataset_repository.create_dataset(
-        [
+        examples=[
             Example(
                 id=example_id,
                 input=InstructInput(instruction=instruction, input=instruction_input),
                 expected_output=None,
             )
-        ]
-    )
+        ],
+        dataset_name="test-dataset",
+    ).id
 
 
 def create_dummy_runs(
