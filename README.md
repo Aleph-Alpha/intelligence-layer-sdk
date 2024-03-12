@@ -30,7 +30,7 @@ The key features of the Intelligence Layer are:
 
 ## Getting started
 
-Not sure where to start? Familiarize yourself with the Intelligence Layer using the below notebook as interactive tuttorials.
+Not sure where to start? Familiarize yourself with the Intelligence Layer using the below notebook as interactive tutorials.
 If you prefer you can also read about the [concepts](Concepts.md) first.
 
 | Order | Topic              | Description                               | Notebook 📓                                                     |
