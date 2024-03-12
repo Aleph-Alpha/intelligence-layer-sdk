@@ -96,7 +96,7 @@ class FileAggregationRepository(AggregationRepository, FileBasedRepository):
         )
 
     def _aggregation_root_directory(self) -> Path:
-        path = self._root_directory / "aggregation"
+        path = self._root_directory / "aggregations"
         path.mkdir(exist_ok=True)
         return path
 

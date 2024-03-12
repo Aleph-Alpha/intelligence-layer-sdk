@@ -276,7 +276,7 @@ class FileEvaluationRepository(EvaluationRepository, FileBasedRepository):
         return sorted(example_evaluations, key=lambda i: i.example_id)
 
     def _eval_root_directory(self) -> Path:
-        path = self._root_directory / "evals"
+        path = self._root_directory / "evaluations"
         path.mkdir(exist_ok=True)
         return path
 
