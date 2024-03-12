@@ -123,9 +123,7 @@ class SingleChunkQa(Task[SingleChunkQaInput, SingleChunkQaOutput]):
     ):
         super().__init__()
         self._model = model or LuminousControlModel("luminous-supreme-control")
-        self._text_highlight = text_highlight or TextHighlight(
-            LuminousControlModel("luminous-base-control")
-        )
+        self._text_highlight = text_highlight or TextHighlight(self._model)
         self._instruction_config = instruction_config
         self._maximum_tokens = maximum_tokens
 
