@@ -4,6 +4,7 @@ from itertools import chain
 from pathlib import Path
 from typing import Iterable, Optional, Sequence, cast
 from uuid import uuid4
+from fsspec.implementations.local import LocalFileSystem  # type: ignore
 
 from pydantic import BaseModel
 
@@ -15,7 +16,7 @@ from intelligence_layer.connectors.argilla.argilla_client import (
     RecordData,
 )
 from intelligence_layer.core import JsonSerializer
-from intelligence_layer.evaluation.data_storage.utils import FileBasedRepository
+from intelligence_layer.evaluation.data_storage.utils import FileSystemBasedRepository
 from intelligence_layer.evaluation.domain import (
     Evaluation,
     EvaluationOverview,
@@ -207,7 +208,7 @@ class EvaluationRepository(ABC):
         return [r for r in results if isinstance(r.result, FailedExampleEvaluation)]
 
 
-class FileEvaluationRepository(EvaluationRepository, FileBasedRepository):
+class FileSystemEvaluationRepository(EvaluationRepository, FileSystemBasedRepository):
     """An :class:`EvaluationRepository` that stores evaluation results in JSON files."""
 
     def store_evaluation_overview(self, overview: EvaluationOverview) -> None:
@@ -333,6 +334,11 @@ class InMemoryEvaluationRepository(EvaluationRepository):
             for example_evaluation in self._example_evaluations[evaluation_id]
         ]
         return sorted(example_evaluations, key=lambda i: i.example_id)
+    
+class FileEvaluationRepository(FileSystemEvaluationRepository):
+    def __init__(self, root_directory: Path) -> None:
+        super().__init__(LocalFileSystem(), root_directory)
+        root_directory.mkdir(parents=True, exist_ok=True)
 
 
 class RecordDataSequence(BaseModel):

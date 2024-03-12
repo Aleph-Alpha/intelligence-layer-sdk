@@ -1,8 +1,10 @@
 from abc import ABC, abstractmethod
 from pathlib import Path
 from typing import Any, Iterable, Optional, Sequence
+from fsspec.implementations.local import LocalFileSystem  # type: ignore
 
-from intelligence_layer.evaluation.data_storage.utils import FileBasedRepository
+
+from intelligence_layer.evaluation.data_storage.utils import FileSystemBasedRepository
 from intelligence_layer.evaluation.domain import (
     AggregatedEvaluation,
     AggregationOverview,
@@ -69,7 +71,7 @@ class AggregationRepository(ABC):
         pass
 
 
-class FileAggregationRepository(AggregationRepository, FileBasedRepository):
+class FileSystemAggregationRepository(AggregationRepository, FileSystemBasedRepository):
     def store_aggregation_overview(
         self, aggregation_overview: AggregationOverview[AggregatedEvaluation]
     ) -> None:
@@ -126,3 +128,9 @@ class InMemoryAggregationRepository(AggregationRepository):
 
     def aggregation_overview_ids(self) -> Sequence[str]:
         return sorted(list(self._aggregation_overviews.keys()))
+    
+    
+class FileAggregationRepository(FileSystemAggregationRepository):
+    def __init__(self, root_directory: Path) -> None:
+        super().__init__(LocalFileSystem(), root_directory)
+        root_directory.mkdir(parents=True, exist_ok=True)

@@ -2,6 +2,8 @@ from abc import ABC, abstractmethod
 from collections import defaultdict
 from pathlib import Path
 from typing import Iterable, Optional, Sequence, cast
+from fsspec.implementations.local import LocalFileSystem  # type: ignore
+
 
 from intelligence_layer.core import (
     FileTracer,
@@ -12,7 +14,7 @@ from intelligence_layer.core import (
     PydanticSerializable,
     Tracer,
 )
-from intelligence_layer.evaluation.data_storage.utils import FileBasedRepository
+from intelligence_layer.evaluation.data_storage.utils import FileSystemBasedRepository
 from intelligence_layer.evaluation.domain import (
     ExampleOutput,
     ExampleTrace,
@@ -149,7 +151,7 @@ class RunRepository(ABC):
         ...
 
 
-class FileRunRepository(RunRepository, FileBasedRepository):
+class FileSystemRunRepository(RunRepository, FileSystemBasedRepository):
     def store_run_overview(self, overview: RunOverview) -> None:
         self.write_utf8(
             self._run_overview_path(overview.id), overview.model_dump_json(indent=2)
@@ -328,3 +330,8 @@ class InMemoryRunRepository(RunRepository):
                 for example_output in self._example_outputs[run_id]
             ]
         )
+
+class FileRunRepository(FileSystemRunRepository):
+    def __init__(self, root_directory: Path) -> None:
+        super().__init__(LocalFileSystem(), root_directory)
+        root_directory.mkdir(parents=True, exist_ok=True)
