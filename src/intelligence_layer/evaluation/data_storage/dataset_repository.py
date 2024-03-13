@@ -169,7 +169,7 @@ class FileSystemDatasetRepository(DatasetRepository):
 
     def dataset(self, dataset_id: str) -> Optional[Dataset]:
         file_path = self._dataset_path(dataset_id)
-        if not file_path.exists():
+        if not self._file_system.exists(str(file_path)):
             return None
 
         with self._file_system.open(
@@ -257,7 +257,8 @@ class InMemoryDatasetRepository(DatasetRepository):
             )
 
         examples_casted = cast(
-            Sequence[Example[PydanticSerializable, PydanticSerializable]], examples
+            Sequence[Example[PydanticSerializable, PydanticSerializable]],
+            list(examples),
         )
         self._datasets_and_examples[dataset.id] = (dataset, examples_casted)
 
