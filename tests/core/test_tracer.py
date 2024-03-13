@@ -1,4 +1,7 @@
+import contextlib
+import os
 from pathlib import Path
+from typing import Iterator
 from unittest.mock import Mock
 
 import pytest
@@ -91,7 +94,7 @@ def test_can_add_parent_and_child_entries() -> None:
 
 
 def test_task_automatically_logs_input_and_output(
-    complete: Task[CompleteInput, CompleteOutput]
+    complete: Task[CompleteInput, CompleteOutput],
 ) -> None:
     tracer = InMemoryTracer()
     input = CompleteInput(prompt=Prompt.from_text("test"))
@@ -223,6 +226,33 @@ def test_file_tracer_raises_non_log_entry_failed_exceptions(
         file_tracer.task_span(
             task_name="mock_task_name", input="42", timestamp=None, trace_id="21"
         )
+
+
+# take from and modified: https://stackoverflow.com/questions/2059482/temporarily-modify-the-current-processs-environment
+@contextlib.contextmanager
+def set_env(name: str, value: str | None) -> Iterator[None]:
+    old_environ = dict(os.environ)
+    if value is None:
+        os.environ.pop(name)
+    else:
+        os.environ[name] = value
+    try:
+        yield
+    finally:
+        os.environ.clear()
+        os.environ.update(old_environ)
+
+
+def test_in_memory_tracer_trace_viewer_doesnt_crash_if_it_cant_reach(
+    file_tracer: FileTracer,
+) -> None:
+    # note that this test sets the environment variable, which might
+    # become a problem with multi-worker tests
+    ENV_VARIABLE_NAME = "TRACE_VIEWER_URL"
+    # ensure that the code works even with the variable is not set
+    with set_env(ENV_VARIABLE_NAME, None):
+        expected = InMemoryTracer()
+        expected._ipython_display_()
 
 
 @mark.skip(
