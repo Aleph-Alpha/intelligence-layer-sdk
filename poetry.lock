@@ -956,18 +956,18 @@ devel = ["colorama", "json-spec", "jsonschema", "pylint", "pytest", "pytest-benc
 
 [[package]]
 name = "filelock"
-version = "3.13.1"
+version = "3.13.3"
 description = "A platform independent file lock."
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "filelock-3.13.1-py3-none-any.whl", hash = "sha256:57dbda9b35157b05fb3e58ee91448612eb674172fab98ee235ccb0b5bee19a1c"},
-    {file = "filelock-3.13.1.tar.gz", hash = "sha256:521f5f56c50f8426f5e03ad3b281b490a87ef15bc6c526f168290f0c7148d44e"},
+    {file = "filelock-3.13.3-py3-none-any.whl", hash = "sha256:5ffa845303983e7a0b7ae17636509bc97997d58afeafa72fb141a17b152284cb"},
+    {file = "filelock-3.13.3.tar.gz", hash = "sha256:a79895a25bbefdf55d1a2a0a80968f7dbb28edcd6d4234a0afb3f37ecde4b546"},
 ]
 
 [package.extras]
-docs = ["furo (>=2023.9.10)", "sphinx (>=7.2.6)", "sphinx-autodoc-typehints (>=1.24)"]
-testing = ["covdefaults (>=2.3)", "coverage (>=7.3.2)", "diff-cover (>=8)", "pytest (>=7.4.3)", "pytest-cov (>=4.1)", "pytest-mock (>=3.12)", "pytest-timeout (>=2.2)"]
+docs = ["furo (>=2023.9.10)", "sphinx (>=7.2.6)", "sphinx-autodoc-typehints (>=1.25.2)"]
+testing = ["covdefaults (>=2.3)", "coverage (>=7.3.2)", "diff-cover (>=8.0.1)", "pytest (>=7.4.3)", "pytest-cov (>=4.1)", "pytest-mock (>=3.12)", "pytest-timeout (>=2.2)"]
 typing = ["typing-extensions (>=4.8)"]
 
 [[package]]
@@ -1104,6 +1104,23 @@ sftp = ["paramiko"]
 smb = ["smbprotocol"]
 ssh = ["paramiko"]
 tqdm = ["tqdm"]
+
+[[package]]
+name = "googleapis-common-protos"
+version = "1.63.0"
+description = "Common protobufs used in Google APIs"
+optional = false
+python-versions = ">=3.7"
+files = [
+    {file = "googleapis-common-protos-1.63.0.tar.gz", hash = "sha256:17ad01b11d5f1d0171c06d3ba5c04c54474e883b66b949722b4938ee2694ef4e"},
+    {file = "googleapis_common_protos-1.63.0-py2.py3-none-any.whl", hash = "sha256:ae45f75702f7c08b541f750854a678bd8f534a1a6bace6afe975f1d0a82d6632"},
+]
+
+[package.dependencies]
+protobuf = ">=3.19.5,<3.20.0 || >3.20.0,<3.20.1 || >3.20.1,<4.21.1 || >4.21.1,<4.21.2 || >4.21.2,<4.21.3 || >4.21.3,<4.21.4 || >4.21.4,<4.21.5 || >4.21.5,<5.0.0.dev0"
+
+[package.extras]
+grpc = ["grpcio (>=1.44.0,<2.0.0.dev0)"]
 
 [[package]]
 name = "grpcio"
@@ -2543,6 +2560,57 @@ files = [
 [package.dependencies]
 deprecated = ">=1.2.6"
 importlib-metadata = ">=6.0,<7.0"
+
+[[package]]
+name = "opentelemetry-exporter-otlp-proto-common"
+version = "1.23.0"
+description = "OpenTelemetry Protobuf encoding"
+optional = false
+python-versions = ">=3.8"
+files = [
+    {file = "opentelemetry_exporter_otlp_proto_common-1.23.0-py3-none-any.whl", hash = "sha256:2a9e7e9d5a8b026b572684b6b24dcdefcaa58613d5ce3d644130b0c373c056c1"},
+    {file = "opentelemetry_exporter_otlp_proto_common-1.23.0.tar.gz", hash = "sha256:35e4ea909e7a0b24235bd0aaf17fba49676527feb1823b46565ff246d5a1ab18"},
+]
+
+[package.dependencies]
+opentelemetry-proto = "1.23.0"
+
+[[package]]
+name = "opentelemetry-exporter-otlp-proto-http"
+version = "1.23.0"
+description = "OpenTelemetry Collector Protobuf over HTTP Exporter"
+optional = false
+python-versions = ">=3.8"
+files = [
+    {file = "opentelemetry_exporter_otlp_proto_http-1.23.0-py3-none-any.whl", hash = "sha256:ad853b58681df8efcb2cfc93be2b5fd86351c99ff4ab47dc917da384b8650d91"},
+    {file = "opentelemetry_exporter_otlp_proto_http-1.23.0.tar.gz", hash = "sha256:088eac2320f4a604e2d9ff71aced71fdae601ac6457005fb0303d6bbbf44e6ca"},
+]
+
+[package.dependencies]
+deprecated = ">=1.2.6"
+googleapis-common-protos = ">=1.52,<2.0"
+opentelemetry-api = ">=1.15,<2.0"
+opentelemetry-exporter-otlp-proto-common = "1.23.0"
+opentelemetry-proto = "1.23.0"
+opentelemetry-sdk = ">=1.23.0,<1.24.0"
+requests = ">=2.7,<3.0"
+
+[package.extras]
+test = ["responses (>=0.22.0,<0.25)"]
+
+[[package]]
+name = "opentelemetry-proto"
+version = "1.23.0"
+description = "OpenTelemetry Python Proto"
+optional = false
+python-versions = ">=3.8"
+files = [
+    {file = "opentelemetry_proto-1.23.0-py3-none-any.whl", hash = "sha256:4c017deca052cb287a6003b7c989ed8b47af65baeb5d57ebf93dde0793f78509"},
+    {file = "opentelemetry_proto-1.23.0.tar.gz", hash = "sha256:e6aaf8b7ace8d021942d546161401b83eed90f9f2cc6f13275008cea730e4651"},
+]
+
+[package.dependencies]
+protobuf = ">=3.19,<5.0"
 
 [[package]]
 name = "opentelemetry-sdk"
@@ -4054,22 +4122,22 @@ files = [
 
 [[package]]
 name = "semantic-text-splitter"
-version = "0.8.0"
-description = "Split text into semantic chunks, up to a desired chunk size. Supports calculating length by characters and tokens (when used with large language models)."
+version = "0.8.1"
+description = "Split text into semantic chunks, up to a desired chunk size. Supports calculating length by characters and tokens, and is callable from Rust and Python."
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "semantic_text_splitter-0.8.0-cp38-abi3-macosx_10_12_x86_64.whl", hash = "sha256:2282b82edd06afbb164ef1675e5ae5b07b8c06d9617755373c8da49b0c802856"},
-    {file = "semantic_text_splitter-0.8.0-cp38-abi3-macosx_11_0_arm64.whl", hash = "sha256:b555f604a0386fe8060a9c4ecd285ff0040cbaee5282258f0420d0955d7b48f6"},
-    {file = "semantic_text_splitter-0.8.0-cp38-abi3-manylinux_2_12_i686.manylinux2010_i686.whl", hash = "sha256:71ff145f9ba0fb631219f74d13a340962328bc96a2e1016abb48167b976048de"},
-    {file = "semantic_text_splitter-0.8.0-cp38-abi3-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:bdfcfd2d89d0893be4a13a75cb29e5d902c1735eadcddb57116d40d38c3f8318"},
-    {file = "semantic_text_splitter-0.8.0-cp38-abi3-manylinux_2_17_armv7l.manylinux2014_armv7l.whl", hash = "sha256:95d4b032856c14b9b087311b96d2a4a31e9a34e679fd14dbe7968c7c391b343b"},
-    {file = "semantic_text_splitter-0.8.0-cp38-abi3-manylinux_2_17_ppc64le.manylinux2014_ppc64le.whl", hash = "sha256:b873458cb2eea0c48e884030e510ed3dfacf9633d49f0642386b6e5cc371d735"},
-    {file = "semantic_text_splitter-0.8.0-cp38-abi3-manylinux_2_17_s390x.manylinux2014_s390x.whl", hash = "sha256:53f237ba6576c958c0045802afed3629c4e2b02a89c1746505f4af189fd155f6"},
-    {file = "semantic_text_splitter-0.8.0-cp38-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:722d3b0fc53acd3ed3eaa97c482fa632e42c3751201f4033597d0c71c39982f0"},
-    {file = "semantic_text_splitter-0.8.0-cp38-abi3-win32.whl", hash = "sha256:4257fee50ca42c064713d58b0682a05a6580144f6d41a85d69ca57d9e7968708"},
-    {file = "semantic_text_splitter-0.8.0-cp38-abi3-win_amd64.whl", hash = "sha256:ec517936b984fae656499f9d90e768d8631893036ae78668ad71049cbae20f7a"},
-    {file = "semantic_text_splitter-0.8.0.tar.gz", hash = "sha256:d35e903475f851a289d209fc8b23691bb1429d4cc18162ba3ccc1df698cf355d"},
+    {file = "semantic_text_splitter-0.8.1-cp38-abi3-macosx_10_12_x86_64.whl", hash = "sha256:bf03e6a44a3c0b5d6b742eb8bd1088408b4aae56a7a7f6cdd61a0508b2d96371"},
+    {file = "semantic_text_splitter-0.8.1-cp38-abi3-macosx_11_0_arm64.whl", hash = "sha256:e1bf8ebb8be275f595637a62585ee2e89ce34f5c903c3a2fb4ef7ba0dbdaefcb"},
+    {file = "semantic_text_splitter-0.8.1-cp38-abi3-manylinux_2_12_i686.manylinux2010_i686.whl", hash = "sha256:fe611f637f82e7b3fc4c422d322b416c8aa11784d21fd2fbd4e8e6c5a1881a5e"},
+    {file = "semantic_text_splitter-0.8.1-cp38-abi3-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:cbd204c049e69c671cb1f9d6fdc7879d197349cf8c434b4595c0eb6c0f075665"},
+    {file = "semantic_text_splitter-0.8.1-cp38-abi3-manylinux_2_17_armv7l.manylinux2014_armv7l.whl", hash = "sha256:5867d9b55763fdda07494855a6c663b44ae216ceee477020547d4a1a9f69d25a"},
+    {file = "semantic_text_splitter-0.8.1-cp38-abi3-manylinux_2_17_ppc64le.manylinux2014_ppc64le.whl", hash = "sha256:ffc3fcfd3e945d0c892c5dd15462766dadf34cb2c7a92d4653ad2f91ece11a3d"},
+    {file = "semantic_text_splitter-0.8.1-cp38-abi3-manylinux_2_17_s390x.manylinux2014_s390x.whl", hash = "sha256:7b1e40f25ddd1fd8ebf226a0ccbd4792926a2c4a1b2459d597def4eee683aaf4"},
+    {file = "semantic_text_splitter-0.8.1-cp38-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:80387d6784ba6a1e246796208fc1b52a00d5e75b2d00a943df9c9619e80b87bf"},
+    {file = "semantic_text_splitter-0.8.1-cp38-abi3-win32.whl", hash = "sha256:526fd168bf7bb2938be3a19469f3c3a0aa2cd806c123b5abf6db844bdae3ad65"},
+    {file = "semantic_text_splitter-0.8.1-cp38-abi3-win_amd64.whl", hash = "sha256:8ae92672e663500461a468c5ffa6b3f44ca79470b33f24dd5c92967e2e01005a"},
+    {file = "semantic_text_splitter-0.8.1.tar.gz", hash = "sha256:4778c8766f7a65e112065a45a34dbdc716fd3bec63210629befbd11a3d07b6f3"},
 ]
 
 [package.extras]
@@ -5224,4 +5292,4 @@ testing = ["big-O", "jaraco.functools", "jaraco.itertools", "more-itertools", "p
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.10,<3.12"
-content-hash = "61db0ed6bd3da734d53532d8b3e06eb57d40b7863d175d600e6205b5f44b51f7"
+content-hash = "b551964342853508feac9d45069d795f743dbbd641c7b819f4e6cc251e67622e"
