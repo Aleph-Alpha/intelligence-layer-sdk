@@ -233,7 +233,8 @@ def test_file_tracer_raises_non_log_entry_failed_exceptions(
 def set_env(name: str, value: str | None) -> Iterator[None]:
     old_environ = dict(os.environ)
     if value is None:
-        os.environ.pop(name)
+        if os.getenv(name, None) is not None:
+            os.environ.pop(name)
     else:
         os.environ[name] = value
     try:
