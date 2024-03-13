@@ -116,24 +116,20 @@ class FileSystemDatasetRepository(DatasetRepository):
     _REPO_TYPE = "dataset"
 
     def __init__(self, filesystem: AbstractFileSystem, root_directory: Path) -> None:
-        super().__init__()
-
         assert str(root_directory)[-1] != "/"
-        root_directory.mkdir(parents=True, exist_ok=True)
+
+        super().__init__()
 
         self._file_system = filesystem
         self._root_directory = root_directory
+
+        self._dataset_root_directory().mkdir(parents=True, exist_ok=True)
 
     def create_dataset(
         self, examples: Iterable[Example[Input, ExpectedOutput]], dataset_name: str
     ) -> Dataset:
         dataset = Dataset(name=dataset_name)
-        try:
-            self._dataset_directory(dataset.id).mkdir(exist_ok=False)
-        except OSError:
-            raise ValueError(
-                f"Created random dataset ID already exists for dataset {dataset}. This should not happen."
-            )
+        self._dataset_directory(dataset.id).mkdir(exist_ok=True)
 
         dataset_path = self._dataset_path(dataset.id)
         examples_path = self._dataset_examples_path(dataset.id)
@@ -173,7 +169,7 @@ class FileSystemDatasetRepository(DatasetRepository):
 
     def dataset_ids(self) -> Iterable[str]:
         dataset_files = self._file_system.glob(
-            path=str(self._root_directory) + "/**/*.json",
+            path=str(self._dataset_root_directory()) + "/**/*.jsonl",
             maxdepth=2,
             detail=False,
         )
@@ -218,8 +214,11 @@ class FileSystemDatasetRepository(DatasetRepository):
 
         return sorted(examples, key=lambda example: example.id)
 
+    def _dataset_root_directory(self) -> Path:
+        return self._root_directory / "datasets"
+
     def _dataset_directory(self, dataset_id: str) -> Path:
-        return self._root_directory / f"{dataset_id}"
+        return self._dataset_root_directory() / f"{dataset_id}"
 
     def _dataset_path(self, dataset_id: str) -> Path:
         return self._dataset_directory(dataset_id) / f"{dataset_id}.json"
