@@ -1,11 +1,14 @@
 <script lang="ts">
 	import { activeTrace } from '$lib/active';
-	import { tracer } from '$lib/trace';
+	import { tracer, type Tracer } from '$lib/trace';
 	import { parseTraceFile } from '$lib/tracefile.parser';
+	import { enhance } from '$app/forms';
 
 	let files: FileList;
 	// Reset on refresh
 	let value = '';
+	let trace: Tracer;
+	export let submitAction = '?/setTrace';
 </script>
 
 <!--
@@ -24,7 +27,8 @@
 			name="trace-file"
 			bind:value
 			on:change={(e) => {
-				activeTrace.set(tracer.parse(JSON.parse(e.currentTarget.value)));
+				const newTrace = tracer.parse(JSON.parse(e.currentTarget.value));
+				trace = newTrace ?? trace;
 			}}
 		/>
 
@@ -37,8 +41,28 @@
 			bind:files
 			on:change={async (file) => {
 				const firstFile = file.currentTarget?.files?.item(0);
-				firstFile && activeTrace.set(await parseTraceFile(firstFile));
+				if (firstFile) {
+					trace = await parseTraceFile(firstFile);
+				}
 			}}
 		/>
+
+		<form
+			method="POST"
+			action={submitAction}
+			use:enhance={() => {
+				return ({ result }) => {
+					if (result.type === 'success') {
+						activeTrace.set(trace);
+					}
+				};
+			}}
+		>
+			<input type="hidden" name="trace" value={JSON.stringify(trace)} required />
+			<button class="rounded bg-blue-500 px-4 py-2 font-bold text-white hover:bg-blue-700"
+				>Submit</button
+			>
+			<!--on:click={() =>activeTrace.set(trace)}-->
+		</form>
 	</div>
 </div>

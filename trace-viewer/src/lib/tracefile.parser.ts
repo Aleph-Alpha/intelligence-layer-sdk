@@ -5,7 +5,8 @@ const plainEntry = z.object({
 	parent: z.string(),
 	message: z.string(),
 	value: z.any(),
-	timestamp: z.string()
+	timestamp: z.string(),
+	trace_id: z.string()
 });
 
 type PlainEntry = z.infer<typeof plainEntry>;
@@ -14,7 +15,8 @@ const spanStart = z.object({
 	uuid: z.string(),
 	parent: z.string(),
 	name: z.string(),
-	start: z.string()
+	start: z.string(),
+	trace_id: z.string()
 });
 
 type SpanStart = z.infer<typeof spanStart>;
@@ -31,7 +33,8 @@ const taskStart = z.object({
 	parent: z.string(),
 	name: z.string(),
 	start: z.string(),
-	input: z.any()
+	input: z.any(),
+	trace_id: z.string()
 });
 
 type TaskStart = z.infer<typeof taskStart>;
@@ -111,8 +114,13 @@ class TraceBuilder {
 	addPlainEntry(entry: PlainEntry) {
 		const parent = this.parentTrace(entry.parent);
 		// entry.value is any, but value is "Json"
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-		parent.entries.push({ message: entry.message, value: entry.value, timestamp: entry.timestamp });
+		parent.entries.push({
+			message: entry.message,
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+			value: entry.value,
+			timestamp: entry.timestamp,
+			trace_id: entry.trace_id
+		});
 	}
 
 	startSpan(entry: SpanStart) {
@@ -121,7 +129,8 @@ class TraceBuilder {
 			name: entry.name,
 			start_timestamp: entry.start,
 			end_timestamp: entry.start,
-			entries: []
+			entries: [],
+			trace_id: entry.trace_id
 		};
 		parent.entries.push(span);
 		this.spans.set(entry.uuid, span);
@@ -142,7 +151,8 @@ class TraceBuilder {
 			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 			input: entry.input,
 			output: null,
-			entries: []
+			entries: [],
+			trace_id: entry.trace_id
 		};
 		parent.entries.push(task);
 		this.tasks.set(entry.uuid, task);

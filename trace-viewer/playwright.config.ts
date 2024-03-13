@@ -8,6 +8,7 @@ const config: PlaywrightTestConfig = {
 			PUBLIC_DISABLE_ANALYTICS: 'true'
 		}
 	},
+	timeout: 5 * 1000,
 	testDir: 'tests',
 	testMatch: /(.+\.)?(test|spec)\.[jt]s/
 };

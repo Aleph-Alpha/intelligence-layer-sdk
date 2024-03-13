@@ -67,7 +67,7 @@ filterwarnings = [
 ]
 
 [tool.pylama]
-skip = "*/__init__.py,.venv/*"
+skip = "*/__init__.py,.venv/*,*/node_modules/*"
 ignore = "E501,E203"
 
 [tool.pylama.linter.mccabe]

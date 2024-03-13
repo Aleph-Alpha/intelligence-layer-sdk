@@ -1,8 +1,13 @@
+import json
+import os
 from datetime import datetime
 from typing import Optional, Union
 from uuid import UUID
 
+import requests
+import rich
 from pydantic import BaseModel, Field, SerializeAsAny
+from requests import HTTPError
 from rich.tree import Tree
 
 from intelligence_layer.core.tracer.tracer import (
@@ -77,9 +82,27 @@ class InMemoryTracer(BaseModel, Tracer):
 
     def _ipython_display_(self) -> None:
         """Default rendering for Jupyter notebooks"""
-        from rich import print
 
-        print(self._rich_render_())
+        self.submit_to_trace_viewer()
+        rich.print(self._rich_render_())
+
+    def submit_to_trace_viewer(self) -> None:
+        """Submits the trace to the UI for visualization"""
+        trace_viewer_url = os.getenv("TRACE_VIEWER_URL", "http://localhost:3000")
+        trace_viewer_trace_upload = f"{trace_viewer_url}/trace"
+        try:
+            res = requests.post(
+                trace_viewer_trace_upload, json=json.loads(self.model_dump_json())
+            )
+            if res.status_code != 200:
+                raise HTTPError
+            rich.print(
+                f"Open the [link={trace_viewer_url}]Trace Viewer[/link] to view the trace."
+            )
+        except requests.ConnectionError:
+            print(
+                f"Trace viewer not found under {trace_viewer_url}.\nConsider running it for a better viewing experience.\nIf it is, set `TRACE_VIEWER_URL` in the environment."
+            )
 
 
 class InMemorySpan(InMemoryTracer, Span):

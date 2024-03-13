@@ -31,7 +31,13 @@ function toFile(expected: Tracer) {
 function toFlatLogEntry(parent: string, entry: LogEntry): LogLine {
 	return {
 		entry_type: 'PlainEntry',
-		entry: { parent, message: entry.message, timestamp: entry.timestamp, value: entry.value }
+		entry: {
+			parent,
+			message: entry.message,
+			timestamp: entry.timestamp,
+			value: entry.value,
+			trace_id: entry.trace_id
+		}
 	};
 }
 
@@ -52,7 +58,13 @@ function toFlatSpanEntries(parent: string, entry: Span): LogLine[] {
 	const entries: LogLine[] = [
 		{
 			entry_type: 'StartSpan',
-			entry: { parent, name: entry.name, start: entry.start_timestamp, uuid }
+			entry: {
+				parent,
+				name: entry.name,
+				start: entry.start_timestamp,
+				uuid,
+				trace_id: entry.trace_id
+			}
 		}
 	];
 	entries.push(...toFlatEntries(uuid, entry.entries));
@@ -70,7 +82,8 @@ function toFlatTaskSpanEntries(parent: string, entry: TaskSpan): LogLine[] {
 				name: entry.name,
 				start: entry.start_timestamp,
 				uuid,
-				input: entry.input
+				input: entry.input,
+				trace_id: entry.trace_id
 			}
 		}
 	];

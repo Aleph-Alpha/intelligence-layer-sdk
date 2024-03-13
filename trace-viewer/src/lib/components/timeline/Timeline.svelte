@@ -20,7 +20,7 @@
 		{#if range}
 			<SpanTree entries={trace.entries} {range} />
 		{:else}
-			<p class="text-sm">No trace available</p>
+			<p class="text-sm">The uploaded trace is empty.</p>
 		{/if}
 	</div>
 </div>
