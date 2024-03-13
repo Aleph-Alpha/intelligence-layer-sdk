@@ -32,14 +32,14 @@ export const tracer: z.ZodType<Tracer> = z.object({
 export type Span = Tracer & {
 	name: string;
 	start_timestamp: string;
-	end_timestamp: string | null;
+	end_timestamp: string;
 	trace_id: string;
 };
 const span: z.ZodType<Span> = tracer.and(
 	z.object({
 		name: z.string(),
 		start_timestamp: z.string(),
-		end_timestamp: z.string().nullable(),
+		end_timestamp: z.string(),
 		trace_id: z.string()
 	})
 );

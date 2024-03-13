@@ -74,7 +74,8 @@ async function checkCorrectTraceDisplay(randomTrace: Tracer, page: Page) {
 
 		await page.getByText('Logs').click();
 		await expect(page.getByText(span.start_timestamp)).toBeVisible();
-		await expect(page.getByText(span.end_timestamp)).toBeVisible();
+
+		await expect(page.getByText(span.end_timestamp ?? 'NEVER HAPPENS')).toBeVisible();
 
 		for (const log of span.entries.filter(isLogEntry)) {
 			await expect(page.getByText(log.message)).toBeVisible();
