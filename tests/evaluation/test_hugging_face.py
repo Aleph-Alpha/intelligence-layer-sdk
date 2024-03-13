@@ -1,15 +1,18 @@
 import os
+from typing import Iterable, Sequence, Tuple
 from uuid import uuid4
 
-import pytest
+import huggingface_hub  # type: ignore
 from dotenv import load_dotenv
 from pydantic import BaseModel
-from pytest import MarkDecorator, fixture
+from pytest import fixture
 
 from intelligence_layer.core.tracer.tracer import utc_now
 from intelligence_layer.evaluation import Example, HuggingFaceDatasetRepository
-from intelligence_layer.evaluation.domain import AggregationOverview
-from intelligence_layer.evaluation.hugging_face import HuggingFaceAggregationRepository
+from intelligence_layer.evaluation.data_storage.hugging_face.hf_aggregation_respository import (
+    HuggingFaceAggregationRepository,
+)
+from intelligence_layer.evaluation.domain import AggregationOverview, Dataset
 
 
 class DummyAggregatedEvaluation(BaseModel):
@@ -17,7 +20,12 @@ class DummyAggregatedEvaluation(BaseModel):
 
 
 @fixture(scope="session")
-def hf_token() -> str:
+def hugging_face_repository_id() -> str:
+    return "Aleph-Alpha/test-datasets"
+
+
+@fixture(scope="session")
+def hugging_face_token() -> str:
     load_dotenv()
     token = os.getenv("HUGGING_FACE_TOKEN")
     assert isinstance(token, str)
@@ -25,16 +33,22 @@ def hf_token() -> str:
 
 
 @fixture(scope="session")
-def hf_repository(hf_token: str) -> HuggingFaceDatasetRepository:
+def hugging_face_repository(
+    hugging_face_repository_id: str, hugging_face_token: str
+) -> HuggingFaceDatasetRepository:
     return HuggingFaceDatasetRepository(
-        "Aleph-Alpha/test-datasets", token=hf_token, private=True
+        repository_id=hugging_face_repository_id,
+        token=hugging_face_token,
+        private=True,
     )
 
 
 @fixture(scope="session")
-def hf_aggregation_repository(hf_token: str) -> HuggingFaceAggregationRepository:
+def hf_aggregation_repository(
+    hugging_face_token: str,
+) -> HuggingFaceAggregationRepository:
     return HuggingFaceAggregationRepository(
-        "Aleph-Alpha/test-aggregations", token=hf_token, private=True
+        "Aleph-Alpha/test-aggregations", token=hugging_face_token, private=True
     )
 
 
@@ -60,75 +74,187 @@ def example_aggregation(
 
 
 @fixture
-def example1() -> Example[str, str]:
-    return Example(input="hey", expected_output="ho", id="0")
+def dataset_id_without_a_stored_dataset_file() -> str:
+    """A dataset ID of an already existing HuggingFace dataset
+    which does NOT have a stored dataset file but has an existing examples file.
+
+    Used to test backwards-compatibility.
+    """
+    return "examples-without-a-dataset-object_do-not-delete-me"
 
 
 @fixture
-def example2() -> Example[str, str]:
-    return Example(input="ho", expected_output="hey", id="1")
+def dataset_and_example_id_without_a_stored_dataset_file(
+    dataset_id_without_a_stored_dataset_file: str,
+) -> Tuple[str, str]:
+    """Dataset ID and a linked example ID of an already existing HuggingFace dataset
+    which does NOT have a stored dataset file but has an existing examples file.
+
+    Used to test backwards-compatibility.
+    """
+    return dataset_id_without_a_stored_dataset_file, "example-id-2"
 
 
-def skip_if_required_token_not_set() -> MarkDecorator:
-    return pytest.mark.skipif(
-        "HUGGING_FACE_TOKEN" in os.environ.keys(),
-        reason="HUGGING_FACE_TOKEN not set, necessary for for current test",
+@fixture
+def example_1() -> Example[str, str]:
+    return Example(input="hey", expected_output="hey hey")
+
+
+@fixture
+def example_2() -> Example[str, str]:
+    return Example(input="hi", expected_output="hi hi")
+
+
+@fixture
+def hugging_face_repository_with_dataset_and_examples(
+    hugging_face_repository: HuggingFaceDatasetRepository,
+    example_1: Example[str, str],
+    example_2: Example[str, str],
+) -> Iterable[
+    Tuple[HuggingFaceDatasetRepository, Dataset, Sequence[Example[str, str]]]
+]:
+    examples = [example_1, example_2]
+    dataset = hugging_face_repository.create_dataset(
+        examples=examples, dataset_name="test-hg-dataset"
+    )
+
+    try:
+        yield hugging_face_repository, dataset, examples
+    finally:
+        hugging_face_repository.delete_dataset(dataset.id)
+
+
+def test_hugging_face_repository_can_create_and_delete_a_repository(
+    hugging_face_token: str,
+) -> None:
+    repository_id = f"Aleph-Alpha/test-{uuid4()}"
+
+    assert not huggingface_hub.repo_exists(
+        repo_id=repository_id,
+        token=hugging_face_token,
+        repo_type="dataset",
+    ), f"This is very unlikely but it seems that the repository with the ID {repository_id} already exists."
+
+    created_repository = HuggingFaceDatasetRepository(
+        repository_id=repository_id,
+        token=hugging_face_token,
+        private=True,
+    )
+
+    try:
+        assert huggingface_hub.repo_exists(
+            repo_id=repository_id,
+            token=hugging_face_token,
+            repo_type="dataset",
+        )
+        created_repository.delete_repository()
+        assert not huggingface_hub.repo_exists(
+            repo_id=repository_id,
+            token=hugging_face_token,
+            repo_type="dataset",
+        )
+    finally:
+        huggingface_hub.delete_repo(
+            repo_id=repository_id,
+            token=hugging_face_token,
+            repo_type="dataset",
+            missing_ok=True,
+        )
+
+
+def test_hugging_face_repository_can_load_old_datasets(
+    hugging_face_repository: HuggingFaceDatasetRepository,
+    dataset_and_example_id_without_a_stored_dataset_file: Tuple[str, str],
+) -> None:
+    (dataset_id, example_id) = dataset_and_example_id_without_a_stored_dataset_file
+
+    stored_examples = list(hugging_face_repository.examples(dataset_id, str, str))
+    stored_datasets = list(hugging_face_repository.datasets())
+    stored_example = hugging_face_repository.example(dataset_id, example_id, str, str)
+    stored_dataset = hugging_face_repository.dataset(dataset_id)
+    stored_dataset_ids = list(hugging_face_repository.dataset_ids())
+
+    assert len(stored_examples) > 0
+    assert stored_example is not None
+    assert stored_example in stored_examples
+
+    assert len(stored_datasets) > 0
+    assert stored_dataset is not None
+    assert stored_dataset in stored_datasets
+    assert stored_dataset.id == dataset_id
+
+    assert len(stored_dataset_ids) > 0
+    assert dataset_id in stored_dataset_ids
+
+
+def test_examples_returns_an_empty_list_for_not_existing_dataset_id(
+    hugging_face_repository: HuggingFaceDatasetRepository,
+) -> None:
+    assert hugging_face_repository.examples("not-existing-dataset-id", str, str) == []
+
+
+def test_example_returns_none_for_not_existing_ids(
+    hugging_face_repository: HuggingFaceDatasetRepository,
+) -> None:
+    assert (
+        hugging_face_repository.example(
+            "not-existing-dataset-id", "not-existing-example-id", str, str
+        )
+        is None
     )
 
 
-@skip_if_required_token_not_set()
-def test_hf_database_non_existing(hf_repository: HuggingFaceDatasetRepository) -> None:
-    # not existing IDs
-    assert hf_repository.examples("lol", str, str) == []
-    assert hf_repository.example("lol", "abc", str, str) is None
-
-    # deleting a not-existing dataset
+def test_delete_dataset_does_not_fail_for_not_existing_dataset_id(
+    hugging_face_repository: HuggingFaceDatasetRepository,
+) -> None:
     try:
-        hf_repository.delete_dataset("lol")
+        hugging_face_repository.delete_dataset("not-existing-dataset-id")
     except Exception:
         assert False, "Deleting a not-existing dataset should not throw an exception"
 
-    # non-dataset files are not retrieved as datasets
-    datasets = list(hf_repository.dataset_ids())
 
-    assert ".gitattributes" not in datasets
-    assert "README.md" not in datasets
-
-
-@skip_if_required_token_not_set()
-def test_hf_database_operations(
-    hf_repository: HuggingFaceDatasetRepository,
-    example1: Example[str, str],
-    example2: Example[str, str],
+def test_hugging_face_repository_supports_all_operations_for_created_dataset(
+    hugging_face_repository_with_dataset_and_examples: Tuple[
+        HuggingFaceDatasetRepository, Dataset, Sequence[Example[str, str]]
+    ]
 ) -> None:
-    examples = [example1, example2]
+    (hugging_face_repository_, dataset, examples) = (
+        hugging_face_repository_with_dataset_and_examples
+    )
 
-    dataset_id = hf_repository.create_dataset(examples, "test-hg-dataset").id
+    # created dataset is stored
+    stored_dataset = hugging_face_repository_.dataset(dataset.id)
+    assert stored_dataset == dataset
 
-    try:
-        stored_dataset_ids = list(hf_repository.dataset_ids())
+    stored_dataset_ids = list(hugging_face_repository_.dataset_ids())
+    # non-dataset files are not retrieved as datasets
+    assert ".gitattributes" not in stored_dataset_ids
+    assert "README.md" not in stored_dataset_ids
+    # created dataset is included
+    assert dataset.id in stored_dataset_ids
 
-        # non-dataset files are not retrieved as datasets
-        assert ".gitattributes" not in stored_dataset_ids
-        assert "README.md" not in stored_dataset_ids
+    # given examples are stored and can be accessed via their ID
+    assert list(hugging_face_repository_.examples(dataset.id, str, str)) == sorted(
+        examples, key=lambda e: e.id
+    )
+    for example in examples:
+        assert (
+            hugging_face_repository_.example(dataset.id, example.id, str, str)
+            == example
+        )
 
-        # created dataset is stored
-        assert dataset_id in stored_dataset_ids
+    # one gets None for a not existing example ID
+    assert (
+        hugging_face_repository_.example(
+            dataset.id, "not-existing-example-id", str, str
+        )
+        is None
+    )
 
-        # given examples are stored and can be accessed via their ID
-        assert list(hf_repository.examples(dataset_id, str, str)) == examples
-        for example in examples:
-            assert hf_repository.example(dataset_id, example.id, str, str) == example
-
-        # example() with not-existing example ID returns None
-        assert hf_repository.example(dataset_id, "abc", str, str) is None
-
-        # deleting a dataset works
-        hf_repository.delete_dataset(dataset_id)
-
-        assert hf_repository.examples(dataset_id, str, str) == []
-    finally:
-        hf_repository.delete_dataset(dataset_id)
+    # deleting an existing dataset works
+    hugging_face_repository_.delete_dataset(dataset.id)
+    assert hugging_face_repository_.examples(dataset.id, str, str) == []
+    assert hugging_face_repository_.dataset(dataset.id) is None
 
 
 def test_hf_aggregation_operations(
