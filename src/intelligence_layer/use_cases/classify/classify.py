@@ -116,9 +116,29 @@ class SingleLabelClassifyAggregationLogic(
         self, evaluations: Iterable[SingleLabelClassifyEvaluation]
     ) -> AggregatedSingleLabelClassifyEvaluation:
         acc = MeanAccumulator()
+        missing_labels: dict[str, int] = defaultdict(int)
+        confusion_matrix: dict[tuple[str, str], int] = defaultdict(int)
+        by_label: dict[str, Mapping[str, int]] = defaultdict(lambda: defaultdict(int))
         for evaluation in evaluations:
             acc.add(1.0 if evaluation.correct else 0.0)
-        return AggregatedSingleLabelClassifyEvaluation(percentage_correct=acc.extract())
+            if evaluation.expected_label_missing:
+                missing_labels[evaluation.expected] += 1
+            else:
+                confusion_matrix[(evaluation.predicted, evaluation.expected)] += 1
+                by_label[evaluation.predicted]["predicted"] += 1
+                by_label[evaluation.expected]["expected"] += 1
+        return AggregatedSingleLabelClassifyEvaluation(
+            percentage_correct=acc.extract(),
+            confusion_matrix=confusion_matrix,
+            by_label={
+                label: AggregatedLabelInfo(
+                    expected_count=counts["expected"],
+                    predicted_count=counts["predicted"],
+                )
+                for label, counts in by_label.items()
+            },
+            missing_labels=missing_labels,
+        )
 
 
 class SingleLabelClassifyEvaluationLogic(
@@ -138,13 +158,15 @@ class SingleLabelClassifyEvaluationLogic(
             output.scores.items(), key=lambda item: item[1], reverse=True
         )
         predicted = sorted_classes[0][0]
-        if sorted_classes[0][0] in example.expected_output:
+        if predicted == example.expected_output:
             correct = True
         else:
             correct = False
         return SingleLabelClassifyEvaluation(
             correct=correct,
-
+            predicted=predicted,
+            expected=example.expected_output,
+            expected_label_missing=example.expected_output not in example.input.labels,
         )
 
 
