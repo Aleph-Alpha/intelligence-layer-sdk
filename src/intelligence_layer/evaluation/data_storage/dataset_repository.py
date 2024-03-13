@@ -144,18 +144,8 @@ class FileSystemDatasetRepository(DatasetRepository):
                 f"One of the dataset files already exist for dataset {dataset}. This should not happen. Files: {dataset_path}, {examples_path}."
             )
 
-        with self._file_system.open(
-            str(dataset_path), "w", encoding="utf-8"
-        ) as dataset_file:
-            dataset_file.write(JsonSerializer(root=dataset).model_dump_json() + "\n")
-
-        with self._file_system.open(
-            str(examples_path), "w", encoding="utf-8"
-        ) as examples_file:
-            for example in examples:
-                serialized_result = JsonSerializer(root=example)
-                text = serialized_result.model_dump_json() + "\n"
-                examples_file.write(text)
+        self._write_data(dataset_path, [dataset])
+        self._write_data(examples_path, examples)
 
         return dataset
 
@@ -236,6 +226,17 @@ class FileSystemDatasetRepository(DatasetRepository):
 
     def _dataset_examples_path(self, dataset_id: str) -> Path:
         return self._dataset_directory(dataset_id) / f"{dataset_id}.jsonl"
+
+    def _write_data(
+        self,
+        file_path: Path,
+        data_to_write: Iterable[PydanticSerializable],
+    ) -> None:
+        with self._file_system.open(str(file_path), "w", encoding="utf-8") as file:
+            for data_chunk in data_to_write:
+                serialized_result = JsonSerializer(root=data_chunk)
+                json_string = serialized_result.model_dump_json() + "\n"
+                file.write(json_string)
 
 
 class InMemoryDatasetRepository(DatasetRepository):
