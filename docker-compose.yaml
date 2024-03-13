@@ -12,3 +12,12 @@ services:
       - "6900:6900"
     environment:
       ARGILLA_ELASTICSEARCH: "http://argilla-elastic-search:9200"
+  open-telemetry-trace-service:
+    container_name: jaeger_1_35
+    environment:
+      COLLECTOR_OTLP_ENABLED: "true"
+    ports:
+      - "4317:4317"
+      - "4318:4318"
+      - "16686:16686"
+    image: jaegertracing/all-in-one:1.35
