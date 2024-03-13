@@ -38,7 +38,8 @@ export function randomLogEntry(between?: TimeRange): LogEntry {
 	return {
 		message: faker.lorem.sentence(),
 		value: randomValue(),
-		timestamp: (between ? faker.date.between(between) : faker.date.recent()).toISOString()
+		timestamp: (between ? faker.date.between(between) : faker.date.recent()).toISOString(),
+		trace_id: faker.string.uuid()
 	};
 }
 
@@ -51,7 +52,8 @@ export function randomSpan(between?: TimeRange): Span {
 		name: faker.word.sample(),
 		start_timestamp: range.from.toISOString(),
 		end_timestamp: range.to.toISOString(),
-		entries: faker.helpers.multiple(() => randomEntry(range), { count: { max: 2, min: 0 } })
+		entries: faker.helpers.multiple(() => randomEntry(range), { count: { max: 2, min: 0 } }),
+		trace_id: faker.string.uuid()
 	};
 }
 
