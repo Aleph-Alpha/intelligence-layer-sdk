@@ -58,10 +58,11 @@ class SingleHuggingfaceDatasetRepository(
 
         answers = "ABCD"
 
-        for sample in self._huggingface_dataset["test"]:
+        for index, sample in enumerate(self._huggingface_dataset["test"]):
             yield Example(
                 input=MultipleChoiceInput(
                     question=sample["question"], choices=sample["choices"]
                 ),
                 expected_output=answers[sample["answer"]],
+                id=str(index),
             )

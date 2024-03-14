@@ -31,3 +31,5 @@ def test_load_example_for_existing_dataset() -> None:
     ]
 
     assert first_example.expected_output == "D"
+
+    assert first_example.id == "0"
