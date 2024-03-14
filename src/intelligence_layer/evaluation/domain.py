@@ -205,6 +205,9 @@ class ExampleOutput(BaseModel, Generic[Output]):
     example_id: str
     output: Output | FailedExampleRun
 
+    def __repr__(self) -> str:
+        return self.__str__()
+
     def __str__(self) -> str:
         return (
             f"Run ID={self.run_id}\n"
