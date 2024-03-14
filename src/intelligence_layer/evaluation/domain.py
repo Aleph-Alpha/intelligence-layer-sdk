@@ -230,6 +230,16 @@ class SuccessfulExampleOutput(BaseModel, Generic[Output]):
     example_id: str
     output: Output
 
+    def __repr__(self) -> str:
+        return self.__str__()
+
+    def __str__(self) -> str:
+        return (
+            f"Run ID={self.run_id}\n"
+            f"Example ID={self.example_id}\n"
+            f'Output="{self.output}"\n'
+        )
+
 
 class ExampleTrace(BaseModel):
     """Trace of a single evaluated :class:`Example`
