@@ -1,4 +1,6 @@
-from typing import Generic, Iterable
+from typing import Generic, Iterable, Sequence
+
+from pydantic import BaseModel
 from intelligence_layer.core.task import Input
 from intelligence_layer.evaluation.data_storage.dataset_repository import (
     DatasetRepository,
@@ -6,6 +8,11 @@ from intelligence_layer.evaluation.data_storage.dataset_repository import (
 from datasets import DatasetDict, Dataset, IterableDatasetDict, IterableDataset
 
 from intelligence_layer.evaluation.domain import Dataset, Example, ExpectedOutput
+
+
+class MultipleChoiceInput(BaseModel):
+    question: str
+    choices: Sequence[str]
 
 
 class SingleHuggingfaceDatasetRepository(
@@ -48,4 +55,9 @@ class SingleHuggingfaceDatasetRepository(
         input_type: type[Input],
         expected_output_type: type[ExpectedOutput],
     ) -> Iterable[Example[Input, ExpectedOutput]]:
-        return super().examples(dataset_id, input_type, expected_output_type)
+
+        for question in self._huggingface_dataset["test"]["question"]:
+            yield Example(
+                input=MultipleChoiceInput(question=question, choices=[]),
+                expected_output="",
+            )
