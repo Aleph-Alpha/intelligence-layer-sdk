@@ -1,10 +1,19 @@
 import os
+from uuid import uuid4
 
 import pytest
 from dotenv import load_dotenv
+from pydantic import BaseModel
 from pytest import MarkDecorator, fixture
 
+from intelligence_layer.core.tracer.tracer import utc_now
 from intelligence_layer.evaluation import Example, HuggingFaceDatasetRepository
+from intelligence_layer.evaluation.domain import AggregationOverview
+from intelligence_layer.evaluation.hugging_face import HuggingFaceAggregationRepository
+
+
+class DummyAggregatedEvaluation(BaseModel):
+    score: float
 
 
 @fixture(scope="session")
@@ -19,6 +28,34 @@ def hf_token() -> str:
 def hf_repository(hf_token: str) -> HuggingFaceDatasetRepository:
     return HuggingFaceDatasetRepository(
         "Aleph-Alpha/test-datasets", token=hf_token, private=True
+    )
+
+
+@fixture(scope="session")
+def hf_aggregation_repository(hf_token: str) -> HuggingFaceAggregationRepository:
+    return HuggingFaceAggregationRepository(
+        "Aleph-Alpha/test-aggregations", token=hf_token, private=True
+    )
+
+
+@fixture
+def dummy_aggregated_evaluation() -> DummyAggregatedEvaluation:
+    return DummyAggregatedEvaluation(score=0.5)
+
+
+@fixture
+def example_aggregation(
+    dummy_aggregated_evaluation: DummyAggregatedEvaluation,
+) -> AggregationOverview[DummyAggregatedEvaluation]:
+    return AggregationOverview(
+        evaluation_overviews=frozenset([]),
+        id=str(uuid4()),
+        start=utc_now(),
+        end=utc_now(),
+        successful_evaluation_count=0,
+        crashed_during_evaluation_count=0,
+        description="",
+        statistics=dummy_aggregated_evaluation,
     )
 
 
@@ -92,3 +129,20 @@ def test_hf_database_operations(
         assert hf_repository.examples(dataset_id, str, str) == []
     finally:
         hf_repository.delete_dataset(dataset_id)
+
+
+def test_hf_aggregation_operations(
+    hf_aggregation_repository: HuggingFaceAggregationRepository,
+    example_aggregation: AggregationOverview[DummyAggregatedEvaluation],
+) -> None:
+    hf_aggregation_repository.store_aggregation_overview(example_aggregation)
+    overview_id = example_aggregation.id
+
+    try:
+        assert overview_id in list(hf_aggregation_repository.aggregation_overview_ids())
+        overview = hf_aggregation_repository.aggregation_overview(
+            overview_id, DummyAggregatedEvaluation
+        )
+        assert overview != []
+    finally:
+        hf_aggregation_repository.delete_repository()

@@ -1,8 +1,10 @@
 from abc import ABC, abstractmethod
 from pathlib import Path
-from typing import Any, Iterable, Optional, Sequence
+from typing import Any, Dict, Iterable, Optional, Sequence
 
-from intelligence_layer.evaluation.data_storage.utils import FileBasedRepository
+from fsspec.implementations.local import LocalFileSystem  # type: ignore
+
+from intelligence_layer.evaluation.data_storage.utils import FileSystemBasedRepository
 from intelligence_layer.evaluation.domain import (
     AggregatedEvaluation,
     AggregationOverview,
@@ -69,7 +71,7 @@ class AggregationRepository(ABC):
         pass
 
 
-class FileAggregationRepository(AggregationRepository, FileBasedRepository):
+class FileSystemAggregationRepository(AggregationRepository, FileSystemBasedRepository):
     def store_aggregation_overview(
         self, aggregation_overview: AggregationOverview[AggregatedEvaluation]
     ) -> None:
@@ -82,7 +84,8 @@ class FileAggregationRepository(AggregationRepository, FileBasedRepository):
         self, aggregation_id: str, aggregation_type: type[AggregatedEvaluation]
     ) -> Optional[AggregationOverview[AggregatedEvaluation]]:
         file_path = self._aggregation_overview_path(aggregation_id)
-        if not file_path.exists():
+
+        if not self.exists(file_path):
             return None
 
         content = self.read_utf8(file_path)
@@ -92,7 +95,13 @@ class FileAggregationRepository(AggregationRepository, FileBasedRepository):
 
     def aggregation_overview_ids(self) -> Sequence[str]:
         return sorted(
-            [path.stem for path in self._aggregation_root_directory().glob("*.json")]
+            [
+                Path(f["name"]).stem
+                for f in self._fs.ls(
+                    self.path_to_str(self._aggregation_root_directory()), detail=True
+                )
+                if isinstance(f, Dict) and Path(f["name"]).suffix == ".json"
+            ]
         )
 
     def _aggregation_root_directory(self) -> Path:
@@ -126,3 +135,12 @@ class InMemoryAggregationRepository(AggregationRepository):
 
     def aggregation_overview_ids(self) -> Sequence[str]:
         return sorted(list(self._aggregation_overviews.keys()))
+
+
+class FileAggregationRepository(FileSystemAggregationRepository):
+    def __init__(self, root_directory: Path) -> None:
+        super().__init__(LocalFileSystem(), root_directory)
+
+    @staticmethod
+    def path_to_str(path: Path) -> str:
+        return str(path)

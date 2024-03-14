@@ -1,7 +1,9 @@
 from abc import ABC, abstractmethod
 from collections import defaultdict
 from pathlib import Path
-from typing import Iterable, Optional, Sequence, cast
+from typing import Dict, Iterable, Optional, Sequence, cast
+
+from fsspec.implementations.local import LocalFileSystem  # type: ignore
 
 from intelligence_layer.core import (
     FileTracer,
@@ -12,7 +14,7 @@ from intelligence_layer.core import (
     PydanticSerializable,
     Tracer,
 )
-from intelligence_layer.evaluation.data_storage.utils import FileBasedRepository
+from intelligence_layer.evaluation.data_storage.utils import FileSystemBasedRepository
 from intelligence_layer.evaluation.domain import (
     ExampleOutput,
     ExampleTrace,
@@ -149,7 +151,7 @@ class RunRepository(ABC):
         ...
 
 
-class FileRunRepository(RunRepository, FileBasedRepository):
+class FileSystemRunRepository(RunRepository, FileSystemBasedRepository):
     def store_run_overview(self, overview: RunOverview) -> None:
         self.write_utf8(
             self._run_overview_path(overview.id), overview.model_dump_json(indent=2)
@@ -157,14 +159,22 @@ class FileRunRepository(RunRepository, FileBasedRepository):
 
     def run_overview(self, run_id: str) -> Optional[RunOverview]:
         file_path = self._run_overview_path(run_id)
-        if not file_path.exists():
+        if not self.exists(file_path):
             return None
 
         content = self.read_utf8(file_path)
         return RunOverview.model_validate_json(content)
 
     def run_overview_ids(self) -> Sequence[str]:
-        return sorted(path.stem for path in self._run_root_directory().glob("*.json"))
+        return sorted(
+            [
+                Path(f["name"]).stem
+                for f in self._fs.ls(
+                    self.path_to_str(self._run_root_directory()), detail=True
+                )
+                if isinstance(f, Dict) and Path(f["name"]).suffix == ".json"
+            ]
+        )
 
     def store_example_output(self, example_output: ExampleOutput[Output]) -> None:
         serialized_result = JsonSerializer(root=example_output)
@@ -328,3 +338,12 @@ class InMemoryRunRepository(RunRepository):
                 for example_output in self._example_outputs[run_id]
             ]
         )
+
+
+class FileRunRepository(FileSystemRunRepository):
+    def __init__(self, root_directory: Path) -> None:
+        super().__init__(LocalFileSystem(), root_directory)
+
+    @staticmethod
+    def path_to_str(path: Path) -> str:
+        return str(path)

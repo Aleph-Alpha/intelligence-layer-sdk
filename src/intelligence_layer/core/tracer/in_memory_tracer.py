@@ -95,7 +95,7 @@ class InMemoryTracer(BaseModel, Tracer):
                 trace_viewer_trace_upload, json=json.loads(self.model_dump_json())
             )
             if res.status_code != 200:
-                raise HTTPError
+                raise HTTPError(res.status_code)
             rich.print(
                 f"Open the [link={trace_viewer_url}]Trace Viewer[/link] to view the trace."
             )
