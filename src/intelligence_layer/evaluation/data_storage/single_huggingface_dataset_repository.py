@@ -56,8 +56,12 @@ class SingleHuggingfaceDatasetRepository(
         expected_output_type: type[ExpectedOutput],
     ) -> Iterable[Example[Input, ExpectedOutput]]:
 
-        for question in self._huggingface_dataset["test"]["question"]:
+        answers = "ABCD"
+
+        for sample in self._huggingface_dataset["test"]:
             yield Example(
-                input=MultipleChoiceInput(question=question, choices=[]),
-                expected_output="",
+                input=MultipleChoiceInput(
+                    question=sample["question"], choices=sample["choices"]
+                ),
+                expected_output=answers[sample["answer"]],
             )
