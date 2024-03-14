@@ -91,7 +91,9 @@ def test_qa_with_logit_bias_for_no_answer(
     assert any(output.answer == a for a in acceptable_answers)
 
 
-def test_qa_highlights_will_not_become_negative(single_chunk_qa: SingleChunkQa) -> None:
+def test_qa_highlights_will_not_become_out_of_bounds(
+    single_chunk_qa: SingleChunkQa,
+) -> None:
     input_text = """Zubereitung
 Ein Hotdog besteht aus einem erwärmten Brühwürstchen in einem länglichen, meist weichen Weizenbrötchen, das üblicherweise getoastet oder gedämpft wird. Das Hotdogbrötchen wird zur Hälfte der Länge nach aufgeschnitten und ggf. erhitzt. Danach legt man das heiße Würstchen hinein und garniert es mit den Saucen (Ketchup, Senf, Mayonnaise usw.). Häufig werden auch noch weitere Zugaben, etwa Röstzwiebeln, Essiggurken, Sauerkraut oder Krautsalat in das Brötchen gegeben.
 
@@ -104,7 +106,8 @@ Weltweit bekannt sind die Hotdog-Stände der schwedischen Möbelhauskette IKEA, 
 In den USA wird der Hotdog meist auf einem Roller Grill gegart. So bekommt die Wurst einen besonderen Grillgeschmack. Amerikanische Hotdogs werden mit speziellen Pickled Gherkins (Gurkenscheiben) und Relishes (Sweet Relish, Hot Pepper Relish oder Corn Relish), häufig mit mildem Senf (Yellow Mustard, die populärste Hotdog-Zutat) oder mit Ketchup serviert. Auch eine Garnitur aus warmem Sauerkraut ist möglich (Nathan’s Famous in New York)."""
     model = LuminousControlModel("luminous-supreme-control")
     qa_task = SingleChunkQa(
-        text_highlight=TextHighlight(model=model, granularity=None), model=model
+        text_highlight=TextHighlight(model=model, granularity=None, clamp=True),
+        model=model,
     )
     input = SingleChunkQaInput(
         chunk=TextChunk(input_text),

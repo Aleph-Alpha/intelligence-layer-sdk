@@ -72,6 +72,7 @@ class TextHighlight(Task[TextHighlightInput, TextHighlightOutput]):
         model: The model used throughout the task for model related API calls.
         granularity: At which granularity should the target be explained in terms of the prompt.
         threshold: After normalization, everything highlight below this value will be dropped.
+        clamp: Control whether highlights should be clamped to a focus range if they intersect it.
 
     Example:
         >>> import os
@@ -104,11 +105,13 @@ class TextHighlight(Task[TextHighlightInput, TextHighlightOutput]):
         model: AlephAlphaModel,
         granularity: PromptGranularity | None = None,
         threshold: float = 0.1,
+        clamp: bool = False,
     ) -> None:
         super().__init__()
         self._threshold = threshold
         self._model = model
         self._granularity = granularity
+        self._clamp_to_focus = clamp
 
     def do_run(
         self, input: TextHighlightInput, task_span: TaskSpan
@@ -124,9 +127,7 @@ class TextHighlight(Task[TextHighlightInput, TextHighlightOutput]):
         )
 
         text_prompt_item_explanations_and_indices = (
-            self._extract_text_prompt_item_explanations_and_item_index(
-                input.rich_prompt, explanation
-            )
+            self._extract_text_prompt_item_explanations_and_item_index(explanation)
         )
 
         highlights = self._to_highlights(
@@ -164,7 +165,6 @@ class TextHighlight(Task[TextHighlightInput, TextHighlightOutput]):
 
     def _extract_text_prompt_item_explanations_and_item_index(
         self,
-        prompt: Prompt,
         explain_output: ExplainOutput,
     ) -> Iterable[tuple[TextPromptItemExplanation, int]]:
         return (
@@ -188,6 +188,7 @@ class TextHighlight(Task[TextHighlightInput, TextHighlightOutput]):
         ) in text_prompt_item_explanations_and_indices:
             for text_score in text_prompt_item_explanation.scores:
                 assert isinstance(text_score, TextScore)  # for typing
+
                 if self._is_relevant_explanation(
                     explanation_idx, text_score, prompt_ranges
                 ):
@@ -205,6 +206,10 @@ class TextHighlight(Task[TextHighlightInput, TextHighlightOutput]):
             ],
         )
 
+        relevant_text_scores = self._clamp_ranges_to_focus(
+            prompt_ranges, relevant_text_scores
+        )
+
         text_highlights = [
             ScoredTextHighlight(
                 start=text_score.start,
@@ -215,6 +220,67 @@ class TextHighlight(Task[TextHighlightInput, TextHighlightOutput]):
         ]
 
         return self._normalize_and_filter(text_highlights)
+
+    def _clamp_ranges_to_focus(
+        self,
+        prompt_ranges: Sequence[PromptRange],
+        relevant_text_scores: Sequence[TextScore],
+    ):
+        # check if the prompts are overlapping
+        def are_overlapping(p1: PromptRange, p2: PromptRange) -> bool:
+            # TODO check if this is enough, as text actually has a position, but we can't
+            return p1.start.item <= p2.end.item and p1.end.item >= p2.start.item
+
+        if self._clamp_to_focus and len(prompt_ranges) > 0:
+            new_relevant_text_scores: Sequence[TextScore] = []
+            has_overlapping_ranges = any(
+                are_overlapping(p1, p2)
+                for p1, p2 in zip(prompt_ranges, prompt_ranges[1:])
+            )
+            if has_overlapping_ranges:
+                print(
+                    "TextHighlighting with clamping is on, but focus ranges are overlapping. Disabling clamping."
+                )
+            else:
+                # TODO we just assume that its all text for now, but thats not a given. This will need to be replaced
+                for prompt_range in prompt_ranges:
+                    assert isinstance(prompt_range.start, TextCursor)
+                    assert isinstance(prompt_range.end, TextCursor)
+                for score in relevant_text_scores:
+                    most_overlapping_range = sorted(
+                        prompt_ranges,
+                        # positive for any overlapping regions
+                        key=lambda range: min(
+                            score.start + score.length, prompt_range.end.position
+                        )
+                        - max(score.start, prompt_range.start.position),
+                    )[0]
+                    new_start = score.start
+                    new_length = score.length
+                    new_score = score.score
+                    cut_characters = 0
+                    if score.start < most_overlapping_range.start.position:
+                        cut_characters += (
+                            most_overlapping_range.start.position - score.start
+                        )
+                        new_start = most_overlapping_range.start.position
+
+                    if score.start + score.length > most_overlapping_range.end.position:
+                        cut_characters += (
+                            score.start
+                            + score.length
+                            - most_overlapping_range.end.position
+                        )
+                        new_length = most_overlapping_range.end.position - new_start
+
+                    if cut_characters:
+                        new_score = score.length / new_length
+                    new_relevant_text_scores.append(
+                        TextScore(new_start, new_length, new_score)
+                    )
+            return new_relevant_text_scores
+        else:
+            return relevant_text_scores
 
     def _normalize_and_filter(
         self, text_highlights: Sequence[ScoredTextHighlight]
