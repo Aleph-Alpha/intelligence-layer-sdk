@@ -4,8 +4,8 @@ from itertools import chain
 from pathlib import Path
 from typing import Dict, Iterable, Optional, Sequence, cast
 from uuid import uuid4
-from fsspec.implementations.local import LocalFileSystem  # type: ignore
 
+from fsspec.implementations.local import LocalFileSystem  # type: ignore
 from pydantic import BaseModel
 
 from intelligence_layer.connectors.argilla.argilla_client import (
@@ -219,7 +219,7 @@ class FileSystemEvaluationRepository(EvaluationRepository, FileSystemBasedReposi
 
     def evaluation_overview(self, evaluation_id: str) -> Optional[EvaluationOverview]:
         file_path = self._evaluation_overview_path(evaluation_id)
-        if file_path is None:
+        if not self.exists(file_path):
             return None
 
         content = self.read_utf8(file_path)
@@ -229,7 +229,9 @@ class FileSystemEvaluationRepository(EvaluationRepository, FileSystemBasedReposi
         return sorted(
             [
                 Path(f["name"]).stem
-                for f in self._fs.ls(self.path_to_str(self._eval_root_directory()), detail=True)
+                for f in self._fs.ls(
+                    self.path_to_str(self._eval_root_directory()), detail=True
+                )
                 if isinstance(f, Dict) and Path(f["name"]).suffix == ".json"
             ]
         )
@@ -336,7 +338,8 @@ class InMemoryEvaluationRepository(EvaluationRepository):
             for example_evaluation in self._example_evaluations[evaluation_id]
         ]
         return sorted(example_evaluations, key=lambda i: i.example_id)
-    
+
+
 class FileEvaluationRepository(FileSystemEvaluationRepository):
     def __init__(self, root_directory: Path) -> None:
         super().__init__(LocalFileSystem(), root_directory)

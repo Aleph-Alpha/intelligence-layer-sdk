@@ -1,18 +1,20 @@
 import os
 from uuid import uuid4
-from pydantic import BaseModel
 
 import pytest
 from dotenv import load_dotenv
+from pydantic import BaseModel
 from pytest import MarkDecorator, fixture
-from intelligence_layer.core.tracer.tracer import utc_now
 
+from intelligence_layer.core.tracer.tracer import utc_now
 from intelligence_layer.evaluation import Example, HuggingFaceDatasetRepository
 from intelligence_layer.evaluation.domain import AggregationOverview
 from intelligence_layer.evaluation.hugging_face import HuggingFaceAggregationRepository
 
+
 class DummyAggregatedEvaluation(BaseModel):
     score: float
+
 
 @fixture(scope="session")
 def hf_token() -> str:
@@ -42,18 +44,19 @@ def dummy_aggregated_evaluation() -> DummyAggregatedEvaluation:
 
 
 @fixture
-def example_aggregation(dummy_aggregated_evaluation: DummyAggregatedEvaluation) -> AggregationOverview[DummyAggregatedEvaluation]:
+def example_aggregation(
+    dummy_aggregated_evaluation: DummyAggregatedEvaluation,
+) -> AggregationOverview[DummyAggregatedEvaluation]:
     return AggregationOverview(
-        evaluation_overviews = frozenset([]),
-        id = str(uuid4()),
-        start = utc_now(),
-        end = utc_now(),
-        successful_evaluation_count = 0,
-        crashed_during_evaluation_count = 0,
-        description = "",
-        statistics = dummy_aggregated_evaluation,
+        evaluation_overviews=frozenset([]),
+        id=str(uuid4()),
+        start=utc_now(),
+        end=utc_now(),
+        successful_evaluation_count=0,
+        crashed_during_evaluation_count=0,
+        description="",
+        statistics=dummy_aggregated_evaluation,
     )
-
 
 
 @fixture
@@ -128,18 +131,18 @@ def test_hf_database_operations(
         hf_repository.delete_dataset(dataset_id)
 
 
-@requires_token()
 def test_hf_aggregation_operations(
     hf_aggregation_repository: HuggingFaceAggregationRepository,
-    example_aggregation: AggregationOverview[DummyAggregatedEvaluation]
+    example_aggregation: AggregationOverview[DummyAggregatedEvaluation],
 ) -> None:
     hf_aggregation_repository.store_aggregation_overview(example_aggregation)
     overview_id = example_aggregation.id
 
     try:
         assert overview_id in list(hf_aggregation_repository.aggregation_overview_ids())
-        overview = hf_aggregation_repository.aggregation_overview(overview_id, DummyAggregatedEvaluation)
+        overview = hf_aggregation_repository.aggregation_overview(
+            overview_id, DummyAggregatedEvaluation
+        )
         assert overview != []
     finally:
         hf_aggregation_repository.delete_repository()
-    

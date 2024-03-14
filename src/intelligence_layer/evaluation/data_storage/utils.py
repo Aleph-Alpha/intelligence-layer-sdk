@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 from pathlib import Path
 from typing import cast
 
-from fsspec import AbstractFileSystem # type: ignore
+from fsspec import AbstractFileSystem  # type: ignore
 
 
 class FileSystemBasedRepository(ABC):
@@ -12,7 +12,6 @@ class FileSystemBasedRepository(ABC):
         root_directory: The folder where the files are stored. The folder
             (along with its parents) will be created if it does not exist yet.
     """
-        
 
     def __init__(self, fs: AbstractFileSystem, root_directory: Path) -> None:
         root_directory.mkdir(parents=True, exist_ok=True)
@@ -24,8 +23,10 @@ class FileSystemBasedRepository(ABC):
 
     def read_utf8(self, path: Path) -> str:
         return cast(str, self._fs.read_text(self.path_to_str(path), encoding="utf-8"))
-    
-    
+
+    def exists(self, path: Path) -> bool:
+        return cast(bool, self._fs.exists(path))
+
     @staticmethod
     @abstractmethod
     def path_to_str(path: Path) -> str:
@@ -37,6 +38,3 @@ class FileSystemBasedRepository(ABC):
             String representation of the given Path.
         """
         ...
-
-    
-

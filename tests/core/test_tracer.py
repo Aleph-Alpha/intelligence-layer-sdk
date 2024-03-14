@@ -244,9 +244,7 @@ def set_env(name: str, value: str | None) -> Iterator[None]:
         os.environ.update(old_environ)
 
 
-def test_in_memory_tracer_trace_viewer_doesnt_crash_if_it_cant_reach(
-    file_tracer: FileTracer,
-) -> None:
+def test_in_memory_tracer_trace_viewer_doesnt_crash_if_it_cant_reach() -> None:
     # note that this test sets the environment variable, which might
     # become a problem with multi-worker tests
     ENV_VARIABLE_NAME = "TRACE_VIEWER_URL"

@@ -1,8 +1,8 @@
 from abc import ABC, abstractmethod
 from pathlib import Path
 from typing import Any, Dict, Iterable, Optional, Sequence
-from fsspec.implementations.local import LocalFileSystem  # type: ignore
 
+from fsspec.implementations.local import LocalFileSystem  # type: ignore
 
 from intelligence_layer.evaluation.data_storage.utils import FileSystemBasedRepository
 from intelligence_layer.evaluation.domain import (
@@ -84,7 +84,8 @@ class FileSystemAggregationRepository(AggregationRepository, FileSystemBasedRepo
         self, aggregation_id: str, aggregation_type: type[AggregatedEvaluation]
     ) -> Optional[AggregationOverview[AggregatedEvaluation]]:
         file_path = self._aggregation_overview_path(aggregation_id)
-        if file_path is None:
+
+        if not self.exists(file_path):
             return None
 
         content = self.read_utf8(file_path)
@@ -96,7 +97,9 @@ class FileSystemAggregationRepository(AggregationRepository, FileSystemBasedRepo
         return sorted(
             [
                 Path(f["name"]).stem
-                for f in self._fs.ls(self.path_to_str(self._aggregation_root_directory()), detail=True)
+                for f in self._fs.ls(
+                    self.path_to_str(self._aggregation_root_directory()), detail=True
+                )
                 if isinstance(f, Dict) and Path(f["name"]).suffix == ".json"
             ]
         )
@@ -132,9 +135,8 @@ class InMemoryAggregationRepository(AggregationRepository):
 
     def aggregation_overview_ids(self) -> Sequence[str]:
         return sorted(list(self._aggregation_overviews.keys()))
-    
-    
-    
+
+
 class FileAggregationRepository(FileSystemAggregationRepository):
     def __init__(self, root_directory: Path) -> None:
         super().__init__(LocalFileSystem(), root_directory)

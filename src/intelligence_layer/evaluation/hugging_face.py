@@ -2,8 +2,10 @@ from pathlib import Path
 
 import huggingface_hub  # type: ignore
 from huggingface_hub import HfFileSystem, create_repo
-from intelligence_layer.evaluation.data_storage.aggregation_repository import FileSystemAggregationRepository
 
+from intelligence_layer.evaluation.data_storage.aggregation_repository import (
+    FileSystemAggregationRepository,
+)
 from intelligence_layer.evaluation.data_storage.dataset_repository import (
     FileSystemDatasetRepository,
 )

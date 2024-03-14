@@ -2,8 +2,8 @@ from abc import ABC, abstractmethod
 from collections import defaultdict
 from pathlib import Path
 from typing import Dict, Iterable, Optional, Sequence, cast
-from fsspec.implementations.local import LocalFileSystem  # type: ignore
 
+from fsspec.implementations.local import LocalFileSystem  # type: ignore
 
 from intelligence_layer.core import (
     FileTracer,
@@ -159,7 +159,7 @@ class FileSystemRunRepository(RunRepository, FileSystemBasedRepository):
 
     def run_overview(self, run_id: str) -> Optional[RunOverview]:
         file_path = self._run_overview_path(run_id)
-        if file_path is None:
+        if not self.exists(file_path):
             return None
 
         content = self.read_utf8(file_path)
@@ -169,7 +169,9 @@ class FileSystemRunRepository(RunRepository, FileSystemBasedRepository):
         return sorted(
             [
                 Path(f["name"]).stem
-                for f in self._fs.ls(self.path_to_str(self._run_root_directory()), detail=True)
+                for f in self._fs.ls(
+                    self.path_to_str(self._run_root_directory()), detail=True
+                )
                 if isinstance(f, Dict) and Path(f["name"]).suffix == ".json"
             ]
         )
@@ -337,10 +339,10 @@ class InMemoryRunRepository(RunRepository):
             ]
         )
 
+
 class FileRunRepository(FileSystemRunRepository):
     def __init__(self, root_directory: Path) -> None:
         super().__init__(LocalFileSystem(), root_directory)
-
 
     @staticmethod
     def path_to_str(path: Path) -> str:
