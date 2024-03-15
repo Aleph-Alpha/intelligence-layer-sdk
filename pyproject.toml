@@ -37,7 +37,7 @@ huggingface-hub = "^0.21.4"
 [tool.poetry.group.dev.dependencies]
 mypy = "^1.9.0"
 pytest = "*"
-black = { extras = ["jupyter"], version = "^24.2.0" }
+black = { extras = ["jupyter"], version = "^24.3.0" }
 pre-commit = "*"
 httpx = "*"
 types-Pygments = "*"
