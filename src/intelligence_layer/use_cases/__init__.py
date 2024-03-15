@@ -60,6 +60,9 @@ from .qa.single_chunk_qa import SingleChunkQaOutput as SingleChunkQaOutput
 from .search.search import Search as Search
 from .search.search import SearchInput as SearchInput
 from .summarize.recursive_summarize import RecursiveSummarize as RecursiveSummarize
+from .summarize.recursive_summarize import (
+    RecursiveSummarizeInput as RecursiveSummarizeInput,
+)
 from .summarize.steerable_long_context_summarize import (
     SteerableLongContextSummarize as SteerableLongContextSummarize,
 )

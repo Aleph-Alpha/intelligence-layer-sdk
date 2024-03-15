@@ -5,7 +5,10 @@ from aleph_alpha_client import Client, CompletionRequest, CompletionResponse
 from pytest import fixture
 
 from intelligence_layer.core import Chunk, LuminousControlModel, NoOpTracer
-from intelligence_layer.use_cases import LongContextSummarizeInput, RecursiveSummarize
+from intelligence_layer.use_cases import RecursiveSummarize
+from intelligence_layer.use_cases.summarize.recursive_summarize import (
+    RecursiveSummarizeInput,
+)
 from intelligence_layer.use_cases.summarize.steerable_long_context_summarize import (
     SteerableLongContextSummarize,
 )
@@ -45,7 +48,7 @@ def test_recursive_summarize_stops_when_hitting_max_tokens(
     steerable_long_context_summarize: SteerableLongContextSummarize,
 ) -> None:
     max_tokens = 1000
-    input = LongContextSummarizeInput(text=very_long_text, max_tokens=max_tokens)
+    input = RecursiveSummarizeInput(text=very_long_text, max_tokens=max_tokens)
     task = RecursiveSummarize(steerable_long_context_summarize)
     output = task.run(input, NoOpTracer())
 
@@ -57,8 +60,8 @@ def test_recursive_summarize_stops_when_hitting_max_tokens(
 def test_recursive_summarize_stops_when_num_partial_summaries_stays_same(
     steerable_long_context_summarize: SteerableLongContextSummarize,
 ) -> None:
-    max_tokens = None
-    input = LongContextSummarizeInput(text=short_text, max_tokens=max_tokens)
+    max_tokens = 2048
+    input = RecursiveSummarizeInput(text=short_text, max_tokens=max_tokens)
     task = RecursiveSummarize(steerable_long_context_summarize)
     output = task.run(input, NoOpTracer())
 
@@ -76,7 +79,7 @@ def test_recursive_summarize_stops_after_one_chunk(
         summarize=SteerableSingleChunkSummarize(model, max_generated_tokens=100),
         chunk=Chunk(model, max_tokens_per_chunk=1500),
     )
-    input = LongContextSummarizeInput(text=short_text)
+    input = RecursiveSummarizeInput(text=short_text)
     task = RecursiveSummarize(long_context_high_compression_summarize)
     task.run(input, NoOpTracer())
 
