@@ -35,7 +35,7 @@ If you prefer you can also read about the [concepts](Concepts.md) first.
 
 | Order | Topic              | Description                               | Notebook 📓                                                     |
 | ----- | ------------------ | ----------------------------------------- | --------------------------------------------------------------- |
-| 1     | Summarization      | Summarize a document                      | [summarization.ipynb](./src/examples/summarize.ipynb)           |
+| 1     | Summarization      | Summarize a document                      | [summarization.ipynb](./src/examples/summarization.ipynb)       |
 | 2     | Question Answering | Various approaches for QA                 | [qa.ipynb](./src/examples/qa.ipynb)                             |
 | 3     | Classification     | Learn about two methods of classification | [classification.ipynb](./src/examples/classification.ipynb)     |
 | 4     | Evaluation         | Evaluate LLM-based methodologies          | [evaluation.ipynb](./src/examples/evaluation.ipynb)             |
