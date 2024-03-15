@@ -1,8 +1,10 @@
 from datetime import datetime
+from os import getenv
 from pathlib import Path
 from typing import Iterable, Sequence
 from uuid import uuid4
 
+from dotenv import load_dotenv
 from pydantic import BaseModel
 from pytest import fixture
 
@@ -229,3 +231,11 @@ class StubArgillaClient(ArgillaClient):
 @fixture
 def stub_argilla_client() -> StubArgillaClient:
     return StubArgillaClient()
+
+
+@fixture(scope="session")
+def hugging_face_token() -> str:
+    load_dotenv()
+    token = getenv("HUGGING_FACE_TOKEN")
+    assert isinstance(token, str)
+    return token

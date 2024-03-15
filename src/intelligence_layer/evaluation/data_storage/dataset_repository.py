@@ -6,6 +6,9 @@ from fsspec import AbstractFileSystem  # type: ignore
 from fsspec.implementations.local import LocalFileSystem  # type: ignore
 
 from intelligence_layer.core import Input, JsonSerializer, PydanticSerializable
+from intelligence_layer.evaluation.data_storage.file_system_based_repository import (
+    FileSystemBasedRepository,
+)
 from intelligence_layer.evaluation.domain import Dataset, Example, ExpectedOutput
 
 
@@ -112,16 +115,13 @@ class DatasetRepository(ABC):
         pass
 
 
-class FileSystemDatasetRepository(DatasetRepository):
+class FileSystemDatasetRepository(DatasetRepository, FileSystemBasedRepository):
     _REPO_TYPE = "dataset"
 
     def __init__(self, filesystem: AbstractFileSystem, root_directory: Path) -> None:
         assert str(root_directory)[-1] != "/"
 
-        super().__init__()
-
-        self._file_system = filesystem
-        self._root_directory = root_directory
+        super().__init__(file_system=filesystem, root_directory=root_directory)
 
         self._dataset_root_directory().mkdir(parents=True, exist_ok=True)
 

@@ -1,18 +1,12 @@
-import os
 from typing import Iterable, Sequence, Tuple
 from uuid import uuid4
 
 import huggingface_hub  # type: ignore
-from dotenv import load_dotenv
 from pydantic import BaseModel
 from pytest import fixture
 
-from intelligence_layer.core.tracer.tracer import utc_now
 from intelligence_layer.evaluation import Example, HuggingFaceDatasetRepository
-from intelligence_layer.evaluation.data_storage.hugging_face.hf_aggregation_respository import (
-    HuggingFaceAggregationRepository,
-)
-from intelligence_layer.evaluation.domain import AggregationOverview, Dataset
+from intelligence_layer.evaluation.domain import Dataset
 
 
 class DummyAggregatedEvaluation(BaseModel):
@@ -20,56 +14,19 @@ class DummyAggregatedEvaluation(BaseModel):
 
 
 @fixture(scope="session")
-def hugging_face_repository_id() -> str:
+def hugging_face_dataset_repository_id() -> str:
     return "Aleph-Alpha/test-datasets"
 
 
 @fixture(scope="session")
-def hugging_face_token() -> str:
-    load_dotenv()
-    token = os.getenv("HUGGING_FACE_TOKEN")
-    assert isinstance(token, str)
-    return token
-
-
-@fixture(scope="session")
-def hugging_face_repository(
-    hugging_face_repository_id: str, hugging_face_token: str
+def hugging_face_dataset_repository(
+    hugging_face_dataset_repository_id: str, hugging_face_token: str
 ) -> HuggingFaceDatasetRepository:
+    # this repository should already exist and does not have to be deleted after the tests
     return HuggingFaceDatasetRepository(
-        repository_id=hugging_face_repository_id,
+        repository_id=hugging_face_dataset_repository_id,
         token=hugging_face_token,
         private=True,
-    )
-
-
-@fixture(scope="session")
-def hf_aggregation_repository(
-    hugging_face_token: str,
-) -> HuggingFaceAggregationRepository:
-    return HuggingFaceAggregationRepository(
-        "Aleph-Alpha/test-aggregations", token=hugging_face_token, private=True
-    )
-
-
-@fixture
-def dummy_aggregated_evaluation() -> DummyAggregatedEvaluation:
-    return DummyAggregatedEvaluation(score=0.5)
-
-
-@fixture
-def example_aggregation(
-    dummy_aggregated_evaluation: DummyAggregatedEvaluation,
-) -> AggregationOverview[DummyAggregatedEvaluation]:
-    return AggregationOverview(
-        evaluation_overviews=frozenset([]),
-        id=str(uuid4()),
-        start=utc_now(),
-        end=utc_now(),
-        successful_evaluation_count=0,
-        crashed_during_evaluation_count=0,
-        description="",
-        statistics=dummy_aggregated_evaluation,
     )
 
 
@@ -107,21 +64,21 @@ def example_2() -> Example[str, str]:
 
 @fixture
 def hugging_face_repository_with_dataset_and_examples(
-    hugging_face_repository: HuggingFaceDatasetRepository,
+    hugging_face_dataset_repository: HuggingFaceDatasetRepository,
     example_1: Example[str, str],
     example_2: Example[str, str],
 ) -> Iterable[
     Tuple[HuggingFaceDatasetRepository, Dataset, Sequence[Example[str, str]]]
 ]:
     examples = [example_1, example_2]
-    dataset = hugging_face_repository.create_dataset(
+    dataset = hugging_face_dataset_repository.create_dataset(
         examples=examples, dataset_name="test-hg-dataset"
     )
 
     try:
-        yield hugging_face_repository, dataset, examples
+        yield hugging_face_dataset_repository, dataset, examples
     finally:
-        hugging_face_repository.delete_dataset(dataset.id)
+        hugging_face_dataset_repository.delete_dataset(dataset.id)
 
 
 def test_hugging_face_repository_can_create_and_delete_a_repository(
@@ -163,16 +120,20 @@ def test_hugging_face_repository_can_create_and_delete_a_repository(
 
 
 def test_hugging_face_repository_can_load_old_datasets(
-    hugging_face_repository: HuggingFaceDatasetRepository,
+    hugging_face_dataset_repository: HuggingFaceDatasetRepository,
     dataset_and_example_id_without_a_stored_dataset_file: Tuple[str, str],
 ) -> None:
     (dataset_id, example_id) = dataset_and_example_id_without_a_stored_dataset_file
 
-    stored_examples = list(hugging_face_repository.examples(dataset_id, str, str))
-    stored_datasets = list(hugging_face_repository.datasets())
-    stored_example = hugging_face_repository.example(dataset_id, example_id, str, str)
-    stored_dataset = hugging_face_repository.dataset(dataset_id)
-    stored_dataset_ids = list(hugging_face_repository.dataset_ids())
+    stored_examples = list(
+        hugging_face_dataset_repository.examples(dataset_id, str, str)
+    )
+    stored_datasets = list(hugging_face_dataset_repository.datasets())
+    stored_example = hugging_face_dataset_repository.example(
+        dataset_id, example_id, str, str
+    )
+    stored_dataset = hugging_face_dataset_repository.dataset(dataset_id)
+    stored_dataset_ids = list(hugging_face_dataset_repository.dataset_ids())
 
     assert len(stored_examples) > 0
     assert stored_example is not None
@@ -188,16 +149,19 @@ def test_hugging_face_repository_can_load_old_datasets(
 
 
 def test_examples_returns_an_empty_list_for_not_existing_dataset_id(
-    hugging_face_repository: HuggingFaceDatasetRepository,
+    hugging_face_dataset_repository: HuggingFaceDatasetRepository,
 ) -> None:
-    assert hugging_face_repository.examples("not-existing-dataset-id", str, str) == []
+    assert (
+        hugging_face_dataset_repository.examples("not-existing-dataset-id", str, str)
+        == []
+    )
 
 
 def test_example_returns_none_for_not_existing_ids(
-    hugging_face_repository: HuggingFaceDatasetRepository,
+    hugging_face_dataset_repository: HuggingFaceDatasetRepository,
 ) -> None:
     assert (
-        hugging_face_repository.example(
+        hugging_face_dataset_repository.example(
             "not-existing-dataset-id", "not-existing-example-id", str, str
         )
         is None
@@ -205,10 +169,10 @@ def test_example_returns_none_for_not_existing_ids(
 
 
 def test_delete_dataset_does_not_fail_for_not_existing_dataset_id(
-    hugging_face_repository: HuggingFaceDatasetRepository,
+    hugging_face_dataset_repository: HuggingFaceDatasetRepository,
 ) -> None:
     try:
-        hugging_face_repository.delete_dataset("not-existing-dataset-id")
+        hugging_face_dataset_repository.delete_dataset("not-existing-dataset-id")
     except Exception:
         assert False, "Deleting a not-existing dataset should not throw an exception"
 
@@ -255,20 +219,3 @@ def test_hugging_face_repository_supports_all_operations_for_created_dataset(
     hugging_face_repository_.delete_dataset(dataset.id)
     assert hugging_face_repository_.examples(dataset.id, str, str) == []
     assert hugging_face_repository_.dataset(dataset.id) is None
-
-
-def test_hf_aggregation_operations(
-    hf_aggregation_repository: HuggingFaceAggregationRepository,
-    example_aggregation: AggregationOverview[DummyAggregatedEvaluation],
-) -> None:
-    hf_aggregation_repository.store_aggregation_overview(example_aggregation)
-    overview_id = example_aggregation.id
-
-    try:
-        assert overview_id in list(hf_aggregation_repository.aggregation_overview_ids())
-        overview = hf_aggregation_repository.aggregation_overview(
-            overview_id, DummyAggregatedEvaluation
-        )
-        assert overview != []
-    finally:
-        hf_aggregation_repository.delete_repository()
