@@ -35,6 +35,9 @@ class Dataset(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid4()))
     name: str
 
+    def __str__(self) -> str:
+        return f"Dataset ID={self.id}\nName={self.name}\n"
+
 
 class FailedExampleRun(BaseModel):
     """Captures an exception raised when running a single example with a :class:`Task`.
