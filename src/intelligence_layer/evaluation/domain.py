@@ -418,6 +418,25 @@ class AggregationOverview(BaseModel, Generic[AggregatedEvaluation], frozen=True)
         if self.crashed_during_evaluation_count > 0:
             raise EvaluationFailed(self.id, self.crashed_during_evaluation_count)
 
+    def __str__(self) -> str:
+        res = (
+            f"Aggregation Overview ID={self.id}\n"
+            f"Start time={self.start}\n"
+            f"End time={self.end}\n"
+            f"Successful example count={self.successful_evaluation_count}\n"
+            f"Count of examples crashed during evaluation={self.failed_evaluation_count}\n"
+            f'Description="{self.description}"\n'
+        )
+
+        res += f"IDs of aggregated Evaluation Overviews={[evaluation_overview.id for evaluation_overview in self.evaluation_overviews]}\n"
+        res += f"IDs of aggregated Run Overviews={self.run_ids}\n"
+
+        res += "Statistics={\n"
+        res += f"{self.statistics}\n"
+        res += "}\n"
+
+        return res
+
 
 class Example(BaseModel, Generic[Input, ExpectedOutput]):
     """Example case used for evaluations.
