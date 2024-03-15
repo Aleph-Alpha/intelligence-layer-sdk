@@ -42,6 +42,15 @@ from .data_storage.evaluation_repository import (
     InMemoryEvaluationRepository as InMemoryEvaluationRepository,
 )
 from .data_storage.evaluation_repository import RecordDataSequence as RecordDataSequence
+from .data_storage.hugging_face.hugging_face_aggregation_repository import (
+    HuggingFaceAggregationRepository as HuggingFaceAggregationRepository,
+)
+from .data_storage.hugging_face.hugging_face_dataset_repository import (
+    HuggingFaceDatasetRepository as HuggingFaceDatasetRepository,
+)
+from .data_storage.hugging_face.hugging_face_repository import (
+    HuggingFaceRepository as HuggingFaceRepository,
+)
 from .data_storage.run_repository import FileRunRepository as FileRunRepository
 from .data_storage.run_repository import InMemoryRunRepository as InMemoryRunRepository
 from .data_storage.run_repository import RunRepository as RunRepository
@@ -66,7 +75,6 @@ from .evaluator import Evaluator as Evaluator
 from .graders import BleuGrader as BleuGrader
 from .graders import RougeGrader as RougeGrader
 from .graders import RougeScores as RougeScores
-from .hugging_face import HuggingFaceDatasetRepository as HuggingFaceDatasetRepository
 from .runner import Runner as Runner
 
 __all__ = [symbol for symbol in dir()]

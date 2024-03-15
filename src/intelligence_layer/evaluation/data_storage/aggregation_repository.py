@@ -4,7 +4,9 @@ from typing import Any, Dict, Iterable, Optional, Sequence
 
 from fsspec.implementations.local import LocalFileSystem  # type: ignore
 
-from intelligence_layer.evaluation.data_storage.utils import FileSystemBasedRepository
+from intelligence_layer.evaluation.data_storage.file_system_based_repository import (
+    FileSystemBasedRepository,
+)
 from intelligence_layer.evaluation.domain import (
     AggregatedEvaluation,
     AggregationOverview,
@@ -97,7 +99,7 @@ class FileSystemAggregationRepository(AggregationRepository, FileSystemBasedRepo
         return sorted(
             [
                 Path(f["name"]).stem
-                for f in self._fs.ls(
+                for f in self._file_system.ls(
                     self.path_to_str(self._aggregation_root_directory()), detail=True
                 )
                 if isinstance(f, Dict) and Path(f["name"]).suffix == ".json"

@@ -16,7 +16,9 @@ from intelligence_layer.connectors.argilla.argilla_client import (
     RecordData,
 )
 from intelligence_layer.core import JsonSerializer
-from intelligence_layer.evaluation.data_storage.utils import FileSystemBasedRepository
+from intelligence_layer.evaluation.data_storage.file_system_based_repository import (
+    FileSystemBasedRepository,
+)
 from intelligence_layer.evaluation.domain import (
     Evaluation,
     EvaluationOverview,
@@ -229,7 +231,7 @@ class FileSystemEvaluationRepository(EvaluationRepository, FileSystemBasedReposi
         return sorted(
             [
                 Path(f["name"]).stem
-                for f in self._fs.ls(
+                for f in self._file_system.ls(
                     self.path_to_str(self._eval_root_directory()), detail=True
                 )
                 if isinstance(f, Dict) and Path(f["name"]).suffix == ".json"

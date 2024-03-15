@@ -14,7 +14,9 @@ from intelligence_layer.core import (
     PydanticSerializable,
     Tracer,
 )
-from intelligence_layer.evaluation.data_storage.utils import FileSystemBasedRepository
+from intelligence_layer.evaluation.data_storage.file_system_based_repository import (
+    FileSystemBasedRepository,
+)
 from intelligence_layer.evaluation.domain import (
     ExampleOutput,
     ExampleTrace,
@@ -169,7 +171,7 @@ class FileSystemRunRepository(RunRepository, FileSystemBasedRepository):
         return sorted(
             [
                 Path(f["name"]).stem
-                for f in self._fs.ls(
+                for f in self._file_system.ls(
                     self.path_to_str(self._run_root_directory()), detail=True
                 )
                 if isinstance(f, Dict) and Path(f["name"]).suffix == ".json"
