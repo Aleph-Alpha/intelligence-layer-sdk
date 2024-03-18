@@ -33,3 +33,12 @@ def test_load_example_for_existing_dataset() -> None:
     assert first_example.expected_output == "D"
 
     assert first_example.id == "0"
+
+    first_example_by_id = repository.example(
+        dataset_id="",
+        example_id=str(0),
+        input_type=MultipleChoiceInput,
+        expected_output_type=str,
+    )
+
+    assert first_example == first_example_by_id

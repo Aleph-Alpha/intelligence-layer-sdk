@@ -29,16 +29,16 @@ class SingleHuggingfaceDatasetRepository(
     def create_dataset(
         self, examples: Iterable[Example[Input, ExpectedOutput]], dataset_name: str
     ) -> Dataset:
-        return super().create_dataset(examples, dataset_name)
+        raise NotImplementedError
 
     def dataset(self, dataset_id: str) -> Dataset | None:
-        return super().dataset(dataset_id)
+        raise NotImplementedError
 
     def dataset_ids(self) -> Iterable[str]:
-        return super().dataset_ids()
+        raise NotImplementedError
 
     def delete_dataset(self, dataset_id: str) -> None:
-        return super().delete_dataset(dataset_id)
+        raise NotImplementedError
 
     def example(
         self,
@@ -47,7 +47,15 @@ class SingleHuggingfaceDatasetRepository(
         input_type: type[Input],
         expected_output_type: type[ExpectedOutput],
     ) -> Example[Input, ExpectedOutput] | None:
-        return super().example(dataset_id, example_id, input_type, expected_output_type)
+        examples = self.examples(
+            dataset_id=dataset_id,
+            input_type=input_type,
+            expected_output_type=expected_output_type,
+        )
+
+        for example in examples:
+            if example.id == example_id:
+                return example
 
     def examples(
         self,
