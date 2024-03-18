@@ -243,8 +243,6 @@ You can read more about this in the [official documentation](https://docs.docker
 
 ## For Developers
 
-## How to set up a basic
-
 ### Python: Naming Conventions
 
 We follow the [PEP 8 – Style Guide for Python Code](https://peps.python.org/pep-0008/).
