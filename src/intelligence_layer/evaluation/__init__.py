@@ -9,20 +9,17 @@ from .aggregation.aggregation_repository import (
     InMemoryAggregationRepository as InMemoryAggregationRepository,
 )
 from .aggregation.aggregator import Aggregator as Aggregator
+from .aggregation.argilla_aggregator import (
+    AggregatedInstructComparison as AggregatedInstructComparison,
+)
+from .aggregation.argilla_aggregator import ArgillaAggregator as ArgillaAggregator
+from .aggregation.argilla_aggregator import (
+    InstructComparisonArgillaAggregationLogic as InstructComparisonArgillaAggregationLogic,
+)
+from .aggregation.argilla_aggregator import PlayerScore as PlayerScore
 from .aggregation.hugging_face_aggregation_repository import (
     HuggingFaceAggregationRepository as HuggingFaceAggregationRepository,
 )
-from .argilla import AggregatedInstructComparison as AggregatedInstructComparison
-from .argilla import ArgillaAggregator as ArgillaAggregator
-from .argilla import ArgillaEvaluationLogic as ArgillaEvaluationLogic
-from .argilla import ArgillaEvaluator as ArgillaEvaluator
-from .argilla import (
-    InstructComparisonArgillaAggregationLogic as InstructComparisonArgillaAggregationLogic,
-)
-from .argilla import (
-    InstructComparisonArgillaEvaluationLogic as InstructComparisonArgillaEvaluationLogic,
-)
-from .argilla import PlayerScore as PlayerScore
 from .base_logic import AggregationLogic as AggregationLogic
 from .base_logic import EvaluationLogic as EvaluationLogic
 from .dataset.dataset_repository import DatasetRepository as DatasetRepository
@@ -50,6 +47,13 @@ from .domain import TaskSpanTrace as TaskSpanTrace
 from .elo import EloCalculator as EloCalculator
 from .elo import MatchOutcome as MatchOutcome
 from .elo import WinRateCalculator as WinRateCalculator
+from .evaluation.argilla_evaluator import (
+    ArgillaEvaluationLogic as ArgillaEvaluationLogic,
+)
+from .evaluation.argilla_evaluator import ArgillaEvaluator as ArgillaEvaluator
+from .evaluation.argilla_evaluator import (
+    InstructComparisonArgillaEvaluationLogic as InstructComparisonArgillaEvaluationLogic,
+)
 from .evaluation.evaluation_repository import (
     ArgillaEvaluationRepository as ArgillaEvaluationRepository,
 )

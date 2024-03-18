@@ -19,11 +19,14 @@ from intelligence_layer.core import utc_now
 from intelligence_layer.core.instruct import InstructInput
 from intelligence_layer.core.model import CompleteOutput
 from intelligence_layer.evaluation import (
+    AggregatedInstructComparison,
+    ArgillaAggregator,
     ArgillaEvaluationRepository,
     ArgillaEvaluator,
     EloCalculator,
     Example,
     ExampleOutput,
+    InMemoryAggregationRepository,
     InMemoryDatasetRepository,
     InMemoryEvaluationRepository,
     InMemoryRunRepository,
@@ -31,12 +34,7 @@ from intelligence_layer.evaluation import (
     MatchOutcome,
     RunOverview,
 )
-from intelligence_layer.evaluation.aggregation.aggregation_repository import (
-    InMemoryAggregationRepository,
-)
-from intelligence_layer.evaluation.argilla import (
-    AggregatedInstructComparison,
-    ArgillaAggregator,
+from intelligence_layer.evaluation.evaluation.argilla_evaluator import (
     create_instruct_comparison_argilla_evaluation_classes,
 )
 
