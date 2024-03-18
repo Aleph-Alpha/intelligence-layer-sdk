@@ -35,6 +35,12 @@ class Dataset(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid4()))
     name: str
 
+    def __repr__(self) -> str:
+        return self.__str__()
+
+    def __str__(self) -> str:
+        return f"Dataset ID = {self.id}\nName = {self.name}\n"
+
 
 class FailedExampleRun(BaseModel):
     """Captures an exception raised when running a single example with a :class:`Task`.
@@ -205,6 +211,16 @@ class ExampleOutput(BaseModel, Generic[Output]):
     example_id: str
     output: Output | FailedExampleRun
 
+    def __repr__(self) -> str:
+        return self.__str__()
+
+    def __str__(self) -> str:
+        return (
+            f"Example ID={self.example_id}\n"
+            f"Related Run ID={self.run_id}\n"
+            f'Output="{self.output}"\n'
+        )
+
 
 class SuccessfulExampleOutput(BaseModel, Generic[Output]):
     """Successful output of a single evaluated :class:`Example`
@@ -222,6 +238,16 @@ class SuccessfulExampleOutput(BaseModel, Generic[Output]):
     run_id: str
     example_id: str
     output: Output
+
+    def __repr__(self) -> str:
+        return self.__str__()
+
+    def __str__(self) -> str:
+        return (
+            f"Run ID = {self.run_id}\n"
+            f"Example ID = {self.example_id}\n"
+            f'Output = "{self.output}"\n'
+        )
 
 
 class ExampleTrace(BaseModel):
@@ -261,6 +287,20 @@ class RunOverview(BaseModel, frozen=True):
     successful_example_count: int
     description: str
 
+    def __repr__(self) -> str:
+        return self.__str__()
+
+    def __str__(self) -> str:
+        return (
+            f"Run Overview ID = {self.id}\n"
+            f"Dataset ID = {self.dataset_id}\n"
+            f"Start time = {self.start}\n"
+            f"End time = {self.end}\n"
+            f"Failed example count = {self.failed_example_count}\n"
+            f"Successful example count = {self.successful_example_count}\n"
+            f'Description = "{self.description}"\n'
+        )
+
 
 class ExampleEvaluation(BaseModel, Generic[Evaluation]):
     """Evaluation of a single evaluated :class:`Example`
@@ -282,6 +322,16 @@ class ExampleEvaluation(BaseModel, Generic[Evaluation]):
     example_id: str
     result: SerializeAsAny[Evaluation | FailedExampleEvaluation]
 
+    def __repr__(self) -> str:
+        return self.__str__()
+
+    def __str__(self) -> str:
+        return (
+            f"Evaluation ID = {self.evaluation_id}\n"
+            f"Example ID = {self.example_id}\n"
+            f"Result = {self.result}\n"
+        )
+
 
 class EvaluationOverview(BaseModel, frozen=True):
     """Overview of the un-aggregated results of evaluating a :class:`Task` on a dataset.
@@ -297,6 +347,26 @@ class EvaluationOverview(BaseModel, frozen=True):
     id: str
     start: Optional[datetime]
     description: str
+
+    def __repr__(self) -> str:
+        return self.__str__()
+
+    def __str__(self) -> str:
+        run_overview_str: str = "Run Overviews={\n"
+        comma_counter = 0
+        for overview in self.run_overviews:
+            run_overview_str += f"{overview}"
+            if comma_counter < len(self.run_overviews) - 1:
+                run_overview_str += ", "
+                comma_counter += 1
+        run_overview_str += "}\n"
+
+        return (
+            f"Evaluation Overview ID = {self.id}\n"
+            f"Start time = {self.start}\n"
+            f'Description = "{self.description}"\n'
+            f"{run_overview_str}"
+        )
 
 
 class EvaluationFailed(Exception):
@@ -361,6 +431,28 @@ class AggregationOverview(BaseModel, Generic[AggregatedEvaluation], frozen=True)
         if self.crashed_during_evaluation_count > 0:
             raise EvaluationFailed(self.id, self.crashed_during_evaluation_count)
 
+    def __repr__(self) -> str:
+        return self.__str__()
+
+    def __str__(self) -> str:
+        res = (
+            f"Aggregation Overview ID = {self.id}\n"
+            f"Start time = {self.start}\n"
+            f"End time = {self.end}\n"
+            f"Successful example count = {self.successful_evaluation_count}\n"
+            f"Count of examples crashed during evaluation = {self.failed_evaluation_count}\n"
+            f'Description = "{self.description}"\n'
+        )
+
+        res += f"IDs of aggregated Evaluation Overviews = {[evaluation_overview.id for evaluation_overview in self.evaluation_overviews]}\n"
+        res += f"IDs of aggregated Run Overviews = {self.run_ids}\n"
+
+        res += "Statistics = {\n"
+        res += f"{self.statistics}\n"
+        res += "}\n"
+
+        return res
+
 
 class Example(BaseModel, Generic[Input, ExpectedOutput]):
     """Example case used for evaluations.
@@ -379,3 +471,13 @@ class Example(BaseModel, Generic[Input, ExpectedOutput]):
     input: Input
     expected_output: ExpectedOutput
     id: str = Field(default_factory=lambda: str(uuid4()))
+
+    def __repr__(self) -> str:
+        return self.__str__()
+
+    def __str__(self) -> str:
+        return (
+            f"Example ID = {self.id}\n"
+            f"Input = {self.input}\n"
+            f'Expected output = "{self.expected_output}"\n'
+        )
