@@ -1,7 +1,6 @@
 from datetime import datetime
 from json import dumps
 from typing import Optional, Sequence, Union
-from uuid import uuid4
 
 from pydantic import BaseModel, ConfigDict, SerializeAsAny
 from rich.panel import Panel
