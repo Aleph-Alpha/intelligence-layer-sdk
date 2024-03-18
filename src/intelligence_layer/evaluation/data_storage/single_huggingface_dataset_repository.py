@@ -1,9 +1,9 @@
-from typing import Generic, Iterable, Sequence
+from typing import Iterable, Sequence, cast
 
 from pydantic import BaseModel
 
-from datasets import Dataset as HFDataset
-from datasets import DatasetDict, IterableDataset, IterableDatasetDict
+from datasets import Dataset as HFDataset  # type: ignore
+from datasets import DatasetDict, IterableDataset, IterableDatasetDict  # type: ignore
 from intelligence_layer.core.task import Input
 from intelligence_layer.evaluation.data_storage.dataset_repository import (
     DatasetRepository,
@@ -16,9 +16,7 @@ class MultipleChoiceInput(BaseModel):
     choices: Sequence[str]
 
 
-class SingleHuggingfaceDatasetRepository(
-    DatasetRepository, Generic[Input, ExpectedOutput]
-):
+class SingleHuggingfaceDatasetRepository(DatasetRepository):
     def __init__(
         self,
         huggingface_dataset: (
@@ -57,6 +55,7 @@ class SingleHuggingfaceDatasetRepository(
         for example in examples:
             if example.id == example_id:
                 return example
+        return None
 
     def examples(
         self,
@@ -66,12 +65,16 @@ class SingleHuggingfaceDatasetRepository(
     ) -> Iterable[Example[Input, ExpectedOutput]]:
 
         answers = "ABCD"
-
+        assert input_type == MultipleChoiceInput
+        assert expected_output_type == str
         for index, sample in enumerate(self._huggingface_dataset["test"]):
             yield Example(
-                input=MultipleChoiceInput(
-                    question=sample["question"], choices=sample["choices"]
+                input=cast(
+                    Input,
+                    MultipleChoiceInput(
+                        question=sample["question"], choices=sample["choices"]
+                    ),
                 ),
-                expected_output=answers[sample["answer"]],
+                expected_output=cast(ExpectedOutput, answers[sample["answer"]]),
                 id=str(index),
             )
