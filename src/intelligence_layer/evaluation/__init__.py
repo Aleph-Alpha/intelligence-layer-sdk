@@ -80,8 +80,8 @@ from .infrastructure.hugging_face_repository import (
 from .run.domain import ExampleOutput as ExampleOutput
 from .run.domain import RunOverview as RunOverview
 from .run.domain import SuccessfulExampleOutput as SuccessfulExampleOutput
-from .run.run_repository import FileRunRepository as FileRunRepository
-from .run.run_repository import InMemoryRunRepository as InMemoryRunRepository
+from .run.file_run_repository import FileRunRepository as FileRunRepository
+from .run.in_memory_run_repository import InMemoryRunRepository as InMemoryRunRepository
 from .run.run_repository import RunRepository as RunRepository
 from .run.runner import Runner as Runner
 from .run.trace import ExampleTrace as ExampleTrace

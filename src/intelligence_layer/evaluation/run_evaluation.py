@@ -20,7 +20,7 @@ from intelligence_layer.evaluation.evaluation.evaluator import Evaluator
 from intelligence_layer.evaluation.evaluation.file_evaluation_repository import (
     FileEvaluationRepository,
 )
-from intelligence_layer.evaluation.run.run_repository import FileRunRepository
+from intelligence_layer.evaluation.run.file_run_repository import FileRunRepository
 from intelligence_layer.evaluation.run.runner import Runner
 
 

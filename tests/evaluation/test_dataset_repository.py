@@ -76,7 +76,7 @@ def test_dataset_repository_ensures_unique_dataset_ids(
 
 
 @patch(
-    target="intelligence_layer.evaluation.dataset.dataset_repository.LocalFileSystem.exists",
+    target="intelligence_layer.evaluation.dataset.file_dataset_repository.LocalFileSystem.exists",
     return_value=True,
 )
 def test_file_system_dataset_repository_avoids_overriding_existing_files(
