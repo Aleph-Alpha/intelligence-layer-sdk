@@ -13,7 +13,7 @@ from intelligence_layer.evaluation.aggregation.aggregator import Aggregator
 from intelligence_layer.evaluation.aggregation.file_aggregation_repository import (
     FileAggregationRepository,
 )
-from intelligence_layer.evaluation.dataset.dataset_repository import (
+from intelligence_layer.evaluation.dataset.file_dataset_repository import (
     FileDatasetRepository,
 )
 from intelligence_layer.evaluation.evaluation.evaluation_repository import (

@@ -27,15 +27,17 @@ from .aggregation.in_memory_aggregation_repository import (
     InMemoryAggregationRepository as InMemoryAggregationRepository,
 )
 from .dataset.dataset_repository import DatasetRepository as DatasetRepository
-from .dataset.dataset_repository import FileDatasetRepository as FileDatasetRepository
-from .dataset.dataset_repository import (
-    InMemoryDatasetRepository as InMemoryDatasetRepository,
-)
 from .dataset.domain import Dataset as Dataset
 from .dataset.domain import Example as Example
 from .dataset.domain import ExpectedOutput as ExpectedOutput
+from .dataset.file_dataset_repository import (
+    FileDatasetRepository as FileDatasetRepository,
+)
 from .dataset.hugging_face_dataset_repository import (
     HuggingFaceDatasetRepository as HuggingFaceDatasetRepository,
+)
+from .dataset.in_memory_dataset_repository import (
+    InMemoryDatasetRepository as InMemoryDatasetRepository,
 )
 from .evaluation.argilla_evaluator import (
     ArgillaEvaluationLogic as ArgillaEvaluationLogic,

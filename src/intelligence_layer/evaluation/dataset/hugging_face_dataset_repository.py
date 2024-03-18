@@ -4,10 +4,10 @@ from typing import Optional
 import huggingface_hub  # type: ignore
 from huggingface_hub import HfFileSystem, create_repo
 
-from intelligence_layer.evaluation.dataset.dataset_repository import (
+from intelligence_layer.evaluation.dataset.domain import Dataset
+from intelligence_layer.evaluation.dataset.file_dataset_repository import (
     FileSystemDatasetRepository,
 )
-from intelligence_layer.evaluation.dataset.domain import Dataset
 from intelligence_layer.evaluation.infrastructure.hugging_face_repository import (
     HuggingFaceRepository,
 )
