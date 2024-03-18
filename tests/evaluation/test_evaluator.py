@@ -19,13 +19,13 @@ from intelligence_layer.evaluation import (
     Runner,
     SuccessfulExampleOutput,
 )
+from intelligence_layer.evaluation.aggregation.aggregation_repository import (
+    InMemoryAggregationRepository,
+)
 from intelligence_layer.evaluation.base_logic import (
     AggregationLogic,
     EvaluationLogic,
     SingleOutputEvaluationLogic,
-)
-from intelligence_layer.evaluation.data_storage.aggregation_repository import (
-    InMemoryAggregationRepository,
 )
 from intelligence_layer.evaluation.domain import AggregatedEvaluation
 from tests.evaluation.conftest import (

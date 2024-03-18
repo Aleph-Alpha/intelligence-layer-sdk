@@ -15,10 +15,7 @@ from intelligence_layer.core import (
     Tracer,
     utc_now,
 )
-from intelligence_layer.evaluation.data_storage.dataset_repository import (
-    DatasetRepository,
-)
-from intelligence_layer.evaluation.data_storage.run_repository import RunRepository
+from intelligence_layer.evaluation.dataset.dataset_repository import DatasetRepository
 from intelligence_layer.evaluation.domain import (
     Example,
     ExampleOutput,
@@ -26,6 +23,7 @@ from intelligence_layer.evaluation.domain import (
     FailedExampleRun,
     RunOverview,
 )
+from intelligence_layer.evaluation.run.run_repository import RunRepository
 
 
 class Runner(Generic[Input, Output]):

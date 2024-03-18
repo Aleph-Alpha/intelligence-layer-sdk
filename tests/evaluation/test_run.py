@@ -12,10 +12,10 @@ from intelligence_layer.evaluation import (
     FileDatasetRepository,
     SuccessfulExampleOutput,
 )
-from intelligence_layer.evaluation.base_logic import AggregationLogic, EvaluationLogic
-from intelligence_layer.evaluation.data_storage.aggregation_repository import (
+from intelligence_layer.evaluation.aggregation.aggregation_repository import (
     FileAggregationRepository,
 )
+from intelligence_layer.evaluation.base_logic import AggregationLogic, EvaluationLogic
 from intelligence_layer.evaluation.run import main
 
 load_dotenv()

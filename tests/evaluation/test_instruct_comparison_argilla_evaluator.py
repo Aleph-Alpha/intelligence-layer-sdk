@@ -31,13 +31,13 @@ from intelligence_layer.evaluation import (
     MatchOutcome,
     RunOverview,
 )
+from intelligence_layer.evaluation.aggregation.aggregation_repository import (
+    InMemoryAggregationRepository,
+)
 from intelligence_layer.evaluation.argilla import (
     AggregatedInstructComparison,
     ArgillaAggregator,
     create_instruct_comparison_argilla_evaluation_classes,
-)
-from intelligence_layer.evaluation.data_storage.aggregation_repository import (
-    InMemoryAggregationRepository,
 )
 
 

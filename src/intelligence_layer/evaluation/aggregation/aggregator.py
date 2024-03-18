@@ -14,19 +14,19 @@ from typing import (
 from uuid import uuid4
 
 from intelligence_layer.core import utc_now
-from intelligence_layer.evaluation.base_logic import AggregationLogic
-from intelligence_layer.evaluation.data_storage.aggregation_repository import (
+from intelligence_layer.evaluation.aggregation.aggregation_repository import (
     AggregationRepository,
 )
-from intelligence_layer.evaluation.data_storage.evaluation_repository import (
-    EvaluationRepository,
-)
+from intelligence_layer.evaluation.base_logic import AggregationLogic
 from intelligence_layer.evaluation.domain import (
     AggregatedEvaluation,
     AggregationOverview,
     Evaluation,
     EvaluationOverview,
     FailedExampleEvaluation,
+)
+from intelligence_layer.evaluation.evaluation.evaluation_repository import (
+    EvaluationRepository,
 )
 
 T = TypeVar("T")

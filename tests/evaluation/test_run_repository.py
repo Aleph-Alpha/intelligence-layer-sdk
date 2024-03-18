@@ -12,8 +12,8 @@ from intelligence_layer.core import (
     utc_now,
 )
 from intelligence_layer.evaluation import ExampleTrace, TaskSpanTrace
-from intelligence_layer.evaluation.data_storage.run_repository import RunRepository
 from intelligence_layer.evaluation.domain import ExampleOutput, RunOverview
+from intelligence_layer.evaluation.run.run_repository import RunRepository
 from tests.conftest import DummyStringInput
 
 test_repository_fixtures = [

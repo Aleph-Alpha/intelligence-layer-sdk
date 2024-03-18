@@ -3,10 +3,10 @@ from pathlib import Path
 import huggingface_hub  # type: ignore
 from huggingface_hub import HfFileSystem, create_repo
 
-from intelligence_layer.evaluation.data_storage.aggregation_repository import (
+from intelligence_layer.evaluation.aggregation.aggregation_repository import (
     FileSystemAggregationRepository,
 )
-from intelligence_layer.evaluation.data_storage.hugging_face.hugging_face_repository import (
+from intelligence_layer.evaluation.infrastructure.hugging_face_repository import (
     HuggingFaceRepository,
 )
 

@@ -13,10 +13,10 @@ from intelligence_layer.evaluation import (
     Runner,
     RunRepository,
 )
-from intelligence_layer.evaluation.data_storage.aggregation_repository import (
+from intelligence_layer.evaluation.aggregation.aggregation_repository import (
     InMemoryAggregationRepository,
 )
-from intelligence_layer.evaluation.evaluator import Evaluator
+from intelligence_layer.evaluation.evaluation.evaluator import Evaluator
 from intelligence_layer.use_cases.classify.classify import (
     AggregatedMultiLabelClassifyEvaluation,
     ClassifyInput,

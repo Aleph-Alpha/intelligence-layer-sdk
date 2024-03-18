@@ -18,13 +18,7 @@ from tqdm import tqdm
 
 from intelligence_layer.core import Input, Output, utc_now
 from intelligence_layer.evaluation.base_logic import EvaluationLogic
-from intelligence_layer.evaluation.data_storage.dataset_repository import (
-    DatasetRepository,
-)
-from intelligence_layer.evaluation.data_storage.evaluation_repository import (
-    EvaluationRepository,
-)
-from intelligence_layer.evaluation.data_storage.run_repository import RunRepository
+from intelligence_layer.evaluation.dataset.dataset_repository import DatasetRepository
 from intelligence_layer.evaluation.domain import (
     Evaluation,
     EvaluationOverview,
@@ -37,6 +31,10 @@ from intelligence_layer.evaluation.domain import (
     RunOverview,
     SuccessfulExampleOutput,
 )
+from intelligence_layer.evaluation.evaluation.evaluation_repository import (
+    EvaluationRepository,
+)
+from intelligence_layer.evaluation.run.run_repository import RunRepository
 
 
 class Evaluator(Generic[Input, Output, ExpectedOutput, Evaluation]):

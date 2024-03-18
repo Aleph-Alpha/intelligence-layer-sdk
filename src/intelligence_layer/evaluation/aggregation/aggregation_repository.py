@@ -4,12 +4,12 @@ from typing import Any, Dict, Iterable, Optional, Sequence
 
 from fsspec.implementations.local import LocalFileSystem  # type: ignore
 
-from intelligence_layer.evaluation.data_storage.file_system_based_repository import (
-    FileSystemBasedRepository,
-)
 from intelligence_layer.evaluation.domain import (
     AggregatedEvaluation,
     AggregationOverview,
+)
+from intelligence_layer.evaluation.infrastructure.file_system_based_repository import (
+    FileSystemBasedRepository,
 )
 
 

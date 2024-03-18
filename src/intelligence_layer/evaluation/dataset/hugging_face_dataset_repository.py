@@ -4,13 +4,13 @@ from typing import Optional
 import huggingface_hub  # type: ignore
 from huggingface_hub import HfFileSystem, create_repo
 
-from intelligence_layer.evaluation.data_storage.dataset_repository import (
+from intelligence_layer.evaluation.dataset.dataset_repository import (
     FileSystemDatasetRepository,
 )
-from intelligence_layer.evaluation.data_storage.hugging_face.hugging_face_repository import (
+from intelligence_layer.evaluation.domain import Dataset
+from intelligence_layer.evaluation.infrastructure.hugging_face_repository import (
     HuggingFaceRepository,
 )
-from intelligence_layer.evaluation.domain import Dataset
 
 
 class HuggingFaceDatasetRepository(HuggingFaceRepository, FileSystemDatasetRepository):

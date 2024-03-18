@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from intelligence_layer.evaluation.data_storage.dataset_repository import (
+from intelligence_layer.evaluation.dataset.dataset_repository import (
     FileSystemDatasetRepository,
 )
 

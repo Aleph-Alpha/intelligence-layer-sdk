@@ -14,14 +14,14 @@ from intelligence_layer.core import (
     PydanticSerializable,
     Tracer,
 )
-from intelligence_layer.evaluation.data_storage.file_system_based_repository import (
-    FileSystemBasedRepository,
-)
 from intelligence_layer.evaluation.domain import (
     ExampleOutput,
     ExampleTrace,
     RunOverview,
     TaskSpanTrace,
+)
+from intelligence_layer.evaluation.infrastructure.file_system_based_repository import (
+    FileSystemBasedRepository,
 )
 
 

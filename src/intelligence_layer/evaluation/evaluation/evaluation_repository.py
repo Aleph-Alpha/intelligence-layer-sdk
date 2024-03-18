@@ -16,14 +16,14 @@ from intelligence_layer.connectors.argilla.argilla_client import (
     RecordData,
 )
 from intelligence_layer.core import JsonSerializer
-from intelligence_layer.evaluation.data_storage.file_system_based_repository import (
-    FileSystemBasedRepository,
-)
 from intelligence_layer.evaluation.domain import (
     Evaluation,
     EvaluationOverview,
     ExampleEvaluation,
     FailedExampleEvaluation,
+)
+from intelligence_layer.evaluation.infrastructure.file_system_based_repository import (
+    FileSystemBasedRepository,
 )
 
 

@@ -10,18 +10,18 @@ from intelligence_layer.connectors.limited_concurrency_client import (
     LimitedConcurrencyClient,
 )
 from intelligence_layer.evaluation import Aggregator
-from intelligence_layer.evaluation.data_storage.aggregation_repository import (
+from intelligence_layer.evaluation.aggregation.aggregation_repository import (
     FileAggregationRepository,
 )
 from intelligence_layer.evaluation.data_storage.dataset_repository import (
     FileDatasetRepository,
 )
-from intelligence_layer.evaluation.data_storage.evaluation_repository import (
+from intelligence_layer.evaluation.evaluation.evaluation_repository import (
     FileEvaluationRepository,
 )
-from intelligence_layer.evaluation.data_storage.run_repository import FileRunRepository
-from intelligence_layer.evaluation.evaluator import Evaluator
-from intelligence_layer.evaluation.runner import Runner
+from intelligence_layer.evaluation.evaluation.evaluator import Evaluator
+from intelligence_layer.evaluation.run.run_repository import FileRunRepository
+from intelligence_layer.evaluation.run.runner import Runner
 
 
 def function_from_string(fully_qualified_function_name: str) -> Any:

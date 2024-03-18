@@ -15,20 +15,12 @@ from intelligence_layer.connectors.argilla.argilla_client import (
 )
 from intelligence_layer.core import CompleteOutput, Input, InstructInput, Output
 from intelligence_layer.evaluation import Aggregator
-from intelligence_layer.evaluation.accumulator import MeanAccumulator
-from intelligence_layer.evaluation.base_logic import AggregationLogic, EvaluationLogic
-from intelligence_layer.evaluation.data_storage.aggregation_repository import (
+from intelligence_layer.evaluation.aggregation.accumulator import MeanAccumulator
+from intelligence_layer.evaluation.aggregation.aggregation_repository import (
     AggregationRepository,
 )
-from intelligence_layer.evaluation.data_storage.dataset_repository import (
-    DatasetRepository,
-)
-from intelligence_layer.evaluation.data_storage.evaluation_repository import (
-    ArgillaEvaluationRepository,
-    EvaluationRepository,
-    RecordDataSequence,
-)
-from intelligence_layer.evaluation.data_storage.run_repository import RunRepository
+from intelligence_layer.evaluation.base_logic import AggregationLogic, EvaluationLogic
+from intelligence_layer.evaluation.dataset.dataset_repository import DatasetRepository
 from intelligence_layer.evaluation.domain import (
     AggregatedEvaluation,
     Example,
@@ -40,7 +32,13 @@ from intelligence_layer.evaluation.elo import (
     MatchOutcome,
     WinRateCalculator,
 )
-from intelligence_layer.evaluation.evaluator import Evaluator
+from intelligence_layer.evaluation.evaluation.evaluation_repository import (
+    ArgillaEvaluationRepository,
+    EvaluationRepository,
+    RecordDataSequence,
+)
+from intelligence_layer.evaluation.evaluation.evaluator import Evaluator
+from intelligence_layer.evaluation.run.run_repository import RunRepository
 
 
 class ArgillaEvaluationLogic(
