@@ -5,8 +5,7 @@ import huggingface_hub  # type: ignore
 from pydantic import BaseModel
 from pytest import fixture
 
-from intelligence_layer.evaluation import Example, HuggingFaceDatasetRepository
-from intelligence_layer.evaluation.domain import Dataset
+from intelligence_layer.evaluation import Dataset, Example, HuggingFaceDatasetRepository
 
 
 class DummyAggregatedEvaluation(BaseModel):

@@ -14,15 +14,11 @@ from intelligence_layer.core import (
     PydanticSerializable,
     Tracer,
 )
-from intelligence_layer.evaluation.domain import (
-    ExampleOutput,
-    ExampleTrace,
-    RunOverview,
-    TaskSpanTrace,
-)
 from intelligence_layer.evaluation.infrastructure.file_system_based_repository import (
     FileSystemBasedRepository,
 )
+from intelligence_layer.evaluation.run.domain import ExampleOutput, RunOverview
+from intelligence_layer.evaluation.run.trace import ExampleTrace, TaskSpanTrace
 
 
 class RunRepository(ABC):

@@ -6,13 +6,15 @@ from typing import Iterable, Mapping
 from pydantic import BaseModel
 
 from intelligence_layer.connectors.argilla.argilla_client import ArgillaEvaluation
-from intelligence_layer.evaluation import Aggregator
 from intelligence_layer.evaluation.aggregation.accumulator import MeanAccumulator
 from intelligence_layer.evaluation.aggregation.aggregation_repository import (
     AggregationRepository,
 )
-from intelligence_layer.evaluation.base_logic import AggregationLogic
-from intelligence_layer.evaluation.domain import AggregatedEvaluation
+from intelligence_layer.evaluation.aggregation.aggregator import (
+    AggregationLogic,
+    Aggregator,
+)
+from intelligence_layer.evaluation.aggregation.domain import AggregatedEvaluation
 from intelligence_layer.evaluation.elo import (
     EloCalculator,
     MatchOutcome,

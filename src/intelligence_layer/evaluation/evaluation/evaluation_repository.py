@@ -16,7 +16,7 @@ from intelligence_layer.connectors.argilla.argilla_client import (
     RecordData,
 )
 from intelligence_layer.core import JsonSerializer
-from intelligence_layer.evaluation.domain import (
+from intelligence_layer.evaluation.evaluation.domain import (
     Evaluation,
     EvaluationOverview,
     ExampleEvaluation,

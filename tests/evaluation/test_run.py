@@ -8,14 +8,13 @@ from pytest import fixture
 from intelligence_layer.connectors import AlephAlphaClientProtocol
 from intelligence_layer.core import Task, TaskSpan
 from intelligence_layer.evaluation import (
+    AggregationLogic,
+    EvaluationLogic,
     Example,
+    FileAggregationRepository,
     FileDatasetRepository,
     SuccessfulExampleOutput,
 )
-from intelligence_layer.evaluation.aggregation.aggregation_repository import (
-    FileAggregationRepository,
-)
-from intelligence_layer.evaluation.base_logic import AggregationLogic, EvaluationLogic
 from intelligence_layer.evaluation.run import main
 
 load_dotenv()

@@ -1,12 +1,17 @@
 from abc import ABC, abstractmethod
 from pathlib import Path
 from typing import Iterable, Optional, Sequence, Tuple, cast
+from uuid import uuid4
 
 from fsspec import AbstractFileSystem  # type: ignore
 from fsspec.implementations.local import LocalFileSystem  # type: ignore
 
 from intelligence_layer.core import Input, JsonSerializer, PydanticSerializable
-from intelligence_layer.evaluation.domain import Dataset, Example, ExpectedOutput
+from intelligence_layer.evaluation.dataset.domain import (
+    Dataset,
+    Example,
+    ExpectedOutput,
+)
 from intelligence_layer.evaluation.infrastructure.file_system_based_repository import (
     FileSystemBasedRepository,
 )

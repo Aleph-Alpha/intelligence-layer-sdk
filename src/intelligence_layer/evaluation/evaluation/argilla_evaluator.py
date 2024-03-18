@@ -11,19 +11,18 @@ from intelligence_layer.connectors.argilla.argilla_client import (
     RecordData,
 )
 from intelligence_layer.core import CompleteOutput, Input, InstructInput, Output
-from intelligence_layer.evaluation.base_logic import EvaluationLogic
 from intelligence_layer.evaluation.dataset.dataset_repository import DatasetRepository
-from intelligence_layer.evaluation.domain import (
-    Example,
-    ExpectedOutput,
-    SuccessfulExampleOutput,
-)
+from intelligence_layer.evaluation.dataset.domain import Example, ExpectedOutput
 from intelligence_layer.evaluation.evaluation.evaluation_repository import (
     ArgillaEvaluationRepository,
     EvaluationRepository,
     RecordDataSequence,
 )
-from intelligence_layer.evaluation.evaluation.evaluator import Evaluator
+from intelligence_layer.evaluation.evaluation.evaluator import (
+    EvaluationLogic,
+    Evaluator,
+)
+from intelligence_layer.evaluation.run.domain import SuccessfulExampleOutput
 from intelligence_layer.evaluation.run.run_repository import RunRepository
 
 

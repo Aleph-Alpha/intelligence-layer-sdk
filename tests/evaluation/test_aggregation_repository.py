@@ -5,8 +5,11 @@ from _pytest.fixtures import FixtureRequest
 from pytest import fixture, mark
 
 from intelligence_layer.core import utc_now
-from intelligence_layer.evaluation import AggregationOverview, AggregationRepository
-from intelligence_layer.evaluation.domain import EvaluationOverview
+from intelligence_layer.evaluation import (
+    AggregationOverview,
+    AggregationRepository,
+    EvaluationOverview,
+)
 from tests.evaluation.conftest import DummyAggregatedEvaluation
 
 test_repository_fixtures = [

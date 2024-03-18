@@ -8,18 +8,18 @@ from dotenv import load_dotenv
 from pydantic import BaseModel
 from pytest import fixture
 
-from intelligence_layer.connectors.argilla.argilla_client import (
+from intelligence_layer.connectors import (
     ArgillaClient,
     ArgillaEvaluation,
     Field,
     Question,
     RecordData,
 )
-from intelligence_layer.core import Tracer, utc_now
-from intelligence_layer.core.task import Task
+from intelligence_layer.core import Task, Tracer, utc_now
 from intelligence_layer.evaluation import (
     AggregationOverview,
     DatasetRepository,
+    EvaluationOverview,
     Example,
     ExampleEvaluation,
     FileAggregationRepository,
@@ -31,7 +31,6 @@ from intelligence_layer.evaluation import (
     Runner,
     RunOverview,
 )
-from intelligence_layer.evaluation.domain import EvaluationOverview
 from tests.conftest import DummyStringInput, DummyStringOutput
 
 FAIL_IN_EVAL_INPUT = "fail in eval"

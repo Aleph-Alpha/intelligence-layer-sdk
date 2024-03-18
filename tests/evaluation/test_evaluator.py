@@ -3,31 +3,34 @@ from typing import Generic, Iterable, Optional, TypeVar
 from pydantic import BaseModel
 from pytest import fixture
 
-from intelligence_layer.core import InMemoryTaskSpan, InMemoryTracer, NoOpTracer, Tracer
-from intelligence_layer.core.task import Input, Output, Task
+from intelligence_layer.core import (
+    InMemoryTaskSpan,
+    InMemoryTracer,
+    Input,
+    NoOpTracer,
+    Output,
+    Task,
+    Tracer,
+)
 from intelligence_layer.evaluation import (
+    AggregatedEvaluation,
+    AggregationLogic,
     Aggregator,
     Evaluation,
+    EvaluationLogic,
     Evaluator,
     Example,
     ExpectedOutput,
     FailedExampleEvaluation,
+    InMemoryAggregationRepository,
     InMemoryDatasetRepository,
     InMemoryEvaluationRepository,
     InMemoryRunRepository,
     MeanAccumulator,
     Runner,
+    SingleOutputEvaluationLogic,
     SuccessfulExampleOutput,
 )
-from intelligence_layer.evaluation.aggregation.aggregation_repository import (
-    InMemoryAggregationRepository,
-)
-from intelligence_layer.evaluation.base_logic import (
-    AggregationLogic,
-    EvaluationLogic,
-    SingleOutputEvaluationLogic,
-)
-from intelligence_layer.evaluation.domain import AggregatedEvaluation
 from tests.evaluation.conftest import (
     FAIL_IN_EVAL_INPUT,
     FAIL_IN_TASK_INPUT,

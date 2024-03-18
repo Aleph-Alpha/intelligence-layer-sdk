@@ -3,16 +3,13 @@ from typing import Iterable, Sequence, Union
 from pydantic import BaseModel
 
 from intelligence_layer.core import Language, TextChunk
-from intelligence_layer.evaluation import (
-    BleuGrader,
-    Example,
-    MeanAccumulator,
-    RougeGrader,
-)
-from intelligence_layer.evaluation.base_logic import (
-    AggregationLogic,
+from intelligence_layer.evaluation.aggregation.accumulator import MeanAccumulator
+from intelligence_layer.evaluation.aggregation.aggregator import AggregationLogic
+from intelligence_layer.evaluation.dataset.domain import Example
+from intelligence_layer.evaluation.evaluation.evaluator import (
     SingleOutputEvaluationLogic,
 )
+from intelligence_layer.evaluation.evaluation.graders import BleuGrader, RougeGrader
 
 
 class LongContextSummarizeInput(BaseModel):

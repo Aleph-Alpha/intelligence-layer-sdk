@@ -4,21 +4,17 @@ from uuid import uuid4
 
 from pytest import fixture
 
-from intelligence_layer.connectors.argilla.argilla_client import (
-    ArgillaEvaluation,
-    Field,
-    Question,
-    RecordData,
-)
+from intelligence_layer.connectors import ArgillaEvaluation, Field, Question, RecordData
 from intelligence_layer.core import utc_now
 from intelligence_layer.evaluation import (
     ArgillaEvaluationRepository,
+    EvaluationOverview,
     ExampleEvaluation,
     FailedExampleEvaluation,
     InMemoryEvaluationRepository,
     RecordDataSequence,
+    RunOverview,
 )
-from intelligence_layer.evaluation.domain import EvaluationOverview, RunOverview
 from tests.evaluation.conftest import DummyEvaluation, StubArgillaClient
 
 

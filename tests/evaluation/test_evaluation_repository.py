@@ -9,14 +9,15 @@ from pytest import fixture, mark
 
 from intelligence_layer.core import utc_now
 from intelligence_layer.evaluation import (
+    EvaluationOverview,
     EvaluationRepository,
     ExampleEvaluation,
     ExampleTrace,
     FailedExampleEvaluation,
     FileEvaluationRepository,
+    RunOverview,
     TaskSpanTrace,
 )
-from intelligence_layer.evaluation.domain import EvaluationOverview, RunOverview
 from tests.evaluation.conftest import DummyEvaluation
 
 

@@ -5,8 +5,8 @@ from pydantic import BaseModel
 
 from intelligence_layer.core import TextChunk
 from intelligence_layer.evaluation import Example, MeanAccumulator
-from intelligence_layer.evaluation.base_logic import (
-    AggregationLogic,
+from intelligence_layer.evaluation.aggregation.aggregator import AggregationLogic
+from intelligence_layer.evaluation.evaluation.evaluator import (
     SingleOutputEvaluationLogic,
 )
 

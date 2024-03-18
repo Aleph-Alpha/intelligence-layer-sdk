@@ -8,7 +8,7 @@ from intelligence_layer.evaluation import (
     SpanTrace,
     TaskSpanTrace,
 )
-from intelligence_layer.evaluation.domain import _to_trace_entry
+from intelligence_layer.evaluation.run.trace import _to_trace_entry
 from tests.evaluation.conftest import DummyAggregatedEvaluation
 
 

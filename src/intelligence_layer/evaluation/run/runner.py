@@ -16,10 +16,9 @@ from intelligence_layer.core import (
     utc_now,
 )
 from intelligence_layer.evaluation.dataset.dataset_repository import DatasetRepository
-from intelligence_layer.evaluation.domain import (
-    Example,
+from intelligence_layer.evaluation.dataset.domain import Example, ExpectedOutput
+from intelligence_layer.evaluation.run.domain import (
     ExampleOutput,
-    ExpectedOutput,
     FailedExampleRun,
     RunOverview,
 )

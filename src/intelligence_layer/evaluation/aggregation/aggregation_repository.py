@@ -4,7 +4,7 @@ from typing import Any, Dict, Iterable, Optional, Sequence
 
 from fsspec.implementations.local import LocalFileSystem  # type: ignore
 
-from intelligence_layer.evaluation.domain import (
+from intelligence_layer.evaluation.aggregation.domain import (
     AggregatedEvaluation,
     AggregationOverview,
 )

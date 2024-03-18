@@ -1,3 +1,4 @@
+from abc import ABC, abstractmethod
 from concurrent.futures import ThreadPoolExecutor
 from functools import lru_cache
 from typing import (
@@ -17,24 +18,65 @@ from typing import (
 from tqdm import tqdm
 
 from intelligence_layer.core import Input, Output, utc_now
-from intelligence_layer.evaluation.base_logic import EvaluationLogic
 from intelligence_layer.evaluation.dataset.dataset_repository import DatasetRepository
-from intelligence_layer.evaluation.domain import (
+from intelligence_layer.evaluation.dataset.domain import Example, ExpectedOutput
+from intelligence_layer.evaluation.evaluation.domain import (
     Evaluation,
     EvaluationOverview,
-    Example,
     ExampleEvaluation,
-    ExampleOutput,
-    ExpectedOutput,
     FailedExampleEvaluation,
-    FailedExampleRun,
-    RunOverview,
-    SuccessfulExampleOutput,
 )
 from intelligence_layer.evaluation.evaluation.evaluation_repository import (
     EvaluationRepository,
 )
+from intelligence_layer.evaluation.run.domain import (
+    ExampleOutput,
+    FailedExampleRun,
+    RunOverview,
+    SuccessfulExampleOutput,
+)
 from intelligence_layer.evaluation.run.run_repository import RunRepository
+
+
+class EvaluationLogic(ABC, Generic[Input, Output, ExpectedOutput, Evaluation]):
+    @abstractmethod
+    def do_evaluate(
+        self,
+        example: Example[Input, ExpectedOutput],
+        *output: SuccessfulExampleOutput[Output],
+    ) -> Evaluation:
+        """Executes the evaluation for this specific example.
+
+        Responsible for comparing the input & expected output of a task to the
+        actually generated output.
+
+        Args:
+            example: Input data of :class:`Task` to produce the output.
+            output: Output of the :class:`Task`.
+
+        Returns:
+            The metrics that come from the evaluated :class:`Task`.
+        """
+        pass
+
+
+class SingleOutputEvaluationLogic(
+    EvaluationLogic[Input, Output, ExpectedOutput, Evaluation]
+):
+    @final
+    def do_evaluate(
+        self,
+        example: Example[Input, ExpectedOutput],
+        *output: SuccessfulExampleOutput[Output],
+    ) -> Evaluation:
+        assert len(output) == 1
+        return self.do_evaluate_single_output(example, output[0].output)
+
+    @abstractmethod
+    def do_evaluate_single_output(
+        self, example: Example[Input, ExpectedOutput], output: Output
+    ) -> Evaluation:
+        pass
 
 
 class Evaluator(Generic[Input, Output, ExpectedOutput, Evaluation]):

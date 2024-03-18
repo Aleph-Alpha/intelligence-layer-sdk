@@ -1,3 +1,4 @@
+from abc import ABC, abstractmethod
 from functools import lru_cache
 from typing import (
     Callable,
@@ -17,10 +18,11 @@ from intelligence_layer.core import utc_now
 from intelligence_layer.evaluation.aggregation.aggregation_repository import (
     AggregationRepository,
 )
-from intelligence_layer.evaluation.base_logic import AggregationLogic
-from intelligence_layer.evaluation.domain import (
+from intelligence_layer.evaluation.aggregation.domain import (
     AggregatedEvaluation,
     AggregationOverview,
+)
+from intelligence_layer.evaluation.evaluation.domain import (
     Evaluation,
     EvaluationOverview,
     FailedExampleEvaluation,
@@ -57,6 +59,23 @@ class CountingFilterIterable(Iterable[T]):
 
     def excluded_count(self) -> int:
         return self._excluded_count
+
+
+class AggregationLogic(ABC, Generic[Evaluation, AggregatedEvaluation]):
+    @abstractmethod
+    def aggregate(self, evaluations: Iterable[Evaluation]) -> AggregatedEvaluation:
+        """`Evaluator`-specific method for aggregating individual `Evaluations` into report-like `Aggregated Evaluation`.
+
+        This method is responsible for taking the results of an evaluation run and aggregating all the results.
+        It should create an `AggregatedEvaluation` class and return it at the end.
+
+        Args:
+            evaluations: The results from running `eval_and_aggregate_runs` with a :class:`Task`.
+
+        Returns:
+            The aggregated results of an evaluation run with a :class:`Dataset`.
+        """
+        ...
 
 
 class Aggregator(Generic[Evaluation, AggregatedEvaluation]):
