@@ -51,7 +51,9 @@ def test_dataset_repository_can_create_and_store_a_dataset(
     assert stored_examples[0] == dummy_string_example
 
 
-@patch(target="intelligence_layer.evaluation.domain.uuid4", return_value="12345")
+@patch(
+    target="intelligence_layer.evaluation.dataset.domain.uuid4", return_value="12345"
+)
 @mark.parametrize(
     "repository_fixture",
     test_repository_fixtures,
@@ -74,7 +76,7 @@ def test_dataset_repository_ensures_unique_dataset_ids(
 
 
 @patch(
-    target="intelligence_layer.evaluation.data_storage.dataset_repository.LocalFileSystem.exists",
+    target="intelligence_layer.evaluation.dataset.dataset_repository.LocalFileSystem.exists",
     return_value=True,
 )
 def test_file_system_dataset_repository_avoids_overriding_existing_files(

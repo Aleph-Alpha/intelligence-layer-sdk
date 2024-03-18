@@ -15,7 +15,7 @@ from intelligence_layer.evaluation import (
     FileDatasetRepository,
     SuccessfulExampleOutput,
 )
-from intelligence_layer.evaluation.run import main
+from intelligence_layer.evaluation.run_evaluation import main
 
 load_dotenv()
 
