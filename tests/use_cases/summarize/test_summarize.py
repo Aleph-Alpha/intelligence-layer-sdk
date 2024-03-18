@@ -7,14 +7,12 @@ from intelligence_layer.evaluation import (
     EvaluationRepository,
     Evaluator,
     Example,
+    InMemoryAggregationRepository,
     InMemoryDatasetRepository,
     InMemoryEvaluationRepository,
     InMemoryRunRepository,
     Runner,
     RunRepository,
-)
-from intelligence_layer.evaluation.aggregation.aggregation_repository import (
-    InMemoryAggregationRepository,
 )
 from intelligence_layer.use_cases import (
     AggregatedSummarizeEvaluation,

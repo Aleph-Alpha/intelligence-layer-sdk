@@ -7,27 +7,23 @@ from intelligence_layer.core import Task, TextChunk
 from intelligence_layer.evaluation import (
     Aggregator,
     DatasetRepository,
+    Evaluator,
     Example,
+    InMemoryAggregationRepository,
     InMemoryDatasetRepository,
     InMemoryEvaluationRepository,
     Runner,
     RunRepository,
 )
-from intelligence_layer.evaluation.aggregation.aggregation_repository import (
-    InMemoryAggregationRepository,
-)
-from intelligence_layer.evaluation.evaluation.evaluator import Evaluator
-from intelligence_layer.use_cases.classify.classify import (
+from intelligence_layer.use_cases import (
     AggregatedMultiLabelClassifyEvaluation,
     ClassifyInput,
+    EmbeddingBasedClassify,
+    LabelWithExamples,
     MultiLabelClassifyAggregationLogic,
     MultiLabelClassifyEvaluation,
     MultiLabelClassifyEvaluationLogic,
     MultiLabelClassifyOutput,
-)
-from intelligence_layer.use_cases.classify.embedding_based_classify import (
-    EmbeddingBasedClassify,
-    LabelWithExamples,
 )
 
 

@@ -15,7 +15,7 @@ from intelligence_layer.evaluation.aggregation.aggregator import (
     Aggregator,
 )
 from intelligence_layer.evaluation.aggregation.domain import AggregatedEvaluation
-from intelligence_layer.evaluation.elo import (
+from intelligence_layer.evaluation.aggregation.elo import (
     EloCalculator,
     MatchOutcome,
     WinRateCalculator,

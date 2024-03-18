@@ -1,8 +1,6 @@
 from abc import ABC, abstractmethod
 from pathlib import Path
-from typing import Any, Dict, Iterable, Optional, Sequence
-
-from fsspec.implementations.local import LocalFileSystem  # type: ignore
+from typing import Dict, Iterable, Optional, Sequence
 
 from intelligence_layer.evaluation.aggregation.domain import (
     AggregatedEvaluation,
@@ -118,31 +116,3 @@ class FileSystemAggregationRepository(AggregationRepository, FileSystemBasedRepo
 
     def _aggregation_overview_path(self, aggregation_id: str) -> Path:
         return self._aggregation_directory(aggregation_id).with_suffix(".json")
-
-
-class InMemoryAggregationRepository(AggregationRepository):
-    def __init__(self) -> None:
-        super().__init__()
-        self._aggregation_overviews: dict[str, AggregationOverview[Any]] = dict()
-
-    def store_aggregation_overview(
-        self, aggregation_overview: AggregationOverview[AggregatedEvaluation]
-    ) -> None:
-        self._aggregation_overviews[aggregation_overview.id] = aggregation_overview
-
-    def aggregation_overview(
-        self, aggregation_id: str, aggregation_type: type[AggregatedEvaluation]
-    ) -> Optional[AggregationOverview[AggregatedEvaluation]]:
-        return self._aggregation_overviews.get(aggregation_id, None)
-
-    def aggregation_overview_ids(self) -> Sequence[str]:
-        return sorted(list(self._aggregation_overviews.keys()))
-
-
-class FileAggregationRepository(FileSystemAggregationRepository):
-    def __init__(self, root_directory: Path) -> None:
-        super().__init__(LocalFileSystem(), root_directory)
-
-    @staticmethod
-    def path_to_str(path: Path) -> str:
-        return str(path)

@@ -9,10 +9,10 @@ from dotenv import load_dotenv
 from intelligence_layer.connectors.limited_concurrency_client import (
     LimitedConcurrencyClient,
 )
-from intelligence_layer.evaluation.aggregation.aggregation_repository import (
+from intelligence_layer.evaluation.aggregation.aggregator import Aggregator
+from intelligence_layer.evaluation.aggregation.file_aggregation_repository import (
     FileAggregationRepository,
 )
-from intelligence_layer.evaluation.aggregation.aggregator import Aggregator
 from intelligence_layer.evaluation.dataset.dataset_repository import (
     FileDatasetRepository,
 )

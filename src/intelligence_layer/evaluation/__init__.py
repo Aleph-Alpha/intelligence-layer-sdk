@@ -2,12 +2,6 @@ from .aggregation.accumulator import MeanAccumulator as MeanAccumulator
 from .aggregation.aggregation_repository import (
     AggregationRepository as AggregationRepository,
 )
-from .aggregation.aggregation_repository import (
-    FileAggregationRepository as FileAggregationRepository,
-)
-from .aggregation.aggregation_repository import (
-    InMemoryAggregationRepository as InMemoryAggregationRepository,
-)
 from .aggregation.aggregator import AggregationLogic as AggregationLogic
 from .aggregation.aggregator import Aggregator as Aggregator
 from .aggregation.argilla_aggregator import (
@@ -20,8 +14,17 @@ from .aggregation.argilla_aggregator import (
 from .aggregation.argilla_aggregator import PlayerScore as PlayerScore
 from .aggregation.domain import AggregatedEvaluation as AggregatedEvaluation
 from .aggregation.domain import AggregationOverview as AggregationOverview
+from .aggregation.elo import EloCalculator as EloCalculator
+from .aggregation.elo import MatchOutcome as MatchOutcome
+from .aggregation.elo import WinRateCalculator as WinRateCalculator
+from .aggregation.file_aggregation_repository import (
+    FileAggregationRepository as FileAggregationRepository,
+)
 from .aggregation.hugging_face_aggregation_repository import (
     HuggingFaceAggregationRepository as HuggingFaceAggregationRepository,
+)
+from .aggregation.in_memory_aggregation_repository import (
+    InMemoryAggregationRepository as InMemoryAggregationRepository,
 )
 from .dataset.dataset_repository import DatasetRepository as DatasetRepository
 from .dataset.dataset_repository import FileDatasetRepository as FileDatasetRepository
@@ -34,9 +37,6 @@ from .dataset.domain import ExpectedOutput as ExpectedOutput
 from .dataset.hugging_face_dataset_repository import (
     HuggingFaceDatasetRepository as HuggingFaceDatasetRepository,
 )
-from .elo import EloCalculator as EloCalculator
-from .elo import MatchOutcome as MatchOutcome
-from .elo import WinRateCalculator as WinRateCalculator
 from .evaluation.argilla_evaluator import (
     ArgillaEvaluationLogic as ArgillaEvaluationLogic,
 )
