@@ -1,8 +1,7 @@
 from datasets import load_dataset
-
 from intelligence_layer.evaluation.data_storage.single_huggingface_dataset_repository import (
-    SingleHuggingfaceDatasetRepository,
     MultipleChoiceInput,
+    SingleHuggingfaceDatasetRepository,
 )
 
 

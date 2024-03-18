@@ -1,12 +1,13 @@
 from typing import Generic, Iterable, Sequence
 
 from pydantic import BaseModel
+
+from datasets import Dataset as HFDataset
+from datasets import DatasetDict, IterableDataset, IterableDatasetDict
 from intelligence_layer.core.task import Input
 from intelligence_layer.evaluation.data_storage.dataset_repository import (
     DatasetRepository,
 )
-from datasets import DatasetDict, Dataset, IterableDatasetDict, IterableDataset
-
 from intelligence_layer.evaluation.domain import Dataset, Example, ExpectedOutput
 
 
@@ -21,7 +22,7 @@ class SingleHuggingfaceDatasetRepository(
     def __init__(
         self,
         huggingface_dataset: (
-            DatasetDict | Dataset | IterableDatasetDict | IterableDataset
+            DatasetDict | HFDataset | IterableDatasetDict | IterableDataset
         ),
     ) -> None:
         self._huggingface_dataset = huggingface_dataset
