@@ -39,6 +39,12 @@ from .dataset.hugging_face_dataset_repository import (
 from .dataset.in_memory_dataset_repository import (
     InMemoryDatasetRepository as InMemoryDatasetRepository,
 )
+from .evaluation.argilla_evaluation_repository import (
+    ArgillaEvaluationRepository as ArgillaEvaluationRepository,
+)
+from .evaluation.argilla_evaluation_repository import (
+    RecordDataSequence as RecordDataSequence,
+)
 from .evaluation.argilla_evaluator import (
     ArgillaEvaluationLogic as ArgillaEvaluationLogic,
 )
@@ -52,26 +58,22 @@ from .evaluation.domain import EvaluationOverview as EvaluationOverview
 from .evaluation.domain import ExampleEvaluation as ExampleEvaluation
 from .evaluation.domain import FailedExampleEvaluation as FailedExampleEvaluation
 from .evaluation.evaluation_repository import (
-    ArgillaEvaluationRepository as ArgillaEvaluationRepository,
-)
-from .evaluation.evaluation_repository import (
     EvaluationRepository as EvaluationRepository,
 )
-from .evaluation.evaluation_repository import (
-    FileEvaluationRepository as FileEvaluationRepository,
-)
-from .evaluation.evaluation_repository import (
-    InMemoryEvaluationRepository as InMemoryEvaluationRepository,
-)
-from .evaluation.evaluation_repository import RecordDataSequence as RecordDataSequence
 from .evaluation.evaluator import EvaluationLogic as EvaluationLogic
 from .evaluation.evaluator import Evaluator as Evaluator
 from .evaluation.evaluator import (
     SingleOutputEvaluationLogic as SingleOutputEvaluationLogic,
 )
+from .evaluation.file_evaluation_repository import (
+    FileEvaluationRepository as FileEvaluationRepository,
+)
 from .evaluation.graders import BleuGrader as BleuGrader
 from .evaluation.graders import RougeGrader as RougeGrader
 from .evaluation.graders import RougeScores as RougeScores
+from .evaluation.in_memory_evaluation_repository import (
+    InMemoryEvaluationRepository as InMemoryEvaluationRepository,
+)
 from .infrastructure.hugging_face_repository import (
     HuggingFaceRepository as HuggingFaceRepository,
 )

@@ -20,7 +20,7 @@ from intelligence_layer.evaluation.aggregation.elo import (
     MatchOutcome,
     WinRateCalculator,
 )
-from intelligence_layer.evaluation.evaluation.evaluation_repository import (
+from intelligence_layer.evaluation.evaluation.argilla_evaluation_repository import (
     ArgillaEvaluationRepository,
 )
 
