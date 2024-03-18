@@ -224,63 +224,77 @@ class TextHighlight(Task[TextHighlightInput, TextHighlightOutput]):
     def _clamp_ranges_to_focus(
         self,
         prompt_ranges: Sequence[PromptRange],
-        relevant_text_scores: Sequence[TextScore],
-    ):
-        # check if the prompts are overlapping
-        def are_overlapping(p1: PromptRange, p2: PromptRange) -> bool:
-            # TODO check if this is enough, as text actually has a position, but we can't
-            return p1.start.item <= p2.end.item and p1.end.item >= p2.start.item
+        relevant_highlights: Sequence[TextScore],
+    ) -> Sequence[TextScore]:
+        # TODO we just assume that its all text for now, but thats not a given. This will need to be replaced
+        for prompt_range in prompt_ranges:
+            assert isinstance(prompt_range.start, TextCursor)
+            assert isinstance(prompt_range.end, TextCursor)
 
-        if self._clamp_to_focus and len(prompt_ranges) > 0:
-            new_relevant_text_scores: Sequence[TextScore] = []
-            has_overlapping_ranges = any(
-                are_overlapping(p1, p2)
-                for p1, p2 in zip(prompt_ranges, prompt_ranges[1:])
+        if not self._should_clamp(prompt_ranges):
+            return relevant_highlights
+
+        new_relevant_text_scores: Sequence[TextScore] = []
+        for highlight in relevant_highlights:
+
+            def _get_overlap(range: PromptRange) -> int:
+                return min(
+                    highlight.start + highlight.length, range.end.position
+                ) - max(highlight.start, range.start.position)
+
+            most_overlapping_range = sorted(
+                prompt_ranges,
+                key=_get_overlap,
+            )[-1]
+            new_relevant_text_scores.append(
+                self._clamp_to_range(highlight, most_overlapping_range)
             )
-            if has_overlapping_ranges:
-                print(
-                    "TextHighlighting with clamping is on, but focus ranges are overlapping. Disabling clamping."
-                )
-            else:
-                # TODO we just assume that its all text for now, but thats not a given. This will need to be replaced
-                for prompt_range in prompt_ranges:
-                    assert isinstance(prompt_range.start, TextCursor)
-                    assert isinstance(prompt_range.end, TextCursor)
-                for score in relevant_text_scores:
-                    most_overlapping_range = sorted(
-                        prompt_ranges,
-                        # positive for any overlapping regions
-                        key=lambda range: min(
-                            score.start + score.length, prompt_range.end.position
-                        )
-                        - max(score.start, prompt_range.start.position),
-                    )[0]
-                    new_start = score.start
-                    new_length = score.length
-                    new_score = score.score
-                    cut_characters = 0
-                    if score.start < most_overlapping_range.start.position:
-                        cut_characters += (
-                            most_overlapping_range.start.position - score.start
-                        )
-                        new_start = most_overlapping_range.start.position
+        return new_relevant_text_scores
 
-                    if score.start + score.length > most_overlapping_range.end.position:
-                        cut_characters += (
-                            score.start
-                            + score.length
-                            - most_overlapping_range.end.position
-                        )
-                        new_length = most_overlapping_range.end.position - new_start
+    def _should_clamp(self, prompt_ranges: Sequence[PromptRange]) -> bool:
+        def are_overlapping(p1: PromptRange, p2: PromptRange) -> bool:
+            if p1.start.position > p2.start.position:
+                p1, p2 = p2, p1
+            return (
+                p1.start.position <= p2.end.position
+                and p1.end.position >= p2.start.position
+            )
 
-                    if cut_characters:
-                        new_score = score.length / new_length
-                    new_relevant_text_scores.append(
-                        TextScore(new_start, new_length, new_score)
-                    )
-            return new_relevant_text_scores
-        else:
-            return relevant_text_scores
+        if not self._clamp_to_focus or len(prompt_ranges) == 0:
+            return False
+
+        # this check is relatively expensive if no ranges are overlapping
+        has_overlapping_ranges = any(
+            are_overlapping(p1, p2)
+            for p1, p2 in itertools.permutations(prompt_ranges, 2)
+        )
+        if has_overlapping_ranges:
+            print(
+                "TextHighlighting with clamping is on, but focus ranges are overlapping. Disabling clamping."
+            )
+        return not has_overlapping_ranges
+
+    def _clamp_to_range(
+        self, highlight: TextScore, focus_range: PromptRange
+    ) -> TextScore:
+        new_start = highlight.start
+        new_length = highlight.length
+        new_score = highlight.score
+        cut_characters = 0
+        # clamp start
+        if highlight.start < focus_range.start.position:
+            cut_characters = focus_range.start.position - highlight.start
+            new_start = focus_range.start.position
+            new_length -= cut_characters
+        # clamp end
+        if highlight.start + highlight.length > focus_range.end.position:
+            n_cut_at_end = (highlight.start + highlight.length) - focus_range.end.position
+            cut_characters += n_cut_at_end
+            new_length -= n_cut_at_end
+
+        if cut_characters:
+            new_score = highlight.score * (new_length / highlight.length)
+        return TextScore(new_start, new_length, new_score)
 
     def _normalize_and_filter(
         self, text_highlights: Sequence[ScoredTextHighlight]
