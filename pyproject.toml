@@ -50,7 +50,7 @@ types-tqdm = "*"
 sphinx-rtd-theme = "^2.0.0"
 sphinx = "^7.2.6"
 pylama = { extras = ["all", "toml"], version = "^8.4.1" }
-faker = "^24.2.0"
+faker = "^24.3.0"
 hypercorn = "0.16.0"
 
 [tool.mypy]
