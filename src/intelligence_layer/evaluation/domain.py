@@ -353,8 +353,12 @@ class EvaluationOverview(BaseModel, frozen=True):
 
     def __str__(self) -> str:
         run_overview_str: str = "Run Overviews={\n"
+        comma_counter = 0
         for overview in self.run_overviews:
-            run_overview_str += f"{overview},"
+            run_overview_str += f"{overview}"
+            if comma_counter < len(self.run_overviews) - 1:
+                run_overview_str += ", "
+                comma_counter += 1
         run_overview_str += "}\n"
 
         return (
