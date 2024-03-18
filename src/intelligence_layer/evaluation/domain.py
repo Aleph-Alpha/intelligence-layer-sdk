@@ -35,6 +35,9 @@ class Dataset(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid4()))
     name: str
 
+    def __repr__(self) -> str:
+        return self.__str__()
+
     def __str__(self) -> str:
         return f"Dataset ID = {self.id}\nName = {self.name}\n"
 
@@ -213,9 +216,9 @@ class ExampleOutput(BaseModel, Generic[Output]):
 
     def __str__(self) -> str:
         return (
-            f"Run ID = {self.run_id}\n"
-            f"Example ID = {self.example_id}\n"
-            f'Output = "{self.output}"\n'
+            f"Example ID={self.example_id}\n"
+            f"Related Run ID={self.run_id}\n"
+            f'Output="{self.output}"\n'
         )
 
 
@@ -345,10 +348,13 @@ class EvaluationOverview(BaseModel, frozen=True):
     start: Optional[datetime]
     description: str
 
+    def __repr__(self) -> str:
+        return self.__str__()
+
     def __str__(self) -> str:
         run_overview_str: str = "Run Overviews={\n"
         for overview in self.run_overviews:
-            run_overview_str += f"{overview}"
+            run_overview_str += f"{overview},"
         run_overview_str += "}\n"
 
         return (
@@ -421,6 +427,9 @@ class AggregationOverview(BaseModel, Generic[AggregatedEvaluation], frozen=True)
         if self.crashed_during_evaluation_count > 0:
             raise EvaluationFailed(self.id, self.crashed_during_evaluation_count)
 
+    def __repr__(self) -> str:
+        return self.__str__()
+
     def __str__(self) -> str:
         res = (
             f"Aggregation Overview ID = {self.id}\n"
@@ -458,6 +467,9 @@ class Example(BaseModel, Generic[Input, ExpectedOutput]):
     input: Input
     expected_output: ExpectedOutput
     id: str = Field(default_factory=lambda: str(uuid4()))
+
+    def __repr__(self) -> str:
+        return self.__str__()
 
     def __str__(self) -> str:
         return (
