@@ -7,6 +7,7 @@ from intelligence_layer.core.model import LuminousControlModel
 from intelligence_layer.evaluation import (
     Aggregator,
     DatasetRepository,
+    Evaluator,
     Example,
     InMemoryAggregationRepository,
     InMemoryDatasetRepository,
@@ -14,7 +15,6 @@ from intelligence_layer.evaluation import (
     Runner,
     RunRepository,
 )
-from intelligence_layer.evaluation.evaluation.evaluator import Evaluator
 from intelligence_layer.use_cases.classify.classify import (
     AggregatedSingleLabelClassifyEvaluation,
     ClassifyInput,

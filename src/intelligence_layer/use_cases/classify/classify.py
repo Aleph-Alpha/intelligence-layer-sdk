@@ -4,9 +4,10 @@ from typing import Iterable, Mapping, NewType, Sequence
 from pydantic import BaseModel
 
 from intelligence_layer.core import TextChunk
-from intelligence_layer.evaluation import Example, MeanAccumulator
-from intelligence_layer.evaluation.aggregation.aggregator import AggregationLogic
-from intelligence_layer.evaluation.evaluation.evaluator import (
+from intelligence_layer.evaluation import (
+    AggregationLogic,
+    Example,
+    MeanAccumulator,
     SingleOutputEvaluationLogic,
 )
 
