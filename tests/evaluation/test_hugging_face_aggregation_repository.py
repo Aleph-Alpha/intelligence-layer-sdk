@@ -1,3 +1,4 @@
+from pathlib import Path
 from typing import Iterable
 from uuid import uuid4
 
@@ -8,6 +9,9 @@ from intelligence_layer.core import utc_now
 from intelligence_layer.evaluation import (
     AggregationOverview,
     HuggingFaceAggregationRepository,
+)
+from intelligence_layer.evaluation.aggregation.file_aggregation_repository import (
+    FileSystemAggregationRepository,
 )
 from tests.evaluation.conftest import DummyAggregatedEvaluation
 
@@ -72,16 +76,14 @@ def test_repository_operations(
     assert overview != []
 
 
-def test_subdirectory_create_read_update_delete(
+def test_file_exists_in_subdirectory(
     hugging_face_aggregation_repository: HuggingFaceAggregationRepository,
     aggregation_overview: AggregationOverview[DummyAggregatedEvaluation],
+    hugging_face_aggregation_repository_id: str,
 ) -> None:
     hugging_face_aggregation_repository.store_aggregation_overview(aggregation_overview)
-    overview = hugging_face_aggregation_repository.aggregation_overview(
-        aggregation_overview.id, DummyAggregatedEvaluation
+    path_to_file = Path(
+        f"{hugging_face_aggregation_repository_id}/{FileSystemAggregationRepository._SUB_DIRECTORY}/{aggregation_overview.id}.json"
     )
-
-    assert aggregation_overview.id in list(
-        hugging_face_aggregation_repository.aggregation_overview_ids()
-    )
-    assert overview != []
+    file_exists = hugging_face_aggregation_repository.exists(path_to_file)
+    assert file_exists

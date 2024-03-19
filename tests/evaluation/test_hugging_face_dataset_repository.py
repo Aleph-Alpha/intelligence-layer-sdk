@@ -1,3 +1,4 @@
+from pathlib import Path
 from typing import Iterable, Sequence, Tuple
 from uuid import uuid4
 
@@ -27,28 +28,6 @@ def hugging_face_dataset_repository(
         token=hugging_face_token,
         private=True,
     )
-
-
-@fixture
-def dataset_id_without_a_stored_dataset_file() -> str:
-    """A dataset ID of an already existing HuggingFace dataset
-    which does NOT have a stored dataset file but has an existing examples file.
-
-    Used to test backwards-compatibility.
-    """
-    return "examples-without-a-dataset-object_do-not-delete-me"
-
-
-@fixture
-def dataset_and_example_id_without_a_stored_dataset_file(
-    dataset_id_without_a_stored_dataset_file: str,
-) -> Tuple[str, str]:
-    """Dataset ID and a linked example ID of an already existing HuggingFace dataset
-    which does NOT have a stored dataset file but has an existing examples file.
-
-    Used to test backwards-compatibility.
-    """
-    return dataset_id_without_a_stored_dataset_file, "example-id-2"
 
 
 @fixture
@@ -116,35 +95,6 @@ def test_hugging_face_repository_can_create_and_delete_a_repository(
             repo_type="dataset",
             missing_ok=True,
         )
-
-
-def test_hugging_face_repository_can_load_old_datasets(
-    hugging_face_dataset_repository: HuggingFaceDatasetRepository,
-    dataset_and_example_id_without_a_stored_dataset_file: Tuple[str, str],
-) -> None:
-    (dataset_id, example_id) = dataset_and_example_id_without_a_stored_dataset_file
-
-    stored_examples = list(
-        hugging_face_dataset_repository.examples(dataset_id, str, str)
-    )
-    stored_datasets = list(hugging_face_dataset_repository.datasets())
-    stored_example = hugging_face_dataset_repository.example(
-        dataset_id, example_id, str, str
-    )
-    stored_dataset = hugging_face_dataset_repository.dataset(dataset_id)
-    stored_dataset_ids = list(hugging_face_dataset_repository.dataset_ids())
-
-    assert len(stored_examples) > 0
-    assert stored_example is not None
-    assert stored_example in stored_examples
-
-    assert len(stored_datasets) > 0
-    assert stored_dataset is not None
-    assert stored_dataset in stored_datasets
-    assert stored_dataset.id == dataset_id
-
-    assert len(stored_dataset_ids) > 0
-    assert dataset_id in stored_dataset_ids
 
 
 def test_examples_returns_an_empty_list_for_not_existing_dataset_id(
@@ -218,3 +168,19 @@ def test_hugging_face_repository_supports_all_operations_for_created_dataset(
     hugging_face_repository_.delete_dataset(dataset.id)
     assert hugging_face_repository_.examples(dataset.id, str, str) == []
     assert hugging_face_repository_.dataset(dataset.id) is None
+
+
+def test_file_exists_in_subdirectory(
+    hugging_face_repository_with_dataset_and_examples: Tuple[
+        HuggingFaceDatasetRepository, Dataset, Sequence[Example[str, str]]
+    ]
+) -> None:
+    (hugging_face_repository, dataset, examples) = (
+        hugging_face_repository_with_dataset_and_examples
+    )
+    path_to_file = Path(
+        f"{hugging_face_repository._repository_id}/datasets/{dataset.id}/{dataset.id}.json"
+    )
+
+    file_exists = hugging_face_repository.exists(path_to_file)
+    assert file_exists

@@ -48,12 +48,16 @@ class HuggingFaceAggregationRepository(
     # Here, we overwrite the method defined in the `AbstractFileSystem`.
     # This fix will have to be implemented in `HuggingFaceRepository` and/or `HuggingFaceDatasetRepository`.
     def exists(self, path: Path) -> bool:
-        print(f"exists: path = {path}")
+        try:
+            path_relative_to_repository_id = path.relative_to(self._repository_id)
+        except ValueError:
+            return False
+
         return (
             len(
                 get_paths_info(
                     self._repository_id,
-                    "aggregations/" + path.name,
+                    path_relative_to_repository_id,
                     repo_type="dataset",
                     token=self._file_system.token,
                 )

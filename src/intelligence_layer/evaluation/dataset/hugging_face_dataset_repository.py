@@ -2,7 +2,7 @@ from pathlib import Path
 from typing import Optional
 
 import huggingface_hub  # type: ignore
-from huggingface_hub import HfFileSystem, create_repo
+from huggingface_hub import HfFileSystem, create_repo, get_paths_info
 
 from intelligence_layer.evaluation.dataset.domain import Dataset
 from intelligence_layer.evaluation.dataset.file_dataset_repository import (
@@ -95,10 +95,24 @@ class HuggingFaceDatasetRepository(HuggingFaceRepository, FileSystemDatasetRepos
 
         return super().dataset(dataset_id)
 
-    def _dataset_root_directory(self) -> Path:
-        # we override this method as the existing HuggingFace datasets have a different file structure
-        return self._root_directory
+    # The `exists` function implemented for the Hugginface file system (HfFileSystem)
+    # cannot find files that are nested in folders, but only top-level files in the repository.
+    # Here, we overwrite the method defined in the `AbstractFileSystem`.
+    # This fix will have to be implemented in `HuggingFaceRepository` and/or `HuggingFaceDatasetRepository`.
+    def exists(self, path: Path) -> bool:
+        try:
+            path_relative_to_repository_id = path.relative_to(self._repository_id)
+        except ValueError:
+            return False
 
-    def _dataset_directory(self, dataset_id: str) -> Path:
-        # we override this method as the existing HuggingFace datasets have a different file structure
-        return self._root_directory
+        return (
+            len(
+                get_paths_info(
+                    self._repository_id,
+                    path_relative_to_repository_id,
+                    repo_type="dataset",
+                    token=self._file_system.token,
+                )
+            )
+            != 0
+        )

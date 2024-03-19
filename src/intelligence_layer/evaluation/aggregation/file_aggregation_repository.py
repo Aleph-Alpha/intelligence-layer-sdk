@@ -16,6 +16,9 @@ from intelligence_layer.evaluation.infrastructure.file_system_based_repository i
 
 
 class FileSystemAggregationRepository(AggregationRepository, FileSystemBasedRepository):
+
+    _SUB_DIRECTORY = "aggregations"
+
     def store_aggregation_overview(
         self, aggregation_overview: AggregationOverview[AggregatedEvaluation]
     ) -> None:
@@ -49,7 +52,7 @@ class FileSystemAggregationRepository(AggregationRepository, FileSystemBasedRepo
         )
 
     def _aggregation_root_directory(self) -> Path:
-        path = self._root_directory / "aggregations"
+        path = self._root_directory / self._SUB_DIRECTORY
         path.mkdir(exist_ok=True)
         return path
 
