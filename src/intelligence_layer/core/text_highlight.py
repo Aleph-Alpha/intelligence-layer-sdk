@@ -1,9 +1,10 @@
 import itertools
-from typing import Iterable, Mapping, Sequence
+from typing import Iterable, Mapping, Sequence, cast
 
 from aleph_alpha_client import (
     Prompt,
     PromptGranularity,
+    Text,
     TextPromptItemExplanation,
     TextScore,
 )
@@ -61,11 +62,16 @@ class TextHighlightOutput(BaseModel):
     highlights: Sequence[ScoredTextHighlight]
 
 
+class TextPromptRange(PromptRange):
+    start: TextCursor
+    end: TextCursor
+
+
 class TextHighlight(Task[TextHighlightInput, TextHighlightOutput]):
     """Generates text highlights given a prompt and completion.
 
     For a given prompt and target (completion), extracts the parts of the prompt responsible for generation.
-    A range can be provided via use of the liquid language (see the example).
+    The prompt can only contain text. A range can be provided via use of the liquid language (see the example).
     In this case, the highlights will only refer to text within this range.
 
     Args:
@@ -117,12 +123,13 @@ class TextHighlight(Task[TextHighlightInput, TextHighlightOutput]):
         self, input: TextHighlightInput, task_span: TaskSpan
     ) -> TextHighlightOutput:
         self._raise_on_invalid_focus_range(input)
+        self._raise_on_incompatible_prompt(input)
         explanation = self._explain(
             prompt=input.rich_prompt,
             target=input.target,
             task_span=task_span,
         )
-        prompt_ranges = self._filter_and_flatten_prompt_ranges(
+        focus_ranges = self._filter_and_flatten_prompt_ranges(
             input.focus_ranges, input.rich_prompt.ranges
         )
 
@@ -131,11 +138,25 @@ class TextHighlight(Task[TextHighlightInput, TextHighlightOutput]):
         )
 
         highlights = self._to_highlights(
-            prompt_ranges,
+            focus_ranges,
             text_prompt_item_explanations_and_indices,
             task_span,
         )
         return TextHighlightOutput(highlights=highlights)
+
+    def _raise_on_incompatible_prompt(self, input: TextHighlightInput) -> None:
+        """Currently, the text highlight logic does not correctly deal with
+        multi item texts. This is a result of returning indices instead of text.
+        Therefore, we disable running text highlighting on prompts with more than one index
+        for the moment. This also means we only deal with text items."""
+        n_items = len(input.rich_prompt.items)
+        # the last item is always the question
+        if n_items > 2:
+            raise ValueError(
+                f"Text highlighting currently only works correctly with a single Text item. Found {n_items-1}."
+            )
+        if any(not isinstance(item, Text) for item in input.rich_prompt.items):
+            raise ValueError("Text highlighting only supports text prompts.")
 
     def _raise_on_invalid_focus_range(self, input: TextHighlightInput) -> None:
         unknown_focus_ranges = input.focus_ranges - set(input.rich_prompt.ranges.keys())
@@ -169,13 +190,14 @@ class TextHighlight(Task[TextHighlightInput, TextHighlightOutput]):
     ) -> Iterable[tuple[TextPromptItemExplanation, int]]:
         return (
             (explanation, index)
+            # we explain the complete target at once, therefore we have 1 explanation
             for index, explanation in enumerate(explain_output.explanations[0].items)
             if isinstance(explanation, TextPromptItemExplanation)
         )
 
     def _to_highlights(
         self,
-        prompt_ranges: Sequence[PromptRange],
+        focus_ranges: Sequence[PromptRange],
         text_prompt_item_explanations_and_indices: Iterable[
             tuple[TextPromptItemExplanation, int]
         ],
@@ -190,7 +212,7 @@ class TextHighlight(Task[TextHighlightInput, TextHighlightOutput]):
                 assert isinstance(text_score, TextScore)  # for typing
 
                 if self._is_relevant_explanation(
-                    explanation_idx, text_score, prompt_ranges
+                    explanation_idx, text_score, focus_ranges
                 ):
                     relevant_text_scores.append(text_score)
 
@@ -205,10 +227,10 @@ class TextHighlight(Task[TextHighlightInput, TextHighlightOutput]):
                 for text_score in relevant_text_scores
             ],
         )
-
-        relevant_text_scores = self._clamp_ranges_to_focus(
-            prompt_ranges, relevant_text_scores
-        )
+        if self._clamp_to_focus:
+            relevant_text_scores = self._clamp_ranges_to_focus(
+                focus_ranges, relevant_text_scores
+            )
 
         text_highlights = [
             ScoredTextHighlight(
@@ -224,26 +246,24 @@ class TextHighlight(Task[TextHighlightInput, TextHighlightOutput]):
     def _clamp_ranges_to_focus(
         self,
         prompt_ranges: Sequence[PromptRange],
-        relevant_highlights: Sequence[TextScore],
-    ) -> Sequence[TextScore]:
-        # TODO we just assume that its all text for now, but thats not a given. This will need to be replaced
-        for prompt_range in prompt_ranges:
-            assert isinstance(prompt_range.start, TextCursor)
-            assert isinstance(prompt_range.end, TextCursor)
-
-        if not self._should_clamp(prompt_ranges):
+        relevant_highlights: list[TextScore],
+    ) -> list[TextScore]:
+        text_prompt_ranges = [
+            cast(TextPromptRange, prompt_range) for prompt_range in prompt_ranges
+        ]
+        if not self._should_clamp(text_prompt_ranges):
             return relevant_highlights
 
-        new_relevant_text_scores: Sequence[TextScore] = []
+        new_relevant_text_scores: list[TextScore] = []
         for highlight in relevant_highlights:
 
-            def _get_overlap(range: PromptRange) -> int:
+            def _get_overlap(range: TextPromptRange) -> int:
                 return min(
                     highlight.start + highlight.length, range.end.position
                 ) - max(highlight.start, range.start.position)
 
             most_overlapping_range = sorted(
-                prompt_ranges,
+                text_prompt_ranges,
                 key=_get_overlap,
             )[-1]
             new_relevant_text_scores.append(
@@ -251,8 +271,8 @@ class TextHighlight(Task[TextHighlightInput, TextHighlightOutput]):
             )
         return new_relevant_text_scores
 
-    def _should_clamp(self, prompt_ranges: Sequence[PromptRange]) -> bool:
-        def are_overlapping(p1: PromptRange, p2: PromptRange) -> bool:
+    def _should_clamp(self, prompt_ranges: Sequence[TextPromptRange]) -> bool:
+        def are_overlapping(p1: TextPromptRange, p2: TextPromptRange) -> bool:
             if p1.start.position > p2.start.position:
                 p1, p2 = p2, p1
             return (
@@ -260,7 +280,7 @@ class TextHighlight(Task[TextHighlightInput, TextHighlightOutput]):
                 and p1.end.position >= p2.start.position
             )
 
-        if not self._clamp_to_focus or len(prompt_ranges) == 0:
+        if len(prompt_ranges) == 0:
             return False
 
         # this check is relatively expensive if no ranges are overlapping
@@ -275,7 +295,7 @@ class TextHighlight(Task[TextHighlightInput, TextHighlightOutput]):
         return not has_overlapping_ranges
 
     def _clamp_to_range(
-        self, highlight: TextScore, focus_range: PromptRange
+        self, highlight: TextScore, focus_range: TextPromptRange
     ) -> TextScore:
         new_start = highlight.start
         new_length = highlight.length
@@ -288,7 +308,9 @@ class TextHighlight(Task[TextHighlightInput, TextHighlightOutput]):
             new_length -= cut_characters
         # clamp end
         if highlight.start + highlight.length > focus_range.end.position:
-            n_cut_at_end = (highlight.start + highlight.length) - focus_range.end.position
+            n_cut_at_end = (
+                highlight.start + highlight.length
+            ) - focus_range.end.position
             cut_characters += n_cut_at_end
             new_length -= n_cut_at_end
 

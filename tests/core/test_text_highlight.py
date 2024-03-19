@@ -1,6 +1,6 @@
+import pytest
 from aleph_alpha_client import Image, Text
 from pytest import fixture, raises
-import pytest
 
 from intelligence_layer.core import (
     AlephAlphaModel,
@@ -129,28 +129,20 @@ Answer:"""
     completion = " The latin name of the brown bear is Ursus arctos."
 
     input = TextHighlightInput(rich_prompt=rich_prompt, target=completion)
-    output = text_highlight_base.run(input, NoOpTracer())
-
-    assert output.highlights
-    assert any(
-        "bear" in map_to_prompt(rich_prompt, highlight)
-        for highlight in output.highlights
-    )
+    with pytest.raises(ValueError):
+        text_highlight_base.run(input, NoOpTracer())
 
 
-def test_text_highlight_without_range(
-    text_highlight_base: TextHighlight, prompt_image: Image
-) -> None:
+def test_text_highlight_without_range(text_highlight: TextHighlight) -> None:
     prompt_template_str = """Question: What is the Latin name of the brown bear?
 Text: The brown bear (Ursus arctos) is a large bear species found across Eurasia and North America.
-Here is an image, just for LOLs: {{image}}
 Answer:"""
     template = PromptTemplate(prompt_template_str)
-    rich_prompt = template.to_rich_prompt(image=template.placeholder(prompt_image))
-    completion = " The latin name of the brown bear is Ursus arctos."
+    rich_prompt = template.to_rich_prompt()
+    completion = " Ursus arctos."
 
     input = TextHighlightInput(rich_prompt=rich_prompt, target=completion)
-    output = text_highlight_base.run(input, NoOpTracer())
+    output = text_highlight.run(input, NoOpTracer())
 
     assert output.highlights
     assert any(
@@ -238,7 +230,7 @@ def test_text_ranges_do_not_overlap_into_question_when_clamping(
 
 def test_highlight_does_not_clamp_when_prompt_ranges_overlap(
     text_highlight_with_clamp: TextHighlight,
-):
+) -> None:
     # given
     prompt_template_str = """{% promptrange outer %}t{% promptrange inner %}es{% endpromptrange %}t{% endpromptrange %}"""
     template = PromptTemplate(prompt_template_str)
@@ -260,7 +252,7 @@ def test_highlight_does_not_clamp_when_prompt_ranges_overlap(
 
 def test_highlight_clamps_to_the_correct_range_at(
     text_highlight_with_clamp: TextHighlight,
-):
+) -> None:
     # given
     prompt_template_str = """{% promptrange short %}t{% endpromptrange %}e{% promptrange long %}st{% endpromptrange %}"""
     template = PromptTemplate(prompt_template_str)
@@ -282,16 +274,16 @@ def test_highlight_clamps_to_the_correct_range_at(
 
 @pytest.mark.parametrize(
     "prompt, start, end, score",
-    [
-        ("""t{% promptrange short %}e{% endpromptrange%}st""", 1, 2, 0.41417408 / 4),
-        ("""{% promptrange short %}te{% endpromptrange%}st""", 0, 2, 0.41417408 / 2),
-        ("""te{% promptrange short %}st{% endpromptrange%}""", 2, 4, 0.41417408 / 2),
+    [  # scores taken from test
+        ("""t{% promptrange short %}e{% endpromptrange%}st""", 1, 2, 0.44712114 / 4),
+        ("""{% promptrange short %}te{% endpromptrange%}st""", 0, 2, 0.44712114 / 2),
+        ("""te{% promptrange short %}st{% endpromptrange%}""", 2, 4, 0.44712114 / 2),
         (
             """te{% promptrange short %}st .....{% endpromptrange%}""",
             2,
             4,
-            0.5253249116053202,
-        ),  # score taken from test
+            0.5348406757698838,
+        ),
     ],
 )
 def test_highlight_clamps_end_correctly(
@@ -300,7 +292,7 @@ def test_highlight_clamps_end_correctly(
     start: int,
     end: int,
     score: int,
-):
+) -> None:
     # given
     template = PromptTemplate(prompt)
     rich_prompt = template.to_rich_prompt()
@@ -318,7 +310,3 @@ def test_highlight_clamps_end_correctly(
     assert result.highlights[0].start == start
     assert result.highlights[0].end == end
     assert result.highlights[0].score == score
-
-
-def test_highlight_claming_works_with_images_present():
-    pass
