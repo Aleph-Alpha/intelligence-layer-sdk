@@ -1,5 +1,4 @@
 import langdetect  # type: ignore
-import nltk
 from pytest import fixture
 
 from intelligence_layer.evaluation.evaluation.graders import LanguageMatchesGrader
