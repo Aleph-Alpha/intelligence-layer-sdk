@@ -1,9 +1,10 @@
 import itertools
-from typing import Iterable, Mapping, Sequence
+from typing import Iterable, Mapping, Sequence, cast
 
 from aleph_alpha_client import (
     Prompt,
     PromptGranularity,
+    Text,
     TextPromptItemExplanation,
     TextScore,
 )
@@ -61,17 +62,23 @@ class TextHighlightOutput(BaseModel):
     highlights: Sequence[ScoredTextHighlight]
 
 
+class TextPromptRange(PromptRange):
+    start: TextCursor
+    end: TextCursor
+
+
 class TextHighlight(Task[TextHighlightInput, TextHighlightOutput]):
     """Generates text highlights given a prompt and completion.
 
     For a given prompt and target (completion), extracts the parts of the prompt responsible for generation.
-    A range can be provided via use of the liquid language (see the example).
+    The prompt can only contain text. A range can be provided via use of the liquid language (see the example).
     In this case, the highlights will only refer to text within this range.
 
     Args:
         model: The model used throughout the task for model related API calls.
         granularity: At which granularity should the target be explained in terms of the prompt.
         threshold: After normalization, everything highlight below this value will be dropped.
+        clamp: Control whether highlights should be clamped to a focus range if they intersect it.
 
     Example:
         >>> import os
@@ -104,37 +111,52 @@ class TextHighlight(Task[TextHighlightInput, TextHighlightOutput]):
         model: AlephAlphaModel,
         granularity: PromptGranularity | None = None,
         threshold: float = 0.1,
+        clamp: bool = False,
     ) -> None:
         super().__init__()
         self._threshold = threshold
         self._model = model
         self._granularity = granularity
+        self._clamp_to_focus = clamp
 
     def do_run(
         self, input: TextHighlightInput, task_span: TaskSpan
     ) -> TextHighlightOutput:
         self._raise_on_invalid_focus_range(input)
+        self._raise_on_incompatible_prompt(input)
         explanation = self._explain(
             prompt=input.rich_prompt,
             target=input.target,
             task_span=task_span,
         )
-        prompt_ranges = self._filter_and_flatten_prompt_ranges(
+        focus_ranges = self._filter_and_flatten_prompt_ranges(
             input.focus_ranges, input.rich_prompt.ranges
         )
 
         text_prompt_item_explanations_and_indices = (
-            self._extract_text_prompt_item_explanations_and_item_index(
-                input.rich_prompt, explanation
-            )
+            self._extract_text_prompt_item_explanations_and_item_index(explanation)
         )
 
         highlights = self._to_highlights(
-            prompt_ranges,
+            focus_ranges,
             text_prompt_item_explanations_and_indices,
             task_span,
         )
         return TextHighlightOutput(highlights=highlights)
+
+    def _raise_on_incompatible_prompt(self, input: TextHighlightInput) -> None:
+        """Currently, the text highlight logic does not correctly deal with
+        multi item texts. This is a result of returning indices instead of text.
+        Therefore, we disable running text highlighting on prompts with more than one index
+        for the moment. This also means we only deal with text items."""
+        n_items = len(input.rich_prompt.items)
+        # the last item is always the question
+        if n_items > 2:
+            raise ValueError(
+                f"Text highlighting currently only works correctly with a single Text item. Found {n_items-1}."
+            )
+        if any(not isinstance(item, Text) for item in input.rich_prompt.items):
+            raise ValueError("Text highlighting only supports text prompts.")
 
     def _raise_on_invalid_focus_range(self, input: TextHighlightInput) -> None:
         unknown_focus_ranges = input.focus_ranges - set(input.rich_prompt.ranges.keys())
@@ -164,18 +186,18 @@ class TextHighlight(Task[TextHighlightInput, TextHighlightOutput]):
 
     def _extract_text_prompt_item_explanations_and_item_index(
         self,
-        prompt: Prompt,
         explain_output: ExplainOutput,
     ) -> Iterable[tuple[TextPromptItemExplanation, int]]:
         return (
             (explanation, index)
+            # we explain the complete target at once, therefore we have 1 explanation
             for index, explanation in enumerate(explain_output.explanations[0].items)
             if isinstance(explanation, TextPromptItemExplanation)
         )
 
     def _to_highlights(
         self,
-        prompt_ranges: Sequence[PromptRange],
+        focus_ranges: Sequence[PromptRange],
         text_prompt_item_explanations_and_indices: Iterable[
             tuple[TextPromptItemExplanation, int]
         ],
@@ -188,8 +210,9 @@ class TextHighlight(Task[TextHighlightInput, TextHighlightOutput]):
         ) in text_prompt_item_explanations_and_indices:
             for text_score in text_prompt_item_explanation.scores:
                 assert isinstance(text_score, TextScore)  # for typing
+
                 if self._is_relevant_explanation(
-                    explanation_idx, text_score, prompt_ranges
+                    explanation_idx, text_score, focus_ranges
                 ):
                     relevant_text_scores.append(text_score)
 
@@ -204,6 +227,10 @@ class TextHighlight(Task[TextHighlightInput, TextHighlightOutput]):
                 for text_score in relevant_text_scores
             ],
         )
+        if self._clamp_to_focus:
+            relevant_text_scores = self._clamp_ranges_to_focus(
+                focus_ranges, relevant_text_scores
+            )
 
         text_highlights = [
             ScoredTextHighlight(
@@ -215,6 +242,81 @@ class TextHighlight(Task[TextHighlightInput, TextHighlightOutput]):
         ]
 
         return self._normalize_and_filter(text_highlights)
+
+    def _clamp_ranges_to_focus(
+        self,
+        prompt_ranges: Sequence[PromptRange],
+        relevant_highlights: list[TextScore],
+    ) -> list[TextScore]:
+        text_prompt_ranges = [
+            cast(TextPromptRange, prompt_range) for prompt_range in prompt_ranges
+        ]
+        if not self._should_clamp(text_prompt_ranges):
+            return relevant_highlights
+
+        new_relevant_text_scores: list[TextScore] = []
+        for highlight in relevant_highlights:
+
+            def _get_overlap(range: TextPromptRange) -> int:
+                return min(
+                    highlight.start + highlight.length, range.end.position
+                ) - max(highlight.start, range.start.position)
+
+            most_overlapping_range = sorted(
+                text_prompt_ranges,
+                key=_get_overlap,
+            )[-1]
+            new_relevant_text_scores.append(
+                self._clamp_to_range(highlight, most_overlapping_range)
+            )
+        return new_relevant_text_scores
+
+    def _should_clamp(self, prompt_ranges: Sequence[TextPromptRange]) -> bool:
+        def are_overlapping(p1: TextPromptRange, p2: TextPromptRange) -> bool:
+            if p1.start.position > p2.start.position:
+                p1, p2 = p2, p1
+            return (
+                p1.start.position <= p2.end.position
+                and p1.end.position >= p2.start.position
+            )
+
+        if len(prompt_ranges) == 0:
+            return False
+
+        # this check is relatively expensive if no ranges are overlapping
+        has_overlapping_ranges = any(
+            are_overlapping(p1, p2)
+            for p1, p2 in itertools.permutations(prompt_ranges, 2)
+        )
+        if has_overlapping_ranges:
+            print(
+                "TextHighlighting with clamping is on, but focus ranges are overlapping. Disabling clamping."
+            )
+        return not has_overlapping_ranges
+
+    def _clamp_to_range(
+        self, highlight: TextScore, focus_range: TextPromptRange
+    ) -> TextScore:
+        new_start = highlight.start
+        new_length = highlight.length
+        new_score = highlight.score
+        cut_characters = 0
+        # clamp start
+        if highlight.start < focus_range.start.position:
+            cut_characters = focus_range.start.position - highlight.start
+            new_start = focus_range.start.position
+            new_length -= cut_characters
+        # clamp end
+        if highlight.start + highlight.length > focus_range.end.position:
+            n_cut_at_end = (
+                highlight.start + highlight.length
+            ) - focus_range.end.position
+            cut_characters += n_cut_at_end
+            new_length -= n_cut_at_end
+
+        if cut_characters:
+            new_score = highlight.score * (new_length / highlight.length)
+        return TextScore(new_start, new_length, new_score)
 
     def _normalize_and_filter(
         self, text_highlights: Sequence[ScoredTextHighlight]

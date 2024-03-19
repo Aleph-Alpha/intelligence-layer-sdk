@@ -5,6 +5,7 @@ from intelligence_layer.core import (
     LuminousControlModel,
     NoOpTracer,
     TextChunk,
+    TextHighlight,
 )
 from intelligence_layer.core.detect_language import LanguageNotSupportedError
 from intelligence_layer.use_cases.qa.single_chunk_qa import (
@@ -88,3 +89,33 @@ def test_qa_with_logit_bias_for_no_answer(
         first_token * max_tokens,
     ]
     assert any(output.answer == a for a in acceptable_answers)
+
+
+def test_qa_highlights_will_not_become_out_of_bounds(
+    single_chunk_qa: SingleChunkQa,
+) -> None:
+    input_text = """Zubereitung
+Ein Hotdog besteht aus einem erwärmten Brühwürstchen in einem länglichen, meist weichen Weizenbrötchen, das üblicherweise getoastet oder gedämpft wird. Das Hotdogbrötchen wird zur Hälfte der Länge nach aufgeschnitten und ggf. erhitzt. Danach legt man das heiße Würstchen hinein und garniert es mit den Saucen (Ketchup, Senf, Mayonnaise usw.). Häufig werden auch noch weitere Zugaben, etwa Röstzwiebeln, Essiggurken, Sauerkraut oder Krautsalat in das Brötchen gegeben.
+
+Varianten
+
+In Dänemark und teilweise auch in Schweden wird der Hotdog mit leuchtend rot eingefärbten Würstchen (Røde Pølser) hergestellt und kogt (gebrüht) oder risted (gebraten) angeboten. Der dänische Hotdog wird meist mit Röstzwiebeln, gehackten Zwiebeln und süßsauer eingelegten Salatgurken-Scheiben und regional mit Rotkohl garniert. Als Saucen werden Ketchup, milder Senf und dänische Remoulade, die Blumenkohl enthält, verwendet. Der bekannteste Imbiss Dänemarks, der Hotdogs verkauft, ist Annies Kiosk.
+
+Weltweit bekannt sind die Hotdog-Stände der schwedischen Möbelhauskette IKEA, an denen im Möbelhaus hinter den Kassen Hot Dogs der schwedischen Variante zum Selberbelegen mit Röstzwiebeln, Gurken und verschiedenen Soßen verkauft werden. Der Hotdogstand in der Filiale gilt weltweit als eine Art Markenzeichen von IKEA. In Deutschland wird das Gericht meist mit Frankfurter oder Wiener Würstchen zubereitet.
+
+In den USA wird der Hotdog meist auf einem Roller Grill gegart. So bekommt die Wurst einen besonderen Grillgeschmack. Amerikanische Hotdogs werden mit speziellen Pickled Gherkins (Gurkenscheiben) und Relishes (Sweet Relish, Hot Pepper Relish oder Corn Relish), häufig mit mildem Senf (Yellow Mustard, die populärste Hotdog-Zutat) oder mit Ketchup serviert. Auch eine Garnitur aus warmem Sauerkraut ist möglich (Nathan’s Famous in New York)."""
+    model = LuminousControlModel("luminous-supreme-control")
+    qa_task = SingleChunkQa(
+        text_highlight=TextHighlight(model=model, granularity=None, clamp=True),
+        model=model,
+    )
+    input = SingleChunkQaInput(
+        chunk=TextChunk(input_text),
+        question="What is a hot dog",
+        language=Language("de"),
+    )
+    output = qa_task.run(input, NoOpTracer())
+
+    for highlight in output.highlights:
+        assert highlight.start >= 0
+        assert 0 < highlight.end <= len(input_text)

@@ -1,3 +1,4 @@
+import pytest
 from aleph_alpha_client import Image, Text
 from pytest import fixture, raises
 
@@ -18,6 +19,13 @@ def text_highlight(
     luminous_control_model: ControlModel,
 ) -> TextHighlight:
     return TextHighlight(luminous_control_model)
+
+
+@fixture
+def text_highlight_with_clamp(
+    luminous_control_model: ControlModel,
+) -> TextHighlight:
+    return TextHighlight(luminous_control_model, clamp=True)
 
 
 # To test with multimodal input, we also need a base model.
@@ -121,28 +129,20 @@ Answer:"""
     completion = " The latin name of the brown bear is Ursus arctos."
 
     input = TextHighlightInput(rich_prompt=rich_prompt, target=completion)
-    output = text_highlight_base.run(input, NoOpTracer())
-
-    assert output.highlights
-    assert any(
-        "bear" in map_to_prompt(rich_prompt, highlight)
-        for highlight in output.highlights
-    )
+    with pytest.raises(ValueError):
+        text_highlight_base.run(input, NoOpTracer())
 
 
-def test_text_highlight_without_range(
-    text_highlight_base: TextHighlight, prompt_image: Image
-) -> None:
+def test_text_highlight_without_range(text_highlight: TextHighlight) -> None:
     prompt_template_str = """Question: What is the Latin name of the brown bear?
 Text: The brown bear (Ursus arctos) is a large bear species found across Eurasia and North America.
-Here is an image, just for LOLs: {{image}}
 Answer:"""
     template = PromptTemplate(prompt_template_str)
-    rich_prompt = template.to_rich_prompt(image=template.placeholder(prompt_image))
-    completion = " The latin name of the brown bear is Ursus arctos."
+    rich_prompt = template.to_rich_prompt()
+    completion = " Ursus arctos."
 
     input = TextHighlightInput(rich_prompt=rich_prompt, target=completion)
-    output = text_highlight_base.run(input, NoOpTracer())
+    output = text_highlight.run(input, NoOpTracer())
 
     assert output.highlights
     assert any(
@@ -191,12 +191,12 @@ This finding, while not complex extraterrestrial life, significantly raises the 
 The international community is abuzz with plans for more focused research and potential interstellar missions.{% endpromptrange %}
 Answer:"""
     template = PromptTemplate(prompt_template_str)
-    prompt_with_metadata = template.to_rich_prompt()
+    rich_prompt = template.to_rich_prompt()
     answer = " Extreme conditions."
 
     unknown_range_name = "bla"
     input = TextHighlightInput(
-        rich_prompt=prompt_with_metadata,
+        rich_prompt=rich_prompt,
         target=answer,
         focus_ranges=frozenset([unknown_range_name]),
     )
@@ -204,3 +204,109 @@ Answer:"""
         text_highlight.run(input, NoOpTracer())
 
     assert unknown_range_name in str(e.value)
+
+
+def test_text_ranges_do_not_overlap_into_question_when_clamping(
+    text_highlight_with_clamp: TextHighlight,
+) -> None:
+    instruct = """Beantworte die Frage anhand des Textes. Wenn sich die Frage nicht mit dem Text beantworten lässt, antworte "Unbeantwortbar".\nFrage: What is a hot dog\n"""
+    prompt_template_str = """{% promptrange instruction %}{{instruct}}{% endpromptrange %}
+{% promptrange input %}Zubereitung \nEin Hotdog besteht aus einem erwärmten Brühwürstchen in einem länglichen, meist weichen Weizenbrötchen, das üblicherweise getoastet oder gedämpft wird. Das Hotdogbrötchen wird zur Hälfte der Länge nach aufgeschnitten und ggf. erhitzt. Danach legt man das heiße Würstchen hinein und garniert es mit den Saucen (Ketchup, Senf, Mayonnaise usw.). Häufig werden auch noch weitere Zugaben, etwa Röstzwiebeln, Essiggurken, Sauerkraut oder Krautsalat in das Brötchen gegeben.\n\nVarianten \n\n In Dänemark und teilweise auch in Schweden wird der Hotdog mit leuchtend rot eingefärbten Würstchen (Røde Pølser) hergestellt und kogt (gebrüht) oder risted (gebraten) angeboten. Der dänische Hotdog wird meist mit Röstzwiebeln, gehackten Zwiebeln und süßsauer eingelegten Salatgurken-Scheiben und regional mit Rotkohl garniert. Als Saucen werden Ketchup, milder Senf und dänische Remoulade, die Blumenkohl enthält, verwendet. Der bekannteste Imbiss Dänemarks, der Hotdogs verkauft, ist Annies Kiosk. \n\nWeltweit bekannt sind die Hotdog-Stände der schwedischen Möbelhauskette IKEA, an denen im Möbelhaus hinter den Kassen Hot Dogs der schwedischen Variante zum Selberbelegen mit Röstzwiebeln, Gurken und verschiedenen Soßen verkauft werden. Der Hotdogstand in der Filiale gilt weltweit als eine Art Markenzeichen von IKEA. In Deutschland wird das Gericht meist mit Frankfurter oder Wiener Würstchen zubereitet.\n\n In den USA wird der Hotdog meist auf einem Roller Grill gegart. So bekommt die Wurst einen besonderen Grillgeschmack. Amerikanische Hotdogs werden mit speziellen Pickled Gherkins (Gurkenscheiben) und Relishes (Sweet Relish, Hot Pepper Relish oder Corn Relish), häufig mit mildem Senf (Yellow Mustard, die populärste Hotdog-Zutat) oder mit Ketchup serviert. Auch eine Garnitur aus warmem Sauerkraut ist möglich (Nathan’s Famous in New York).\n{% endpromptrange %}
+### Response:"""
+    template = PromptTemplate(prompt_template_str)
+    rich_prompt = template.to_rich_prompt(instruct=instruct)
+    answer = "Ein Hotdog ist ein Würstchen, das in einem Brötchen serviert wird."
+
+    input = TextHighlightInput(
+        rich_prompt=rich_prompt,
+        target=answer,
+        focus_ranges=frozenset(["input"]),
+    )
+    result = text_highlight_with_clamp.run(input, NoOpTracer())
+    for highlight in result.highlights:
+        assert highlight.start >= len(instruct)
+        assert 0 < highlight.end
+
+
+def test_highlight_does_not_clamp_when_prompt_ranges_overlap(
+    text_highlight_with_clamp: TextHighlight,
+) -> None:
+    # given
+    prompt_template_str = """{% promptrange outer %}t{% promptrange inner %}es{% endpromptrange %}t{% endpromptrange %}"""
+    template = PromptTemplate(prompt_template_str)
+    rich_prompt = template.to_rich_prompt()
+    answer = "Test?"
+
+    highlight_input = TextHighlightInput(
+        rich_prompt=rich_prompt,
+        target=answer,
+        focus_ranges=frozenset(["outer", "inner"]),
+    )
+    # when
+    result = text_highlight_with_clamp.run(highlight_input, NoOpTracer())
+
+    # then
+    assert result.highlights[0].start == 0
+    assert result.highlights[0].end == 4
+
+
+def test_highlight_clamps_to_the_correct_range_at(
+    text_highlight_with_clamp: TextHighlight,
+) -> None:
+    # given
+    prompt_template_str = """{% promptrange short %}t{% endpromptrange %}e{% promptrange long %}st{% endpromptrange %}"""
+    template = PromptTemplate(prompt_template_str)
+    rich_prompt = template.to_rich_prompt()
+    answer = "Test?"
+
+    highlight_input = TextHighlightInput(
+        rich_prompt=rich_prompt,
+        target=answer,
+        focus_ranges=frozenset(["short", "long"]),
+    )
+    # when
+    result = text_highlight_with_clamp.run(highlight_input, NoOpTracer())
+
+    # then
+    assert result.highlights[0].start == 2
+    assert result.highlights[0].end == 4
+
+
+@pytest.mark.parametrize(
+    "prompt, start, end, score",
+    [  # scores taken from test
+        ("""t{% promptrange short %}e{% endpromptrange%}st""", 1, 2, 0.44712114 / 4),
+        ("""{% promptrange short %}te{% endpromptrange%}st""", 0, 2, 0.44712114 / 2),
+        ("""te{% promptrange short %}st{% endpromptrange%}""", 2, 4, 0.44712114 / 2),
+        (
+            """te{% promptrange short %}st .....{% endpromptrange%}""",
+            2,
+            4,
+            0.5348406757698838,
+        ),
+    ],
+)
+def test_highlight_clamps_end_correctly(
+    text_highlight_with_clamp: TextHighlight,
+    prompt: str,
+    start: int,
+    end: int,
+    score: int,
+) -> None:
+    # given
+    template = PromptTemplate(prompt)
+    rich_prompt = template.to_rich_prompt()
+    answer = "Test?"
+
+    highlight_input = TextHighlightInput(
+        rich_prompt=rich_prompt,
+        target=answer,
+        focus_ranges=frozenset(["short"]),
+    )
+    # when
+    result = text_highlight_with_clamp.run(highlight_input, NoOpTracer())
+
+    # then
+    assert result.highlights[0].start == start
+    assert result.highlights[0].end == end
+    assert result.highlights[0].score == score
