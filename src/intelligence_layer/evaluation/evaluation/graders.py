@@ -1,11 +1,10 @@
 from dataclasses import dataclass
 from threading import Lock
-from typing import Mapping
-from typing import Sequence
+from typing import Mapping, Sequence
 
 import nltk  # type: ignore
-from langdetect import detect_langs
-from langdetect.language import Language as LangdetectLanguage
+from langdetect import detect_langs  # type: ignore
+from langdetect.language import Language as LangdetectLanguage  # type: ignore
 from nltk import sent_tokenize
 from nltk.tokenize import RegexpTokenizer  # type: ignore
 from nltk.translate.bleu_score import sentence_bleu  # type: ignore
@@ -98,11 +97,12 @@ class RougeGrader:
 
 
 class LanguageMatchesGrader:
-    """ Provides a method to evaluate whether two texts are of the same language
+    """Provides a method to evaluate whether two texts are of the same language
 
     Args:
         acceptance_threshold: probability a language must surpass to be accepted
     """
+
     _acceptance_threshold: float
 
     def __init__(self, acceptance_threshold: float = 0.75) -> None:
@@ -110,7 +110,7 @@ class LanguageMatchesGrader:
         _download_nltk()
 
     def languages_match(self, input: str, output: str) -> bool:
-        """ Calculates if the input and output text are of the same language
+        """Calculates if the input and output text are of the same language
 
         Args:
             input: text for which languages is compared to
@@ -118,7 +118,7 @@ class LanguageMatchesGrader:
 
         Returns:
             bool: whether input and output language match
-                  returns true if clear input langauge is not determinable
+                  returns true if clear input language is not determinable
         """
 
         dominant_input_language = self._get_dominant_language(input)
@@ -134,7 +134,12 @@ class LanguageMatchesGrader:
         sentences: Sequence[str] = sent_tokenize(text)
         probs_per_language = self._get_scores_per_language(sentences)
         dominant_language = next(
-            (langs for langs, probs in probs_per_language.items() if probs >= self._acceptance_threshold), None
+            (
+                langs
+                for langs, probs in probs_per_language.items()
+                if probs >= self._acceptance_threshold
+            ),
+            None,
         )
         return dominant_language
 
@@ -144,8 +149,9 @@ class LanguageMatchesGrader:
         for sentence in sentences:
             languages_with_probs: Sequence[LangdetectLanguage] = detect_langs(sentence)
             for language in languages_with_probs:
-                scores_per_language[language.lang] \
-                    = scores_per_language.get(language.lang, 0) + language.prob * len(sentence)
+                scores_per_language[language.lang] = scores_per_language.get(
+                    language.lang, 0
+                ) + language.prob * len(sentence)
 
         return cls._normalize_dict(scores_per_language)
 
