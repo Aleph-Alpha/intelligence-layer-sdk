@@ -3,6 +3,9 @@ from threading import Lock
 from typing import Mapping, Sequence
 
 import nltk  # type: ignore
+from langdetect import detect_langs  # type: ignore
+from langdetect.language import Language as LangdetectLanguage  # type: ignore
+from nltk import sent_tokenize
 from nltk.tokenize import RegexpTokenizer  # type: ignore
 from nltk.translate.bleu_score import sentence_bleu  # type: ignore
 from rouge import Rouge  # type: ignore
@@ -91,3 +94,70 @@ class RougeGrader:
         rouge = Rouge()
         rouge_scores = rouge.get_scores(hypothesis, reference)[0]["rouge-2"]
         return RougeScores.from_rouge_results(rouge_scores)
+
+
+class LanguageMatchesGrader:
+    """Provides a method to evaluate whether two texts are of the same language
+
+    Args:
+        acceptance_threshold: probability a language must surpass to be accepted
+    """
+
+    _acceptance_threshold: float
+
+    def __init__(self, acceptance_threshold: float = 0.75) -> None:
+        self._acceptance_threshold = acceptance_threshold
+        _download_nltk()
+
+    def languages_match(self, input: str, output: str) -> bool:
+        """Calculates if the input and output text are of the same language
+
+        Args:
+            input: text for which languages is compared to
+            output: text
+
+        Returns:
+            bool: whether input and output language match
+                  returns true if clear input language is not determinable
+        """
+
+        dominant_input_language = self._get_dominant_language(input)
+
+        if dominant_input_language is None:
+            return True
+
+        dominant_output_language = self._get_dominant_language(output)
+
+        return dominant_input_language == dominant_output_language
+
+    def _get_dominant_language(self, text: str) -> str | None:
+        sentences: Sequence[str] = sent_tokenize(text)
+        probs_per_language = self._get_scores_per_language(sentences)
+        dominant_language = next(
+            (
+                langs
+                for langs, probs in probs_per_language.items()
+                if probs >= self._acceptance_threshold
+            ),
+            None,
+        )
+        return dominant_language
+
+    @classmethod
+    def _get_scores_per_language(cls, sentences: Sequence[str]) -> dict[str, float]:
+        scores_per_language: dict[str, float] = {}
+        for sentence in sentences:
+            languages_with_probs: Sequence[LangdetectLanguage] = detect_langs(sentence)
+            for language in languages_with_probs:
+                scores_per_language[language.lang] = scores_per_language.get(
+                    language.lang, 0
+                ) + language.prob * len(sentence)
+
+        return cls._normalize_dict(scores_per_language)
+
+    @staticmethod
+    def _normalize_dict(dictionary: dict[str, float]) -> dict[str, float]:
+        total = sum(dictionary.values())
+        if total == 0:
+            return {key: 0 for key in dictionary}
+        return {key: value / total for key, value in dictionary.items()}
