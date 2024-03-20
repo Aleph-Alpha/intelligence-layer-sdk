@@ -161,3 +161,71 @@ class LanguageMatchesGrader:
         if total == 0:
             return {key: 0 for key in dictionary}
         return {key: value / total for key, value in dictionary.items()}
+
+
+class HighlightCoverageGrader:
+    def compare_highlights(
+        self,
+        text: str,
+        generated_highlights: frozenset[str],
+        expected_highlights: frozenset[str]
+    ):     
+        def get_start_and_stop_index(highlights: frozenset[str]) -> Sequence[tuple[int, int]]:
+            return [
+                (
+                    text.index(highlight),
+                    text.index(highlight)+len(highlight)
+                ) for highlight in highlights
+            ]
+
+        start_and_stop_indices_generated = get_start_and_stop_index(generated_highlights)
+        start_and_stop_indices_expected = get_start_and_stop_index(expected_highlights)
+
+        def highlight_ranges(generated_highlights, expected_highlights):
+            # Convert set of ranges to list of booleans for each character in text
+            def get_highlight_map(highlights):
+                highlight_map = [False] * len(text)
+                for start, end in highlights:
+                    for i in range(start, end):
+                        highlight_map[i] = True
+                return highlight_map
+
+            gen_map = get_highlight_map(generated_highlights)
+            exp_map = get_highlight_map(expected_highlights)
+
+            overlapping, non_overlapping_gen, non_overlapping_exp = [], [], []
+            current_range = None
+
+            for i, (g, e) in enumerate(zip(gen_map, exp_map)):
+                if g and e:
+                    if current_range is None:
+                        current_range = [i, i + 1]
+                    else:
+                        current_range[1] = i + 1
+                else:
+                    if current_range:
+                        overlapping.append(tuple(current_range))
+                        current_range = None
+
+                    if g != e:
+                        if g:
+                            target_list = non_overlapping_gen
+                        else:
+                            target_list = non_overlapping_exp
+
+                        if target_list and target_list[-1][1] == i:
+                            target_list[-1] = (target_list[-1][0], i + 1)
+                        else:
+                            target_list.append((i, i + 1))
+
+            # Append the last found range if any
+            if current_range:
+                overlapping.append(tuple(current_range))
+
+            return overlapping, non_overlapping_gen, non_overlapping_exp
+
+        highlight_ranges(
+            start_and_stop_indices_generated,
+            start_and_stop_indices_expected
+        )
+
