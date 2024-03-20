@@ -27,7 +27,7 @@ class FileSystemBasedRepository(ABC):
         )
 
     def exists(self, path: Path) -> bool:
-        return cast(bool, self._file_system.exists(path))
+        return cast(bool, self._file_system.exists(self.path_to_str(path)))
 
     @staticmethod
     def path_to_str(path: Path) -> str:

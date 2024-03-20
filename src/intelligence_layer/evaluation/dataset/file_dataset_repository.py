@@ -49,19 +49,17 @@ class FileSystemDatasetRepository(DatasetRepository, FileSystemBasedRepository):
     def delete_dataset(self, dataset_id: str) -> None:
         try:
             self._file_system.rm(
-                str(self._dataset_directory(dataset_id)), recursive=True
+                self.path_to_str(self._dataset_directory(dataset_id)), recursive=True
             )
         except FileNotFoundError:
             pass
 
     def dataset(self, dataset_id: str) -> Optional[Dataset]:
-        file_path = self._dataset_path(dataset_id)
-        if not self._file_system.exists(str(file_path)):
+        file_path = self.path_to_str(self._dataset_path(dataset_id))
+        if not self._file_system.exists(file_path):
             return None
 
-        with self._file_system.open(
-            str(file_path), "r", encoding="utf-8"
-        ) as file_content:
+        with self._file_system.open(file_path, "r", encoding="utf-8") as file_content:
             # we save only one dataset per file
             return [
                 Dataset.model_validate_json(dataset_string)
@@ -70,7 +68,7 @@ class FileSystemDatasetRepository(DatasetRepository, FileSystemBasedRepository):
 
     def dataset_ids(self) -> Iterable[str]:
         dataset_files = self._file_system.glob(
-            path=str(self._dataset_root_directory()) + "/**/*.jsonl",
+            path=self.path_to_str(self._dataset_root_directory()) + "/**/*.jsonl",
             maxdepth=2,
             detail=False,
         )
@@ -83,12 +81,12 @@ class FileSystemDatasetRepository(DatasetRepository, FileSystemBasedRepository):
         input_type: type[Input],
         expected_output_type: type[ExpectedOutput],
     ) -> Optional[Example[Input, ExpectedOutput]]:
-        example_path = self._dataset_examples_path(dataset_id)
+        example_path = self.path_to_str(self._dataset_examples_path(dataset_id))
         if not self._file_system.exists(example_path):
             return None
 
         with self._file_system.open(
-            str(example_path), "r", encoding="utf-8"
+            example_path, "r", encoding="utf-8"
         ) as examples_file:
             for example in examples_file:
                 # mypy does not accept dynamic types
@@ -103,12 +101,12 @@ class FileSystemDatasetRepository(DatasetRepository, FileSystemBasedRepository):
         input_type: type[Input],
         expected_output_type: type[ExpectedOutput],
     ) -> Iterable[Example[Input, ExpectedOutput]]:
-        example_path = self._dataset_examples_path(dataset_id)
+        example_path = self.path_to_str(self._dataset_examples_path(dataset_id))
         if not self._file_system.exists(example_path):
             return []
 
         with self._file_system.open(
-            str(example_path), "r", encoding="utf-8"
+            example_path, "r", encoding="utf-8"
         ) as examples_file:
             # Mypy does not accept dynamic types
             examples = [Example[input_type, expected_output_type].model_validate_json(json_data=example) for example in examples_file]  # type: ignore
@@ -132,7 +130,9 @@ class FileSystemDatasetRepository(DatasetRepository, FileSystemBasedRepository):
         file_path: Path,
         data_to_write: Iterable[PydanticSerializable],
     ) -> None:
-        with self._file_system.open(str(file_path), "w", encoding="utf-8") as file:
+        with self._file_system.open(
+            self.path_to_str(file_path), "w", encoding="utf-8"
+        ) as file:
             for data_chunk in data_to_write:
                 serialized_result = JsonSerializer(root=data_chunk)
                 json_string = serialized_result.model_dump_json() + "\n"

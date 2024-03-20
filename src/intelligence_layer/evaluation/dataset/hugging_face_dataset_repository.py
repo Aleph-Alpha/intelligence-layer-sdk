@@ -94,11 +94,3 @@ class HuggingFaceDatasetRepository(HuggingFaceRepository, FileSystemDatasetRepos
                 return Dataset(id=dataset_id, name=f"HuggingFace dataset {dataset_id}")
 
         return super().dataset(dataset_id)
-
-    def _dataset_root_directory(self) -> Path:
-        # we override this method as the existing HuggingFace datasets have a different file structure
-        return self._root_directory
-
-    def _dataset_directory(self, dataset_id: str) -> Path:
-        # we override this method as the existing HuggingFace datasets have a different file structure
-        return self._root_directory
