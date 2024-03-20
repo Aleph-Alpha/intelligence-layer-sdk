@@ -17,31 +17,35 @@ The key features of the Intelligence Layer are:
 # Table of contents
 - [Aleph Alpha Intelligence Layer](#aleph-alpha-intelligence-layer)
 - [Table of contents](#table-of-contents)
-  - [Installation](#installation)
-    - [Local installation (for development and tutorials)](#local-installation-for-development-and-tutorials)
-    - [How to use the Intelligence Layer in your project](#how-to-use-the-intelligence-layer-in-your-project)
-    - [How to use the Intelligence Layer in Docker](#how-to-use-the-intelligence-layer-in-docker)
-  - [Getting started](#getting-started)
-    - [Tutorials](#tutorials)
-    - [How-Tos](#how-tos)
-  - [Use-case index](#use-case-index)
-  - [How to make your own use case](#how-to-make-your-own-use-case)
-  - [Running the Trace Viewer](#running-the-trace-viewer)
-  - [References](#references)
-  - [License](#license)
-  - [For Developers](#for-developers)
-    - [Python: Naming Conventions](#python-naming-conventions)
-## Installation
-### Local installation (for development and tutorials)
-The intelligence layer uses `poetry` as a package manager. Follow the [official instructions](https://python-poetry.org/docs/#installation) to install it.
+- [Installation](#installation)
+  - [Local installation (for development and tutorials)](#local-installation-for-development-and-tutorials)
+    - [Getting started with the Jupyter Notebooks](#getting-started-with-the-jupyter-notebooks)
+  - [How to use the Intelligence Layer in your project](#how-to-use-the-intelligence-layer-in-your-project)
+  - [How to use the Intelligence Layer in Docker](#how-to-use-the-intelligence-layer-in-docker)
+- [Getting started](#getting-started)
+  - [Tutorials](#tutorials)
+  - [How-Tos](#how-tos)
+- [Use-case index](#use-case-index)
+- [Running the Trace Viewer](#running-the-trace-viewer)
+- [References](#references)
+- [License](#license)
+- [For Developers](#for-developers)
+  - [Python: Naming Conventions](#python-naming-conventions)
+# Installation
+## Local installation (for development and tutorials)
+Clone the Intelligence Layer repository from github.
+```bash
+git clone git@github.com:Aleph-Alpha/intelligence-layer.git
+```
+The Intelligence Layer uses `poetry` as a package manager. Follow the [official instructions](https://python-poetry.org/docs/#installation) to install it.
 Afterwards, simply run `poetry install` to install all dependencies in a virtual environment.
 ```bash
 poetry install
 ```
-The environment can be activated via `poetry shell`. See more the official poetry documentation for more information. \
+The environment can be activated via `poetry shell`. See the official poetry documentation for more information.
 
 
-**Getting started with the Jupyter Notebooks**
+### Getting started with the Jupyter Notebooks
 
 After running the local installation steps, there are two environment variables that have to be set before you can start running the examples.
 
@@ -49,7 +53,7 @@ After running the local installation steps, there are two environment variables 
 **Using the Aleph-Alpha API** \
   \
 You will need an [Aleph Alpha access token](https://docs.aleph-alpha.com/docs/account/#create-a-new-token) to run the examples.
-First, set your access token:
+Set your access token with
 
 ```bash
 export AA_TOKEN=<YOUR TOKEN HERE>
@@ -75,7 +79,7 @@ For this, run `jupyter lab` inside the virtual environment and go to the [exampl
 cd src/examples && poetry run jupyter lab
 ```
 
-### How to use the Intelligence Layer in your project
+## How to use the Intelligence Layer in your project
 To install this as a dependency in your project, you need a [Github access token](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens#creating-a-personal-access-token-classic).
 This token needs the following permissions
 
@@ -136,7 +140,7 @@ In VSCode, to enable auto-import up to the second depth, where all symbols are e
     }
 ]
 ```
-### How to use the Intelligence Layer in Docker
+## How to use the Intelligence Layer in Docker
 
 To use the Intelligence Layer in Docker, a few settings are needed to not leak your Github token.
 
@@ -179,12 +183,13 @@ secrets:
 
 You can read more about this in the [official documentation](https://docs.docker.com/engine/swarm/secrets/).
 
-## Getting started
+# Getting started
 
 Not sure where to start? Familiarize yourself with the Intelligence Layer using the below notebook as interactive tutorials.
 If you prefer you can also read about the [concepts](Concepts.md) first.
 
-### Tutorials
+## Tutorials
+The tutorials aim to guide you through implementing several common use-cases with the Intelligence Layer. They introduce you to key concepts and enable you to create your own use-cases.
 
 | Order | Topic              | Description                                          | Notebook 📓                                                      |
 | ----- | ------------------ | ---------------------------------------------------- | --------------------------------------------------------------- |
@@ -198,8 +203,8 @@ If you prefer you can also read about the [concepts](Concepts.md) first.
 | 8     | Performance tips   | Contains some small tips for performance             | [performance_tips.ipynb](./src/examples/performance_tips.ipynb) |
 | 9     | Deployment         | Shows how to deploy a Task in a minimal FastAPI app. | [fastapi_example.py](./src/examples/fastapi_example.py)         |
 
-### How-Tos
-The how-tos are quick lookups about how to do things. Compared to the tutorials, they are shorter and do not explain the concepts they are using.
+## How-Tos
+The how-tos are quick lookups about how to do things. Compared to the tutorials, they are shorter and do not explain the concepts they are using in-depth.
 
 | Tutorial                                                                            | Description                                                             |
 | ----------------------------------------------------------------------------------- | ----------------------------------------------------------------------- |
@@ -209,7 +214,7 @@ The how-tos are quick lookups about how to do things. Compared to the tutorials,
 
 
 
-## Use-case index
+# Use-case index
 
 To give you a starting point for using the Intelligence Layer, we provide some pre-configured `Task`s that are ready to use out-of-the-box, as well as an accompanying "Getting started" guide in the form of Jupyter Notebooks.
 
@@ -227,19 +232,15 @@ To give you a starting point for using the Intelligence Layer, we provide some p
 | Summarize | [SteerableSingleChunkSummarize](https://aleph-alpha-intelligence-layer.readthedocs-hosted.com/en/latest/intelligence_layer.use_cases.html#intelligence_layer.use_cases.SteerableSingleChunkSummarize) | Condense a short text into a summary with a natural language instruction.                                                                                                                                                                  |
 | Summarize | [RecursiveSummarize](https://aleph-alpha-intelligence-layer.readthedocs-hosted.com/en/latest/intelligence_layer.use_cases.html#intelligence_layer.use_cases.RecursiveSummarize)                       | Recursively condense a text into a summary.                                                                                                                                                                                                |
 
-
-## How to make your own use case
-
 Note that we do not expect the above use cases to solve all of your issues.
 Instead, we encourage you to think of our pre-configured use cases as a foundation to fast-track your development process.
 By leveraging these tasks, you gain insights into the framework's capabilities and best practices.
 
 We encourage you to copy and paste these use cases directly into your own project.
 From here, you can customize everything, including the prompt, model, and more intricate functional logic.
-This not only saves you time but also ensures you're building on a tried and tested foundation.
-Therefore, think of these use-cases as stepping stones, guiding you towards crafting tailored solutions that best fit your unique requirements.
+For more information, check the [tutorials](#tutorials) and the [how-tos](#how-tos)
 
-## Running the Trace Viewer
+# Running the Trace Viewer
 
 Make sure you have your `GITHUB_TOKEN` env variable set the same as above for installing the Python package, and that it has the `read:packages` permission.
 
@@ -259,16 +260,16 @@ Finally, visit `http://localhost:3000`, where you can upload a trace to interact
 
 
 
-## References
+# References
 The full code documentation can be found in our read-the-docs [here](https://aleph-alpha-intelligence-layer.readthedocs-hosted.com/en/latest/)
 
-## License
+# License
 
 This project can only be used after signing the agreement with Aleph Alpha®. Please refer to the [LICENSE](LICENSE.md) file for more details.
 
-## For Developers
+# For Developers
 
-### Python: Naming Conventions
+## Python: Naming Conventions
 
 We follow the [PEP 8 – Style Guide for Python Code](https://peps.python.org/pep-0008/).
 In addition, there are the following naming conventions:
