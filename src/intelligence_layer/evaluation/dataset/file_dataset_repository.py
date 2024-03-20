@@ -59,9 +59,7 @@ class FileSystemDatasetRepository(DatasetRepository, FileSystemBasedRepository):
         if not self._file_system.exists(file_path):
             return None
 
-        with self._file_system.open(
-            file_path, "r", encoding="utf-8"
-        ) as file_content:
+        with self._file_system.open(file_path, "r", encoding="utf-8") as file_content:
             # we save only one dataset per file
             return [
                 Dataset.model_validate_json(dataset_string)
@@ -132,7 +130,9 @@ class FileSystemDatasetRepository(DatasetRepository, FileSystemBasedRepository):
         file_path: Path,
         data_to_write: Iterable[PydanticSerializable],
     ) -> None:
-        with self._file_system.open(self.path_to_str(file_path), "w", encoding="utf-8") as file:
+        with self._file_system.open(
+            self.path_to_str(file_path), "w", encoding="utf-8"
+        ) as file:
             for data_chunk in data_to_write:
                 serialized_result = JsonSerializer(root=data_chunk)
                 json_string = serialized_result.model_dump_json() + "\n"

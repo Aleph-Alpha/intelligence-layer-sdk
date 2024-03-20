@@ -83,7 +83,7 @@ def test_file_exists_in_subdirectory(
 ) -> None:
     hugging_face_aggregation_repository.store_aggregation_overview(aggregation_overview)
     path_to_file = Path(
-        f"{hugging_face_aggregation_repository_id}/{FileSystemAggregationRepository._SUB_DIRECTORY}/{aggregation_overview.id}.json"
+        f"datasets/{hugging_face_aggregation_repository_id}/{FileSystemAggregationRepository._SUB_DIRECTORY}/{aggregation_overview.id}.json"
     )
     file_exists = hugging_face_aggregation_repository.exists(path_to_file)
     assert file_exists

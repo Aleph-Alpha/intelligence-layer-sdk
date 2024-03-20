@@ -179,7 +179,7 @@ def test_file_exists_in_subdirectory(
         hugging_face_repository_with_dataset_and_examples
     )
     path_to_file = Path(
-        f"{hugging_face_repository._repository_id}/datasets/{dataset.id}/{dataset.id}.json"
+        f"datasets/{hugging_face_repository._repository_id}/datasets/{dataset.id}/{dataset.id}.json"
     )
 
     file_exists = hugging_face_repository.exists(path_to_file)
