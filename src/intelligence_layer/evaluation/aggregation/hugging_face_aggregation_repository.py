@@ -57,7 +57,7 @@ class HuggingFaceAggregationRepository(
             len(
                 get_paths_info(
                     self._repository_id,
-                    path_relative_to_repository_id,
+                    self.path_to_str(path_relative_to_repository_id),
                     repo_type="dataset",
                     token=self._file_system.token,
                 )
