@@ -26,7 +26,6 @@ The key features of the Intelligence Layer are:
   - [Tutorials](#tutorials)
   - [How-Tos](#how-tos)
 - [Use-case index](#use-case-index)
-- [Running the Trace Viewer](#running-the-trace-viewer)
 - [References](#references)
 - [License](#license)
 - [For Developers](#for-developers)
@@ -210,7 +209,8 @@ The how-tos are quick lookups about how to do things. Compared to the tutorials,
 | ----------------------------------------------------------------------------------- | ----------------------------------------------------------------------- |
 | [...define a task](./src/examples/how-tos/how_to_define_a_task.ipynb)               | How to come up with a new task and formulate it                         |
 | [...implement a task](./src/examples/how-tos/how_to_implement_a_task.ipynb)         | Implement a formulated task and make it run with the Intelligence Layer |
-| [...debug and log a task](./src/examples/how-tos/how_to_log_and_debug_a_task.ipynb) | Tools for logging and debugging in tasks                                 |
+| [...debug and log a task](./src/examples/how-tos/how_to_log_and_debug_a_task.ipynb) | Tools for logging and debugging in tasks                                |
+| [...run the trace viewer](./src/examples/how-tos/how_to_run_the_trace_viewer.ipynb) | Downloading and running the trace viewer for debugging traces           |
 
 
 
@@ -239,24 +239,6 @@ By leveraging these tasks, you gain insights into the framework's capabilities a
 We encourage you to copy and paste these use cases directly into your own project.
 From here, you can customize everything, including the prompt, model, and more intricate functional logic.
 For more information, check the [tutorials](#tutorials) and the [how-tos](#how-tos)
-
-# Running the Trace Viewer
-
-Make sure you have your `GITHUB_TOKEN` env variable set the same as above for installing the Python package, and that it has the `read:packages` permission.
-
-Then login to the container registry with docker:
-
-```bash
-echo $GITHUB_TOKEN | docker login ghcr.io -u YOUR_GITHUB_USERNAME --password-stdin
-```
-
-Run the container locally:
-
-```bash
-docker run -p 3000:3000 ghcr.io/aleph-alpha/intelligence-layer-trace-viewer:latest
-```
-
-Finally, visit `http://localhost:3000`, where you can upload a trace to interact with the data.
 
 
 
