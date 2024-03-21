@@ -1,14 +1,16 @@
 from typing import Iterable, Sequence, cast
 
-from datasets import Dataset as HFDataset  # type: ignore
-from datasets import DatasetDict, IterableDataset, IterableDatasetDict
 from pydantic import BaseModel
 
+from datasets import Dataset as HFDataset  # type: ignore
+from datasets import DatasetDict, IterableDataset, IterableDatasetDict  # type: ignore
 from intelligence_layer.core.task import Input
-from intelligence_layer.evaluation.data_storage.dataset_repository import (
-    DatasetRepository,
+from intelligence_layer.evaluation.dataset.dataset_repository import DatasetRepository
+from intelligence_layer.evaluation.dataset.domain import (
+    Dataset,
+    Example,
+    ExpectedOutput,
 )
-from intelligence_layer.evaluation.domain import Dataset, Example, ExpectedOutput
 
 
 class MultipleChoiceInput(BaseModel):

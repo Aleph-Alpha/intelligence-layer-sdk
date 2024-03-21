@@ -39,6 +39,12 @@ from .dataset.hugging_face_dataset_repository import (
 from .dataset.in_memory_dataset_repository import (
     InMemoryDatasetRepository as InMemoryDatasetRepository,
 )
+from .dataset.single_huggingface_dataset_repository import (
+    MultipleChoiceInput as MultipleChoiceInput,
+)
+from .dataset.single_huggingface_dataset_repository import (
+    SingleHuggingfaceDatasetRepository as SingleHuggingfaceDatasetRepository,
+)
 from .evaluation.argilla_evaluation_repository import (
     ArgillaEvaluationRepository as ArgillaEvaluationRepository,
 )
