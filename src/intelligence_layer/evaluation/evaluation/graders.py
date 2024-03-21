@@ -1,6 +1,7 @@
+import math
 from dataclasses import dataclass
 from threading import Lock
-from typing import Mapping, Sequence
+from typing import List, Mapping, Sequence, Tuple
 
 import nltk  # type: ignore
 from langdetect import detect_langs  # type: ignore
@@ -59,17 +60,17 @@ class BleuGrader:
 
 
 @dataclass
-class RougeScores:
+class FScores:
     precision: float
     recall: float
-    f1: float
+    f_score: float
 
     @classmethod
-    def from_rouge_results(cls, rouge_results: Mapping[str, float]) -> "RougeScores":
+    def from_rouge_results(cls, rouge_results: Mapping[str, float]) -> "FScores":
         return cls(
             precision=rouge_results["p"],
             recall=rouge_results["r"],
-            f1=rouge_results["f"],
+            f_score=rouge_results["f"],
         )
 
 
@@ -77,7 +78,7 @@ class RougeGrader:
     def __init__(self) -> None:
         _download_nltk()
 
-    def calculate_rouge(self, hypothesis: str, reference: str) -> RougeScores:
+    def calculate_rouge(self, hypothesis: str, reference: str) -> FScores:
         """Calculates the ROUGE-score for the hypothesis and reference.
 
         In the summarization use-case the `ROUGE-score <https://aclanthology.org/W04-1013>`_ roughly corresponds to the recall of the generated summary with regard to the expected summary.
@@ -93,7 +94,7 @@ class RougeGrader:
         reference = " ".join(_split_into_words(reference))
         rouge = Rouge()
         rouge_scores = rouge.get_scores(hypothesis, reference)[0]["rouge-2"]
-        return RougeScores.from_rouge_results(rouge_scores)
+        return FScores.from_rouge_results(rouge_scores)
 
 
 class LanguageMatchesGrader:
@@ -163,69 +164,163 @@ class LanguageMatchesGrader:
         return {key: value / total for key, value in dictionary.items()}
 
 
+@dataclass
+class IndexRange:
+    start: int
+    stop: int
+
+
+_HighlightRange = List[IndexRange]
+
+
 class HighlightCoverageGrader:
-    def compare_highlights(
+    """Evaluates how well the generated highlights match the expected highlights (via precision, recall and f1-score)
+
+    Args:
+        beta_factor: factor to control weight of precision (0 <= beta < 1) vs. recall (beta > 1) when computing the f-score
+    """
+
+    beta_factor: float
+
+    def __init__(self, beta_factor: float = 1.0) -> None:
+        self.beta_factor = beta_factor
+
+    def compute_fscores(
         self,
-        text: str,
-        generated_highlights: frozenset[str],
-        expected_highlights: frozenset[str]
-    ):     
-        def get_start_and_stop_index(highlights: frozenset[str]) -> Sequence[tuple[int, int]]:
-            return [
-                (
-                    text.index(highlight),
-                    text.index(highlight)+len(highlight)
-                ) for highlight in highlights
-            ]
+        generated_highlight_indices: Sequence[Tuple[int, int]],
+        expected_highlight_indices: Sequence[Tuple[int, int]],
+    ) -> FScores:
+        """Calculates how well the generated highlight ranges match the expected ones
 
-        start_and_stop_indices_generated = get_start_and_stop_index(generated_highlights)
-        start_and_stop_indices_expected = get_start_and_stop_index(expected_highlights)
+        Args:
+            generated_highlight_indices: list of tuples(start, end) of the generated highlights
+            expected_highlight_indices: list of tuples(start, end) of the generated highlights
 
-        def highlight_ranges(generated_highlights, expected_highlights):
-            # Convert set of ranges to list of booleans for each character in text
-            def get_highlight_map(highlights):
-                highlight_map = [False] * len(text)
-                for start, end in highlights:
-                    for i in range(start, end):
-                        highlight_map[i] = True
-                return highlight_map
+        Returns:
+            FScores, which contains precision, recall and f-score metrics, all will be floats between 0 and 1,
+            where 1 means perfect match and 0 no overlap
+        """
 
-            gen_map = get_highlight_map(generated_highlights)
-            exp_map = get_highlight_map(expected_highlights)
+        generated_highlight_ranges: _HighlightRange = [
+            IndexRange(el[0], el[1]) for el in generated_highlight_indices
+        ]
+        expected_highlight_ranges: _HighlightRange = [
+            IndexRange(el[0], el[1]) for el in expected_highlight_indices
+        ]
 
-            overlapping, non_overlapping_gen, non_overlapping_exp = [], [], []
-            current_range = None
-
-            for i, (g, e) in enumerate(zip(gen_map, exp_map)):
-                if g and e:
-                    if current_range is None:
-                        current_range = [i, i + 1]
-                    else:
-                        current_range[1] = i + 1
-                else:
-                    if current_range:
-                        overlapping.append(tuple(current_range))
-                        current_range = None
-
-                    if g != e:
-                        if g:
-                            target_list = non_overlapping_gen
-                        else:
-                            target_list = non_overlapping_exp
-
-                        if target_list and target_list[-1][1] == i:
-                            target_list[-1] = (target_list[-1][0], i + 1)
-                        else:
-                            target_list.append((i, i + 1))
-
-            # Append the last found range if any
-            if current_range:
-                overlapping.append(tuple(current_range))
-
-            return overlapping, non_overlapping_gen, non_overlapping_exp
-
-        highlight_ranges(
-            start_and_stop_indices_generated,
-            start_and_stop_indices_expected
+        (
+            correctly_identified_indices,
+            false_positive_indices,
+            false_negative_indices,
+        ) = self._identify_overlap_ranges(
+            generated_highlight_ranges, expected_highlight_ranges
         )
 
+        true_positive_length = sum(
+            [
+                index_range.stop - index_range.start
+                for index_range in correctly_identified_indices
+            ]
+        )
+        false_positive_length = sum(
+            [
+                index_range.stop - index_range.start
+                for index_range in false_positive_indices
+            ]
+        )
+        false_negative_length = sum(
+            [
+                index_range.stop - index_range.start
+                for index_range in false_negative_indices
+            ]
+        )
+
+        precision = true_positive_length / (
+            true_positive_length + false_positive_length
+        )
+        recall = true_positive_length / (true_positive_length + false_negative_length)
+
+        denominator = math.pow(self.beta_factor, 2) * precision + recall
+        if denominator == 0.0:
+            f1_score = 0.0
+        else:
+            f1_score = (
+                (1 + math.pow(self.beta_factor, 2)) * precision * recall
+            ) / denominator
+
+        return FScores(precision=precision, recall=recall, f_score=f1_score)
+
+    @staticmethod
+    def _identify_overlap_ranges(
+        generated_highlights: _HighlightRange, expected_highlights: _HighlightRange
+    ) -> Tuple[_HighlightRange, _HighlightRange, _HighlightRange]:
+        max_index: int = max(
+            index_range.stop
+            for index_range in generated_highlights + expected_highlights
+        )
+
+        def get_highlight_present_array(highlights: _HighlightRange) -> Sequence[bool]:
+            highlight_map = [False] * max_index
+            for index_range in highlights:
+                for index in range(index_range.start, index_range.stop):
+                    highlight_map[index] = True
+            return highlight_map
+
+        gen_highlight_present_array = get_highlight_present_array(generated_highlights)
+        exp_highlight_present_array = get_highlight_present_array(expected_highlights)
+
+        overlapping_indices: _HighlightRange = []
+        leftover_gen_highlights: _HighlightRange = []
+        leftover_exp_highlights: _HighlightRange = []
+        current_range: IndexRange | None = None
+
+        for index, (
+            generated_highlight_present,
+            expected_highlight_present,
+        ) in enumerate(zip(gen_highlight_present_array, exp_highlight_present_array)):
+            if generated_highlight_present and expected_highlight_present:
+                current_range = HighlightCoverageGrader._increase_current_range_by_one(
+                    current_range, index
+                )
+            else:
+                if current_range:
+                    overlapping_indices.append(current_range)
+                    current_range = None
+
+                if generated_highlight_present != expected_highlight_present:
+                    if generated_highlight_present:
+                        leftover_highlights = leftover_gen_highlights
+                    else:
+                        leftover_highlights = leftover_exp_highlights
+
+                    HighlightCoverageGrader._increase_last_leftover_range_by_one(
+                        index, leftover_highlights
+                    )
+
+        if current_range:
+            overlapping_indices.append(current_range)
+
+        return overlapping_indices, leftover_gen_highlights, leftover_exp_highlights
+
+    @staticmethod
+    def _increase_current_range_by_one(
+        current_range: IndexRange | None, index: int
+    ) -> IndexRange:
+        if current_range is None:
+            return IndexRange(index, index + 1)
+        return IndexRange(current_range.start, index + 1)
+
+    @staticmethod
+    def _increase_last_leftover_range_by_one(
+        index: int, leftover_highlights: _HighlightRange
+    ) -> _HighlightRange:
+        if leftover_highlights and leftover_highlights[-1].stop == index:
+            leftover_highlights[-1] = (
+                HighlightCoverageGrader._increase_current_range_by_one(
+                    leftover_highlights[-1], index
+                )
+            )
+        else:
+            leftover_highlights.append(IndexRange(index, index + 1))
+
+        return leftover_highlights
