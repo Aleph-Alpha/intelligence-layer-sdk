@@ -31,7 +31,7 @@ class Question(BaseModel):
     """ "Definition of an evaluation-question for an Argilla feedback dataset.
 
     Attributes:
-        name: The name of the questionm. This is used to reference the questions in json-documents
+        name: The name of the question. This is used to reference the questions in json-documents
         title: The title of the field. This is displayed in the Argilla UI to users that perform the manual evaluations.
         description: A more verbose description of the question.
             This is displayed in the Argilla UI to users that perform the manual evaluations.
@@ -97,21 +97,23 @@ class ArgillaClient(ABC):
     """
 
     @abstractmethod
-    def create_dataset(
+    def ensure_dataset_exists(
         self,
         workspace_id: str,
         dataset_name: str,
         fields: Sequence[Field],
         questions: Sequence[Question],
     ) -> str:
-        """Creates and publishes a new feedback dataset in Argilla.
+        """Retrieves an existing dataset or creates and publishes a new feedback dataset in Argilla.
 
         Args:
             workspace_id: the id of the workspace the feedback-dataset should be created in.
                 The user executing this request must have corresponding permissions for this workspace.
             dataset_name: the name of the feedback-dataset to be created.
-            fields: all fields of this dataset
-            questions: all questions for this dataset
+            fields: all fields of this dataset.
+            questions: all questions for this dataset.
+        Returns:
+            dataset_id: the id of the dataset to be retrieved .
         """
         ...
 
@@ -130,7 +132,7 @@ class ArgillaClient(ABC):
         """Returns all submitted evaluations for the given dataset.
 
         Args:
-            dataset_id: the id of the dataset
+            dataset_id: the id of the dataset.
         Returns:
             An `Iterable` over all submitted evaluations for the given dataset.
         """
@@ -174,7 +176,14 @@ class DefaultArgillaClient(ArgillaClient):
         self.session.mount("https://", adapter)
         self.session.mount("http://", adapter)
 
-    def create_workspace(self, workspace_name: str) -> str:
+    def ensure_workspace_exists(self, workspace_name: str) -> str:
+        """Retrieves the id of an argilla workspace with specified name or creates a new workspace if necessary
+
+        Args:
+            workspace_name: the name of the workspace to be retrieved or created.
+        Returns:
+            workspace_id: The id of an argilla workspace with the given `workspace_name`.
+        """
         try:
             return cast(str, self._create_workspace(workspace_name)["id"])
         except HTTPError as e:
@@ -187,7 +196,7 @@ class DefaultArgillaClient(ArgillaClient):
                 )
             raise e
 
-    def create_dataset(
+    def ensure_dataset_exists(
         self,
         workspace_id: str,
         dataset_name: str,

@@ -188,7 +188,7 @@ class StubArgillaClient(ArgillaClient):
     _datasets: dict[str, list[RecordData]] = {}
     _score = 3.0
 
-    def create_dataset(
+    def ensure_dataset_exists(
         self,
         workspace_id: str,
         _: str,

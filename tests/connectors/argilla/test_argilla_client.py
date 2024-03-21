@@ -50,7 +50,7 @@ def argilla_client() -> DefaultArgillaClient:
 @fixture
 def workspace_id(argilla_client: DefaultArgillaClient) -> Iterable[str]:
     try:
-        workspace_id = argilla_client.create_workspace(str(uuid4()))
+        workspace_id = argilla_client.ensure_workspace_exists(str(uuid4()))
         yield workspace_id
     finally:
         argilla_client.delete_workspace(workspace_id)
@@ -71,7 +71,9 @@ def qa_dataset_id(argilla_client: DefaultArgillaClient, workspace_id: str) -> st
             options=list(range(1, 4)),
         )
     ]
-    return argilla_client.create_dataset(workspace_id, dataset_name, fields, questions)
+    return argilla_client.ensure_dataset_exists(
+        workspace_id, dataset_name, fields, questions
+    )
 
 
 @fixture

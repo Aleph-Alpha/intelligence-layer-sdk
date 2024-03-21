@@ -41,7 +41,7 @@ class ArgillaFake(ArgillaClient):
     def __init__(self) -> None:
         self.records: dict[str, list[RecordData]] = defaultdict(list)
 
-    def create_dataset(
+    def ensure_dataset_exists(
         self,
         workspace_id: str,
         dataset_name: str,

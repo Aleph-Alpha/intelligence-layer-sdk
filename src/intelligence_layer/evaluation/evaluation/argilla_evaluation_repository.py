@@ -56,7 +56,7 @@ class ArgillaEvaluationRepository(EvaluationRepository):
         self._questions = questions
 
     def initialize_evaluation(self) -> str:
-        return self._client.create_dataset(
+        return self._client.ensure_dataset_exists(
             self._workspace_id,
             str(uuid4()),
             self._fields,
