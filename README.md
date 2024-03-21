@@ -46,12 +46,12 @@ The environment can be activated via `poetry shell`. See the official poetry doc
 
 ### Getting started with the Jupyter Notebooks
 
-After running the local installation steps, there are two environment variables that have to be set before you can start running the examples.
+After running the local installation steps, you can set whether you are using the Aleph-Alpha API or an on-prem setup via the environment variables.
 
 ---
 **Using the Aleph-Alpha API** \
   \
-You will need an [Aleph Alpha access token](https://docs.aleph-alpha.com/docs/account/#create-a-new-token) to run the examples.
+In the Intelligence Layer the Aleph-Alpha API (`https://api.aleph-alpha.com`) is set as default host URL. However, you will need an [Aleph Alpha access token](https://docs.aleph-alpha.com/docs/account/#create-a-new-token) to run the examples.
 Set your access token with
 
 ```bash
@@ -62,13 +62,13 @@ export AA_TOKEN=<YOUR TOKEN HERE>
 
 **Using an on-prem setup** \
   \
-The default host url in the project is set to `https://api.aleph-alpha.com`. This can be changed by setting the `CLIENT_URL` environment variable:
+In case you want to use an on-prem endpoint you will have to change the host URL by setting the `CLIENT_URL` environment variable:
 
 ```bash
 export CLIENT_URL=<YOUR_ENDPOINT_URL_HERE>
 ```
 
-The program will warn you if no `CLIENT_URL` is explicitly set.
+The program will warn you in case no `CLIENT_URL` is set explicitly set.
 
 ---
 After correctly setting up the environment variables you can run the jupyter notebooks.
@@ -188,10 +188,10 @@ Not sure where to start? Familiarize yourself with the Intelligence Layer using 
 If you prefer you can also read about the [concepts](Concepts.md) first.
 
 ## Tutorials
-The tutorials aim to guide you through implementing several common use-cases with the Intelligence Layer. They introduce you to key concepts and enable you to create your own use-cases.
+The tutorials aim to guide you through implementing several common use-cases with the Intelligence Layer. They introduce you to key concepts and enable you to create your own use-cases. In general the tutorials are build in a way that you can simply hop into the topic you are most interested in. However, for starters we recommend to read through the `Summarization` tutorial first. It explains the core concepts of the intelligence layer in more depth while for the other tutorials we assume that these concepts are known.
 
-| Order | Topic              | Description                                          | Notebook 📓                                                      |
-| ----- | ------------------ | ---------------------------------------------------- | --------------------------------------------------------------- |
+| Order | Topic              | Description                                          | Notebook 📓                                                     |
+| ----- | ------------------ |------------------------------------------------------|-----------------------------------------------------------------|
 | 1     | Summarization      | Summarize a document                                 | [summarization.ipynb](./src/examples/summarization.ipynb)       |
 | 2     | Question Answering | Various approaches for QA                            | [qa.ipynb](./src/examples/qa.ipynb)                             |
 | 3     | Classification     | Learn about two methods of classification            | [classification.ipynb](./src/examples/classification.ipynb)     |
@@ -200,7 +200,7 @@ The tutorials aim to guide you through implementing several common use-cases wit
 | 6     | Document Index     | Connect your proprietary knowledge base              | [document_index.ipynb](./src/examples/document_index.ipynb)     |
 | 7     | Human Evaluation   | Connect to Argilla for manual evaluation             | [human_evaluation.ipynb](./src/examples/human_evaluation.ipynb) |
 | 8     | Performance tips   | Contains some small tips for performance             | [performance_tips.ipynb](./src/examples/performance_tips.ipynb) |
-| 9     | Deployment         | Shows how to deploy a Task in a minimal FastAPI app. | [fastapi_example.py](./src/examples/fastapi_example.py)         |
+| 9     | Deployment         | Shows how to deploy a Task in a minimal FastAPI app. | [fastapi_tutorial.md](./src/examples/fastapi_tutorial.md)       |
 
 ## How-Tos
 The how-tos are quick lookups about how to do things. Compared to the tutorials, they are shorter and do not explain the concepts they are using in-depth.
