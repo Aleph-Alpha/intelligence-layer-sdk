@@ -2,13 +2,15 @@ name: Blueprint for Github Actions Usage (Push to PyPi Repository)
 
 on:
   push: {}
+env:
+  ARTIFACTORY_URL: https://alephalpha.jfrog.io
+  ARTIFACTORY_PYPI_REPOSITORY: "blueprint-python"
 
 jobs:
   push-to:
     permissions:
       contents: read
       id-token: write
-
     runs-on: ubuntu-latest
     steps:
       - name: Get Identity Token From Github
@@ -19,17 +21,14 @@ jobs:
       - name: Get Jfrog Access Token with Github Identity Token
         env:
           ID_TOKEN: ${{ env.ID_TOKEN }}
-          ARTIFACTORY_URL: https://alephalpha.jfrog.io
         run: |
-          echo $ID_TOKEN | jq -R  'split(".") | .[1] | @base64d | fromjson'
-          JFROG_ACCESS_TOKEN=$(curl -v \
+          curl \
             -X POST \
             -H "Content-type: application/json" \
             $ARTIFACTORY_URL/access/api/v1/oidc/token \
             -d \
-            "{\"grant_type\": \"urn:ietf:params:oauth:grant-type:token-exchange\", \"subject_token_type\":\"urn:ietf:params:oauth:token-type:id_token\", \"subject_token\": \"$ID_TOKEN\", \"provider_name\": \"github\"}" | jq .access_token -r)
-          echo "JFROG_ACCESS_TOKEN=${JFROG_ACCESS_TOKEN}" >> $GITHUB_ENV
-          echo $JFROG_ACCESS_TOKEN | jq -R  'split(".") | .[1] | @base64d | fromjson'
+            "{\"grant_type\": \"urn:ietf:params:oauth:grant-type:token-exchange\", \"subject_token_type\":\"urn:ietf:params:oauth:token-type:id_token\", \"subject_token\": \"$ID_TOKEN\", \"provider_name\": \"github\"}" \
+          | jq .access_token -r >> $GITHUB_ENV
       - name: Checkout
         uses: actions/checkout@v2
       - uses: actions/setup-python@v5
@@ -44,10 +43,9 @@ jobs:
       - name: Build package and push to Artifactory
         env:
           JFROG_ACCESS_TOKEN: ${{ env.JFROG_ACCESS_TOKEN }}
-          ARTIFACTORY_URL: https://alephalpha.jfrog.io
         run: |
           poetry build
-          poetry config repositories.blueprint-python $ARTIFACTORY_URL/artifactory/api/pypi/blueprint-python
+          poetry config repositories.artifactory $ARTIFACTORY_URL/artifactory/api/pypi/$ARTIFACTORY_PYPI_REPOSITORY
           JFROG_ACCESS_TOKEN_SUBJECT=$(echo $JFROG_ACCESS_TOKEN | awk -F'.' '{print $2}'  | sed 's/.\{1,3\}$/&==/' | base64 -d | jq '.sub' -r)
           poetry config http-basic.blueprint-python "$JFROG_ACCESS_TOKEN_SUBJECT" "$JFROG_ACCESS_TOKEN"
-          poetry publish -r blueprint-python 
+          poetry publish -r artifactory
