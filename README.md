@@ -207,11 +207,13 @@ The how-tos are quick lookups about how to do things. Compared to the tutorials,
 
 | Tutorial                                                                            | Description                                                             |
 | ----------------------------------------------------------------------------------- | ----------------------------------------------------------------------- |
+| **Tasks** | ---|
 | [...define a task](./src/examples/how-tos/how_to_define_a_task.ipynb)               | How to come up with a new task and formulate it                         |
 | [...implement a task](./src/examples/how-tos/how_to_implement_a_task.ipynb)         | Implement a formulated task and make it run with the Intelligence Layer |
 | [...debug and log a task](./src/examples/how-tos/how_to_log_and_debug_a_task.ipynb) | Tools for logging and debugging in tasks                                |
 | [...run the trace viewer](./src/examples/how-tos/how_to_run_the_trace_viewer.ipynb) | Downloading and running the trace viewer for debugging traces           |
-
+| **Evaluation** | ---|
+| [...implement a simple evaluation and aggregation logic](./src/examples/how-tos/how_to_implement_a_simple_evaluation_and_aggregation_logic.ipynb) | Basic use-case for evaluation and aggregation logic          |
 
 
 # Use-case index
