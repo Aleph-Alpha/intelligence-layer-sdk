@@ -42,3 +42,16 @@ def test_highlight_coverage_grader_returns_perfect_score_for_good_highlights() -
         generated_highlights=generated_highlights,
         expected_highlights=expected_highlights
     ) == 1.0
+
+
+def test_highlight_coverage_grader_returns_null_score_for_all_text_highlighted() -> None:
+    grader = HighlightCoverageGrader()
+    text = "Hello, I am working on this highlight grader."
+    generated_highlights = {text}
+    expected_highlights = {text[5:10]}
+    
+    assert grader.compare_highlights(
+        text=text,
+        generated_highlights=generated_highlights,
+        expected_highlights=expected_highlights
+    ) == 0.0
