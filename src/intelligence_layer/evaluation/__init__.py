@@ -69,7 +69,7 @@ from .evaluation.file_evaluation_repository import (
     FileEvaluationRepository as FileEvaluationRepository,
 )
 from .evaluation.graders import BleuGrader as BleuGrader
-from .evaluation.graders import FScores as RougeScores
+from .evaluation.graders import FScores as FScores
 from .evaluation.graders import HighlightCoverageGrader as HighlightCoverageGrader
 from .evaluation.graders import LanguageMatchesGrader as LanguageMatchesGrader
 from .evaluation.graders import RougeGrader as RougeGrader
