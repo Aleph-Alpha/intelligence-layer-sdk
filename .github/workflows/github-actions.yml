@@ -11,196 +11,32 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  doctest:
+  jfrog-test:
+    permissions:
+      contents: read
+      id-token: write
+
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.10"
-
-      - name: Install and configure Poetry
-        uses: snok/install-poetry@v1
-        with:
-          virtualenvs-create: true
-          virtualenvs-in-project: true
-          installer-parallel: true
-
-      - name: Load cached venv
-        id: cached-poetry-dependencies
-        uses: actions/cache@v4
-        with:
-          path: .venv
-          key: venv-${{ runner.os }}-${{ steps.setup-python.outputs.python-version }}-${{ hashFiles('**/poetry.lock') }}
-
-      - name: Install dependencies
-        if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
+      - name: Get id token
         run: |
-          poetry config installer.max-workers 10
-          poetry install --no-interaction
-
-      - name: install Sphinx
-        run: sudo apt-get update -y && sudo apt-get install python3-sphinx
-
-      - name: run doctest
+          ID_TOKEN=$(curl -sLS -H "User-Agent: actions/oidc-client" -H "Authorization: Bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" \
+          "${ACTIONS_ID_TOKEN_REQUEST_URL}&audience=https://alephalpha.jfrog.io" | jq .value | tr -d '"')
+          echo "ID_TOKEN=${ID_TOKEN}" >> $GITHUB_ENV
+          echo $ID_TOKEN | jq -R  'split(".") | .[1] | @base64d | fromjson'
+      - name: Exchange token with access
         env:
-          AA_TOKEN: ${{ secrets.AA_TOKEN }}
-          HUGGING_FACE_TOKEN: ${{ secrets.HUGGING_FACE_TOKEN }}
-          CLIENT_URL: "https://api.aleph-alpha.com"
-        run: ./scripts/doctest.sh
-
-  lint:
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.10"
-
-      - name: Install and configure Poetry
-        uses: snok/install-poetry@v1
-        with:
-          virtualenvs-create: true
-          virtualenvs-in-project: true
-          installer-parallel: true
-
-      - name: Load cached venv
-        id: cached-poetry-dependencies
-        uses: actions/cache@v4
-        with:
-          path: .venv
-          key: venv-${{ runner.os }}-${{ steps.setup-python.outputs.python-version }}-${{ hashFiles('**/poetry.lock') }}
-
-      - name: Install dependencies
-        if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
+          ID_TOKEN: ${{ env.ID_TOKEN }}
+          ARTIFACTORY_URL: https://alephalpha.jfrog.io
         run: |
-          poetry config installer.max-workers 10
-          poetry install --no-interaction
-
-      - name: set PY for pre-commit
-        run: echo "PY=$(python -VV | sha256sum | cut -d' ' -f1)" >> $GITHUB_ENV
-
-      - uses: actions/cache@v4
-        with:
-          path: ~/.cache/pre-commit
-          key: pre-commit|${{ env.PY }}|${{ hashFiles('.pre-commit-config.yaml') }}
-
-      - name: Run linters
-        run: |
-          ./scripts/lint.sh
-
-  test:
-    runs-on: ubuntu-latest
-
-    services:
-      argilla-elastic-search:
-        image: docker.elastic.co/elasticsearch/elasticsearch:8.5.3
-        env:
-          ES_JAVA_OPTS: "-Xms512m -Xmx512m"
-          discovery.type: "single-node"
-          xpack.security.enabled: "false"
-      argilla:
-        image: argilla/argilla-server
-        ports:
-          - "6900:6900"
-        env:
-          ARGILLA_ELASTICSEARCH: "http://argilla-elastic-search:9200"
-
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.10"
-
-      - name: Install and configure Poetry
-        uses: snok/install-poetry@v1
-        with:
-          virtualenvs-create: true
-          virtualenvs-in-project: true
-          installer-parallel: true
-
-      - name: Load cached venv
-        id: cached-poetry-dependencies
-        uses: actions/cache@v4
-        with:
-          path: .venv
-          key: venv-${{ runner.os }}-${{ steps.setup-python.outputs.python-version }}-${{ hashFiles('**/poetry.lock') }}
-
-      - name: Install dependencies
-        if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
-        run: |
-          poetry config installer.max-workers 10
-          poetry install --no-interaction
-
-      - name: Run pytest
-        env:
-          AA_TOKEN: ${{ secrets.AA_TOKEN }}
-          HUGGING_FACE_TOKEN: ${{ secrets.HUGGING_FACE_TOKEN }}
-          ARGILLA_API_URL: "http://localhost:6900/"
-          ARGILLA_API_KEY: "argilla.apikey"
-          CLIENT_URL: "https://api.aleph-alpha.com"
-        run: |
-          ./scripts/test.sh
-
-  run-notebooks:
-    runs-on: ubuntu-latest
-
-    services:
-      argilla-elastic-search:
-        image: docker.elastic.co/elasticsearch/elasticsearch:8.5.3
-        env:
-          ES_JAVA_OPTS: "-Xms512m -Xmx512m"
-          discovery.type: "single-node"
-          xpack.security.enabled: "false"
-      argilla:
-        image: argilla/argilla-server
-        ports:
-          - "6900:6900"
-        env:
-          ARGILLA_ELASTICSEARCH: "http://argilla-elastic-search:9200"
-
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.10"
-
-      - name: Install and configure Poetry
-        uses: snok/install-poetry@v1
-        with:
-          virtualenvs-create: true
-          virtualenvs-in-project: true
-          installer-parallel: true
-
-      - name: Load cached venv
-        id: cached-poetry-dependencies
-        uses: actions/cache@v4
-        with:
-          path: .venv
-          key: venv-${{ runner.os }}-${{ steps.setup-python.outputs.python-version }}-${{ hashFiles('**/poetry.lock') }}
-
-      - name: Install dependencies
-        if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
-        run: |
-          poetry config installer.max-workers 10
-          poetry install --no-interaction
-
-      - name: Configure Poetry for notebooks and run
-        env:
-          AA_TOKEN: ${{ secrets.AA_TOKEN }}
-          HUGGING_FACE_TOKEN: ${{ secrets.HUGGING_FACE_TOKEN }}
-          ARGILLA_API_URL: "http://localhost:6900/"
-          ARGILLA_API_KEY: "argilla.apikey"
-          CLIENT_URL: "https://api.aleph-alpha.com"
-        run: |
-          ./scripts/notebook_runner.sh
+          echo $ID_TOKEN | jq -R  'split(".") | .[1] | @base64d | fromjson'
+          JFROG_ACCESS_TOKEN=$(curl -v \
+            -X POST \
+            -H "Content-type: application/json" \
+            $ARTIFACTORY_URL/access/api/v1/oidc/token \
+            -d \
+            "{\"grant_type\": \"urn:ietf:params:oauth:grant-type:token-exchange\", \"subject_token_type\":\"urn:ietf:params:oauth:token-type:id_token\", \"subject_token\": \"$ID_TOKEN\", \"provider_name\": \"github\"}" | jq .access_token -r)
+          echo "JFROG_ACCESS_TOKEN=${JFROG_ACCESS_TOKEN}" >> $GITHUB_ENV
+          echo $JFROG_ACCESS_TOKEN | jq -R  'split(".") | .[1] | @base64d | fromjson'
+      - name: Checkout
+        uses: actions/checkout@v2
