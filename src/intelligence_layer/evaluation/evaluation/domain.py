@@ -6,6 +6,7 @@ from pydantic import BaseModel, SerializeAsAny
 from intelligence_layer.evaluation.run.domain import RunOverview
 
 Evaluation = TypeVar("Evaluation", bound=BaseModel, covariant=True)
+"""Custom type that holds the domain-specific data of a single :class:`Example` evaluation"""
 
 
 class FailedExampleEvaluation(BaseModel):

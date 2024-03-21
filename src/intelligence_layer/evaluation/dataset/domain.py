@@ -7,6 +7,9 @@ from intelligence_layer.core.task import Input
 from intelligence_layer.core.tracer.tracer import PydanticSerializable
 
 ExpectedOutput = TypeVar("ExpectedOutput", bound=PydanticSerializable)
+"""Dataset-specific type that defines what properties an :class:`Output` should have.
+
+Traditional names for this are `labels` or `y` in classification."""
 
 
 class Example(BaseModel, Generic[Input, ExpectedOutput]):
