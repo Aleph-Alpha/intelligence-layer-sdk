@@ -214,6 +214,7 @@ The how-tos are quick lookups about how to do things. Compared to the tutorials,
 | [...run the trace viewer](./src/examples/how-tos/how_to_run_the_trace_viewer.ipynb) | Downloading and running the trace viewer for debugging traces           |
 | **Evaluation** | ---|
 | [...implement a simple evaluation and aggregation logic](./src/examples/how-tos/how_to_implement_a_simple_evaluation_and_aggregation_logic.ipynb) | Basic use-case for evaluation and aggregation logic          |
+| [...implement a custom human evaluation](./src/examples/how-tos/how_to_perform_custom_human_evaluation.ipynb) | Necessary steps to create an evaluation with humans as a judge     |
 
 
 # Use-case index
