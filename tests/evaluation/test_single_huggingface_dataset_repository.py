@@ -1,4 +1,5 @@
 from datasets import load_dataset  # type: ignore
+
 from intelligence_layer.evaluation import (
     MultipleChoiceInput,
     SingleHuggingfaceDatasetRepository,
