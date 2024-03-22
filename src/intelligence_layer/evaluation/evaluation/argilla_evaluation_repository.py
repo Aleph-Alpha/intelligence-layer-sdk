@@ -26,18 +26,18 @@ class RecordDataSequence(BaseModel):
 
 
 class ArgillaEvaluationRepository(EvaluationRepository):
-    """Evaluation repository used in the :class:`ArgillaEvaluator`.
+    """Evaluation repository used in the :class:`ArgillaEvaluator` and :class:`ArgillaAggregator`.
 
-    Does not support storing evaluations,
-    since the ArgillaEvaluator does not do automated evaluations.
+    Only an `EvaluationOverview` is stored in the `evaluation_repository`, while the `ExampleEvaluation`s themselves are stored in Argilla.
+    These `ExampleEvaluation`s are submitted to Argilla in the `store_example_evaluation` method.
 
     Args:
         evaluation_repository: The evaluation repository to use internally.
         argilla_client: Client to be used to connect to Argilla.
         workspace_id: The workspace ID to save the results in.
             Has to be created in Argilla beforehand.
-        fields: The Argilla fields of the dataset.
-        questions: The questions that will be presented to the human evaluators in Argilla.
+        fields: The Argilla fields of the dataset. Has to be set for use in the :class:`ArgillaEvaluator`.
+        questions: The questions that will be presented to the human evaluators in Argilla. Has to be set for use in the :class:`ArgillaEvaluator`.
     """
 
     def __init__(
@@ -45,8 +45,8 @@ class ArgillaEvaluationRepository(EvaluationRepository):
         evaluation_repository: EvaluationRepository,
         argilla_client: ArgillaClient,
         workspace_id: str,
-        fields: Sequence[Field],
-        questions: Sequence[Question],
+        fields: Optional[Sequence[Field]] = None,
+        questions: Optional[Sequence[Question]] = None,
     ) -> None:
         super().__init__()
         self._evaluation_repository = evaluation_repository
@@ -56,7 +56,12 @@ class ArgillaEvaluationRepository(EvaluationRepository):
         self._questions = questions
 
     def initialize_evaluation(self) -> str:
-        return self._client.create_dataset(
+        if self._fields is None or self._questions is None:
+            raise ValueError(
+                "Fields and questions have to be set to initialize the evaluation but are `None`."
+            )
+
+        return self._client.ensure_dataset_exists(
             self._workspace_id,
             str(uuid4()),
             self._fields,
