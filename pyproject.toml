@@ -13,7 +13,7 @@ packages = [{ include = "intelligence_layer", from = "src" }]
 
 [tool.poetry.dependencies]
 python = ">=3.10,<3.12"
-pydantic = "*"
+pydantic = ">=2.0"
 fastapi = "*"
 uvicorn = "*"
 aleph-alpha-client = ">=4.0.0"
