@@ -2,6 +2,7 @@ from pathlib import Path
 from typing import Any, Iterable
 from unittest.mock import patch
 
+import pytest
 from pytest import FixtureRequest, fixture, mark, raises
 
 from intelligence_layer.evaluation import (
@@ -123,13 +124,9 @@ def test_delete_dataset_deletes_a_dataset(
 
     dataset_repository.delete_dataset(dataset.id)
 
-    stored_dataset = dataset_repository.dataset(dataset.id)
-    examples = list(
+    assert dataset_repository.dataset(dataset.id) is None
+    with pytest.raises(ValueError):
         dataset_repository.examples(dataset.id, DummyStringInput, DummyStringOutput)
-    )
-
-    assert stored_dataset is None
-    assert len(examples) == 0
 
     dataset_repository.delete_dataset(
         dataset.id
@@ -212,18 +209,15 @@ def test_examples_returns_all_examples_sorted_by_their_id(
     "repository_fixture",
     test_repository_fixtures,
 )
-def test_examples_returns_an_empty_list_for_not_existing_dataset_id(
+def test_examples_raises_value_error_for_not_existing_dataset_id(
     repository_fixture: str, request: FixtureRequest
 ) -> None:
     dataset_repository: DatasetRepository = request.getfixturevalue(repository_fixture)
 
-    examples = list(
+    with pytest.raises(ValueError):
         dataset_repository.examples(
             "not_existing_dataset_id", DummyStringInput, type(None)
         )
-    )
-
-    assert len(examples) == 0
 
 
 @mark.parametrize(
@@ -248,7 +242,7 @@ def test_example_returns_example_for_existing_dataset_id_and_example_id(
 
 
 @mark.parametrize("repository_fixture", test_repository_fixtures)
-def test_example_returns_none_for_not_existing_dataset_id_or_example_id(
+def test_example_returns_none_for_not_existant_example_id(
     repository_fixture: str,
     request: FixtureRequest,
     dummy_string_example: Example[DummyStringInput, DummyStringOutput],
@@ -258,22 +252,32 @@ def test_example_returns_none_for_not_existing_dataset_id_or_example_id(
         examples=[dummy_string_example], dataset_name="test-dataset"
     )
 
-    examples = [
+    examples = dataset_repository.example(
+        dataset.id, "not_existing_example_id", DummyStringInput, DummyStringOutput
+    )
+
+    assert examples is None
+
+
+@mark.parametrize("repository_fixture", test_repository_fixtures)
+def test_example_raises_error_for_not_existing_dataset_id(
+    repository_fixture: str,
+    request: FixtureRequest,
+    dummy_string_example: Example[DummyStringInput, DummyStringOutput],
+) -> None:
+    dataset_repository: DatasetRepository = request.getfixturevalue(repository_fixture)
+
+    with pytest.raises(ValueError):
         dataset_repository.example(
             "not_existing_dataset_id",
             dummy_string_example.id,
             DummyStringInput,
             DummyStringOutput,
-        ),
-        dataset_repository.example(
-            dataset.id, "not_existing_example_id", DummyStringInput, DummyStringOutput
-        ),
+        )
+    with pytest.raises(ValueError):
         dataset_repository.example(
             "not_existing_dataset_id",
             "not_existing_example_id",
             DummyStringInput,
             DummyStringOutput,
-        ),
-    ]
-
-    assert examples == [None, None, None]
+        )

@@ -64,7 +64,9 @@ class InMemoryDatasetRepository(DatasetRepository):
         expected_output_type: type[ExpectedOutput],
     ) -> Iterable[Example[Input, ExpectedOutput]]:
         if dataset_id not in self._datasets_and_examples:
-            return []
+            raise ValueError(
+                f"Repository does not contain a dataset with id: {dataset_id}"
+            )
         return cast(
             Iterable[Example[Input, ExpectedOutput]],
             sorted(

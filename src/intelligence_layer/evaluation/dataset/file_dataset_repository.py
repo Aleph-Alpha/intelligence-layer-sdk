@@ -81,16 +81,23 @@ class FileSystemDatasetRepository(DatasetRepository, FileSystemBasedRepository):
         input_type: type[Input],
         expected_output_type: type[ExpectedOutput],
     ) -> Optional[Example[Input, ExpectedOutput]]:
-        example_path = self.path_to_str(self._dataset_examples_path(dataset_id))
-        if not self._file_system.exists(example_path):
+        example_path = self._dataset_examples_path(dataset_id)
+        example_path_str = self.path_to_str(self._dataset_examples_path(dataset_id))
+        if not self._file_system.exists(self.path_to_str(example_path.parent)):
+            raise ValueError(
+                f"Repository does not contain a dataset with id: {dataset_id}"
+            )
+        if not self._file_system.exists(example_path_str):
             return None
 
         with self._file_system.open(
-            example_path, "r", encoding="utf-8"
+            example_path_str, "r", encoding="utf-8"
         ) as examples_file:
             for example in examples_file:
                 # mypy does not accept dynamic types
-                validated_example = Example[input_type, expected_output_type].model_validate_json(json_data=example)  # type: ignore
+                validated_example = Example[
+                    input_type, expected_output_type  # type: ignore
+                ].model_validate_json(json_data=example)
                 if validated_example.id == example_id:
                     return validated_example
         return None
@@ -103,13 +110,20 @@ class FileSystemDatasetRepository(DatasetRepository, FileSystemBasedRepository):
     ) -> Iterable[Example[Input, ExpectedOutput]]:
         example_path = self.path_to_str(self._dataset_examples_path(dataset_id))
         if not self._file_system.exists(example_path):
-            return []
+            raise ValueError(
+                f"Repository does not contain a dataset with id: {dataset_id}"
+            )
 
         with self._file_system.open(
             example_path, "r", encoding="utf-8"
         ) as examples_file:
             # Mypy does not accept dynamic types
-            examples = [Example[input_type, expected_output_type].model_validate_json(json_data=example) for example in examples_file]  # type: ignore
+            examples = [
+                Example[input_type, expected_output_type].model_validate_json(  # type: ignore
+                    json_data=example
+                )
+                for example in examples_file
+            ]
 
         return sorted(examples, key=lambda example: example.id)
 
