@@ -20,6 +20,12 @@ from intelligence_layer.evaluation.infrastructure.file_system_based_repository i
 class FileSystemEvaluationRepository(EvaluationRepository, FileSystemBasedRepository):
     """An :class:`EvaluationRepository` that stores evaluation results in JSON files."""
 
+    def initialize_evaluation(self) -> str:
+        eval_id = super().initialize_evaluation()
+        # initialize the correct folders
+        self._evaluation_overview_path(eval_id, True)
+        return eval_id
+
     def store_evaluation_overview(self, overview: EvaluationOverview) -> None:
         self.write_utf8(
             self._evaluation_overview_path(overview.id, create_parents=True),

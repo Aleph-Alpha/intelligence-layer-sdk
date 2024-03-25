@@ -152,7 +152,7 @@ class ArgillaEvaluationRepository(EvaluationRepository):
         Returns:
             An empty list.
         """
-        # If no failed examples are created, this would raise an error.
+        # If there are no failed examples, the dataset with the id was never created and fails on retrieval.
         try:
             return self._evaluation_repository.failed_example_evaluations(
                 evaluation_id, evaluation_type
