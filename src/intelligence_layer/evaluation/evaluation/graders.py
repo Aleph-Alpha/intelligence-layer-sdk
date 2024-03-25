@@ -132,7 +132,7 @@ class LanguageMatchesGrader:
         return dominant_input_language == dominant_output_language
 
     def _get_dominant_language(self, text: str) -> str | None:
-        sentences: Sequence[str] = sent_tokenize(text)
+        sentences: Sequence[str] = self._tokenize_text(text)
         probs_per_language = self._get_scores_per_language(sentences)
         dominant_language = next(
             (
@@ -143,6 +143,10 @@ class LanguageMatchesGrader:
             None,
         )
         return dominant_language
+
+    @staticmethod
+    def _tokenize_text(text: str) -> Sequence[str]:
+        return sent_tokenize(text)
 
     @classmethod
     def _get_scores_per_language(cls, sentences: Sequence[str]) -> dict[str, float]:
