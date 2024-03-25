@@ -4,7 +4,7 @@ from threading import Lock
 from typing import List, Mapping, Sequence, Tuple
 
 import nltk  # type: ignore
-from langdetect import detect_langs  # type: ignore
+from langdetect import detect_langs, LangDetectException  # type: ignore
 from langdetect.language import Language as LangdetectLanguage  # type: ignore
 from nltk import sent_tokenize
 from nltk.tokenize import RegexpTokenizer  # type: ignore
@@ -152,11 +152,14 @@ class LanguageMatchesGrader:
     def _get_scores_per_language(cls, sentences: Sequence[str]) -> dict[str, float]:
         scores_per_language: dict[str, float] = {}
         for sentence in sentences:
-            languages_with_probs: Sequence[LangdetectLanguage] = detect_langs(sentence)
-            for language in languages_with_probs:
-                scores_per_language[language.lang] = scores_per_language.get(
-                    language.lang, 0
-                ) + language.prob * len(sentence)
+            try:
+                languages_with_probs: Sequence[LangdetectLanguage] = detect_langs(sentence)
+                for language in languages_with_probs:
+                    scores_per_language[language.lang] = scores_per_language.get(
+                        language.lang, 0
+                    ) + language.prob * len(sentence)
+            except LangDetectException:
+                continue # skip sentence in case language cannot be determined
 
         return cls._normalize_dict(scores_per_language)
 
