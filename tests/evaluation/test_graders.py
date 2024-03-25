@@ -30,6 +30,11 @@ def test_language_matches_grader_returns_false_if_output_language_is_unclear() -
         "This is a test.", "This is a test. Das ist ein Test."
     )
 
+def test_language_matches_grader_can_handle_difficult_input() -> None:
+    grader = LanguageMatchesGrader()
+    assert grader.languages_match(
+        "1. This test is difficult. 2. And it has esp. diff. characters.", "a) Here is a another test.\nb) How can it handle enumerations?"
+    )
 
 def test_highlight_coverage_grader_returns_perfect_score_if_exact_match() -> None:
     grader = HighlightCoverageGrader()
