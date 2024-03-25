@@ -55,7 +55,9 @@ class InMemoryEvaluationRepository(EvaluationRepository):
         self, evaluation_id: str, evaluation_type: type[Evaluation]
     ) -> Sequence[ExampleEvaluation[Evaluation]]:
         if evaluation_id not in self._example_evaluations.keys():
-            raise ValueError(f"Repository does not contain an evaluation with id: {evaluation_id}")
+            raise ValueError(
+                f"Repository does not contain an evaluation with id: {evaluation_id}"
+            )
 
         example_evaluations = [
             cast(ExampleEvaluation[Evaluation], example_evaluation)

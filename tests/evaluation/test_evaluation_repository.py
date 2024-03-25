@@ -1,12 +1,12 @@
 from datetime import datetime
 from itertools import chain
-from typing import Iterable, Sequence
+from typing import Iterable
 from uuid import uuid4
 
+import pytest
 from _pytest.fixtures import FixtureRequest
 from pydantic import BaseModel
 from pytest import fixture, mark
-import pytest
 
 from intelligence_layer.core import utc_now
 from intelligence_layer.evaluation import (
@@ -276,7 +276,7 @@ def test_example_evaluations_returns_all_example_evaluations(
     evaluation_repository: EvaluationRepository = request.getfixturevalue(
         repository_fixture
     )
-    all_example_evaluations: Sequence[ExampleEvaluation[DummyEvaluation]] = []
+    all_example_evaluations: list[ExampleEvaluation[DummyEvaluation]] = []
 
     for example_evaluation in chain(
         successful_example_evaluations, failed_example_evaluations

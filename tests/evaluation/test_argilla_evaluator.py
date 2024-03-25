@@ -141,7 +141,7 @@ def string_argilla_evaluator(
 def string_argilla_aggregator(
     argilla_evaluation_repository: ArgillaEvaluationRepository,
     in_memory_aggregation_repository: InMemoryAggregationRepository,
-) -> ArgillaAggregator[DummyAggregatedEvaluation,]:
+) -> ArgillaAggregator[DummyAggregatedEvaluation]:
     aggregator = ArgillaAggregator(
         argilla_evaluation_repository,
         in_memory_aggregation_repository,
@@ -202,7 +202,7 @@ def test_argilla_evaluator_can_aggregate_evaluation(
     ],
     string_argilla_runner: Runner[DummyStringInput, DummyStringOutput],
     string_dataset_id: str,
-    string_argilla_aggregator: ArgillaAggregator,
+    string_argilla_aggregator: ArgillaAggregator[DummyAggregatedEvaluation],
 ) -> None:
     # given
     argilla_client = cast(
