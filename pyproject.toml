@@ -32,7 +32,7 @@ pycountry = "23.12.11"
 rouge = "^1.0.1"
 opentelemetry-api = "^1.22.0"
 opentelemetry-sdk = "^1.22.0"
-huggingface-hub = "^0.21.4"
+huggingface-hub = "^0.22.0"
 
 [tool.poetry.group.dev.dependencies]
 mypy = "^1.9.0"
@@ -50,7 +50,7 @@ types-tqdm = "*"
 sphinx-rtd-theme = "^2.0.0"
 sphinx = "^7.2.6"
 pylama = { extras = ["all", "toml"], version = "^8.4.1" }
-faker = "^24.3.0"
+faker = "^24.4.0"
 hypercorn = "0.16.0"
 
 [tool.mypy]
