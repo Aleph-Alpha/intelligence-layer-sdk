@@ -4,6 +4,8 @@
 export AA_TOKEN
 # Find all .ipynb files in the directory and pass them to xargs for parallel execution
 rm -rf src/examples/.ipynb_checkpoints
+rm -rf src/examples/how-tos/.ipynb_checkpoints
+
 find src/examples -name "*.nbconvert.ipynb" -type f -delete
-find src/examples -name "*.ipynb" ! -name "performance_tips.ipynb" | xargs --max-args 1 --max-procs 3 poetry run jupyter nbconvert --to notebook --execute
+find src/examples -name "*.ipynb" ! -name "performance_tips.ipynb" | xargs --max-args 1 --max-procs 6 poetry run jupyter nbconvert --to notebook --execute
 find src/examples -name "*.nbconvert.ipynb" -type f -delete
