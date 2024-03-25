@@ -104,7 +104,7 @@ def argilla_evaluation_repository_with_example_evaluations(
         )
         failed_example_evaluations.append(failed_example_evaluation)
         (
-            argilla_evaluation_repository._evaluation_repository.store_example_evaluation(
+            argilla_evaluation_repository.store_example_evaluation(
                 failed_example_evaluation
             )
         )

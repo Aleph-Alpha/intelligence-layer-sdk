@@ -122,9 +122,6 @@ def string_argilla_evaluator(
     in_memory_dataset_repository: InMemoryDatasetRepository,
     in_memory_run_repository: InMemoryRunRepository,
     argilla_evaluation_repository: ArgillaEvaluationRepository,
-    stub_argilla_client: StubArgillaClient,
-    argilla_questions: Sequence[Question],
-    argilla_fields: Sequence[Field],
 ) -> ArgillaEvaluator[
     DummyStringInput,
     DummyStringOutput,
@@ -144,27 +141,14 @@ def string_argilla_evaluator(
 def string_argilla_aggregator(
     argilla_evaluation_repository: ArgillaEvaluationRepository,
     in_memory_aggregation_repository: InMemoryAggregationRepository,
-    stub_argilla_client: StubArgillaClient,
-    argilla_questions: Sequence[Question],
-    argilla_fields: Sequence[Field],
 ) -> ArgillaAggregator[DummyAggregatedEvaluation,]:
-    workspace_id = stub_argilla_client._expected_workspace_id
-
-    eval_repository = ArgillaEvaluationRepository(
+    aggregator = ArgillaAggregator(
         argilla_evaluation_repository,
-        stub_argilla_client,
-        workspace_id,
-        argilla_fields,
-        argilla_questions,
-    )
-
-    evaluator = ArgillaAggregator(
-        eval_repository,
         in_memory_aggregation_repository,
         "dummy-string-task",
         DummyStringTaskArgillaAggregationLogic(),
     )
-    return evaluator
+    return aggregator
 
 
 @fixture
@@ -216,18 +200,21 @@ def test_argilla_evaluator_can_aggregate_evaluation(
         DummyStringOutput,
         DummyStringOutput,
     ],
-    string_argilla_aggregator: ArgillaAggregator[DummyAggregatedEvaluation],
     string_argilla_runner: Runner[DummyStringInput, DummyStringOutput],
     string_dataset_id: str,
+    string_argilla_aggregator: ArgillaAggregator,
 ) -> None:
+    # given
     argilla_client = cast(
         StubArgillaClient, string_argilla_evaluator._evaluation_repository._client  # type: ignore
     )
+    # when
     run_overview = string_argilla_runner.run_dataset(string_dataset_id)
     eval_overview = string_argilla_evaluator.evaluate_runs(run_overview.id)
     aggregated_eval_overview = string_argilla_aggregator.aggregate_evaluation(
         eval_overview.id
     )
+    # then
     assert aggregated_eval_overview.statistics.score == argilla_client._score
 
 

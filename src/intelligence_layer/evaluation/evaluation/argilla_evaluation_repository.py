@@ -15,6 +15,7 @@ from intelligence_layer.evaluation.evaluation.domain import (
     Evaluation,
     EvaluationOverview,
     ExampleEvaluation,
+    FailedExampleEvaluation,
 )
 from intelligence_layer.evaluation.evaluation.evaluation_repository import (
     EvaluationRepository,
@@ -83,6 +84,8 @@ class ArgillaEvaluationRepository(EvaluationRepository):
         if isinstance(evaluation.result, RecordDataSequence):
             for record in evaluation.result.records:
                 self._client.add_record(evaluation.evaluation_id, record)
+        elif isinstance(evaluation.result, FailedExampleEvaluation):
+            self._evaluation_repository.store_example_evaluation(evaluation)
         else:
             raise TypeError(
                 "ArgillaEvaluationRepository does not support storing non-RecordDataSequence evaluations."
@@ -139,11 +142,7 @@ class ArgillaEvaluationRepository(EvaluationRepository):
     def failed_example_evaluations(
         self, evaluation_id: str, evaluation_type: type[Evaluation]
     ) -> Sequence[ExampleEvaluation[Evaluation]]:
-        """Returns all failed :class:`ExampleEvaluation`s sorted by their example ID.
-
-        A failed example evaluation is an :class:`ExampleEvaluation` for
-        which the storage process failed, e.g., because the Argilla service
-        was unresponsive.
+        """Failed example evaluations are not supported in the argilla evaluation repository.
 
         Args:
             evaluation_id: ID of the corresponding evaluation overview.
@@ -151,8 +150,12 @@ class ArgillaEvaluationRepository(EvaluationRepository):
                 in :func:`Evaluator.do_evaluate`
 
         Returns:
-            A :class:`Sequence` of failed :class:`ExampleEvaluation`s.
+            An empty list.
         """
-        return self._evaluation_repository.failed_example_evaluations(
-            evaluation_id, evaluation_type
-        )
+        # If no failed examples are created, this would raise an error.
+        try:
+            return self._evaluation_repository.failed_example_evaluations(
+                evaluation_id, evaluation_type
+            )
+        except ValueError:
+            return []
