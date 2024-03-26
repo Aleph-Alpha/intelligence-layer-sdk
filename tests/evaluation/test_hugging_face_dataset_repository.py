@@ -3,6 +3,7 @@ from typing import Iterable, Sequence, Tuple
 from uuid import uuid4
 
 import huggingface_hub  # type: ignore
+import pytest
 from pydantic import BaseModel
 from pytest import fixture
 
@@ -100,10 +101,8 @@ def test_hugging_face_repository_can_create_and_delete_a_repository(
 def test_examples_returns_an_empty_list_for_not_existing_dataset_id(
     hugging_face_dataset_repository: HuggingFaceDatasetRepository,
 ) -> None:
-    assert (
+    with pytest.raises(ValueError):
         hugging_face_dataset_repository.examples("not-existing-dataset-id", str, str)
-        == []
-    )
 
 
 def test_example_returns_none_for_not_existing_ids(

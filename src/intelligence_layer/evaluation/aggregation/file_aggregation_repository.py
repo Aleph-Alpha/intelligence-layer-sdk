@@ -45,12 +45,10 @@ class FileSystemAggregationRepository(AggregationRepository, FileSystemBasedRepo
         return sorted(self.file_names(self._aggregation_root_directory()))
 
     def _aggregation_root_directory(self) -> Path:
-        path = self._root_directory / self._SUB_DIRECTORY
-        return path
+        return self._root_directory / self._SUB_DIRECTORY
 
     def _aggregation_directory(self, evaluation_id: str) -> Path:
-        path = self._aggregation_root_directory() / evaluation_id
-        return path
+        return self._aggregation_root_directory() / evaluation_id
 
     def _aggregation_overview_path(self, aggregation_id: str) -> Path:
         return self._aggregation_directory(aggregation_id).with_suffix(".json")

@@ -39,12 +39,10 @@ class FileSystemBasedRepository(ABC):
         self._file_system.makedir(self.path_to_str(path), create_parents=True)
 
     def file_names(self, path: Path, file_type: str = "json") -> Sequence[str]:
-        # return [
-        #     file.rsplit(".", 1)[0]
-        #     for file in self._file_system.ls(self.path_to_str(path))
-        #     if file.endswith("." + file_type)
-        # ]
-        files = [Path(file) for file in self._file_system.ls(self.path_to_str(path))]
+        files = [
+            Path(file)
+            for file in self._file_system.ls(self.path_to_str(path), detail=False)
+        ]
         return [file.stem for file in files if file.suffix == "." + file_type]
 
     @staticmethod
