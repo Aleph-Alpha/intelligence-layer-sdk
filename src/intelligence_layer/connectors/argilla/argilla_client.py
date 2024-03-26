@@ -285,7 +285,7 @@ class DefaultArgillaClient(ArgillaClient):
 
     def _create_metadata_property(self, dataset_id: str, n_splits: int) -> None:
         response = self.session.get(
-            f"http://localhost:6900/api/v1/me/datasets/{dataset_id}/metadata-properties"
+            f"{self.api_url}api/v1/me/datasets/{dataset_id}/metadata-properties"
         )
         response.raise_for_status()
         existing_split_id = [
@@ -295,7 +295,7 @@ class DefaultArgillaClient(ArgillaClient):
         ]
         if len(existing_split_id) > 0:
             self.session.delete(
-                f"http://localhost:6900/api/v1/metadata-properties/{existing_split_id[0]}"
+                f"{self.api_url}api/v1/metadata-properties/{existing_split_id[0]}"
             )
 
         data = {
@@ -307,7 +307,7 @@ class DefaultArgillaClient(ArgillaClient):
         }
 
         response = self.session.post(
-            f"http://localhost:6900/api/v1/datasets/{dataset_id}/metadata-properties",
+            f"{self.api_url}api/v1/datasets/{dataset_id}/metadata-properties",
             json=data,
         )
         response.raise_for_status()
@@ -340,7 +340,7 @@ class DefaultArgillaClient(ArgillaClient):
                 ]
             }
             response = self.session.patch(
-                f"http://localhost:6900/api/v1/datasets/{dataset_id}/records",
+                f"{self.api_url}api/v1/datasets/{dataset_id}/records",
                 json=data,
             )
             response.raise_for_status()
