@@ -155,15 +155,15 @@ class LanguageMatchesGrader:
     @classmethod
     def _get_scores_per_language(cls, text_chunks: Sequence[str]) -> dict[str, float]:
         scores_per_language: dict[str, float] = {}
-        for test_chunk in text_chunks:
+        for text_chunk in text_chunks:
             try:
                 languages_with_probs: Sequence[LangdetectLanguage] = detect_langs(
-                    test_chunk
+                    text_chunk
                 )
                 for language in languages_with_probs:
                     scores_per_language[language.lang] = scores_per_language.get(
                         language.lang, 0
-                    ) + language.prob * len(test_chunk)
+                    ) + language.prob * len(text_chunk)
             except LangDetectException:
                 continue  # skip text_chunk in case language cannot be determined
         return cls._normalize_dict(scores_per_language)
