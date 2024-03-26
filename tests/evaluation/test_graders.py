@@ -49,6 +49,14 @@ def test_language_matches_grader_can_handle_difficult_input() -> None:
     )
 
 
+def test_language_matches_grader_empty_input_and_output() -> None:
+    grader = LanguageMatchesGrader()
+    assert grader.languages_match(
+        "",
+        "",
+    )
+
+
 def test_highlight_coverage_grader_returns_perfect_score_if_exact_match() -> None:
     grader = HighlightCoverageGrader()
     generated_highlights = [(3, 5)]
