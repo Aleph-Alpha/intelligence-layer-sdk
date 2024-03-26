@@ -62,14 +62,12 @@ class HuggingFaceDatasetRepository(HuggingFaceRepository, FileSystemDatasetRepos
         Args:
             dataset_id: Dataset ID of the dataset to delete.
         """
-        if self._file_system.exists(
-            self.path_to_str(self._dataset_examples_path(dataset_id))
-        ):
+        if self.exists(self._dataset_examples_path(dataset_id)):
             self._file_system.rm(
                 self.path_to_str(self._dataset_examples_path(dataset_id))
             )
 
-        if self._file_system.exists(self.path_to_str(self._dataset_path(dataset_id))):
+        if self.exists(self._dataset_path(dataset_id)):
             self._file_system.rm(self.path_to_str(self._dataset_path(dataset_id)))
 
     def dataset(self, dataset_id: str) -> Optional[Dataset]:
@@ -87,8 +85,8 @@ class HuggingFaceDatasetRepository(HuggingFaceRepository, FileSystemDatasetRepos
         """
         dataset_file_path = self._dataset_path(dataset_id)
         examples_file_path = self._dataset_examples_path(dataset_id)
-        if not self._file_system.exists(self.path_to_str(dataset_file_path)):
-            if not self._file_system.exists(self.path_to_str(examples_file_path)):
+        if not self.exists(dataset_file_path):
+            if not self.exists(examples_file_path):
                 return None
             else:
                 return Dataset(id=dataset_id, name=f"HuggingFace dataset {dataset_id}")

@@ -20,17 +20,13 @@ class FileSystemDatasetRepository(DatasetRepository, FileSystemBasedRepository):
     _REPO_TYPE = "dataset"
 
     def __init__(self, filesystem: AbstractFileSystem, root_directory: Path) -> None:
-        assert str(root_directory)[-1] != "/"
-
         super().__init__(file_system=filesystem, root_directory=root_directory)
-
-        self._dataset_root_directory().mkdir(parents=True, exist_ok=True)
 
     def create_dataset(
         self, examples: Iterable[Example[Input, ExpectedOutput]], dataset_name: str
     ) -> Dataset:
         dataset = Dataset(name=dataset_name)
-        self._dataset_directory(dataset.id).mkdir(exist_ok=True)
+        self.mkdir(self._dataset_directory(dataset.id))
 
         dataset_path = self._dataset_path(dataset.id)
         examples_path = self._dataset_examples_path(dataset.id)
