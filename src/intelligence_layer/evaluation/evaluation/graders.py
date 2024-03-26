@@ -6,10 +6,10 @@ from typing import List, Mapping, Sequence, Tuple, cast
 import nltk  # type: ignore
 from langdetect import LangDetectException, detect_langs  # type: ignore
 from langdetect.language import Language as LangdetectLanguage  # type: ignore
-from nltk import sent_tokenize
 from nltk.tokenize import RegexpTokenizer  # type: ignore
 from nltk.translate.bleu_score import sentence_bleu  # type: ignore
 from rouge import Rouge  # type: ignore
+from semantic_text_splitter import TextSplitter
 
 _nltk_lock = Lock()
 
@@ -98,7 +98,7 @@ class RougeGrader:
 
 
 class LanguageMatchesGrader:
-    """Provides a method to evaluate whether two texts are of the same language
+    """Provides a method to evaluate whether two texts are of the same language.
 
     Args:
         acceptance_threshold: probability a language must surpass to be accepted
@@ -111,7 +111,8 @@ class LanguageMatchesGrader:
         _download_nltk()
 
     def languages_match(self, input: str, output: str) -> bool:
-        """Calculates if the input and output text are of the same language
+        """Calculates if the input and output text are of the same language.
+        The length of the texts and its sentences should be reasonably long in order for good performance.
 
         Args:
             input: text for which languages is compared to
@@ -132,8 +133,8 @@ class LanguageMatchesGrader:
         return dominant_input_language == dominant_output_language
 
     def _get_dominant_language(self, text: str) -> str | None:
-        sentences: Sequence[str] = self._tokenize_text(text)
-        probs_per_language = self._get_scores_per_language(sentences)
+        test_chunks: Sequence[str] = self._tokenize_text(text)
+        probs_per_language = self._get_scores_per_language(test_chunks)
         dominant_language = next(
             (
                 langs
@@ -145,24 +146,26 @@ class LanguageMatchesGrader:
         return dominant_language
 
     @staticmethod
-    def _tokenize_text(text: str) -> Sequence[str]:
-        return cast(Sequence[str], sent_tokenize(text))
+    def _tokenize_text(
+        text: str, lower_char_bound: int = 30, upper_char_bound: int = 200
+    ) -> Sequence[str]:
+        text_splitter = TextSplitter()
+        return text_splitter.chunks(text, (lower_char_bound, upper_char_bound))
 
     @classmethod
-    def _get_scores_per_language(cls, sentences: Sequence[str]) -> dict[str, float]:
+    def _get_scores_per_language(cls, text_chunks: Sequence[str]) -> dict[str, float]:
         scores_per_language: dict[str, float] = {}
-        for sentence in sentences:
+        for test_chunk in text_chunks:
             try:
                 languages_with_probs: Sequence[LangdetectLanguage] = detect_langs(
-                    sentence
+                    test_chunk
                 )
                 for language in languages_with_probs:
                     scores_per_language[language.lang] = scores_per_language.get(
                         language.lang, 0
-                    ) + language.prob * len(sentence)
+                    ) + language.prob * len(test_chunk)
             except LangDetectException:
-                continue  # skip sentence in case language cannot be determined
-
+                continue  # skip text_chunk in case language cannot be determined
         return cls._normalize_dict(scores_per_language)
 
     @staticmethod
