@@ -1,7 +1,7 @@
 import math
 from dataclasses import dataclass
 from threading import Lock
-from typing import List, Mapping, Sequence, Tuple, cast
+from typing import List, Mapping, Sequence, Tuple
 
 import nltk  # type: ignore
 from langdetect import LangDetectException, detect_langs  # type: ignore
