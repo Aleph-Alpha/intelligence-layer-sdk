@@ -70,8 +70,9 @@ def test_repository_operations(
         aggregation_overview.id, DummyAggregatedEvaluation
     )
 
-    assert aggregation_overview.id in list(
-        hugging_face_aggregation_repository.aggregation_overview_ids()
+    assert (
+        aggregation_overview.id
+        in hugging_face_aggregation_repository.aggregation_overview_ids()
     )
     assert overview != []
 

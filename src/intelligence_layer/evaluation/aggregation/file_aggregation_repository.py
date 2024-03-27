@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Dict, Optional, Sequence
+from typing import Optional, Sequence
 
 from fsspec.implementations.local import LocalFileSystem  # type: ignore
 
@@ -25,6 +25,7 @@ class FileSystemAggregationRepository(AggregationRepository, FileSystemBasedRepo
         self.write_utf8(
             self._aggregation_overview_path(aggregation_overview.id),
             aggregation_overview.model_dump_json(indent=2),
+            create_parents=True,
         )
 
     def aggregation_overview(
@@ -41,25 +42,13 @@ class FileSystemAggregationRepository(AggregationRepository, FileSystemBasedRepo
         )
 
     def aggregation_overview_ids(self) -> Sequence[str]:
-        return sorted(
-            [
-                Path(f["name"]).stem
-                for f in self._file_system.ls(
-                    self.path_to_str(self._aggregation_root_directory()), detail=True
-                )
-                if isinstance(f, Dict) and Path(f["name"]).suffix == ".json"
-            ]
-        )
+        return sorted(self.file_names(self._aggregation_root_directory()))
 
     def _aggregation_root_directory(self) -> Path:
-        path = self._root_directory / self._SUB_DIRECTORY
-        path.mkdir(exist_ok=True)
-        return path
+        return self._root_directory / self._SUB_DIRECTORY
 
     def _aggregation_directory(self, evaluation_id: str) -> Path:
-        path = self._aggregation_root_directory() / evaluation_id
-        path.mkdir(exist_ok=True)
-        return path
+        return self._aggregation_root_directory() / evaluation_id
 
     def _aggregation_overview_path(self, aggregation_id: str) -> Path:
         return self._aggregation_directory(aggregation_id).with_suffix(".json")

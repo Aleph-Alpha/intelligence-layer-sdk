@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Dict, Optional, Sequence
+from typing import Optional, Sequence
 
 from fsspec.implementations.local import LocalFileSystem  # type: ignore
 
@@ -24,7 +24,10 @@ class FileSystemEvaluationRepository(EvaluationRepository, FileSystemBasedReposi
         self.write_utf8(
             self._evaluation_overview_path(overview.id),
             overview.model_dump_json(indent=2),
+            create_parents=True,
         )
+        # initialize the correct folders
+        self.mkdir(self._eval_directory(overview.id))
 
     def evaluation_overview(self, evaluation_id: str) -> Optional[EvaluationOverview]:
         file_path = self._evaluation_overview_path(evaluation_id)
@@ -35,15 +38,7 @@ class FileSystemEvaluationRepository(EvaluationRepository, FileSystemBasedReposi
         return EvaluationOverview.model_validate_json(content)
 
     def evaluation_overview_ids(self) -> Sequence[str]:
-        return sorted(
-            [
-                Path(f["name"]).stem
-                for f in self._file_system.ls(
-                    self.path_to_str(self._eval_root_directory()), detail=True
-                )
-                if isinstance(f, Dict) and Path(f["name"]).suffix == ".json"
-            ]
-        )
+        return sorted(self.file_names(self._eval_root_directory()))
 
     def store_example_evaluation(
         self, example_evaluation: ExampleEvaluation[Evaluation]
@@ -56,13 +51,18 @@ class FileSystemEvaluationRepository(EvaluationRepository, FileSystemBasedReposi
                 example_evaluation.evaluation_id, example_evaluation.example_id
             ),
             serialized_result.model_dump_json(indent=2),
+            create_parents=True,
         )
 
     def example_evaluation(
         self, evaluation_id: str, example_id: str, evaluation_type: type[Evaluation]
     ) -> Optional[ExampleEvaluation[Evaluation]]:
         file_path = self._example_result_path(evaluation_id, example_id)
-        if not file_path.exists():
+        if not self.exists(file_path.parent):
+            raise ValueError(
+                f"Repository does not contain an evaluation with id: {evaluation_id}"
+            )
+        if not self.exists(file_path):
             return None
 
         content = self.read_utf8(file_path)
@@ -72,38 +72,37 @@ class FileSystemEvaluationRepository(EvaluationRepository, FileSystemBasedReposi
     def example_evaluations(
         self, evaluation_id: str, evaluation_type: type[Evaluation]
     ) -> Sequence[ExampleEvaluation[Evaluation]]:
-        def load_example_evaluation_from_file_name(
-            file_path: Path,
-        ) -> Optional[ExampleEvaluation[Evaluation]]:
-            example_id = file_path.with_suffix("").name
-            return self.example_evaluation(evaluation_id, example_id, evaluation_type)
-
         path = self._eval_directory(evaluation_id)
-        json_files = path.glob("*.json")
-        example_evaluations = [
-            example_result
-            for example_result in (
-                load_example_evaluation_from_file_name(file) for file in json_files
+        if not self.exists(path):
+            raise ValueError(
+                f"Repository does not contain an evaluation with id: {evaluation_id}"
             )
-            if example_result is not None
-        ]
+
+        example_evaluations: list[ExampleEvaluation[Evaluation]] = []
+        for file_name in self.file_names(path):
+            evaluation = self.example_evaluation(
+                evaluation_id, file_name, evaluation_type
+            )
+            if evaluation is not None:
+                example_evaluations.append(evaluation)
+
         return sorted(example_evaluations, key=lambda i: i.example_id)
 
     def _eval_root_directory(self) -> Path:
         path = self._root_directory / "evaluations"
-        path.mkdir(exist_ok=True)
         return path
 
     def _eval_directory(self, evaluation_id: str) -> Path:
         path = self._eval_root_directory() / evaluation_id
-        path.mkdir(exist_ok=True)
         return path
 
     def _example_result_path(self, evaluation_id: str, example_id: str) -> Path:
-        return (self._eval_directory(evaluation_id) / example_id).with_suffix(".json")
+        path = (self._eval_directory(evaluation_id) / example_id).with_suffix(".json")
+        return path
 
     def _evaluation_overview_path(self, evaluation_id: str) -> Path:
-        return self._eval_directory(evaluation_id).with_suffix(".json")
+        path = self._eval_directory(evaluation_id).with_suffix(".json")
+        return path
 
 
 class FileEvaluationRepository(FileSystemEvaluationRepository):

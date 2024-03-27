@@ -2,6 +2,7 @@ from datetime import datetime
 from typing import Iterable, Sequence, cast
 from uuid import uuid4
 
+import pytest
 from _pytest.fixtures import FixtureRequest
 from pytest import fixture, mark
 
@@ -69,7 +70,7 @@ def test_run_repository_stores_and_returns_example_output(
     "repository_fixture",
     test_repository_fixtures,
 )
-def test_example_output_returns_none_for_not_existing_ids(
+def test_example_output_returns_none_for_not_existing_example_id(
     repository_fixture: str,
     request: FixtureRequest,
 ) -> None:
@@ -79,15 +80,32 @@ def test_example_output_returns_none_for_not_existing_ids(
     example_output = ExampleOutput(run_id=run_id, example_id=example_id, output=None)
     run_repository.store_example_output(example_output)
 
-    stored_example_outputs = [
-        run_repository.example_output("not-existing-run-id", example_id, type(None)),
-        run_repository.example_output(run_id, "not-existing-example-id", type(None)),
+    assert (
+        run_repository.example_output(run_id, "not-existing-example-id", type(None))
+        is None
+    )
+
+
+@mark.parametrize(
+    "repository_fixture",
+    test_repository_fixtures,
+)
+def test_example_output_returns_none_for_not_existing_run_id(
+    repository_fixture: str,
+    request: FixtureRequest,
+) -> None:
+    run_repository: RunRepository = request.getfixturevalue(repository_fixture)
+    run_id = "run-id"
+    example_id = "example-id"
+    example_output = ExampleOutput(run_id=run_id, example_id=example_id, output=None)
+    run_repository.store_example_output(example_output)
+
+    with pytest.raises(ValueError):
+        run_repository.example_output("not-existing-run-id", example_id, type(None))
+    with pytest.raises(ValueError):
         run_repository.example_output(
             "not-existing-run-id", "not-existing-example-id", type(None)
-        ),
-    ]
-
-    assert stored_example_outputs == [None, None, None]
+        )
 
 
 @mark.parametrize(

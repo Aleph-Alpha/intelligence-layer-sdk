@@ -15,6 +15,7 @@ from intelligence_layer.evaluation.evaluation.domain import (
     Evaluation,
     EvaluationOverview,
     ExampleEvaluation,
+    FailedExampleEvaluation,
 )
 from intelligence_layer.evaluation.evaluation.evaluation_repository import (
     EvaluationRepository,
@@ -83,6 +84,8 @@ class ArgillaEvaluationRepository(EvaluationRepository):
         if isinstance(evaluation.result, RecordDataSequence):
             for record in evaluation.result.records:
                 self._client.add_record(evaluation.evaluation_id, record)
+        elif isinstance(evaluation.result, FailedExampleEvaluation):
+            self._evaluation_repository.store_example_evaluation(evaluation)
         else:
             raise TypeError(
                 "ArgillaEvaluationRepository does not support storing non-RecordDataSequence evaluations."
@@ -141,9 +144,10 @@ class ArgillaEvaluationRepository(EvaluationRepository):
     ) -> Sequence[ExampleEvaluation[Evaluation]]:
         """Returns all failed :class:`ExampleEvaluation`s sorted by their example ID.
 
-        A failed example evaluation is an :class:`ExampleEvaluation` for
-        which the storage process failed, e.g., because the Argilla service
-        was unresponsive.
+        A failed example evaluation is an :class:`ExampleEvaluation` for which the storage process failed, e.g., because
+        the Argilla service was unresponsive.
+
+        The failed examples are stored in the given evaluation repository and not in Argilla.
 
         Args:
             evaluation_id: ID of the corresponding evaluation overview.
@@ -151,8 +155,12 @@ class ArgillaEvaluationRepository(EvaluationRepository):
                 in :func:`Evaluator.do_evaluate`
 
         Returns:
-            A :class:`Sequence` of failed :class:`ExampleEvaluation`s.
+            A `Sequence` of failed example evaluations.
         """
-        return self._evaluation_repository.failed_example_evaluations(
-            evaluation_id, evaluation_type
-        )
+        # If there are no failed examples, the dataset with the id was never created and fails on retrieval.
+        try:
+            return self._evaluation_repository.failed_example_evaluations(
+                evaluation_id, evaluation_type
+            )
+        except ValueError:
+            return []

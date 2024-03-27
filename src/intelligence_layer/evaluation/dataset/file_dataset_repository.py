@@ -20,17 +20,13 @@ class FileSystemDatasetRepository(DatasetRepository, FileSystemBasedRepository):
     _REPO_TYPE = "dataset"
 
     def __init__(self, filesystem: AbstractFileSystem, root_directory: Path) -> None:
-        assert str(root_directory)[-1] != "/"
-
         super().__init__(file_system=filesystem, root_directory=root_directory)
-
-        self._dataset_root_directory().mkdir(parents=True, exist_ok=True)
 
     def create_dataset(
         self, examples: Iterable[Example[Input, ExpectedOutput]], dataset_name: str
     ) -> Dataset:
         dataset = Dataset(name=dataset_name)
-        self._dataset_directory(dataset.id).mkdir(exist_ok=True)
+        self.mkdir(self._dataset_directory(dataset.id))
 
         dataset_path = self._dataset_path(dataset.id)
         examples_path = self._dataset_examples_path(dataset.id)
@@ -81,16 +77,22 @@ class FileSystemDatasetRepository(DatasetRepository, FileSystemBasedRepository):
         input_type: type[Input],
         expected_output_type: type[ExpectedOutput],
     ) -> Optional[Example[Input, ExpectedOutput]]:
-        example_path = self.path_to_str(self._dataset_examples_path(dataset_id))
-        if not self._file_system.exists(example_path):
+        example_path = self._dataset_examples_path(dataset_id)
+        if not self.exists(example_path.parent):
+            raise ValueError(
+                f"Repository does not contain a dataset with id: {dataset_id}"
+            )
+        if not self.exists(example_path):
             return None
 
         with self._file_system.open(
-            example_path, "r", encoding="utf-8"
+            self.path_to_str(example_path), "r", encoding="utf-8"
         ) as examples_file:
             for example in examples_file:
                 # mypy does not accept dynamic types
-                validated_example = Example[input_type, expected_output_type].model_validate_json(json_data=example)  # type: ignore
+                validated_example = Example[
+                    input_type, expected_output_type  # type: ignore
+                ].model_validate_json(json_data=example)
                 if validated_example.id == example_id:
                     return validated_example
         return None
@@ -103,13 +105,20 @@ class FileSystemDatasetRepository(DatasetRepository, FileSystemBasedRepository):
     ) -> Iterable[Example[Input, ExpectedOutput]]:
         example_path = self.path_to_str(self._dataset_examples_path(dataset_id))
         if not self._file_system.exists(example_path):
-            return []
+            raise ValueError(
+                f"Repository does not contain a dataset with id: {dataset_id}"
+            )
 
         with self._file_system.open(
             example_path, "r", encoding="utf-8"
         ) as examples_file:
             # Mypy does not accept dynamic types
-            examples = [Example[input_type, expected_output_type].model_validate_json(json_data=example) for example in examples_file]  # type: ignore
+            examples = [
+                Example[input_type, expected_output_type].model_validate_json(  # type: ignore
+                    json_data=example
+                )
+                for example in examples_file
+            ]
 
         return sorted(examples, key=lambda example: example.id)
 

@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Dict, Iterable, Optional, Sequence, cast
+from typing import Iterable, Optional, Sequence, cast
 
 from fsspec.implementations.local import LocalFileSystem  # type: ignore
 
@@ -22,8 +22,12 @@ from intelligence_layer.evaluation.run.trace import ExampleTrace, TaskSpanTrace
 class FileSystemRunRepository(RunRepository, FileSystemBasedRepository):
     def store_run_overview(self, overview: RunOverview) -> None:
         self.write_utf8(
-            self._run_overview_path(overview.id), overview.model_dump_json(indent=2)
+            self._run_overview_path(overview.id),
+            overview.model_dump_json(indent=2),
+            create_parents=True,
         )
+        # create empty folder just in case no examples are ever saved
+        self.mkdir(self._run_directory(overview.id))
 
     def run_overview(self, run_id: str) -> Optional[RunOverview]:
         file_path = self._run_overview_path(run_id)
@@ -34,28 +38,23 @@ class FileSystemRunRepository(RunRepository, FileSystemBasedRepository):
         return RunOverview.model_validate_json(content)
 
     def run_overview_ids(self) -> Sequence[str]:
-        return sorted(
-            [
-                Path(f["name"]).stem
-                for f in self._file_system.ls(
-                    self.path_to_str(self._run_root_directory()), detail=True
-                )
-                if isinstance(f, Dict) and Path(f["name"]).suffix == ".json"
-            ]
-        )
+        return sorted(self.file_names(self._run_root_directory()))
 
     def store_example_output(self, example_output: ExampleOutput[Output]) -> None:
         serialized_result = JsonSerializer(root=example_output)
         self.write_utf8(
             self._example_output_path(example_output.run_id, example_output.example_id),
             serialized_result.model_dump_json(indent=2),
+            create_parents=True,
         )
 
     def example_output(
         self, run_id: str, example_id: str, output_type: type[Output]
     ) -> Optional[ExampleOutput[Output]]:
         file_path = self._example_output_path(run_id, example_id)
-        if not file_path.exists():
+        if not self.exists(file_path.parent):
+            raise ValueError(f"Repository does not contain a run with id: {run_id}")
+        if not self.exists(file_path):
             return None
         content = self.read_utf8(file_path)
         # mypy does not accept dynamic types
@@ -65,7 +64,7 @@ class FileSystemRunRepository(RunRepository, FileSystemBasedRepository):
 
     def example_trace(self, run_id: str, example_id: str) -> Optional[ExampleTrace]:
         file_path = self._example_trace_path(run_id, example_id)
-        if not file_path.exists():
+        if not self.exists(file_path):
             return None
         in_memory_tracer = self._parse_log(file_path)
         trace = TaskSpanTrace.from_task_span(
@@ -80,42 +79,34 @@ class FileSystemRunRepository(RunRepository, FileSystemBasedRepository):
     def example_outputs(
         self, run_id: str, output_type: type[Output]
     ) -> Iterable[ExampleOutput[Output]]:
-        def load_example_output(
-            file_path: Path,
-        ) -> Optional[ExampleOutput[Output]]:
-            example_id = file_path.with_suffix("").name
-            return self.example_output(run_id, example_id, output_type)
-
         path = self._run_output_directory(run_id)
-        output_files = path.glob("*.json")
-        example_output = [load_example_output(file) for file in output_files]
+        if not self.exists(path):
+            raise ValueError(f"Repository does not contain a run with id: {run_id}")
+
+        example_outputs = []
+        for file_name in self.file_names(path):
+            output = self.example_output(run_id, file_name, output_type)
+            if output is not None:
+                example_outputs.append(output)
+
         return sorted(
-            [
-                example_output
-                for example_output in example_output
-                if example_output is not None
-            ],
+            example_outputs,
             key=lambda _example_output: _example_output.example_id,
         )
 
     def example_output_ids(self, run_id: str) -> Sequence[str]:
-        return sorted(
-            [path.stem for path in self._run_output_directory(run_id).glob("*.json")]
-        )
+        return sorted(self.file_names(self._run_output_directory(run_id)))
 
     def _run_root_directory(self) -> Path:
         path = self._root_directory / "runs"
-        path.mkdir(exist_ok=True)
         return path
 
     def _run_directory(self, run_id: str) -> Path:
         path = self._run_root_directory() / run_id
-        path.mkdir(exist_ok=True)
         return path
 
     def _run_output_directory(self, run_id: str) -> Path:
         path = self._run_directory(run_id) / "output"
-        path.mkdir(exist_ok=True)
         return path
 
     def _run_overview_path(self, run_id: str) -> Path:
@@ -123,7 +114,6 @@ class FileSystemRunRepository(RunRepository, FileSystemBasedRepository):
 
     def _trace_directory(self, run_id: str) -> Path:
         path = self._run_directory(run_id) / "trace"
-        path.mkdir(exist_ok=True)
         return path
 
     def _example_trace_path(self, run_id: str, example_id: str) -> Path:

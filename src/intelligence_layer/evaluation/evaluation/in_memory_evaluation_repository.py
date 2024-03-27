@@ -27,6 +27,8 @@ class InMemoryEvaluationRepository(EvaluationRepository):
 
     def store_evaluation_overview(self, overview: EvaluationOverview) -> None:
         self._evaluation_overviews[overview.id] = overview
+        if overview.id not in self._example_evaluations.keys():
+            self._example_evaluations[overview.id] = []
 
     def evaluation_overview(self, evaluation_id: str) -> Optional[EvaluationOverview]:
         return self._evaluation_overviews.get(evaluation_id, None)
@@ -49,6 +51,11 @@ class InMemoryEvaluationRepository(EvaluationRepository):
     def example_evaluations(
         self, evaluation_id: str, evaluation_type: type[Evaluation]
     ) -> Sequence[ExampleEvaluation[Evaluation]]:
+        if evaluation_id not in self._example_evaluations.keys():
+            raise ValueError(
+                f"Repository does not contain an evaluation with id: {evaluation_id}"
+            )
+
         example_evaluations = [
             cast(ExampleEvaluation[Evaluation], example_evaluation)
             for example_evaluation in self._example_evaluations[evaluation_id]

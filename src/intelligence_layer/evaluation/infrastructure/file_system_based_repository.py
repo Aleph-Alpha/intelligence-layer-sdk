@@ -1,6 +1,6 @@
 from abc import ABC
 from pathlib import Path
-from typing import cast
+from typing import Sequence, cast
 
 from fsspec import AbstractFileSystem  # type: ignore
 
@@ -14,11 +14,15 @@ class FileSystemBasedRepository(ABC):
     """
 
     def __init__(self, file_system: AbstractFileSystem, root_directory: Path) -> None:
-        root_directory.mkdir(parents=True, exist_ok=True)
         self._root_directory = root_directory
         self._file_system = file_system
+        self.mkdir(root_directory)
 
-    def write_utf8(self, path: Path, content: str) -> None:
+    def write_utf8(
+        self, path: Path, content: str, create_parents: bool = False
+    ) -> None:
+        if create_parents:
+            self.mkdir(path.parent)
         self._file_system.write_text(self.path_to_str(path), content, encoding="utf-8")
 
     def read_utf8(self, path: Path) -> str:
@@ -28,6 +32,18 @@ class FileSystemBasedRepository(ABC):
 
     def exists(self, path: Path) -> bool:
         return cast(bool, self._file_system.exists(self.path_to_str(path)))
+
+    def mkdir(self, path: Path) -> None:
+        if self.exists(path):
+            return
+        self._file_system.makedir(self.path_to_str(path), create_parents=True)
+
+    def file_names(self, path: Path, file_type: str = "json") -> Sequence[str]:
+        files = [
+            Path(file)
+            for file in self._file_system.ls(self.path_to_str(path), detail=False)
+        ]
+        return [file.stem for file in files if file.suffix == "." + file_type]
 
     @staticmethod
     def path_to_str(path: Path) -> str:

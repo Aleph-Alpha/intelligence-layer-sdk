@@ -35,6 +35,7 @@ class FileTracer(PersistentTracer):
         self._log_file_path = log_file_path
 
     def _log_entry(self, id: str, entry: BaseModel) -> None:
+        self._log_file_path.parent.mkdir(parents=True, exist_ok=True)
         with self._log_file_path.open(mode="a", encoding="utf-8") as f:
             f.write(
                 LogLine(
