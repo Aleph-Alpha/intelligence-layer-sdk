@@ -83,10 +83,10 @@ class InMemoryTracer(BaseModel, Tracer):
     def _ipython_display_(self) -> None:
         """Default rendering for Jupyter notebooks"""
 
-        self.submit_to_trace_viewer()
-        rich.print(self._rich_render_())
+        if not self.submit_to_trace_viewer():
+            rich.print(self._rich_render_())
 
-    def submit_to_trace_viewer(self) -> None:
+    def submit_to_trace_viewer(self) -> bool:
         """Submits the trace to the UI for visualization"""
         trace_viewer_url = os.getenv("TRACE_VIEWER_URL", "http://localhost:3000")
         trace_viewer_trace_upload = f"{trace_viewer_url}/trace"
@@ -99,10 +99,12 @@ class InMemoryTracer(BaseModel, Tracer):
             rich.print(
                 f"Open the [link={trace_viewer_url}]Trace Viewer[/link] to view the trace."
             )
+            return True
         except requests.ConnectionError:
             print(
                 f"Trace viewer not found under {trace_viewer_url}.\nConsider running it for a better viewing experience.\nIf it is, set `TRACE_VIEWER_URL` in the environment."
             )
+            return False
 
 
 class InMemorySpan(InMemoryTracer, Span):
