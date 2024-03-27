@@ -1,6 +1,6 @@
+from datasets import Dataset, DatasetDict  # type: ignore
 from pytest import fixture
 
-from datasets import Dataset, DatasetDict  # type: ignore
 from intelligence_layer.evaluation import (
     MultipleChoiceInput,
     SingleHuggingfaceDatasetRepository,
