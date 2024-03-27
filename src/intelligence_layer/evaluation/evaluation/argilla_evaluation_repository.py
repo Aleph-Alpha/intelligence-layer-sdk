@@ -142,7 +142,12 @@ class ArgillaEvaluationRepository(EvaluationRepository):
     def failed_example_evaluations(
         self, evaluation_id: str, evaluation_type: type[Evaluation]
     ) -> Sequence[ExampleEvaluation[Evaluation]]:
-        """Failed example evaluations are not supported in the argilla evaluation repository.
+        """Returns all failed :class:`ExampleEvaluation`s sorted by their example ID.
+
+        A failed example evaluation is an :class:`ExampleEvaluation` for which the storage process failed, e.g., because
+        the Argilla service was unresponsive.
+
+        The failed examples are stored in the given evaluation repository and not in Argilla.
 
         Args:
             evaluation_id: ID of the corresponding evaluation overview.
@@ -150,7 +155,7 @@ class ArgillaEvaluationRepository(EvaluationRepository):
                 in :func:`Evaluator.do_evaluate`
 
         Returns:
-            An empty list.
+            A `Sequence` of failed example evaluations.
         """
         # If there are no failed examples, the dataset with the id was never created and fails on retrieval.
         try:

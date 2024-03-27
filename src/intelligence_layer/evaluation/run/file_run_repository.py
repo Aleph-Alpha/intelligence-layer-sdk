@@ -51,11 +51,9 @@ class FileSystemRunRepository(RunRepository, FileSystemBasedRepository):
     def example_output(
         self, run_id: str, example_id: str, output_type: type[Output]
     ) -> Optional[ExampleOutput[Output]]:
-        path = self._run_output_directory(run_id)
-        if not self.exists(path):
-            raise ValueError(f"Repository does not contain a run with id: {run_id}")
-
         file_path = self._example_output_path(run_id, example_id)
+        if not self.exists(file_path.parent):
+            raise ValueError(f"Repository does not contain a run with id: {run_id}")
         if not self.exists(file_path):
             return None
         content = self.read_utf8(file_path)

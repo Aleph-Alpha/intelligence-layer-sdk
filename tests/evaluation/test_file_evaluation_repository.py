@@ -18,7 +18,7 @@ def test_evaluation_overview_ids_does_not_create_a_folder(
     assert not file_evaluation_repository._eval_root_directory().exists()
     try:
         file_evaluation_repository.evaluation_overview_ids()
-    except Exception:
+    except FileNotFoundError:
         pass
     assert not file_evaluation_repository._eval_root_directory().exists()
 
@@ -29,10 +29,7 @@ def test_evaluation_overview_does_not_create_a_folder(
     assert not file_evaluation_repository._eval_root_directory().exists()
     assert not file_evaluation_repository._eval_directory("Non-existent").exists()
 
-    try:
-        file_evaluation_repository.evaluation_overview("Non-existent")
-    except Exception:
-        pass
+    file_evaluation_repository.evaluation_overview("Non-existent")
     assert not file_evaluation_repository._eval_root_directory().exists()
 
 
@@ -44,7 +41,7 @@ def test_example_evaluations_does_not_create_a_folder(
 
     try:
         file_evaluation_repository.example_evaluations("Non-existent", DummyType)
-    except Exception:
+    except ValueError:
         pass
     assert not file_evaluation_repository._eval_root_directory().exists()
 
@@ -59,6 +56,6 @@ def test_example_evaluation_does_not_create_a_folder(
         file_evaluation_repository.example_evaluation(
             "Non-existent", "Non-existent", DummyType
         )
-    except Exception:
+    except ValueError:
         pass
     assert not file_evaluation_repository._eval_root_directory().exists()

@@ -25,13 +25,10 @@ class InMemoryEvaluationRepository(EvaluationRepository):
         )
         self._evaluation_overviews: dict[str, EvaluationOverview] = dict()
 
-    def initialize_evaluation(self) -> str:
-        eval_id = super().initialize_evaluation()
-        self._example_evaluations[eval_id] = []
-        return eval_id
-
     def store_evaluation_overview(self, overview: EvaluationOverview) -> None:
         self._evaluation_overviews[overview.id] = overview
+        if overview.id not in self._example_evaluations.keys():
+            self._example_evaluations[overview.id] = []
 
     def evaluation_overview(self, evaluation_id: str) -> Optional[EvaluationOverview]:
         return self._evaluation_overviews.get(evaluation_id, None)
