@@ -15,8 +15,10 @@ class Accumulator(ABC, Generic[T, Output]):
     def add(self, value: T) -> None:
         """Responsible for accumulating values
 
-        :param value: the value to add
-        :return: nothing
+        Args:
+            value: the value to add
+        Returns:
+             nothing
         """
         ...
 
@@ -24,7 +26,8 @@ class Accumulator(ABC, Generic[T, Output]):
     def extract(self) -> Output:
         """Accumulates the final result
 
-        :return: the result of this calculation
+        Returns:
+           float: 0.0 if no values were added before, else the mean
         """
         ...
 

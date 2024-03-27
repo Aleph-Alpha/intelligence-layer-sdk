@@ -140,7 +140,12 @@ class QdrantInMemoryRetriever(BaseRetriever[int]):
     def get_filtered_documents_with_scores(
         self, query: str, filter: models.Filter
     ) -> Sequence[SearchResult[int]]:
-        """Specific method for `InMemoryRetriever` to support filtering search results."""
+        """Specific method for `InMemoryRetriever` to support filtering search results.
+
+        Args:
+            query: The text to be searched with.
+            filter: Conditions to filter by.
+        """
         query_embedding = self._embed(query, self._query_representation)
         search_result = self._search_client.search(
             collection_name=self._collection_name,

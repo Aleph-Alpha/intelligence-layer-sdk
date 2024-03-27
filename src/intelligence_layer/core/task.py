@@ -51,7 +51,7 @@ class Task(ABC, Generic[Input, Output]):
 
         Args:
             input: Generic input defined by the task implementation
-            span: The `Span` used for tracing.
+            task_span: The `Span` used for tracing.
         Returns:
             Generic output defined by the task implementation.
         """
