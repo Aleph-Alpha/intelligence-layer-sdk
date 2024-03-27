@@ -108,12 +108,10 @@ def test_examples_returns_an_empty_list_for_not_existing_dataset_id(
 def test_example_returns_none_for_not_existing_ids(
     hugging_face_dataset_repository: HuggingFaceDatasetRepository,
 ) -> None:
-    assert (
+    with pytest.raises(ValueError):
         hugging_face_dataset_repository.example(
             "not-existing-dataset-id", "not-existing-example-id", str, str
         )
-        is None
-    )
 
 
 def test_delete_dataset_does_not_fail_for_not_existing_dataset_id(
@@ -165,7 +163,8 @@ def test_hugging_face_repository_supports_all_operations_for_created_dataset(
 
     # deleting an existing dataset works
     hugging_face_repository_.delete_dataset(dataset.id)
-    assert hugging_face_repository_.examples(dataset.id, str, str) == []
+    with pytest.raises(ValueError):
+        hugging_face_repository_.examples(dataset.id, str, str)
     assert hugging_face_repository_.dataset(dataset.id) is None
 
 

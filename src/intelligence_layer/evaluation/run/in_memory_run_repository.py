@@ -67,6 +67,9 @@ class InMemoryRunRepository(RunRepository):
     def example_outputs(
         self, run_id: str, output_type: type[Output]
     ) -> Iterable[ExampleOutput[Output]]:
+        if run_id not in self._run_overviews.keys():
+            raise ValueError(f"Repository does not contain a run with id: {run_id}")
+
         return (
             cast(ExampleOutput[Output], example_output)
             for example_output in sorted(

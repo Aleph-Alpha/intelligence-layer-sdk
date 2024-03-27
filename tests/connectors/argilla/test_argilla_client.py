@@ -2,9 +2,11 @@ from time import sleep
 from typing import Callable, Iterable, Sequence, TypeVar
 from uuid import uuid4
 
+import pytest
 from dotenv import load_dotenv
 from pydantic import BaseModel
 from pytest import fixture
+from requests import HTTPError
 
 from intelligence_layer.connectors.argilla.argilla_client import (
     ArgillaClient,
@@ -108,6 +110,13 @@ def long_qa_records(
     for record in records:
         argilla_client.add_record(qa_dataset_id, record)
     return records
+
+
+def test_error_on_non_existent_dataset(
+    argilla_client: DefaultArgillaClient,
+) -> None:
+    with pytest.raises(HTTPError):
+        list(argilla_client.records("non_existent_dataset_id"))
 
 
 def test_records_returns_records_previously_added(
