@@ -182,14 +182,14 @@ class Aggregator(Generic[Evaluation, AggregatedEvaluation]):
 
     @final
     def aggregate_evaluation(
-        self, *eval_ids: str
+        self, *evaluation_ids: str
     ) -> AggregationOverview[AggregatedEvaluation]:
         """Aggregates all evaluations into an overview that includes high-level statistics.
 
         Aggregates :class:`Evaluation`s according to the implementation of :func:`BaseEvaluator.aggregate`.
 
         Args:
-            evaluation_overview: An overview of the evaluation to be aggregated. Does not include
+            evaluation_ids: Unique identifier of the evaluation overviews to be aggregated. Does not include
                 actual evaluations as these will be retrieved from the repository.
 
         Returns:
@@ -207,7 +207,7 @@ class Aggregator(Generic[Evaluation, AggregatedEvaluation]):
             return evaluation_overview
 
         evaluation_overviews = frozenset(
-            load_eval_overview(evaluation_id) for evaluation_id in set(eval_ids)
+            load_eval_overview(evaluation_id) for evaluation_id in set(evaluation_ids)
         )
 
         nested_evaluations = [

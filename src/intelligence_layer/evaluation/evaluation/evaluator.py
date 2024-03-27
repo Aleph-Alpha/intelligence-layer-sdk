@@ -183,6 +183,10 @@ class Evaluator(Generic[Input, Output, ExpectedOutput, Evaluation]):
 
         Returns:
             the type of the evaluated task's output.
+
+        Raises:
+            TypeError: Raised in case of a KeyError in the Output type.
+
         """
         try:
             output_type = self._get_types()["Output"]
@@ -207,6 +211,9 @@ class Evaluator(Generic[Input, Output, ExpectedOutput, Evaluation]):
 
         Returns:
             Returns the type of the evaluation result of an example.
+
+        Raises:
+            TypeError: Raised in case of a KeyError in the Evaluation type.
         """
         try:
             evaluation_type = self._get_types()["Evaluation"]
@@ -237,7 +244,7 @@ class Evaluator(Generic[Input, Output, ExpectedOutput, Evaluation]):
                 Always the first n runs stored in the evaluation repository
 
         Returns:
-            An overview of the evaluation. Individual :class:`Evaluation`s will not be
+            EvaluationOverview: An overview of the evaluation. Individual :class:`Evaluation`s will not be
             returned but instead stored in the :class:`EvaluationRepository` provided in the
             __init__.
         """

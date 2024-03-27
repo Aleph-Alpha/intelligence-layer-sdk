@@ -15,8 +15,10 @@ class Accumulator(ABC, Generic[T, Output]):
     def add(self, value: T) -> None:
         """Responsible for accumulating values
 
-        :param value: the value to add
-        :return: nothing
+        Args:
+            value: the value to add
+        Returns:
+             nothing
         """
         ...
 
@@ -43,7 +45,9 @@ class MeanAccumulator(Accumulator[float, float]):
     def extract(self) -> float:
         """Accumulates the mean
 
-        :return: 0.0 if no values were added before, else the mean"""
+        Returns:
+            float: 0.0 if no values were added before, else the mean
+        """
         return 0.0 if self._n == 0 else self._acc / self._n
 
     def standard_deviation(self) -> float:
