@@ -4,7 +4,7 @@ from pytest import fixture
 from intelligence_layer.evaluation import HighlightCoverageGrader, LanguageMatchesGrader
 
 
-@fixture(scope="session")
+@fixture(scope="session", autouse=True)
 def set_deterministic_seed() -> None:
     langdetect.DetectorFactory.seed = 0
 
