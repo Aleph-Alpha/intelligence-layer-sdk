@@ -26,6 +26,8 @@ class FileSystemRunRepository(RunRepository, FileSystemBasedRepository):
             overview.model_dump_json(indent=2),
             create_parents=True,
         )
+        # create empty folder just in case no examples are ever saved
+        self.mkdir(self._run_directory(overview.id))
 
     def run_overview(self, run_id: str) -> Optional[RunOverview]:
         file_path = self._run_overview_path(run_id)
@@ -49,6 +51,10 @@ class FileSystemRunRepository(RunRepository, FileSystemBasedRepository):
     def example_output(
         self, run_id: str, example_id: str, output_type: type[Output]
     ) -> Optional[ExampleOutput[Output]]:
+        path = self._run_output_directory(run_id)
+        if not self.exists(path):
+            raise ValueError(f"Repository does not contain a run with id: {run_id}")
+
         file_path = self._example_output_path(run_id, example_id)
         if not self.exists(file_path):
             return None

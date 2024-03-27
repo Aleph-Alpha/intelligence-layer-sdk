@@ -78,16 +78,15 @@ class FileSystemDatasetRepository(DatasetRepository, FileSystemBasedRepository):
         expected_output_type: type[ExpectedOutput],
     ) -> Optional[Example[Input, ExpectedOutput]]:
         example_path = self._dataset_examples_path(dataset_id)
-        example_path_str = self.path_to_str(self._dataset_examples_path(dataset_id))
-        if not self._file_system.exists(self.path_to_str(example_path.parent)):
+        if not self.exists(example_path.parent):
             raise ValueError(
                 f"Repository does not contain a dataset with id: {dataset_id}"
             )
-        if not self._file_system.exists(example_path_str):
+        if not self.exists(example_path):
             return None
 
         with self._file_system.open(
-            example_path_str, "r", encoding="utf-8"
+            self.path_to_str(example_path), "r", encoding="utf-8"
         ) as examples_file:
             for example in examples_file:
                 # mypy does not accept dynamic types

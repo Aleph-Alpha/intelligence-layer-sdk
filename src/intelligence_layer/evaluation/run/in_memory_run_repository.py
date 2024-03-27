@@ -23,6 +23,8 @@ class InMemoryRunRepository(RunRepository):
 
     def store_run_overview(self, overview: RunOverview) -> None:
         self._run_overviews[overview.id] = overview
+        if overview.id not in self._example_outputs.keys():
+            self._example_outputs[overview.id] = []
 
     def run_overview(self, run_id: str) -> Optional[RunOverview]:
         return self._run_overviews.get(run_id, None)
@@ -38,6 +40,9 @@ class InMemoryRunRepository(RunRepository):
     def example_output(
         self, run_id: str, example_id: str, output_type: type[Output]
     ) -> Optional[ExampleOutput[Output]]:
+        if run_id not in self._example_outputs.keys():
+            raise ValueError(f"Repository does not contain a run with id: {run_id}")
+
         if run_id not in self._example_outputs.keys():
             return None
 

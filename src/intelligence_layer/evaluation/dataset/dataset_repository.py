@@ -81,8 +81,6 @@ class DatasetRepository(ABC):
     ) -> Optional[Example[Input, ExpectedOutput]]:
         """Returns an :class:`Example` for the given dataset ID and example ID.
 
-        Raises a :class:`ValueError` if the `dataset_id` does not correspond to a dataset.
-
         Args:
             dataset_id: Dataset ID of the linked dataset.
             example_id: ID of the example to retrieve.
