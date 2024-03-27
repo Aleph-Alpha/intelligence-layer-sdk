@@ -3,7 +3,6 @@
 The trace viewer uses svelte. The docs on how to run the trace viewer in docker can be found [here](../src/examples/how-tos/how_to_run_the_trace_viewer.ipynb).
 If you want to run the trace viewer from source, see below.
 
-
 ## Development
 
 Node and pnpm versions for this project are managed by [Volta](https://docs.volta.sh/guide/getting-started).
