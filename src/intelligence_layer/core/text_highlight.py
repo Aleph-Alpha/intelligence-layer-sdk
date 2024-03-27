@@ -148,7 +148,11 @@ class TextHighlight(Task[TextHighlightInput, TextHighlightOutput]):
         """Currently, the text highlight logic does not correctly deal with
         multi item texts. This is a result of returning indices instead of text.
         Therefore, we disable running text highlighting on prompts with more than one index
-        for the moment. This also means we only deal with text items."""
+        for the moment. This also means we only deal with text items.
+
+        Args:
+            input: The input for a text highlighting task.
+        """
         n_items = len(input.rich_prompt.items)
         # the last item is always the question
         if n_items > 2:

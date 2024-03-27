@@ -121,6 +121,9 @@ def test_overlapping_tokens_generate_correct_tokens(echo_task: Echo) -> None:
     """This test checks if the echo task correctly tokenizes the expected completion separately
     The two tokens when tokenized together will result in a combination of the end of the first token
     and the start of the second token. This is not the expected behaviour.
+
+    Args:
+        echo_task: Fixture used for this test
     """
     token1 = "ĠGastronomie"
     token2 = "Baby"

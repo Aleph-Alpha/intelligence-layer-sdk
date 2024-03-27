@@ -113,7 +113,7 @@ class ArgillaClient(ABC):
             fields: all fields of this dataset.
             questions: all questions for this dataset.
         Returns:
-            dataset_id: the id of the dataset to be retrieved .
+            The id of the dataset to be retrieved .
         """
         ...
 
@@ -182,7 +182,7 @@ class DefaultArgillaClient(ArgillaClient):
         Args:
             workspace_name: the name of the workspace to be retrieved or created.
         Returns:
-            workspace_id: The id of an argilla workspace with the given `workspace_name`.
+            The id of an argilla workspace with the given `workspace_name`.
         """
         try:
             return cast(str, self._create_workspace(workspace_name)["id"])

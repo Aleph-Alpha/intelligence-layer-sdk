@@ -37,7 +37,11 @@ def token() -> str:
 
 @fixture(scope="session")
 def client(token: str) -> AlephAlphaClientProtocol:
-    """Provide fixture for api."""
+    """Provide fixture for api.
+
+    Args:
+        token: AA Token
+    """
     return LimitedConcurrencyClient(Client(token), max_concurrency=10)
 
 

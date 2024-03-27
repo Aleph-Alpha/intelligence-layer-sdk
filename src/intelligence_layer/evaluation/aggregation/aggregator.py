@@ -189,7 +189,7 @@ class Aggregator(Generic[Evaluation, AggregatedEvaluation]):
         Aggregates :class:`Evaluation`s according to the implementation of :func:`BaseEvaluator.aggregate`.
 
         Args:
-            evaluation_overview: An overview of the evaluation to be aggregated. Does not include
+            eval_ids: An overview of the evaluation to be aggregated. Does not include
                 actual evaluations as these will be retrieved from the repository.
 
         Returns:

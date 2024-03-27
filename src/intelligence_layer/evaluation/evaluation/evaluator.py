@@ -237,7 +237,7 @@ class Evaluator(Generic[Input, Output, ExpectedOutput, Evaluation]):
                 Always the first n runs stored in the evaluation repository
 
         Returns:
-            An overview of the evaluation. Individual :class:`Evaluation`s will not be
+            EvaluationOverview: An overview of the evaluation. Individual :class:`Evaluation`s will not be
             returned but instead stored in the :class:`EvaluationRepository` provided in the
             __init__.
         """

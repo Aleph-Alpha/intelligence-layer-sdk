@@ -153,7 +153,7 @@ The Intelligence Layer supports different kinds of evaluation techniques. Most i
   a single output, but it is easier to compare two different outputs and decide which one is better. An example
   use case could be summarization.
 
-To support these techniques the Intelligence Layer differantiates between 3 consecutive steps:
+To support these techniques the Intelligence Layer differentiates between 3 consecutive steps:
 
 1. Run a task by feeding it all inputs of a dataset and collecting all outputs
 2. Evaluate the outputs of one or several
@@ -197,7 +197,7 @@ There are the following Repositories:
   and makes them available to the `Aggregator`.
 - The `AggregationRepository` stores the `AggregationOverview` containing the aggregated metrics on request of the `Aggregator`.
 
-The following diagramms illustrate how the different concepts play together in case of the different types of evaluations.
+The following diagrams illustrate how the different concepts play together in case of the different types of evaluations.
 
 <figure>
 <img src="./assets/AbsoluteEvaluation.drawio.svg">
