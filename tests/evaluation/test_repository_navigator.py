@@ -261,3 +261,23 @@ def test_get_eval_lineage_for_non_existent_eval_id_returns_none(
         repository_navigator.evaluation_lineage(
             "non-existent-id", "irrelevant", str, str, str, DummyEval
         )
+
+
+def test_run_lineage_tree_view() -> None:
+    # TODO
+    ...
+
+
+def test_evaluation_lineage_tree_view() -> None:
+    # TODO
+    ...
+
+
+def test_run_lineages_to_pandas() -> None:
+    # TODO
+    ...
+
+
+def test_evaluation_lineages_to_pandas() -> None:
+    # TODO
+    ...

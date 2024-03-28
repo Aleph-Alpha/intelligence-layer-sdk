@@ -1,7 +1,10 @@
 import itertools
 from typing import Generic, Iterable, Sequence
 
+import pandas as pd
+import rich
 from pydantic import BaseModel
+from rich.tree import Tree
 
 from intelligence_layer.core.task import Input, Output
 from intelligence_layer.evaluation.dataset.dataset_repository import DatasetRepository
@@ -21,11 +24,61 @@ class RunLineage(BaseModel, Generic[Input, ExpectedOutput, Output]):
     example: Example[Input, ExpectedOutput]
     output: ExampleOutput[Output]
 
+    def _ipython_display_(self):
+        tree = Tree("Run Lineage")
+        tree.add(self.example._rich_render())
+        tree.add(self.output._rich_render(skip_example_id=True))
+        rich.print(tree)
+
+
+def run_lineages_to_pandas(
+    evaluation_lineages: Sequence[RunLineage[Input, ExpectedOutput, Output]]
+):
+    df = pd.DataFrame(
+        [
+            vars(lineage.example) | vars(lineage.output) | {"lineage": lineage}
+            for lineage in evaluation_lineages
+        ]
+    )
+    df = df.drop(columns="id")
+    df = df.set_index(["example_id", "run_id"])
+    return df
+
 
 class EvaluationLineage(BaseModel, Generic[Input, ExpectedOutput, Output, Evaluation]):
     example: Example[Input, ExpectedOutput]
     outputs: Sequence[ExampleOutput[Output]]
     evaluation: ExampleEvaluation[Evaluation]
+
+    def _ipython_display_(self):
+        tree = Tree("Run Lineage")
+        tree.add(self.example._rich_render())
+        output_tree = Tree("Outputs")
+        for output in self.outputs:
+            output_tree.add(output._rich_render(skip_example_id=True))
+        tree.add(output_tree)
+        tree.add(self.evaluation._rich_render(skip_example_id=True))
+        rich.print(tree)
+
+
+def evaluation_lineages_to_pandas(
+    evaluation_lineages: Sequence[
+        EvaluationLineage[Input, ExpectedOutput, Output, Evaluation]
+    ]
+):
+    df = pd.DataFrame(
+        [
+            vars(lineage.example)
+            | vars(output)
+            | vars(lineage.evaluation)
+            | {"lineage": lineage}
+            for lineage in evaluation_lineages
+            for output in lineage.outputs
+        ]
+    )
+    df = df.drop(columns="id")
+    df = df.set_index(["example_id", "evaluation_id", "run_id"])
+    return df
 
 
 class RepositoryNavigator:
