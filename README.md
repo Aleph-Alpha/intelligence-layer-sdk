@@ -114,7 +114,7 @@ to your `pyproject.toml` and run `poetry update`
 Alternatively you can also add it to a `requirements.txt`.
 
 ```txt
-git+https://$GITHUB_TOKEN@github.com/Aleph-Alpha/intelligence-layer.git@VERSION_TAG
+git+https://${GITHUB_TOKEN}@github.com/Aleph-Alpha/intelligence-layer.git@VERSION_TAG
 ```
 
 Finally you can also install the package manually using pip.
