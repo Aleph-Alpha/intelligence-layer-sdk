@@ -1,17 +1,145 @@
 # Changelog
 
-## Unreleased
+## 0.7.0
 
-- The elo-calculation logic has been heavily simplified
-- `Payoff` from the elo package has been renamed to `Match`
-- `PayoffMatrix` from the elo package has been renamed to `MatchOutcome` and is now pydantic (de)-serializable
-- `SingleChunkQa` now uses a logit_bias to promote not answering for German
-- `__init__`-parameters of all tasks are streamlined:
+### Breaking Changes
+- breaking change: FScores are now correctly exposed as FScores and no longer as RougeScores
+- breaking change: HuggingFaceAggregationRepository and HuggingFaceDatasetRepository now consistently follow the same folder structure as FileDatasetRepository when creating data sets. This means that datasets will be stored in a folder datasets and additional sub-folders named according to the respective dataset ID.
+- breaking change: Split run_repository into file_run_repository, in_memory_run_repository.
+- breaking change: Split evaluation_repository into argilla_evaluation_repository, file_evaluation_repository and in_memory_evaluation_repository
+- breaking change: Split dataset_repository into file_dataset_repository and in_memory_dataset_respository
+- breaking change: Split aggregation_respository into file_aggragation_repository and in_memory_aggregation_repository
+- breaking change: Renamed evaluation/run.py to evaluation/run_evaluator.py
+- breaking change: Split evaluation/domain and distribute it across aggregation, evaluation, dataset and run packages.
+- breaking change: Split evaluation/argilla and distribute it across  aggregation and evaluation packages.
+- breaking change: Split evaluation into separate dataset, run, evaluation and aggregationpackages.
+- breaking change: Split evaluation/hugging_face.py into dataset and aggregation repository files in data_storage package.
+- breaking change: create_dataset now returns the new Dataset type instead of a dataset ID.
+- breaking change:  Consistent naming for repository root directories when creating evaluations or aggregations:
+  - .../eval → .../evaluations and .../aggregation → aggregations.
+- breaking change: Core tasks not longer provide defaults for the applied models.
+- breaking change: Methods returning entities from repositories now return the results ordered by their IDs.
+- breaking change:  Renamed crashed_during_eval_count to crashed_during_evaluation_count in AggregationOverview.
+- breaking change: Renamed create_evaluation_dataset to initialize_evaluation in EvaluationRepository.
+- breaking change:  Renamed to_explanation_response  to to_explanation_request in ExplainInput.
+- breaking change: Removed TextHighlight::text in favor of TextHighlight::start and TextHighlight::end
+- breaking change: Removed `IntelligenceApp` and `IntelligenceStarterApp`
+- breaking change: RetrieverBasedQa uses now MultiChunkQa instead of generic task pr SingleChunkQa
+- breaking change: EvaluationRepository failed_example_evaluations no longer abstract
+- breaking change: Elo calculation simplified:
+  - Payoff from elo package has been removed
+  - PayoffMatrix from elo package renamed to MatchOutcome
+  - SingleChunkQa uses logit_bias to promote not answering for German
+- breaking change: Remove ChunkOverlap task.
+- breaking change: Rename Chunk to TextChunk.
+- breaking change: Rename ChunkTask to Chunk .
+- breaking change: Rename EchoTask to Echo.
+- breaking change: Rename TextHighlightTask to TextHighlightbreaking change: Rename ChunkOverlaptTask to ChunkOverlap
+
+### New Features
+
+- Aggregation:
+  - feature: InstructComparisonArgillaAggregationLogic uses full evaluation set instead of sample for aggregation
+
+- Documentation
+
+  - feature: Added How-To’s (linked in the README):
+    - how to define a task
+    - how to implement a task
+    - how to create a dataset
+    - how to run a task on a dataset
+    - how to perform aggregation
+    - how to evaluate runs
+  - feature: Restructured and cleaned up README for more conciseness.
+  - feature: Add illustrations to Concepts.md.
+  - feature: Added tutorial for adding task to a FastAPI app (linked in README).
+  - feature: Improved and added various DocStrings.
+  - feature: Added a README section about the client URL.
+  - feature: Add python naming convention to README
+
+- Classify
+  - feature: PromptBasedClassify now supports changing of the prompt instruction via the instruction parameter.
+  - feature: Add default model for PromptBasedClassify
+  - feature: Add default task for PromptBasedClassify
+
+- Evaluation
+  - feature:  All repositories will return a ValueError when trying to access a dataset that does not exist while also trying to access an entry of the dataset. If only the dataset is retrieved, it will return None.
+  - `ArgillaEvaluationRepository` now handles failed evaluations.
+  - feature: Added SingleHuggingfaceDatasetRepository.
+  - feature: Added HighlightCoverageGrader.
+  - feature: Added LanguageMatchesGrader.
+
+  - feature: Added prettier default printing behavior of repository entities by providing overloads to __str__ and __repr__   methods.
+
+  - feature: Added abstract HuggingFace repository base-class.
+
+  - feature: Refactoring of HuggingFace repository
+
+  - feature: Added HuggingFaceAggregationRepository.
+  - feature: Added template method to individual repository
+  - feature: Added Dataset model to dataset repository. This allows to store a short descriptive name for the dataset for easier identification
+  - feature: SingleChunkQa internally now uses the same model in TextHighlight by default.
+  - feature: MeanAccumulator tracks standard deviation and standard error
+  - feature: EloCalculator now updates ranking after each match
+  - feature: Add data selection methods to repositories:
+    - AggregationRepository::aggregation_overviews
+    - EvaluationRepository::run_overviews
+    - EvaluationRepository::run_overview_ids
+    - EvaluationRepository::example_output
+    - EvaluationRepository::example_outputs
+    - EvaluationRepository::example_output_ids
+    - EvaluationRepository::example_trace
+    - EvaluationRepository::example_tracer
+    - RunRepository::run_overviews
+    - RunRepository::run_overview_ids
+    - RunRepository::example_output
+    - RunRepository::example_outputs
+    - RunRepository::example_output_ids
+    - RunRepository::example_trace
+    - RunRepository::example_tracer
+
+  - feature: Evaluator continues in case of no successful outputs
+
+- Q & A
+
+  - feature: Define default parameters for LongContextQa, SingleChunkQa
+  - feature: Define default task for RetrieverBasedQa
+  - feature: Define default model for KeyWordExtract, MultiChunkQa,
+  - feature: Improved focus of highlights in TextHighlight tasks.
+  - feature: Added filtering for TextHighlight tasks.
+  - feature: Introduce logit_bias to SingleChunkQa
+
+- Summarize
+  - feature: Added RecursiveSummarizeInput.
+  - feature:  Define defaults for SteerableSingleChunkSummarize,SteerableLongContexSummarize, RecursiveSummarize
+
+- Tracer
+  - feature: Added better trace viewer integration:
+    - Add trace storage to trace viewer server
+    - added submit_to_tracer_viewer method to InMemoryTracer
+    - UI and navigation improvements for trace viewer
+    - Add exception handling for tracers during log entry writing
+
+- Others
+
+  - feature: The following classes are now exposed:
+    - DocumentChunk
+    - MultipleChunkQaOutput
+    - Subanswer
+  - feature: Simplified internal imports.
+  - feature: Stream lining of __init__-parameters of all tasks
     - Sub-tasks are typically exposed as `__init__`-parameters with sensible defaults.
-    - Defaults for non-trivial parameters like models or tasks are defined in `__init__` while the default parameter is `None`.
+    - Defaults for non-trivial parameters like models or tasks are defined in __init__while the default parameter is None.
     - Instead of exposing parameters that are passed on to sub-tasks the sub-task themselves are exposed.
-- `IntelligenceApp` and `IntelligenceStarterApp` have been removed.
+  - feature: Update supported models
 
+### Fixes
+
+- fix: Fixed exception handling in language detection of LanguageMatchesGrader.
+- fix: Fixed a bug that could lead to cut-off highlight ranges in TextHighlight tasks.
+- fix: Fixed list_ids methods to use path_to_str
+- fix: Disallow traces without end in the trace viewer
+- fix: ArgillaClient now correctly uses provided API-URL instead of hard-coded localhost
 
 ## 0.6.0
 
