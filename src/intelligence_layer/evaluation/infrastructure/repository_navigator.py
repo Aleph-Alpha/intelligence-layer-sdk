@@ -1,5 +1,6 @@
 import itertools
-from typing import Generic, Iterable
+from typing import Generic, Iterable, Sequence
+
 from pydantic import BaseModel
 
 from intelligence_layer.core.task import Input, Output
@@ -23,14 +24,13 @@ class RunLineage(BaseModel, Generic[Input, ExpectedOutput, Output]):
 
 class EvalLineage(BaseModel, Generic[Input, ExpectedOutput, Output, Evaluation]):
     example: Example[Input, ExpectedOutput]
-    output: ExampleOutput[Output]
+    outputs: Sequence[ExampleOutput[Output]]
     evaluation: ExampleEvaluation[Evaluation]
 
 
-# run_lineage_type: type[RunLineage[Input, ExpectedOutput, Output]]
-
-
 class RepositoryNavigator:
+    """The `RepositoryNavigator` is used to retrieve coupled data from multiple repositories."""
+
     def __init__(
         self,
         dataset_repository: DatasetRepository,
@@ -99,3 +99,54 @@ class RepositoryNavigator:
                     output=run_lineage.output,
                     evaluation=evaluation,
                 )
+
+    def run_single_example(
+        self,
+        run_id: str,
+        example_id: str,
+        input_type: type[Input],
+        expected_output_type: type[ExpectedOutput],
+        output_type: type[Output],
+    ) -> RunLineage[Input, ExpectedOutput, Output] | None:
+
+        run_overview = self._run_repository.run_overview(run_id)
+        if run_overview is None:
+            return None
+
+        example = self._dataset_repository.example(
+            run_overview.dataset_id, example_id, input_type, expected_output_type
+        )
+        example_output = self._run_repository.example_output(
+            run_id, example_id, output_type
+        )
+
+        return RunLineage(example=example, output=example_output)
+
+    def eval_single_example(
+        self,
+        eval_id: str,
+        example_id: str,
+        input_type: type[Input],
+        expected_output_type: type[ExpectedOutput],
+        output_type: type[Output],
+        evaluation_type: type[Evaluation],
+    ) -> Sequence[EvalLineage[Input, ExpectedOutput, Output, Evaluation]] | None:
+
+        eval_overview = self._eval_repository.evaluation_overview(eval_id)
+        if eval_overview is None:
+            return None
+
+        run_lineages = [
+            self.run_single_example(
+                overview.id, example_id, input_type, expected_output_type, output_type
+            )
+            for overview in eval_overview.run_overviews
+        ]
+
+        example_evaluation = self._eval_repository.example_evaluation(
+            eval_id, example_id, evaluation_type
+        )
+
+        return EvalLineage(
+            example=example, output=example_output, evaluation=example_evaluation
+        )
