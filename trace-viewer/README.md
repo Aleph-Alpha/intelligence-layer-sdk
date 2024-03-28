@@ -1,38 +1,27 @@
-# create-svelte
+# Trace viewer
 
-Everything you need to build a Svelte project, powered by [`create-svelte`](https://github.com/sveltejs/kit/tree/master/packages/create-svelte).
+The trace viewer uses svelte. The docs on how to run the trace viewer in docker can be found [here](../src/examples/how-tos/how_to_run_the_trace_viewer.ipynb).
+If you want to run the trace viewer from source, see below.
 
-## Creating a project
+## Development
 
-If you're seeing this, you've probably already done this step. Congrats!
+Node and pnpm versions for this project are managed by [Volta](https://docs.volta.sh/guide/getting-started).
+
+For pnpm support, add the following to your `.bashrc` or `.zshrc` etc.
 
 ```bash
-# create a new project in the current directory
-npm create svelte@latest
-
-# create a new project in my-app
-npm create svelte@latest my-app
+export VOLTA_FEATURE_PNPM=true
 ```
 
-## Developing
+Before running the server, make sure you create a local copy of the `env.sample` file
 
-Once you've created a project and installed dependencies with `npm install` (or `pnpm install` or `yarn`), start a development server:
+Once you've created a project and installed dependencies with `pnpm install`, start a development server:
 
 ```bash
-npm run dev
+pnpm run dev
 
 # or start the server and open the app in a new browser tab
-npm run dev -- --open
+pnpm run dev -- --open
 ```
 
-## Building
-
-To create a production version of your app:
-
-```bash
-npm run build
-```
-
-You can preview the production build with `npm run preview`.
-
-> To deploy your app, you may need to install an [adapter](https://kit.svelte.dev/docs/adapters) for your target environment.
+This will open the trace viewer on port 5173 per default, not on 3000 as described in the how-to.
