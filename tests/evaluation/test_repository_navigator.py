@@ -145,7 +145,7 @@ def test_works_on_run_overviews(
     run_overview: RunOverview,
 ) -> None:
     # when
-    res = list(repository_navigator.run_data(run_overview.id, str, str, str))
+    res = list(repository_navigator.run_lineages(run_overview.id, str, str, str))
 
     # then
     res = sorted(res, key=lambda result: result.example.input)
@@ -161,7 +161,9 @@ def test_works_on_evaluation(
 ) -> None:
     # when
     res = list(
-        repository_navigator.eval_data(eval_overview.id, str, str, str, DummyEval)
+        repository_navigator.evaluation_lineages(
+            eval_overview.id, str, str, str, DummyEval
+        )
     )
 
     # then
@@ -182,20 +184,23 @@ def test_initialization_gives_warning_if_not_compatible() -> None:
 
     x = RepositoryNavigator(dataset_repository, run_repository)
     with pytest.raises(ValueError):
-        list(x.eval_data("irrelevant", str, str, str, DummyEval))
+        list(x.evaluation_lineages("irrelevant", str, str, str, DummyEval))
+    with pytest.raises(ValueError):
+        x.evaluation_lineage("irrelevant", "irrelevant", str, str, str, DummyEval)
 
 
 def test_get_run_lineage_for_single_example(
     examples: Sequence[DummyExample],
     repository_navigator: RepositoryNavigator,
     run_overview: RunOverview,
-):
+) -> None:
     # when
-    res = repository_navigator.run_single_example(
+    res = repository_navigator.run_lineage(
         run_overview.id, examples[0].id, str, str, str
     )
 
     # Then
+    assert res is not None
     assert res.example.input == "input0"
     assert res.output.output == "input0 -> output"
 
@@ -204,13 +209,55 @@ def test_get_eval_lineage_for_single_example(
     examples: Sequence[DummyExample],
     repository_navigator: RepositoryNavigator,
     eval_overview: EvaluationOverview,
-):
+) -> None:
     # when
-    res = repository_navigator.eval_single_example(
+    res = repository_navigator.evaluation_lineage(
         eval_overview.id, examples[0].id, str, str, str, DummyEval
     )
 
     # Then
+    assert res is not None
     assert res.example.input == "input0"
-    assert res.output.output == "input0 -> output"
-    assert res.evaluation.result.startswith("input0")
+    assert res.outputs[0].output == "input0 -> output"
+    assert len(res.outputs) == 2
+    eval_result = res.evaluation.result
+    assert isinstance(eval_result, DummyEval)
+    assert eval_result.eval.startswith("input0")
+
+
+def test_get_run_lineage_for_non_existent_example_returns_none(
+    repository_navigator: RepositoryNavigator,
+    run_overview: RunOverview,
+) -> None:
+    res = repository_navigator.run_lineage(
+        run_overview.id, "non-existent-id", str, str, str
+    )
+
+    assert res is None
+
+
+def test_get_eval_lineage_for_non_existent_example_returns_none(
+    repository_navigator: RepositoryNavigator,
+    eval_overview: EvaluationOverview,
+) -> None:
+    res = repository_navigator.evaluation_lineage(
+        eval_overview.id, "non-existent-id", str, str, str, DummyEval
+    )
+
+    assert res is None
+
+
+def test_get_run_lineage_for_non_existent_run_id_returns_none(
+    repository_navigator: RepositoryNavigator,
+) -> None:
+    with pytest.raises(ValueError):
+        repository_navigator.run_lineage("non-existent-id", "irrelevant", str, str, str)
+
+
+def test_get_eval_lineage_for_non_existent_eval_id_returns_none(
+    repository_navigator: RepositoryNavigator,
+) -> None:
+    with pytest.raises(ValueError):
+        repository_navigator.evaluation_lineage(
+            "non-existent-id", "irrelevant", str, str, str, DummyEval
+        )

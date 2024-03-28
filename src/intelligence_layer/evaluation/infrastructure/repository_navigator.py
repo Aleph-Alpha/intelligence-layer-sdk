@@ -22,7 +22,7 @@ class RunLineage(BaseModel, Generic[Input, ExpectedOutput, Output]):
     output: ExampleOutput[Output]
 
 
-class EvalLineage(BaseModel, Generic[Input, ExpectedOutput, Output, Evaluation]):
+class EvaluationLineage(BaseModel, Generic[Input, ExpectedOutput, Output, Evaluation]):
     example: Example[Input, ExpectedOutput]
     outputs: Sequence[ExampleOutput[Output]]
     evaluation: ExampleEvaluation[Evaluation]
@@ -41,16 +41,27 @@ class RepositoryNavigator:
         self._run_repository = run_repository
         self._eval_repository = evaluation_repository
 
-    def run_data(
+    def run_lineages(
         self,
         run_id: str,
         input_type: type[Input],
         expected_output_type: type[ExpectedOutput],
         output_type: type[Output],
     ) -> Iterable[RunLineage[Input, ExpectedOutput, Output]]:
+        """Retrieves all :class:`RunLineage`s for the run with id `run_id`.
+
+        Args:
+            run_id: The id of the run
+            input_type: The type of the input as defined by the :class:`Example`
+            expected_output_type: The type of the expected output as defined by the :class:`Example`
+            output_type: The type of the run output as defined by the :class:`Output`
+
+        Returns:
+            An iterator over all :class:`RunLineage`s for the given run id.
+        """
         run_overview = self._run_repository.run_overview(run_id)
         if run_overview is None:
-            return []
+            raise ValueError(f"Run repository does not contain a run with id {run_id}.")
 
         examples = list(
             self._dataset_repository.examples(
@@ -69,38 +80,65 @@ class RepositoryNavigator:
             if example.id == example_output.example_id:
                 yield RunLineage(example=example, output=example_output)
 
-    def eval_data(
+    def evaluation_lineages(
         self,
-        eval_id: str,
+        evaluation_id: str,
         input_type: type[Input],
         expected_output_type: type[ExpectedOutput],
         output_type: type[Output],
         evaluation_type: type[Evaluation],
-    ) -> Iterable[EvalLineage[Input, ExpectedOutput, Output, Evaluation]]:
+    ) -> Iterable[EvaluationLineage[Input, ExpectedOutput, Output, Evaluation]]:
+        """Retrieves all :class:`EvaluationLineage`s for the evaluation with id `evaluation_id`.
+
+        Args:
+            evaluation_id: The id of the evaluation
+            input_type: The type of the input as defined by the :class:`Example`
+            expected_output_type: The type of the expected output as defined by the :class:`Example`
+            output_type: The type of the run output as defined by the :class:`Output`
+            evaluation_type: The type of the evaluation as defined by the :class:`Evaluation`
+
+        Returns:
+            An iterator over all :class:`EvaluationLineage`s for the given evaluation id.
+        """
         if self._eval_repository is None:
             raise ValueError("Evaluation Repository is not set, but required.")
-        eval_overview = self._eval_repository.evaluation_overview(eval_id)
+
+        eval_overview = self._eval_repository.evaluation_overview(evaluation_id)
         if eval_overview is None:
-            return []
+            raise ValueError(
+                f"Evaluation repository does not contain an evaluation with id {evaluation_id}."
+            )
 
         evaluations = list(
-            self._eval_repository.example_evaluations(eval_id, evaluation_type)
+            self._eval_repository.example_evaluations(evaluation_id, evaluation_type)
         )
-        run_lineages = itertools.chain.from_iterable(
-            self.run_data(overview.id, input_type, expected_output_type, output_type)
-            for overview in eval_overview.run_overviews
+        run_lineages = list(
+            itertools.chain.from_iterable(
+                self.run_lineages(
+                    overview.id, input_type, expected_output_type, output_type
+                )
+                for overview in eval_overview.run_overviews
+            )
         )
 
         # join
-        for run_lineage, evaluation in itertools.product(run_lineages, evaluations):
-            if run_lineage.example.id == evaluation.example_id:
-                yield EvalLineage(
-                    example=run_lineage.example,
-                    output=run_lineage.output,
-                    evaluation=evaluation,
+        for evaluation in evaluations:
+            example = None
+            outputs = []
+            for run_lineage in run_lineages:
+                if run_lineage.example.id == evaluation.example_id:
+                    if example is None:
+                        # the evaluation has only one example
+                        # and all relevant run lineages contain the same example
+                        example = run_lineage.example
+                    outputs.append(run_lineage.output)
+
+            if example is not None:
+                yield EvaluationLineage(
+                    example=example, outputs=outputs, evaluation=evaluation
                 )
 
-    def run_single_example(
+    def run_lineage(
         self,
         run_id: str,
         example_id: str,
@@ -108,45 +146,90 @@ class RepositoryNavigator:
         expected_output_type: type[ExpectedOutput],
         output_type: type[Output],
     ) -> RunLineage[Input, ExpectedOutput, Output] | None:
+        """Retrieves the :class:`RunLineage` for the run with id `run_id` and example with id `example_id`.
+
+        Args:
+            run_id: The id of the run
+            example_id: The id of the example
+            input_type: The type of the input as defined by the :class:`Example`
+            expected_output_type: The type of the expected output as defined by the :class:`Example`
+            output_type: The type of the run output as defined by the :class:`Output`
+
+        Returns:
+            The :class:`RunLineage` for the given run id and example id, `None` if the example or an output for the example does not exist.
+        """
 
         run_overview = self._run_repository.run_overview(run_id)
         if run_overview is None:
-            return None
+            raise ValueError(f"Run repository does not contain a run with id {run_id}.")
 
         example = self._dataset_repository.example(
             run_overview.dataset_id, example_id, input_type, expected_output_type
         )
+        if example is None:
+            return None
+
         example_output = self._run_repository.example_output(
             run_id, example_id, output_type
         )
+        if example_output is None:
+            return None
 
         return RunLineage(example=example, output=example_output)
 
-    def eval_single_example(
+    def evaluation_lineage(
         self,
-        eval_id: str,
+        evaluation_id: str,
         example_id: str,
         input_type: type[Input],
         expected_output_type: type[ExpectedOutput],
         output_type: type[Output],
         evaluation_type: type[Evaluation],
-    ) -> Sequence[EvalLineage[Input, ExpectedOutput, Output, Evaluation]] | None:
+    ) -> EvaluationLineage[Input, ExpectedOutput, Output, Evaluation] | None:
+        """Retrieves the :class:`EvaluationLineage` for the evaluation with id `evaluation_id` and example with id `example_id`.
 
-        eval_overview = self._eval_repository.evaluation_overview(eval_id)
+        Args:
+            evaluation_id: The id of the evaluation
+            example_id: The id of the example
+            input_type: The type of the input as defined by the :class:`Example`
+            expected_output_type: The type of the expected output as defined by the :class:`Example`
+            output_type: The type of the run output as defined by the :class:`Output`
+            evaluation_type: The type of the evaluation as defined by the :class:`Evaluation`
+
+        Returns:
+            The :class:`EvaluationLineage` for the given evaluation id and example id.
+            Returns `None` if the lineage is not complete because either an example, a run, or an evaluation does not exist.
+        """
+
+        if self._eval_repository is None:
+            raise ValueError("Evaluation Repository is not set, but required.")
+
+        eval_overview = self._eval_repository.evaluation_overview(evaluation_id)
         if eval_overview is None:
-            return None
+            raise ValueError(
+                f"Evaluation repository does not contain an evaluation with id {evaluation_id}."
+            )
 
         run_lineages = [
-            self.run_single_example(
+            self.run_lineage(
                 overview.id, example_id, input_type, expected_output_type, output_type
             )
             for overview in eval_overview.run_overviews
         ]
+        existing_run_lineages = [
+            lineage for lineage in run_lineages if lineage is not None
+        ]
+        if len(existing_run_lineages) == 0:
+            return None
 
         example_evaluation = self._eval_repository.example_evaluation(
-            eval_id, example_id, evaluation_type
+            evaluation_id, example_id, evaluation_type
         )
+        if example_evaluation is None:
+            return None
 
-        return EvalLineage(
-            example=example, output=example_output, evaluation=example_evaluation
+        return EvaluationLineage(
+            example=existing_run_lineages[0].example,
+            outputs=[lineage.output for lineage in existing_run_lineages],
+            evaluation=example_evaluation,
         )
