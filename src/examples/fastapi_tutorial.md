@@ -1,8 +1,8 @@
 # Tutorial: Extending a FastAPI App with the Aleph-Alpha Intelligence Layer
 
-In this tutorial, a basic [FastAPI](https://fastapi.tiangolo.com) app is extended with new route at which a summary for a given text can be retrieved, using the _Aleph-Alpha Intelligence Layer_, and it's _Luminous_ control models.
+In this tutorial, a basic [FastAPI](https://fastapi.tiangolo.com) app is extended with a new route at which a summary for a given text can be retrieved, using the _Aleph-Alpha Intelligence Layer_, and it's _Luminous_ control models.
 
-The full source code for this tutorial app can be found at the end and in [src/examples/fastapi_example.py](./fastapi_example.py).
+The full source code for this example app can be found at the end of this tutorial and in [src/examples/fastapi_example.py](./fastapi_example.py).
 
 ## Basic FastAPI App
 
@@ -26,12 +26,12 @@ This application can be started from the command line with the [Hypercorn](https
 hypercorn fastapi_example:app --bind localhost:8000
 ```
 
-In a successful run, you should see a message similar to
+If the start-up was successful, you should see a message similar to
 ```cmd
 [2024-03-07 14:00:55 +0100] [6468] [INFO] Running on http://<your ip>:8000 (CTRL + C to quit)
 ```
 
-Now that the server is running, we can make a `GET` request via `cURL`:
+Now that the server is running, we can perform a `GET` request via `cURL`:
 ```bash
 curl -X GET http://localhost:8000
 ```
@@ -40,21 +40,26 @@ You should get
 Hello World
 ```
 
-After successfully starting the basic FastAPI app, the next step is to add a route to make use of the Intelligence Layer.
+After successfully starting the basic FastAPI app, the next step is to add a route that makes use of the Intelligence Layer.
 
 ## Adding the Intelligence Layer to the application
 
-The building blocks of the Intelligence Layer for applications are `Tasks`. In general, a task implements the `Task` interface and defines an `Input` and an `Output`. Multiple tasks can be chained to create more complex applications.
-Here, we will make use of the pre-built task `SteerableSingleChunkSummarize` of the Intelligence Layer. This task defines as it's input the `SingleChunkSummarizeInput` class, and as it's output the `SummarizeOutput` class.
-As many other tasks, the `SteerableSingleChunkSummarize` task makes use of a `ControlModel`, and in turn, the `ControlModel` needs access to the Aleph-Alpha backend via a `AlephAlphaClientProtocol` client.
+The building blocks of the Intelligence Layer for applications are `Tasks`. In general, a task implements the `Task`
+interface and defines an `Input` and an `Output`. Multiple tasks can be chained to create more complex applications.
+Here, we will make use of the pre-built task `SteerableSingleChunkSummarize`. This task defines `SingleChunkSummarizeInput`
+as it's input, and `SummarizeOutput` as it's output.
+Like many other tasks, the `SteerableSingleChunkSummarize` task makes use of a `ControlModel`. The
+`ControlModel` itself needs access to the Aleph-Alpha backend via a `AlephAlphaClientProtocol` client.
 In short, the hierarchy is as follows:
 
 ![task_dependencies.drawio.svg](task_dependencies.drawio.svg)
 
 We make use of the built-in [Dependency Injection](https://fastapi.tiangolo.com/reference/dependencies/) of FastAPI to
-resolve this hierarchy automatically. In this framework, the defaults for parameters are dynamically created with the `Depends(func)` annotation, where `func` is a function that returns the default value.
+resolve this hierarchy automatically. In this framework, the defaults for the parameters are dynamically created with
+the `Depends(func)` annotation, where `func` is a function that returns the default value.
 
-So, first, we define our client-generating function. For that, we provide the host URL and a valid Aleph-Alpha token, which are stored in an `.env`-file.
+So, first, we define our client-generating function. For that, we provide the host URL and a valid Aleph-Alpha token,
+which are stored in an `.env`-file.
 
 ```python
 import os
@@ -71,7 +76,7 @@ def client() -> Client:
 ```
 
 Next, we create a `ControlModel`. In this case, we make use of the `LuminousControlModel`, which takes
-an `AlephAlphaClientProtocol` that we default to the previously defined `client`.
+an `AlephAlphaClientProtocol` that we let default to the previously defined `client`.
 
 ```python
 from typing import Annotated
@@ -84,9 +89,11 @@ def default_model(app_client: Annotated[AlephAlphaClientProtocol, Depends(client
 ```
 
 
-Finally, we create the actual `Task`. For our example, we choose the `SteerableSingleChunkSummarize` of the Intelligence Layer.
-The `Input` of this task is a `SingleChunkSummarizeInput`, which consists of the text to summarize as the field `chunk`, and the desired `Language` as the field `language`.
-The `Output` of this task is a `SummarizeOutput` and contains the `summary` as text, and number of generated tokens for the `summary` as the field `generated_tokens`.
+Finally, we create the actual `Task`. For our example, we choose the `SteerableSingleChunkSummarize`.
+The `Input` of this task is a `SingleChunkSummarizeInput`, consisting of the text to summarize as the `chunk` field,
+and the desired `Language` as the `language` field.
+The `Output` of this task is a `SummarizeOutput` and contains the `summary` as text,
+and number of generated tokens for the `summary` as the `generated_tokens` field.
 
 ```python
 from intelligence_layer.use_cases import SteerableSingleChunkSummarize
@@ -118,10 +125,11 @@ def summary_task_route(
     return task.run(input, NoOpTracer())
 ```
 
-This concludes the refactoring to add an Intelligence-Layer task to the FastAPI app. After restarting the server, we can call our endpoint via a command such as the following (`<your text here>` with the text you want to summarize):
+This concludes the addition of an Intelligence-Layer task to the FastAPI app. After restarting the server, we can call
+our newly created  endpoint via a command such as the following:
 ```bash
 
-curl -X POST http://localhost:8000/summary -H "Content-Type: application/json" -d '{"chunk": "<your text here>", "language": {"iso_639_1": "en"}}'
+curl -X POST http://localhost:8000/summary -H "Content-Type: application/json" -d '{"chunk": "<your text to summarize here>", "language": {"iso_639_1": "en"}}'
 ```
 
 ## Add Authorization to the Routes
@@ -129,9 +137,11 @@ curl -X POST http://localhost:8000/summary -H "Content-Type: application/json" -
 Typically, authorization is needed to control access to endpoints.
 Here, we will give a minimal example of how a per-route authorization system could be implemented in the minimal example app.
 
-The authorization system makes use of two parts: An `AuthService` that checks whether the user is allowed to access a given site, and a `PermissionsChecker` that is called on each route access and in turn calls the `AuthService`.
+The authorization system makes use of two parts: An `AuthService` that checks whether the user is allowed to access a
+given site, and a `PermissionsChecker` that is called on each route access and in turn calls the `AuthService`.
 
-For this minimal example, the `AuthService` is simply a stub. You will want to implement a concrete authorization service depending on your needs.
+For this minimal example, the `AuthService` is simply a stub. You will want to implement a concrete authorization service
+tailored to your needs.
 
 ```python
 from typing import Sequence
@@ -149,7 +159,10 @@ class AuthService:
         return True
 ```
 
-When the `PermissionsChecker` is created, `permissions` can be passed in to define which roles, e.g. "user" or "admin", are allowed to access which website. The `PermissionsChecker` implements the `__call__` function, so that it can be used as a function in the `dependencies` argument of each route via `Depends`, see extended definition of the `summary_task_route` further below.
+With this `PermissionsChecker`, `permissions` can be passed in to define which roles, e.g. "user" or "admin",
+are allowed to access which endpoints. The `PermissionsChecker` implements the `__call__` function, so that it can be
+used as a function in the `dependencies` argument of each route via `Depends`. For more details see the extended
+definition of the `summary_task_route` further below.
 
 ```python
 from fastapi import HTTPException, Request
