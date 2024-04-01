@@ -16,10 +16,10 @@ devDependencies:
     version: 8.4.1
   '@melt-ui/pp':
     specifier: ^0.3.0
-    version: 0.3.0(@melt-ui/svelte@0.76.2)(svelte@4.2.12)
+    version: 0.3.0(@melt-ui/svelte@0.76.3)(svelte@4.2.12)
   '@melt-ui/svelte':
-    specifier: ^0.76.2
-    version: 0.76.2(svelte@4.2.12)
+    specifier: ^0.76.3
+    version: 0.76.3(svelte@4.2.12)
   '@playwright/test':
     specifier: ^1.42.1
     version: 1.42.1
@@ -1872,7 +1872,7 @@ packages:
   /@internationalized/date@3.5.2:
     resolution: {integrity: sha512-vo1yOMUt2hzp63IutEaTUxROdvQg1qlMRsbCvbay2AK2Gai7wIgCyK5weEX3nHkiLgo4qCXHijFNC/ILhlRpOQ==}
     dependencies:
-      '@swc/helpers': 0.5.7
+      '@swc/helpers': 0.5.8
     dev: true
 
   /@isaacs/cliui@8.0.2:
@@ -1966,21 +1966,21 @@ packages:
       react: 18.2.0
     dev: true
 
-  /@melt-ui/pp@0.3.0(@melt-ui/svelte@0.76.2)(svelte@4.2.12):
+  /@melt-ui/pp@0.3.0(@melt-ui/svelte@0.76.3)(svelte@4.2.12):
     resolution: {integrity: sha512-b07Bdh8l2KcwKVCXOY+SoBw1dk9eWvQfMSi6SoacpRVyVmmfpi0kV4oGt3HYF0tUCB3sEmVicxse50ZzZxEzEA==}
     engines: {pnpm: '>=8.6.3'}
     peerDependencies:
       '@melt-ui/svelte': '>= 0.29.0'
       svelte: ^3.55.0 || ^4.0.0 || ^5.0.0-next.1
     dependencies:
-      '@melt-ui/svelte': 0.76.2(svelte@4.2.12)
+      '@melt-ui/svelte': 0.76.3(svelte@4.2.12)
       estree-walker: 3.0.3
       magic-string: 0.30.7
       svelte: 4.2.12
     dev: true
 
-  /@melt-ui/svelte@0.76.2(svelte@4.2.12):
-    resolution: {integrity: sha512-7SbOa11tXUS95T3fReL+dwDs5FyJtCEqrqG3inRziDws346SYLsxOQ6HmX+4BkIsQh1R8U3XNa+EMmdMt38lMA==}
+  /@melt-ui/svelte@0.76.3(svelte@4.2.12):
+    resolution: {integrity: sha512-fEtwHnOVLH0eNwtr+7pX5JQVtOL2XWVFA0/xrNU0yL6NkEpv++4NUwaaulGZC4nVmVG/gIA1JK2fx5M0u01TlA==}
     peerDependencies:
       svelte: '>=3 <5'
     dependencies:
@@ -3238,8 +3238,8 @@ packages:
       - supports-color
     dev: true
 
-  /@swc/helpers@0.5.7:
-    resolution: {integrity: sha512-BVvNZhx362+l2tSwSuyEUV4h7+jk9raNdoTSdLfwTshXJSaGmYKluGRJznziCI3KX02Z19DdsQrdfrpXAU3Hfg==}
+  /@swc/helpers@0.5.8:
+    resolution: {integrity: sha512-lruDGw3pnfM3wmZHeW7JuhkGQaJjPyiKjxeGhdmfoOT53Ic9qb5JLDNaK2HUdl1zLDeX28H221UvKjfdvSLVMg==}
     dependencies:
       tslib: 2.6.2
     dev: true

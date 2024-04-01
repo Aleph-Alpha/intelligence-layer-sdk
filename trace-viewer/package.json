@@ -4,7 +4,7 @@
 		"@codemirror/theme-one-dark": "^6.1.2",
 		"@faker-js/faker": "^8.4.1",
 		"@melt-ui/pp": "^0.3.0",
-		"@melt-ui/svelte": "^0.76.2",
+		"@melt-ui/svelte": "^0.76.3",
 		"@playwright/test": "^1.42.1",
 		"@storybook/addon-essentials": "^8.0.5",
 		"@storybook/addon-interactions": "^8.0.5",
