@@ -2,6 +2,7 @@ from datetime import datetime
 from typing import Generic, Optional, TypeVar
 
 from pydantic import BaseModel, SerializeAsAny
+from rich.tree import Tree
 
 from intelligence_layer.evaluation.run.domain import RunOverview
 
@@ -54,6 +55,13 @@ class ExampleEvaluation(BaseModel, Generic[Evaluation]):
             f"Example ID = {self.example_id}\n"
             f"Result = {self.result}\n"
         )
+
+    def _rich_render(self, skip_example_id: bool = False) -> Tree:
+        tree = Tree(f"Evaluation: {self.evaluation_id}")
+        if not skip_example_id:
+            tree.add(f"Example ID: {self.example_id}")
+        tree.add(str(self.result))
+        return tree
 
 
 class EvaluationOverview(BaseModel, frozen=True):

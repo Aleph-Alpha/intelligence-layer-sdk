@@ -85,6 +85,15 @@ from .evaluation.in_memory_evaluation_repository import (
 from .infrastructure.hugging_face_repository import (
     HuggingFaceRepository as HuggingFaceRepository,
 )
+from .infrastructure.repository_navigator import (
+    RepositoryNavigator as RepositoryNavigator,
+)
+from .infrastructure.repository_navigator import (
+    evaluation_lineages_to_pandas as evaluation_lineages_to_pandas,
+)
+from .infrastructure.repository_navigator import (
+    run_lineages_to_pandas as run_lineages_to_pandas,
+)
 from .run.domain import ExampleOutput as ExampleOutput
 from .run.domain import RunOverview as RunOverview
 from .run.domain import SuccessfulExampleOutput as SuccessfulExampleOutput

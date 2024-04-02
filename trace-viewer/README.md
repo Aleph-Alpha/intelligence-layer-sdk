@@ -1,6 +1,6 @@
 # Trace viewer
 
-The trace viewer uses svelte. The docs on how to run the trace viewer in docker can be found [here](../src/examples/how-tos/how_to_run_the_trace_viewer.ipynb).
+The trace viewer uses svelte. The docs on how to run the trace viewer in docker can be found [here](../src/examples/how_tos/how_to_run_the_trace_viewer.ipynb).
 If you want to run the trace viewer from source, see below.
 
 ## Development

@@ -2,6 +2,7 @@ from datetime import datetime
 from typing import Generic
 
 from pydantic import BaseModel
+from rich.tree import Tree
 
 from intelligence_layer.core.task import Output
 
@@ -48,6 +49,13 @@ class ExampleOutput(BaseModel, Generic[Output]):
             f"Related Run ID={self.run_id}\n"
             f'Output="{self.output}"\n'
         )
+
+    def _rich_render(self, skip_example_id: bool = False) -> Tree:
+        tree = Tree(f"Output: {self.run_id}")
+        if not skip_example_id:
+            tree.add(f"Example ID: {self.example_id}")
+        tree.add(str(self.output))
+        return tree
 
 
 class SuccessfulExampleOutput(BaseModel, Generic[Output]):

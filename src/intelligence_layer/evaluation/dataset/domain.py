@@ -2,6 +2,7 @@ from typing import Generic, TypeVar
 from uuid import uuid4
 
 from pydantic import BaseModel, Field
+from rich.tree import Tree
 
 from intelligence_layer.core.task import Input
 from intelligence_layer.core.tracer.tracer import PydanticSerializable
@@ -39,6 +40,12 @@ class Example(BaseModel, Generic[Input, ExpectedOutput]):
             f"Input = {self.input}\n"
             f'Expected output = "{self.expected_output}"\n'
         )
+
+    def _rich_render(self) -> Tree:
+        example_tree = Tree(f"Example: {self.id}")
+        example_tree.add("Input").add(str(self.input))
+        example_tree.add("Expected Output").add(str(self.expected_output))
+        return example_tree
 
 
 class Dataset(BaseModel):

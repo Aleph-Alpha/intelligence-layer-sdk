@@ -1,7 +1,7 @@
 from concurrent.futures import ThreadPoolExecutor
 from inspect import get_annotations
 from itertools import islice
-from typing import Generic, Optional, cast
+from typing import Generic, Iterable, Optional, cast
 from uuid import uuid4
 
 from pydantic import JsonValue
@@ -17,6 +17,10 @@ from intelligence_layer.core import (
 )
 from intelligence_layer.evaluation.dataset.dataset_repository import DatasetRepository
 from intelligence_layer.evaluation.dataset.domain import Example, ExpectedOutput
+from intelligence_layer.evaluation.infrastructure.repository_navigator import (
+    RepositoryNavigator,
+    RunLineage,
+)
 from intelligence_layer.evaluation.run.domain import (
     ExampleOutput,
     FailedExampleRun,
@@ -89,7 +93,7 @@ class Runner(Generic[Input, Output]):
         """
 
         def run(
-            example: Example[Input, ExpectedOutput]
+            example: Example[Input, ExpectedOutput],
         ) -> tuple[str, Output | FailedExampleRun]:
             evaluate_tracer = self._run_repository.example_tracer(run_id, example.id)
             if tracer:
@@ -103,7 +107,9 @@ class Runner(Generic[Input, Output]):
         # mypy does not like union types
 
         examples = self._dataset_repository.examples(
-            dataset_id, self.input_type(), JsonValue  # type: ignore
+            dataset_id,
+            self.input_type(),
+            JsonValue,  # type: ignore
         )
         if examples is None:
             raise ValueError(f"Dataset with id {dataset_id} not found")
@@ -137,3 +143,50 @@ class Runner(Generic[Input, Output]):
         )
         self._run_repository.store_run_overview(run_overview)
         return run_overview
+
+    def run_lineages(
+        self,
+        run_id: str,
+        expected_output_type: type[ExpectedOutput],
+    ) -> Iterable[RunLineage[Input, ExpectedOutput, Output]]:
+        """Wrapper for `RepositoryNagivator.run_lineages`.
+
+        Args:
+            run_id: The id of the run
+            expected_output_type: The type of the expected output as defined by the :class:`Example`
+
+        Returns:
+            An iterator over all :class:`RunLineage`s for the given run id.
+        """
+        navigator = RepositoryNavigator(self._dataset_repository, self._run_repository)
+        return navigator.run_lineages(
+            run_id=run_id,
+            input_type=self.input_type(),
+            expected_output_type=expected_output_type,
+            output_type=self.output_type(),
+        )
+
+    def run_lineage(
+        self,
+        run_id: str,
+        example_id: str,
+        expected_output_type: type[ExpectedOutput],
+    ) -> RunLineage[Input, ExpectedOutput, Output] | None:
+        """Wrapper for `RepositoryNagivator.run_lineage`.
+
+        Args:
+            run_id: The id of the run
+            example_id: The id of the example of interest
+            expected_output_type: The type of the expected output as defined by the :class:`Example`
+
+        Returns:
+            The :class:`RunLineage` for the given run id and example id, `None` if the example or an output for the example does not exist.
+        """
+        navigator = RepositoryNavigator(self._dataset_repository, self._run_repository)
+        return navigator.run_lineage(
+            run_id=run_id,
+            example_id=example_id,
+            input_type=self.input_type(),
+            expected_output_type=expected_output_type,
+            output_type=self.output_type(),
+        )
