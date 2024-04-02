@@ -35,12 +35,22 @@ class RunLineage(BaseModel, Generic[Input, ExpectedOutput, Output]):
 
 
 def run_lineages_to_pandas(
-    evaluation_lineages: Sequence[RunLineage[Input, ExpectedOutput, Output]]
+    run_lineages: Sequence[RunLineage[Input, ExpectedOutput, Output]]
 ) -> pd.DataFrame:
+    """Converts a sequence of `RunLineage` objects to a pandas `DataFrame`.
+    The `RunLineage` objects are stored in the column `"lineage"`.
+    The `DataFrame` is indexed by `(example_id, run_id)`.
+
+    Args:
+        run_lineages: The lineages to convert.
+
+    Returns:
+        A pandas `DataFrame` with the data contained in the `run_lineages`.
+    """
     df = pd.DataFrame(
         [
             vars(lineage.example) | vars(lineage.output) | {"lineage": lineage}
-            for lineage in evaluation_lineages
+            for lineage in run_lineages
         ]
     )
     df = df.drop(columns="id")
@@ -72,6 +82,17 @@ def evaluation_lineages_to_pandas(
         EvaluationLineage[Input, ExpectedOutput, Output, Evaluation]
     ]
 ) -> pd.DataFrame:
+    """Converts a sequence of `EvaluationLineage` objects to a pandas `DataFrame`.
+    The `EvaluationLineage` objects are stored in the column `"lineage"`.
+    The `DataFrame` is indexed by `(example_id, evaluation_id, run_id)`.
+    Each `output` of every lineage will contribute one row in the `DataFrame`.
+
+    Args:
+        evaluation_lineages: The lineages to convert.
+
+    Returns:
+        A pandas `DataFrame` with the data contained in the `evaluation_lineages`.
+    """
     df = pd.DataFrame(
         [
             vars(lineage.example)

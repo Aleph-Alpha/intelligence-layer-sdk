@@ -208,17 +208,17 @@ The how-tos are quick lookups about how to do things. Compared to the tutorials,
 | Tutorial                                                                            | Description                                                             |
 | ----------------------------------------------------------------------------------- | ----------------------------------------------------------------------- |
 | **Tasks** | ---|
-| [...define a task](./src/examples/how-tos/how_to_define_a_task.ipynb)               | How to come up with a new task and formulate it                         |
-| [...implement a task](./src/examples/how-tos/how_to_implement_a_task.ipynb)         | Implement a formulated task and make it run with the Intelligence Layer |
-| [...debug and log a task](./src/examples/how-tos/how_to_log_and_debug_a_task.ipynb) | Tools for logging and debugging in tasks                                |
-| [...run the trace viewer](./src/examples/how-tos/how_to_run_the_trace_viewer.ipynb) | Downloading and running the trace viewer for debugging traces           |
+| [...define a task](./src/examples/how_tos/how_to_define_a_task.ipynb)               | How to come up with a new task and formulate it                         |
+| [...implement a task](./src/examples/how_tos/how_to_implement_a_task.ipynb)         | Implement a formulated task and make it run with the Intelligence Layer |
+| [...debug and log a task](./src/examples/how_tos/how_to_log_and_debug_a_task.ipynb) | Tools for logging and debugging in tasks                                |
+| [...run the trace viewer](./src/examples/how_tos/how_to_run_the_trace_viewer.ipynb) | Downloading and running the trace viewer for debugging traces           |
 | **Analysis Pipeline** | ---|
-| [...implement a simple evaluation and aggregation logic](./src/examples/how-tos/how_to_implement_a_simple_evaluation_and_aggregation_logic.ipynb) | Basic examples of evaluation and aggregation logic
-| [...create a dataset](./src/examples/how-tos/how_to_create_a_dataset.ipynb) | Create a dataset used for running a task  |
-| [...run a task on a dataset](./src/examples/how-tos/how_to_run_a_task_on_a_dataset.ipynb) | Run a task on a whole dataset instead of single examples |
-| [...evaluate multiple runs](./src/examples/how-tos/how_to_evaluate_runs.ipynb) | Evaluate (multiple) runs in a single evaluation |
-| [...aggregate multiple evaluations](./src/examples/how-tos/how_to_aggregate_evaluations.ipynb) | Aggregate (multiple) evaluations in a single aggregation  |
-| [...implement a custom human evaluation](./src/examples/how-tos/how_to_human_evaluation_via_argilla.ipynb) | Necessary steps to create an evaluation with humans as a judge via Argilla |
+| [...implement a simple evaluation and aggregation logic](./src/examples/how_tos/how_to_implement_a_simple_evaluation_and_aggregation_logic.ipynb) | Basic examples of evaluation and aggregation logic
+| [...create a dataset](./src/examples/how_tos/how_to_create_a_dataset.ipynb) | Create a dataset used for running a task  |
+| [...run a task on a dataset](./src/examples/how_tos/how_to_run_a_task_on_a_dataset.ipynb) | Run a task on a whole dataset instead of single examples |
+| [...evaluate multiple runs](./src/examples/how_tos/how_to_evaluate_runs.ipynb) | Evaluate (multiple) runs in a single evaluation |
+| [...aggregate multiple evaluations](./src/examples/how_tos/how_to_aggregate_evaluations.ipynb) | Aggregate (multiple) evaluations in a single aggregation  |
+| [...implement a custom human evaluation](./src/examples/how_tos/how_to_human_evaluation_via_argilla.ipynb) | Necessary steps to create an evaluation with humans as a judge via Argilla |
 
 
 
