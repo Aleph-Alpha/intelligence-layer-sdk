@@ -41,10 +41,10 @@ class Example(BaseModel, Generic[Input, ExpectedOutput]):
             f'Expected output = "{self.expected_output}"\n'
         )
 
-    def _rich_render(self):
+    def _rich_render(self) -> Tree:
         example_tree = Tree(f"Example: {self.id}")
-        example_tree.add(f"Input").add(str(self.input))
-        example_tree.add(f"Expected Output").add(str(self.expected_output))
+        example_tree.add("Input").add(str(self.input))
+        example_tree.add("Expected Output").add(str(self.expected_output))
         return example_tree
 
 

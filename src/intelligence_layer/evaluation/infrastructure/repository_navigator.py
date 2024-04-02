@@ -24,16 +24,19 @@ class RunLineage(BaseModel, Generic[Input, ExpectedOutput, Output]):
     example: Example[Input, ExpectedOutput]
     output: ExampleOutput[Output]
 
-    def _ipython_display_(self):
+    def _rich_render(self) -> Tree:
         tree = Tree("Run Lineage")
         tree.add(self.example._rich_render())
         tree.add(self.output._rich_render(skip_example_id=True))
-        rich.print(tree)
+        return tree
+
+    def _ipython_display_(self) -> None:
+        rich.print(self._rich_render())
 
 
 def run_lineages_to_pandas(
     evaluation_lineages: Sequence[RunLineage[Input, ExpectedOutput, Output]]
-):
+) -> pd.DataFrame:
     df = pd.DataFrame(
         [
             vars(lineage.example) | vars(lineage.output) | {"lineage": lineage}
@@ -50,7 +53,7 @@ class EvaluationLineage(BaseModel, Generic[Input, ExpectedOutput, Output, Evalua
     outputs: Sequence[ExampleOutput[Output]]
     evaluation: ExampleEvaluation[Evaluation]
 
-    def _ipython_display_(self):
+    def _rich_render(self) -> Tree:
         tree = Tree("Run Lineage")
         tree.add(self.example._rich_render())
         output_tree = Tree("Outputs")
@@ -58,14 +61,17 @@ class EvaluationLineage(BaseModel, Generic[Input, ExpectedOutput, Output, Evalua
             output_tree.add(output._rich_render(skip_example_id=True))
         tree.add(output_tree)
         tree.add(self.evaluation._rich_render(skip_example_id=True))
-        rich.print(tree)
+        return tree
+
+    def _ipython_display_(self) -> None:
+        rich.print(self._rich_render())
 
 
 def evaluation_lineages_to_pandas(
     evaluation_lineages: Sequence[
         EvaluationLineage[Input, ExpectedOutput, Output, Evaluation]
     ]
-):
+) -> pd.DataFrame:
     df = pd.DataFrame(
         [
             vars(lineage.example)

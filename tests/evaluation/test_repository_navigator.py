@@ -4,36 +4,26 @@ import pytest
 from pydantic import BaseModel
 from pytest import fixture
 
-from intelligence_layer.core.task import Task
-from intelligence_layer.core.tracer.tracer import TaskSpan
-from intelligence_layer.evaluation.dataset.dataset_repository import DatasetRepository
-from intelligence_layer.evaluation.dataset.domain import Dataset, Example
-from intelligence_layer.evaluation.dataset.in_memory_dataset_repository import (
-    InMemoryDatasetRepository,
-)
-from intelligence_layer.evaluation.evaluation.domain import EvaluationOverview
-from intelligence_layer.evaluation.evaluation.evaluation_repository import (
-    EvaluationRepository,
-)
-from intelligence_layer.evaluation.evaluation.evaluator import (
+from intelligence_layer.core import Task, TaskSpan
+from intelligence_layer.evaluation import (
+    Dataset,
+    DatasetRepository,
     EvaluationLogic,
+    EvaluationOverview,
+    EvaluationRepository,
     Evaluator,
-)
-from intelligence_layer.evaluation.evaluation.in_memory_evaluation_repository import (
+    Example,
+    InMemoryDatasetRepository,
     InMemoryEvaluationRepository,
-)
-from intelligence_layer.evaluation.infrastructure.repository_navigator import (
-    RepositoryNavigator,
-)
-from intelligence_layer.evaluation.run.domain import (
-    RunOverview,
-    SuccessfulExampleOutput,
-)
-from intelligence_layer.evaluation.run.in_memory_run_repository import (
     InMemoryRunRepository,
+    RepositoryNavigator,
+    Runner,
+    RunOverview,
+    RunRepository,
+    SuccessfulExampleOutput,
+    evaluation_lineages_to_pandas,
+    run_lineages_to_pandas,
 )
-from intelligence_layer.evaluation.run.run_repository import RunRepository
-from intelligence_layer.evaluation.run.runner import Runner
 
 
 class DummyExample(Example[str, str]):
@@ -110,22 +100,22 @@ def additional_run_overview(
 
 
 @fixture
-def eval_repository() -> EvaluationRepository:
+def evaluation_repository() -> EvaluationRepository:
     return InMemoryEvaluationRepository()
 
 
 @fixture
-def eval_overview(
+def evaluation_overview(
     dataset_repository: DatasetRepository,
     run_repository: RunRepository,
-    eval_repository: EvaluationRepository,
+    evaluation_repository: EvaluationRepository,
     run_overview: RunOverview,
     additional_run_overview: RunOverview,
 ) -> EvaluationOverview:
     return Evaluator(
         dataset_repository,
         run_repository,
-        eval_repository,
+        evaluation_repository,
         "Evaluator",
         DummyEvalLogic(),
     ).evaluate_runs(run_overview.id, additional_run_overview.id)
@@ -135,9 +125,11 @@ def eval_overview(
 def repository_navigator(
     dataset_repository: DatasetRepository,
     run_repository: RunRepository,
-    eval_repository: EvaluationRepository,
+    evaluation_repository: EvaluationRepository,
 ) -> RepositoryNavigator:
-    return RepositoryNavigator(dataset_repository, run_repository, eval_repository)
+    return RepositoryNavigator(
+        dataset_repository, run_repository, evaluation_repository
+    )
 
 
 def test_works_on_run_overviews(
@@ -157,12 +149,12 @@ def test_works_on_run_overviews(
 
 def test_works_on_evaluation(
     repository_navigator: RepositoryNavigator,
-    eval_overview: EvaluationOverview,
+    evaluation_overview: EvaluationOverview,
 ) -> None:
     # when
     res = list(
         repository_navigator.evaluation_lineages(
-            eval_overview.id, str, str, str, DummyEval
+            evaluation_overview.id, str, str, str, DummyEval
         )
     )
 
@@ -208,11 +200,11 @@ def test_get_run_lineage_for_single_example(
 def test_get_eval_lineage_for_single_example(
     examples: Sequence[DummyExample],
     repository_navigator: RepositoryNavigator,
-    eval_overview: EvaluationOverview,
+    evaluation_overview: EvaluationOverview,
 ) -> None:
     # when
     res = repository_navigator.evaluation_lineage(
-        eval_overview.id, examples[0].id, str, str, str, DummyEval
+        evaluation_overview.id, examples[0].id, str, str, str, DummyEval
     )
 
     # Then
@@ -238,10 +230,10 @@ def test_get_run_lineage_for_non_existent_example_returns_none(
 
 def test_get_eval_lineage_for_non_existent_example_returns_none(
     repository_navigator: RepositoryNavigator,
-    eval_overview: EvaluationOverview,
+    evaluation_overview: EvaluationOverview,
 ) -> None:
     res = repository_navigator.evaluation_lineage(
-        eval_overview.id, "non-existent-id", str, str, str, DummyEval
+        evaluation_overview.id, "non-existent-id", str, str, str, DummyEval
     )
 
     assert res is None
@@ -263,21 +255,72 @@ def test_get_eval_lineage_for_non_existent_eval_id_returns_none(
         )
 
 
-def test_run_lineage_tree_view() -> None:
-    # TODO
-    ...
+def test_smoke_run_lineage_tree_view(
+    repository_navigator: RepositoryNavigator,
+    run_overview: RunOverview,
+) -> None:
+    for lineage in repository_navigator.run_lineages(run_overview.id, str, str, str):
+        lineage._rich_render()
 
 
-def test_evaluation_lineage_tree_view() -> None:
-    # TODO
-    ...
+def test_smoke_evaluation_lineage_tree_view(
+    repository_navigator: RepositoryNavigator,
+    evaluation_overview: EvaluationOverview,
+) -> None:
+    for lineage in repository_navigator.evaluation_lineages(
+        evaluation_overview.id, str, str, str, DummyEval
+    ):
+        lineage._rich_render()
 
 
-def test_run_lineages_to_pandas() -> None:
-    # TODO
-    ...
+def test_run_lineages_to_pandas(
+    repository_navigator: RepositoryNavigator,
+    run_overview: RunOverview,
+) -> None:
+    # Given
+    lineages = list(repository_navigator.run_lineages(run_overview.id, str, str, str))
+    lineages.sort(key=lambda lineage: (lineage.example.id, lineage.output.run_id))
+
+    # When
+    df = run_lineages_to_pandas(lineages).reset_index()
+    # df.sort_index(inplace=True)
+
+    # Then
+    assert [lineage.example.id for lineage in lineages] == df["example_id"].to_list()
+    assert [lineage.output.run_id for lineage in lineages] == df["run_id"].to_list()
+    assert [lineage.example.input for lineage in lineages] == df["input"].to_list()
+    assert [lineage.example.expected_output for lineage in lineages] == df[
+        "expected_output"
+    ].to_list()
+    assert [lineage.output.output for lineage in lineages] == df["output"].to_list()
+    assert lineages == df["lineage"].to_list()
 
 
-def test_evaluation_lineages_to_pandas() -> None:
-    # TODO
-    ...
+def test_evaluation_lineages_to_pandas(
+    repository_navigator: RepositoryNavigator,
+    evaluation_overview: EvaluationOverview,
+) -> None:
+    # Given
+    lineages = list(
+        repository_navigator.evaluation_lineages(
+            evaluation_overview.id, str, str, str, DummyEval
+        )
+    )
+
+    # When
+    df = evaluation_lineages_to_pandas(lineages)
+
+    # Then
+    count = 0
+    for lineage in lineages:
+        for output in lineage.outputs:
+            row = df.loc[
+                lineage.example.id, lineage.evaluation.evaluation_id, output.run_id  # type: ignore
+            ]
+            assert lineage.example.input == row.input
+            assert lineage.example.expected_output == row.expected_output
+            assert output.output == row.output
+            assert lineage == row.lineage
+            count += 1
+
+    assert count == len(df)

@@ -50,7 +50,7 @@ class ExampleOutput(BaseModel, Generic[Output]):
             f'Output="{self.output}"\n'
         )
 
-    def _rich_render(self, skip_example_id: bool = False):
+    def _rich_render(self, skip_example_id: bool = False) -> Tree:
         tree = Tree(f"Output: {self.run_id}")
         if not skip_example_id:
             tree.add(f"Example ID: {self.example_id}")

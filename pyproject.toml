@@ -53,6 +53,7 @@ sphinx = "^7.2.6"
 pylama = { extras = ["all", "toml"], version = "^8.4.1" }
 faker = "^24.4.0"
 hypercorn = "0.16.0"
+pandas-stubs = "^2.2.1.240316"
 
 [tool.mypy]
 files = "src,tests"
