@@ -78,14 +78,18 @@ def run_repository() -> RunRepository:
 
 
 @fixture
+def runner(
+    dataset_repository: DatasetRepository, run_repository: RunRepository
+) -> Runner[str, str]:
+    return Runner(DummyTask(), dataset_repository, run_repository, "Runner")
+
+
+@fixture
 def run_overview(
-    dataset_repository: DatasetRepository,
-    run_repository: RunRepository,
+    runner: Runner[str, str],
     dataset: Dataset,
 ) -> RunOverview:
-    return Runner(
-        DummyTask(), dataset_repository, run_repository, "Runner"
-    ).run_dataset(dataset.id)
+    return runner.run_dataset(dataset.id)
 
 
 @fixture
@@ -105,20 +109,27 @@ def evaluation_repository() -> EvaluationRepository:
 
 
 @fixture
-def evaluation_overview(
+def evaluator(
     dataset_repository: DatasetRepository,
     run_repository: RunRepository,
     evaluation_repository: EvaluationRepository,
-    run_overview: RunOverview,
-    additional_run_overview: RunOverview,
-) -> EvaluationOverview:
+) -> Evaluator[str, str, str, DummyEval]:
     return Evaluator(
         dataset_repository,
         run_repository,
         evaluation_repository,
         "Evaluator",
         DummyEvalLogic(),
-    ).evaluate_runs(run_overview.id, additional_run_overview.id)
+    )
+
+
+@fixture
+def evaluation_overview(
+    evaluator: Evaluator[str, str, str, DummyEval],
+    run_overview: RunOverview,
+    additional_run_overview: RunOverview,
+) -> EvaluationOverview:
+    return evaluator.evaluate_runs(run_overview.id, additional_run_overview.id)
 
 
 @fixture
@@ -147,6 +158,21 @@ def test_works_on_run_overviews(
         assert res[i].output.output == f"input{i} -> output"
 
 
+def test_works_run_lineages_work_with_runner(
+    runner: Runner[str, str],
+    run_overview: RunOverview,
+) -> None:
+    # when
+    res = runner.run_lineages(run_overview.id, str)
+
+    # then
+    res = sorted(res, key=lambda result: result.example.input)
+    for i in range(2):
+        assert res[i].example.input == f"input{i}"
+        assert res[i].example.expected_output == f"expected_output{i}"
+        assert res[i].output.output == f"input{i} -> output"
+
+
 def test_works_on_evaluation(
     repository_navigator: RepositoryNavigator,
     evaluation_overview: EvaluationOverview,
@@ -157,6 +183,25 @@ def test_works_on_evaluation(
             evaluation_overview.id, str, str, str, DummyEval
         )
     )
+
+    # then
+    res = sorted(res, key=lambda result: result.example.input)
+    for i in range(2):
+        assert res[i].example.input == f"input{i}"
+        assert res[i].example.expected_output == f"expected_output{i}"
+        assert len(res[i].outputs) == 2
+        assert res[i].outputs[0].output == f"input{i} -> output"
+        eval_result = res[i].evaluation.result
+        assert isinstance(eval_result, DummyEval)
+        assert eval_result.eval.startswith(f"input{i}")
+
+
+def test_works_evaluation_lineages_work_with_evaluator(
+    evaluator: Evaluator[str, str, str, DummyEval],
+    evaluation_overview: EvaluationOverview,
+) -> None:
+    # when
+    res = list(evaluator.evaluation_lineages(evaluation_overview.id))
 
     # then
     res = sorted(res, key=lambda result: result.example.input)
@@ -197,6 +242,20 @@ def test_get_run_lineage_for_single_example(
     assert res.output.output == "input0 -> output"
 
 
+def test_get_run_lineage_for_single_example_works_with_runner(
+    examples: Sequence[DummyExample],
+    runner: Runner[str, str],
+    run_overview: RunOverview,
+) -> None:
+    # when
+    res = runner.run_lineage(run_overview.id, examples[0].id, str)
+
+    # Then
+    assert res is not None
+    assert res.example.input == "input0"
+    assert res.output.output == "input0 -> output"
+
+
 def test_get_eval_lineage_for_single_example(
     examples: Sequence[DummyExample],
     repository_navigator: RepositoryNavigator,
@@ -206,6 +265,24 @@ def test_get_eval_lineage_for_single_example(
     res = repository_navigator.evaluation_lineage(
         evaluation_overview.id, examples[0].id, str, str, str, DummyEval
     )
+
+    # Then
+    assert res is not None
+    assert res.example.input == "input0"
+    assert res.outputs[0].output == "input0 -> output"
+    assert len(res.outputs) == 2
+    eval_result = res.evaluation.result
+    assert isinstance(eval_result, DummyEval)
+    assert eval_result.eval.startswith("input0")
+
+
+def test_get_eval_lineage_for_single_example_works_with_evaluator(
+    examples: Sequence[DummyExample],
+    evaluator: Evaluator[str, str, str, DummyEval],
+    evaluation_overview: EvaluationOverview,
+) -> None:
+    # when
+    res = evaluator.evaluation_lineage(evaluation_overview.id, examples[0].id)
 
     # Then
     assert res is not None

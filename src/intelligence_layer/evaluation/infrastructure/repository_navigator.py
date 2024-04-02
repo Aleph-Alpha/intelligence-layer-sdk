@@ -249,7 +249,7 @@ class RepositoryNavigator:
 
         Args:
             evaluation_id: The id of the evaluation
-            example_id: The id of the example
+            example_id: The id of the example of interest
             input_type: The type of the input as defined by the :class:`Example`
             expected_output_type: The type of the expected output as defined by the :class:`Example`
             output_type: The type of the run output as defined by the :class:`Output`

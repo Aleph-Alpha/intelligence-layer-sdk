@@ -29,6 +29,10 @@ from intelligence_layer.evaluation.evaluation.domain import (
 from intelligence_layer.evaluation.evaluation.evaluation_repository import (
     EvaluationRepository,
 )
+from intelligence_layer.evaluation.infrastructure.repository_navigator import (
+    EvaluationLineage,
+    RepositoryNavigator,
+)
 from intelligence_layer.evaluation.run.domain import (
     ExampleOutput,
     FailedExampleRun,
@@ -373,4 +377,51 @@ class Evaluator(Generic[Input, Output, ExpectedOutput, Evaluation]):
             ExampleEvaluation(
                 evaluation_id=evaluation_id, example_id=example.id, result=result
             )
+        )
+
+    def evaluation_lineages(
+        self, evaluation_id: str
+    ) -> Iterable[EvaluationLineage[Input, ExpectedOutput, Output, Evaluation]]:
+        """Wrapper for `RepositoryNagivator.evaluation_lineages`.
+
+        Args:
+            evaluation_id: The id of the evaluation
+
+        Returns:
+            An iterator over all :class:`EvaluationLineage`s for the given evaluation id.
+        """
+        navigator = RepositoryNavigator(
+            self._dataset_repository, self._run_repository, self._evaluation_repository
+        )
+        return navigator.evaluation_lineages(
+            evaluation_id=evaluation_id,
+            input_type=self.input_type(),
+            expected_output_type=self.expected_output_type(),
+            output_type=self.output_type(),
+            evaluation_type=self.evaluation_type(),
+        )
+
+    def evaluation_lineage(
+        self, evaluation_id: str, example_id: str
+    ) -> EvaluationLineage[Input, ExpectedOutput, Output, Evaluation] | None:
+        """Wrapper for `RepositoryNagivator.evaluation_lineage`.
+
+        Args:
+            evaluation_id: The id of the evaluation
+            example_id: The id of the example of interest
+
+        Returns:
+            The :class:`EvaluationLineage` for the given evaluation id and example id.
+            Returns `None` if the lineage is not complete because either an example, a run, or an evaluation does not exist.
+        """
+        navigator = RepositoryNavigator(
+            self._dataset_repository, self._run_repository, self._evaluation_repository
+        )
+        return navigator.evaluation_lineage(
+            evaluation_id=evaluation_id,
+            example_id=example_id,
+            input_type=self.input_type(),
+            expected_output_type=self.expected_output_type(),
+            output_type=self.output_type(),
+            evaluation_type=self.evaluation_type(),
         )
