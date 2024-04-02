@@ -1,3 +1,4 @@
+import warnings
 from collections import defaultdict
 from typing import Iterable, Mapping, NewType, Sequence
 
@@ -67,20 +68,6 @@ class SingleLabelClassifyEvaluation(BaseModel):
     predicted: str
     expected: str
     expected_label_missing: bool
-
-
-class PerformanceScores(BaseModel):
-    """The relevant metrics resulting from a confusion matrix in a classification run.
-
-    Attributes:
-        precision: Proportion of correctly predicted classes to all predicted classes.
-        recall: Proportion of correctly predicted classes to all expected classes.
-        f1: Aggregated performance, formally the harmonic mean of precision and recall.
-    """
-
-    precision: float
-    recall: float
-    f1: float
 
 
 class AggregatedLabelInfo(BaseModel):
@@ -154,6 +141,10 @@ class SingleLabelClassifyEvaluationLogic(
         sorted_classes = sorted(
             output.scores.items(), key=lambda item: item[1], reverse=True
         )
+        if example.expected_output not in example.input.labels:
+            warn_message = f"[WARNING] Example with ID '{example.id}' has expected label '{example.expected_output}', which is not part of the example's input labels."
+            warnings.warn(warn_message, RuntimeWarning)
+
         predicted = sorted_classes[0][0]
         if predicted == example.expected_output:
             correct = True
@@ -183,6 +174,20 @@ class MultiLabelClassifyEvaluation(BaseModel):
     fn: frozenset[str]
 
 
+class MultiLabelClassifyMetrics(BaseModel):
+    """The relevant metrics resulting from a confusion matrix in a classification run.
+
+    Attributes:
+        precision: Proportion of correctly predicted classes to all predicted classes.
+        recall: Proportion of correctly predicted classes to all expected classes.
+        f1: Aggregated performance, formally the harmonic mean of precision and recall.
+    """
+
+    precision: float
+    recall: float
+    f1: float
+
+
 class AggregatedMultiLabelClassifyEvaluation(BaseModel):
     """The aggregated evaluation of a multi-label classify dataset.
 
@@ -193,9 +198,9 @@ class AggregatedMultiLabelClassifyEvaluation(BaseModel):
 
     """
 
-    class_metrics: Mapping[str, PerformanceScores]
-    micro_avg: PerformanceScores
-    macro_avg: PerformanceScores
+    class_metrics: Mapping[str, MultiLabelClassifyMetrics]
+    micro_avg: MultiLabelClassifyMetrics
+    macro_avg: MultiLabelClassifyMetrics
 
 
 class MultiLabelClassifyAggregationLogic(
@@ -243,7 +248,7 @@ class MultiLabelClassifyAggregationLogic(
                 else 0
             )
 
-            class_metrics[label] = PerformanceScores(
+            class_metrics[label] = MultiLabelClassifyMetrics(
                 precision=precision, recall=recall, f1=f1
             )
 
@@ -255,19 +260,19 @@ class MultiLabelClassifyAggregationLogic(
             sum_f1 += f1
 
         try:
-            micro_avg = PerformanceScores(
+            micro_avg = MultiLabelClassifyMetrics(
                 precision=sum_tp / (sum_tp + sum_fp),
                 recall=sum_tp / (sum_tp + sum_fn),
                 f1=(2 * (sum_tp / (sum_tp + sum_fp)) * (sum_tp / (sum_tp + sum_fn)))
                 / ((sum_tp / (sum_tp + sum_fp)) + (sum_tp / (sum_tp + sum_fn))),
             )
         except ZeroDivisionError:
-            micro_avg = PerformanceScores(
+            micro_avg = MultiLabelClassifyMetrics(
                 precision=0,
                 recall=0,
                 f1=0,
             )
-        macro_avg = PerformanceScores(
+        macro_avg = MultiLabelClassifyMetrics(
             precision=sum_precision / len(class_metrics),
             recall=sum_recall / len(class_metrics),
             f1=sum_f1 / len(class_metrics),
