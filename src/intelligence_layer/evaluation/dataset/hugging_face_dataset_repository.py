@@ -50,24 +50,24 @@ class HuggingFaceDatasetRepository(HuggingFaceRepository, FileSystemDatasetRepos
         self._repository_id = repository_id
         self._file_system = file_system  # for better type checks
 
-    def create_dataset(
-        self,
-        examples: Iterable[Example[Input, ExpectedOutput]],
-        dataset_name: str,
-        id: str | None = None,
-    ) -> Dataset:
-        failures = 0
-        exception = None
-        while failures < 5:
-            try:
-                dataset = super().create_dataset(examples, dataset_name, id)
-                return dataset
-            except Exception as e:
-                exception = typing.cast(HfHubHTTPError, e)
-            failures += 1
-            print(f"Failure {failures}")
-            time.sleep(0.5)
-        raise exception  # RuntimeError("Cannot create dataset on Huggingface.")
+    # def create_dataset(
+    #     self,
+    #     examples: Iterable[Example[Input, ExpectedOutput]],
+    #     dataset_name: str,
+    #     id: str | None = None,
+    # ) -> Dataset:
+    #     failures = 0
+    #     exception = None
+    #     while failures < 5:
+    #         try:
+    #             dataset = super().create_dataset(examples, dataset_name, id)
+    #             return dataset
+    #         except Exception as e:
+    #             exception = typing.cast(HfHubHTTPError, e)
+    #         failures += 1
+    #         print(f"Failure {failures}")
+    #         time.sleep(0.5)
+    #     raise exception  # RuntimeError("Cannot create dataset on Huggingface.")
 
     def delete_repository(self) -> None:
         huggingface_hub.delete_repo(
