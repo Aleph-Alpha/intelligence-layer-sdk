@@ -1,5 +1,6 @@
 from typing import Generic, Iterable, Optional, TypeVar
 
+import pytest
 from pydantic import BaseModel
 from pytest import fixture
 
@@ -115,15 +116,6 @@ class DummyTaskWithoutTypeHints(Task[str, str]):
     # type hint for return value missing on purpose for testing
     def do_run(self, input: str, tracer: Tracer):  # type: ignore
         return input
-
-
-@fixture
-def sequence_examples() -> Iterable[Example[str, None]]:
-    return [
-        Example(input="success", expected_output=None, id="example-1"),
-        Example(input=FAIL_IN_TASK_INPUT, expected_output=None, id="example-2"),
-        Example(input=FAIL_IN_EVAL_INPUT, expected_output=None, id="example-3"),
-    ]
 
 
 @fixture
@@ -253,6 +245,20 @@ def test_eval_and_aggregate_runs_returns_generic_statistics(
     assert next(iter(aggregation_overview.run_overviews())).dataset_id == dataset_id
     assert aggregation_overview.successful_evaluation_count == 1
     assert aggregation_overview.failed_evaluation_count == 2
+
+
+def test_evaluator_aborts_on_error(
+    dummy_evaluator: Evaluator[str, str, None, DummyEvaluation],
+    dummy_aggregator: Aggregator[
+        DummyEvaluation, DummyAggregatedEvaluationWithResultList
+    ],
+    dummy_runner: Runner[str, str],
+    dataset_id: str,
+) -> None:
+    run_overview = dummy_runner.run_dataset(dataset_id)
+
+    with pytest.raises(RuntimeError):
+        dummy_evaluator.evaluate_runs(run_overview.id, abort_on_error=True)
 
 
 def test_eval_and_aggregate_runs_uses_passed_tracer(

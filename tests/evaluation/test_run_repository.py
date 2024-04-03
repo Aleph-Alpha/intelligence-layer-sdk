@@ -304,11 +304,11 @@ def test_successful_example_outputs_returns_only_successful_examples(
         ExampleOutput(run_id=run_overview.id, example_id="2", output=None)
     )
 
-    failed_outputs = list(
+    successful_outputs = list(
         run_repository.successful_example_outputs(
             run_id=run_overview.id, output_type=type(None)
         )
     )
 
-    assert len(failed_outputs) == 1
-    assert failed_outputs[0].example_id == "2"
+    assert len(successful_outputs) == 1
+    assert successful_outputs[0].example_id == "2"

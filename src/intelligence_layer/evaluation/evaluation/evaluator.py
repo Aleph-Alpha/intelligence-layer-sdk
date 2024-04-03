@@ -1,3 +1,4 @@
+import typing
 from abc import ABC, abstractmethod
 from concurrent.futures import ThreadPoolExecutor
 from functools import lru_cache
@@ -297,7 +298,7 @@ class Evaluator(Generic[Input, Output, ExpectedOutput, Evaluation]):
             current_example = 0
             for example_outputs in examples_zipped:
                 successful_example_outputs = [
-                    output
+                    typing.cast(SuccessfulExampleOutput[Output], output)
                     for output in example_outputs
                     if not isinstance(output.output, FailedExampleRun)
                 ]
@@ -324,31 +325,19 @@ class Evaluator(Generic[Input, Output, ExpectedOutput, Evaluation]):
                 yield (
                     example,
                     eval_id,
-                    [
-                        SuccessfulExampleOutput(
-                            run_id=example_output.run_id,
-                            example_id=example_output.example_id,
-                            output=example_output.output,
-                        )
-                        for example_output in successful_example_outputs
-                        if not isinstance(example_output.output, FailedExampleRun)
-                    ],
+                    successful_example_outputs,
                 )
 
-        def evaluate(
-            args: Tuple[
-                Example[Input, ExpectedOutput],
-                str,
-                Sequence[SuccessfulExampleOutput[Output]],
-            ],
-        ) -> None:
-            example, eval_id, example_outputs = args
-            self.evaluate(example, eval_id, abort_on_error, *example_outputs)
-
         with ThreadPoolExecutor(max_workers=10) as executor:
-            tqdm(
-                executor.map(evaluate, generate_evaluation_inputs()),
-                desc="Evaluating",
+            list(  # the list is needed to consume the iterator returned from the executor.map
+                tqdm(
+                    executor.map(
+                        lambda args: self.evaluate(
+                            args[0], args[1], abort_on_error, *args[2]
+                        ),
+                        generate_evaluation_inputs(),
+                    )
+                )
             )
 
         partial_overview = EvaluationOverview(
