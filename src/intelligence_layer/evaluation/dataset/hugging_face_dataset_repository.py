@@ -1,10 +1,18 @@
+import time
 from pathlib import Path
-from typing import Optional
+from typing import Iterable, Optional
+from uuid import uuid4
 
 import huggingface_hub  # type: ignore
 from huggingface_hub import HfFileSystem, create_repo
+from huggingface_hub.utils import HfHubHTTPError  # type: ignore
 
-from intelligence_layer.evaluation.dataset.domain import Dataset
+from intelligence_layer.core.task import Input
+from intelligence_layer.evaluation.dataset.domain import (
+    Dataset,
+    Example,
+    ExpectedOutput,
+)
 from intelligence_layer.evaluation.dataset.file_dataset_repository import (
     FileSystemDatasetRepository,
 )
@@ -41,6 +49,29 @@ class HuggingFaceDatasetRepository(HuggingFaceRepository, FileSystemDatasetRepos
 
         self._repository_id = repository_id
         self._file_system = file_system  # for better type checks
+
+    # This function retries to create a dataset because it sometimes fails for unknown reasons.
+    def create_dataset(
+        self,
+        examples: Iterable[Example[Input, ExpectedOutput]],
+        dataset_name: str,
+        id: str | None = None,
+    ) -> Dataset:
+        failures = 0
+        exception = None
+        _id = id or str(uuid4())
+        while failures < 5:
+            try:
+                dataset = super().create_dataset(examples, dataset_name, _id)
+                return dataset
+            except HfHubHTTPError as e:
+                exception = e
+            failures += 1
+            print(f"Failure {failures}")
+            time.sleep(0.5)
+
+        assert exception is not None
+        raise exception
 
     def delete_repository(self) -> None:
         huggingface_hub.delete_repo(
