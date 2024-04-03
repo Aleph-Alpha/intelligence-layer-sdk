@@ -75,6 +75,7 @@ class Runner(Generic[Input, Output]):
         dataset_id: str,
         tracer: Optional[Tracer] = None,
         num_examples: Optional[int] = None,
+        abort_on_error: bool = False,
     ) -> RunOverview:
         """Generates all outputs for the provided dataset.
 
@@ -86,6 +87,7 @@ class Runner(Generic[Input, Output]):
             tracer: An optional :class:`Tracer` to trace all the runs from each example
             num_examples: An optional int to specify how many examples from the dataset should be run.
                 Always the first n examples will be taken.
+            abort_on_error: Flag to abort all run when an error occurs. Defaults to False.
 
         Returns:
             An overview of the run. Outputs will not be returned but instead stored in the
@@ -101,7 +103,11 @@ class Runner(Generic[Input, Output]):
             try:
                 return example.id, self._task.run(example.input, evaluate_tracer)
             except Exception as e:
-                print(e)
+                if abort_on_error:
+                    raise e
+                print(
+                    f'FAILED RUN: example {example.id}, {type(e).__qualname__}: "{e}"'
+                )
                 return example.id, FailedExampleRun.from_exception(e)
 
         # mypy does not like union types

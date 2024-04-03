@@ -1,3 +1,4 @@
+import traceback
 from datetime import datetime
 from typing import Generic
 
@@ -18,7 +19,9 @@ class FailedExampleRun(BaseModel):
 
     @staticmethod
     def from_exception(exception: Exception) -> "FailedExampleRun":
-        return FailedExampleRun(error_message=f"{type(exception)}: {str(exception)}")
+        return FailedExampleRun(
+            error_message=f"{type(exception)}: {str(exception)}\n{traceback.format_exc()}"
+        )
 
 
 class ExampleOutput(BaseModel, Generic[Output]):
