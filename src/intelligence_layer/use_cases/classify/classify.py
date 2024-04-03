@@ -84,9 +84,8 @@ class PerformanceScores(BaseModel):
 
 
 class AggregatedLabelInfo(BaseModel):
-    scores: PerformanceScores
-    expected_share: float
-    actual_share: float
+    expected_count: int
+    predicted_count: int
 
 
 class AggregatedSingleLabelClassifyEvaluation(BaseModel):
@@ -94,14 +93,12 @@ class AggregatedSingleLabelClassifyEvaluation(BaseModel):
 
     Attributes:
         percentage_correct: Percentage of answers that were considered to be correct.
-        js_divergence: Divergence between expected and predicted distributions ().
         confusion_matrix: How often each label was confused with each other.
         by_label: Each label along with a couple aggregated statistics.
         missing_labels: Each label missing from the results accompanied by the missing count.
     """
 
     percentage_correct: float
-    js_divergence: float
     confusion_matrix: Mapping[tuple[str, str], int]
     by_label: Mapping[str, AggregatedLabelInfo]
     missing_labels: Mapping[str, int]
@@ -118,7 +115,7 @@ class SingleLabelClassifyAggregationLogic(
         acc = MeanAccumulator()
         missing_labels: dict[str, int] = defaultdict(int)
         confusion_matrix: dict[tuple[str, str], int] = defaultdict(int)
-        by_label: dict[str, Mapping[str, int]] = defaultdict(lambda: defaultdict(int))
+        by_label: dict[str, dict[str, int]] = defaultdict(lambda: defaultdict(int))
         for evaluation in evaluations:
             acc.add(1.0 if evaluation.correct else 0.0)
             if evaluation.expected_label_missing:

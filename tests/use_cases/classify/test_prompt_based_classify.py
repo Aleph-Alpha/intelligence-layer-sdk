@@ -54,7 +54,7 @@ def classify_evaluator(
 ) -> Evaluator[
     ClassifyInput,
     SingleLabelClassifyOutput,
-    Sequence[str],
+    str,
     SingleLabelClassifyEvaluation,
 ]:
     return Evaluator(
@@ -197,7 +197,7 @@ def test_can_evaluate_classify(
             chunk=TextChunk("This is good"),
             labels=frozenset({"positive", "negative"}),
         ),
-        expected_output=["positive"],
+        expected_output="positive",
     )
 
     dataset_id = in_memory_dataset_repository.create_dataset(
@@ -230,20 +230,20 @@ def test_can_aggregate_evaluations(
     in_memory_dataset_repository: InMemoryDatasetRepository,
     classify_runner: Runner[ClassifyInput, SingleLabelClassifyOutput],
 ) -> None:
-    positive_lst: Sequence[str] = ["positive"]
+    positive: str = "positive"
     correct_example = Example(
         input=ClassifyInput(
             chunk=TextChunk("This is good"),
             labels=frozenset({"positive", "negative"}),
         ),
-        expected_output=positive_lst,
+        expected_output=positive,
     )
     incorrect_example = Example(
         input=ClassifyInput(
             chunk=TextChunk("This is extremely bad"),
             labels=frozenset({"positive", "negative"}),
         ),
-        expected_output=positive_lst,
+        expected_output=positive,
     )
     dataset_id = in_memory_dataset_repository.create_dataset(
         examples=[correct_example, incorrect_example], dataset_name="test-dataset"
