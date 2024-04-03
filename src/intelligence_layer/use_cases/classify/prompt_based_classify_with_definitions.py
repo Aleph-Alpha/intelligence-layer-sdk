@@ -71,7 +71,7 @@ Reply with only the class label."""
                 if label.name in labels
             )
             return f"""Labels:
-{', '.join(l.name for l in self._labels_with_definitions)}
+{', '.join(label.name for label in self._labels_with_definitions if label.name in labels)}
 
 Definitions:
 {definitions}

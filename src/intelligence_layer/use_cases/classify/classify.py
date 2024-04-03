@@ -93,9 +93,9 @@ class AggregatedSingleLabelClassifyEvaluation(BaseModel):
 
     Attributes:
         percentage_correct: Percentage of answers that were considered to be correct.
-        confusion_matrix: How often each label was confused with each other.
-        by_label: Each label along with a couple aggregated statistics.
-        missing_labels: Each label missing from the results accompanied by the missing count.
+        confusion_matrix: A matrix showing the predicted classifications vs the expected classifications.
+        by_label: Each label along side the counts how often it was expected or predicted.
+        missing_labels: Each expected label which is missing in the set of possible labels in the task input and the number of its occurrences.
     """
 
     percentage_correct: float
