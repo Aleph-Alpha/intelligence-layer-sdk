@@ -19,9 +19,14 @@ class InMemoryDatasetRepository(DatasetRepository):
         ] = {}
 
     def create_dataset(
-        self, examples: Iterable[Example[Input, ExpectedOutput]], dataset_name: str
+        self,
+        examples: Iterable[Example[Input, ExpectedOutput]],
+        dataset_name: str,
+        id: str | None = None,
     ) -> Dataset:
         dataset = Dataset(name=dataset_name)
+        if id is not None:
+            dataset.id = id
         if dataset.id in self._datasets_and_examples:
             raise ValueError(
                 f"Created random dataset ID already exists for dataset {dataset}. This should not happen."
