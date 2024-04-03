@@ -61,6 +61,15 @@ class DummyAggregatedEvaluationWithResultList(BaseModel):
 
 
 @fixture
+def sequence_examples() -> Iterable[Example[str, None]]:
+    return [
+        Example(input="success", expected_output=None, id="example-1"),
+        Example(input=FAIL_IN_TASK_INPUT, expected_output=None, id="example-2"),
+        Example(input=FAIL_IN_EVAL_INPUT, expected_output=None, id="example-3"),
+    ]
+
+
+@fixture
 def evaluation_id() -> str:
     return "evaluation-id-1"
 

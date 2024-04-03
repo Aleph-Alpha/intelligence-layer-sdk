@@ -19,6 +19,7 @@ from intelligence_layer.evaluation import (
     RunRepository,
     TaskSpanTrace,
 )
+from intelligence_layer.evaluation.run.domain import FailedExampleRun
 from tests.conftest import DummyStringInput
 
 test_repository_fixtures = [
@@ -249,3 +250,65 @@ def test_run_overview_ids_returns_all_sorted_ids(
     stored_run_overview_ids = list(run_repository.run_overview_ids())
 
     assert stored_run_overview_ids == sorted(run_overview_ids)
+
+
+@mark.parametrize(
+    "repository_fixture",
+    test_repository_fixtures,
+)
+def test_failed_example_outputs_returns_only_failed_examples(
+    repository_fixture: str, request: FixtureRequest, run_overview: RunOverview
+) -> None:
+    run_repository: RunRepository = request.getfixturevalue(repository_fixture)
+    run_repository.store_run_overview(run_overview)
+
+    run_repository.store_example_output(
+        ExampleOutput(
+            run_id=run_overview.id,
+            example_id="1",
+            output=FailedExampleRun(error_message="test"),
+        )
+    )
+    run_repository.store_example_output(
+        ExampleOutput(run_id=run_overview.id, example_id="2", output=None)
+    )
+
+    failed_outputs = list(
+        run_repository.failed_example_outputs(
+            run_id=run_overview.id, output_type=type(None)
+        )
+    )
+
+    assert len(failed_outputs) == 1
+    assert failed_outputs[0].example_id == "1"
+
+
+@mark.parametrize(
+    "repository_fixture",
+    test_repository_fixtures,
+)
+def test_successful_example_outputs_returns_only_successful_examples(
+    repository_fixture: str, request: FixtureRequest, run_overview: RunOverview
+) -> None:
+    run_repository: RunRepository = request.getfixturevalue(repository_fixture)
+    run_repository.store_run_overview(run_overview)
+
+    run_repository.store_example_output(
+        ExampleOutput(
+            run_id=run_overview.id,
+            example_id="1",
+            output=FailedExampleRun(error_message="test"),
+        )
+    )
+    run_repository.store_example_output(
+        ExampleOutput(run_id=run_overview.id, example_id="2", output=None)
+    )
+
+    successful_outputs = list(
+        run_repository.successful_example_outputs(
+            run_id=run_overview.id, output_type=type(None)
+        )
+    )
+
+    assert len(successful_outputs) == 1
+    assert successful_outputs[0].example_id == "2"

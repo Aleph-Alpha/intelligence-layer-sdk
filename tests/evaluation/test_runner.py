@@ -1,3 +1,7 @@
+from typing import Iterable
+
+import pytest
+
 from intelligence_layer.core import InMemoryTracer
 from intelligence_layer.evaluation import (
     Example,
@@ -5,22 +9,19 @@ from intelligence_layer.evaluation import (
     InMemoryRunRepository,
     Runner,
 )
-from tests.evaluation.conftest import FAIL_IN_EVAL_INPUT, FAIL_IN_TASK_INPUT, DummyTask
+from tests.evaluation.conftest import FAIL_IN_TASK_INPUT, DummyTask
 
 
 def test_runner_runs_dataset(
     in_memory_dataset_repository: InMemoryDatasetRepository,
     in_memory_run_repository: InMemoryRunRepository,
+    sequence_examples: Iterable[Example[str, None]],
 ) -> None:
+    examples = list(sequence_examples)
     task = DummyTask()
     runner = Runner(
         task, in_memory_dataset_repository, in_memory_run_repository, "dummy-runner"
     )
-    examples = [
-        Example(input="success", expected_output=None),
-        Example(input=FAIL_IN_TASK_INPUT, expected_output=None),
-        Example(input=FAIL_IN_EVAL_INPUT, expected_output=None),
-    ]
 
     dataset_id = in_memory_dataset_repository.create_dataset(
         examples=examples, dataset_name="test-dataset"
@@ -35,6 +36,27 @@ def test_runner_runs_dataset(
     assert set(output.example_id for output in outputs) == set(
         example.id for example in examples
     )
+
+    failed_runs = list(runner.failed_runs(overview.id, type(None)))
+    assert len(failed_runs) == 1
+    assert failed_runs[0].example.id == examples[1].id
+
+
+def test_runner_aborts_on_error(
+    in_memory_dataset_repository: InMemoryDatasetRepository,
+    in_memory_run_repository: InMemoryRunRepository,
+    sequence_examples: Iterable[Example[str, None]],
+) -> None:
+    task = DummyTask()
+    runner = Runner(
+        task, in_memory_dataset_repository, in_memory_run_repository, "dummy-runner"
+    )
+
+    dataset_id = in_memory_dataset_repository.create_dataset(
+        examples=sequence_examples, dataset_name="test-dataset"
+    ).id
+    with pytest.raises(RuntimeError):
+        runner.run_dataset(dataset_id, abort_on_error=True)
 
 
 def test_runner_runs_n_examples(

@@ -1,3 +1,4 @@
+import typing
 from abc import ABC, abstractmethod
 from concurrent.futures import ThreadPoolExecutor
 from functools import lru_cache
@@ -222,7 +223,10 @@ class Evaluator(Generic[Input, Output, ExpectedOutput, Evaluation]):
 
     @final
     def evaluate_runs(
-        self, *run_ids: str, num_examples: Optional[int] = None
+        self,
+        *run_ids: str,
+        num_examples: Optional[int] = None,
+        abort_on_error: bool = False,
     ) -> EvaluationOverview:
         """Evaluates all generated outputs in the run.
 
@@ -239,6 +243,7 @@ class Evaluator(Generic[Input, Output, ExpectedOutput, Evaluation]):
                 specific evaluation. The method compares all run of the provided ids to each other.
             num_examples: The number of examples which should be evaluated from the given runs.
                 Always the first n runs stored in the evaluation repository
+            abort_on_error: Flag to abort all evaluations when an error occurs. Defaults to False.
 
         Returns:
             EvaluationOverview: An overview of the evaluation. Individual :class:`Evaluation`s will not be
@@ -293,7 +298,7 @@ class Evaluator(Generic[Input, Output, ExpectedOutput, Evaluation]):
             current_example = 0
             for example_outputs in examples_zipped:
                 successful_example_outputs = [
-                    output
+                    typing.cast(SuccessfulExampleOutput[Output], output)
                     for output in example_outputs
                     if not isinstance(output.output, FailedExampleRun)
                 ]
@@ -320,31 +325,19 @@ class Evaluator(Generic[Input, Output, ExpectedOutput, Evaluation]):
                 yield (
                     example,
                     eval_id,
-                    [
-                        SuccessfulExampleOutput(
-                            run_id=example_output.run_id,
-                            example_id=example_output.example_id,
-                            output=example_output.output,
-                        )
-                        for example_output in successful_example_outputs
-                        if not isinstance(example_output.output, FailedExampleRun)
-                    ],
+                    successful_example_outputs,
                 )
 
-        def evaluate(
-            args: Tuple[
-                Example[Input, ExpectedOutput],
-                str,
-                Sequence[SuccessfulExampleOutput[Output]],
-            ],
-        ) -> None:
-            example, eval_id, example_outputs = args
-            self.evaluate(example, eval_id, *example_outputs)
-
         with ThreadPoolExecutor(max_workers=10) as executor:
-            tqdm(
-                executor.map(evaluate, generate_evaluation_inputs()),
-                desc="Evaluating",
+            list(  # the list is needed to consume the iterator returned from the executor.map
+                tqdm(
+                    executor.map(
+                        lambda args: self.evaluate(
+                            args[0], args[1], abort_on_error, *args[2]
+                        ),
+                        generate_evaluation_inputs(),
+                    )
+                )
             )
 
         partial_overview = EvaluationOverview(
@@ -362,6 +355,7 @@ class Evaluator(Generic[Input, Output, ExpectedOutput, Evaluation]):
         self,
         example: Example[Input, ExpectedOutput],
         evaluation_id: str,
+        abort_on_error: bool,
         *example_outputs: SuccessfulExampleOutput[Output],
     ) -> None:
         try:
@@ -372,12 +366,39 @@ class Evaluator(Generic[Input, Output, ExpectedOutput, Evaluation]):
                 )
             )
         except Exception as e:
+            if abort_on_error:
+                raise e
+            print(
+                f'FAILED EVALUATION: example "{example.id}", {type(e).__qualname__}: "{e}"'
+            )
             result = FailedExampleEvaluation.from_exception(e)
         self._evaluation_repository.store_example_evaluation(
             ExampleEvaluation(
                 evaluation_id=evaluation_id, example_id=example.id, result=result
             )
         )
+
+    def failed_evaluations(
+        self, evaluation_id: str
+    ) -> Iterable[EvaluationLineage[Input, ExpectedOutput, Output, Evaluation]]:
+        """Returns the `EvaluationLineage` objects for all failed example evalations that belong to the given evaluation ID.
+
+        Args:
+            evaluation_id: The ID of the evaluation overview
+
+        Returns:
+            :class:`Iterable` of :class:`EvaluationLineage`s.
+        """
+        failed_example_evaluations = (
+            self._evaluation_repository.failed_example_evaluations(
+                evaluation_id, evaluation_type=self.evaluation_type()
+            )
+        )
+        lineages = (
+            self.evaluation_lineage(evaluation_id, output.example_id)
+            for output in failed_example_evaluations
+        )
+        return (lineage for lineage in lineages if lineage is not None)
 
     def evaluation_lineages(
         self, evaluation_id: str

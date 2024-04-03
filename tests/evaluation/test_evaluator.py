@@ -1,5 +1,6 @@
 from typing import Generic, Iterable, Optional, TypeVar
 
+import pytest
 from pydantic import BaseModel
 from pytest import fixture
 
@@ -115,15 +116,6 @@ class DummyTaskWithoutTypeHints(Task[str, str]):
     # type hint for return value missing on purpose for testing
     def do_run(self, input: str, tracer: Tracer):  # type: ignore
         return input
-
-
-@fixture
-def sequence_examples() -> Iterable[Example[str, None]]:
-    return [
-        Example(input="success", expected_output=None, id="example-1"),
-        Example(input=FAIL_IN_TASK_INPUT, expected_output=None, id="example-2"),
-        Example(input=FAIL_IN_EVAL_INPUT, expected_output=None, id="example-3"),
-    ]
 
 
 @fixture
@@ -255,6 +247,20 @@ def test_eval_and_aggregate_runs_returns_generic_statistics(
     assert aggregation_overview.failed_evaluation_count == 2
 
 
+def test_evaluator_aborts_on_error(
+    dummy_evaluator: Evaluator[str, str, None, DummyEvaluation],
+    dummy_aggregator: Aggregator[
+        DummyEvaluation, DummyAggregatedEvaluationWithResultList
+    ],
+    dummy_runner: Runner[str, str],
+    dataset_id: str,
+) -> None:
+    run_overview = dummy_runner.run_dataset(dataset_id)
+
+    with pytest.raises(RuntimeError):
+        dummy_evaluator.evaluate_runs(run_overview.id, abort_on_error=True)
+
+
 def test_eval_and_aggregate_runs_uses_passed_tracer(
     dummy_evaluator: Evaluator[str, str, None, DummyEvaluation],
     dummy_aggregator: Aggregator[
@@ -274,39 +280,34 @@ def test_eval_and_aggregate_runs_uses_passed_tracer(
 
 
 def test_eval_and_aggregate_runs_stores_example_evaluations(
+    dummy_runner: Runner[str, str],
     dummy_evaluator: Evaluator[str, str, None, DummyEvaluation],
     dummy_aggregator: Aggregator[
         DummyEvaluation, DummyAggregatedEvaluationWithResultList
     ],
     dataset_id: str,
-    dummy_runner: Runner[str, str],
 ) -> None:
     evaluation_repository = dummy_evaluator._evaluation_repository
     dataset_repository = dummy_evaluator._dataset_repository
-    dataset_id = list(dataset_repository.dataset_ids())[0]
-    dataset: Optional[Iterable[Example[str, None]]] = dataset_repository.examples(
-        dataset_id, str, type(None)
-    )
-    assert dataset is not None
+    examples = list(dataset_repository.examples(dataset_id, str, type(None)))
 
     run_overview = dummy_runner.run_dataset(dataset_id, NoOpTracer())
     evaluation_overview = dummy_evaluator.evaluate_runs(run_overview.id)
     aggregation_overview = dummy_aggregator.aggregate_evaluation(evaluation_overview.id)
+    assert next(iter(aggregation_overview.evaluation_overviews)) == evaluation_overview
 
-    examples = list(dataset)
-    eval_overview = next(iter(aggregation_overview.evaluation_overviews))
     success_result = evaluation_repository.example_evaluation(
-        eval_overview.id,
+        evaluation_overview.id,
         examples[0].id,
         DummyEvaluation,
     )
     failure_result_task = evaluation_repository.example_evaluation(
-        eval_overview.id,
+        evaluation_overview.id,
         examples[1].id,
         DummyEvaluation,
     )
     failure_result_eval = evaluation_repository.example_evaluation(
-        eval_overview.id,
+        evaluation_overview.id,
         examples[2].id,
         DummyEvaluation,
     )
@@ -316,6 +317,23 @@ def test_eval_and_aggregate_runs_stores_example_evaluations(
     assert failure_result_eval and isinstance(
         failure_result_eval.result, FailedExampleEvaluation
     )
+
+
+def test_failed_evaluations_returns_only_failed_evaluations(
+    dummy_runner: Runner[str, str],
+    dummy_evaluator: Evaluator[str, str, None, DummyEvaluation],
+    dataset_id: str,
+    sequence_examples: Iterable[Example[str, None]],
+) -> None:
+    run_overview = dummy_runner.run_dataset(dataset_id, NoOpTracer())
+    evaluation_overview = dummy_evaluator.evaluate_runs(run_overview.id)
+    failed_evaluations = list(
+        dummy_evaluator.failed_evaluations(evaluation_overview.id)
+    )
+
+    assert len(failed_evaluations) == 1
+    assert isinstance(failed_evaluations[0].evaluation.result, FailedExampleEvaluation)
+    assert failed_evaluations[0].example.id == list(sequence_examples)[-1].id
 
 
 def test_eval_and_aggregate_runs_stores_example_traces(

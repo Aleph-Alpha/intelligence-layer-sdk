@@ -1,3 +1,4 @@
+import traceback
 from datetime import datetime
 from typing import Generic, Optional, TypeVar
 
@@ -22,7 +23,7 @@ class FailedExampleEvaluation(BaseModel):
     @staticmethod
     def from_exception(exception: Exception) -> "FailedExampleEvaluation":
         return FailedExampleEvaluation(
-            error_message=f"{type(exception)}: {str(exception)}"
+            error_message=f"{type(exception)}: {str(exception)}\n{traceback.format_exc()}"
         )
 
 
