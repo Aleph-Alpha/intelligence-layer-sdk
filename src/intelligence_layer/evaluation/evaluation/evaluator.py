@@ -380,7 +380,7 @@ class Evaluator(Generic[Input, Output, ExpectedOutput, Evaluation]):
             if abort_on_error:
                 raise e
             print(
-                f'FAILED EVALUATION: example {example.id}, {type(e).__qualname__}: "{e}"'
+                f'FAILED EVALUATION: example "{example.id}", {type(e).__qualname__}: "{e}"'
             )
             result = FailedExampleEvaluation.from_exception(e)
         self._evaluation_repository.store_example_evaluation(
@@ -388,6 +388,28 @@ class Evaluator(Generic[Input, Output, ExpectedOutput, Evaluation]):
                 evaluation_id=evaluation_id, example_id=example.id, result=result
             )
         )
+
+    def failed_evaluations(
+        self, evaluation_id: str
+    ) -> Iterable[EvaluationLineage[Input, ExpectedOutput, Output, Evaluation]]:
+        """Returns the `EvaluationLineage` objects for all failed example evalations that belong to the given evaluation ID.
+
+        Args:
+            evaluation_id: The ID of the evaluation overview
+
+        Returns:
+            :class:`Iterable` of :class:`EvaluationLineage`s.
+        """
+        failed_example_evaluations = (
+            self._evaluation_repository.failed_example_evaluations(
+                evaluation_id, evaluation_type=self.evaluation_type()
+            )
+        )
+        lineages = (
+            self.evaluation_lineage(evaluation_id, output.example_id)
+            for output in failed_example_evaluations
+        )
+        return (lineage for lineage in lineages if lineage is not None)
 
     def evaluation_lineages(
         self, evaluation_id: str

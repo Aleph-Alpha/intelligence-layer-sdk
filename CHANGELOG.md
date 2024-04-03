@@ -8,6 +8,8 @@
 - feature: Error information is printed to the console on failed runs and evaluations.
 - feature: The stack trace of a failed run/evaluation is included in the `FailedExampleRun`/`FailedExampleEvaluation` object
 - feature: The `Runner.run_dataset` and `Evaluator.evaluate_run` have an optional flag `abort_on_error` to stop running/evaluating when an error occurs.
+- feature: Added `Runner.failed_runs` and `Evaluator.failed_evaluations` to retrieve all failed run / evaluation lineages
+- feature: Added `.successful_example_outputs` and `.failed_example_outputs` to `RunRepository` to match the evaluation repository
 
 ### Fixes
 

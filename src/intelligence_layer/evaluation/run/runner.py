@@ -106,7 +106,7 @@ class Runner(Generic[Input, Output]):
                 if abort_on_error:
                     raise e
                 print(
-                    f'FAILED RUN: example {example.id}, {type(e).__qualname__}: "{e}"'
+                    f'FAILED RUN: example "{example.id}", {type(e).__qualname__}: "{e}"'
                 )
                 return example.id, FailedExampleRun.from_exception(e)
 
@@ -165,11 +165,11 @@ class Runner(Generic[Input, Output]):
         failed_example_outputs = self._run_repository.failed_example_outputs(
             run_id, output_type=self.output_type()
         )
-        lineages = [
+        lineages = (
             self.run_lineage(run_id, output.example_id, expected_output_type)
             for output in failed_example_outputs
-        ]
-        return [lineage for lineage in lineages if lineage is not None]
+        )
+        return (lineage for lineage in lineages if lineage is not None)
 
     def run_lineages(
         self,

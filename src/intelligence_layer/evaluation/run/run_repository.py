@@ -137,6 +137,21 @@ class RunRepository(ABC):
         """
         ...
 
+    def successful_example_outputs(
+        self, run_id: str, output_type: type[Output]
+    ) -> Iterable[ExampleOutput[Output]]:
+        """Returns all :class:`ExampleOutput` for successful example runs with a given run-overview ID sorted by their example ID.
+
+        Args:
+            run_id: The ID of the run overview.
+            output_type: Type of output that the `Task` returned in :func:`Task.do_run`
+
+        Returns:
+            :class:`Iterable` of :class:`ExampleOutput`s.
+        """
+        results = self.example_outputs(run_id, output_type)
+        return (r for r in results if not isinstance(r.output, FailedExampleRun))
+
     def failed_example_outputs(
         self, run_id: str, output_type: type[Output]
     ) -> Iterable[ExampleOutput[Output]]:
@@ -150,4 +165,4 @@ class RunRepository(ABC):
             :class:`Iterable` of :class:`ExampleOutput`s.
         """
         results = self.example_outputs(run_id, output_type)
-        return [r for r in results if isinstance(r.output, FailedExampleRun)]
+        return (r for r in results if isinstance(r.output, FailedExampleRun))
