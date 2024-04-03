@@ -150,6 +150,27 @@ class Runner(Generic[Input, Output]):
         self._run_repository.store_run_overview(run_overview)
         return run_overview
 
+    def failed_runs(
+        self, run_id: str, expected_output_type: type[ExpectedOutput]
+    ) -> Iterable[RunLineage[Input, ExpectedOutput, Output]]:
+        """Returns the `RunLineage` objects for all failed example runs that belong to the given run ID.
+
+        Args:
+            run_id: The ID of the run overview
+            expected_output_type: Type of output that the `Task` returned in :func:`Task.do_run`
+
+        Returns:
+            :class:`Iterable` of :class:`RunLineage`s.
+        """
+        failed_example_outputs = self._run_repository.failed_example_outputs(
+            run_id, output_type=self.output_type()
+        )
+        lineages = [
+            self.run_lineage(run_id, output.example_id, expected_output_type)
+            for output in failed_example_outputs
+        ]
+        return [lineage for lineage in lineages if lineage is not None]
+
     def run_lineages(
         self,
         run_id: str,

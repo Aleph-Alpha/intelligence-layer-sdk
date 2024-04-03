@@ -5,7 +5,7 @@ from intelligence_layer.evaluation import (
     InMemoryRunRepository,
     Runner,
 )
-from tests.evaluation.conftest import FAIL_IN_EVAL_INPUT, FAIL_IN_TASK_INPUT, DummyTask
+from tests.evaluation.conftest import FAIL_IN_TASK_INPUT, DummyTask
 
 
 def test_runner_runs_dataset(
@@ -19,7 +19,6 @@ def test_runner_runs_dataset(
     examples = [
         Example(input="success", expected_output=None),
         Example(input=FAIL_IN_TASK_INPUT, expected_output=None),
-        Example(input=FAIL_IN_EVAL_INPUT, expected_output=None),
     ]
 
     dataset_id = in_memory_dataset_repository.create_dataset(
@@ -35,6 +34,10 @@ def test_runner_runs_dataset(
     assert set(output.example_id for output in outputs) == set(
         example.id for example in examples
     )
+
+    failed_runs = list(runner.failed_runs(overview.id, type(None)))
+    assert len(failed_runs) == 1
+    assert failed_runs[0].example.id == examples[1].id
 
 
 def test_runner_runs_n_examples(

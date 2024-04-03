@@ -2,7 +2,11 @@ from abc import ABC, abstractmethod
 from typing import Iterable, Optional, Sequence
 
 from intelligence_layer.core import Output, Tracer
-from intelligence_layer.evaluation.run.domain import ExampleOutput, RunOverview
+from intelligence_layer.evaluation.run.domain import (
+    ExampleOutput,
+    FailedExampleRun,
+    RunOverview,
+)
 from intelligence_layer.evaluation.run.trace import ExampleTrace
 
 
@@ -132,3 +136,18 @@ class RunRepository(ABC):
             A :class:`Sequence` of all :class:`ExampleOutput` IDs.
         """
         ...
+
+    def failed_example_outputs(
+        self, run_id: str, output_type: type[Output]
+    ) -> Iterable[ExampleOutput[Output]]:
+        """Returns all :class:`ExampleOutput` for failed example runs with a given run-overview ID sorted by their example ID.
+
+        Args:
+            run_id: The ID of the run overview.
+            output_type: Type of output that the `Task` returned in :func:`Task.do_run`
+
+        Returns:
+            :class:`Iterable` of :class:`ExampleOutput`s.
+        """
+        results = self.example_outputs(run_id, output_type)
+        return [r for r in results if isinstance(r.output, FailedExampleRun)]
