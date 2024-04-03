@@ -50,14 +50,19 @@ def hugging_face_repository_with_dataset_and_examples(
     Tuple[HuggingFaceDatasetRepository, Dataset, Sequence[Example[str, str]]]
 ]:
     examples = [example_1, example_2]
-    dataset = hugging_face_dataset_repository.create_dataset(
-        examples=examples, dataset_name="test-hg-dataset"
-    )
+    id = str(uuid4())
+    try:
+        dataset = hugging_face_dataset_repository.create_dataset(
+            examples=examples, dataset_name="test-hg-dataset", id=id
+        )
+    except Exception as e:
+        hugging_face_dataset_repository.delete_dataset(id)
+        raise e
 
     try:
         yield hugging_face_dataset_repository, dataset, examples
     finally:
-        hugging_face_dataset_repository.delete_dataset(dataset.id)
+        hugging_face_dataset_repository.delete_dataset(id)
 
 
 def test_hugging_face_repository_can_create_and_delete_a_repository(

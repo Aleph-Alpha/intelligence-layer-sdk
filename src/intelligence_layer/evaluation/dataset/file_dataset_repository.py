@@ -23,9 +23,16 @@ class FileSystemDatasetRepository(DatasetRepository, FileSystemBasedRepository):
         super().__init__(file_system=filesystem, root_directory=root_directory)
 
     def create_dataset(
-        self, examples: Iterable[Example[Input, ExpectedOutput]], dataset_name: str
+        self,
+        examples: Iterable[Example[Input, ExpectedOutput]],
+        dataset_name: str,
+        id: str | None = None,
     ) -> Dataset:
-        dataset = Dataset(name=dataset_name)
+        if id is None:
+            dataset = Dataset(name=dataset_name)
+        else:
+            dataset = Dataset(name=dataset_name, id=id)
+
         self.mkdir(self._dataset_directory(dataset.id))
 
         dataset_path = self._dataset_path(dataset.id)
