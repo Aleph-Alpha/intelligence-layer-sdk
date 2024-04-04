@@ -1,5 +1,6 @@
 from typing import Sequence
 
+import pytest
 from pytest import fixture
 
 from intelligence_layer.core import InMemoryTracer, NoOpTracer, TextChunk
@@ -214,6 +215,35 @@ def test_can_evaluate_classify(
 
     assert isinstance(evaluation, SingleLabelClassifyEvaluation)
     assert evaluation.correct is True
+
+
+def test_classify_warns_on_missing_label(
+    in_memory_dataset_repository: InMemoryDatasetRepository,
+    classify_runner: Runner[ClassifyInput, SingleLabelClassifyOutput],
+    in_memory_evaluation_repository: InMemoryEvaluationRepository,
+    classify_evaluator: Evaluator[
+        ClassifyInput,
+        SingleLabelClassifyOutput,
+        Sequence[str],
+        SingleLabelClassifyEvaluation,
+    ],
+    prompt_based_classify: PromptBasedClassify,
+) -> None:
+    example = Example(
+        input=ClassifyInput(
+            chunk=TextChunk("This is good"),
+            labels=frozenset({"positive", "negative"}),
+        ),
+        expected_output="SomethingElse",
+    )
+
+    dataset_id = in_memory_dataset_repository.create_dataset(
+        examples=[example], dataset_name="test-dataset"
+    ).id
+
+    run_overview = classify_runner.run_dataset(dataset_id)
+
+    pytest.warns(RuntimeWarning, classify_evaluator.evaluate_runs, run_overview.id)
 
 
 def test_can_aggregate_evaluations(

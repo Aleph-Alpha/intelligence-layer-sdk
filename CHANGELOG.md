@@ -5,6 +5,7 @@
 ### Breaking Changes
 
 ### New Features
+- feature: Add SingleLabelClassifyFailedExampleIterator for easy retrieval of failed examples.
 - feature: Error information is printed to the console on failed runs and evaluations.
 - feature: The stack trace of a failed run/evaluation is included in the `FailedExampleRun`/`FailedExampleEvaluation` object
 - feature: The `Runner.run_dataset(..)` and `Evaluator.evaluate_run(..)` have an optional flag `abort_on_error` to stop running/evaluating when an error occurs.

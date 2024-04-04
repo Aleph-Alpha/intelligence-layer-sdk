@@ -1,3 +1,4 @@
+import warnings
 from collections import defaultdict
 from typing import Iterable, Mapping, NewType, Sequence
 
@@ -6,10 +7,15 @@ from pydantic import BaseModel
 from intelligence_layer.core import TextChunk
 from intelligence_layer.evaluation import (
     AggregationLogic,
+    DatasetRepository,
+    EvaluationRepository,
     Example,
     MeanAccumulator,
+    RepositoryNavigator,
+    RunRepository,
     SingleOutputEvaluationLogic,
 )
+from intelligence_layer.evaluation.evaluation.domain import FailedExampleEvaluation
 
 Probability = NewType("Probability", float)
 
@@ -69,20 +75,6 @@ class SingleLabelClassifyEvaluation(BaseModel):
     expected_label_missing: bool
 
 
-class PerformanceScores(BaseModel):
-    """The relevant metrics resulting from a confusion matrix in a classification run.
-
-    Attributes:
-        precision: Proportion of correctly predicted classes to all predicted classes.
-        recall: Proportion of correctly predicted classes to all expected classes.
-        f1: Aggregated performance, formally the harmonic mean of precision and recall.
-    """
-
-    precision: float
-    recall: float
-    f1: float
-
-
 class AggregatedLabelInfo(BaseModel):
     expected_count: int
     predicted_count: int
@@ -124,6 +116,11 @@ class SingleLabelClassifyAggregationLogic(
                 confusion_matrix[(evaluation.predicted, evaluation.expected)] += 1
                 by_label[evaluation.predicted]["predicted"] += 1
                 by_label[evaluation.expected]["expected"] += 1
+
+        if len(missing_labels) > 0:
+            warn_message = "[WARNING] There were examples with expected labels missing in the evaluation inputs. For a detailed list, see the 'statistics.missing_labels' field of the returned `AggregationOverview`."
+            warnings.warn(warn_message, RuntimeWarning)
+
         return AggregatedSingleLabelClassifyEvaluation(
             percentage_correct=acc.extract(),
             confusion_matrix=confusion_matrix,
@@ -154,6 +151,10 @@ class SingleLabelClassifyEvaluationLogic(
         sorted_classes = sorted(
             output.scores.items(), key=lambda item: item[1], reverse=True
         )
+        if example.expected_output not in example.input.labels:
+            warn_message = f"[WARNING] Example with ID '{example.id}' has expected label '{example.expected_output}', which is not part of the example's input labels."
+            warnings.warn(warn_message, RuntimeWarning)
+
         predicted = sorted_classes[0][0]
         if predicted == example.expected_output:
             correct = True
@@ -165,6 +166,40 @@ class SingleLabelClassifyEvaluationLogic(
             expected=example.expected_output,
             expected_label_missing=example.expected_output not in example.input.labels,
         )
+
+
+class SingleLabelClassifyFailedExampleIterator:
+    def __init__(
+        self,
+        dataset_repository: DatasetRepository,
+        run_repository: RunRepository,
+        evaluation_repository: EvaluationRepository,
+    ):
+        self.repository_navigator = RepositoryNavigator(
+            dataset_repository, run_repository, evaluation_repository
+        )
+
+    # TODO: Add test
+    def get_examples(
+        self, evaluation_overview_id: str, first_n: int = 0
+    ) -> Iterable[Example[ClassifyInput, str]]:
+        evaluation_lineages = self.repository_navigator.evaluation_lineages(
+            evaluation_id=evaluation_overview_id,
+            input_type=ClassifyInput,
+            expected_output_type=str,
+            output_type=SingleLabelClassifyOutput,
+            evaluation_type=SingleLabelClassifyEvaluation,
+        )
+        count_yielded = 0
+        for lineage in evaluation_lineages:
+            if first_n != 0 and count_yielded >= first_n:
+                break
+            if (
+                isinstance(lineage.evaluation.result, FailedExampleEvaluation)
+                or not lineage.evaluation.result.correct
+            ):
+                count_yielded += 1
+                yield lineage.example
 
 
 class MultiLabelClassifyEvaluation(BaseModel):
@@ -183,6 +218,20 @@ class MultiLabelClassifyEvaluation(BaseModel):
     fn: frozenset[str]
 
 
+class MultiLabelClassifyMetrics(BaseModel):
+    """The relevant metrics resulting from a confusion matrix in a classification run.
+
+    Attributes:
+        precision: Proportion of correctly predicted classes to all predicted classes.
+        recall: Proportion of correctly predicted classes to all expected classes.
+        f1: Aggregated performance, formally the harmonic mean of precision and recall.
+    """
+
+    precision: float
+    recall: float
+    f1: float
+
+
 class AggregatedMultiLabelClassifyEvaluation(BaseModel):
     """The aggregated evaluation of a multi-label classify dataset.
 
@@ -193,9 +242,9 @@ class AggregatedMultiLabelClassifyEvaluation(BaseModel):
 
     """
 
-    class_metrics: Mapping[str, PerformanceScores]
-    micro_avg: PerformanceScores
-    macro_avg: PerformanceScores
+    class_metrics: Mapping[str, MultiLabelClassifyMetrics]
+    micro_avg: MultiLabelClassifyMetrics
+    macro_avg: MultiLabelClassifyMetrics
 
 
 class MultiLabelClassifyAggregationLogic(
@@ -243,7 +292,7 @@ class MultiLabelClassifyAggregationLogic(
                 else 0
             )
 
-            class_metrics[label] = PerformanceScores(
+            class_metrics[label] = MultiLabelClassifyMetrics(
                 precision=precision, recall=recall, f1=f1
             )
 
@@ -255,19 +304,19 @@ class MultiLabelClassifyAggregationLogic(
             sum_f1 += f1
 
         try:
-            micro_avg = PerformanceScores(
+            micro_avg = MultiLabelClassifyMetrics(
                 precision=sum_tp / (sum_tp + sum_fp),
                 recall=sum_tp / (sum_tp + sum_fn),
                 f1=(2 * (sum_tp / (sum_tp + sum_fp)) * (sum_tp / (sum_tp + sum_fn)))
                 / ((sum_tp / (sum_tp + sum_fp)) + (sum_tp / (sum_tp + sum_fn))),
             )
         except ZeroDivisionError:
-            micro_avg = PerformanceScores(
+            micro_avg = MultiLabelClassifyMetrics(
                 precision=0,
                 recall=0,
                 f1=0,
             )
-        macro_avg = PerformanceScores(
+        macro_avg = MultiLabelClassifyMetrics(
             precision=sum_precision / len(class_metrics),
             recall=sum_recall / len(class_metrics),
             f1=sum_f1 / len(class_metrics),
