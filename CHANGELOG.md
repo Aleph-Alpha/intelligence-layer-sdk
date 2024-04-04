@@ -5,6 +5,7 @@
 ### Breaking Changes
 
 ### New Features
+- feature: Add histogram and cross-tab for ground truth and classification labels to `user_journey.ipynb`
 - feature: Add sorted_scores property to `SingleLabelClassifyOutput`.
 - feature: Error information is printed to the console on failed runs and evaluations.
 - feature: The stack trace of a failed run/evaluation is included in the `FailedExampleRun`/`FailedExampleEvaluation` object

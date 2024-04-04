@@ -61,6 +61,7 @@ pandas-stubs = "^2.2.1.240316"
 # docs
 sphinx-rtd-theme = "^2.0.0"
 sphinx = "^7.2.6"
+matplotlib = "^3.8.4"
 
 [tool.mypy]
 files = "src,tests"
