@@ -108,7 +108,9 @@ class ComparingEvaluationLogic(
 
 
 class DummyEvaluatorWithoutTypeHints(DummyEvaluationLogic):
-    def do_evaluate(self, example: Example, *output: SuccessfulExampleOutput[str]) -> DummyEvaluation:  # type: ignore
+    def do_evaluate(  # type: ignore
+        self, example: Example[str, None], *output: SuccessfulExampleOutput[str]
+    ) -> DummyEvaluation:
         return super().do_evaluate(example, *output)
 
 

@@ -56,7 +56,7 @@ class InnerTask(Task[None, None]):
 
 
 def dummy_decorator(
-    f: Callable[["BaseTask", None, TaskSpan], None]
+    f: Callable[["BaseTask", None, TaskSpan], None],
 ) -> Callable[["BaseTask", None, TaskSpan], None]:
     @wraps(f)
     def wrap(

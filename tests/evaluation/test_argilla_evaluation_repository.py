@@ -279,7 +279,6 @@ def test_failed_example_evaluations_returns_sorted_failed_example_evaluations(
         list[ExampleEvaluation[DummyEvaluation]],
     ],
 ) -> None:
-
     (
         dataset_id,
         argilla_evaluation_repository,

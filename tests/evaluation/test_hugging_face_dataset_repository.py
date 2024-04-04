@@ -137,7 +137,7 @@ def test_delete_dataset_does_not_fail_for_not_existing_dataset_id(
 def test_hugging_face_repository_supports_all_operations_for_created_dataset(
     hugging_face_repository_with_dataset_and_examples: Tuple[
         HuggingFaceDatasetRepository, Dataset, Sequence[Example[str, str]]
-    ]
+    ],
 ) -> None:
     (hugging_face_repository_, dataset, examples) = (
         hugging_face_repository_with_dataset_and_examples
@@ -182,7 +182,7 @@ def test_hugging_face_repository_supports_all_operations_for_created_dataset(
 def test_file_exists_in_subdirectory(
     hugging_face_repository_with_dataset_and_examples: Tuple[
         HuggingFaceDatasetRepository, Dataset, Sequence[Example[str, str]]
-    ]
+    ],
 ) -> None:
     (hugging_face_repository, dataset, examples) = (
         hugging_face_repository_with_dataset_and_examples

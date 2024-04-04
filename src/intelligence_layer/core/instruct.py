@@ -15,7 +15,6 @@ class InstructInput(BaseModel):
 
 
 class Instruct(Task[InstructInput, CompleteOutput]):
-
     def __init__(self, model: ControlModel) -> None:
         super().__init__()
         self._model = model

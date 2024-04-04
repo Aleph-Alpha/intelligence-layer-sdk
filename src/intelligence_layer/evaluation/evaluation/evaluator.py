@@ -288,13 +288,15 @@ class Evaluator(Generic[Input, Output, ExpectedOutput, Evaluation]):
             strict=True,
         )
 
-        def generate_evaluation_inputs() -> Iterable[
-            Tuple[
-                Example[Input, ExpectedOutput],
-                str,
-                Sequence[SuccessfulExampleOutput[Output]],
+        def generate_evaluation_inputs() -> (
+            Iterable[
+                Tuple[
+                    Example[Input, ExpectedOutput],
+                    str,
+                    Sequence[SuccessfulExampleOutput[Output]],
+                ]
             ]
-        ]:
+        ):
             current_example = 0
             for example_outputs in examples_zipped:
                 successful_example_outputs = [

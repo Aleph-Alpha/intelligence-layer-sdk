@@ -35,7 +35,7 @@ class RunLineage(BaseModel, Generic[Input, ExpectedOutput, Output]):
 
 
 def run_lineages_to_pandas(
-    run_lineages: Sequence[RunLineage[Input, ExpectedOutput, Output]]
+    run_lineages: Sequence[RunLineage[Input, ExpectedOutput, Output]],
 ) -> pd.DataFrame:
     """Converts a sequence of `RunLineage` objects to a pandas `DataFrame`.
     The `RunLineage` objects are stored in the column `"lineage"`.
@@ -80,7 +80,7 @@ class EvaluationLineage(BaseModel, Generic[Input, ExpectedOutput, Output, Evalua
 def evaluation_lineages_to_pandas(
     evaluation_lineages: Sequence[
         EvaluationLineage[Input, ExpectedOutput, Output, Evaluation]
-    ]
+    ],
 ) -> pd.DataFrame:
     """Converts a sequence of `EvaluationLineage` objects to a pandas `DataFrame`.
     The `EvaluationLineage` objects are stored in the column `"lineage"`.

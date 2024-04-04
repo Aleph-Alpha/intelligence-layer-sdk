@@ -128,9 +128,7 @@ class LimitedConcurrencyClient:
         """
         if token is None:
             token = getenv("AA_TOKEN")
-            assert (
-                token
-            ), "Define environment variable AA_TOKEN with a valid token for the Aleph Alpha API"
+            assert token, "Define environment variable AA_TOKEN with a valid token for the Aleph Alpha API"
         if host is None:
             host = getenv("CLIENT_URL")
             if not host:
