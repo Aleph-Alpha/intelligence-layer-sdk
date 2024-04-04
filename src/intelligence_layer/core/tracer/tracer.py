@@ -1,3 +1,4 @@
+import traceback
 from abc import ABC, abstractmethod
 from contextlib import AbstractContextManager
 from datetime import datetime, timezone
@@ -126,6 +127,12 @@ class Tracer(ABC):
         return id if id is not None else str(uuid4())
 
 
+class ErrorValue(BaseModel):
+    error_type: str
+    message: str
+    stack_trace: str
+
+
 class Span(Tracer, AbstractContextManager["Span"]):
     """Captures a logical step within the overall workflow
 
@@ -187,8 +194,15 @@ class Span(Tracer, AbstractContextManager["Span"]):
         self,
         exc_type: Optional[type[BaseException]],
         exc_value: Optional[BaseException],
-        traceback: Optional[TracebackType],
+        _traceback: Optional[TracebackType],
     ) -> None:
+        if exc_type is not None and exc_value is not None and _traceback is not None:
+            error_value = ErrorValue(
+                error_type=str(exc_type.__qualname__),
+                message=str(exc_value),
+                stack_trace=str(traceback.format_exc()),
+            )
+            self.log(error_value.message, error_value)
         self.end()
 
 
