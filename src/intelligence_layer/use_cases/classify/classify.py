@@ -168,7 +168,7 @@ class SingleLabelClassifyEvaluationLogic(
         )
 
 
-class FailedExampleIterator:
+class SingleLabelClassifyFailedExampleIterator:
     def __init__(
         self,
         dataset_repository: DatasetRepository,
