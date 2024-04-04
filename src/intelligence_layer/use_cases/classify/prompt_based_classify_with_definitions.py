@@ -70,13 +70,13 @@ Reply with only the class label."""
                 for label in self._labels_with_definitions
                 if label.name in labels
             )
-            return f"""Text: {text}
-
-Labels:
-{', '.join(l.name for l in self._labels_with_definitions)}
+            return f"""Labels:
+{', '.join(label.name for label in self._labels_with_definitions if label.name in labels)}
 
 Definitions:
-{definitions}"""
+{definitions}
+
+Text: {text}"""
 
         unexpected_labels = labels - set(
             label.name for label in self._labels_with_definitions

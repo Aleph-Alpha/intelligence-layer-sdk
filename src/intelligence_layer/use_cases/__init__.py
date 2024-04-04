@@ -14,8 +14,8 @@ from .classify.classify import (
 from .classify.classify import (
     MultiLabelClassifyEvaluationLogic as MultiLabelClassifyEvaluationLogic,
 )
-from .classify.classify import MultiLabelClassifyMetrics as MultiLabelClassifyMetrics
 from .classify.classify import MultiLabelClassifyOutput as MultiLabelClassifyOutput
+from .classify.classify import PerformanceScores as PerformanceScores
 from .classify.classify import Probability as Probability
 from .classify.classify import (
     SingleLabelClassifyAggregationLogic as SingleLabelClassifyAggregationLogic,

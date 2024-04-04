@@ -57,19 +57,51 @@ class SingleLabelClassifyEvaluation(BaseModel):
 
     Attributes:
         correct: Was the highest scoring class from the output in the set of "correct classes".
+        predicted: The predicted label.
+        expected: The expected label.
+        expected_label_missing: Whether the expected label was missing from the possible set of
+            labels in the task's input.
     """
 
     correct: bool
+    predicted: str
+    expected: str
+    expected_label_missing: bool
+
+
+class PerformanceScores(BaseModel):
+    """The relevant metrics resulting from a confusion matrix in a classification run.
+
+    Attributes:
+        precision: Proportion of correctly predicted classes to all predicted classes.
+        recall: Proportion of correctly predicted classes to all expected classes.
+        f1: Aggregated performance, formally the harmonic mean of precision and recall.
+    """
+
+    precision: float
+    recall: float
+    f1: float
+
+
+class AggregatedLabelInfo(BaseModel):
+    expected_count: int
+    predicted_count: int
 
 
 class AggregatedSingleLabelClassifyEvaluation(BaseModel):
     """The aggregated evaluation of a single label classify implementation against a dataset.
 
     Attributes:
-        percentage_correct: Percentage of answers that were considered to be correct
+        percentage_correct: Percentage of answers that were considered to be correct.
+        confusion_matrix: A matrix showing the predicted classifications vs the expected classifications.
+        by_label: Each label along side the counts how often it was expected or predicted.
+        missing_labels: Each expected label which is missing in the set of possible labels in the task input and the number of its occurrences.
     """
 
     percentage_correct: float
+    confusion_matrix: Mapping[tuple[str, str], int]
+    by_label: Mapping[str, AggregatedLabelInfo]
+    missing_labels: Mapping[str, int]
 
 
 class SingleLabelClassifyAggregationLogic(
@@ -81,32 +113,58 @@ class SingleLabelClassifyAggregationLogic(
         self, evaluations: Iterable[SingleLabelClassifyEvaluation]
     ) -> AggregatedSingleLabelClassifyEvaluation:
         acc = MeanAccumulator()
+        missing_labels: dict[str, int] = defaultdict(int)
+        confusion_matrix: dict[tuple[str, str], int] = defaultdict(int)
+        by_label: dict[str, dict[str, int]] = defaultdict(lambda: defaultdict(int))
         for evaluation in evaluations:
             acc.add(1.0 if evaluation.correct else 0.0)
-        return AggregatedSingleLabelClassifyEvaluation(percentage_correct=acc.extract())
+            if evaluation.expected_label_missing:
+                missing_labels[evaluation.expected] += 1
+            else:
+                confusion_matrix[(evaluation.predicted, evaluation.expected)] += 1
+                by_label[evaluation.predicted]["predicted"] += 1
+                by_label[evaluation.expected]["expected"] += 1
+        return AggregatedSingleLabelClassifyEvaluation(
+            percentage_correct=acc.extract(),
+            confusion_matrix=confusion_matrix,
+            by_label={
+                label: AggregatedLabelInfo(
+                    expected_count=counts["expected"],
+                    predicted_count=counts["predicted"],
+                )
+                for label, counts in by_label.items()
+            },
+            missing_labels=missing_labels,
+        )
 
 
 class SingleLabelClassifyEvaluationLogic(
     SingleOutputEvaluationLogic[
         ClassifyInput,
         SingleLabelClassifyOutput,
-        Sequence[str],
+        str,
         SingleLabelClassifyEvaluation,
     ]
 ):
     def do_evaluate_single_output(
         self,
-        example: Example[ClassifyInput, Sequence[str]],
+        example: Example[ClassifyInput, str],
         output: SingleLabelClassifyOutput,
     ) -> SingleLabelClassifyEvaluation:
         sorted_classes = sorted(
             output.scores.items(), key=lambda item: item[1], reverse=True
         )
-        if sorted_classes[0][0] in example.expected_output:
+        predicted = sorted_classes[0][0]
+        if predicted == example.expected_output:
             correct = True
         else:
             correct = False
-        return SingleLabelClassifyEvaluation(correct=correct)
+        return SingleLabelClassifyEvaluation(
+            correct=correct,
+            predicted=predicted,
+            expected=example.expected_output,
+            expected_label_missing=example.expected_output not in example.input.labels,
+        )
 
 
 class MultiLabelClassifyEvaluation(BaseModel):
@@ -125,20 +183,6 @@ class MultiLabelClassifyEvaluation(BaseModel):
     fn: frozenset[str]
 
 
-class MultiLabelClassifyMetrics(BaseModel):
-    """The relevant metrics resulting from a confusion matrix in a classification run.
-
-    Attributes:
-        precision: Proportion of correctly predicted classes to all predicted classes.
-        recall: Proportion of correctly predicted classes to all expected classes.
-        f1: Aggregated performance, formally the harmonic mean of precision and recall.
-    """
-
-    precision: float
-    recall: float
-    f1: float
-
-
 class AggregatedMultiLabelClassifyEvaluation(BaseModel):
     """The aggregated evaluation of a multi-label classify dataset.
 
@@ -149,9 +193,9 @@ class AggregatedMultiLabelClassifyEvaluation(BaseModel):
 
     """
 
-    class_metrics: Mapping[str, MultiLabelClassifyMetrics]
-    micro_avg: MultiLabelClassifyMetrics
-    macro_avg: MultiLabelClassifyMetrics
+    class_metrics: Mapping[str, PerformanceScores]
+    micro_avg: PerformanceScores
+    macro_avg: PerformanceScores
 
 
 class MultiLabelClassifyAggregationLogic(
@@ -199,7 +243,7 @@ class MultiLabelClassifyAggregationLogic(
                 else 0
             )
 
-            class_metrics[label] = MultiLabelClassifyMetrics(
+            class_metrics[label] = PerformanceScores(
                 precision=precision, recall=recall, f1=f1
             )
 
@@ -211,19 +255,19 @@ class MultiLabelClassifyAggregationLogic(
             sum_f1 += f1
 
         try:
-            micro_avg = MultiLabelClassifyMetrics(
+            micro_avg = PerformanceScores(
                 precision=sum_tp / (sum_tp + sum_fp),
                 recall=sum_tp / (sum_tp + sum_fn),
                 f1=(2 * (sum_tp / (sum_tp + sum_fp)) * (sum_tp / (sum_tp + sum_fn)))
                 / ((sum_tp / (sum_tp + sum_fp)) + (sum_tp / (sum_tp + sum_fn))),
             )
         except ZeroDivisionError:
-            micro_avg = MultiLabelClassifyMetrics(
+            micro_avg = PerformanceScores(
                 precision=0,
                 recall=0,
                 f1=0,
             )
-        macro_avg = MultiLabelClassifyMetrics(
+        macro_avg = PerformanceScores(
             precision=sum_precision / len(class_metrics),
             recall=sum_recall / len(class_metrics),
             f1=sum_f1 / len(class_metrics),
