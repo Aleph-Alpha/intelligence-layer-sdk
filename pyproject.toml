@@ -79,3 +79,6 @@ extend-include = ["*.ipynb"]
 
 [tool.pylama.linter.mccabe]
 max-complexity = "11"
+
+[tool.isort]
+profile = "black"
