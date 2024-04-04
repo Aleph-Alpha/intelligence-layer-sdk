@@ -808,17 +808,6 @@ files = [
 ]
 
 [[package]]
-name = "eradicate"
-version = "2.3.0"
-description = "Removes commented-out code."
-optional = false
-python-versions = "*"
-files = [
-    {file = "eradicate-2.3.0-py3-none-any.whl", hash = "sha256:2b29b3dd27171f209e4ddd8204b70c02f0682ae95eecb353f10e8d72b149c63e"},
-    {file = "eradicate-2.3.0.tar.gz", hash = "sha256:06df115be3b87d0fc1c483db22a2ebb12bcf40585722810d809cc770f5031c37"},
-]
-
-[[package]]
 name = "exceptiongroup"
 version = "1.2.0"
 description = "Backport of PEP 654 (exception groups)"
@@ -3335,7 +3324,6 @@ files = [
 ]
 
 [package.dependencies]
-eradicate = {version = "*", optional = true, markers = "extra == \"eradicate\""}
 mccabe = ">=0.7.0"
 pycodestyle = ">=2.9.1"
 pydocstyle = ">=6.1.1"
@@ -5251,4 +5239,4 @@ testing = ["big-O", "jaraco.functools", "jaraco.itertools", "more-itertools", "p
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.10,<3.12"
-content-hash = "4f257b3e286eb62bd97adddde0d86efd11f2f6ba781bb40bd5c48ea494545e15"
+content-hash = "df2da4dd924fb91f831997f5e6ad96769779e4dc8fee6600260680a8aaf2b279"
