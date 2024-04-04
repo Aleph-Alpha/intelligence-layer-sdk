@@ -2,9 +2,9 @@
 
 ## 0.8.0
 
-### Breaking Changes
 
 ### New Features
+- feature: Expose start and end index in DocumentChunk
 - feature: Add sorted_scores property to `SingleLabelClassifyOutput`.
 - feature: Error information is printed to the console on failed runs and evaluations.
 - feature: The stack trace of a failed run/evaluation is included in the `FailedExampleRun`/`FailedExampleEvaluation` object
@@ -14,10 +14,17 @@
 - feature: Added optional argument to set an id when creating a `Dataset` via `DatasetRepository.create_dataset(..)`
 - feature: Traces now log exceptions using the `ErrorValue` type.
 
+
 - Documentation:
+  - feature: Add info on how to run tests in VSCode 
   - feature: Add `issue_classification_user_journey` notebook.
+  - feature: Add documentation of newly added data retrieval methods `how_to_retrieve_data_for_analysis`
+  - feature: Add documentation of release workflow
+
 
 ### Fixes
+- fix: Fix version number in pyproject.toml in IL
+- fix: Fix instructions for installing IL via pip.
 
 ## 0.7.0
 
