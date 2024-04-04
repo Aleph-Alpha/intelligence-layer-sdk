@@ -39,6 +39,10 @@ class SingleLabelClassifyOutput(BaseModel):
 
     scores: Mapping[str, Probability]
 
+    @property
+    def sorted_scores(self) -> list[tuple[str, Probability]]:
+        return sorted(self.scores.items(), key=lambda item: item[1], reverse=True)
+
 
 class MultiLabelClassifyOutput(BaseModel):
     """Output for a multi label classification task.
@@ -143,14 +147,11 @@ class SingleLabelClassifyEvaluationLogic(
         example: Example[ClassifyInput, str],
         output: SingleLabelClassifyOutput,
     ) -> SingleLabelClassifyEvaluation:
-        sorted_classes = sorted(
-            output.scores.items(), key=lambda item: item[1], reverse=True
-        )
         if example.expected_output not in example.input.labels:
             warn_message = f"[WARNING] Example with ID '{example.id}' has expected label '{example.expected_output}', which is not part of the example's input labels."
             warnings.warn(warn_message, RuntimeWarning)
 
-        predicted = sorted_classes[0][0]
+        predicted = output.sorted_scores[0][0]
         if predicted == example.expected_output:
             correct = True
         else:
