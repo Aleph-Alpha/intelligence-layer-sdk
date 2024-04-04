@@ -16,19 +16,25 @@ class DummyAggregatedEvaluation(BaseModel):
 
 @fixture(scope="session")
 def hugging_face_dataset_repository_id() -> str:
-    return "Aleph-Alpha/test-datasets"
+    return f"Aleph-Alpha/test-datasets-{str(uuid4())}"
 
 
-@fixture(scope="session")
+# @fixture(scope="session")
+@fixture
 def hugging_face_dataset_repository(
     hugging_face_dataset_repository_id: str, hugging_face_token: str
-) -> HuggingFaceDatasetRepository:
+) -> Iterable[HuggingFaceDatasetRepository]:
     # this repository should already exist and does not have to be deleted after the tests
-    return HuggingFaceDatasetRepository(
+    repo = HuggingFaceDatasetRepository(
         repository_id=hugging_face_dataset_repository_id,
         token=hugging_face_token,
         private=True,
     )
+
+    try:
+        yield repo
+    finally:
+        repo.delete_repository()
 
 
 @fixture
