@@ -28,7 +28,10 @@ class SingleHuggingfaceDatasetRepository(DatasetRepository):
         self._huggingface_dataset = huggingface_dataset
 
     def create_dataset(
-        self, examples: Iterable[Example[Input, ExpectedOutput]], dataset_name: str
+        self,
+        examples: Iterable[Example[Input, ExpectedOutput]],
+        dataset_name: str,
+        id: str | None = None,
     ) -> Dataset:
         raise NotImplementedError
 

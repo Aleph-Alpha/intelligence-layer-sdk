@@ -17,13 +17,17 @@ class DatasetRepository(ABC):
 
     @abstractmethod
     def create_dataset(
-        self, examples: Iterable[Example[Input, ExpectedOutput]], dataset_name: str
+        self,
+        examples: Iterable[Example[Input, ExpectedOutput]],
+        dataset_name: str,
+        id: str | None = None,
     ) -> Dataset:
         """Creates a dataset from given :class:`Example`s and returns the ID of that dataset.
 
         Args:
             examples: An :class:`Iterable` of :class:`Example`s to be saved in the same dataset.
             dataset_name: A name for the dataset.
+            id: The dataset ID. If `None`, an ID will be generated.
 
         Returns:
             The created :class:`Dataset`.

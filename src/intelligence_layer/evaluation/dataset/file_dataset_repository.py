@@ -23,9 +23,15 @@ class FileSystemDatasetRepository(DatasetRepository, FileSystemBasedRepository):
         super().__init__(file_system=filesystem, root_directory=root_directory)
 
     def create_dataset(
-        self, examples: Iterable[Example[Input, ExpectedOutput]], dataset_name: str
+        self,
+        examples: Iterable[Example[Input, ExpectedOutput]],
+        dataset_name: str,
+        id: str | None = None,
     ) -> Dataset:
         dataset = Dataset(name=dataset_name)
+        if id is not None:
+            dataset.id = id
+
         self.mkdir(self._dataset_directory(dataset.id))
 
         dataset_path = self._dataset_path(dataset.id)
@@ -139,13 +145,10 @@ class FileSystemDatasetRepository(DatasetRepository, FileSystemBasedRepository):
         file_path: Path,
         data_to_write: Iterable[PydanticSerializable],
     ) -> None:
-        with self._file_system.open(
-            self.path_to_str(file_path), "w", encoding="utf-8"
-        ) as file:
-            for data_chunk in data_to_write:
-                serialized_result = JsonSerializer(root=data_chunk)
-                json_string = serialized_result.model_dump_json() + "\n"
-                file.write(json_string)
+        data = "\n".join(
+            JsonSerializer(root=chunk).model_dump_json() for chunk in data_to_write
+        )
+        self.write_utf8(file_path, data, create_parents=True)
 
 
 class FileDatasetRepository(FileSystemDatasetRepository):

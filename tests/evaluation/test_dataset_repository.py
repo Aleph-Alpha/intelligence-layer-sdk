@@ -28,6 +28,26 @@ test_repository_fixtures = [
     "repository_fixture",
     test_repository_fixtures,
 )
+def test_dataset_repository_with_custom_id(
+    repository_fixture: str,
+    request: FixtureRequest,
+    dummy_string_example: Example[DummyStringInput, DummyStringOutput],
+) -> None:
+    dataset_repository: DatasetRepository = request.getfixturevalue(repository_fixture)
+
+    dataset = dataset_repository.create_dataset(
+        examples=[dummy_string_example],
+        dataset_name="test-dataset",
+        id="my-custom-dataset-id",
+    )
+
+    assert dataset.id == "my-custom-dataset-id"
+
+
+@mark.parametrize(
+    "repository_fixture",
+    test_repository_fixtures,
+)
 def test_dataset_repository_can_create_and_store_a_dataset(
     repository_fixture: str,
     request: FixtureRequest,
