@@ -20,7 +20,7 @@ class FailedExampleRun(BaseModel):
     @staticmethod
     def from_exception(exception: Exception) -> "FailedExampleRun":
         return FailedExampleRun(
-            error_message=f"{type(exception)}: {str(exception)}\n{traceback.format_exc()}"
+            error_message=f"{type(exception).__qualname__}: {str(exception)}\n{traceback.format_exc()}"
         )
 
 

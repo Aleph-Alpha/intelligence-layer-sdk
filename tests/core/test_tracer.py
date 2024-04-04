@@ -32,6 +32,7 @@ from intelligence_layer.core import (
     utc_now,
 )
 from intelligence_layer.core.tracer.persistent_tracer import TracerLogEntryFailed
+from intelligence_layer.core.tracer.tracer import ErrorValue
 
 
 @fixture
@@ -111,6 +112,22 @@ def test_can_add_parent_and_child_entries() -> None:
 
     assert isinstance(parent.entries[0], InMemoryTracer)
     assert isinstance(parent.entries[0].entries[0], LogEntry)
+
+
+def test_task_logs_error_value() -> None:
+    tracer = InMemoryTracer()
+
+    with pytest.raises(ValueError):
+        with tracer.task_span("failing task", None):
+            raise ValueError("my bad, sorry")
+
+    assert isinstance(tracer.entries[0], InMemoryTaskSpan)
+    assert isinstance(tracer.entries[0].entries[0], LogEntry)
+    error = tracer.entries[0].entries[0].value
+    assert isinstance(error, ErrorValue)
+    assert error.message == "my bad, sorry"
+    assert error.error_type == "ValueError"
+    assert error.stack_trace.startswith("Traceback")
 
 
 def test_task_automatically_logs_input_and_output(

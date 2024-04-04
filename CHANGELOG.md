@@ -12,6 +12,7 @@
 - feature: Added `Runner.failed_runs(..)` and `Evaluator.failed_evaluations(..)` to retrieve all failed run / evaluation lineages
 - feature: Added `.successful_example_outputs(..)` and `.failed_example_outputs(..)` to `RunRepository` to match the evaluation repository
 - feature: Added optional argument to set an id when creating a `Dataset` via `DatasetRepository.create_dataset(..)`
+- feature: Traces now log exceptions using the `ErrorValue` type.
 
 ### Fixes
 
