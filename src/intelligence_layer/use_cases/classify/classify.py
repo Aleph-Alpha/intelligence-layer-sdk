@@ -7,15 +7,10 @@ from pydantic import BaseModel
 from intelligence_layer.core import TextChunk
 from intelligence_layer.evaluation import (
     AggregationLogic,
-    DatasetRepository,
-    EvaluationRepository,
     Example,
     MeanAccumulator,
-    RepositoryNavigator,
-    RunRepository,
     SingleOutputEvaluationLogic,
 )
-from intelligence_layer.evaluation.evaluation.domain import FailedExampleEvaluation
 
 Probability = NewType("Probability", float)
 
@@ -166,40 +161,6 @@ class SingleLabelClassifyEvaluationLogic(
             expected=example.expected_output,
             expected_label_missing=example.expected_output not in example.input.labels,
         )
-
-
-class SingleLabelClassifyFailedExampleIterator:
-    def __init__(
-        self,
-        dataset_repository: DatasetRepository,
-        run_repository: RunRepository,
-        evaluation_repository: EvaluationRepository,
-    ):
-        self.repository_navigator = RepositoryNavigator(
-            dataset_repository, run_repository, evaluation_repository
-        )
-
-    # TODO: Add test
-    def get_examples(
-        self, evaluation_overview_id: str, first_n: int = 0
-    ) -> Iterable[Example[ClassifyInput, str]]:
-        evaluation_lineages = self.repository_navigator.evaluation_lineages(
-            evaluation_id=evaluation_overview_id,
-            input_type=ClassifyInput,
-            expected_output_type=str,
-            output_type=SingleLabelClassifyOutput,
-            evaluation_type=SingleLabelClassifyEvaluation,
-        )
-        count_yielded = 0
-        for lineage in evaluation_lineages:
-            if first_n != 0 and count_yielded >= first_n:
-                break
-            if (
-                isinstance(lineage.evaluation.result, FailedExampleEvaluation)
-                or not lineage.evaluation.result.correct
-            ):
-                count_yielded += 1
-                yield lineage.example
 
 
 class MultiLabelClassifyEvaluation(BaseModel):
