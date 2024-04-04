@@ -35,11 +35,20 @@ huggingface-hub = "^0.22.2"
 opentelemetry-exporter-otlp-proto-http = "1.23.0"
 
 [tool.poetry.group.dev.dependencies]
+# lint & format
 mypy = "^1.9.0"
+nbqa = "^1.8.5"
+ruff = "^0.3.5"
+pre-commit = "*"
+pylama = { extras = ["eradicate", "radon", "vulture", "toml"], version = "^8.4.1" }
+faker = "^24.4.0"
+
+# tests
 pytest = "*"
 pytest-xdist = "^3.5.0"
-black = { extras = ["jupyter"], version = "^24.3.0" }
-pre-commit = "*"
+hypercorn = "0.16.0"
+
+# typing
 httpx = "*"
 types-Pygments = "*"
 types-colorama = "*"
@@ -48,14 +57,10 @@ types-setuptools = "*"
 types-decorator = "*"
 types-requests = "*"
 types-tqdm = "*"
+pandas-stubs = "^2.2.1.240316"
+# docs
 sphinx-rtd-theme = "^2.0.0"
 sphinx = "^7.2.6"
-pylama = { extras = ["all", "toml"], version = "^8.4.1" }
-faker = "^24.4.0"
-hypercorn = "0.16.0"
-pandas-stubs = "^2.2.1.240316"
-nbqa = "^1.8.5"
-ruff = "^0.3.5"
 
 [tool.mypy]
 files = "src,tests"
