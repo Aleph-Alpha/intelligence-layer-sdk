@@ -22,10 +22,14 @@ class DocumentChunk(BaseModel):
     Attributes:
         text: Chunk of the document that matched the search query.
         metadata: Any metadata added to the document.
+        start: Start index of the chunk within the document
+        end: End index of the chunk within the document
     """
 
     text: str
     metadata: Any = None
+    start: int
+    end: int
 
 
 ID = TypeVar("ID")
