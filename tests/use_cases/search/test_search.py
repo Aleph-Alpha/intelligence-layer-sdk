@@ -35,3 +35,5 @@ def test_search(
     assert [to_document(r.document_chunk) for r in result.results] == [
         in_memory_retriever_documents[2]
     ]
+    assert result.results[0].document_chunk.start == 0
+    assert result.results[0].document_chunk.end == len(in_memory_retriever_documents[2].text) - 1
