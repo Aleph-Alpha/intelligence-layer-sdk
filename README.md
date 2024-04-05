@@ -270,3 +270,18 @@ In addition, there are the following naming conventions:
     * E.g., `evaluation_overview` which returns an evaluation overview object
   * Use a verb for a method name if it has side effects and return nothing
     * E.g., `store_evaluation_overview` which saves a given evaluation overview (and returns nothing)
+
+
+
+## Tests
+In VSCode
+1. Sidebar > Testing
+2. Select pytest as framework for the tests
+3. Select `intelligence_layer/tests` as source of the tests
+
+You can then run the tests from the sidebar.
+
+In order to run a local proxy w.r.t. to the CI pipeline (required to merge) you can run
+> scripts/all.sh
+
+This will run linters and all tests.
