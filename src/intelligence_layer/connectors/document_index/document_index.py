@@ -157,6 +157,20 @@ class DocumentFilterQueryParams(BaseModel):
     starts_with: Optional[str]
 
 
+class DocumentTextPosition(BaseModel):
+    """Position of a document chunk within a document item.
+
+    Args:
+        item: Which item in the document the chunk belongs to.
+        start_position: Start index of the chunk within the item.
+        end_position: End index of the chunk within the item.
+    """
+
+    item: int
+    start_position: int
+    end_position: int
+
+
 class DocumentSearchResult(BaseModel):
     """Result of a search query for one individual section.
 
@@ -171,15 +185,22 @@ class DocumentSearchResult(BaseModel):
     document_path: DocumentPath
     section: str
     score: float
+    chunk_position: DocumentTextPosition
 
     @classmethod
     def _from_search_response(
         cls, search_response: Mapping[str, Any]
     ) -> "DocumentSearchResult":
+        assert search_response["start"]["item"] == search_response["end"]["item"]
         return cls(
             document_path=DocumentPath.from_json(search_response["document_path"]),
             section=search_response["section"][0]["text"],
             score=search_response["score"],
+            chunk_position=DocumentTextPosition(
+                item=search_response["start"]["item"],
+                start_position=search_response["start"]["position"],
+                end_position=search_response["end"]["position"],
+            ),
         )
 
 

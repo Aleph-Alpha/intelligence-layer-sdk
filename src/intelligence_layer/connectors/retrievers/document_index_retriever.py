@@ -4,6 +4,7 @@ from intelligence_layer.connectors.document_index.document_index import (
     CollectionPath,
     DocumentIndexClient,
     DocumentPath,
+    DocumentTextPosition,
     SearchQuery,
 )
 from intelligence_layer.connectors.retrievers.base_retriever import (
@@ -50,6 +51,20 @@ class DocumentIndexRetriever(BaseRetriever[DocumentPath]):
         self._k = k
         self._threshold = threshold
 
+    def _get_absolute_position(
+        self, id: DocumentPath, document_text_position: DocumentTextPosition
+    ) -> dict[str, int]:
+        doc = self._document_index.document(id)
+
+        previous_item_length = sum(
+            len(text) for text in doc.contents[0 : document_text_position.item]
+        )
+
+        start = previous_item_length + document_text_position.start_position
+        end = previous_item_length + document_text_position.end_position
+
+        return {"start": start, "end": end}
+
     def get_relevant_documents_with_scores(
         self, query: str
     ) -> Sequence[SearchResult[DocumentPath]]:
@@ -65,6 +80,10 @@ class DocumentIndexRetriever(BaseRetriever[DocumentPath]):
                 score=result.score,
                 document_chunk=DocumentChunk(
                     text=result.section,
+                    **self._get_absolute_position(
+                        id=result.document_path,
+                        document_text_position=result.chunk_position,
+                    )
                 ),
             )
             for result in response

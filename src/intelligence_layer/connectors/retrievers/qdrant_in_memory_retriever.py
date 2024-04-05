@@ -129,7 +129,12 @@ class QdrantInMemoryRetriever(BaseRetriever[int]):
                 PointStruct(
                     id=idx,
                     vector=text_embedding,
-                    payload=document.model_dump(),
+                    payload=DocumentChunk(
+                        text=document.text,
+                        start=0,
+                        end=len(document.text) - 1,
+                        metadata=document.metadata,
+                    ).model_dump(),
                 )
                 for idx, (text_embedding, document) in enumerate(
                     zip(embeddings, documents)
