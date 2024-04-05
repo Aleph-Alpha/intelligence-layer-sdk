@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Iterable, Sequence
+from typing import Iterable, Optional, Sequence
 
 from dotenv import load_dotenv
 from pydantic import BaseModel
@@ -7,6 +7,7 @@ from pytest import fixture
 
 from intelligence_layer.connectors import AlephAlphaClientProtocol
 from intelligence_layer.core import Task, TaskSpan
+from intelligence_layer.core.tracer.tracer import Tracer
 from intelligence_layer.evaluation import (
     AggregationLogic,
     EvaluationLogic,
@@ -54,7 +55,10 @@ class DummyAggregationLogic(AggregationLogic[DummyEvaluation, DummyAggregation])
 
 class DummyEvaluationLogic(EvaluationLogic[None, None, None, DummyEvaluation]):
     def do_evaluate(
-        self, example: Example[None, None], *output: SuccessfulExampleOutput[None]
+        self,
+        example: Example[None, None],
+        tracer: Optional[Tracer],
+        *output: SuccessfulExampleOutput[None],
     ) -> DummyEvaluation:
         return DummyEvaluation(correct=True)
 

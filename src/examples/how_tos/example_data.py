@@ -1,8 +1,9 @@
-from typing import Iterable, Sequence
+from typing import Iterable, Sequence, Optional
 
 from pydantic import BaseModel
 
 from intelligence_layer.core import Task, TaskSpan
+from intelligence_layer.core.tracer.tracer import Tracer
 from intelligence_layer.evaluation import (
     Dataset,
     EvaluationLogic,
@@ -34,7 +35,10 @@ class DummyEvaluation(BaseModel):
 
 class DummyEvaluationLogic(EvaluationLogic[str, str, str, DummyEvaluation]):
     def do_evaluate(
-        self, example: Example[str, str], *output: SuccessfulExampleOutput[str]
+        self,
+        example: Example[str, str],
+        tracer: Optional[Tracer],
+        *output: SuccessfulExampleOutput[str],
     ) -> DummyEvaluation:
         output_str = "(" + (", ".join(o.output for o in output)) + ")"
         return DummyEvaluation(

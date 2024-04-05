@@ -1,10 +1,11 @@
-from typing import Sequence
+from typing import Optional, Sequence
 
 import pytest
 from pydantic import BaseModel
 from pytest import fixture
 
 from intelligence_layer.core import Task, TaskSpan
+from intelligence_layer.core.tracer.tracer import Tracer
 from intelligence_layer.evaluation import (
     Dataset,
     DatasetRepository,
@@ -41,7 +42,7 @@ class DummyEval(BaseModel):
 
 class DummyEvalLogic(EvaluationLogic[str, str, str, DummyEval]):
     def do_evaluate(
-        self, example: Example[str, str], *output: SuccessfulExampleOutput[str]
+        self, example: Example[str, str], tracer: Optional[Tracer], *output: SuccessfulExampleOutput[str]
     ) -> DummyEval:
         output_str = ", ".join(o.output for o in output)
         return DummyEval(

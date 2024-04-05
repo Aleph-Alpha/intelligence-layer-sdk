@@ -19,6 +19,7 @@ from typing import (
 from tqdm import tqdm
 
 from intelligence_layer.core import Input, Output, utc_now
+from intelligence_layer.core.tracer.tracer import Tracer
 from intelligence_layer.evaluation.dataset.dataset_repository import DatasetRepository
 from intelligence_layer.evaluation.dataset.domain import Example, ExpectedOutput
 from intelligence_layer.evaluation.evaluation.domain import (
@@ -48,6 +49,7 @@ class EvaluationLogic(ABC, Generic[Input, Output, ExpectedOutput, Evaluation]):
     def do_evaluate(
         self,
         example: Example[Input, ExpectedOutput],
+        tracer: Optional[Tracer],
         *output: SuccessfulExampleOutput[Output],
     ) -> Evaluation:
         """Executes the evaluation for this specific example.
@@ -72,14 +74,18 @@ class SingleOutputEvaluationLogic(
     def do_evaluate(
         self,
         example: Example[Input, ExpectedOutput],
+        tracer: Optional[Tracer],
         *output: SuccessfulExampleOutput[Output],
     ) -> Evaluation:
         assert len(output) == 1
-        return self.do_evaluate_single_output(example, output[0].output)
+        return self.do_evaluate_single_output(example, tracer, output[0].output)
 
     @abstractmethod
     def do_evaluate_single_output(
-        self, example: Example[Input, ExpectedOutput], output: Output
+        self,
+        example: Example[Input, ExpectedOutput],
+        tracer: Optional[Tracer],
+        output: Output,
     ) -> Evaluation:
         pass
 
@@ -225,6 +231,7 @@ class Evaluator(Generic[Input, Output, ExpectedOutput, Evaluation]):
     def evaluate_runs(
         self,
         *run_ids: str,
+        tracer: Optional[Tracer] = None,
         num_examples: Optional[int] = None,
         abort_on_error: bool = False,
     ) -> EvaluationOverview:
@@ -335,7 +342,7 @@ class Evaluator(Generic[Input, Output, ExpectedOutput, Evaluation]):
                 tqdm(
                     executor.map(
                         lambda args: self.evaluate(
-                            args[0], args[1], abort_on_error, *args[2]
+                            args[0], args[1], tracer, abort_on_error, *args[2]
                         ),
                         generate_evaluation_inputs(),
                     ),
@@ -358,6 +365,7 @@ class Evaluator(Generic[Input, Output, ExpectedOutput, Evaluation]):
         self,
         example: Example[Input, ExpectedOutput],
         evaluation_id: str,
+        tracer: Optional[Tracer],
         abort_on_error: bool,
         *example_outputs: SuccessfulExampleOutput[Output],
     ) -> None:
@@ -365,6 +373,7 @@ class Evaluator(Generic[Input, Output, ExpectedOutput, Evaluation]):
             result: Evaluation | FailedExampleEvaluation = (
                 self._evaluation_logic.do_evaluate(
                     example,
+                    tracer,
                     *example_outputs,
                 )
             )

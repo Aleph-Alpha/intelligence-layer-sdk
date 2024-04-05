@@ -60,6 +60,7 @@ class DummyEvaluationLogic(
     def do_evaluate_single_output(
         self,
         example: Example[str, None],
+        tracer: Optional[Tracer],
         output: str,
     ) -> DummyEvaluation:
         if output == FAIL_IN_EVAL_INPUT:
@@ -99,7 +100,7 @@ class ComparingEvaluationLogic(
     ]
 ):
     def do_evaluate(
-        self, example: Example[str, None], *output: SuccessfulExampleOutput[str]
+        self, example: Example[str, None], tracer:Optional[Tracer], *output: SuccessfulExampleOutput[str]
     ) -> ComparisonEvaluation:
         unwrapped_output = [o.output for o in output]
         return ComparisonEvaluation(
@@ -109,7 +110,7 @@ class ComparingEvaluationLogic(
 
 class DummyEvaluatorWithoutTypeHints(DummyEvaluationLogic):
     def do_evaluate(  # type: ignore
-        self, example: Example[str, None], *output: SuccessfulExampleOutput[str]
+        self, example: Example[str, None], tracer:Optional[Tracer], *output: SuccessfulExampleOutput[str]
     ) -> DummyEvaluation:
         return super().do_evaluate(example, *output)
 
@@ -464,6 +465,7 @@ def test_evaluator_type_magic_works(
         def do_evaluate(
             self,
             example: Example[Input, ExpectedOutput],
+            tracer:Optional[Tracer],
             *output: SuccessfulExampleOutput[Output],
         ) -> Evaluation:
             return None  # type: ignore

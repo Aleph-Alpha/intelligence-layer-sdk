@@ -1,10 +1,11 @@
 import warnings
 from collections import defaultdict
-from typing import Iterable, Mapping, NewType, Sequence
+from typing import Iterable, Mapping, NewType, Optional, Sequence
 
 from pydantic import BaseModel
 
 from intelligence_layer.core import TextChunk
+from intelligence_layer.core.tracer.tracer import Tracer
 from intelligence_layer.evaluation import (
     AggregationLogic,
     Example,
@@ -145,6 +146,7 @@ class SingleLabelClassifyEvaluationLogic(
     def do_evaluate_single_output(
         self,
         example: Example[ClassifyInput, str],
+        tracer:Optional[Tracer],
         output: SingleLabelClassifyOutput,
     ) -> SingleLabelClassifyEvaluation:
         if example.expected_output not in example.input.labels:
@@ -307,6 +309,7 @@ class MultiLabelClassifyEvaluationLogic(
     def do_evaluate_single_output(
         self,
         example: Example[ClassifyInput, Sequence[str]],
+        tracer:Optional[Tracer],
         output: MultiLabelClassifyOutput,
     ) -> MultiLabelClassifyEvaluation:
         predicted_classes = frozenset(

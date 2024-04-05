@@ -11,6 +11,7 @@ from intelligence_layer.connectors.argilla.argilla_client import (
     RecordData,
 )
 from intelligence_layer.core import CompleteOutput, Input, InstructInput, Output
+from intelligence_layer.core.tracer.tracer import Tracer
 from intelligence_layer.evaluation.dataset.dataset_repository import DatasetRepository
 from intelligence_layer.evaluation.dataset.domain import Example, ExpectedOutput
 from intelligence_layer.evaluation.evaluation.argilla_evaluation_repository import (
@@ -34,6 +35,7 @@ class ArgillaEvaluationLogic(
     def do_evaluate(
         self,
         example: Example[Input, ExpectedOutput],
+        tracer:Optional[Tracer],
         *output: SuccessfulExampleOutput[Output],
     ) -> RecordDataSequence:
         return self._to_record(example, *output)

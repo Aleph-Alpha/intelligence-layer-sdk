@@ -1,8 +1,9 @@
-from typing import Iterable, Sequence, Union
+from typing import Iterable, Optional, Sequence, Union
 
 from pydantic import BaseModel
 
 from intelligence_layer.core import Language, TextChunk
+from intelligence_layer.core.tracer.tracer import Tracer
 from intelligence_layer.evaluation import (
     AggregationLogic,
     BleuGrader,
@@ -123,6 +124,7 @@ class SingleChunkSummarizeEvaluationLogic(
     def do_evaluate_single_output(
         self,
         example: Example[SingleChunkSummarizeInput, str],
+        tracer:Optional[Tracer],
         output: SummarizeOutput,
     ) -> SummarizeEvaluation:
         bleu_score = self.bleu_grader.calculate_bleu(
@@ -162,6 +164,7 @@ class LongContextSummarizeEvaluationLogic(
     def do_evaluate_single_output(
         self,
         example: Example[LongContextSummarizeInput, str],
+        tracer:Optional[Tracer],
         output: LongContextSummarizeOutput,
     ) -> SummarizeEvaluation:
         joint_summary = " ".join(
