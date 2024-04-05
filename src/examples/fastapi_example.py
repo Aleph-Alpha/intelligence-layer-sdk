@@ -69,7 +69,7 @@ def client() -> Client:
 
 
 def default_model(
-    app_client: Annotated[AlephAlphaClientProtocol, Depends(client)]
+    app_client: Annotated[AlephAlphaClientProtocol, Depends(client)],
 ) -> LuminousControlModel:
     return LuminousControlModel(client=app_client)
 

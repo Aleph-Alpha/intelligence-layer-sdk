@@ -167,7 +167,7 @@ def dummy_string_example() -> Example[DummyStringInput, DummyStringOutput]:
 
 @fixture
 def dummy_string_examples(
-    dummy_string_example: Example[DummyStringInput, DummyStringOutput]
+    dummy_string_example: Example[DummyStringInput, DummyStringOutput],
 ) -> Iterable[Example[DummyStringInput, DummyStringOutput]]:
     return [dummy_string_example]
 

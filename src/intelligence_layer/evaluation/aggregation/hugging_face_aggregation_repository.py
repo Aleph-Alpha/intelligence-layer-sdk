@@ -14,7 +14,6 @@ from intelligence_layer.evaluation.infrastructure.hugging_face_repository import
 class HuggingFaceAggregationRepository(
     FileSystemAggregationRepository, HuggingFaceRepository
 ):
-
     def __init__(self, repository_id: str, token: str, private: bool) -> None:
         assert repository_id[-1] != "/"
 

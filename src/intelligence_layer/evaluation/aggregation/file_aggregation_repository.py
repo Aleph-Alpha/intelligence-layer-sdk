@@ -16,7 +16,6 @@ from intelligence_layer.evaluation.infrastructure.file_system_based_repository i
 
 
 class FileSystemAggregationRepository(AggregationRepository, FileSystemBasedRepository):
-
     _SUB_DIRECTORY = "aggregations"
 
     def store_aggregation_overview(

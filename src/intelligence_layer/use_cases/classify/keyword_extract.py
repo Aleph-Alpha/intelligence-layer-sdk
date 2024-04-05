@@ -41,7 +41,6 @@ class KeywordExtractOutput(BaseModel):
 
 
 class KeywordExtract(Task[KeywordExtractInput, KeywordExtractOutput]):
-
     def __init__(
         self,
         model: ControlModel | None = None,

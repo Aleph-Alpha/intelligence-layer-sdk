@@ -68,7 +68,6 @@ class SingleHuggingfaceDatasetRepository(DatasetRepository):
         input_type: type[Input],
         expected_output_type: type[ExpectedOutput],
     ) -> Iterable[Example[Input, ExpectedOutput]]:
-
         answers = "ABCD"
         assert input_type == MultipleChoiceInput
         assert expected_output_type == str

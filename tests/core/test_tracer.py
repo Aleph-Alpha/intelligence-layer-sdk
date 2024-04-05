@@ -292,7 +292,7 @@ def test_in_memory_tracer_trace_viewer_doesnt_crash_if_it_cant_reach() -> None:
 
 
 def test_open_telemetry_tracer_check_consistency_in_trace_ids(
-    open_telemetry_tracer: tuple[str, OpenTelemetryTracer]
+    open_telemetry_tracer: tuple[str, OpenTelemetryTracer],
 ) -> None:
     tracing_service, tracer = open_telemetry_tracer
     expected_trace_id = tracer.ensure_id(None)

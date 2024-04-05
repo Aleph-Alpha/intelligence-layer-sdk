@@ -35,7 +35,6 @@ class LabelWithDefinition(BaseModel):
 class PromptBasedClassifyWithDefinitions(
     Task[ClassifyInput, SingleLabelClassifyOutput]
 ):
-
     INSTRUCTION: str = """Identify a class that describes the text adequately.
 Reply with only the class label."""
 

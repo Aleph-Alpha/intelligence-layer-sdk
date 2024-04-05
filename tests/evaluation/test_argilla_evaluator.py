@@ -206,7 +206,8 @@ def test_argilla_evaluator_can_aggregate_evaluation(
 ) -> None:
     # given
     argilla_client = cast(
-        StubArgillaClient, string_argilla_evaluator._evaluation_repository._client  # type: ignore
+        StubArgillaClient,
+        string_argilla_evaluator._evaluation_repository._client,  # type: ignore
     )
     # when
     run_overview = string_argilla_runner.run_dataset(string_dataset_id)
