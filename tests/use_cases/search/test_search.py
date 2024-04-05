@@ -36,4 +36,7 @@ def test_search(
         in_memory_retriever_documents[2]
     ]
     assert result.results[0].document_chunk.start == 0
-    assert result.results[0].document_chunk.end == len(in_memory_retriever_documents[2].text) - 1
+    assert (
+        result.results[0].document_chunk.end
+        == len(in_memory_retriever_documents[2].text) - 1
+    )
