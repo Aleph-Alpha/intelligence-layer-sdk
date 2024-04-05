@@ -83,7 +83,7 @@ class DocumentIndexRetriever(BaseRetriever[DocumentPath]):
                     **self._get_absolute_position(
                         id=result.document_path,
                         document_text_position=result.chunk_position,
-                    )
+                    ),
                 ),
             )
             for result in response
