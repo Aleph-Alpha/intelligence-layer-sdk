@@ -146,7 +146,7 @@ class SingleLabelClassifyEvaluationLogic(
     def do_evaluate_single_output(
         self,
         example: Example[ClassifyInput, str],
-        tracer:Optional[Tracer],
+        tracer: Optional[Tracer],
         output: SingleLabelClassifyOutput,
     ) -> SingleLabelClassifyEvaluation:
         if example.expected_output not in example.input.labels:
@@ -309,7 +309,7 @@ class MultiLabelClassifyEvaluationLogic(
     def do_evaluate_single_output(
         self,
         example: Example[ClassifyInput, Sequence[str]],
-        tracer:Optional[Tracer],
+        tracer: Optional[Tracer],
         output: MultiLabelClassifyOutput,
     ) -> MultiLabelClassifyEvaluation:
         predicted_classes = frozenset(

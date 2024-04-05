@@ -124,7 +124,7 @@ class SingleChunkSummarizeEvaluationLogic(
     def do_evaluate_single_output(
         self,
         example: Example[SingleChunkSummarizeInput, str],
-        tracer:Optional[Tracer],
+        tracer: Optional[Tracer],
         output: SummarizeOutput,
     ) -> SummarizeEvaluation:
         bleu_score = self.bleu_grader.calculate_bleu(
@@ -164,7 +164,7 @@ class LongContextSummarizeEvaluationLogic(
     def do_evaluate_single_output(
         self,
         example: Example[LongContextSummarizeInput, str],
-        tracer:Optional[Tracer],
+        tracer: Optional[Tracer],
         output: LongContextSummarizeOutput,
     ) -> SummarizeEvaluation:
         joint_summary = " ".join(

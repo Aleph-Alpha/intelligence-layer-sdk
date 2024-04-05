@@ -42,7 +42,10 @@ class DummyEval(BaseModel):
 
 class DummyEvalLogic(EvaluationLogic[str, str, str, DummyEval]):
     def do_evaluate(
-        self, example: Example[str, str], tracer: Optional[Tracer], *output: SuccessfulExampleOutput[str]
+        self,
+        example: Example[str, str],
+        tracer: Optional[Tracer],
+        *output: SuccessfulExampleOutput[str],
     ) -> DummyEval:
         output_str = ", ".join(o.output for o in output)
         return DummyEval(

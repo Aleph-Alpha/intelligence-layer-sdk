@@ -35,7 +35,7 @@ class ArgillaEvaluationLogic(
     def do_evaluate(
         self,
         example: Example[Input, ExpectedOutput],
-        tracer:Optional[Tracer],
+        tracer: Optional[Tracer],
         *output: SuccessfulExampleOutput[Output],
     ) -> RecordDataSequence:
         return self._to_record(example, *output)
