@@ -5,7 +5,6 @@
 ### Breaking Changes
 
 ### New Features
-- feature: Add histogram and cross-tab for ground truth and classification labels to `user_journey.ipynb`
 - feature: Add sorted_scores property to `SingleLabelClassifyOutput`.
 - feature: Error information is printed to the console on failed runs and evaluations.
 - feature: The stack trace of a failed run/evaluation is included in the `FailedExampleRun`/`FailedExampleEvaluation` object
@@ -14,6 +13,9 @@
 - feature: Added `.successful_example_outputs(..)` and `.failed_example_outputs(..)` to `RunRepository` to match the evaluation repository
 - feature: Added optional argument to set an id when creating a `Dataset` via `DatasetRepository.create_dataset(..)`
 - feature: Traces now log exceptions using the `ErrorValue` type.
+
+- Documentation:
+  - feature: Add `issue_classification_user_journey` notebook.
 
 ### Fixes
 
