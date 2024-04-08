@@ -54,6 +54,11 @@ def example(
     return Example(input=SearchInput(query=""), expected_output=expected_output)
 
 
+@fixture
+def search_eval_logic() -> SearchEvaluationLogic:
+    return SearchEvaluationLogic()
+
+
 def test_search(
     search: Search[int],
     no_op_tracer: NoOpTracer,
@@ -73,8 +78,8 @@ def test_search(
 
 def test_search_evaluation_logic_works_for_overlapping_output(
     example: Example[SearchInput, ExpectedSearchOutput],
+    search_eval_logic: SearchEvaluationLogic,
 ) -> None:
-    logic = SearchEvaluationLogic()
     output = SuccessfulExampleOutput(
         run_id="1",
         example_id="1",
@@ -88,7 +93,7 @@ def test_search_evaluation_logic_works_for_overlapping_output(
             ]
         ),
     )
-    eval = logic.do_evaluate(example, output)
+    eval = search_eval_logic.do_evaluate(example, output)
 
     assert eval.rank == 1
     assert eval.similarity_score == output.output.results[0].score
@@ -96,8 +101,8 @@ def test_search_evaluation_logic_works_for_overlapping_output(
 
 def test_search_evaluation_logic_works_for_wholly_included_output(
     example: Example[SearchInput, ExpectedSearchOutput],
+    search_eval_logic: SearchEvaluationLogic,
 ) -> None:
-    logic = SearchEvaluationLogic()
     output = SuccessfulExampleOutput(
         run_id="1",
         example_id="1",
@@ -111,7 +116,7 @@ def test_search_evaluation_logic_works_for_wholly_included_output(
             ]
         ),
     )
-    eval = logic.do_evaluate(example, *[output])
+    eval = search_eval_logic.do_evaluate(example, *[output])
 
     assert eval.rank == 1
     assert eval.similarity_score == output.output.results[0].score
@@ -119,6 +124,7 @@ def test_search_evaluation_logic_works_for_wholly_included_output(
 
 def test_search_evaluation_logic_works_for_identical_ranges(
     example: Example[SearchInput, ExpectedSearchOutput],
+    search_eval_logic: SearchEvaluationLogic,
 ) -> None:
     logic = SearchEvaluationLogic()
     output = SuccessfulExampleOutput(
@@ -134,7 +140,7 @@ def test_search_evaluation_logic_works_for_identical_ranges(
             ]
         ),
     )
-    eval = logic.do_evaluate(example, *[output])
+    eval = search_eval_logic.do_evaluate(example, *[output])
 
     assert eval.rank == 1
     assert eval.similarity_score == output.output.results[0].score
@@ -142,8 +148,8 @@ def test_search_evaluation_logic_works_for_identical_ranges(
 
 def test_search_evaluation_logic_works_for_non_overlapping_output(
     example: Example[SearchInput, ExpectedSearchOutput],
+    search_eval_logic: SearchEvaluationLogic,
 ) -> None:
-    logic = SearchEvaluationLogic()
     output = SuccessfulExampleOutput(
         run_id="1",
         example_id="1",
@@ -157,7 +163,7 @@ def test_search_evaluation_logic_works_for_non_overlapping_output(
             ]
         ),
     )
-    eval = logic.do_evaluate(example, *[output])
+    eval = search_eval_logic.do_evaluate(example, *[output])
 
     assert not eval.rank
     assert not eval.similarity_score
