@@ -1,4 +1,4 @@
-from typing import Generic, Iterable, Optional, Sequence
+from typing import Generic, Iterable, Mapping, Optional, Sequence
 
 from pydantic import BaseModel
 
@@ -125,11 +125,6 @@ class SearchEvaluationLogic(
         return SearchEvaluation(rank=rank, similarity_score=score)
 
 
-class MeanTopK(BaseModel):
-    top_k: int
-    mean: float
-
-
 class ChunkFound(BaseModel):
     found_count: int  # found => chunk was within top-k results of retriever
     expected_count: int
@@ -139,7 +134,7 @@ class ChunkFound(BaseModel):
 class AggregatedSearchEvaluation(BaseModel):
     mean_score: float
     mean_reciprocal_rank: float
-    mean_top_ks: Sequence[MeanTopK]
+    mean_top_ks: Mapping[int, float]
     chunk_found: ChunkFound
 
 
@@ -164,6 +159,8 @@ class SearchAggregationLogic(
             chunk_found = True if evaluation.rank else False
             chunk_found_accumulator.add(chunk_found)
             if chunk_found:
+                assert evaluation.similarity_score and evaluation.rank
+
                 score_accumulator.add(evaluation.similarity_score)
                 reciprocal_rank_accumulator.add(1 / evaluation.rank)
                 for top_k in self.top_ks_to_evaluate:
@@ -174,10 +171,9 @@ class SearchAggregationLogic(
         return AggregatedSearchEvaluation(
             mean_score=score_accumulator.extract(),
             mean_reciprocal_rank=reciprocal_rank_accumulator.extract(),
-            mean_top_ks=[
-                MeanTopK(top_k=top_k, mean=acc.extract())
-                for top_k, acc in top_k_accumulator.items()
-            ],
+            mean_top_ks={
+                top_k: acc.extract() for top_k, acc in top_k_accumulator.items()
+            },
             chunk_found=ChunkFound(
                 found_count=int(chunk_found_accumulator._acc),
                 expected_count=chunk_found_accumulator._n,

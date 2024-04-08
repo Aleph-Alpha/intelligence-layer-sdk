@@ -1,3 +1,4 @@
+from statistics import mean
 from typing import Sequence
 
 from pytest import fixture
@@ -13,6 +14,8 @@ from intelligence_layer.evaluation import Example
 from intelligence_layer.use_cases import (
     ExpectedSearchOutput,
     Search,
+    SearchAggregationLogic,
+    SearchEvaluation,
     SearchEvaluationLogic,
     SearchInput,
     SearchOutput,
@@ -56,6 +59,22 @@ def example(
 @fixture
 def search_eval_logic() -> SearchEvaluationLogic[str]:
     return SearchEvaluationLogic[str]()
+
+
+@fixture
+def search_evaluations() -> Sequence[SearchEvaluation]:
+    return [
+        SearchEvaluation(rank=1, similarity_score=0.7),
+        SearchEvaluation(rank=3, similarity_score=0.6),
+        SearchEvaluation(rank=10, similarity_score=0.5),
+        SearchEvaluation(rank=None, similarity_score=None),
+        SearchEvaluation(rank=None, similarity_score=None),
+    ]
+
+
+@fixture
+def search_aggregation_logic() -> SearchAggregationLogic:
+    return SearchAggregationLogic(top_ks_to_evaluate=[1, 3])
 
 
 def test_search(
@@ -149,3 +168,33 @@ def test_search_evaluation_logic_works_for_non_overlapping_output(
 
     assert not eval.rank
     assert not eval.similarity_score
+
+
+def test_search_aggregation_logic_works(
+    search_evaluations: Sequence[SearchEvaluation],
+    search_aggregation_logic: SearchAggregationLogic,
+) -> None:
+    aggregations = search_aggregation_logic.aggregate(search_evaluations)
+
+    assert (
+        aggregations.mean_score
+        == mean(
+            [
+                eval.similarity_score
+                for eval in search_evaluations
+                if eval.similarity_score
+            ]
+        )
+        == 0.6
+    )
+    assert (
+        round(aggregations.mean_reciprocal_rank, 5)
+        == round(mean([1 / eval.rank for eval in search_evaluations if eval.rank]), 5)
+        == round((1 + (1 / 3) + (1 / 10)) / 3, 5)
+    )
+    assert aggregations.mean_top_ks
+    assert aggregations.chunk_found.found_count == 3
+    assert aggregations.chunk_found.expected_count == len(search_evaluations) == 5
+    assert aggregations.chunk_found.percentage == 3 / 5
+    assert aggregations.mean_top_ks[1] == 1 / 3
+    assert aggregations.mean_top_ks[3] == 2 / 3

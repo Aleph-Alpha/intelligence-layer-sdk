@@ -57,6 +57,7 @@ from .qa.single_chunk_qa import SingleChunkQa as SingleChunkQa
 from .qa.single_chunk_qa import SingleChunkQaInput as SingleChunkQaInput
 from .qa.single_chunk_qa import SingleChunkQaOutput as SingleChunkQaOutput
 from .search.search import AggregatedSearchEvaluation as AggregatedSearchEvaluation
+from .search.search import ChunkFound as ChunkFound
 from .search.search import ExpectedSearchOutput as ExpectedSearchOutput
 from .search.search import Search as Search
 from .search.search import SearchAggregationLogic as SearchAggregationLogic
