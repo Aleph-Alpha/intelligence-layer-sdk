@@ -1,11 +1,14 @@
 # Changelog
 
 ## 0.8.1
+
 ### Fixes
 - fix: Linting for release version
 
-## 0.8.0
+### New Features
+- feature: Add `SearchEvaluationLogic` and `SearchAggregationLogic` to evaluate `Search`-use-cases
 
+## 0.8.0
 
 ### New Features
 - feature: Expose start and end index in DocumentChunk
@@ -13,9 +16,9 @@
 - feature: Error information is printed to the console on failed runs and evaluations.
 - feature: The stack trace of a failed run/evaluation is included in the `FailedExampleRun`/`FailedExampleEvaluation` object
 - feature: The `Runner.run_dataset(..)` and `Evaluator.evaluate_run(..)` have an optional flag `abort_on_error` to stop running/evaluating when an error occurs.
-- feature: Added `Runner.failed_runs(..)` and `Evaluator.failed_evaluations(..)` to retrieve all failed run / evaluation lineages
-- feature: Added `.successful_example_outputs(..)` and `.failed_example_outputs(..)` to `RunRepository` to match the evaluation repository
-- feature: Added optional argument to set an id when creating a `Dataset` via `DatasetRepository.create_dataset(..)`
+- feature: Add `Runner.failed_runs(..)` and `Evaluator.failed_evaluations(..)` to retrieve all failed run / evaluation lineages
+- feature: Add `.successful_example_outputs(..)` and `.failed_example_outputs(..)` to `RunRepository` to match the evaluation repository
+- feature: Add optional argument to set an id when creating a `Dataset` via `DatasetRepository.create_dataset(..)`
 - feature: Traces now log exceptions using the `ErrorValue` type.
 
 

@@ -27,9 +27,9 @@ class DocumentChunk(BaseModel):
     """
 
     text: str
-    metadata: Any = None
     start: int
     end: int
+    metadata: Any = None
 
 
 ID = TypeVar("ID")
