@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.8.1
+### Fixes
+- fix: Linting for release version
+
 ## 0.8.0
 
 
