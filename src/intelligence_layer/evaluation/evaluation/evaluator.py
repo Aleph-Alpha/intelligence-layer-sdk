@@ -19,7 +19,8 @@ from typing import (
 from tqdm import tqdm
 
 from intelligence_layer.core import Input, Output, utc_now
-from intelligence_layer.core.tracer.tracer import Tracer
+from intelligence_layer.core.tracer.composite_tracer import CompositeTracer
+from intelligence_layer.core.tracer.tracer import EvaluationSpan, Tracer
 from intelligence_layer.evaluation.dataset.dataset_repository import DatasetRepository
 from intelligence_layer.evaluation.dataset.domain import Example, ExpectedOutput
 from intelligence_layer.evaluation.evaluation.domain import (
@@ -48,9 +49,9 @@ class EvaluationLogic(ABC, Generic[Input, Output, ExpectedOutput, Evaluation]):
     @abstractmethod
     def do_evaluate(
         self,
+        evaluation_span: EvaluationSpan,
         example: Example[Input, ExpectedOutput],
-        tracer: Optional[Tracer],
-        *output: SuccessfulExampleOutput[Output],
+        *example_outputs: SuccessfulExampleOutput[Output],
     ) -> Evaluation:
         """Executes the evaluation for this specific example.
 
@@ -59,12 +60,31 @@ class EvaluationLogic(ABC, Generic[Input, Output, ExpectedOutput, Evaluation]):
 
         Args:
             example: Input data of :class:`Task` to produce the output.
-            output: Output of the :class:`Task`.
+            example_outputs: Output of the :class:`Task`.
 
         Returns:
             The metrics that come from the evaluated :class:`Task`.
         """
         pass
+
+    @final
+    def evaluate(
+        self,
+        tracer: Tracer,
+        example: Example[Input, ExpectedOutput],
+        *example_outputs: SuccessfulExampleOutput[Output],
+        trace_id: Optional[str] = None,
+    ) -> Evaluation:
+        
+        with tracer.evaluation_span(
+            type(self).__name__,
+            example,
+            *example_outputs,
+            trace_id=trace_id,
+        ) as evaluation_span:
+            evaluation = self.do_evaluate(evaluation_span, example, *example_outputs)
+            evaluation_span.record_evaluation(evaluation)
+            return evaluation
 
 
 class SingleOutputEvaluationLogic(
@@ -73,18 +93,20 @@ class SingleOutputEvaluationLogic(
     @final
     def do_evaluate(
         self,
+        evaluation_span: EvaluationSpan,
         example: Example[Input, ExpectedOutput],
-        tracer: Optional[Tracer],
         *output: SuccessfulExampleOutput[Output],
     ) -> Evaluation:
         assert len(output) == 1
-        return self.do_evaluate_single_output(example, tracer, output[0].output)
+        return self.do_evaluate_single_output(
+            evaluation_span, example, output[0].output
+        )
 
     @abstractmethod
     def do_evaluate_single_output(
         self,
+        evaluation_span: EvaluationSpan,
         example: Example[Input, ExpectedOutput],
-        tracer: Optional[Tracer],
         output: Output,
     ) -> Evaluation:
         pass
@@ -227,7 +249,6 @@ class Evaluator(Generic[Input, Output, ExpectedOutput, Evaluation]):
             )
         return cast(type[Evaluation], evaluation_type)
 
-    @final
     def evaluate_runs(
         self,
         *run_ids: str,
@@ -299,7 +320,6 @@ class Evaluator(Generic[Input, Output, ExpectedOutput, Evaluation]):
             Iterable[
                 Tuple[
                     Example[Input, ExpectedOutput],
-                    str,
                     Sequence[SuccessfulExampleOutput[Output]],
                 ]
             ]
@@ -333,16 +353,46 @@ class Evaluator(Generic[Input, Output, ExpectedOutput, Evaluation]):
 
                 yield (
                     example,
-                    eval_id,
                     successful_example_outputs,
                 )
+
+        def evaluate(
+            example: Example[Input, ExpectedOutput],
+            abort_on_error: bool,
+            *example_outputs: SuccessfulExampleOutput[Output],
+        ) -> None:
+            evaluate_tracer = self._evaluation_repository.example_tracer(
+                eval_id, example.id
+            )
+            if tracer:
+                evaluate_tracer = CompositeTracer([evaluate_tracer, tracer])
+            try:
+                result: Evaluation | FailedExampleEvaluation = (
+                    self._evaluation_logic.evaluate(
+                        evaluate_tracer,
+                        example,
+                        *example_outputs,
+                    )
+                )
+            except Exception as e:
+                if abort_on_error:
+                    raise e
+                print(
+                    f'FAILED EVALUATION: example "{example.id}", {type(e).__qualname__}: "{e}"'
+                )
+                result = FailedExampleEvaluation.from_exception(e)
+            self._evaluation_repository.store_example_evaluation(
+                ExampleEvaluation(
+                    evaluation_id=eval_id, example_id=example.id, result=result
+                )
+            )
 
         with ThreadPoolExecutor(max_workers=10) as executor:
             list(  # the list is needed to consume the iterator returned from the executor.map
                 tqdm(
                     executor.map(
-                        lambda args: self.evaluate(
-                            args[0], args[1], tracer, abort_on_error, *args[2]
+                        lambda args: evaluate(
+                            args[0], abort_on_error, *args[1]
                         ),
                         generate_evaluation_inputs(),
                     ),
@@ -359,36 +409,6 @@ class Evaluator(Generic[Input, Output, ExpectedOutput, Evaluation]):
         self._evaluation_repository.store_evaluation_overview(partial_overview)
 
         return partial_overview
-
-    @final
-    def evaluate(
-        self,
-        example: Example[Input, ExpectedOutput],
-        evaluation_id: str,
-        tracer: Optional[Tracer],
-        abort_on_error: bool,
-        *example_outputs: SuccessfulExampleOutput[Output],
-    ) -> None:
-        try:
-            result: Evaluation | FailedExampleEvaluation = (
-                self._evaluation_logic.do_evaluate(
-                    example,
-                    tracer,
-                    *example_outputs,
-                )
-            )
-        except Exception as e:
-            if abort_on_error:
-                raise e
-            print(
-                f'FAILED EVALUATION: example "{example.id}", {type(e).__qualname__}: "{e}"'
-            )
-            result = FailedExampleEvaluation.from_exception(e)
-        self._evaluation_repository.store_example_evaluation(
-            ExampleEvaluation(
-                evaluation_id=evaluation_id, example_id=example.id, result=result
-            )
-        )
 
     def failed_evaluations(
         self, evaluation_id: str

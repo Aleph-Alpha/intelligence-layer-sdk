@@ -115,6 +115,16 @@ class Tracer(ABC):
         """
         ...
 
+    @abstractmethod
+    def evaluation_span(
+        self,
+        evaluation_name: str,
+        example: PydanticSerializable,
+        *example_outputs: PydanticSerializable,
+        timestamp: Optional[datetime] = None,
+        trace_id: Optional[str] = None,
+    ) -> "EvaluationSpan": ...
+
     def ensure_id(self, id: Optional[str]) -> str:
         """Returns a valid id for tracing.
 
@@ -242,6 +252,11 @@ class TaskSpan(Span):
             )
             self.record_output(error_value)
         self.end()
+
+
+class EvaluationSpan(Span):
+    @abstractmethod
+    def record_evaluation(self, evaluation: PydanticSerializable) -> None: ...
 
 
 TracerVar = TypeVar("TracerVar", bound=Tracer)
