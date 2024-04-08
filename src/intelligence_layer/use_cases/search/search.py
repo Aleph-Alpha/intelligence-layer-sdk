@@ -8,7 +8,11 @@ from intelligence_layer.connectors.retrievers.base_retriever import (
     SearchResult,
 )
 from intelligence_layer.core import Task, TaskSpan
-from intelligence_layer.evaluation import EvaluationLogic, Example, SuccessfulExampleOutput
+from intelligence_layer.evaluation import (
+    EvaluationLogic,
+    Example,
+    SuccessfulExampleOutput,
+)
 from intelligence_layer.evaluation.aggregation.aggregator import AggregationLogic
 
 
@@ -81,53 +85,44 @@ class ExpectedSearchOutput(BaseModel):
 
 
 class SearchEvaluation(BaseModel):
-    """"""
-    
     rank: Optional[int]
+    similarity_score: Optional[float]
 
 
 class SearchEvaluationLogic(
     EvaluationLogic[
-        SearchInput, SearchOutput, ExpectedSearchOutput, SearchEvaluation
+        SearchInput, SearchOutput[ID], ExpectedSearchOutput, SearchEvaluation
     ]
 ):
-
     def do_evaluate(
         self,
         example: Example[SearchInput, ExpectedSearchOutput],
-        *output: SuccessfulExampleOutput[SearchOutput]
+        *output: SuccessfulExampleOutput[SearchOutput[ID]],
     ) -> SearchEvaluation:
         assert len(output) == 1
         results = output[0].output.results
 
-        def overlaps(range_1: tuple[int, int], range_2: tuple[int, int]) -> bool:
-            0, 5 - 5, 6
-            "hallo hi"
-            if range_1[0] <= range_2[0]:
-                return range_1[1] < range_2[0]
+        def overlaps(a: tuple[int, int], b: tuple[int, int]) -> bool:
+            a_start, a_end = a
+            b_start, b_end = b
+            return a_start < b_end and b_start < a_end
 
+        index, score = next(
+            (
+                (index, result.score)
+                for index, result in enumerate(results)
+                if overlaps(
+                    (result.document_chunk.start, result.document_chunk.end),
+                    (
+                        example.expected_output.start_idx,
+                        example.expected_output.end_idx,
+                    ),
+                )
+            ),
+            (None, None),
+        )
 
-        next(index for index, result in enumerate(results) if overlaps(
-            (result.document_chunk.start, result.document_chunk.end),
-            (example.expected_output.start_idx, example.expected_output.end_idx)
-        ))
-
-
-        # for any example in the source dataset, this function receives:
-        # the input used to generate the result
-        # the expected output given the input
-        # the generated result
-
-        # doc chunks overlap?
-        # calculate MRR
-        
-        found_start = 1000
-        found_end = 1500
-
-        expected_start = 800
-        expected_end = 1100
-
-        return super().do_evaluate(example, *output)
+        return SearchEvaluation(rank=index, similarity_score=score)
 
 
 class MeanTopK(BaseModel):
