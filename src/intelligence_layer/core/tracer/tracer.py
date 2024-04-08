@@ -228,6 +228,21 @@ class TaskSpan(Span):
         """
         ...
 
+    def __exit__(
+        self,
+        exc_type: Optional[type[BaseException]],
+        exc_value: Optional[BaseException],
+        _traceback: Optional[TracebackType],
+    ) -> None:
+        if exc_type is not None and exc_value is not None and _traceback is not None:
+            error_value = ErrorValue(
+                error_type=str(exc_type.__qualname__),
+                message=str(exc_value),
+                stack_trace=str(traceback.format_exc()),
+            )
+            self.record_output(error_value)
+        self.end()
+
 
 TracerVar = TypeVar("TracerVar", bound=Tracer)
 
