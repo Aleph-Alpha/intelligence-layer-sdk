@@ -16,7 +16,7 @@
 
 
 - Documentation:
-  - feature: Add info on how to run tests in VSCode 
+  - feature: Add info on how to run tests in VSCode
   - feature: Add `issue_classification_user_journey` notebook.
   - feature: Add documentation of newly added data retrieval methods `how_to_retrieve_data_for_analysis`
   - feature: Add documentation of release workflow
