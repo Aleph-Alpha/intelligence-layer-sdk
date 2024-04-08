@@ -8,11 +8,7 @@ from intelligence_layer.connectors.retrievers.base_retriever import (
     SearchResult,
 )
 from intelligence_layer.core import Task, TaskSpan
-from intelligence_layer.evaluation import (
-    EvaluationLogic,
-    Example,
-    SuccessfulExampleOutput,
-)
+from intelligence_layer.evaluation import Example, SingleOutputEvaluationLogic
 from intelligence_layer.evaluation.aggregation.aggregator import AggregationLogic
 
 
@@ -90,17 +86,17 @@ class SearchEvaluation(BaseModel):
 
 
 class SearchEvaluationLogic(
-    EvaluationLogic[
+    Generic[ID],
+    SingleOutputEvaluationLogic[
         SearchInput, SearchOutput[ID], ExpectedSearchOutput, SearchEvaluation
-    ]
+    ],
 ):
-    def do_evaluate(
+    def do_evaluate_single_output(
         self,
         example: Example[SearchInput, ExpectedSearchOutput],
-        *output: SuccessfulExampleOutput[SearchOutput[ID]],
+        output: SearchOutput[ID],
     ) -> SearchEvaluation:
-        assert len(output) == 1
-        results = output[0].output.results
+        results = output.results
 
         def overlaps(a: tuple[int, int], b: tuple[int, int]) -> bool:
             a_start, a_end = a

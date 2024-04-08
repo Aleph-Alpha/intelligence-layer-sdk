@@ -10,7 +10,6 @@ from intelligence_layer.connectors import (
 )
 from intelligence_layer.core import NoOpTracer
 from intelligence_layer.evaluation import Example
-from intelligence_layer.evaluation.run.domain import SuccessfulExampleOutput
 from intelligence_layer.use_cases import (
     ExpectedSearchOutput,
     Search,
@@ -55,8 +54,8 @@ def example(
 
 
 @fixture
-def search_eval_logic() -> SearchEvaluationLogic:
-    return SearchEvaluationLogic()
+def search_eval_logic() -> SearchEvaluationLogic[str]:
+    return SearchEvaluationLogic[str]()
 
 
 def test_search(
@@ -78,92 +77,75 @@ def test_search(
 
 def test_search_evaluation_logic_works_for_overlapping_output(
     example: Example[SearchInput, ExpectedSearchOutput],
-    search_eval_logic: SearchEvaluationLogic,
+    search_eval_logic: SearchEvaluationLogic[str],
 ) -> None:
-    output = SuccessfulExampleOutput(
-        run_id="1",
-        example_id="1",
-        output=SearchOutput(
-            results=[
-                SearchResult[str](
-                    id="1",
-                    score=0.5,
-                    document_chunk=DocumentChunk(text="llo", start=2, end=5),
-                )
-            ]
-        ),
+    output = SearchOutput(
+        results=[
+            SearchResult(
+                id="1",
+                score=0.5,
+                document_chunk=DocumentChunk(text="llo", start=2, end=5),
+            )
+        ]
     )
-    eval = search_eval_logic.do_evaluate(example, output)
+    eval = search_eval_logic.do_evaluate_single_output(example, output)
 
     assert eval.rank == 1
-    assert eval.similarity_score == output.output.results[0].score
+    assert eval.similarity_score == output.results[0].score
 
 
 def test_search_evaluation_logic_works_for_wholly_included_output(
     example: Example[SearchInput, ExpectedSearchOutput],
-    search_eval_logic: SearchEvaluationLogic,
+    search_eval_logic: SearchEvaluationLogic[str],
 ) -> None:
-    output = SuccessfulExampleOutput(
-        run_id="1",
-        example_id="1",
-        output=SearchOutput(
-            results=[
-                SearchResult(
-                    id="1",
-                    score=0.5,
-                    document_chunk=DocumentChunk(text="l", start=2, end=3),
-                )
-            ]
-        ),
+    output = SearchOutput(
+        results=[
+            SearchResult(
+                id="1",
+                score=0.5,
+                document_chunk=DocumentChunk(text="l", start=2, end=3),
+            )
+        ]
     )
-    eval = search_eval_logic.do_evaluate(example, *[output])
+    eval = search_eval_logic.do_evaluate_single_output(example, output)
 
     assert eval.rank == 1
-    assert eval.similarity_score == output.output.results[0].score
+    assert eval.similarity_score == output.results[0].score
 
 
 def test_search_evaluation_logic_works_for_identical_ranges(
     example: Example[SearchInput, ExpectedSearchOutput],
-    search_eval_logic: SearchEvaluationLogic,
+    search_eval_logic: SearchEvaluationLogic[str],
 ) -> None:
-    logic = SearchEvaluationLogic()
-    output = SuccessfulExampleOutput(
-        run_id="1",
-        example_id="1",
-        output=SearchOutput(
-            results=[
-                SearchResult(
-                    id="1",
-                    score=0.5,
-                    document_chunk=DocumentChunk(text="hallo", start=0, end=5),
-                )
-            ]
-        ),
+    output = SearchOutput(
+        results=[
+            SearchResult(
+                id="1",
+                score=0.5,
+                document_chunk=DocumentChunk(text="hallo", start=0, end=5),
+            )
+        ]
     )
-    eval = search_eval_logic.do_evaluate(example, *[output])
+    eval = search_eval_logic.do_evaluate_single_output(example, output)
 
     assert eval.rank == 1
-    assert eval.similarity_score == output.output.results[0].score
+    assert eval.similarity_score == output.results[0].score
 
 
 def test_search_evaluation_logic_works_for_non_overlapping_output(
     example: Example[SearchInput, ExpectedSearchOutput],
-    search_eval_logic: SearchEvaluationLogic,
+    search_eval_logic: SearchEvaluationLogic[str],
 ) -> None:
-    output = SuccessfulExampleOutput(
-        run_id="1",
-        example_id="1",
-        output=SearchOutput(
-            results=[
-                SearchResult(
-                    id="1",
-                    score=0.5,
-                    document_chunk=DocumentChunk(text=" test.", start=5, end=10),
-                )
-            ]
-        ),
+    output = SearchOutput(
+        results=[
+            SearchResult(
+                id="1",
+                score=0.5,
+                document_chunk=DocumentChunk(text=" test.", start=5, end=10),
+            )
+        ]
     )
-    eval = search_eval_logic.do_evaluate(example, *[output])
+    eval = search_eval_logic.do_evaluate_single_output(example, output)
 
     assert not eval.rank
     assert not eval.similarity_score
