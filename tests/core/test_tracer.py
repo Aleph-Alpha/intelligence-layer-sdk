@@ -118,12 +118,27 @@ def test_task_logs_error_value() -> None:
     tracer = InMemoryTracer()
 
     with pytest.raises(ValueError):
+        with tracer.span("failing task"):
+            raise ValueError("my bad, sorry")
+
+    assert isinstance(tracer.entries[0], InMemorySpan)
+    assert isinstance(tracer.entries[0].entries[0], LogEntry)
+    error = tracer.entries[0].entries[0].value
+    assert isinstance(error, ErrorValue)
+    assert error.message == "my bad, sorry"
+    assert error.error_type == "ValueError"
+    assert error.stack_trace.startswith("Traceback")
+
+
+def test_task_span_records_error_value() -> None:
+    tracer = InMemoryTracer()
+
+    with pytest.raises(ValueError):
         with tracer.task_span("failing task", None):
             raise ValueError("my bad, sorry")
 
     assert isinstance(tracer.entries[0], InMemoryTaskSpan)
-    assert isinstance(tracer.entries[0].entries[0], LogEntry)
-    error = tracer.entries[0].entries[0].value
+    error = tracer.entries[0].output
     assert isinstance(error, ErrorValue)
     assert error.message == "my bad, sorry"
     assert error.error_type == "ValueError"
