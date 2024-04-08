@@ -107,9 +107,9 @@ class SearchEvaluationLogic(
             b_start, b_end = b
             return a_start < b_end and b_start < a_end
 
-        index, score = next(
+        rank, score = next(
             (
-                (index, result.score)
+                (index + 1, result.score)
                 for index, result in enumerate(results)
                 if overlaps(
                     (result.document_chunk.start, result.document_chunk.end),
@@ -122,7 +122,7 @@ class SearchEvaluationLogic(
             (None, None),
         )
 
-        return SearchEvaluation(rank=index, similarity_score=score)
+        return SearchEvaluation(rank=rank, similarity_score=score)
 
 
 class MeanTopK(BaseModel):

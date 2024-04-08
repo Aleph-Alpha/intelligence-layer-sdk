@@ -74,7 +74,7 @@ def test_search(
 def test_search_evaluation_logic_works_for_overlapping_output(
     example: Example[SearchInput, ExpectedSearchOutput],
 ) -> None:
-    logic = SearchEvaluationLogic[SearchResult[str]]()
+    logic = SearchEvaluationLogic()
     output = SuccessfulExampleOutput(
         run_id="1",
         example_id="1",
