@@ -90,7 +90,7 @@ def test_search_evaluation_logic_works_for_overlapping_output(
     )
     eval = logic.do_evaluate(example, output)
 
-    assert eval.rank == 0
+    assert eval.rank == 1
     assert eval.similarity_score == output.output.results[0].score
 
 
@@ -113,7 +113,7 @@ def test_search_evaluation_logic_works_for_wholly_included_output(
     )
     eval = logic.do_evaluate(example, *[output])
 
-    assert eval.rank == 0
+    assert eval.rank == 1
     assert eval.similarity_score == output.output.results[0].score
 
 
@@ -136,7 +136,7 @@ def test_search_evaluation_logic_works_for_identical_ranges(
     )
     eval = logic.do_evaluate(example, *[output])
 
-    assert eval.rank == 0
+    assert eval.rank == 1
     assert eval.similarity_score == output.output.results[0].score
 
 
