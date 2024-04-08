@@ -1,4 +1,4 @@
-from typing import Generic, Optional, Sequence
+from typing import Generic, Iterable, Optional, Sequence
 
 from pydantic import BaseModel
 
@@ -8,8 +8,12 @@ from intelligence_layer.connectors.retrievers.base_retriever import (
     SearchResult,
 )
 from intelligence_layer.core import Task, TaskSpan
-from intelligence_layer.evaluation import Example, SingleOutputEvaluationLogic
-from intelligence_layer.evaluation.aggregation.aggregator import AggregationLogic
+from intelligence_layer.evaluation import (
+    AggregationLogic,
+    Example,
+    MeanAccumulator,
+    SingleOutputEvaluationLogic,
+)
 
 
 class SearchInput(BaseModel):
@@ -126,13 +130,57 @@ class MeanTopK(BaseModel):
     mean: float
 
 
+class ChunkFound(BaseModel):
+    found_count: int  # found => chunk was within top-k results of retriever
+    expected_count: int
+    percentage: float
+
+
 class AggregatedSearchEvaluation(BaseModel):
-    mean_rank: float
+    mean_score: float
     mean_reciprocal_rank: float
     mean_top_ks: Sequence[MeanTopK]
+    chunk_found: ChunkFound
 
 
 class SearchAggregationLogic(
     AggregationLogic[SearchEvaluation, AggregatedSearchEvaluation]
 ):
-    pass
+    def __init__(self, top_ks_to_evaluate: Sequence[int]) -> None:
+        assert all(top_k > 0 for top_k in top_ks_to_evaluate)
+        self.top_ks_to_evaluate = top_ks_to_evaluate
+
+    def aggregate(
+        self, evaluations: Iterable[SearchEvaluation]
+    ) -> AggregatedSearchEvaluation:
+        score_accumulator = MeanAccumulator()
+        reciprocal_rank_accumulator = MeanAccumulator()
+        chunk_found_accumulator = MeanAccumulator()
+        top_k_accumulator = {
+            top_k: MeanAccumulator() for top_k in self.top_ks_to_evaluate
+        }
+
+        for evaluation in evaluations:
+            chunk_found = True if evaluation.rank else False
+            chunk_found_accumulator.add(chunk_found)
+            if chunk_found:
+                score_accumulator.add(evaluation.similarity_score)
+                reciprocal_rank_accumulator.add(1 / evaluation.rank)
+                for top_k in self.top_ks_to_evaluate:
+                    top_k_accumulator[top_k].add(
+                        1.0 if evaluation.rank <= top_k else 0.0
+                    )
+
+        return AggregatedSearchEvaluation(
+            mean_score=score_accumulator.extract(),
+            mean_reciprocal_rank=reciprocal_rank_accumulator.extract(),
+            mean_top_ks=[
+                MeanTopK(top_k=top_k, mean=acc.extract())
+                for top_k, acc in top_k_accumulator.items()
+            ],
+            chunk_found=ChunkFound(
+                found_count=int(chunk_found_accumulator._acc),
+                expected_count=chunk_found_accumulator._n,
+                percentage=chunk_found_accumulator.extract(),
+            ),
+        )
