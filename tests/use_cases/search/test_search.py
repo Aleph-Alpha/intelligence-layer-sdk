@@ -2,12 +2,10 @@ from typing import Sequence
 
 from pytest import fixture
 
-from intelligence_layer.connectors.retrievers.base_retriever import Document
-from intelligence_layer.connectors.retrievers.qdrant_in_memory_retriever import (
-    QdrantInMemoryRetriever,
-)
+from intelligence_layer.connectors import Document, SearchResult, QdrantInMemoryRetriever, DocumentChunk
 from intelligence_layer.core import NoOpTracer
-from intelligence_layer.use_cases.search.search import Search, SearchInput
+from intelligence_layer.evaluation import Example
+from intelligence_layer.use_cases import Search, SearchEvaluationLogic, SearchInput, ExpectedSearchOutput, SearchOutput
 from tests.conftest import to_document
 
 
@@ -25,6 +23,23 @@ def search(asymmetric_in_memory_retriever: QdrantInMemoryRetriever) -> Search[in
     return Search(asymmetric_in_memory_retriever)
 
 
+@fixture
+def example() -> Example:
+    return Example(input=SearchInput(query=""))
+
+
+@fixture
+def expected_output() -> ExpectedSearchOutput:
+    return ExpectedSearchOutput(
+        document_id="1",
+        start_idx=0,
+        end_idx=5,
+        origin_chunk="hallo ",
+        answer="",
+        task_label=""
+    )
+
+
 def test_search(
     search: Search[int],
     no_op_tracer: NoOpTracer,
@@ -39,4 +54,21 @@ def test_search(
     assert (
         result.results[0].document_chunk.end
         == len(in_memory_retriever_documents[2].text) - 1
+    )
+
+
+def test_search_evaluation_logic_works_for_non_overlapping_output(example: Example, expected_output: ExpectedSearchOutput) -> None:
+    logic = SearchEvaluationLogic()
+    output = SearchOutput(
+        results=[
+            SearchResult(
+                id="1",
+                score=0.5,
+                document_chunk=DocumentChunk(
+                    text="test ",
+                    start=5,
+                    end=10
+                )
+            )
+        ]
     )
