@@ -1,8 +1,12 @@
 on:
   workflow_call:
+    inputs:
+      runner:
+        type: string
+        default: "ubuntu-latest"
 jobs:
   lint:
-    runs-on: ubuntu-latest
+    runs-on: ${{inputs.runner}}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4

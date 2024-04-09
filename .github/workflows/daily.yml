@@ -1,14 +1,24 @@
 name: CI
 
-# Scheduled workflows will only run on the default branch.
 on:
- schedule:
+  workflow_dispatch:
+# Scheduled workflows will only run on the default branch.
+  schedule:
     - cron: '0 0 * * *' # runs once a day at midnight in the timezone of your GitHub repository
 
 jobs:
- build:
-   runs-on: [windows-latest, macos-latest]
-   steps:
-   - name: Checkout code
-     uses: actions/checkout@v2
-   # your steps go here
+
+  # doctest:
+  #   uses: ./.github/workflows/doctest.yml
+  #   secrets: inherit
+  lint:
+    uses: ./.github/workflows/lint.yml
+    with:
+      runner: "['windows-latest', 'macos-latest']"
+    secrets: inherit
+  # test:
+  #   uses: ./.github/workflows/test.yml
+  #   secrets: inherit
+  # run-notebooks:
+  #   uses: ./.github/workflows/run_notebooks.yml
+  #   secrets: inherit
