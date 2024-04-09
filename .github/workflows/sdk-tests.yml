@@ -54,149 +54,157 @@ jobs:
       - name: Run linters
         run: |
           ./scripts/lint.sh
-  # doctest:
-  #   runs-on: ${{inputs.runner}}
-  #   steps:
-  #     - name: Checkout repository
-  #       uses: actions/checkout@v4
-  #     - uses: actions/setup-python@v5
-  #       with:
-  #         python-version: "3.10"
+  doctest:
+    defaults:
+      run:
+        shell: bash
+    runs-on: ${{inputs.runner}}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
 
-  #     - name: Install and configure Poetry
-  #       uses: snok/install-poetry@v1
-  #       with:
-  #         virtualenvs-create: true
-  #         virtualenvs-in-project: true
-  #         installer-parallel: true
+      - name: Install and configure Poetry
+        uses: snok/install-poetry@v1
+        with:
+          virtualenvs-create: true
+          virtualenvs-in-project: true
+          installer-parallel: true
 
-  #     - name: Load cached venv
-  #       id: cached-poetry-dependencies
-  #       uses: actions/cache@v4
-  #       with:
-  #         path: .venv
-  #         key: venv-${{ runner.os }}-${{ steps.setup-python.outputs.python-version }}-${{ hashFiles('**/poetry.lock') }}
+      - name: Load cached venv
+        id: cached-poetry-dependencies
+        uses: actions/cache@v4
+        with:
+          path: .venv
+          key: venv-${{ runner.os }}-${{ steps.setup-python.outputs.python-version }}-${{ hashFiles('**/poetry.lock') }}
 
-  #     - name: Install dependencies
-  #       if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
-  #       run: |
-  #         poetry config installer.max-workers 10
-  #         poetry install --no-interaction
-  #         - name: install Sphinx
-  #         run: sudo apt-get update -y && sudo apt-get install python3-sphinx
-  #     - name: run doctest
-  #       env:
-  #         AA_TOKEN: ${{ secrets.AA_TOKEN }}
-  #         HUGGING_FACE_TOKEN: ${{ secrets.HUGGING_FACE_TOKEN }}
-  #         CLIENT_URL: "https://api.aleph-alpha.com"
-  #       run: ./scripts/doctest.sh
+      - name: Install dependencies
+        if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
+        run: |
+          poetry config installer.max-workers 10
+          poetry install --no-interaction
+          - name: install Sphinx
+          run: sudo apt-get update -y && sudo apt-get install python3-sphinx
+      - name: run doctest
+        env:
+          AA_TOKEN: ${{ secrets.AA_TOKEN }}
+          HUGGING_FACE_TOKEN: ${{ secrets.HUGGING_FACE_TOKEN }}
+          CLIENT_URL: "https://api.aleph-alpha.com"
+        run: ./scripts/doctest.sh
 
-  # test:
-  #   runs-on: ${{inputs.runner}}
-  #   services:
-  #     argilla-elastic-search:
-  #       image: docker.elastic.co/elasticsearch/elasticsearch:8.5.3
-  #       env:
-  #         ES_JAVA_OPTS: "-Xms512m -Xmx512m"
-  #         discovery.type: "single-node"
-  #         xpack.security.enabled: "false"
-  #     argilla:
-  #       image: argilla/argilla-server
-  #       ports:
-  #         - "6900:6900"
-  #       env:
-  #         ARGILLA_ELASTICSEARCH: "http://argilla-elastic-search:9200"
-  #     open-telemetry-trace-service:
-  #       env:
-  #         COLLECTOR_OTLP_ENABLED: "true"
-  #       ports:
-  #         - "4317:4317"
-  #         - "4318:4318"
-  #         - "16686:16686"
-  #       image: jaegertracing/all-in-one:1.35
+  test:
+    defaults:
+      run:
+        shell: bash
+    runs-on: ${{inputs.runner}}
+    services:
+      argilla-elastic-search:
+        image: docker.elastic.co/elasticsearch/elasticsearch:8.5.3
+        env:
+          ES_JAVA_OPTS: "-Xms512m -Xmx512m"
+          discovery.type: "single-node"
+          xpack.security.enabled: "false"
+      argilla:
+        image: argilla/argilla-server
+        ports:
+          - "6900:6900"
+        env:
+          ARGILLA_ELASTICSEARCH: "http://argilla-elastic-search:9200"
+      open-telemetry-trace-service:
+        env:
+          COLLECTOR_OTLP_ENABLED: "true"
+        ports:
+          - "4317:4317"
+          - "4318:4318"
+          - "16686:16686"
+        image: jaegertracing/all-in-one:1.35
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-  #   steps:
-  #     - name: Checkout repository
-  #       uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
 
-  #     - uses: actions/setup-python@v5
-  #       with:
-  #         python-version: "3.10"
+      - name: Install and configure Poetry
+        uses: snok/install-poetry@v1
+        with:
+          virtualenvs-create: true
+          virtualenvs-in-project: true
+          installer-parallel: true
 
-  #     - name: Install and configure Poetry
-  #       uses: snok/install-poetry@v1
-  #       with:
-  #         virtualenvs-create: true
-  #         virtualenvs-in-project: true
-  #         installer-parallel: true
+      - name: Load cached venv
+        id: cached-poetry-dependencies
+        uses: actions/cache@v4
+        with:
+          path: .venv
+          key: venv-${{ runner.os }}-${{ steps.setup-python.outputs.python-version }}-${{ hashFiles('**/poetry.lock') }}
 
-  #     - name: Load cached venv
-  #       id: cached-poetry-dependencies
-  #       uses: actions/cache@v4
-  #       with:
-  #         path: .venv
-  #         key: venv-${{ runner.os }}-${{ steps.setup-python.outputs.python-version }}-${{ hashFiles('**/poetry.lock') }}
+      - name: Install dependencies
+        if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
+        run: |
+          poetry config installer.max-workers 10
+          poetry install --no-interaction
 
-  #     - name: Install dependencies
-  #       if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
-  #       run: |
-  #         poetry config installer.max-workers 10
-  #         poetry install --no-interaction
+      - name: Run pytest
+        env:
+          AA_TOKEN: ${{ secrets.AA_TOKEN }}
+          HUGGING_FACE_TOKEN: ${{ secrets.HUGGING_FACE_TOKEN }}
+          ARGILLA_API_URL: "http://localhost:6900/"
+          ARGILLA_API_KEY: "argilla.apikey"
+          CLIENT_URL: "https://api.aleph-alpha.com"
+        run: |
+          ./scripts/test.sh
+  run-notebooks:
+    defaults:
+      run:
+        shell: bash
+    runs-on: ${{inputs.runner}}
+    services:
+      argilla-elastic-search:
+        image: docker.elastic.co/elasticsearch/elasticsearch:8.5.3
+        env:
+          ES_JAVA_OPTS: "-Xms512m -Xmx512m"
+          discovery.type: "single-node"
+          xpack.security.enabled: "false"
+      argilla:
+        image: argilla/argilla-server
+        ports:
+          - "6900:6900"
+        env:
+          ARGILLA_ELASTICSEARCH: "http://argilla-elastic-search:9200"
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+      - name: Install and configure Poetry
+        uses: snok/install-poetry@v1
+        with:
+          virtualenvs-create: true
+          virtualenvs-in-project: true
+          installer-parallel: true
 
-  #     - name: Run pytest
-  #       env:
-  #         AA_TOKEN: ${{ secrets.AA_TOKEN }}
-  #         HUGGING_FACE_TOKEN: ${{ secrets.HUGGING_FACE_TOKEN }}
-  #         ARGILLA_API_URL: "http://localhost:6900/"
-  #         ARGILLA_API_KEY: "argilla.apikey"
-  #         CLIENT_URL: "https://api.aleph-alpha.com"
-  #       run: |
-  #         ./scripts/test.sh
-  # run-notebooks:
-  #   runs-on: ${{inputs.runner}}
-  #   services:
-  #     argilla-elastic-search:
-  #       image: docker.elastic.co/elasticsearch/elasticsearch:8.5.3
-  #       env:
-  #         ES_JAVA_OPTS: "-Xms512m -Xmx512m"
-  #         discovery.type: "single-node"
-  #         xpack.security.enabled: "false"
-  #     argilla:
-  #       image: argilla/argilla-server
-  #       ports:
-  #         - "6900:6900"
-  #       env:
-  #         ARGILLA_ELASTICSEARCH: "http://argilla-elastic-search:9200"
-  #   steps:
-  #     - name: Checkout repository
-  #       uses: actions/checkout@v4
-  #     - uses: actions/setup-python@v5
-  #       with:
-  #         python-version: "3.10"
-  #     - name: Install and configure Poetry
-  #       uses: snok/install-poetry@v1
-  #       with:
-  #         virtualenvs-create: true
-  #         virtualenvs-in-project: true
-  #         installer-parallel: true
-
-  #     - name: Load cached venv
-  #       id: cached-poetry-dependencies
-  #       uses: actions/cache@v4
-  #       with:
-  #         path: .venv
-  #         key: venv-${{ runner.os }}-${{ steps.setup-python.outputs.python-version }}-${{ hashFiles('**/poetry.lock') }}
-  #     - name: Install dependencies
-  #       if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
-  #       run: |
-  #         poetry config installer.max-workers 10
-  #         poetry install --no-interaction
-  #     - name: Configure Poetry for notebooks and run
-  #       env:
-  #         AA_TOKEN: ${{ secrets.AA_TOKEN }}
-  #         HUGGING_FACE_TOKEN: ${{ secrets.HUGGING_FACE_TOKEN }}
-  #         ARGILLA_API_URL: "http://localhost:6900/"
-  #         ARGILLA_API_KEY: "argilla.apikey"
-  #         CLIENT_URL: "https://api.aleph-alpha.com"
-  #       run: |
-  #         ./scripts/notebook_runner.sh
+      - name: Load cached venv
+        id: cached-poetry-dependencies
+        uses: actions/cache@v4
+        with:
+          path: .venv
+          key: venv-${{ runner.os }}-${{ steps.setup-python.outputs.python-version }}-${{ hashFiles('**/poetry.lock') }}
+      - name: Install dependencies
+        if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
+        run: |
+          poetry config installer.max-workers 10
+          poetry install --no-interaction
+      - name: Configure Poetry for notebooks and run
+        env:
+          AA_TOKEN: ${{ secrets.AA_TOKEN }}
+          HUGGING_FACE_TOKEN: ${{ secrets.HUGGING_FACE_TOKEN }}
+          ARGILLA_API_URL: "http://localhost:6900/"
+          ARGILLA_API_KEY: "argilla.apikey"
+          CLIENT_URL: "https://api.aleph-alpha.com"
+        run: |
+          ./scripts/notebook_runner.sh
