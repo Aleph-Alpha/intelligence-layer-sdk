@@ -1,24 +1,22 @@
 name: CI
 
 on:
+  #temporary
+  push:
+    paths-ignore:
+      - "trace-viewer/**"
+      - ".github/workflows/frontend.yml"
   workflow_dispatch:
 # Scheduled workflows will only run on the default branch.
   schedule:
     - cron: '0 0 * * *' # runs once a day at midnight in the timezone of your GitHub repository
 
 jobs:
-
-  # doctest:
-  #   uses: ./.github/workflows/doctest.yml
-  #   secrets: inherit
-  lint:
-    uses: ./.github/workflows/lint.yml
+  os-support:
+    uses: ./.github/workflows/sdk-tests.yml
+    strategy:
+      matrix:
+        os: [macos-latest, windows-latest]
     with:
-      runner: "['windows-latest', 'macos-latest']"
+      runner: ${{ matrix.os }}
     secrets: inherit
-  # test:
-  #   uses: ./.github/workflows/test.yml
-  #   secrets: inherit
-  # run-notebooks:
-  #   uses: ./.github/workflows/run_notebooks.yml
-  #   secrets: inherit
