@@ -1,0 +1,14 @@
+name: CI
+
+# Scheduled workflows will only run on the default branch.
+on:
+ schedule:
+    - cron: '0 0 * * *' # runs once a day at midnight in the timezone of your GitHub repository
+
+jobs:
+ build:
+   runs-on: [windows-latest, macos-latest]
+   steps:
+   - name: Checkout code
+     uses: actions/checkout@v2
+   # your steps go here
