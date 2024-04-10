@@ -1,0 +1,23 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: banana
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: banana
+  template:
+    metadata:
+      labels:
+        app: banana
+    spec:
+      containers:
+      - env:
+        - name: AA_TOKEN
+          valueFrom:
+            secretKeyRef:
+              key: AA_TOKEN
+              name: aa-token
+        image: classification-service:local
+        name: banana

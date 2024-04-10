@@ -27,7 +27,5 @@ COPY --from=builder /app /app
 COPY main.py /app/main.py
 
 ENV PATH="/app/venv/bin:$PATH"
-ENTRYPOINT [ "uvicorn", "--host", "0.0.0.0", "--port", "80", "app.main:app" ]
-# run with 
-# docker run -p 8000:80 classification-service:local
-# you can then access the server on localhost:8000
+WORKDIR /app
+ENTRYPOINT [ "hypercorn", "main:app", "--bind", "0.0.0.0:80", "--access-logfile", "-", "--access-logformat", "%(h)s %(l)s %(l)s %(t)s \"%(r)s\" %(s)s %(b)s %(L)s \"%(f)s\" \"%(a)s\""]
