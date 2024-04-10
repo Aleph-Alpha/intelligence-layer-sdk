@@ -2,6 +2,8 @@ name: Artifactory Deployment of PyPi and trace-viewer
 
 on:
   workflow_dispatch: {}
+  release:
+    types: [published]
 
 env:
   ARTIFACTORY_URL: https://alephalpha.jfrog.io
