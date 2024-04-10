@@ -1,0 +1,138 @@
+name: Blueprint for Github Actions Usage (Push to PyPi Repository)
+
+on:
+  push: {}
+
+env:
+  ARTIFACTORY_URL: https://alephalpha.jfrog.io
+  ARTIFACTORY_PYPI_REPOSITORY: "intelligence-layer"
+
+jobs:
+  push-to:
+    permissions:
+      contents: read
+      id-token: write
+    runs-on: ubuntu-latest
+    steps:
+      - name: Get Identity Token From Github
+        run: |
+          ID_TOKEN=$(curl -sLS -H "User-Agent: actions/oidc-client" -H "Authorization: Bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" \
+          "${ACTIONS_ID_TOKEN_REQUEST_URL}&audience=https://alephalpha.jfrog.io" | jq .value | tr -d '"')
+          echo "ID_TOKEN=${ID_TOKEN}" >> $GITHUB_ENV
+      - name: Get Jfrog Access Token with Github Identity Token
+        env:
+          ID_TOKEN: ${{ env.ID_TOKEN }}
+        run: |
+          JFROG_ACCESS_TOKEN=$(curl \
+            -X POST \
+            -H "Content-type: application/json" \
+            $ARTIFACTORY_URL/access/api/v1/oidc/token \
+            -d \
+            "{\"grant_type\": \"urn:ietf:params:oauth:grant-type:token-exchange\", \"subject_token_type\":\"urn:ietf:params:oauth:token-type:id_token\", \"subject_token\": \"$ID_TOKEN\", \"provider_name\": \"github\"}" \
+          | jq .access_token -r)
+          echo "JFROG_ACCESS_TOKEN=${JFROG_ACCESS_TOKEN}" >> $GITHUB_ENV
+      - name: Checkout
+        uses: actions/checkout@v2
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+      - name: Install and configure Poetry
+        uses: snok/install-poetry@v1
+        with:
+          virtualenvs-create: true
+          virtualenvs-in-project: true
+          installer-parallel: true
+      - name: Build package and push to Artifactory
+        env:
+          JFROG_ACCESS_TOKEN: ${{ env.JFROG_ACCESS_TOKEN }}
+        run: |
+          poetry build
+          poetry config repositories.artifactory $ARTIFACTORY_URL/artifactory/api/pypi/$ARTIFACTORY_PYPI_REPOSITORY
+          JFROG_ACCESS_TOKEN_SUBJECT=$(echo $JFROG_ACCESS_TOKEN | awk -F'.' '{print $2}'  | sed 's/.\{1,3\}$/&==/' | base64 -d | jq '.sub' -r)
+          poetry config http-basic.blueprint-python "$JFROG_ACCESS_TOKEN_SUBJECT" "$JFROG_ACCESS_TOKEN"
+          poetry publish -r artifactory
+
+  build-and-push-image:
+    # Defines two custom environment variables for the workflow. These are used for the Container registry domain, and a name for the Docker image that this workflow builds.
+    env:
+      REGISTRY: ghcr.io
+      IMAGE_NAME: ${{ github.repository }}-trace-viewer
+    runs-on: ubuntu-latest
+    # Sets the permissions granted to the `GITHUB_TOKEN` for the actions in this job.
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      # This step uses [docker/metadata-action](https://github.com/docker/metadata-action#about) to extract tags and labels that will be applied to the specified image. The `id` "meta" allows the output of this step to be referenced in a subsequent step. The `images` value provides the base name for the tags and labels.
+      - name: Extract metadata (tags, labels) for Docker
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=ref,event=branch
+            type=ref,event=pr
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+
+        # Uses the `docker/login-action` action to log in to the Container registry registry using the account and password that will publish the packages. Once published, the packages are scoped to the account defined here.
+      - name: Log in to the Container registry
+        if: github.event_name != 'pull_request'
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      # This step uses the `docker/build-push-action` action to build the image, based on your repository's `Dockerfile`. If the build succeeds, it pushes the image to GitHub Packages.
+      # It uses the `context` parameter to define the build's context as the set of files located in the specified path. For more information, see "[Usage](https://github.com/docker/build-push-action#usage)" in the README of the `docker/build-push-action` repository.
+      # It uses the `tags` and `labels` parameters to tag and label the image with the output from the "meta" step.
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./trace-viewer
+          push: ${{ github.event_name != 'pull_request' }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+
+  publish-docker:
+    env:
+      REGISTRY: ghcr.io
+      IMAGE_NAME: ${{ github.repository }}-trace-viewer
+    runs-on: ubuntu-latest
+    steps:
+      - name: Get Identity Token From Github
+        run: |
+          ID_TOKEN=$(curl -sLS -H "User-Agent: actions/oidc-client" -H "Authorization: Bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" \
+          "${ACTIONS_ID_TOKEN_REQUEST_URL}&audience=https://alephalpha.jfrog.io" | jq .value | tr -d '"')
+          echo "ID_TOKEN=${ID_TOKEN}" >> $GITHUB_ENV
+      - name: Get Jfrog Access Token with Github Identity Token
+        env:
+          ID_TOKEN: ${{ env.ID_TOKEN }}
+        run: |
+          JFROG_ACCESS_TOKEN=$(curl \
+            -X POST \
+            -H "Content-type: application/json" \
+            $ARTIFACTORY_URL/access/api/v1/oidc/token \
+            -d \
+            "{\"grant_type\": \"urn:ietf:params:oauth:grant-type:token-exchange\", \"subject_token_type\":\"urn:ietf:params:oauth:token-type:id_token\", \"subject_token\": \"$ID_TOKEN\", \"provider_name\": \"github\"}" \
+          | jq .access_token -r)
+          echo "JFROG_ACCESS_TOKEN=${JFROG_ACCESS_TOKEN}" >> $GITHUB_ENV
+      - name: Log in to the Container registry
+        if: github.event_name != 'pull_request'
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Build package and push to Artifactory
+        env:
+          JFROG_ACCESS_TOKEN: ${{ env.JFROG_ACCESS_TOKEN }}
+        run: |
+          JFROG_ACCESS_TOKEN_SUBJECT=$(echo $JFROG_ACCESS_TOKEN | awk -F'.' '{print $2}'  | sed 's/.\{1,3\}$/&==/' | base64 -d | jq '.sub' -r)
+          docker login --username $CI_REGISTRY_USER --password $CI_REGISTRY_PASSWORD $CI_REGISTRY
+          docker login --username "$JFROG_ACCESS_TOKEN_SUBJECT" --password $JFROG_ACCESS_TOKEN $ARTIFACTORY_URL/blueprint-images
+          docker pull $CI_REGISTRY_IMAGE/$CONTAINER_IMAGE_NAME:$CI_COMMIT_SHORT_SHA
+          docker tag $CI_REGISTRY_IMAGE/$CONTAINER_IMAGE_NAME:$CI_COMMIT_SHORT_SHA $ARTIFACTORY_HOST/blueprint-images/blueprint-monitoring-image:latest
+          docker push $ARTIFACTORY_HOST/blueprint-images/blueprint-monitoring-image:latest
