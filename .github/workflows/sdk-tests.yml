@@ -113,13 +113,13 @@ jobs:
         env:
           ARGILLA_ELASTICSEARCH: "http://argilla-elastic-search:9200"
       open-telemetry-trace-service:
+        image: jaegertracing/all-in-one:1.35
         env:
           COLLECTOR_OTLP_ENABLED: "true"
         ports:
           - "4317:4317"
           - "4318:4318"
           - "16686:16686"
-        image: jaegertracing/all-in-one:1.35
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4

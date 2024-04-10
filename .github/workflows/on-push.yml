@@ -1,4 +1,4 @@
-name: CI Pipeline
+name: Intelligence Layer SDK Tests
 
 on:
   push:
