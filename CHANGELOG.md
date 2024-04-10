@@ -1,5 +1,10 @@
 # Changelog
 
+## Unreleased
+
+- Documentation
+  - fix: Add missing link to `issue_classification_user_journey` notebook to the tutorials section of README.
+
 ## 0.8.1
 
 ### Fixes

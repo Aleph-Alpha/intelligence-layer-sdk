@@ -201,6 +201,8 @@ The tutorials aim to guide you through implementing several common use-cases wit
 | 7     | Human Evaluation   | Connect to Argilla for manual evaluation             | [human_evaluation.ipynb](./src/examples/human_evaluation.ipynb) |
 | 8     | Performance tips   | Contains some small tips for performance             | [performance_tips.ipynb](./src/examples/performance_tips.ipynb) |
 | 9     | Deployment         | Shows how to deploy a Task in a minimal FastAPI app. | [fastapi_tutorial.md](./src/examples/fastapi_tutorial.md)       |
+| 10    | Issue Classification | In-depth tutorial about implementing and evaluating an email classificator | [issue_classification_user_journy.ipynb](./src/examples/issue_classification_user_journey.ipynb)
+
 
 ## How-Tos
 The how-tos are quick lookups about how to do things. Compared to the tutorials, they are shorter and do not explain the concepts they are using in-depth.
