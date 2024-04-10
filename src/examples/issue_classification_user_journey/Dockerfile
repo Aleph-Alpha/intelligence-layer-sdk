@@ -9,8 +9,6 @@ COPY requirements.txt /app/requirements.txt
 RUN python3 -m venv /app/venv
 ENV PATH="/app/venv/bin:$PATH"
 
-RUN echo $(cat /run/secrets/GITHUB_TOKEN)
-
 RUN pip install --upgrade pip
 RUN --mount=type=secret,id=GITHUB_TOKEN \
     GITHUB_TOKEN=$(cat /run/secrets/GITHUB_TOKEN) pip install -r /app/requirements.txt
@@ -28,4 +26,4 @@ COPY --from=builder /app /app
 COPY main.py /app/main.py
 
 ENV PATH="/app/venv/bin:$PATH"
-ENTRYPOINT [ "uvicorn", "app.main:app" ]
+ENTRYPOINT [ "uvicorn", "--host", "0.0.0.0", "--port", "80", "app.main:app" ]
