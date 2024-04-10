@@ -11,7 +11,8 @@ ENV PATH="/app/venv/bin:$PATH"
 
 RUN pip install --upgrade pip
 RUN --mount=type=secret,id=GITHUB_TOKEN \
-    GITHUB_TOKEN=$(cat /run/secrets/GITHUB_TOKEN) pip install -r /app/requirements.txt
+    GITHUB_TOKEN=$(cat /run/secrets/GITHUB_TOKEN) \
+    pip install -r /app/requirements.txt
 
 
 FROM ubuntu:latest as runtime
@@ -27,3 +28,6 @@ COPY main.py /app/main.py
 
 ENV PATH="/app/venv/bin:$PATH"
 ENTRYPOINT [ "uvicorn", "--host", "0.0.0.0", "--port", "80", "app.main:app" ]
+# run with 
+# docker run -p 8000:80 classification-service:local
+# you can then access the server on localhost:8000
