@@ -79,4 +79,12 @@ jobs:
           ARGILLA_API_KEY: "argilla.apikey"
           CLIENT_URL: "https://api.aleph-alpha.com"
         run: |
-          ./scripts/notebook_runner.sh
+          [ -f .env ] && source .env
+          export AA_TOKEN
+          # Find all .ipynb files in the directory and pass them to xargs for parallel execution
+          rm -rf src/examples/.ipynb_checkpoints
+          rm -rf src/examples/how_tos/.ipynb_checkpoints
+          
+          find src/examples -name "*.nbconvert.ipynb" -type f -delete
+          find src/examples -name "*.ipynb" ! -name "performance_tips.ipynb" ! -name "human_evaluation.ipynb" ! -name "how_to_human_evaluation_via_argilla.ipynb" | xargs -n 1 -P 6 poetry run jupyter nbconvert --to notebook --execute
+          find src/examples -name "*.nbconvert.ipynb" -type f -delete
