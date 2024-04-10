@@ -1,4 +1,4 @@
-name: Blueprint for Github Actions Usage (Push to PyPi Repository)
+name: Artifactory Deployment of PyPi and trace-viewer
 
 on:
   push: {}
@@ -6,7 +6,7 @@ on:
 env:
   ARTIFACTORY_URL: https://alephalpha.jfrog.io
   ARTIFACTORY_PYPI_REPOSITORY: "intelligence-layer"
-  ARTIFACTORY_DOCKER_REGISTRY: https://alephalpha.jfrog.io/intelligence-layer
+  ARTIFACTORY_DOCKER_REGISTRY: alephalpha.jfrog.io/intelligence-layer-images
 
 jobs:
   push-to:
@@ -50,7 +50,7 @@ jobs:
           poetry build
           poetry config repositories.artifactory $ARTIFACTORY_URL/artifactory/api/pypi/$ARTIFACTORY_PYPI_REPOSITORY
           JFROG_ACCESS_TOKEN_SUBJECT=$(echo $JFROG_ACCESS_TOKEN | awk -F'.' '{print $2}'  | sed 's/.\{1,3\}$/&==/' | base64 -d | jq '.sub' -r)
-          poetry config http-basic.blueprint-python "$JFROG_ACCESS_TOKEN_SUBJECT" "$JFROG_ACCESS_TOKEN"
+          poetry config http-basic.artifactory "$JFROG_ACCESS_TOKEN_SUBJECT" "$JFROG_ACCESS_TOKEN"
           poetry publish -r artifactory
 
   build-and-push-image:
@@ -100,11 +100,13 @@ jobs:
   publish-docker:
     permissions:
       contents: read
+      id-token: write
+      packages: read
     env:
       GITHUB_DOCKER_REGISTRY: ghcr.io
       IMAGE_NAME: ${{ github.repository }}-trace-viewer
-    needs:
-      ["build-and-push-image"]
+    #needs:
+      #["build-and-push-image"]
     runs-on: ubuntu-latest
     steps:
       - name: Get Identity Token From Github
@@ -126,6 +128,10 @@ jobs:
           echo "JFROG_ACCESS_TOKEN=${JFROG_ACCESS_TOKEN}" >> $GITHUB_ENV
           JFROG_ACCESS_TOKEN_SUBJECT=$(echo $JFROG_ACCESS_TOKEN | awk -F'.' '{print $2}'  | sed 's/.\{1,3\}$/&==/' | base64 -d | jq '.sub' -r)
           echo "JFROG_ACCESS_TOKEN_SUBJECT=${JFROG_ACCESS_TOKEN_SUBJECT}" >> $GITHUB_ENV
+
+          echo $ID_TOKEN
+          echo $JFROG_ACCESS_TOKEN
+          echo $JFROG_ACCESS_TOKEN_SUBJECT
       - name: Log in to the github container registry
         uses: docker/login-action@v3
         with:
@@ -143,6 +149,9 @@ jobs:
           password: ${{ env.JFROG_ACCESS_TOKEN }}
       - name: Build package and push to Artifactory
         run: |
+          IMAGE_NAME=${IMAGE_NAME,,}
+          echo $GITHUB_DOCKER_REGISTRY/$IMAGE_NAME
+          echo $ARTIFACTORY_DOCKER_REGISTRY/trace-viewer:latest
           docker pull $GITHUB_DOCKER_REGISTRY/$IMAGE_NAME
           docker tag $GITHUB_DOCKER_REGISTRY/$IMAGE_NAME $ARTIFACTORY_DOCKER_REGISTRY/trace-viewer:latest
           docker push $ARTIFACTORY_DOCKER_REGISTRY/trace-viewer:latest
