@@ -306,6 +306,7 @@ def test_in_memory_tracer_trace_viewer_doesnt_crash_if_it_cant_reach() -> None:
         expected._ipython_display_()
 
 
+@pytest.mark.docker
 def test_open_telemetry_tracer_check_consistency_in_trace_ids(
     open_telemetry_tracer: tuple[str, OpenTelemetryTracer],
 ) -> None:
@@ -322,6 +323,7 @@ def test_open_telemetry_tracer_check_consistency_in_trace_ids(
         assert _get_trace_id_from_span(span) == expected_trace_id
 
 
+@pytest.mark.docker
 def test_open_telemetry_tracer_loggs_input_and_output(
     open_telemetry_tracer: tuple[str, OpenTelemetryTracer],
     complete: Task[CompleteInput, CompleteOutput],

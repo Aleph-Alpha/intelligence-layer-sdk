@@ -112,6 +112,7 @@ def long_qa_records(
     return records
 
 
+@pytest.mark.docker
 def test_error_on_non_existent_dataset(
     argilla_client: DefaultArgillaClient,
 ) -> None:
@@ -119,6 +120,7 @@ def test_error_on_non_existent_dataset(
         list(argilla_client.records("non_existent_dataset_id"))
 
 
+@pytest.mark.docker
 def test_records_returns_records_previously_added(
     argilla_client: DefaultArgillaClient,
     qa_dataset_id: str,
@@ -132,6 +134,7 @@ def test_records_returns_records_previously_added(
     )
 
 
+@pytest.mark.docker
 def test_evaluations_returns_evaluation_results(
     argilla_client: DefaultArgillaClient,
     qa_dataset_id: str,
@@ -159,6 +162,7 @@ def test_evaluations_returns_evaluation_results(
     )
 
 
+@pytest.mark.docker
 def test_split_dataset_works(
     argilla_client: DefaultArgillaClient,
     qa_dataset_id: str,
@@ -183,6 +187,7 @@ def test_split_dataset_works(
         assert old_metadata == new_metadata
 
 
+@pytest.mark.docker
 def test_split_dataset_twice_works(
     argilla_client: DefaultArgillaClient,
     qa_dataset_id: str,
@@ -205,6 +210,7 @@ def test_split_dataset_twice_works(
     assert len(metadata_properties["settings"]["values"]) == 1
 
 
+@pytest.mark.docker
 def test_split_dataset_works_with_uneven_splits(
     argilla_client: DefaultArgillaClient,
     qa_dataset_id: str,
@@ -222,6 +228,7 @@ def test_split_dataset_works_with_uneven_splits(
     assert n_records_per_split == [9, 9, 9, 9, 8, 8, 8]
 
 
+@pytest.mark.docker
 def test_add_record_adds_multiple_records_with_same_content(
     argilla_client: DefaultArgillaClient,
     qa_dataset_id: str,
@@ -242,6 +249,7 @@ def test_add_record_adds_multiple_records_with_same_content(
     assert len(list(argilla_client.records(qa_dataset_id))) == 2
 
 
+@pytest.mark.docker
 def test_add_record_does_not_put_example_id_into_metadata(
     argilla_client: DefaultArgillaClient,
     qa_dataset_id: str,
@@ -265,6 +273,7 @@ def test_add_record_does_not_put_example_id_into_metadata(
         assert record.example_id == "0"
 
 
+@pytest.mark.docker
 def test_split_dataset_can_split_long_dataset(
     argilla_client: DefaultArgillaClient,
     qa_dataset_id: str,
