@@ -2,16 +2,26 @@
 
 ## Unreleased
 
-- Documentation
-  - fix: Add missing link to `issue_classification_user_journey` notebook to the tutorials section of README.
+### New Features
+...
+### Fixes
+...
+
+## 0.8.2
+
+### New Features
+ - feature: Add `SearchEvaluationLogic` and `SearchAggregationLogic` to evaluate `Search`-use-cases
+ - feature: Trace viewer and IL python package are now deployed to artifactory
+
+### Fixes
+ - Documentation
+   - fix: Add missing link to `issue_classification_user_journey` notebook to the tutorials section of README.
+   - fix: Confusion matrix in `issue_classification_user_journey` now have rounded numbers.
 
 ## 0.8.1
 
 ### Fixes
 - fix: Linting for release version
-
-### New Features
-- feature: Add `SearchEvaluationLogic` and `SearchAggregationLogic` to evaluate `Search`-use-cases
 
 ## 0.8.0
 
