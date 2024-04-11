@@ -9,4 +9,5 @@ from intelligence_layer.evaluation.infrastructure.hugging_face_repository import
 class HuggingFaceAggregationRepository(
     FileSystemAggregationRepository, HuggingFaceRepository
 ):
+    # this class inherits all its behavior from its parents
     pass
