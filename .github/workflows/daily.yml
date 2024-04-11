@@ -1,8 +1,6 @@
 name: "os-support-tests"
 
 on:
-  # TODO temporary
-  push:
   workflow_dispatch:
   # Scheduled workflows will only run on the default branch.
   schedule:
