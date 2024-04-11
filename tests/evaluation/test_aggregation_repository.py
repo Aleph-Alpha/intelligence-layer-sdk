@@ -28,7 +28,6 @@ test_repository_fixtures = [
 def mocked_hugging_face_aggregation_repository(
     temp_file_system: MemoryFileSystem,
 ) -> Iterable[HuggingFaceAggregationRepository]:
-    # this repository should already exist and does not have to be deleted after the tests
     class_to_patch = "intelligence_layer.evaluation.aggregation.hugging_face_aggregation_repository.HuggingFaceAggregationRepository"
     with patch(f"{class_to_patch}.create_repository", autospec=True), patch(
         f"{class_to_patch}.delete_repository",

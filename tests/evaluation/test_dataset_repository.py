@@ -26,7 +26,6 @@ def file_dataset_repository(tmp_path: Path) -> FileDatasetRepository:
 def mocked_hugging_face_dataset_repository(
     temp_file_system: MemoryFileSystem,
 ) -> Iterable[HuggingFaceDatasetRepository]:
-    # this repository should already exist and does not have to be deleted after the tests
     class_to_patch = "intelligence_layer.evaluation.dataset.hugging_face_dataset_repository.HuggingFaceDatasetRepository"
     with patch(f"{class_to_patch}.create_repository", autospec=True), patch(
         f"{class_to_patch}.delete_repository",

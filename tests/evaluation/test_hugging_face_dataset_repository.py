@@ -19,7 +19,6 @@ class DummyAggregatedEvaluation(BaseModel):
 def hugging_face_dataset_repository(
     hugging_face_test_repository_id: str, hugging_face_token: str
 ) -> Iterable[HuggingFaceDatasetRepository]:
-    # this repository should already exist and does not have to be deleted after the tests
     repo = HuggingFaceDatasetRepository(
         repository_id=hugging_face_test_repository_id,
         token=hugging_face_token,
