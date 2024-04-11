@@ -1,7 +1,10 @@
 from uuid import uuid4
+
 import huggingface_hub  # type: ignore
 
-from intelligence_layer.evaluation.infrastructure.hugging_face_repository import HuggingFaceRepository
+from intelligence_layer.evaluation.infrastructure.hugging_face_repository import (
+    HuggingFaceRepository,
+)
 
 
 def test_hugging_face_repository_can_create_and_delete_a_repository(

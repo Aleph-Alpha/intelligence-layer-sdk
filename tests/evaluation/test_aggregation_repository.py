@@ -1,7 +1,9 @@
 from typing import Iterable
+from unittest.mock import patch
 from uuid import uuid4
 
 from _pytest.fixtures import FixtureRequest
+from fsspec.implementations.memory import MemoryFileSystem  # type: ignore
 from pytest import fixture, mark
 
 from intelligence_layer.core import utc_now
@@ -10,12 +12,35 @@ from intelligence_layer.evaluation import (
     AggregationRepository,
     EvaluationOverview,
 )
+from intelligence_layer.evaluation.aggregation.hugging_face_aggregation_repository import (
+    HuggingFaceAggregationRepository,
+)
 from tests.evaluation.conftest import DummyAggregatedEvaluation
 
 test_repository_fixtures = [
     "file_aggregation_repository",
     "in_memory_aggregation_repository",
+    "mocked_hugging_face_aggregation_repository",
 ]
+
+
+@fixture
+def mocked_hugging_face_aggregation_repository(
+    temp_file_system: MemoryFileSystem,
+) -> Iterable[HuggingFaceAggregationRepository]:
+    # this repository should already exist and does not have to be deleted after the tests
+    class_to_patch = "intelligence_layer.evaluation.aggregation.hugging_face_aggregation_repository.HuggingFaceAggregationRepository"
+    with patch(f"{class_to_patch}.create_repository", autospec=True), patch(
+        f"{class_to_patch}.delete_repository",
+        autospec=True,
+    ):
+        repo = HuggingFaceAggregationRepository(
+            repository_id="doesn't-matter",
+            token="non-existing-token",
+            private=True,
+        )
+        repo._file_system = temp_file_system
+        yield repo
 
 
 @fixture
@@ -70,7 +95,6 @@ def test_aggregation_repository_stores_and_returns_an_aggregation_overview(
 def test_aggregation_overview_returns_none_for_not_existing_id(
     repository_fixture: str,
     request: FixtureRequest,
-    aggregation_overview: AggregationOverview[DummyAggregatedEvaluation],
 ) -> None:
     aggregation_repository: AggregationRepository = request.getfixturevalue(
         repository_fixture
@@ -90,9 +114,7 @@ def test_aggregation_overview_returns_none_for_not_existing_id(
 def test_aggregation_overviews_returns_all_aggregation_overviews(
     repository_fixture: str,
     request: FixtureRequest,
-    evaluation_overview: EvaluationOverview,
     aggregation_overviews: Iterable[AggregationOverview[DummyAggregatedEvaluation]],
-    dummy_aggregated_evaluation: DummyAggregatedEvaluation,
 ) -> None:
     aggregation_repository: AggregationRepository = request.getfixturevalue(
         repository_fixture
@@ -116,9 +138,7 @@ def test_aggregation_overviews_returns_all_aggregation_overviews(
 def test_aggregation_overview_ids_returns_sorted_ids(
     repository_fixture: str,
     request: FixtureRequest,
-    evaluation_overview: EvaluationOverview,
     aggregation_overviews: Iterable[AggregationOverview[DummyAggregatedEvaluation]],
-    dummy_aggregated_evaluation: DummyAggregatedEvaluation,
 ) -> None:
     aggregation_repository: AggregationRepository = request.getfixturevalue(
         repository_fixture

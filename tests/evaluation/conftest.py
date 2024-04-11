@@ -5,6 +5,7 @@ from typing import Iterable, Sequence
 from uuid import uuid4
 
 from dotenv import load_dotenv
+from fsspec.implementations.memory import MemoryFileSystem  # type: ignore
 from pydantic import BaseModel
 from pytest import fixture
 
@@ -31,8 +32,6 @@ from intelligence_layer.evaluation import (
     Runner,
     RunOverview,
 )
-from fsspec.implementations.memory import MemoryFileSystem  # type: ignore
-
 from tests.conftest import DummyStringInput, DummyStringOutput
 
 FAIL_IN_EVAL_INPUT = "fail in eval"
@@ -251,6 +250,11 @@ def temp_file_system() -> Iterable[MemoryFileSystem]:
         yield mfs
     finally:
         mfs.store.clear()
+
+
+@fixture(scope="session")
+def hugging_face_test_repository_id():
+    return f"Aleph-Alpha/test-{str(uuid4())}"
 
 
 @fixture(scope="session")

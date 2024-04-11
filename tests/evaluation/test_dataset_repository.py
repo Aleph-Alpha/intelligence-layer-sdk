@@ -1,7 +1,6 @@
 from pathlib import Path
 from typing import Any, Iterable
 from unittest.mock import patch
-from uuid import uuid4
 
 import pytest
 from fsspec.implementations.memory import MemoryFileSystem  # type: ignore
@@ -23,16 +22,9 @@ def file_dataset_repository(tmp_path: Path) -> FileDatasetRepository:
     return FileDatasetRepository(tmp_path)
 
 
-@fixture(scope="session")
-def hugging_face_dataset_repository_id() -> str:
-    return f"Aleph-Alpha/test-datasets-{str(uuid4())}"
-
-
-
-
 @fixture
 def mocked_hugging_face_dataset_repository(
-    hugging_face_dataset_repository_id: str, temp_file_system: MemoryFileSystem
+    temp_file_system: MemoryFileSystem,
 ) -> Iterable[HuggingFaceDatasetRepository]:
     # this repository should already exist and does not have to be deleted after the tests
     class_to_patch = "intelligence_layer.evaluation.dataset.hugging_face_dataset_repository.HuggingFaceDatasetRepository"
@@ -41,7 +33,7 @@ def mocked_hugging_face_dataset_repository(
         autospec=True,
     ):
         repo = HuggingFaceDatasetRepository(
-            repository_id=hugging_face_dataset_repository_id,
+            repository_id="doesn't-matter",
             token="non-existing-token",
             private=True,
         )
@@ -344,4 +336,3 @@ def test_example_raises_error_for_not_existing_dataset_id(
             DummyStringInput,
             DummyStringOutput,
         )
-

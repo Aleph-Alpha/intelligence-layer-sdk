@@ -13,19 +13,15 @@ class DummyAggregatedEvaluation(BaseModel):
     score: float
 
 
-@fixture(scope="session")
-def hugging_face_dataset_repository_id() -> str:
-    return f"Aleph-Alpha/test-datasets-{str(uuid4())}"
-
-
 # these fixtures should only be used once and are here for readable tests
+# because creating/deleting HuggingFace repositories can be rate-limited
 @fixture(scope="session")
 def hugging_face_dataset_repository(
-    hugging_face_dataset_repository_id: str, hugging_face_token: str
+    hugging_face_test_repository_id: str, hugging_face_token: str
 ) -> Iterable[HuggingFaceDatasetRepository]:
     # this repository should already exist and does not have to be deleted after the tests
     repo = HuggingFaceDatasetRepository(
-        repository_id=hugging_face_dataset_repository_id,
+        repository_id=hugging_face_test_repository_id,
         token=hugging_face_token,
         private=True,
     )
@@ -93,7 +89,6 @@ def test_hugging_face_repository_supports_all_operations_for_created_dataset(
         assert (
             hugging_face_repository.example(dataset.id, example.id, str, str) == example
         )
-    
 
     # one gets None for a not existing example ID
     assert (
