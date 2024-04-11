@@ -1,6 +1,5 @@
 from typing import Optional
 
-
 from intelligence_layer.evaluation.dataset.domain import Dataset
 from intelligence_layer.evaluation.dataset.file_dataset_repository import (
     FileSystemDatasetRepository,

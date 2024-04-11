@@ -31,6 +31,8 @@ from intelligence_layer.evaluation import (
     Runner,
     RunOverview,
 )
+from fsspec.implementations.memory import MemoryFileSystem  # type: ignore
+
 from tests.conftest import DummyStringInput, DummyStringOutput
 
 FAIL_IN_EVAL_INPUT = "fail in eval"
@@ -239,6 +241,16 @@ class StubArgillaClient(ArgillaClient):
 @fixture
 def stub_argilla_client() -> StubArgillaClient:
     return StubArgillaClient()
+
+
+@fixture()
+def temp_file_system() -> Iterable[MemoryFileSystem]:
+    mfs = MemoryFileSystem()
+
+    try:
+        yield mfs
+    finally:
+        mfs.store.clear()
 
 
 @fixture(scope="session")

@@ -1,6 +1,6 @@
 from pathlib import Path
 
-import huggingface_hub
+import huggingface_hub  # type: ignore
 
 from intelligence_layer.evaluation.dataset.file_dataset_repository import (
     FileSystemDatasetRepository,
@@ -38,7 +38,7 @@ class HuggingFaceRepository(FileSystemDatasetRepository):
         # the file system is assigned in super init but this fixes the typing
         self._file_system: huggingface_hub.HfFileSystem
 
-    def create_repository(self, repository_id, token, private):
+    def create_repository(self, repository_id: str, token: str, private: bool) -> None:
         huggingface_hub.create_repo(
             repo_id=repository_id,
             token=token,
