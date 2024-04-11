@@ -5,6 +5,7 @@ from typing import Iterable, Sequence
 from uuid import uuid4
 
 from dotenv import load_dotenv
+from fsspec.implementations.memory import MemoryFileSystem  # type: ignore
 from pydantic import BaseModel
 from pytest import fixture
 
@@ -239,6 +240,21 @@ class StubArgillaClient(ArgillaClient):
 @fixture
 def stub_argilla_client() -> StubArgillaClient:
     return StubArgillaClient()
+
+
+@fixture()
+def temp_file_system() -> Iterable[MemoryFileSystem]:
+    mfs = MemoryFileSystem()
+
+    try:
+        yield mfs
+    finally:
+        mfs.store.clear()
+
+
+@fixture(scope="session")
+def hugging_face_test_repository_id() -> str:
+    return f"Aleph-Alpha/test-{str(uuid4())}"
 
 
 @fixture(scope="session")

@@ -3,12 +3,16 @@ from typing import Any, Iterable
 from unittest.mock import patch
 
 import pytest
+from fsspec.implementations.memory import MemoryFileSystem  # type: ignore
 from pytest import FixtureRequest, fixture, mark, raises
 
 from intelligence_layer.evaluation import (
     DatasetRepository,
     Example,
     FileDatasetRepository,
+)
+from intelligence_layer.evaluation.dataset.hugging_face_dataset_repository import (
+    HuggingFaceDatasetRepository,
 )
 from tests.conftest import DummyStringInput, DummyStringOutput
 
@@ -18,9 +22,28 @@ def file_dataset_repository(tmp_path: Path) -> FileDatasetRepository:
     return FileDatasetRepository(tmp_path)
 
 
+@fixture
+def mocked_hugging_face_dataset_repository(
+    temp_file_system: MemoryFileSystem,
+) -> Iterable[HuggingFaceDatasetRepository]:
+    class_to_patch = "intelligence_layer.evaluation.dataset.hugging_face_dataset_repository.HuggingFaceDatasetRepository"
+    with patch(f"{class_to_patch}.create_repository", autospec=True), patch(
+        f"{class_to_patch}.delete_repository",
+        autospec=True,
+    ):
+        repo = HuggingFaceDatasetRepository(
+            repository_id="doesn't-matter",
+            token="non-existing-token",
+            private=True,
+        )
+        repo._file_system = temp_file_system
+        yield repo
+
+
 test_repository_fixtures = [
     "file_dataset_repository",
     "in_memory_dataset_repository",
+    "mocked_hugging_face_dataset_repository",
 ]
 
 
@@ -72,15 +95,13 @@ def test_dataset_repository_can_create_and_store_a_dataset(
     assert stored_examples[0] == dummy_string_example
 
 
-@patch(
-    target="intelligence_layer.evaluation.dataset.domain.uuid4", return_value="12345"
-)
+@patch(target="intelligence_layer.evaluation.dataset.domain.uuid4", return_value="1234")
 @mark.parametrize(
     "repository_fixture",
     test_repository_fixtures,
 )
 def test_dataset_repository_ensures_unique_dataset_ids(
-    _mock_uuid4: Any,
+    _mock_uuid4: Any,  # this is necessary as otherwise the other fixtures aren't found
     repository_fixture: str,
     request: FixtureRequest,
     dummy_string_example: Example[DummyStringInput, DummyStringOutput],
@@ -151,6 +172,19 @@ def test_delete_dataset_deletes_a_dataset(
     dataset_repository.delete_dataset(
         dataset.id
     )  # tests whether function is idempotent
+
+
+@mark.parametrize(
+    "repository_fixture",
+    test_repository_fixtures,
+)
+def test_deleting_a_nonexistant_repo_does_not_cause_an_exception(
+    repository_fixture: str,
+    request: FixtureRequest,
+) -> None:
+    dataset_repository: DatasetRepository = request.getfixturevalue(repository_fixture)
+
+    dataset_repository.delete_dataset("non-existant-id")
 
 
 @mark.parametrize(

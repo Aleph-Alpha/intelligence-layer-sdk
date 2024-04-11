@@ -1,4 +1,3 @@
-from pathlib import Path
 from typing import Iterable
 from uuid import uuid4
 
@@ -10,9 +9,6 @@ from intelligence_layer.evaluation import (
     AggregationOverview,
     HuggingFaceAggregationRepository,
 )
-from intelligence_layer.evaluation.aggregation.file_aggregation_repository import (
-    FileSystemAggregationRepository,
-)
 from tests.evaluation.conftest import DummyAggregatedEvaluation
 
 
@@ -21,24 +17,21 @@ def dummy_aggregated_evaluation() -> DummyAggregatedEvaluation:
     return DummyAggregatedEvaluation(score=0.5)
 
 
-@fixture(scope="session")
-def hugging_face_aggregation_repository_id() -> str:
-    return "Aleph-Alpha/test-aggregation-datasets"
-
-
+# these fixtures should only be used once and are here for readable tests
+# because creating/deleting HuggingFace repositories can be rate-limited
 @fixture(scope="session")
 def hugging_face_aggregation_repository(
-    hugging_face_token: str, hugging_face_aggregation_repository_id: str
+    hugging_face_token: str, hugging_face_test_repository_id: str
 ) -> Iterable[HuggingFaceAggregationRepository]:
     try:
         yield HuggingFaceAggregationRepository(
-            hugging_face_aggregation_repository_id,
+            hugging_face_test_repository_id,
             token=hugging_face_token,
             private=True,
         )
     finally:
         huggingface_hub.delete_repo(
-            repo_id=hugging_face_aggregation_repository_id,
+            repo_id=hugging_face_test_repository_id,
             token=hugging_face_token,
             repo_type="dataset",
             missing_ok=True,
@@ -75,16 +68,3 @@ def test_repository_operations(
         in hugging_face_aggregation_repository.aggregation_overview_ids()
     )
     assert overview != []
-
-
-def test_file_exists_in_subdirectory(
-    hugging_face_aggregation_repository: HuggingFaceAggregationRepository,
-    aggregation_overview: AggregationOverview[DummyAggregatedEvaluation],
-    hugging_face_aggregation_repository_id: str,
-) -> None:
-    hugging_face_aggregation_repository.store_aggregation_overview(aggregation_overview)
-    path_to_file = Path(
-        f"datasets/{hugging_face_aggregation_repository_id}/{FileSystemAggregationRepository._SUB_DIRECTORY}/{aggregation_overview.id}.json"
-    )
-    file_exists = hugging_face_aggregation_repository.exists(path_to_file)
-    assert file_exists

@@ -36,9 +36,7 @@ class FileSystemDatasetRepository(DatasetRepository, FileSystemBasedRepository):
 
         dataset_path = self._dataset_path(dataset.id)
         examples_path = self._dataset_examples_path(dataset.id)
-        if self._file_system.exists(dataset_path) or self._file_system.exists(
-            examples_path
-        ):
+        if self.exists(dataset_path) or self.exists(examples_path):
             raise ValueError(
                 f"One of the dataset files already exist for dataset {dataset}. This should not happen. Files: {dataset_path}, {examples_path}."
             )

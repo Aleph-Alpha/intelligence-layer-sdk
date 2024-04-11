@@ -2,10 +2,13 @@
 
 ## Unreleased
 
+### Breaking Changes
+ - The implementation of the HuggingFace repository creation and deletion got moved to `HuggingFaceRepository`
 ### New Features
-...
+ - feature: HuggingFaceDataset- & AggregationRepositories now have an explicit `create_repository` function.
 ### Fixes
 ...
+
 
 ## 0.8.2
 
