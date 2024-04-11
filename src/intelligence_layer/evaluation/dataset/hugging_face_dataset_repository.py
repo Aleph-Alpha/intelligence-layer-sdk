@@ -1,8 +1,5 @@
-from pathlib import Path
 from typing import Optional
 
-import huggingface_hub  # type: ignore
-from huggingface_hub import HfFileSystem, create_repo
 
 from intelligence_layer.evaluation.dataset.domain import Dataset
 from intelligence_layer.evaluation.dataset.file_dataset_repository import (
@@ -14,41 +11,6 @@ from intelligence_layer.evaluation.infrastructure.hugging_face_repository import
 
 
 class HuggingFaceDatasetRepository(HuggingFaceRepository, FileSystemDatasetRepository):
-    def __init__(self, repository_id: str, token: str, private: bool) -> None:
-        """Create a HuggingFace dataset repository
-
-        Args:
-            repository_id: The HuggingFace namespace and repository name separated by a "/".
-            token: The HuggingFace token.
-            private: Whether the dataset repository should be private.
-        """
-        assert repository_id[-1] != "/"
-
-        create_repo(
-            repo_id=repository_id,
-            token=token,
-            repo_type=HuggingFaceDatasetRepository._REPO_TYPE,
-            private=private,
-            exist_ok=True,
-        )
-
-        file_system = HfFileSystem(token=token)
-        root_directory = Path(
-            f"{HuggingFaceRepository._ROOT_DIRECTORY_PREFIX_}/{repository_id}"
-        )
-        super().__init__(file_system, root_directory)
-
-        self._repository_id = repository_id
-        self._file_system = file_system  # for better type checks
-
-    def delete_repository(self) -> None:
-        huggingface_hub.delete_repo(
-            repo_id=self._repository_id,
-            token=self._file_system.token,
-            repo_type=HuggingFaceDatasetRepository._REPO_TYPE,
-            missing_ok=True,
-        )
-
     def delete_dataset(self, dataset_id: str) -> None:
         """Deletes a dataset identified by the given dataset ID.
 
