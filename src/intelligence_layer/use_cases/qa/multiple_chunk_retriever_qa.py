@@ -100,8 +100,8 @@ class MultipleChunkRetrieverQa(
             for highlight in highlights:
                 if highlight.start < next_start and highlight.end > current_start:
                     highlights_with_indices_fixed = ScoredTextHighlight(
-                        start=highlight.start - current_start,
-                        end=highlight.end - current_start,
+                        start=max(0, highlight.start - current_start),
+                        end=min(highlight.end - current_start, next_start),
                         score=highlight.score,
                     )
                     current_overlaps.append(highlights_with_indices_fixed)
