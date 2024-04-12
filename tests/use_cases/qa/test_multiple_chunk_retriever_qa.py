@@ -2,18 +2,13 @@ from typing import Sequence
 
 from pytest import fixture
 
-from intelligence_layer.connectors.document_index.document_index import DocumentPath
 from intelligence_layer.connectors.retrievers.base_retriever import Document
-from intelligence_layer.connectors.retrievers.document_index_retriever import (
-    DocumentIndexRetriever,
-)
 from intelligence_layer.connectors.retrievers.qdrant_in_memory_retriever import (
     QdrantInMemoryRetriever,
 )
 from intelligence_layer.core import NoOpTracer
 from intelligence_layer.use_cases import (
-    MultipleChunkQa,
-    RetrieverBasedQa,
+    MultipleChunkRetrieverBasedQa,
     RetrieverBasedQaInput,
 )
 
@@ -37,43 +32,19 @@ def in_memory_retriever_documents() -> Sequence[Document]:
 
 
 @fixture
-def retriever_based_qa_with_in_memory_retriever(
-    multiple_chunk_qa: MultipleChunkQa,
+def multiple_chunk_retriever_qa(
     asymmetric_in_memory_retriever: QdrantInMemoryRetriever,
-) -> RetrieverBasedQa[int]:
-    return RetrieverBasedQa(
-        retriever=asymmetric_in_memory_retriever, multi_chunk_qa=multiple_chunk_qa
-    )
-
-
-@fixture
-def retriever_based_qa_with_document_index(
-    multiple_chunk_qa: MultipleChunkQa, document_index_retriever: DocumentIndexRetriever
-) -> RetrieverBasedQa[DocumentPath]:
-    return RetrieverBasedQa(
-        retriever=document_index_retriever, multi_chunk_qa=multiple_chunk_qa
-    )
+) -> MultipleChunkRetrieverBasedQa[int]:
+    return MultipleChunkRetrieverBasedQa(retriever=asymmetric_in_memory_retriever)
 
 
 def test_retriever_based_qa_using_in_memory_retriever(
-    retriever_based_qa_with_in_memory_retriever: RetrieverBasedQa[int],
+    multiple_chunk_retriever_qa: MultipleChunkRetrieverBasedQa[int],
     no_op_tracer: NoOpTracer,
 ) -> None:
     question = "When was Robert Moses born?"
     input = RetrieverBasedQaInput(question=question)
-    output = retriever_based_qa_with_in_memory_retriever.run(input, no_op_tracer)
+    output = multiple_chunk_retriever_qa.run(input, no_op_tracer)
     assert output.answer
     assert "1888" in output.answer
-    assert output.subanswers[0].id == 3
-
-
-def test_retriever_based_qa_with_document_index(
-    retriever_based_qa_with_document_index: RetrieverBasedQa[DocumentPath],
-    no_op_tracer: NoOpTracer,
-) -> None:
-    question = "When was Robert Moses born?"
-    input = RetrieverBasedQaInput(question=question)
-    output = retriever_based_qa_with_document_index.run(input, no_op_tracer)
-    assert output.answer
-    assert "1888" in output.answer
-    assert output.subanswers[0].id.document_name == "Robert Moses (Begriffsklärung)"
+    assert len(output.sources) == 2
