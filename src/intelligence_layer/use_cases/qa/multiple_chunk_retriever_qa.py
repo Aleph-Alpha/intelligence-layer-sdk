@@ -22,13 +22,13 @@ class AnswerSource(BaseModel, Generic[ID]):
     highlights: Sequence[ScoredTextHighlight]
 
 
-class MultipleChunkRetrieverBasedQaOutput(BaseModel, Generic[ID]):
+class MulMultipleChunkRetrieverQaOutput(BaseModel, Generic[ID]):
     answer: Optional[str]
     sources: Sequence[AnswerSource[ID]]
 
 
-class MultipleChunkRetrieverBasedQa(
-    Task[RetrieverBasedQaInput, MultipleChunkRetrieverBasedQaOutput[ID]], Generic[ID]
+class MultipleChunkRetrieverQa(
+    Task[RetrieverBasedQaInput, MulMultipleChunkRetrieverQaOutput[ID]], Generic[ID]
 ):
     """Answer a question based on documents found by a retriever.
 
@@ -56,8 +56,8 @@ class MultipleChunkRetrieverBasedQa(
 
         >>> token = os.getenv("AA_TOKEN")
         >>> document_index = DocumentIndexClient(token)
-        >>> retriever = DocumentIndexRetriever(document_index, "aleph-alpha", "wikipedia-de", 10)
-        >>> task = MultipleChunkRetrieverQa(retriever)
+        >>> retriever = DocumentIndexRetriever(document_index, "aleph-alpha", "wikipedia-de", 3)
+        >>> task = MultipleChunkRetrieverQa(retriever, k=2)
         >>> input_data = RetrieverBasedQaInput(question="When was Rome founded?")
         >>> tracer = InMemoryTracer()
         >>> output = task.run(input_data, tracer)
@@ -111,14 +111,14 @@ class MultipleChunkRetrieverBasedQa(
 
     def do_run(
         self, input: RetrieverBasedQaInput, task_span: TaskSpan
-    ) -> MultipleChunkRetrieverBasedQaOutput[ID]:
+    ) -> MulMultipleChunkRetrieverQaOutput[ID]:
         search_output = self._search.run(
             SearchInput(query=input.question), task_span
         ).results
         sorted_search_output = sorted(
             search_output,
             key=lambda output: output.score,  # not reversing on purpose because model performs better if relevant info is at the end
-        )
+        )[-self._k:]
 
         chunk, chunk_start_indices = self._combine_input_texts(
             [output.document_chunk.text for output in sorted_search_output]
@@ -138,7 +138,7 @@ class MultipleChunkRetrieverBasedQa(
             chunk_start_indices, single_chunk_qa_output.highlights
         )
 
-        return MultipleChunkRetrieverBasedQaOutput(
+        return MulMultipleChunkRetrieverQaOutput(
             answer=single_chunk_qa_output.answer,
             sources=[
                 AnswerSource(

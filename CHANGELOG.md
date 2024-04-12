@@ -6,6 +6,8 @@
  - The implementation of the HuggingFace repository creation and deletion got moved to `HuggingFaceRepository`
 ### New Features
  - feature: HuggingFaceDataset- & AggregationRepositories now have an explicit `create_repository` function.
+ - feature: Add `MultipleChunkRetrieverBasedQa`, a task that performs better on faster on retriever-QA, especially with longer context models
+
 ### Fixes
 ...
 
