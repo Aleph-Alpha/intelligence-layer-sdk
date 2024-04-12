@@ -49,6 +49,12 @@ from .qa.multiple_chunk_qa import MultipleChunkQa as MultipleChunkQa
 from .qa.multiple_chunk_qa import MultipleChunkQaInput as MultipleChunkQaInput
 from .qa.multiple_chunk_qa import MultipleChunkQaOutput as MultipleChunkQaOutput
 from .qa.multiple_chunk_qa import Subanswer as Subanswer
+from .qa.multiple_chunk_retriever_qa import (
+    MulMultipleChunkRetrieverQaOutput as MulMultipleChunkRetrieverQaOutput,
+)
+from .qa.multiple_chunk_retriever_qa import (
+    MultipleChunkRetrieverQa as MultipleChunkRetrieverQa,
+)
 from .qa.retriever_based_qa import EnrichedSubanswer as EnrichedSubanswer
 from .qa.retriever_based_qa import RetrieverBasedQa as RetrieverBasedQa
 from .qa.retriever_based_qa import RetrieverBasedQaInput as RetrieverBasedQaInput

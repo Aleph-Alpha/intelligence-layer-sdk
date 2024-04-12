@@ -66,14 +66,14 @@ class RetrieverBasedQa(
     Args:
         retriever: Used to access and return a set of texts.
         qa_task: The task that is used to generate an answer for a single chunk (retrieved through
-            the retriever). Defaults to :class:`SingleChunkQa` .
+            the retriever). Defaults to :class:`MultipleChunkQa` .
 
     Example:
         >>> import os
         >>> from intelligence_layer.connectors import DocumentIndexClient
         >>> from intelligence_layer.connectors import DocumentIndexRetriever
         >>> from intelligence_layer.core import InMemoryTracer
-        >>> from intelligence_layer.use_cases import RetrieverBasedQa, RetrieverBasedQaInput, SingleChunkQa
+        >>> from intelligence_layer.use_cases import RetrieverBasedQa, RetrieverBasedQaInput
 
 
         >>> token = os.getenv("AA_TOKEN")
