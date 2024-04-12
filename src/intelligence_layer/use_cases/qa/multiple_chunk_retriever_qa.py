@@ -118,7 +118,7 @@ class MultipleChunkRetrieverQa(
         sorted_search_output = sorted(
             search_output,
             key=lambda output: output.score,  # not reversing on purpose because model performs better if relevant info is at the end
-        )[-self._k:]
+        )[-self._k :]
 
         chunk, chunk_start_indices = self._combine_input_texts(
             [output.document_chunk.text for output in sorted_search_output]
