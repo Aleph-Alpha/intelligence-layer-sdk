@@ -50,10 +50,10 @@ from .qa.multiple_chunk_qa import MultipleChunkQaInput as MultipleChunkQaInput
 from .qa.multiple_chunk_qa import MultipleChunkQaOutput as MultipleChunkQaOutput
 from .qa.multiple_chunk_qa import Subanswer as Subanswer
 from .qa.multiple_chunk_retriever_qa import (
-    MulMultipleChunkRetrieverQaOutput as MulMultipleChunkRetrieverQaOutput,
+    MultipleChunkRetrieverQa as MultipleChunkRetrieverQa,
 )
 from .qa.multiple_chunk_retriever_qa import (
-    MultipleChunkRetrieverQa as MultipleChunkRetrieverQa,
+    MultipleChunkRetrieverQaOutput as MultipleChunkRetrieverQaOutput,
 )
 from .qa.retriever_based_qa import EnrichedSubanswer as EnrichedSubanswer
 from .qa.retriever_based_qa import RetrieverBasedQa as RetrieverBasedQa

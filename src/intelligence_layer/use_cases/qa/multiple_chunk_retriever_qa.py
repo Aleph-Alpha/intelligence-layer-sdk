@@ -18,17 +18,17 @@ from .single_chunk_qa import SingleChunkQa, SingleChunkQaInput, SingleChunkQaOut
 
 
 class AnswerSource(BaseModel, Generic[ID]):
-    chunk: SearchResult[ID]
+    search_result: SearchResult[ID]
     highlights: Sequence[ScoredTextHighlight]
 
 
-class MulMultipleChunkRetrieverQaOutput(BaseModel, Generic[ID]):
+class MultipleChunkRetrieverQaOutput(BaseModel, Generic[ID]):
     answer: Optional[str]
     sources: Sequence[AnswerSource[ID]]
 
 
 class MultipleChunkRetrieverQa(
-    Task[RetrieverBasedQaInput, MulMultipleChunkRetrieverQaOutput[ID]], Generic[ID]
+    Task[RetrieverBasedQaInput, MultipleChunkRetrieverQaOutput[ID]], Generic[ID]
 ):
     """Answer a question based on documents found by a retriever.
 
@@ -113,7 +113,7 @@ class MultipleChunkRetrieverQa(
 
     def do_run(
         self, input: RetrieverBasedQaInput, task_span: TaskSpan
-    ) -> MulMultipleChunkRetrieverQaOutput[ID]:
+    ) -> MultipleChunkRetrieverQaOutput[ID]:
         search_output = self._search.run(
             SearchInput(query=input.question), task_span
         ).results
@@ -140,11 +140,11 @@ class MultipleChunkRetrieverQa(
             chunk_start_indices, single_chunk_qa_output.highlights
         )
 
-        return MulMultipleChunkRetrieverQaOutput(
+        return MultipleChunkRetrieverQaOutput(
             answer=single_chunk_qa_output.answer,
             sources=[
                 AnswerSource(
-                    chunk=chunk,
+                    search_result=chunk,
                     highlights=highlights,
                 )
                 for chunk, highlights in zip(sorted_search_output, highlights_per_chunk)
