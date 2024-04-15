@@ -3,14 +3,22 @@
 ## Unreleased
 
 ### Breaking Changes
- - The implementation of the HuggingFace repository creation and deletion got moved to `HuggingFaceRepository`
+...
+
 ### New Features
- - feature: HuggingFaceDataset- & AggregationRepositories now have an explicit `create_repository` function.
- - feature: Add `MultipleChunkRetrieverBasedQa`, a task that performs better on faster on retriever-QA, especially with longer context models
+...
 
 ### Fixes
 ...
 
+## 0.9.0
+
+### Breaking Changes
+ - The implementation of the HuggingFace repository creation and deletion got moved to `HuggingFaceRepository`
+
+### New Features
+ - feature: HuggingFaceDataset- & AggregationRepositories now have an explicit `create_repository` function.
+ - feature: Add `MultipleChunkRetrieverBasedQa`, a task that performs better on faster on retriever-QA, especially with longer context models
 
 ## 0.8.2
 
