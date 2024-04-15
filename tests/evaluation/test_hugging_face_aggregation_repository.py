@@ -67,4 +67,4 @@ def test_repository_operations(
         aggregation_overview.id
         in hugging_face_aggregation_repository.aggregation_overview_ids()
     )
-    assert overview != []
+    assert overview is not None
