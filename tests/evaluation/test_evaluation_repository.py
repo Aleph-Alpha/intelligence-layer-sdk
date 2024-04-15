@@ -5,7 +5,6 @@ from uuid import uuid4
 
 import pytest
 from _pytest.fixtures import FixtureRequest
-from pydantic import BaseModel
 from pytest import fixture, mark
 
 from intelligence_layer.core import utc_now
@@ -19,11 +18,6 @@ from intelligence_layer.evaluation import (
     TaskSpanTrace,
 )
 from tests.evaluation.conftest import DummyEvaluation
-
-
-class DummyEvaluationWithExceptionStructure(BaseModel):
-    error_message: str
-
 
 test_repository_fixtures = [
     "file_evaluation_repository",
@@ -226,7 +220,6 @@ def test_evaluation_repository_stores_and_returns_a_failed_example_evaluation(
         repository_fixture
     )
     evaluation_id = "evaluation-id"
-
     failed_example_evaluation: ExampleEvaluation[FailedExampleEvaluation] = (
         ExampleEvaluation(
             evaluation_id=evaluation_id,
@@ -239,7 +232,7 @@ def test_evaluation_repository_stores_and_returns_a_failed_example_evaluation(
     example_evaluation = evaluation_repository.example_evaluation(
         evaluation_id,
         failed_example_evaluation.example_id,
-        DummyEvaluationWithExceptionStructure,
+        FailedExampleEvaluation,
     )
 
     assert example_evaluation == failed_example_evaluation
