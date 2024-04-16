@@ -19,7 +19,7 @@ These smaller segments are referred to as chunks.
 
 
 class ChunkInput(BaseModel):
-    """The input for a `ChunkTask`.
+    """The input for a `Chunk`-task.
 
     Attributes:
         text: A text of arbitrary length.
@@ -63,25 +63,33 @@ class Chunk(Task[ChunkInput, ChunkOutput]):
 
 
 class ChunkWithStartIndex(BaseModel):
+    """A `TextChunk` and its `start_index` relative to its parent document.
+
+    Attributes:
+        chunk: The actual text.
+        start_index: The character start index of the chunk within the respective document.
+    """
+
     chunk: TextChunk
     start_index: int
 
 
 class ChunkWithIndicesOutput(BaseModel):
-    """The output of a `ChunkTask`.
+    """The output of a `ChunkWithIndices`-task.
 
     Attributes:
-        chunks_with_indices: A list of smaller sections of the input text.
+        chunks_with_indices: A list of smaller sections of the input text with the respective start_index.
     """
 
     chunks_with_indices: Sequence[ChunkWithStartIndex]
 
 
 class ChunkWithIndices(Task[ChunkInput, ChunkWithIndicesOutput]):
-    """Splits a longer text into smaller text chunks.
+    """Splits a longer text into smaller text chunks and returns the chunks' start indices.
 
     Provide a text of any length and chunk it into smaller pieces using a
-    tokenizer that is available within the Aleph Alpha client.
+    tokenizer that is available within the Aleph Alpha client. For each chunk, the respective
+    start index relative to the document is also returned.
 
     Args:
         model: A valid Aleph Alpha model.
