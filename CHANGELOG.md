@@ -14,7 +14,8 @@
 ## 0.9.0
 
 ### Breaking Changes
- - The implementation of the HuggingFace repository creation and deletion got moved to `HuggingFaceRepository`
+ - breaking change: Renamed the field `chunk` of `AnswerSource` to `search_result` for multi chunk retriever qa.
+ - breaking change: The implementation of the HuggingFace repository creation and deletion got moved to `HuggingFaceRepository`
 
 ### New Features
  - feature: HuggingFaceDataset- & AggregationRepositories now have an explicit `create_repository` function.
