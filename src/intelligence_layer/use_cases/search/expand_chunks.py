@@ -10,16 +10,16 @@ from intelligence_layer.core.task import Task
 from intelligence_layer.core.tracer.tracer import TaskSpan
 
 
-class ExpandChunkInput(BaseModel, Generic[ID]):
+class ExpandChunksInput(BaseModel, Generic[ID]):
     document_id: ID
     chunks_found: Sequence[DocumentChunk]
 
 
-class ExpandChunkOutput(BaseModel):
+class ExpandChunksOutput(BaseModel):
     chunks: Sequence[TextChunk]
 
 
-class ExpandChunks(Generic[ID], Task[ExpandChunkInput[ID], ExpandChunkOutput]):
+class ExpandChunks(Generic[ID], Task[ExpandChunksInput[ID], ExpandChunksOutput]):
     def __init__(
         self,
         retriever: BaseRetriever[ID],
@@ -31,8 +31,8 @@ class ExpandChunks(Generic[ID], Task[ExpandChunkInput[ID], ExpandChunkOutput]):
         self._chunk_with_indices = ChunkWithIndices(model, max_chunk_size)
 
     def do_run(
-        self, input: ExpandChunkInput[ID], task_span: TaskSpan
-    ) -> ExpandChunkOutput:
+        self, input: ExpandChunksInput[ID], task_span: TaskSpan
+    ) -> ExpandChunksOutput:
         full_doc = self._retriever.get_full_document(input.document_id)
         if not full_doc:
             raise RuntimeError(f"No document for id '{input.document_id}' found")
@@ -46,7 +46,7 @@ class ExpandChunks(Generic[ID], Task[ExpandChunkInput[ID], ExpandChunkOutput]):
             [(chunk.start, chunk.end) for chunk in input.chunks_found],
         )
 
-        return ExpandChunkOutput(
+        return ExpandChunksOutput(
             chunks=[
                 chunk_with_indices[index].chunk for index in overlapping_chunk_indices
             ]

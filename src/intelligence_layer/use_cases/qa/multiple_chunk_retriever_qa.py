@@ -1,3 +1,4 @@
+from collections import defaultdict
 from typing import Generic, Optional, Sequence
 
 from pydantic import BaseModel
@@ -8,9 +9,14 @@ from intelligence_layer.connectors.retrievers.base_retriever import (
     SearchResult,
 )
 from intelligence_layer.core.chunk import TextChunk
+from intelligence_layer.core.model import ControlModel, LuminousControlModel
 from intelligence_layer.core.task import Task
 from intelligence_layer.core.text_highlight import ScoredTextHighlight
 from intelligence_layer.core.tracer.tracer import TaskSpan
+from intelligence_layer.use_cases.search.expand_chunks import (
+    ExpandChunks,
+    ExpandChunksInput,
+)
 from intelligence_layer.use_cases.search.search import Search, SearchInput
 
 from .retriever_based_qa import RetrieverBasedQaInput
@@ -18,13 +24,15 @@ from .single_chunk_qa import SingleChunkQa, SingleChunkQaInput, SingleChunkQaOut
 
 
 class AnswerSource(BaseModel, Generic[ID]):
-    search_result: SearchResult[ID]
+    document_id: ID
+    chunk: TextChunk
     highlights: Sequence[ScoredTextHighlight]
 
 
 class MultipleChunkRetrieverQaOutput(BaseModel, Generic[ID]):
     answer: Optional[str]
     sources: Sequence[AnswerSource[ID]]
+    search_results: Sequence[SearchResult[ID]]
 
 
 class MultipleChunkRetrieverQa(
@@ -66,13 +74,17 @@ class MultipleChunkRetrieverQa(
     def __init__(
         self,
         retriever: BaseRetriever[ID],
-        k: int = 5,
+        model: ControlModel | None = None,
+        insert_chunk_number: int = 5,
+        insert_chunk_size: int = 256,
         single_chunk_qa: Task[SingleChunkQaInput, SingleChunkQaOutput] | None = None,
     ):
         super().__init__()
+        self._model = model or LuminousControlModel("luminous-supreme-control")
         self._search = Search(retriever)
-        self._k = k
-        self._single_chunk_qa = single_chunk_qa or SingleChunkQa()
+        self._expand_chunks = ExpandChunks(retriever, self._model, insert_chunk_size)
+        self._single_chunk_qa = single_chunk_qa or SingleChunkQa(self._model)
+        self._insert_chunk_number = insert_chunk_number
 
     @staticmethod
     def _combine_input_texts(chunks: Sequence[str]) -> tuple[TextChunk, Sequence[int]]:
@@ -111,23 +123,46 @@ class MultipleChunkRetrieverQa(
             overlapping_ranges.append(current_overlaps)
         return overlapping_ranges
 
+    def _expand_search_result_chunks(
+        self, search_results: Sequence[SearchResult[ID]], task_span: TaskSpan
+    ) -> Sequence[tuple[ID, TextChunk]]:
+        grouped_results: dict[ID, list[SearchResult[ID]]] = defaultdict(list)
+        for result in search_results:
+            grouped_results[result.id].append(result)
+
+        chunks_to_insert: list[tuple[ID, TextChunk]] = []
+        for id, results in grouped_results.items():
+            input = ExpandChunksInput(
+                document_id=id, chunks_found=[r.document_chunk for r in results]
+            )
+            expand_chunks_output = self._expand_chunks.run(input, task_span)
+            for chunk in expand_chunks_output.chunks:
+                if len(chunks_to_insert) >= self._insert_chunk_number:
+                    break
+                chunks_to_insert.append((id, chunk))
+
+        return chunks_to_insert
+
     def do_run(
         self, input: RetrieverBasedQaInput, task_span: TaskSpan
     ) -> MultipleChunkRetrieverQaOutput[ID]:
         search_output = self._search.run(
             SearchInput(query=input.question), task_span
         ).results
-        sorted_search_output = sorted(
-            search_output,
-            key=lambda output: output.score,  # not reversing on purpose because model performs better if relevant info is at the end
-        )[-self._k :]
+        sorted_search_results = sorted(
+            search_output, key=lambda output: output.score, reverse=True
+        )
 
-        chunk, chunk_start_indices = self._combine_input_texts(
-            [output.document_chunk.text for output in sorted_search_output]
+        chunks_to_insert = self._expand_search_result_chunks(
+            sorted_search_results, task_span
+        )
+
+        chunk_for_prompt, chunk_start_indices = self._combine_input_texts(
+            [c[1] for c in chunks_to_insert]
         )
 
         single_chunk_qa_input = SingleChunkQaInput(
-            chunk=chunk,
+            chunk=chunk_for_prompt,
             question=input.question,
             language=input.language,
         )
@@ -144,9 +179,13 @@ class MultipleChunkRetrieverQa(
             answer=single_chunk_qa_output.answer,
             sources=[
                 AnswerSource(
-                    search_result=chunk,
+                    document_id=id_and_chunk[0],
+                    chunk=id_and_chunk[1],
                     highlights=highlights,
                 )
-                for chunk, highlights in zip(sorted_search_output, highlights_per_chunk)
+                for id_and_chunk, highlights in zip(
+                    chunks_to_insert, highlights_per_chunk
+                )
             ],
+            search_results=sorted_search_results,
         )

@@ -8,7 +8,7 @@ from intelligence_layer.connectors import (
     QdrantInMemoryRetriever,
 )
 from intelligence_layer.core import LuminousControlModel, NoOpTracer
-from intelligence_layer.use_cases import ExpandChunkInput, ExpandChunks
+from intelligence_layer.use_cases import ExpandChunks, ExpandChunksInput
 
 
 @fixture
@@ -46,8 +46,8 @@ In this timeless land, the cycle of challenge and triumph continued, each genera
 
 def build_expand_chunk_input(
     document: Document, index_ranges: Sequence[tuple[int, int]]
-) -> ExpandChunkInput[int]:
-    return ExpandChunkInput(
+) -> ExpandChunksInput[int]:
+    return ExpandChunksInput(
         document_id=0,
         chunks_found=[
             DocumentChunk(
@@ -63,7 +63,7 @@ def build_expand_chunk_input(
 @fixture
 def wholly_included_expand_chunk_input(
     in_memory_retriever_documents: Sequence[Document],
-) -> ExpandChunkInput[int]:
+) -> ExpandChunksInput[int]:
     assert len(in_memory_retriever_documents) == 1
     start_index, end_index = (
         int(len(in_memory_retriever_documents[0].text) * 0.5),
@@ -78,7 +78,7 @@ def wholly_included_expand_chunk_input(
 @fixture
 def overlapping_expand_chunk_input(
     in_memory_retriever_documents: Sequence[Document],
-) -> ExpandChunkInput[int]:
+) -> ExpandChunksInput[int]:
     assert len(in_memory_retriever_documents) == 1
     start_index, end_index = (
         int(len(in_memory_retriever_documents[0].text) * 0.2),
@@ -93,7 +93,7 @@ def overlapping_expand_chunk_input(
 @fixture
 def multiple_chunks_expand_chunk_input(
     in_memory_retriever_documents: Sequence[Document],
-) -> ExpandChunkInput[int]:
+) -> ExpandChunksInput[int]:
     assert len(in_memory_retriever_documents) == 1
     start_index_1, end_index_1 = (
         int(len(in_memory_retriever_documents[0].text) * 0.3),
@@ -113,7 +113,7 @@ def multiple_chunks_expand_chunk_input(
 def test_expand_chunk_works_for_wholly_included_chunk(
     asymmetric_in_memory_retriever: QdrantInMemoryRetriever,
     luminous_control_model: LuminousControlModel,
-    wholly_included_expand_chunk_input: ExpandChunkInput[int],
+    wholly_included_expand_chunk_input: ExpandChunksInput[int],
     no_op_tracer: NoOpTracer,
 ) -> None:
     expand_chunk_task = ExpandChunks(
@@ -137,7 +137,7 @@ def test_expand_chunk_works_for_wholly_included_chunk(
 def test_expand_chunk_works_for_overlapping_chunk(
     asymmetric_in_memory_retriever: QdrantInMemoryRetriever,
     luminous_control_model: LuminousControlModel,
-    overlapping_expand_chunk_input: ExpandChunkInput[int],
+    overlapping_expand_chunk_input: ExpandChunksInput[int],
     no_op_tracer: NoOpTracer,
 ) -> None:
     expand_chunk_task = ExpandChunks(
@@ -153,7 +153,7 @@ def test_expand_chunk_works_for_overlapping_chunk(
 def test_expand_chunk_works_for_multiple_chunks(
     asymmetric_in_memory_retriever: QdrantInMemoryRetriever,
     luminous_control_model: LuminousControlModel,
-    multiple_chunks_expand_chunk_input: ExpandChunkInput[int],
+    multiple_chunks_expand_chunk_input: ExpandChunksInput[int],
     no_op_tracer: NoOpTracer,
 ) -> None:
     expand_chunk_task = ExpandChunks(
