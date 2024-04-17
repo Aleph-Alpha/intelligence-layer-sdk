@@ -20,6 +20,14 @@ class ExpandChunksOutput(BaseModel):
 
 
 class ExpandChunks(Generic[ID], Task[ExpandChunksInput[ID], ExpandChunksOutput]):
+    """Expand chunks found during search.
+
+    Args:
+        retriever: Used to access and return a set of texts.
+        model: The model's tokenizer is relevant to calculate the correct size of the returned chunks.
+        max_chunk_size: The maximum chunk size of each returned chunk.
+    """
+
     def __init__(
         self,
         retriever: BaseRetriever[ID],
