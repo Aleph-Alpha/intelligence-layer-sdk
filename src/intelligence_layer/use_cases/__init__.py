@@ -62,6 +62,9 @@ from .qa.retriever_based_qa import RetrieverBasedQaOutput as RetrieverBasedQaOut
 from .qa.single_chunk_qa import SingleChunkQa as SingleChunkQa
 from .qa.single_chunk_qa import SingleChunkQaInput as SingleChunkQaInput
 from .qa.single_chunk_qa import SingleChunkQaOutput as SingleChunkQaOutput
+from .search.expand_chunks import ExpandChunks as ExpandChunks
+from .search.expand_chunks import ExpandChunksInput as ExpandChunksInput
+from .search.expand_chunks import ExpandChunksOutput as ExpandChunksOutput
 from .search.search import AggregatedSearchEvaluation as AggregatedSearchEvaluation
 from .search.search import ChunkFound as ChunkFound
 from .search.search import ExpectedSearchOutput as ExpectedSearchOutput

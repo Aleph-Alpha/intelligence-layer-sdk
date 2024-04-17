@@ -3,10 +3,10 @@
 ## Unreleased
 
 ### Breaking Changes
-...
+- breaking change: `MultipleChunkRetrieverQaOutput` now return `sources` and `search_results`
 
 ### New Features
-...
+- feature: `ExpandChunks` task takes a retriever and some search results to expand the chunks to the desired length
 
 ### Fixes
 ...

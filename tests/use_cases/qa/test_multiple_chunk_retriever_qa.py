@@ -1,8 +1,6 @@
 from pytest import fixture
 
-from intelligence_layer.connectors.retrievers.qdrant_in_memory_retriever import (
-    QdrantInMemoryRetriever,
-)
+from intelligence_layer.connectors import QdrantInMemoryRetriever
 from intelligence_layer.core import NoOpTracer
 from intelligence_layer.use_cases import MultipleChunkRetrieverQa, RetrieverBasedQaInput
 
