@@ -53,22 +53,6 @@ class MultipleChunkRetrieverQa(
         k: number of top chunk search results to inject into :class:`SingleChunkQa`-task.
         qa_task: The task that is used to generate an answer for a single chunk (retrieved through
             the retriever). Defaults to :class:`SingleChunkQa`.
-
-    Example:
-        >>> import os
-        >>> from intelligence_layer.connectors import DocumentIndexClient
-        >>> from intelligence_layer.connectors import DocumentIndexRetriever
-        >>> from intelligence_layer.core import InMemoryTracer
-        >>> from intelligence_layer.use_cases import MultipleChunkRetrieverQa, RetrieverBasedQaInput
-
-
-        >>> token = os.getenv("AA_TOKEN")
-        >>> document_index = DocumentIndexClient(token)
-        >>> retriever = DocumentIndexRetriever(document_index, "aleph-alpha", "wikipedia-de", 3)
-        >>> task = MultipleChunkRetrieverQa(retriever)
-        >>> input_data = RetrieverBasedQaInput(question="When was Rome founded?")
-        >>> tracer = InMemoryTracer()
-        >>> output = task.run(input_data, tracer)
     """
 
     def __init__(
