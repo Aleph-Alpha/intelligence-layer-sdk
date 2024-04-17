@@ -21,4 +21,4 @@ def test_retriever_based_qa_using_in_memory_retriever(
     output = multiple_chunk_retriever_qa.run(input, no_op_tracer)
     assert output.answer
     assert "1888" in output.answer
-    assert len(output.sources) == 2
+    assert len(output.sources) == 5
