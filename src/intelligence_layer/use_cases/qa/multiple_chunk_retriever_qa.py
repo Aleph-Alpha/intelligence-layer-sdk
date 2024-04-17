@@ -65,7 +65,7 @@ class MultipleChunkRetrieverQa(
         >>> token = os.getenv("AA_TOKEN")
         >>> document_index = DocumentIndexClient(token)
         >>> retriever = DocumentIndexRetriever(document_index, "aleph-alpha", "wikipedia-de", 3)
-        >>> task = MultipleChunkRetrieverQa(retriever, k=2)
+        >>> task = MultipleChunkRetrieverQa(retriever)
         >>> input_data = RetrieverBasedQaInput(question="When was Rome founded?")
         >>> tracer = InMemoryTracer()
         >>> output = task.run(input_data, tracer)
