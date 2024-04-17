@@ -41,7 +41,7 @@ nbqa = "^1.8.5"
 ruff = "^0.3.7"
 pre-commit = "*"
 pylama = { extras = ["radon", "vulture", "toml"], version = "^8.4.1" }
-faker = "^24.9.0"
+faker = "^24.11.0"
 
 # tests
 pytest = "*"
@@ -60,7 +60,7 @@ types-tqdm = "*"
 pandas-stubs = "^2.2.1.240316"
 # docs
 sphinx-rtd-theme = "^2.0.0"
-sphinx = "^7.2.6"
+sphinx = "^7.3.5"
 matplotlib = "^3.8.4"
 
 [tool.mypy]
