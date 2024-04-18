@@ -3,6 +3,15 @@
 ## Unreleased
 
 ### Breaking Changes
+
+### New Features
+
+### Fixes
+
+
+## 0.9.1
+
+### Breaking Changes
 - breaking change: `MultipleChunkRetrieverQaOutput` now return `sources` and `search_results`
 
 ### New Features
