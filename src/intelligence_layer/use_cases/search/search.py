@@ -75,13 +75,10 @@ class Search(Generic[ID], Task[SearchInput, SearchOutput[ID]]):
         return SearchOutput(results=results)
 
 
-class ExpectedSearchOutput(BaseModel):
-    document_id: str
+class ExpectedSearchOutput(BaseModel, Generic[ID]):
+    document_id: ID
     start_idx: int
     end_idx: int
-    origin_chunk: str
-    answer: str
-    task_label: str
 
 
 class SearchEvaluation(BaseModel):
@@ -92,26 +89,30 @@ class SearchEvaluation(BaseModel):
 class SearchEvaluationLogic(
     Generic[ID],
     SingleOutputEvaluationLogic[
-        SearchInput, SearchOutput[ID], ExpectedSearchOutput, SearchEvaluation
+        SearchInput, SearchOutput[ID], ExpectedSearchOutput[ID], SearchEvaluation
     ],
 ):
     def do_evaluate_single_output(
         self,
-        example: Example[SearchInput, ExpectedSearchOutput],
+        example: Example[SearchInput, ExpectedSearchOutput[ID]],
         output: SearchOutput[ID],
     ) -> SearchEvaluation:
         results = output.results
 
-        def overlaps(a: tuple[int, int], b: tuple[int, int]) -> bool:
-            a_start, a_end = a
-            b_start, b_end = b
+        def same_document(id_a: ID, id_b: ID) -> bool:
+            return id_a == id_b
+
+        def chunks_overlap(range_a: tuple[int, int], range_b: tuple[int, int]) -> bool:
+            a_start, a_end = range_a
+            b_start, b_end = range_b
             return a_start < b_end and b_start < a_end
 
         rank, score = next(
             (
                 (index + 1, result.score)
                 for index, result in enumerate(results)
-                if overlaps(
+                if same_document(result.id, example.expected_output.document_id)
+                and chunks_overlap(
                     (result.document_chunk.start, result.document_chunk.end),
                     (
                         example.expected_output.start_idx,
