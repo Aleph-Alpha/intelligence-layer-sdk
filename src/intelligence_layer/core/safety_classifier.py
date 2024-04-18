@@ -39,24 +39,27 @@ class SafetyClassifier(Task[SafetyClassifyInput, SafetyClassifyOutput]):
         self,
         model: ControlModel | None = None,
     ) -> None:
-        self._model = model or LuminousControlModel("luminous-base-control")
+        self._model = model or LuminousControlModel("luminous-nextgen-7b-control-384k")
 
     def do_run(
         self, input: SafetyClassifyInput, task_span: TaskSpan
     ) -> SafetyClassifyOutput:
-        instruction = """Your task is to act as a safety classifier for text.  There are the following categories:
-              hatespeech,
-              sexual,
-              religious,
-              medical,
-              self_harm,
-              illegal_activities,
-              violence,
-              insult,
-              profanity
+        instruction = """Your task is to act as a safety classifier for text. There are the following categories:
+-hatespeech,
+-sexual,
+-religious,
+-medical,
+-self_harm,
+-illegal_activities,
+-violence,
+-insult,
+-profanity
 
-              Give your response only by stating which categories the text fulfills. Return no text if the text is safe.
+Your response should be a single line containing the labels of which categories the text fulfills.
+Return the label 'safe' if the text is safe.
+Please make sure your response is a single line.
 """
+
         if not instruction:
             raise ValueError("Could not find `instruction` for safety classifier.")
         completion = self._model.complete(
