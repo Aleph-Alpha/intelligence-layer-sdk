@@ -51,6 +51,7 @@ class RecursiveSummarize(Task[RecursiveSummarizeInput, SummarizeOutput]):
         num_partial_summaries = 0
         text_to_summarize = input.text
         summary = ""
+        num_generated_tokens = 0
         while True:
             summarize_output = self.long_context_summarize_task.run(
                 LongContextSummarizeInput(
