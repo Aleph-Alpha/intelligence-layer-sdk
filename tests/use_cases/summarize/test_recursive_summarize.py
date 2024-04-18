@@ -68,6 +68,17 @@ def test_recursive_summarize_stops_when_num_partial_summaries_stays_same(
     assert output.generated_tokens > 50
 
 
+def test_recursive_summarize_stops_when_num_partial_summaries_stays_same_with_empty_text(
+    steerable_long_context_summarize: SteerableLongContextSummarize,
+) -> None:
+    max_tokens = 2048
+    input = RecursiveSummarizeInput(text="", max_tokens=max_tokens)
+    task = RecursiveSummarize(steerable_long_context_summarize)
+    output = task.run(input, NoOpTracer())
+
+    assert output.generated_tokens == 0
+
+
 def test_recursive_summarize_stops_after_one_chunk(
     recursive_counting_client: RecursiveCountingClient,
 ) -> None:

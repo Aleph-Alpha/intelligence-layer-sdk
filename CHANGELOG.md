@@ -11,6 +11,7 @@
 ### Fixes
 - fix: `ExpectedSearchOutput` has only relevant fields and supports generic document-`ID` rather than just str
 - fix: `SearchEvaluationLogic` explicitly compares documents by ids
+- fix: In `RecusrsiveSummarize.do_run`, `num_generated_tokens` not uninitialized anymore. [See Issue 743.](https://github.com/Aleph-Alpha/intelligence-layer/issues/743).
 
 
 ## 0.9.0
