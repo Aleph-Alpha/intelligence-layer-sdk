@@ -38,21 +38,18 @@ def search(asymmetric_in_memory_retriever: QdrantInMemoryRetriever) -> Search[in
 
 
 @fixture
-def expected_output() -> ExpectedSearchOutput:
+def expected_output() -> ExpectedSearchOutput[str]:
     return ExpectedSearchOutput(
         document_id="1",
         start_idx=0,
         end_idx=5,
-        origin_chunk="hallo",
-        answer="",
-        task_label="",
     )
 
 
 @fixture
 def example(
-    expected_output: ExpectedSearchOutput,
-) -> Example[SearchInput, ExpectedSearchOutput]:
+    expected_output: ExpectedSearchOutput[str],
+) -> Example[SearchInput, ExpectedSearchOutput[str]]:
     return Example(input=SearchInput(query=""), expected_output=expected_output)
 
 
@@ -95,7 +92,7 @@ def test_search(
 
 
 def test_search_evaluation_logic_works_for_overlapping_output(
-    example: Example[SearchInput, ExpectedSearchOutput],
+    example: Example[SearchInput, ExpectedSearchOutput[str]],
     search_eval_logic: SearchEvaluationLogic[str],
 ) -> None:
     output = SearchOutput(
@@ -114,7 +111,7 @@ def test_search_evaluation_logic_works_for_overlapping_output(
 
 
 def test_search_evaluation_logic_works_for_wholly_included_output(
-    example: Example[SearchInput, ExpectedSearchOutput],
+    example: Example[SearchInput, ExpectedSearchOutput[str]],
     search_eval_logic: SearchEvaluationLogic[str],
 ) -> None:
     output = SearchOutput(
@@ -133,7 +130,7 @@ def test_search_evaluation_logic_works_for_wholly_included_output(
 
 
 def test_search_evaluation_logic_works_for_identical_ranges(
-    example: Example[SearchInput, ExpectedSearchOutput],
+    example: Example[SearchInput, ExpectedSearchOutput[str]],
     search_eval_logic: SearchEvaluationLogic[str],
 ) -> None:
     output = SearchOutput(
@@ -152,7 +149,7 @@ def test_search_evaluation_logic_works_for_identical_ranges(
 
 
 def test_search_evaluation_logic_works_for_non_overlapping_output(
-    example: Example[SearchInput, ExpectedSearchOutput],
+    example: Example[SearchInput, ExpectedSearchOutput[str]],
     search_eval_logic: SearchEvaluationLogic[str],
 ) -> None:
     output = SearchOutput(
