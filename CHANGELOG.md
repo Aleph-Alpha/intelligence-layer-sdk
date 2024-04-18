@@ -10,7 +10,7 @@
 
 ### Fixes
 - fix: `ExpectedSearchOutput` has only relevant fields and supports generic document-`ID` rather than just str
-- fix: `SearchEvaluationLogic` explicitely compares documents by ids
+- fix: `SearchEvaluationLogic` explicitly compares documents by ids
 
 
 ## 0.9.0
