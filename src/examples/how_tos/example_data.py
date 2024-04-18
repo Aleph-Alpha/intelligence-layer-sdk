@@ -1,4 +1,4 @@
-from typing import Sequence
+from typing import Iterable, Sequence
 
 from pydantic import BaseModel
 
@@ -16,6 +16,7 @@ from intelligence_layer.evaluation import (
     RunOverview,
     SuccessfulExampleOutput,
 )
+from intelligence_layer.evaluation.aggregation.aggregator import AggregationLogic
 
 
 class DummyExample(Example[str, str]):
@@ -41,6 +42,15 @@ class DummyEvaluationLogic(EvaluationLogic[str, str, str, DummyEvaluation]):
         )
 
 
+class DummyAggregation(BaseModel):
+    num_evaluations: int
+
+
+class DummyAggregationLogic(AggregationLogic[DummyEvaluation, DummyAggregation]):
+    def aggregate(self, evaluations: Iterable[DummyEvaluation]) -> DummyAggregation:
+        return DummyAggregation(num_evaluations=len(list(evaluations)))
+
+
 class ExampleData:
     examples: Sequence[DummyExample]
     dataset_repository: InMemoryDatasetRepository
@@ -51,7 +61,8 @@ class ExampleData:
     dataset: Dataset
     run_overview_1: RunOverview
     run_overview_2: RunOverview
-    evaluation_overview: EvaluationOverview
+    evaluation_overview_1: EvaluationOverview
+    evaluation_overview_2: EvaluationOverview
 
 
 def example_data() -> ExampleData:
@@ -78,7 +89,12 @@ def example_data() -> ExampleData:
         "my-evaluator",
         DummyEvaluationLogic(),
     )
-    evaluation_overview = evaluator.evaluate_runs(run_overview_1.id, run_overview_2.id)
+    evaluation_overview_1 = evaluator.evaluate_runs(
+        run_overview_1.id, run_overview_2.id
+    )
+    evaluation_overview_2 = evaluator.evaluate_runs(
+        run_overview_1.id, run_overview_2.id
+    )
 
     example_data = ExampleData()
     example_data.examples = examples
@@ -90,5 +106,7 @@ def example_data() -> ExampleData:
     example_data.dataset = dataset
     example_data.run_overview_1 = run_overview_1
     example_data.run_overview_2 = run_overview_2
-    example_data.evaluation_overview = evaluation_overview
+    example_data.evaluation_overview_1 = evaluation_overview_1
+    example_data.evaluation_overview_2 = evaluation_overview_2
+
     return example_data
