@@ -72,8 +72,8 @@ class TaskSpanTrace(SpanTrace):
             end=task_span.end_timestamp,
             # RootModel.model_dump is declared to return the type of root, but actually returns
             # a JSON-like structure that fits to the JsonSerializable type
-            input=JsonSerializer(root=task_span.input).model_dump(mode="json"),
-            output=JsonSerializer(root=task_span.output).model_dump(mode="json"),
+            input=JsonSerializer(root=task_span.input).model_dump(mode="json"),  # type: ignore
+            output=JsonSerializer(root=task_span.output).model_dump(mode="json"),  # type: ignore
         )
 
     def _rich_render_(self) -> Tree:
@@ -112,7 +112,7 @@ class LogTrace(BaseModel):
             message=entry.message,
             # RootModel.model_dump is declared to return the type of root, but actually returns
             # a JSON-like structure that fits to the JsonSerializable type
-            value=JsonSerializer(root=entry.value).model_dump(mode="json"),
+            value=JsonSerializer(root=entry.value).model_dump(mode="json"),  # type: ignore
         )
 
     def _rich_render_(self) -> Panel:
