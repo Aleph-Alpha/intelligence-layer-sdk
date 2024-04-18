@@ -9,7 +9,9 @@
 - feature: `ExpandChunks` task takes a retriever and some search results to expand the chunks to the desired length
 
 ### Fixes
-...
+- fix: `ExpectedSearchOutput` has only relevant fields and supports generic document-`ID` rather than just str
+- fix: `SearchEvaluationLogic` explicitely compares documents by ids
+
 
 ## 0.9.0
 
