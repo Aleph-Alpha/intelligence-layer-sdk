@@ -30,7 +30,8 @@ class CompleteInput(BaseModel, CompletionRequest, frozen=True):
 class CompleteOutput(BaseModel, CompletionResponse, frozen=True):
     """The output of a `Complete` task."""
 
-    # BaseModel protects namespace "model_" but this is a field in the CompletionResponse
+    # BaseModel protects namespace "model_".
+    # "model_version" is a field in CompletionResponse and clashes with the namespace.
     model_config = ConfigDict(protected_namespaces=())
 
     @staticmethod
@@ -85,7 +86,8 @@ class ExplainInput(BaseModel, ExplanationRequest, frozen=True):
 class ExplainOutput(BaseModel, ExplanationResponse, frozen=True):
     """The output of a `Explain` task."""
 
-    # BaseModel protects namespace "model_" but this is a field in the ExplanationResponse
+    # BaseModel protects namespace "model_".
+    # "model_version" is a field in ExplanationResponse and clashes with the namespace.
     model_config = ConfigDict(protected_namespaces=())
 
     @staticmethod
