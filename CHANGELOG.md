@@ -3,10 +3,14 @@
 ## Unreleased
 
 ### Breaking Changes
+- breaking change: `ExpandChunksOutput` now returns `ChunkWithStartEndIndices` instead of `TextChunk`
+- breaking change: `MultipleChunkRetrieverQa`'s `AnswerSource` now contains `EnrichedChunk` instead of just the `TextChunk`
+
 
 ### New Features
 
 ### Fixes
+- fix: `ChunkWithIndices` now additionally returns end_index
 
 
 ## 0.9.1
