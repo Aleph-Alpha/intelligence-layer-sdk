@@ -7,11 +7,13 @@ services:
       discovery.type: "single-node"
       xpack.security.enabled: "false"
   argilla:
-    image: argilla/argilla-server
+    image: argilla/argilla-server:v1.26.1
     ports:
       - "6900:6900"
     environment:
       ARGILLA_ELASTICSEARCH: "http://argilla-elastic-search:9200"
+      ARGILLA_ENABLE_TELEMETRY: 0
+
   open-telemetry-trace-service:
     container_name: jaeger_1_35
     environment:
