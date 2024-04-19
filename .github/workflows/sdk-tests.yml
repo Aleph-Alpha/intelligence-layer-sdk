@@ -107,11 +107,12 @@ jobs:
           discovery.type: "single-node"
           xpack.security.enabled: "false"
       argilla:
-        image: argilla/argilla-server
+        image: argilla/argilla-server:v1.26.1
         ports:
           - "6900:6900"
         env:
           ARGILLA_ELASTICSEARCH: "http://argilla-elastic-search:9200"
+          ARGILLA_ENABLE_TELEMETRY: 0
       open-telemetry-trace-service:
         image: jaegertracing/all-in-one:1.35
         env:
@@ -170,11 +171,12 @@ jobs:
           discovery.type: "single-node"
           xpack.security.enabled: "false"
       argilla:
-        image: argilla/argilla-server
+        image: argilla/argilla-server:v1.26.1
         ports:
           - "6900:6900"
         env:
           ARGILLA_ELASTICSEARCH: "http://argilla-elastic-search:9200"
+          ARGILLA_ENABLE_TELEMETRY: 0
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
