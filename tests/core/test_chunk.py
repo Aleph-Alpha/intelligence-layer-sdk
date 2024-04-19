@@ -54,3 +54,7 @@ def test_chunk_with_indices(
         c.start_index < output.chunks_with_indices[idx + 1].start_index
         for idx, c in enumerate(output.chunks_with_indices[:-1])
     )
+    assert all(
+        c.end_index == output.chunks_with_indices[idx + 1].start_index
+        for idx, c in enumerate(output.chunks_with_indices[:-1])
+    )

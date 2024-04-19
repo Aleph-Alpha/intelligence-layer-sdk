@@ -130,7 +130,7 @@ def test_expand_chunk_works_for_wholly_included_chunk(
     )
     assert (
         wholly_included_expand_chunk_input.chunks_found[0].text
-        in expand_chunk_output.chunks[0]
+        in expand_chunk_output.chunks[0].chunk
     )
 
 
@@ -165,6 +165,6 @@ def test_expand_chunk_works_for_multiple_chunks(
 
     assert len(expand_chunk_output.chunks) == 3
 
-    combined_chunks = "\n\n".join(expand_chunk_output.chunks)
+    combined_chunks = "".join(chunk.chunk for chunk in expand_chunk_output.chunks)
     for chunk_found in multiple_chunks_expand_chunk_input.chunks_found:
         assert chunk_found.text in combined_chunks

@@ -12,7 +12,7 @@ def multiple_chunk_retriever_qa(
     return MultipleChunkRetrieverQa(retriever=asymmetric_in_memory_retriever)
 
 
-def test_retriever_based_qa_using_in_memory_retriever(
+def test_multiple_chunk_retriever_qa_using_in_memory_retriever(
     multiple_chunk_retriever_qa: MultipleChunkRetrieverQa[int],
     no_op_tracer: NoOpTracer,
 ) -> None:
