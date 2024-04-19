@@ -62,16 +62,18 @@ class Chunk(Task[ChunkInput, ChunkOutput]):
         return ChunkOutput(chunks=chunks)
 
 
-class ChunkWithStartIndex(BaseModel):
-    """A `TextChunk` and its `start_index` relative to its parent document.
+class ChunkWithStartEndIndices(BaseModel):
+    """A `TextChunk` and its `start_index` and `end_index` within the given text.
 
     Attributes:
         chunk: The actual text.
-        start_index: The character start index of the chunk within the respective document.
+        start_index: The character start index of the chunk within the given text.
+        end_index: The character end index of the chunk within the given text.
     """
 
     chunk: TextChunk
     start_index: int
+    end_index: int
 
 
 class ChunkWithIndicesOutput(BaseModel):
@@ -81,7 +83,7 @@ class ChunkWithIndicesOutput(BaseModel):
         chunks_with_indices: A list of smaller sections of the input text with the respective start_index.
     """
 
-    chunks_with_indices: Sequence[ChunkWithStartIndex]
+    chunks_with_indices: Sequence[ChunkWithStartEndIndices]
 
 
 class ChunkWithIndices(Task[ChunkInput, ChunkWithIndicesOutput]):
@@ -98,13 +100,19 @@ class ChunkWithIndices(Task[ChunkInput, ChunkWithIndicesOutput]):
 
     def __init__(self, model: AlephAlphaModel, max_tokens_per_chunk: int = 512):
         super().__init__()
-        self._splitter = TextSplitter.from_huggingface_tokenizer(model.get_tokenizer())
+        self._splitter = TextSplitter.from_huggingface_tokenizer(
+            model.get_tokenizer(), trim_chunks=False
+        )
         self._max_tokens_per_chunk = max_tokens_per_chunk
 
     def do_run(self, input: ChunkInput, task_span: TaskSpan) -> ChunkWithIndicesOutput:
         chunks_with_indices = [
-            ChunkWithStartIndex(chunk=TextChunk(t[1]), start_index=t[0])
-            for t in self._splitter.chunk_indices(
+            ChunkWithStartEndIndices(
+                chunk=TextChunk(chunk),
+                start_index=start_index,
+                end_index=start_index + len(chunk),
+            )
+            for (start_index, chunk) in self._splitter.chunk_indices(
                 input.text, self._max_tokens_per_chunk
             )
         ]

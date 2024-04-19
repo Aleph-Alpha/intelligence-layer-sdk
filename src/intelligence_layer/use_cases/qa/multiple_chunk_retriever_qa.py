@@ -23,9 +23,14 @@ from .retriever_based_qa import RetrieverBasedQaInput
 from .single_chunk_qa import SingleChunkQa, SingleChunkQaInput, SingleChunkQaOutput
 
 
-class AnswerSource(BaseModel, Generic[ID]):
+class EnrichedChunk(BaseModel, Generic[ID]):
     document_id: ID
     chunk: TextChunk
+    indices: tuple[int, int]
+
+
+class AnswerSource(BaseModel, Generic[ID]):
+    chunk: EnrichedChunk[ID]
     highlights: Sequence[ScoredTextHighlight]
 
 
@@ -76,7 +81,7 @@ class MultipleChunkRetrieverQa(
         combined_text = ""
         for chunk in chunks:
             start_indices.append(len(combined_text))
-            combined_text += chunk + "\n\n"
+            combined_text += chunk.strip() + "\n\n"
         return (TextChunk(combined_text.strip()), start_indices)
 
     @staticmethod
@@ -97,9 +102,11 @@ class MultipleChunkRetrieverQa(
                 if highlight.start < next_start and highlight.end > current_start:
                     highlights_with_indices_fixed = ScoredTextHighlight(
                         start=max(0, highlight.start - current_start),
-                        end=highlight.end - current_start
-                        if isinstance(next_start, float)
-                        else min(next_start, highlight.end - current_start),
+                        end=(
+                            highlight.end - current_start
+                            if isinstance(next_start, float)
+                            else min(next_start, highlight.end - current_start)
+                        ),
                         score=highlight.score,
                     )
                     current_overlaps.append(highlights_with_indices_fixed)
@@ -109,12 +116,12 @@ class MultipleChunkRetrieverQa(
 
     def _expand_search_result_chunks(
         self, search_results: Sequence[SearchResult[ID]], task_span: TaskSpan
-    ) -> Sequence[tuple[ID, TextChunk]]:
+    ) -> Sequence[EnrichedChunk[ID]]:
         grouped_results: dict[ID, list[SearchResult[ID]]] = defaultdict(list)
         for result in search_results:
             grouped_results[result.id].append(result)
 
-        chunks_to_insert: list[tuple[ID, TextChunk]] = []
+        chunks_to_insert: list[EnrichedChunk[ID]] = []
         for id, results in grouped_results.items():
             input = ExpandChunksInput(
                 document_id=id, chunks_found=[r.document_chunk for r in results]
@@ -123,7 +130,13 @@ class MultipleChunkRetrieverQa(
             for chunk in expand_chunks_output.chunks:
                 if len(chunks_to_insert) >= self._insert_chunk_number:
                     break
-                chunks_to_insert.append((id, chunk))
+                chunks_to_insert.append(
+                    EnrichedChunk(
+                        document_id=id,
+                        chunk=chunk.chunk,
+                        indices=(chunk.start_index, chunk.end_index),
+                    )
+                )
 
         return chunks_to_insert
 
@@ -142,7 +155,7 @@ class MultipleChunkRetrieverQa(
         )
 
         chunk_for_prompt, chunk_start_indices = self._combine_input_texts(
-            [c[1] for c in chunks_to_insert]
+            [c.chunk for c in chunks_to_insert]
         )
 
         single_chunk_qa_input = SingleChunkQaInput(
@@ -163,11 +176,10 @@ class MultipleChunkRetrieverQa(
             answer=single_chunk_qa_output.answer,
             sources=[
                 AnswerSource(
-                    document_id=id_and_chunk[0],
-                    chunk=id_and_chunk[1],
+                    chunk=enriched_chunk,
                     highlights=highlights,
                 )
-                for id_and_chunk, highlights in zip(
+                for enriched_chunk, highlights in zip(
                     chunks_to_insert, highlights_per_chunk
                 )
             ],

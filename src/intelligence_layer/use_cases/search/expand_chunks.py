@@ -4,7 +4,11 @@ from pydantic import BaseModel
 
 from intelligence_layer.connectors import BaseRetriever, DocumentChunk
 from intelligence_layer.connectors.retrievers.base_retriever import ID
-from intelligence_layer.core.chunk import ChunkInput, ChunkWithIndices, TextChunk
+from intelligence_layer.core.chunk import (
+    ChunkInput,
+    ChunkWithIndices,
+    ChunkWithStartEndIndices,
+)
 from intelligence_layer.core.model import AlephAlphaModel
 from intelligence_layer.core.task import Task
 from intelligence_layer.core.tracer.tracer import TaskSpan
@@ -16,7 +20,7 @@ class ExpandChunksInput(BaseModel, Generic[ID]):
 
 
 class ExpandChunksOutput(BaseModel):
-    chunks: Sequence[TextChunk]
+    chunks: Sequence[ChunkWithStartEndIndices]
 
 
 class ExpandChunks(Generic[ID], Task[ExpandChunksInput[ID], ExpandChunksOutput]):
@@ -50,34 +54,26 @@ class ExpandChunks(Generic[ID], Task[ExpandChunksInput[ID], ExpandChunksOutput])
         ).chunks_with_indices
 
         overlapping_chunk_indices = self._overlapping_chunk_indices(
-            [c.start_index for c in chunk_with_indices],
+            [(c.start_index, c.end_index) for c in chunk_with_indices],
             [(chunk.start, chunk.end) for chunk in input.chunks_found],
         )
 
         return ExpandChunksOutput(
-            chunks=[
-                chunk_with_indices[index].chunk for index in overlapping_chunk_indices
-            ]
+            chunks=[chunk_with_indices[index] for index in overlapping_chunk_indices],
         )
 
     def _overlapping_chunk_indices(
         self,
-        chunk_start_indices: Sequence[int],
+        chunk_indices: Sequence[tuple[int, int]],
         target_ranges: Sequence[tuple[int, int]],
     ) -> list[int]:
-        n = len(chunk_start_indices)
         overlapping_indices: list[int] = []
 
-        for i in range(n):
-            if i < n - 1:
-                chunk_end: float = chunk_start_indices[i + 1]
-            else:
-                chunk_end = float("inf")
-
+        for i in range(len(chunk_indices)):
             if any(
                 (
-                    chunk_start_indices[i] <= target_range[1]
-                    and chunk_end > target_range[0]
+                    chunk_indices[i][0] <= target_range[1]
+                    and chunk_indices[i][1] > target_range[0]
                 )
                 for target_range in target_ranges
             ):

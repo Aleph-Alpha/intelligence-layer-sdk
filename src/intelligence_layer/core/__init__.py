@@ -3,7 +3,7 @@ from .chunk import ChunkInput as ChunkInput
 from .chunk import ChunkOutput as ChunkOutput
 from .chunk import ChunkWithIndices as ChunkWithIndices
 from .chunk import ChunkWithIndicesOutput as ChunkWithIndicesOutput
-from .chunk import ChunkWithStartIndex as ChunkWithStartIndex
+from .chunk import ChunkWithStartEndIndices as ChunkWithStartEndIndices
 from .chunk import TextChunk as TextChunk
 from .detect_language import DetectLanguage as DetectLanguage
 from .detect_language import DetectLanguageInput as DetectLanguageInput
