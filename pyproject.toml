@@ -13,16 +13,16 @@ packages = [{ include = "intelligence_layer", from = "src" }]
 
 [tool.poetry.dependencies]
 python = ">=3.10,<3.12"
-pydantic = "2.6.*"
+pydantic = "2.7.*"
 fastapi = "*"
 uvicorn = "*"
 aleph-alpha-client = ">=4.0.0"
 python-dotenv = "*"
-semantic-text-splitter = "^0.10.0"
+semantic-text-splitter = "^0.11.0"
 qdrant-client = "^1.8.2"
 rich = "^13.7.1"
 nbconvert = "^7.16.3"
-datasets = "^2.18.0"
+datasets = "^2.19.0"
 jupyter = "^1.0.0"
 requests = "^2.31.0"
 langdetect = "^1.0.9"
@@ -38,14 +38,14 @@ opentelemetry-exporter-otlp-proto-http = "1.23.0"
 # lint & format
 mypy = "^1.9.0"
 nbqa = "^1.8.5"
-ruff = "^0.3.7"
+ruff = "^0.4.1"
 pre-commit = "*"
 pylama = { extras = ["radon", "vulture", "toml"], version = "^8.4.1" }
-faker = "^24.9.0"
+faker = "^24.11.0"
 
 # tests
 pytest = "*"
-pytest-xdist = "^3.5.0"
+pytest-xdist = "^3.6.0"
 hypercorn = "0.16.0"
 
 # typing
@@ -60,7 +60,7 @@ types-tqdm = "*"
 pandas-stubs = "^2.2.1.240316"
 # docs
 sphinx-rtd-theme = "^2.0.0"
-sphinx = "^7.2.6"
+sphinx = "^7.3.7"
 matplotlib = "^3.8.4"
 
 [tool.mypy]
