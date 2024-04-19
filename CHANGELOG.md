@@ -8,6 +8,7 @@
 
 
 ### New Features
+- feature: New `SafetyClassifier` allows to flag safe/unsafe text
 
 ### Fixes
 - fix: `ChunkWithIndices` now additionally returns end_index
