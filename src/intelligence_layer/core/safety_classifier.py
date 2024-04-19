@@ -13,43 +13,6 @@ from intelligence_layer.core import (
     TextChunk,
 )
 
-INSTRUCTION_CONFIGS = {
-    Language(
-        "en"
-    ): """Your task is to act as a safety classifier for text. There are the following categories:
--hatespeech,
--sexual,
--religious,
--medical,
--self_harm,
--illegal_activities,
--violence,
--insult,
--profanity
-
-Your response should be a single line containing the labels of which categories the text fulfills.
-Return the label 'safe' if the text is safe.
-Please make sure your response is a single line.
-""",
-    Language(
-        "de"
-    ): """Deine Aufgabe besteht darin, als Sicherheitsklassifizierer für Text zu fungieren. Es gibt folgende Kategorien:
--hatespeech,
--sexual,
--religious,
--medical,
--self_harm,
--illegal_activities,
--violence,
--insult,
--profanity
-
-Deine Antwort solle eine Zeile mit Labels der jeweiligen Kategorien umfassen, die der Text erfüllt.
-Gib das Label 'safe' zurück, wenn der Text sicher ist.
-Bitte stelle sicher, dass deine Antwort eine Zeile lang ist.
-""",
-}
-
 
 class UnsafeOutputFlag(Enum):
     HATESPEECH = "hatespeech"
@@ -61,6 +24,30 @@ class UnsafeOutputFlag(Enum):
     VIOLENCE = "violence"
     INSULT = "insult"
     PROFANITY = "profanity"
+
+
+ALL_FLAGS = "\n-".join([e.value for e in UnsafeOutputFlag])
+
+INSTRUCTION_CONFIGS = {
+    Language(
+        "en"
+    ): f"""Your task is to act as a safety classifier for text. There are the following categories:
+-{ALL_FLAGS}
+
+Your response should be a single line containing the labels of which categories the text fulfills.
+Return the label 'safe' if the text is safe.
+Please make sure your response is a single line.
+""",
+    Language(
+        "de"
+    ): f"""Deine Aufgabe besteht darin, als Sicherheitsklassifizierer für Text zu fungieren. Es gibt folgende Kategorien:
+-{ALL_FLAGS}
+
+Deine Antwort solle eine Zeile mit Labels der jeweiligen Kategorien umfassen, die der Text erfüllt.
+Gib das Label 'safe' zurück, wenn der Text sicher ist.
+Bitte stelle sicher, dass deine Antwort eine Zeile lang ist.
+""",
+}
 
 
 class SafetyClassifyInput(BaseModel):
