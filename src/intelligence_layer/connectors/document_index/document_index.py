@@ -51,7 +51,7 @@ class DocumentContents(BaseModel):
         }
 
 
-class CollectionPath(BaseModel):
+class CollectionPath(BaseModel, frozen=True):
     """Path to a collection.
 
     Args:
@@ -64,7 +64,7 @@ class CollectionPath(BaseModel):
     collection: str
 
 
-class DocumentPath(BaseModel):
+class DocumentPath(BaseModel, frozen=True):
     """Path to a document.
 
     Args:
