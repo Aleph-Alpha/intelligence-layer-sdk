@@ -178,3 +178,13 @@ def test_document_list_documents_with_matching_prefix(
 
     assert len(filter_result) == 1
     assert filter_result[0].document_path.document_name.startswith(prefix)
+
+
+def test_document_path_is_immutable() -> None:
+    path = DocumentPath(
+        collection_path=CollectionPath(namespace="1", collection="2"), document_name="3"
+    )
+    dictionary = {}
+    dictionary[path] = 1
+
+    assert dictionary[path] == 1
