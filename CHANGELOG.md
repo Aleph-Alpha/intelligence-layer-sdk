@@ -8,6 +8,7 @@
 
 
 ### New Features
+- Add new models `luminous-nextgen-7b-control-384k` and `luminous-nextgen-7b-control-384k-kto` to selection
 
 ### Fixes
 - fix: `ChunkWithIndices` now additionally returns end_index

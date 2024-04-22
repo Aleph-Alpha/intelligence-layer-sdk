@@ -214,6 +214,8 @@ class LuminousControlModel(ControlModel):
             "luminous-base-control-20240215",
             "luminous-extended-control-20240215",
             "luminous-supreme-control-20240215",
+            "luminous-nextgen-7b-control-384k",
+            "luminous-nextgen-7b-control-384k-kto",
         ] = "luminous-base-control",
         client: Optional[AlephAlphaClientProtocol] = None,
     ) -> None:
