@@ -1,3 +1,4 @@
+from functools import lru_cache
 from pathlib import Path
 from typing import Iterable, Optional
 
@@ -89,18 +90,12 @@ class FileSystemDatasetRepository(DatasetRepository, FileSystemBasedRepository):
         if not self.exists(example_path):
             return None
 
-        with self._file_system.open(
-            self.path_to_str(example_path), "r", encoding="utf-8"
-        ) as examples_file:
-            for example in examples_file:
-                # mypy does not accept dynamic types
-                validated_example = Example[
-                    input_type, expected_output_type  # type: ignore
-                ].model_validate_json(json_data=example)
-                if validated_example.id == example_id:
-                    return validated_example
+        for example in self.examples(dataset_id, input_type, expected_output_type):
+            if example.id == example_id:
+                return example
         return None
 
+    @lru_cache(maxsize=1)
     def examples(
         self,
         dataset_id: str,
