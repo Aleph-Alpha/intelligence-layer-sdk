@@ -1,5 +1,3 @@
-from collections import defaultdict
-from copy import deepcopy
 from typing import Generic, Optional, Sequence
 
 from pydantic import BaseModel
@@ -118,7 +116,6 @@ class MultipleChunkRetrieverQa(
     def _expand_search_result_chunks(
         self, search_results: Sequence[SearchResult[ID]], task_span: TaskSpan
     ) -> Sequence[EnrichedChunk[ID]]:
-
         chunks_to_insert: list[EnrichedChunk[ID]] = []
         for result in search_results:
             input = ExpandChunksInput(
