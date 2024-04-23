@@ -3,6 +3,7 @@
 ## Unreleased
 
 ### Breaking Changes
+- feature: `run_dataset` now takes `max_workers` as an additional argument. Defaults to 10, as it was hardcoded before.
 
 ### New Features
 

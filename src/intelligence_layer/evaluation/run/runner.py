@@ -76,6 +76,7 @@ class Runner(Generic[Input, Output]):
         tracer: Optional[Tracer] = None,
         num_examples: Optional[int] = None,
         abort_on_error: bool = False,
+        max_workers: int = 10,
     ) -> RunOverview:
         """Generates all outputs for the provided dataset.
 
@@ -88,6 +89,7 @@ class Runner(Generic[Input, Output]):
             num_examples: An optional int to specify how many examples from the dataset should be run.
                 Always the first n examples will be taken.
             abort_on_error: Flag to abort all run when an error occurs. Defaults to False.
+            max_workers: Maximum number of workers in the thread pool.
 
         Returns:
             An overview of the run. Outputs will not be returned but instead stored in the
@@ -123,7 +125,7 @@ class Runner(Generic[Input, Output]):
             examples = islice(examples, num_examples)
         run_id = str(uuid4())
         start = utc_now()
-        with ThreadPoolExecutor(max_workers=10) as executor:
+        with ThreadPoolExecutor(max_workers=max_workers) as executor:
             ids_and_outputs = tqdm(executor.map(run, examples), desc="Evaluating")
 
             failed_count = 0
