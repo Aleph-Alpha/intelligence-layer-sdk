@@ -368,6 +368,88 @@ class DocumentIndexClient:
             for collection in response.json()
         ]
 
+    def create_index(
+        self, namespace: str, chunk_size: int, embedding_type: str = "asymmetric"
+    ) -> None:
+        """Creates an index in a namespace.
+
+        Args:
+            namespace: For a collection of documents. Typically corresponds to an organization.
+            chunk_size: The maximum size of the chunks in tokens to be used for the index.
+            embedding_type: Currently only supports "asymmetric".
+        """
+        assert embedding_type == "asymmetric", "Only asymmetric embedding is supported."
+
+        url = f"{self._base_document_index_url}/indexes/{namespace}/asym-{chunk_size}"
+        data = {
+            "chunk_size": chunk_size,
+            "embedding_type": embedding_type,
+        }
+        response = requests.put(url, data=dumps(data), headers=self.headers)
+        self._raise_for_status(response)
+
+    def get_index(self, namespace: str, index: str) -> Mapping[str, Any]:
+        """Retrieve the configuration of an index in a namespace.
+
+        Args:
+            namespace: For a collection of documents. Typically corresponds to an organization.
+            index: Name of the index, e.g. "asym-128".
+
+        Returns:
+            Configuration of the index.
+        """
+
+        url = f"{self._base_document_index_url}/indexes/{namespace}/{index}"
+        response = requests.get(url, headers=self.headers)
+        self._raise_for_status(response)
+        response_json: Mapping[str, Any] = response.json()
+        return response_json
+
+    def assign_index_to_collection(
+        self, collection_path: CollectionPath, index: str
+    ) -> None:
+        """Assign an index to a collection.
+
+        Args:
+            index: Name of the index, e.g. "asym-128".
+            collection_path: Path to the collection of interest.
+        """
+
+        url = f"{self._base_document_index_url}/collections/{collection_path.namespace}/{collection_path.collection}/indexes/{index}"
+        response = requests.put(url, headers=self.headers)
+        self._raise_for_status(response)
+
+    def delete_index_from_collection(
+        self, collection_path: CollectionPath, index: str
+    ) -> None:
+        """Delete an index from a collection.
+
+        Args:
+            index: Name of the index, e.g. "asym-128".
+            collection_path: Path to the collection of interest.
+        """
+
+        url = f"{self._base_document_index_url}/collections/{collection_path.namespace}/{collection_path.collection}/indexes/{index}"
+        response = requests.delete(url, headers=self.headers)
+        self._raise_for_status(response)
+
+    def list_assigned_indexes(
+        self, collection_path: CollectionPath
+    ) -> Sequence[Mapping[str, str]]:
+        """List all indexes assigned to a collection.
+
+        Args:
+            collection_path: Path to the collection of interest.
+
+        Returns:
+            List of all indexes that are assigned to the collection.
+        """
+
+        url = f"{self._base_document_index_url}/collections/{collection_path.namespace}/{collection_path.collection}/indexes"
+        response = requests.get(url, headers=self.headers)
+        self._raise_for_status(response)
+        return [index for index in response.json()]
+
     def add_document(
         self,
         document_path: DocumentPath,
