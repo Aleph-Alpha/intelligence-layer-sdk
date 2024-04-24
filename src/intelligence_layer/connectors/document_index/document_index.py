@@ -306,8 +306,9 @@ class DocumentIndexClient:
         ...     ),
         ...     contents=DocumentContents.from_text("Germany is a country located in ..."),
         ... )
-        >>> search_result = document_index.asymmetric_search(
+        >>> search_result = document_index.search(
         ...     collection_path=collection_path,
+        ...     index_name="asymmetric",
         ...     search_query=SearchQuery(
         ...         query="What is the capital of Germany", max_results=4, min_score=0.5
         ...     ),
