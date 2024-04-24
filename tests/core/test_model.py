@@ -8,6 +8,7 @@ from intelligence_layer.core import (
     AlephAlphaModel,
     CompleteInput,
     ControlModel,
+    Llama3InstructModel,
     LuminousControlModel,
     NoOpTracer,
 )
@@ -53,3 +54,16 @@ def test_explain(model: ControlModel, no_op_tracer: NoOpTracer) -> None:
     )
     output = model.explain(explain_input, no_op_tracer)
     assert output.explanations[0].items[0].scores[5].score > 1
+
+
+def test_llama_3_model_works(no_op_tracer: NoOpTracer) -> None:
+    llama_3_model = Llama3InstructModel()
+
+    prompt = llama_3_model.to_instruct_prompt(
+        "Who likes pizza?",
+        "Marc and Jessica had pizza together. However, Marc hated it. He only agreed to the date because Jessica likes pizza so much.",
+    )
+
+    explain_input = CompleteInput(prompt=prompt)
+    output = llama_3_model.complete(explain_input, no_op_tracer)
+    assert "Jessica" in output.completion

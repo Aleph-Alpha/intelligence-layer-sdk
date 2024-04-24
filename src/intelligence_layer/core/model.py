@@ -228,3 +228,58 @@ class LuminousControlModel(ControlModel):
         return self.INSTRUCTION_PROMPT_TEMPLATE.to_rich_prompt(
             instruction=instruction, input=input, response_prefix=response_prefix
         )
+
+
+class Llama3InstructModel(ControlModel):
+    """A llama-3-*-instruct model.
+
+    Args:
+        name: The name of a valid llama-3 model.
+        client: Aleph Alpha client instance for running model related API calls.
+            Defaults to the :class:`LimitedConcurrencyClient`
+    """
+
+    INSTRUCTION_PROMPT_TEMPLATE = PromptTemplate(
+        """<|begin_of_text|><|start_header_id|>user<|end_header_id|>
+
+{% promptrange instruction %}{{instruction}}{% endpromptrange %}{% if input %}
+
+{% promptrange input %}{{input}}{% endpromptrange %}{% endif %}<eot_id><|start_header_id|>assistant<|end_header_id|>{% if response_prefix %}
+
+{{response_prefix}}{% endif %}"""
+    )
+    EOT_TOKEN = "<|eot_id|>"
+
+    def __init__(
+        self,
+        name: Literal[
+            "llama-3-8b-instruct",
+            "llama-3-70b-instruct",
+        ] = "llama-3-8b-instruct",
+        client: Optional[AlephAlphaClientProtocol] = None,
+    ) -> None:
+        super().__init__(name, client)
+
+    def _add_eot_token_to_stop_sequences(self, input: CompleteInput) -> CompleteInput:
+        # remove this once the API supports the llama-3 EOT_TOKEN
+        params = input.__dict__
+        if isinstance(params["stop_sequences"], list):
+            if self.EOT_TOKEN not in params["stop_sequences"]:
+                params["stop_sequences"].append(self.EOT_TOKEN)
+        else:
+            params["stop_sequences"] = [self.EOT_TOKEN]
+        return CompleteInput(**params)
+
+    def complete(self, input: CompleteInput, tracer: Tracer) -> CompleteOutput:
+        input_with_eot = self._add_eot_token_to_stop_sequences(input)
+        return super().complete(input_with_eot, tracer)
+
+    def to_instruct_prompt(
+        self,
+        instruction: str,
+        input: Optional[str] = None,
+        response_prefix: Optional[str] = None,
+    ) -> RichPrompt:
+        return self.INSTRUCTION_PROMPT_TEMPLATE.to_rich_prompt(
+            instruction=instruction, input=input, response_prefix=response_prefix
+        )
