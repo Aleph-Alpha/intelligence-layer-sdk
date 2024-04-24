@@ -1,4 +1,4 @@
-from functools import lru_cache
+from functools import _lru_cache_wrapper, lru_cache
 from pathlib import Path
 from typing import Iterable, Optional
 
@@ -18,12 +18,27 @@ from intelligence_layer.evaluation.infrastructure.file_system_based_repository i
 
 
 class FileSystemDatasetRepository(DatasetRepository, FileSystemBasedRepository):
+    """A dataset repository that stores :class:`Dataset`s in files.
+
+    It creates a single file per dataset and stores the :class:`Example`s as lines in this file.
+    The format of the file is `.jsonl`.
+
+    Args:
+        filesystem: the file system to use to save and retrieve data. Expects fsspec filesystems.
+        root_directory: the root directory for dataset storage, under which folders for storage can be created.
+        caching: If set, datasets are cached in memory once retrieved.
+            This means external updates to datasets will be missed. Defaults to `True`
+    """
+
     _REPO_TYPE = "dataset"
 
-    def __init__(self, filesystem: AbstractFileSystem, root_directory: Path) -> None:
+    def __init__(
+        self, filesystem: AbstractFileSystem, root_directory: Path, caching: bool = True
+    ) -> None:
         super().__init__(file_system=filesystem, root_directory=root_directory)
         # this is a local lru cache per repository instance, instead of a global one for all classes
-        self.examples = lru_cache(maxsize=2)(self.examples)  # type: ignore
+        if caching:
+            self.examples = lru_cache(maxsize=2)(self.examples)  # type: ignore
 
     def create_dataset(
         self,
@@ -56,6 +71,9 @@ class FileSystemDatasetRepository(DatasetRepository, FileSystemBasedRepository):
             )
         except FileNotFoundError:
             pass
+        # this resets the complete cache if a dataset gets deleted.
+        if isinstance(self.examples, _lru_cache_wrapper):
+            self.examples.cache_clear()
 
     def dataset(self, dataset_id: str) -> Optional[Dataset]:
         file_path = self.path_to_str(self._dataset_path(dataset_id))

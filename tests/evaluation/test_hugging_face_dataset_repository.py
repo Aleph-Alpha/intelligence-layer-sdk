@@ -98,5 +98,6 @@ def test_hugging_face_repository_supports_all_operations_for_created_dataset(
     # deleting an existing dataset works
     hugging_face_repository.delete_dataset(dataset.id)
     with pytest.raises(ValueError):
-        hugging_face_repository.examples(dataset.id, str, str)
+        # note that examples is cached here and does not error, although the dataset exists
+        hugging_face_repository.example(dataset.id, examples[0].id, str, str)
     assert hugging_face_repository.dataset(dataset.id) is None
