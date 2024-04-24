@@ -39,12 +39,14 @@ class DocumentIndexRetriever(BaseRetriever[DocumentPath]):
     def __init__(
         self,
         document_index: DocumentIndexClient,
+        index_name: str,
         namespace: str,
         collection: str,
         k: int,
         threshold: float = 0.5,
     ) -> None:
         self._document_index = document_index
+        self._index_name = index_name
         self._collection_path = CollectionPath(
             namespace=namespace, collection=collection
         )
@@ -72,7 +74,7 @@ class DocumentIndexRetriever(BaseRetriever[DocumentPath]):
             query=query, max_results=self._k, min_score=self._threshold
         )
         response = self._document_index.search(
-            self._collection_path, "asymmetric", search_query
+            self._collection_path, self._index_name, search_query
         )
         relevant_chunks = [
             SearchResult(
