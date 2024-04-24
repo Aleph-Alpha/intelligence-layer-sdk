@@ -19,6 +19,8 @@ from .model import AlephAlphaModel as AlephAlphaModel
 from .model import CompleteInput as CompleteInput
 from .model import CompleteOutput as CompleteOutput
 from .model import ControlModel as ControlModel
+from .model import Llama2InstructModel as Llama2InstructModel
+from .model import Llama3InstructModel as Llama3InstructModel
 from .model import LuminousControlModel as LuminousControlModel
 from .prompt_template import Cursor as Cursor
 from .prompt_template import PromptItemCursor as PromptItemCursor
