@@ -140,7 +140,7 @@ class AlephAlphaModel:
         name: The name of a valid model that can access an API using an implementation
             of the AlephAlphaClientProtocol.
         client: Aleph Alpha client instance for running model related API calls.
-            Defaults to the :class:`LimitedConcurrencyClient`
+            Defaults to :class:`LimitedConcurrencyClient`
     """
 
     def __init__(
@@ -190,8 +190,9 @@ class LuminousControlModel(ControlModel):
 
     Args:
         name: The name of a valid model second generation control model.
+            Defaults to `luminous-base-control`
         client: Aleph Alpha client instance for running model related API calls.
-            Defaults to the :class:`LimitedConcurrencyClient`
+            Defaults to :class:`LimitedConcurrencyClient`
     """
 
     INSTRUCTION_PROMPT_TEMPLATE = PromptTemplate(
@@ -218,6 +219,104 @@ class LuminousControlModel(ControlModel):
         client: Optional[AlephAlphaClientProtocol] = None,
     ) -> None:
         super().__init__(name, client)
+
+    def to_instruct_prompt(
+        self,
+        instruction: str,
+        input: Optional[str] = None,
+        response_prefix: Optional[str] = None,
+    ) -> RichPrompt:
+        return self.INSTRUCTION_PROMPT_TEMPLATE.to_rich_prompt(
+            instruction=instruction, input=input, response_prefix=response_prefix
+        )
+
+
+class Llama2InstructModel(ControlModel):
+    """A llama-2-*-chat model, prompt-optimized for single-turn instructions.
+
+    If possible, we recommend using `Llama3InstructModel` instead.
+
+    Args:
+        name: The name of a valid llama-2 model.
+            Defaults to `llama-2-13b-chat`
+        client: Aleph Alpha client instance for running model related API calls.
+            Defaults to :class:`LimitedConcurrencyClient`
+    """
+
+    INSTRUCTION_PROMPT_TEMPLATE = PromptTemplate("""<s>[INST] <<SYS>>
+{% promptrange instruction %}{{instruction}}{% endpromptrange %}
+<</SYS>>{% if input %}
+
+{% promptrange input %}{{input}}{% endpromptrange %}{% endif %} [/INST]{% if response_prefix %}
+
+{{response_prefix}}{% endif %}""")
+
+    def __init__(
+        self,
+        name: Literal[
+            "llama-2-7b-chat",
+            "llama-2-13b-chat",
+            "llama-2-70b-chat",
+        ] = "llama-2-13b-chat",
+        client: Optional[AlephAlphaClientProtocol] = None,
+    ) -> None:
+        super().__init__(name, client)
+
+    def to_instruct_prompt(
+        self,
+        instruction: str,
+        input: Optional[str] = None,
+        response_prefix: Optional[str] = None,
+    ) -> RichPrompt:
+        return self.INSTRUCTION_PROMPT_TEMPLATE.to_rich_prompt(
+            instruction=instruction, input=input, response_prefix=response_prefix
+        )
+
+
+class Llama3InstructModel(ControlModel):
+    """A llama-3-*-instruct model.
+
+    Args:
+        name: The name of a valid llama-3 model.
+            Defaults to `llama-3-8b-instruct`
+        client: Aleph Alpha client instance for running model related API calls.
+            Defaults to :class:`LimitedConcurrencyClient`
+    """
+
+    INSTRUCTION_PROMPT_TEMPLATE = PromptTemplate(
+        """<|begin_of_text|><|start_header_id|>user<|end_header_id|>
+
+{% promptrange instruction %}{{instruction}}{% endpromptrange %}{% if input %}
+
+{% promptrange input %}{{input}}{% endpromptrange %}{% endif %}<eot_id><|start_header_id|>assistant<|end_header_id|>{% if response_prefix %}
+
+{{response_prefix}}{% endif %}"""
+    )
+    EOT_TOKEN = "<|eot_id|>"
+
+    def __init__(
+        self,
+        name: Literal[
+            "llama-3-8b-instruct",
+            "llama-3-70b-instruct",
+        ] = "llama-3-8b-instruct",
+        client: Optional[AlephAlphaClientProtocol] = None,
+    ) -> None:
+        super().__init__(name, client)
+
+    def _add_eot_token_to_stop_sequences(self, input: CompleteInput) -> CompleteInput:
+        # remove this once the API supports the llama-3 EOT_TOKEN
+        params = input.__dict__
+        if isinstance(params["stop_sequences"], list):
+            if self.EOT_TOKEN not in params["stop_sequences"]:
+                params["stop_sequences"].append(self.EOT_TOKEN)
+        else:
+            params["stop_sequences"] = [self.EOT_TOKEN]
+        return CompleteInput(**params)
+
+    def complete(self, input: CompleteInput, tracer: Tracer) -> CompleteOutput:
+        input_with_eot = self._add_eot_token_to_stop_sequences(input)
+        return super().complete(input_with_eot, tracer)
 
     def to_instruct_prompt(
         self,
