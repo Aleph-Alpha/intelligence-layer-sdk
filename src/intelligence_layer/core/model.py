@@ -140,7 +140,7 @@ class AlephAlphaModel:
         name: The name of a valid model that can access an API using an implementation
             of the AlephAlphaClientProtocol.
         client: Aleph Alpha client instance for running model related API calls.
-            Defaults to the :class:`LimitedConcurrencyClient`
+            Defaults to :class:`LimitedConcurrencyClient`
     """
 
     def __init__(
@@ -190,8 +190,9 @@ class LuminousControlModel(ControlModel):
 
     Args:
         name: The name of a valid model second generation control model.
+            Defaults to `luminous-base-control`
         client: Aleph Alpha client instance for running model related API calls.
-            Defaults to the :class:`LimitedConcurrencyClient`
+            Defaults to :class:`LimitedConcurrencyClient`
     """
 
     INSTRUCTION_PROMPT_TEMPLATE = PromptTemplate(
@@ -237,8 +238,9 @@ class Llama2InstructModel(ControlModel):
 
     Args:
         name: The name of a valid llama-2 model.
+            Defaults to `llama-2-13b-chat`
         client: Aleph Alpha client instance for running model related API calls.
-            Defaults to the :class:`LimitedConcurrencyClient`
+            Defaults to :class:`LimitedConcurrencyClient`
     """
 
     INSTRUCTION_PROMPT_TEMPLATE = PromptTemplate("""<s>[INST] <<SYS>>
@@ -276,8 +278,9 @@ class Llama3InstructModel(ControlModel):
 
     Args:
         name: The name of a valid llama-3 model.
+            Defaults to `llama-3-8b-instruct`
         client: Aleph Alpha client instance for running model related API calls.
-            Defaults to the :class:`LimitedConcurrencyClient`
+            Defaults to :class:`LimitedConcurrencyClient`
     """
 
     INSTRUCTION_PROMPT_TEMPLATE = PromptTemplate(
