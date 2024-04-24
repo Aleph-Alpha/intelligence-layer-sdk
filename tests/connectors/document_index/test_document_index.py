@@ -15,8 +15,13 @@ from intelligence_layer.connectors.document_index.document_index import (
 
 
 @fixture
-def collection_path() -> CollectionPath:
-    return CollectionPath(namespace="aleph-alpha", collection="ci-collection")
+def aleph_alpha_namespace() -> str:
+    return "aleph-alpha"
+
+
+@fixture
+def collection_path(aleph_alpha_namespace: str) -> CollectionPath:
+    return CollectionPath(namespace=aleph_alpha_namespace, collection="ci-collection")
 
 
 @fixture
@@ -188,3 +193,15 @@ def test_document_path_is_immutable() -> None:
     dictionary[path] = 1
 
     assert dictionary[path] == 1
+
+
+def test_document_indexes_are_returned(
+    document_index: DocumentIndexClient, collection_path: CollectionPath
+) -> None:
+    index_names = document_index.list_assigned_index_names(collection_path)
+    index_name = index_names[0]
+    index_configuration = document_index.index_configuration(
+        collection_path.namespace, index_name=index_name
+    )
+
+    assert index_name == index_configuration.name

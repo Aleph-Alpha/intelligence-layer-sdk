@@ -402,7 +402,24 @@ class DocumentIndexClient:
         response = requests.put(url, data=dumps(data), headers=self.headers)
         self._raise_for_status(response)
 
-    def get_index(self, namespace: str, index_name: str) -> Mapping[str, Any]:
+    # def get_index_configurations(
+    #     self, namespace: str
+    # ) -> None:
+    #     """get all namespaces associated with .
+
+    #     Args:
+    #         namespace: For a collection of documents. Typically corresponds to an organization.
+    #     """
+
+    #     url = f"{self._base_document_index_url}/indexes/{namespace}"
+
+    #     response = requests.get(url, headers=self.headers)
+    #     self._raise_for_status(response)
+    #     return response.json()
+
+    def index_configuration(
+        self, namespace: str, index_name: str
+    ) -> IndexConfiguration:
         """Retrieve the configuration of an index in a namespace given its name.
 
         Args:
@@ -417,7 +434,11 @@ class DocumentIndexClient:
         response = requests.get(url, headers=self.headers)
         self._raise_for_status(response)
         response_json: Mapping[str, Any] = response.json()
-        return response_json
+        return IndexConfiguration(
+            name=index_name,
+            embedding_type=response_json["embedding_type"],
+            chunk_size=response_json["chunk_size"],
+        )
 
     def assign_index_to_collection(
         self, collection_path: CollectionPath, index_name: str
@@ -447,9 +468,9 @@ class DocumentIndexClient:
         response = requests.delete(url, headers=self.headers)
         self._raise_for_status(response)
 
-    def list_assigned_indexes(
+    def list_assigned_index_names(
         self, collection_path: CollectionPath
-    ) -> Sequence[Mapping[str, str]]:
+    ) -> Sequence[str]:
         """List all indexes assigned to a collection.
 
         Args:
@@ -462,7 +483,7 @@ class DocumentIndexClient:
         url = f"{self._base_document_index_url}/collections/{collection_path.namespace}/{collection_path.collection}/indexes"
         response = requests.get(url, headers=self.headers)
         self._raise_for_status(response)
-        return [index for index in response.json()]
+        return [index["index"] for index in response.json()]
 
     def add_document(
         self,
