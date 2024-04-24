@@ -33,7 +33,7 @@ class DocumentIndexRetriever(BaseRetriever[DocumentPath]):
     >>> import os
     >>> from intelligence_layer.connectors import DocumentIndexClient, DocumentIndexRetriever
     >>> document_index = DocumentIndexClient(os.getenv("AA_TOKEN"))
-    >>> retriever = DocumentIndexRetriever(document_index, "aleph-alpha", "wikipedia-de", 3)
+    >>> retriever = DocumentIndexRetriever(document_index, "asymmetric", "aleph-alpha", "wikipedia-de", 3)
     >>> documents = retriever.get_relevant_documents_with_scores("Who invented the airplane?")
     """
 

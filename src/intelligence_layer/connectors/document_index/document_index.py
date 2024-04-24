@@ -402,21 +402,6 @@ class DocumentIndexClient:
         response = requests.put(url, data=dumps(data), headers=self.headers)
         self._raise_for_status(response)
 
-    # def get_index_configurations(
-    #     self, namespace: str
-    # ) -> None:
-    #     """get all namespaces associated with .
-
-    #     Args:
-    #         namespace: For a collection of documents. Typically corresponds to an organization.
-    #     """
-
-    #     url = f"{self._base_document_index_url}/indexes/{namespace}"
-
-    #     response = requests.get(url, headers=self.headers)
-    #     self._raise_for_status(response)
-    #     return response.json()
-
     def index_configuration(
         self, namespace: str, index_name: str
     ) -> IndexConfiguration:
