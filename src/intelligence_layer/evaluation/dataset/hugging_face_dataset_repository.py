@@ -14,6 +14,15 @@ class HuggingFaceDatasetRepository(HuggingFaceRepository, FileSystemDatasetRepos
     def __init__(
         self, repository_id: str, token: str, private: bool, caching: bool = True
     ) -> None:
+        """Initializes a :class:`HuggingFaceDatasetRepository` to be ready for dataset storage and access.
+
+        Args:
+            repository_id: The HuggingFace namespace and repository name, separated by a "/".
+            token: The HuggingFace authentication token.
+            private: Whether the dataset repository should be private on HuggingFace.
+            caching: If set, datasets are cached in memory once retrieved.
+                This means external updates to datasets will be missed. Defaults to `True`.
+        """
         super().__init__(repository_id, token, private)
         if caching:
             self.examples = lru_cache(maxsize=2)(self.examples)  # type: ignore

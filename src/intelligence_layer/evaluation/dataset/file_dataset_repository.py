@@ -20,12 +20,6 @@ class FileSystemDatasetRepository(DatasetRepository, FileSystemBasedRepository):
 
     It creates a single file per dataset and stores the :class:`Example`s as lines in this file.
     The format of the file is `.jsonl`.
-
-    Args:
-        filesystem: the file system to use to save and retrieve data. Expects fsspec filesystems.
-        root_directory: the root directory for dataset storage, under which folders for storage can be created.
-        caching: If set, datasets are cached in memory once retrieved.
-            This means external updates to datasets will be missed. Defaults to `True`
     """
 
     _REPO_TYPE = "dataset"
