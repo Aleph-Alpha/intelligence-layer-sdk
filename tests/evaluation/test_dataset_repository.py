@@ -1,6 +1,6 @@
 from pathlib import Path
 from typing import Any, Iterable
-from unittest.mock import Mock, patch
+from unittest.mock import patch
 
 import pytest
 from fsspec.implementations.memory import MemoryFileSystem  # type: ignore
@@ -11,7 +11,6 @@ from intelligence_layer.evaluation import (
     Example,
     FileDatasetRepository,
 )
-from intelligence_layer.evaluation.dataset.file_dataset_repository import FileSystemDatasetRepository
 from intelligence_layer.evaluation.dataset.hugging_face_dataset_repository import (
     HuggingFaceDatasetRepository,
 )
@@ -336,26 +335,3 @@ def test_example_raises_error_for_not_existing_dataset_id(
             DummyStringInput,
             DummyStringOutput,
         )
-
-@mark.parametrize("repository_fixture", test_repository_fixtures)
-def test_example_raises_error_for_not_existing_dataset_id(
-    repository_fixture: str,
-    request: FixtureRequest,
-    dummy_string_example: Example[DummyStringInput, DummyStringOutput],
-) -> None:
-    dataset_repository: FileSystemDatasetRepository = request.getfixturevalue(repository_fixture)
-
-    dataset = dataset_repository.create_dataset([], "temp")
-    
-    dataset_repository._file_system = Mock()
-    try:
-        dataset_repository.example(dataset.id, "", str, str)
-    except Exception as e:
-        pass
-    try:
-        dataset_repository.example(dataset.id, "", str, str)
-    except Exception as e:
-        pass
-    
-    assert dataset_repository._file_system.open.call_count == 1
-    

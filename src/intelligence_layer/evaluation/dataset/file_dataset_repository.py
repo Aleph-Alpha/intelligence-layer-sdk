@@ -22,6 +22,8 @@ class FileSystemDatasetRepository(DatasetRepository, FileSystemBasedRepository):
 
     def __init__(self, filesystem: AbstractFileSystem, root_directory: Path) -> None:
         super().__init__(file_system=filesystem, root_directory=root_directory)
+        # this is a local lru cache per repository instance, instead of a global one for all classes
+        self.examples = lru_cache(maxsize=2)(self.examples)  # type: ignore
 
     def create_dataset(
         self,
@@ -89,13 +91,11 @@ class FileSystemDatasetRepository(DatasetRepository, FileSystemBasedRepository):
             )
         if not self.exists(example_path):
             return None
-
         for example in self.examples(dataset_id, input_type, expected_output_type):
             if example.id == example_id:
                 return example
         return None
 
-    @lru_cache(maxsize=1)
     def examples(
         self,
         dataset_id: str,
