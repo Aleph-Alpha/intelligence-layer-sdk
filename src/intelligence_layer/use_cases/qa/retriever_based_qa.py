@@ -1,3 +1,4 @@
+import warnings
 from typing import Generic, Optional, Sequence
 
 from pydantic import BaseModel
@@ -97,6 +98,11 @@ class RetrieverBasedQa(
     def do_run(
         self, input: RetrieverBasedQaInput, task_span: TaskSpan
     ) -> RetrieverBasedQaOutput[ID]:
+        warnings.warn(
+            "`RetrieverBasedQa` is deprecated and will be removed in future versions.",
+            DeprecationWarning,
+        )
+
         search_output = self._search.run(
             SearchInput(query=input.question), task_span
         ).results

@@ -15,6 +15,7 @@ from intelligence_layer.core.tracer.tracer import TaskSpan
 from intelligence_layer.use_cases.search.expand_chunks import (
     ExpandChunks,
     ExpandChunksInput,
+    ExpandChunksOutput,
 )
 from intelligence_layer.use_cases.search.search import Search, SearchInput
 
@@ -49,6 +50,8 @@ class MultipleChunkRetrieverQa(
     In contrast to the regular `RetrieverBasedQa`, this tasks injects multiple chunks into one
     `SingleChunkQa` task run.
 
+    We recommend using this task instead of `RetrieverBasedQa`.
+
     Note:
         `model` provided should be a control-type model.
 
@@ -62,17 +65,17 @@ class MultipleChunkRetrieverQa(
     def __init__(
         self,
         retriever: BaseRetriever[ID],
-        model: ControlModel | None = None,
         insert_chunk_number: int = 5,
-        insert_chunk_size: int = 256,
+        model: ControlModel | None = None,
+        expand_chunks: Task[ExpandChunksInput[ID], ExpandChunksOutput] | None = None,
         single_chunk_qa: Task[SingleChunkQaInput, SingleChunkQaOutput] | None = None,
     ):
         super().__init__()
-        self._model = model or LuminousControlModel("luminous-supreme-control")
         self._search = Search(retriever)
-        self._expand_chunks = ExpandChunks(retriever, self._model, insert_chunk_size)
-        self._single_chunk_qa = single_chunk_qa or SingleChunkQa(self._model)
         self._insert_chunk_number = insert_chunk_number
+        self._model = model or LuminousControlModel("luminous-supreme-control")
+        self._expand_chunks = expand_chunks or ExpandChunks(retriever, self._model)
+        self._single_chunk_qa = single_chunk_qa or SingleChunkQa(self._model)
 
     @staticmethod
     def _combine_input_texts(chunks: Sequence[str]) -> tuple[TextChunk, Sequence[int]]:
