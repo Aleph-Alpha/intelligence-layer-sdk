@@ -71,8 +71,8 @@ class DocumentIndexRetriever(BaseRetriever[DocumentPath]):
         search_query = SearchQuery(
             query=query, max_results=self._k, min_score=self._threshold
         )
-        response = self._document_index.asymmetric_search(
-            self._collection_path, search_query
+        response = self._document_index.search(
+            self._collection_path, "asymmetric", search_query
         )
         relevant_chunks = [
             SearchResult(

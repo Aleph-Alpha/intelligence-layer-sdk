@@ -570,23 +570,6 @@ class DocumentIndexClient:
         self._raise_for_status(response)
         return [DocumentSearchResult._from_search_response(r) for r in response.json()]
 
-    def asymmetric_search(
-        self,
-        collection_path: CollectionPath,
-        search_query: SearchQuery,
-    ) -> Sequence[DocumentSearchResult]:
-        """Search through a collection with a `search_query` using the asymmetric search configuration.
-
-        Args:
-            collection_path: Path to the collection of interest.
-            search_query: The query to search with.
-
-        Returns:
-            Result of the search operation. Will be empty if nothing was retrieved.
-        """
-
-        return self.search(collection_path, "asymmetric", search_query)
-
     def _raise_for_status(self, response: requests.Response) -> None:
         try:
             response.raise_for_status()

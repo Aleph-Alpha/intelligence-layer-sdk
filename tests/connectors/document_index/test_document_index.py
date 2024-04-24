@@ -101,8 +101,8 @@ def test_document_index_searches_asymmetrically(
         document_name="test_document_index_searches_asymmetrically",  # is always there
     )
     search_query = SearchQuery(query="Who likes pizza?", max_results=1, min_score=0.0)
-    search_result = document_index.asymmetric_search(
-        document_path.collection_path, search_query
+    search_result = document_index.search(
+        document_path.collection_path, "asymmetric", search_query
     )
 
     assert "Mark" in search_result[0].section
