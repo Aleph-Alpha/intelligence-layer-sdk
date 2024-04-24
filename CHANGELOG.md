@@ -18,7 +18,7 @@
 - feature: `DocumentIndexRetriever` now supports `index_name`
 
 ### Fixes
-- refactor: rename `index` parameter in `DocumentIndex.search()` to `index_name` 
+- refactor: rename `index` parameter in `DocumentIndex.search()` to `index_name`
 
 ## 0.10.0
 
