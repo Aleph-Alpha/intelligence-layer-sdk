@@ -1,7 +1,7 @@
 from datetime import datetime
 from http import HTTPStatus
 from json import dumps
-from typing import Annotated, Any, Mapping, Optional, Sequence
+from typing import Annotated, Any, Literal, Mapping, Optional, Sequence
 
 import requests
 from pydantic import BaseModel, Field
@@ -204,6 +204,20 @@ class DocumentSearchResult(BaseModel):
         )
 
 
+class IndexConfiguration(BaseModel):
+    """Configuration of an index.
+
+    Args:
+        name: Name of the index configuration.
+        embedding_type: "symmetric" or "asymmetric" embedding type.
+        chunk_size: The maximum size of the chunks in tokens to be used for the index.
+    """
+
+    name: str
+    embedding_type: Literal["symmetric", "asymmetric"]
+    chunk_size: int
+
+
 class DocumentIndexError(RuntimeError):
     """Raised in case of any `DocumentIndexClient`-related errors.
 
@@ -369,67 +383,66 @@ class DocumentIndexClient:
         ]
 
     def create_index(
-        self, namespace: str, chunk_size: int, embedding_type: str = "asymmetric"
+        self, namespace: str, index_configuration: IndexConfiguration
     ) -> None:
         """Creates an index in a namespace.
 
         Args:
             namespace: For a collection of documents. Typically corresponds to an organization.
-            chunk_size: The maximum size of the chunks in tokens to be used for the index.
-            embedding_type: Currently only supports "asymmetric".
+            index_configuration: Configuration of the index to be created.
         """
-        assert embedding_type == "asymmetric", "Only asymmetric embedding is supported."
 
-        url = f"{self._base_document_index_url}/indexes/{namespace}/asym-{chunk_size}"
+        url = f"{self._base_document_index_url}/indexes/{namespace}/{index_configuration.name}"
+
         data = {
-            "chunk_size": chunk_size,
-            "embedding_type": embedding_type,
+            "chunk_size": index_configuration.chunk_size,
+            "embedding_type": index_configuration.embedding_type,
         }
         response = requests.put(url, data=dumps(data), headers=self.headers)
         self._raise_for_status(response)
 
-    def get_index(self, namespace: str, index: str) -> Mapping[str, Any]:
-        """Retrieve the configuration of an index in a namespace.
+    def get_index(self, namespace: str, index_name: str) -> Mapping[str, Any]:
+        """Retrieve the configuration of an index in a namespace given its name.
 
         Args:
             namespace: For a collection of documents. Typically corresponds to an organization.
-            index: Name of the index, e.g. "asym-128".
+            index_name: Name of the index.
 
         Returns:
             Configuration of the index.
         """
 
-        url = f"{self._base_document_index_url}/indexes/{namespace}/{index}"
+        url = f"{self._base_document_index_url}/indexes/{namespace}/{index_name}"
         response = requests.get(url, headers=self.headers)
         self._raise_for_status(response)
         response_json: Mapping[str, Any] = response.json()
         return response_json
 
     def assign_index_to_collection(
-        self, collection_path: CollectionPath, index: str
+        self, collection_path: CollectionPath, index_name: str
     ) -> None:
         """Assign an index to a collection.
 
         Args:
-            index: Name of the index, e.g. "asym-128".
             collection_path: Path to the collection of interest.
+            index_name: Name of the index.
         """
 
-        url = f"{self._base_document_index_url}/collections/{collection_path.namespace}/{collection_path.collection}/indexes/{index}"
+        url = f"{self._base_document_index_url}/collections/{collection_path.namespace}/{collection_path.collection}/indexes/{index_name}"
         response = requests.put(url, headers=self.headers)
         self._raise_for_status(response)
 
     def delete_index_from_collection(
-        self, collection_path: CollectionPath, index: str
+        self, collection_path: CollectionPath, index_name: str
     ) -> None:
         """Delete an index from a collection.
 
         Args:
-            index: Name of the index, e.g. "asym-128".
+            index_name: Name of the index.
             collection_path: Path to the collection of interest.
         """
 
-        url = f"{self._base_document_index_url}/collections/{collection_path.namespace}/{collection_path.collection}/indexes/{index}"
+        url = f"{self._base_document_index_url}/collections/{collection_path.namespace}/{collection_path.collection}/indexes/{index_name}"
         response = requests.delete(url, headers=self.headers)
         self._raise_for_status(response)
 
@@ -532,22 +545,21 @@ class DocumentIndexClient:
     def search(
         self,
         collection_path: CollectionPath,
-        index: str,
+        index_name: str,
         search_query: SearchQuery,
     ) -> Sequence[DocumentSearchResult]:
         """Search through a collection with a `search_query`.
 
         Args:
             collection_path: Path to the collection of interest.
-            index: Name of the search configuration.
-                Currently only supports "asymmetric".
+            index_name: Name of the index to search with.
             search_query: The query to search with.
 
         Returns:
             Result of the search operation. Will be empty if nothing was retrieved.
         """
 
-        url = f"{self._base_document_index_url}/collections/{collection_path.namespace}/{collection_path.collection}/indexes/{index}/search"
+        url = f"{self._base_document_index_url}/collections/{collection_path.namespace}/{collection_path.collection}/indexes/{index_name}/search"
         data = {
             "query": [{"modality": "text", "text": search_query.query}],
             "max_results": search_query.max_results,
