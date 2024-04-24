@@ -15,8 +15,8 @@ devDependencies:
     specifier: ^8.4.1
     version: 8.4.1
   '@melt-ui/pp':
-    specifier: ^0.3.0
-    version: 0.3.0(@melt-ui/svelte@0.77.0)(svelte@4.2.15)
+    specifier: ^0.3.1
+    version: 0.3.1(@melt-ui/svelte@0.77.0)(svelte@4.2.15)
   '@melt-ui/svelte':
     specifier: ^0.77.0
     version: 0.77.0(svelte@4.2.15)
@@ -96,8 +96,8 @@ devDependencies:
     specifier: ^0.8.0
     version: 0.8.0(eslint@8.57.0)(typescript@5.4.5)
   eslint-plugin-svelte:
-    specifier: ^2.37.0
-    version: 2.37.0(eslint@8.57.0)(svelte@4.2.15)
+    specifier: ^2.38.0
+    version: 2.38.0(eslint@8.57.0)(svelte@4.2.15)
   postcss:
     specifier: ^8.4.38
     version: 8.4.38
@@ -141,8 +141,8 @@ devDependencies:
     specifier: ^1.5.0
     version: 1.5.0
   zod:
-    specifier: ^3.23.0
-    version: 3.23.0
+    specifier: ^3.23.4
+    version: 3.23.4
 
 packages:
 
@@ -1963,16 +1963,15 @@ packages:
       react: 18.2.0
     dev: true
 
-  /@melt-ui/pp@0.3.0(@melt-ui/svelte@0.77.0)(svelte@4.2.15):
-    resolution: {integrity: sha512-b07Bdh8l2KcwKVCXOY+SoBw1dk9eWvQfMSi6SoacpRVyVmmfpi0kV4oGt3HYF0tUCB3sEmVicxse50ZzZxEzEA==}
-    engines: {pnpm: '>=8.6.3'}
+  /@melt-ui/pp@0.3.1(@melt-ui/svelte@0.77.0)(svelte@4.2.15):
+    resolution: {integrity: sha512-FiKsJNvPLpZv5yNCXTJJm3yOsJi3Fq6RCWmqitEAPGIGufd7UsMP/qElpMG87LtByyBg7gXikh78iPIXxzyf/g==}
     peerDependencies:
       '@melt-ui/svelte': '>= 0.29.0'
       svelte: ^3.55.0 || ^4.0.0 || ^5.0.0-next.1
     dependencies:
       '@melt-ui/svelte': 0.77.0(svelte@4.2.15)
       estree-walker: 3.0.3
-      magic-string: 0.30.7
+      magic-string: 0.30.10
       svelte: 4.2.15
     dev: true
 
@@ -4935,12 +4934,12 @@ packages:
       - typescript
     dev: true
 
-  /eslint-plugin-svelte@2.37.0(eslint@8.57.0)(svelte@4.2.15):
-    resolution: {integrity: sha512-H/2Gz7agYHEMEEzRuLYuCmAIdjuBnbhFG9hOK0yCdSBvvJGJMkjo+lR6j67OIvLOavgp4L7zA5LnDKi8WqdPhQ==}
+  /eslint-plugin-svelte@2.38.0(eslint@8.57.0)(svelte@4.2.15):
+    resolution: {integrity: sha512-IwwxhHzitx3dr0/xo0z4jjDlb2AAHBPKt+juMyKKGTLlKi1rZfA4qixMwnveU20/JTHyipM6keX4Vr7LZFYc9g==}
     engines: {node: ^14.17.0 || >=16.0.0}
     peerDependencies:
       eslint: ^7.0.0 || ^8.0.0-0 || ^9.0.0-0
-      svelte: ^3.37.0 || ^4.0.0 || ^5.0.0-next.95
+      svelte: ^3.37.0 || ^4.0.0 || ^5.0.0-next.112
     peerDependenciesMeta:
       svelte:
         optional: true
@@ -4958,7 +4957,7 @@ packages:
       postcss-selector-parser: 6.0.16
       semver: 7.6.0
       svelte: 4.2.15
-      svelte-eslint-parser: 0.34.1(svelte@4.2.15)
+      svelte-eslint-parser: 0.35.0(svelte@4.2.15)
     transitivePeerDependencies:
       - supports-color
       - ts-node
@@ -6354,13 +6353,6 @@ packages:
 
   /magic-string@0.30.10:
     resolution: {integrity: sha512-iIRwTIf0QKV3UAnYK4PU8uiEc4SRh5jX0mwpIwETPpHdhVM4f53RSwS/vXvN1JhGX+Cs7B8qIq3d6AH49O5fAQ==}
-    dependencies:
-      '@jridgewell/sourcemap-codec': 1.4.15
-    dev: true
-
-  /magic-string@0.30.7:
-    resolution: {integrity: sha512-8vBuFF/I/+OSLRmdf2wwFCJCz+nSn0m6DPvGH1fS/KiQoSaR+sETbov0eIk9KhEKy8CYqIkIAnbohxT/4H0kuA==}
-    engines: {node: '>=12'}
     dependencies:
       '@jridgewell/sourcemap-codec': 1.4.15
     dev: true
@@ -8048,11 +8040,11 @@ packages:
       svelte: 4.2.15
     dev: true
 
-  /svelte-eslint-parser@0.34.1(svelte@4.2.15):
-    resolution: {integrity: sha512-9+uLA1pqI9AZioKVGJzYYmlOZWxfoCXSbAM9iaNm7H01XlYlzRTtJfZgl9o3StQGN41PfGJIbkKkfk3e/pHFfA==}
+  /svelte-eslint-parser@0.35.0(svelte@4.2.15):
+    resolution: {integrity: sha512-CtbPseajW0gjwEvHiuzYJkPDjAcHz2FaHt540j6RVYrZgnE6xWkzUBodQ4I3nV+G5AS0Svt8K6aIA/CIU9xT2Q==}
     engines: {node: ^12.22.0 || ^14.17.0 || >=16.0.0}
     peerDependencies:
-      svelte: ^3.37.0 || ^4.0.0 || ^5.0.0-next.94
+      svelte: ^3.37.0 || ^4.0.0 || ^5.0.0-next.112
     peerDependenciesMeta:
       svelte:
         optional: true
@@ -8911,6 +8903,6 @@ packages:
     engines: {node: '>=12.20'}
     dev: true
 
-  /zod@3.23.0:
-    resolution: {integrity: sha512-OFLT+LTocvabn6q76BTwVB0hExEBS0IduTr3cqZyMqEDbOnYmcU+y0tUAYbND4uwclpBGi4I4UUBGzylWpjLGA==}
+  /zod@3.23.4:
+    resolution: {integrity: sha512-/AtWOKbBgjzEYYQRNfoGKHObgfAZag6qUJX1VbHo2PRBgS+wfWagEY2mizjfyAPcGesrJOcx/wcl0L9WnVrHFw==}
     dev: true

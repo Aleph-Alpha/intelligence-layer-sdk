@@ -3,7 +3,7 @@
 		"@codemirror/lang-json": "^6.0.1",
 		"@codemirror/theme-one-dark": "^6.1.2",
 		"@faker-js/faker": "^8.4.1",
-		"@melt-ui/pp": "^0.3.0",
+		"@melt-ui/pp": "^0.3.1",
 		"@melt-ui/svelte": "^0.77.0",
 		"@playwright/test": "^1.43.1",
 		"@storybook/addon-essentials": "^8.0.9",
@@ -30,7 +30,7 @@
 		"eslint": "^8.57.0",
 		"eslint-config-prettier": "^9.1.0",
 		"eslint-plugin-storybook": "^0.8.0",
-		"eslint-plugin-svelte": "^2.37.0",
+		"eslint-plugin-svelte": "^2.38.0",
 		"postcss": "^8.4.38",
 		"prettier": "^3.2.5",
 		"prettier-plugin-svelte": "^3.2.3",
@@ -45,7 +45,7 @@
 		"typescript": "^5.4.5",
 		"vite": "^5.2.10",
 		"vitest": "^1.5.0",
-		"zod": "^3.23.0"
+		"zod": "^3.23.4"
 	},
 	"name": "trace-viewer",
 	"private": true,
