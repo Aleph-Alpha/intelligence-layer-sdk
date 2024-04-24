@@ -253,7 +253,7 @@ class Llama2InstructModel(ControlModel):
             "llama-2-7b-chat",
             "llama-2-13b-chat",
             "llama-2-70b-chat",
-        ] = "llama-2-13b-instruct",
+        ] = "llama-2-13b-chat",
         client: Optional[AlephAlphaClientProtocol] = None,
     ) -> None:
         super().__init__(name, client)
