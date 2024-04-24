@@ -59,7 +59,7 @@ class Search(Generic[ID], Task[SearchInput, SearchOutput[ID]]):
 
 
         >>> document_index = DocumentIndexClient(getenv("AA_TOKEN"))
-        >>> retriever = DocumentIndexRetriever(document_index, "aleph-alpha", "wikipedia-de", 3)
+        >>> retriever = DocumentIndexRetriever(document_index, "asymmetric", "aleph-alpha", "wikipedia-de", 3)
         >>> task = Search(retriever)
         >>> input = SearchInput(query="When did East and West Germany reunite?")
         >>> tracer = InMemoryTracer()

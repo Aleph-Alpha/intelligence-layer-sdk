@@ -11,10 +11,10 @@
 - feature: `ExpandChunks`-task caches chunked documents by ID
 - feature: `DocumentIndexClient` now supports
             - `create_index`
-            - `get_index`
+            - `index_configuration`
             - `assign_index_to_collection`
             - `delete_index_from_collection`
-            - `list_assigned_indexes`
+            - `list_assigned_index_names`
 - feature: `DocumentIndexRetriever` now supports `index_name`
 
 ### Fixes
@@ -33,7 +33,6 @@
 ### Fixes
 - fix: `ChunkWithIndices` now additionally returns end_index
 - fix: `DocumentPath` and `CollectionPath` are now immutable
-
 
 ## 0.9.1
 
@@ -88,13 +87,11 @@
 - feature: Add optional argument to set an id when creating a `Dataset` via `DatasetRepository.create_dataset(..)`
 - feature: Traces now log exceptions using the `ErrorValue` type.
 
-
 - Documentation:
   - feature: Add info on how to run tests in VSCode
   - feature: Add `issue_classification_user_journey` notebook.
   - feature: Add documentation of newly added data retrieval methods `how_to_retrieve_data_for_analysis`
   - feature: Add documentation of release workflow
-
 
 ### Fixes
 - fix: Fix version number in pyproject.toml in IL

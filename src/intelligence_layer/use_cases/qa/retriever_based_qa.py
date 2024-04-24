@@ -78,7 +78,7 @@ class RetrieverBasedQa(
 
         >>> token = os.getenv("AA_TOKEN")
         >>> document_index = DocumentIndexClient(token)
-        >>> retriever = DocumentIndexRetriever(document_index, "aleph-alpha", "wikipedia-de", 3)
+        >>> retriever = DocumentIndexRetriever(document_index, "asymmetric", "aleph-alpha", "wikipedia-de", 3)
         >>> task = RetrieverBasedQa(retriever)
         >>> input_data = RetrieverBasedQaInput(question="When was Rome founded?")
         >>> tracer = InMemoryTracer()
