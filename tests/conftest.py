@@ -97,7 +97,11 @@ def document_index_retriever(
     document_index: DocumentIndexClient,
 ) -> DocumentIndexRetriever:
     return DocumentIndexRetriever(
-        document_index, namespace="aleph-alpha", collection="wikipedia-de", k=2
+        document_index,
+        index_name="asymmetric",
+        namespace="aleph-alpha",
+        collection="wikipedia-de",
+        k=2,
     )
 
 
