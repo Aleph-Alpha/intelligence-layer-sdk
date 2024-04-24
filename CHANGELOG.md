@@ -8,6 +8,7 @@
 ### New Features
 - feature: `Llama2InstructModel` to support llama-2 models in Aleph Alpha API
 - feature: `Llama3InstructModel` to support llama-3 models in Aleph Alpha API
+- feature: `ExpandChunks`-task caches chunked documents by ID
 
 ### Fixes
 
