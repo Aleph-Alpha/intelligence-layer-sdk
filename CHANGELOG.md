@@ -9,14 +9,24 @@
 - feature: `Llama2InstructModel` to support llama-2 models in Aleph Alpha API
 - feature: `Llama3InstructModel` to support llama-3 models in Aleph Alpha API
 - feature: `ExpandChunks`-task caches chunked documents by ID
+- feature: `DocumentIndexClient` now supports
+            - `create_index`
+            - `get_index`
+            - `assign_index_to_collection`
+            - `delete_index_from_collection`
+            - `list_assigned_indexes`
+- feature: `DocumentIndexRetriever` now supports `index_name`
 
 ### Fixes
+- refactor: rename `index` parameter in `DocumentIndex.search()` to `index_name` 
 
 ## 0.10.0
 
 ### Breaking Changes
 - breaking change: `ExpandChunksOutput` now returns `ChunkWithStartEndIndices` instead of `TextChunk`
 - breaking change: `MultipleChunkRetrieverQa`'s `AnswerSource` now contains `EnrichedChunk` instead of just the `TextChunk`
+- breaking change: `DocumentIndexClient` method `asymmetric_search()` has been removed
+- breaking change: `DocumentIndexRetriever` now additionally needs `index_name`
 
 ### New Features
 
