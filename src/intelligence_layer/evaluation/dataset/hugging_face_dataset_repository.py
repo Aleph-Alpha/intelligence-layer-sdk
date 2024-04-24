@@ -1,3 +1,4 @@
+from functools import _lru_cache_wrapper, lru_cache
 from typing import Optional
 
 from intelligence_layer.evaluation.dataset.domain import Dataset
@@ -10,6 +11,13 @@ from intelligence_layer.evaluation.infrastructure.hugging_face_repository import
 
 
 class HuggingFaceDatasetRepository(HuggingFaceRepository, FileSystemDatasetRepository):
+    def __init__(
+        self, repository_id: str, token: str, private: bool, caching: bool = True
+    ) -> None:
+        super().__init__(repository_id, token, private)
+        if caching:
+            self.examples = lru_cache(maxsize=2)(self.examples)  # type: ignore
+
     def delete_dataset(self, dataset_id: str) -> None:
         """Deletes a dataset identified by the given dataset ID.
 
@@ -29,6 +37,9 @@ class HuggingFaceDatasetRepository(HuggingFaceRepository, FileSystemDatasetRepos
 
         if self.exists(self._dataset_path(dataset_id)):
             self._file_system.rm(self.path_to_str(self._dataset_path(dataset_id)))
+            # this resets the complete cache if a dataset gets deleted.
+        if isinstance(self.examples, _lru_cache_wrapper):
+            self.examples.cache_clear()
 
     def dataset(self, dataset_id: str) -> Optional[Dataset]:
         """Returns a dataset identified by the given dataset ID.

@@ -89,7 +89,7 @@ class Runner(Generic[Input, Output]):
             num_examples: An optional int to specify how many examples from the dataset should be run.
                 Always the first n examples will be taken.
             abort_on_error: Flag to abort all run when an error occurs. Defaults to False.
-            max_workers: Maximum number of workers in the thread pool.
+            max_workers: Number of examples that can be evaluated concurrently. Defaults to 10.
 
         Returns:
             An overview of the run. Outputs will not be returned but instead stored in the

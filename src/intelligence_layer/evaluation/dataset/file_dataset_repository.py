@@ -1,8 +1,6 @@
-from functools import _lru_cache_wrapper, lru_cache
 from pathlib import Path
 from typing import Iterable, Optional
 
-from fsspec import AbstractFileSystem  # type: ignore
 from fsspec.implementations.local import LocalFileSystem  # type: ignore
 
 from intelligence_layer.core import Input, JsonSerializer, PydanticSerializable
@@ -31,14 +29,6 @@ class FileSystemDatasetRepository(DatasetRepository, FileSystemBasedRepository):
     """
 
     _REPO_TYPE = "dataset"
-
-    def __init__(
-        self, filesystem: AbstractFileSystem, root_directory: Path, caching: bool = True
-    ) -> None:
-        super().__init__(file_system=filesystem, root_directory=root_directory)
-        # this is a local lru cache per repository instance, instead of a global one for all classes
-        if caching:
-            self.examples = lru_cache(maxsize=2)(self.examples)  # type: ignore
 
     def create_dataset(
         self,
@@ -71,9 +61,6 @@ class FileSystemDatasetRepository(DatasetRepository, FileSystemBasedRepository):
             )
         except FileNotFoundError:
             pass
-        # this resets the complete cache if a dataset gets deleted.
-        if isinstance(self.examples, _lru_cache_wrapper):
-            self.examples.cache_clear()
 
     def dataset(self, dataset_id: str) -> Optional[Dataset]:
         file_path = self.path_to_str(self._dataset_path(dataset_id))
