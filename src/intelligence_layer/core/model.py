@@ -233,6 +233,8 @@ class LuminousControlModel(ControlModel):
 class Llama2InstructModel(ControlModel):
     """A llama-2-*-chat model, prompt-optimized for single-turn instructions.
 
+    If possible, we recommend using `Llama3InstructModel` instead.
+
     Args:
         name: The name of a valid llama-2 model.
         client: Aleph Alpha client instance for running model related API calls.
@@ -257,9 +259,6 @@ class Llama2InstructModel(ControlModel):
         client: Optional[AlephAlphaClientProtocol] = None,
     ) -> None:
         super().__init__(name, client)
-
-    def complete(self, input: CompleteInput, tracer: Tracer) -> CompleteOutput:
-        return super().complete(input, tracer)
 
     def to_instruct_prompt(
         self,

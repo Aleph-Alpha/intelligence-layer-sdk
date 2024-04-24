@@ -25,12 +25,15 @@ The key features of the Intelligence Layer are:
 - [Getting started](#getting-started)
   - [Tutorials](#tutorials)
   - [How-Tos](#how-tos)
+- [Models](#models)
 - [Use-case index](#use-case-index)
 - [References](#references)
 - [License](#license)
 - [For Developers](#for-developers)
   - [Python: Naming Conventions](#python-naming-conventions)
+
 # Installation
+
 ## Local installation (for development and tutorials)
 Clone the Intelligence Layer repository from github.
 ```bash
@@ -203,7 +206,6 @@ The tutorials aim to guide you through implementing several common use-cases wit
 | 9     | Deployment         | Shows how to deploy a Task in a minimal FastAPI app. | [fastapi_tutorial.md](./src/examples/fastapi_tutorial.md)       |
 | 10    | Issue Classification | In-depth tutorial about implementing and evaluating an email classificator | [issue_classification_user_journy.ipynb](./src/examples/issue_classification_user_journey.ipynb)
 
-
 ## How-Tos
 The how-tos are quick lookups about how to do things. Compared to the tutorials, they are shorter and do not explain the concepts they are using in-depth.
 
@@ -224,7 +226,15 @@ The how-tos are quick lookups about how to do things. Compared to the tutorials,
 
 | [...implement a custom human evaluation](./src/examples/how_tos/how_to_human_evaluation_via_argilla.ipynb) | Necessary steps to create an evaluation with humans as a judge via Argilla |
 
+# Models
 
+Currently, we support a bunch of models accessible via the Aleph Alpha API. Depending on your local setup, you may even have additional models available.
+
+| Model                                                                                                                                                                     | Description                                                                                                                                                                                     |
+| ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [LuminousControlModel](https://aleph-alpha-intelligence-layer.readthedocs-hosted.com/en/latest/intelligence_layer.core.html#intelligence_layer.core.LuminousControlModel) | Any control-type model based on the first Luminous generation, specifically `luminous-base-control`, `luminous-extended-control` and `luminous-supreme-control`. Multilingual support.          |
+| [Llama2InstructModel](https://aleph-alpha-intelligence-layer.readthedocs-hosted.com/en/latest/intelligence_layer.core.html#intelligence_layer.core.Llama2InstructModel)   | Llama-2 based models prompted for one-turn instruction answering. Includes `llama-2-7b-chat`, `llama-2-13b-chat` and `llama-2-70b-chat`. Best suited for English tasks.                         |
+| [Llama3InstructModel](https://aleph-alpha-intelligence-layer.readthedocs-hosted.com/en/latest/intelligence_layer.core.html#intelligence_layer.core.Llama3InstructModel)   | Llama-3 based models prompted for one-turn instruction answering. Includes `llama-3-8b-instruct` and `llama-3-70b-instruct`. Best suited for English tasks and recommended over llama-2 models. |
 
 # Use-case index
 
