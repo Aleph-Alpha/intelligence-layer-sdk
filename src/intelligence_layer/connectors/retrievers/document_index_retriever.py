@@ -23,6 +23,7 @@ class DocumentIndexRetriever(BaseRetriever[DocumentPath]):
 
     Args:
         document_index: Client offering functionality for search.
+        index_name: The name of the index to be used.
         namespace: The namespace within the `DocumentIndexClient` where all collections are stored.
         collection: The collection within the namespace that holds the desired documents.
         k: The (top) number of documents to be returned by search.
