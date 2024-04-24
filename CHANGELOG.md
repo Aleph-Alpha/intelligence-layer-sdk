@@ -6,6 +6,7 @@
 - feature: `run_dataset` now takes `max_workers` as an additional argument. Defaults to 10, as it was hardcoded before.
 
 ### New Features
+- feature: `Llama3InstructModel` is now live to support llama-3 models in Aleph Alpha API
 
 ### Fixes
 
