@@ -230,6 +230,48 @@ class LuminousControlModel(ControlModel):
         )
 
 
+class Llama2InstructModel(ControlModel):
+    """A llama-2-*-chat model, prompt-optimized for single-turn instructions.
+
+    Args:
+        name: The name of a valid llama-2 model.
+        client: Aleph Alpha client instance for running model related API calls.
+            Defaults to the :class:`LimitedConcurrencyClient`
+    """
+
+    INSTRUCTION_PROMPT_TEMPLATE = PromptTemplate("""<s>[INST] <<SYS>>
+{% promptrange instruction %}{{instruction}}{% endpromptrange %}
+<</SYS>>{% if input %}
+
+{% promptrange input %}{{input}}{% endpromptrange %}{% endif %} [/INST]{% if response_prefix %}
+
+{{response_prefix}}{% endif %}""")
+
+    def __init__(
+        self,
+        name: Literal[
+            "llama-2-7b-chat",
+            "llama-2-13b-chat",
+            "llama-2-70b-chat",
+        ] = "llama-2-13b-instruct",
+        client: Optional[AlephAlphaClientProtocol] = None,
+    ) -> None:
+        super().__init__(name, client)
+
+    def complete(self, input: CompleteInput, tracer: Tracer) -> CompleteOutput:
+        return super().complete(input, tracer)
+
+    def to_instruct_prompt(
+        self,
+        instruction: str,
+        input: Optional[str] = None,
+        response_prefix: Optional[str] = None,
+    ) -> RichPrompt:
+        return self.INSTRUCTION_PROMPT_TEMPLATE.to_rich_prompt(
+            instruction=instruction, input=input, response_prefix=response_prefix
+        )
+
+
 class Llama3InstructModel(ControlModel):
     """A llama-3-*-instruct model.
 
