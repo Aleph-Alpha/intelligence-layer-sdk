@@ -288,7 +288,7 @@ class Llama3InstructModel(ControlModel):
 
 {% promptrange instruction %}{{instruction}}{% endpromptrange %}{% if input %}
 
-{% promptrange input %}{{input}}{% endpromptrange %}{% endif %}<eot_id><|start_header_id|>assistant<|end_header_id|>{% if response_prefix %}
+{% promptrange input %}{{input}}{% endpromptrange %}{% endif %}<|eot_id|><|start_header_id|>assistant<|end_header_id|>{% if response_prefix %}
 
 {{response_prefix}}{% endif %}"""
     )
