@@ -11,10 +11,19 @@
 - feature: `Llama2InstructModel` to support llama-2 models in Aleph Alpha API
 - feature: `Llama3InstructModel` to support llama-3 models in Aleph Alpha API
 - feature: `ExpandChunks`-task caches chunked documents by ID
+- feature: `DocumentIndexClient` now supports
+            - `create_index`
+            - `index_configuration`
+            - `assign_index_to_collection`
+            - `delete_index_from_collection`
+            - `list_assigned_index_names`
+- feature: `DocumentIndexRetriever` now supports `index_name`
 - feature: `Runner.run_dataset` now has a configurable number of workers via `max_workers` and defaults to the previous value, which is 10.
 
 ### Fixes
- - fix: `HuggingFaceRepository` no longer is a dataset repository. This also means that `HuggingFaceAggregationRepository` no longer is a dataset repository.
+- refactor: rename `index` parameter in `DocumentIndex.search()` to `index_name`
+- fix: `HuggingFaceRepository` no longer is a dataset repository. This also means that `HuggingFaceAggregationRepository` no longer is a dataset repository.
+
 
 ### Deprecations
 - `RetrieverBasedQa` is now deprecated and will be removed in future versions. We recommend using `MultipleChunkRetrieverQa` instead.
@@ -24,13 +33,14 @@
 ### Breaking Changes
 - breaking change: `ExpandChunksOutput` now returns `ChunkWithStartEndIndices` instead of `TextChunk`
 - breaking change: `MultipleChunkRetrieverQa`'s `AnswerSource` now contains `EnrichedChunk` instead of just the `TextChunk`
+- breaking change: `DocumentIndexClient` method `asymmetric_search()` has been removed
+- breaking change: `DocumentIndexRetriever` now additionally needs `index_name`
 
 ### New Features
 
 ### Fixes
 - fix: `ChunkWithIndices` now additionally returns end_index
 - fix: `DocumentPath` and `CollectionPath` are now immutable
-
 
 ## 0.9.1
 
@@ -85,13 +95,11 @@
 - feature: Add optional argument to set an id when creating a `Dataset` via `DatasetRepository.create_dataset(..)`
 - feature: Traces now log exceptions using the `ErrorValue` type.
 
-
 - Documentation:
   - feature: Add info on how to run tests in VSCode
   - feature: Add `issue_classification_user_journey` notebook.
   - feature: Add documentation of newly added data retrieval methods `how_to_retrieve_data_for_analysis`
   - feature: Add documentation of release workflow
-
 
 ### Fixes
 - fix: Fix version number in pyproject.toml in IL

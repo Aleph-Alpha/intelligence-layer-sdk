@@ -17,6 +17,8 @@ from .document_index.document_index import DocumentSearchResult as DocumentSearc
 from .document_index.document_index import (
     ExternalServiceUnavailable as ExternalServiceUnavailable,
 )
+from .document_index.document_index import IndexConfiguration as IndexConfiguration
+from .document_index.document_index import IndexPath as IndexPath
 from .document_index.document_index import InternalError as InternalError
 from .document_index.document_index import InvalidInput as InvalidInput
 from .document_index.document_index import ResourceNotFound as ResourceNotFound

@@ -1,13 +1,37 @@
 from datetime import datetime
 from http import HTTPStatus
 from json import dumps
-from typing import Annotated, Any, Mapping, Optional, Sequence
+from typing import Annotated, Any, Literal, Mapping, Optional, Sequence
 
 import requests
 from pydantic import BaseModel, Field
 from requests import HTTPError
 
 from intelligence_layer.connectors.base.json_serializable import JsonSerializable
+
+
+class IndexPath(BaseModel, frozen=True):
+    """Path to an index.
+
+    Args:
+        namespace: Holds collections.
+        index: The name of the index, holds a config.
+    """
+
+    namespace: str
+    index: str
+
+
+class IndexConfiguration(BaseModel):
+    """Configuration of an index.
+
+    Args:
+        embedding_type: "symmetric" or "asymmetric" embedding type.
+        chunk_size: The maximum size of the chunks in tokens to be used for the index.
+    """
+
+    embedding_type: Literal["symmetric", "asymmetric"]
+    chunk_size: int
 
 
 class DocumentContents(BaseModel):
@@ -292,8 +316,9 @@ class DocumentIndexClient:
         ...     ),
         ...     contents=DocumentContents.from_text("Germany is a country located in ..."),
         ... )
-        >>> search_result = document_index.asymmetric_search(
+        >>> search_result = document_index.search(
         ...     collection_path=collection_path,
+        ...     index_name="asymmetric",
         ...     search_query=SearchQuery(
         ...         query="What is the capital of Germany", max_results=4, min_score=0.5
         ...     ),
@@ -367,6 +392,89 @@ class DocumentIndexClient:
             CollectionPath(namespace=namespace, collection=collection)
             for collection in response.json()
         ]
+
+    def create_index(
+        self, index_path: IndexPath, index_configuration: IndexConfiguration
+    ) -> None:
+        """Creates an index in a namespace.
+
+        Args:
+            index_path: Path to the index.
+            index_configuration: Configuration of the index to be created.
+        """
+
+        url = f"{self._base_document_index_url}/indexes/{index_path.namespace}/{index_path.index}"
+
+        data = {
+            "chunk_size": index_configuration.chunk_size,
+            "embedding_type": index_configuration.embedding_type,
+        }
+        response = requests.put(url, data=dumps(data), headers=self.headers)
+        self._raise_for_status(response)
+
+    def index_configuration(self, index_path: IndexPath) -> IndexConfiguration:
+        """Retrieve the configuration of an index in a namespace given its name.
+
+        Args:
+            index_path: Path to the index.
+
+        Returns:
+            Configuration of the index.
+        """
+
+        url = f"{self._base_document_index_url}/indexes/{index_path.namespace}/{index_path.index}"
+        response = requests.get(url, headers=self.headers)
+        self._raise_for_status(response)
+        response_json: Mapping[str, Any] = response.json()
+        return IndexConfiguration(
+            embedding_type=response_json["embedding_type"],
+            chunk_size=response_json["chunk_size"],
+        )
+
+    def assign_index_to_collection(
+        self, collection_path: CollectionPath, index_name: str
+    ) -> None:
+        """Assign an index to a collection.
+
+        Args:
+            collection_path: Path to the collection of interest.
+            index_name: Name of the index.
+        """
+
+        url = f"{self._base_document_index_url}/collections/{collection_path.namespace}/{collection_path.collection}/indexes/{index_name}"
+        response = requests.put(url, headers=self.headers)
+        self._raise_for_status(response)
+
+    def delete_index_from_collection(
+        self, collection_path: CollectionPath, index_name: str
+    ) -> None:
+        """Delete an index from a collection.
+
+        Args:
+            index_name: Name of the index.
+            collection_path: Path to the collection of interest.
+        """
+
+        url = f"{self._base_document_index_url}/collections/{collection_path.namespace}/{collection_path.collection}/indexes/{index_name}"
+        response = requests.delete(url, headers=self.headers)
+        self._raise_for_status(response)
+
+    def list_assigned_index_names(
+        self, collection_path: CollectionPath
+    ) -> Sequence[str]:
+        """List all indexes assigned to a collection.
+
+        Args:
+            collection_path: Path to the collection of interest.
+
+        Returns:
+            List of all indexes that are assigned to the collection.
+        """
+
+        url = f"{self._base_document_index_url}/collections/{collection_path.namespace}/{collection_path.collection}/indexes"
+        response = requests.get(url, headers=self.headers)
+        self._raise_for_status(response)
+        return [str(index_name) for index_name in response.json()]
 
     def add_document(
         self,
@@ -450,22 +558,21 @@ class DocumentIndexClient:
     def search(
         self,
         collection_path: CollectionPath,
-        index: str,
+        index_name: str,
         search_query: SearchQuery,
     ) -> Sequence[DocumentSearchResult]:
         """Search through a collection with a `search_query`.
 
         Args:
             collection_path: Path to the collection of interest.
-            index: Name of the search configuration.
-                Currently only supports "asymmetric".
+            index_name: Name of the index to search with.
             search_query: The query to search with.
 
         Returns:
             Result of the search operation. Will be empty if nothing was retrieved.
         """
 
-        url = f"{self._base_document_index_url}/collections/{collection_path.namespace}/{collection_path.collection}/indexes/{index}/search"
+        url = f"{self._base_document_index_url}/collections/{collection_path.namespace}/{collection_path.collection}/indexes/{index_name}/search"
         data = {
             "query": [{"modality": "text", "text": search_query.query}],
             "max_results": search_query.max_results,
@@ -475,23 +582,6 @@ class DocumentIndexClient:
         response = requests.post(url, data=dumps(data), headers=self.headers)
         self._raise_for_status(response)
         return [DocumentSearchResult._from_search_response(r) for r in response.json()]
-
-    def asymmetric_search(
-        self,
-        collection_path: CollectionPath,
-        search_query: SearchQuery,
-    ) -> Sequence[DocumentSearchResult]:
-        """Search through a collection with a `search_query` using the asymmetric search configuration.
-
-        Args:
-            collection_path: Path to the collection of interest.
-            search_query: The query to search with.
-
-        Returns:
-            Result of the search operation. Will be empty if nothing was retrieved.
-        """
-
-        return self.search(collection_path, "asymmetric", search_query)
 
     def _raise_for_status(self, response: requests.Response) -> None:
         try:

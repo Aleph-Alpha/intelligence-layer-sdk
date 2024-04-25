@@ -9,14 +9,20 @@ from intelligence_layer.connectors.document_index.document_index import (
     DocumentFilterQueryParams,
     DocumentIndexClient,
     DocumentPath,
+    IndexPath,
     ResourceNotFound,
     SearchQuery,
 )
 
 
 @fixture
-def collection_path() -> CollectionPath:
-    return CollectionPath(namespace="aleph-alpha", collection="ci-collection")
+def aleph_alpha_namespace() -> str:
+    return "aleph-alpha"
+
+
+@fixture
+def collection_path(aleph_alpha_namespace: str) -> CollectionPath:
+    return CollectionPath(namespace=aleph_alpha_namespace, collection="ci-collection")
 
 
 @fixture
@@ -101,8 +107,8 @@ def test_document_index_searches_asymmetrically(
         document_name="test_document_index_searches_asymmetrically",  # is always there
     )
     search_query = SearchQuery(query="Who likes pizza?", max_results=1, min_score=0.0)
-    search_result = document_index.asymmetric_search(
-        document_path.collection_path, search_query
+    search_result = document_index.search(
+        document_path.collection_path, "asymmetric", search_query
     )
 
     assert "Mark" in search_result[0].section
@@ -188,3 +194,16 @@ def test_document_path_is_immutable() -> None:
     dictionary[path] = 1
 
     assert dictionary[path] == 1
+
+
+def test_document_indexes_are_returned(
+    document_index: DocumentIndexClient, collection_path: CollectionPath
+) -> None:
+    index_names = document_index.list_assigned_index_names(collection_path)
+    index_name = index_names[0]
+    index_configuration = document_index.index_configuration(
+        IndexPath(namespace=collection_path.namespace, index=index_name)
+    )
+
+    assert index_configuration.embedding_type == "asymmetric"
+    assert index_configuration.chunk_size == 512

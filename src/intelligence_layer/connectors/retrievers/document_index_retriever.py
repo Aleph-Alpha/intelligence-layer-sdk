@@ -23,6 +23,7 @@ class DocumentIndexRetriever(BaseRetriever[DocumentPath]):
 
     Args:
         document_index: Client offering functionality for search.
+        index_name: The name of the index to be used.
         namespace: The namespace within the `DocumentIndexClient` where all collections are stored.
         collection: The collection within the namespace that holds the desired documents.
         k: The (top) number of documents to be returned by search.
@@ -32,19 +33,21 @@ class DocumentIndexRetriever(BaseRetriever[DocumentPath]):
     >>> import os
     >>> from intelligence_layer.connectors import DocumentIndexClient, DocumentIndexRetriever
     >>> document_index = DocumentIndexClient(os.getenv("AA_TOKEN"))
-    >>> retriever = DocumentIndexRetriever(document_index, "aleph-alpha", "wikipedia-de", 3)
+    >>> retriever = DocumentIndexRetriever(document_index, "asymmetric", "aleph-alpha", "wikipedia-de", 3)
     >>> documents = retriever.get_relevant_documents_with_scores("Who invented the airplane?")
     """
 
     def __init__(
         self,
         document_index: DocumentIndexClient,
+        index_name: str,
         namespace: str,
         collection: str,
         k: int,
         threshold: float = 0.5,
     ) -> None:
         self._document_index = document_index
+        self._index_name = index_name
         self._collection_path = CollectionPath(
             namespace=namespace, collection=collection
         )
@@ -71,8 +74,8 @@ class DocumentIndexRetriever(BaseRetriever[DocumentPath]):
         search_query = SearchQuery(
             query=query, max_results=self._k, min_score=self._threshold
         )
-        response = self._document_index.asymmetric_search(
-            self._collection_path, search_query
+        response = self._document_index.search(
+            self._collection_path, self._index_name, search_query
         )
         relevant_chunks = [
             SearchResult(
