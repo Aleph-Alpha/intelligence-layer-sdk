@@ -10,6 +10,30 @@ from requests import HTTPError
 from intelligence_layer.connectors.base.json_serializable import JsonSerializable
 
 
+class IndexPath(BaseModel, frozen=True):
+    """Path to an index.
+
+    Args:
+        namespace: Holds collections.
+        index: 
+    """
+
+    namespace: str
+    index: str
+
+
+class IndexConfiguration(BaseModel):
+    """Configuration of an index.
+
+    Args:
+        embedding_type: "symmetric" or "asymmetric" embedding type.
+        chunk_size: The maximum size of the chunks in tokens to be used for the index.
+    """
+
+    embedding_type: Literal["symmetric", "asymmetric"]
+    chunk_size: int
+
+
 class DocumentContents(BaseModel):
     """Actual content of a document.
 
@@ -204,20 +228,6 @@ class DocumentSearchResult(BaseModel):
         )
 
 
-class IndexConfiguration(BaseModel):
-    """Configuration of an index.
-
-    Args:
-        name: Name of the index configuration.
-        embedding_type: "symmetric" or "asymmetric" embedding type.
-        chunk_size: The maximum size of the chunks in tokens to be used for the index.
-    """
-
-    name: str
-    embedding_type: Literal["symmetric", "asymmetric"]
-    chunk_size: int
-
-
 class DocumentIndexError(RuntimeError):
     """Raised in case of any `DocumentIndexClient`-related errors.
 
@@ -384,7 +394,7 @@ class DocumentIndexClient:
         ]
 
     def create_index(
-        self, namespace: str, index_configuration: IndexConfiguration
+        self, index_path: IndexPath, index_configuration: IndexConfiguration
     ) -> None:
         """Creates an index in a namespace.
 
@@ -393,7 +403,7 @@ class DocumentIndexClient:
             index_configuration: Configuration of the index to be created.
         """
 
-        url = f"{self._base_document_index_url}/indexes/{namespace}/{index_configuration.name}"
+        url = f"{self._base_document_index_url}/indexes/{index_path.namespace}/{index_path.index}"
 
         data = {
             "chunk_size": index_configuration.chunk_size,
@@ -403,7 +413,7 @@ class DocumentIndexClient:
         self._raise_for_status(response)
 
     def index_configuration(
-        self, namespace: str, index_name: str
+        self, index_path: IndexPath
     ) -> IndexConfiguration:
         """Retrieve the configuration of an index in a namespace given its name.
 
@@ -415,12 +425,11 @@ class DocumentIndexClient:
             Configuration of the index.
         """
 
-        url = f"{self._base_document_index_url}/indexes/{namespace}/{index_name}"
+        url = f"{self._base_document_index_url}/indexes/{index_path.namespace}/{index_path.index}"
         response = requests.get(url, headers=self.headers)
         self._raise_for_status(response)
         response_json: Mapping[str, Any] = response.json()
         return IndexConfiguration(
-            name=index_name,
             embedding_type=response_json["embedding_type"],
             chunk_size=response_json["chunk_size"],
         )
