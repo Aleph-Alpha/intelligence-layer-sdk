@@ -3,14 +3,16 @@
 ## Unreleased
 
 ### Breaking Changes
-- feature: `run_dataset` now takes `max_workers` as an additional argument. Defaults to 10, as it was hardcoded before.
+- feature: `HuggingFaceDatasetRepository` now has a parameter `caching`, which caches a examples of a dataset once loaded. This is `True` by default. This drastically reduces network traffic. For non-breaking changes, set it to `False`.
 
 ### New Features
 - feature: `Llama2InstructModel` to support llama-2 models in Aleph Alpha API
 - feature: `Llama3InstructModel` to support llama-3 models in Aleph Alpha API
 - feature: `ExpandChunks`-task caches chunked documents by ID
+- feature: `Runner.run_dataset` now has a configurable number of workers via `max_workers` and defaults to the previous value, which is 10.
 
 ### Fixes
+ - fix: `HuggingFaceRepository` no longer is a dataset repository. This also means that `HuggingFaceAggregationRepository` no longer is a dataset repository.
 
 ## 0.10.0
 

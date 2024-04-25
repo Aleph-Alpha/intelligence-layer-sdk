@@ -25,7 +25,7 @@ def file_dataset_repository(tmp_path: Path) -> FileDatasetRepository:
 @fixture
 def mocked_hugging_face_dataset_repository(
     temp_file_system: MemoryFileSystem,
-) -> Iterable[HuggingFaceDatasetRepository]:
+) -> HuggingFaceDatasetRepository:
     class_to_patch = "intelligence_layer.evaluation.dataset.hugging_face_dataset_repository.HuggingFaceDatasetRepository"
     with patch(f"{class_to_patch}.create_repository", autospec=True), patch(
         f"{class_to_patch}.delete_repository",
@@ -37,7 +37,7 @@ def mocked_hugging_face_dataset_repository(
             private=True,
         )
         repo._file_system = temp_file_system
-        yield repo
+        return repo
 
 
 test_repository_fixtures = [

@@ -1,12 +1,75 @@
 from pathlib import Path
 from typing import Iterable, Sequence, Tuple
+from unittest.mock import patch
 from uuid import uuid4
 
 import pytest
+from fsspec import AbstractFileSystem  # type: ignore
 from pydantic import BaseModel
 from pytest import fixture
 
+from intelligence_layer.core.task import Input
 from intelligence_layer.evaluation import Dataset, Example, HuggingFaceDatasetRepository
+from intelligence_layer.evaluation.dataset.domain import ExpectedOutput
+
+
+class HuggingFaceDatasetRepositoryTestWrapper(HuggingFaceDatasetRepository):
+    def __init__(
+        self, repository_id: str, token: str, private: bool, caching: bool = True
+    ) -> None:
+        super().__init__(repository_id, token, private, caching)
+        self.counter = 0
+
+    def examples(
+        self,
+        dataset_id: str,
+        input_type: type[Input],
+        expected_output_type: type[ExpectedOutput],
+    ) -> Iterable[Example[Input, ExpectedOutput]]:
+        self.counter += 1
+        return super().examples(dataset_id, input_type, expected_output_type)
+
+
+@fixture
+def cached_mocked_hugging_face_dataset_wrapper(
+    temp_file_system: AbstractFileSystem,
+) -> HuggingFaceDatasetRepository:
+    class_to_patch = "intelligence_layer.evaluation.dataset.hugging_face_dataset_repository.HuggingFaceDatasetRepository"
+    with patch(f"{class_to_patch}.create_repository", autospec=True), patch(
+        f"{class_to_patch}.delete_repository",
+        autospec=True,
+    ):
+        repo = HuggingFaceDatasetRepositoryTestWrapper(
+            repository_id="doesn't-matter",
+            token="non-existing-token",
+            private=True,
+            caching=True,
+        )
+        repo._file_system = temp_file_system
+        return repo
+
+
+def test_opens_files_only_once_when_reading_multiple_examples(
+    cached_mocked_hugging_face_dataset_wrapper: HuggingFaceDatasetRepositoryTestWrapper,
+) -> None:
+    dataset = cached_mocked_hugging_face_dataset_wrapper.create_dataset([], "temp")
+
+    cached_mocked_hugging_face_dataset_wrapper.example(dataset.id, "", str, str)
+    cached_mocked_hugging_face_dataset_wrapper.example(dataset.id, "", str, str)
+
+    assert cached_mocked_hugging_face_dataset_wrapper.counter == 1
+
+
+def test_forgets_datasets_after_deleting_one(
+    cached_mocked_hugging_face_dataset_wrapper: HuggingFaceDatasetRepositoryTestWrapper,
+) -> None:
+    dataset = cached_mocked_hugging_face_dataset_wrapper.create_dataset([], "temp")
+
+    cached_mocked_hugging_face_dataset_wrapper.example(dataset.id, "", str, str)
+    cached_mocked_hugging_face_dataset_wrapper.delete_dataset(dataset.id)
+
+    with pytest.raises(ValueError):
+        cached_mocked_hugging_face_dataset_wrapper.examples(dataset.id, str, str)
 
 
 class DummyAggregatedEvaluation(BaseModel):
