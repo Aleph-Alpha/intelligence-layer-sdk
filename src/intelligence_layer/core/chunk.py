@@ -51,14 +51,12 @@ class Chunk(Task[ChunkInput, ChunkOutput]):
 
     def __init__(self, model: AlephAlphaModel, max_tokens_per_chunk: int = 512):
         super().__init__()
-        self._splitter = TextSplitter.from_huggingface_tokenizer(model.get_tokenizer())
-        self._max_tokens_per_chunk = max_tokens_per_chunk
+        self._splitter = TextSplitter.from_huggingface_tokenizer(
+            model.get_tokenizer(), capacity=max_tokens_per_chunk
+        )
 
     def do_run(self, input: ChunkInput, task_span: TaskSpan) -> ChunkOutput:
-        chunks = [
-            TextChunk(t)
-            for t in self._splitter.chunks(input.text, self._max_tokens_per_chunk)
-        ]
+        chunks = [TextChunk(t) for t in self._splitter.chunks(input.text)]
         return ChunkOutput(chunks=chunks)
 
 
@@ -101,9 +99,8 @@ class ChunkWithIndices(Task[ChunkInput, ChunkWithIndicesOutput]):
     def __init__(self, model: AlephAlphaModel, max_tokens_per_chunk: int = 512):
         super().__init__()
         self._splitter = TextSplitter.from_huggingface_tokenizer(
-            model.get_tokenizer(), trim_chunks=False
+            model.get_tokenizer(), capacity=max_tokens_per_chunk, trim=False
         )
-        self._max_tokens_per_chunk = max_tokens_per_chunk
 
     def do_run(self, input: ChunkInput, task_span: TaskSpan) -> ChunkWithIndicesOutput:
         chunks_with_indices = [
@@ -112,8 +109,6 @@ class ChunkWithIndices(Task[ChunkInput, ChunkWithIndicesOutput]):
                 start_index=start_index,
                 end_index=start_index + len(chunk),
             )
-            for (start_index, chunk) in self._splitter.chunk_indices(
-                input.text, self._max_tokens_per_chunk
-            )
+            for (start_index, chunk) in self._splitter.chunk_indices(input.text)
         ]
         return ChunkWithIndicesOutput(chunks_with_indices=chunks_with_indices)

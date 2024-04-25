@@ -149,7 +149,7 @@ class LanguageMatchesGrader:
     def _tokenize_text(
         text: str, lower_char_bound: int = 30, upper_char_bound: int = 200
     ) -> Sequence[str]:
-        return TextSplitter().chunks(text, (lower_char_bound, upper_char_bound))
+        return TextSplitter((lower_char_bound, upper_char_bound)).chunks(text)
 
     @classmethod
     def _get_scores_per_language(cls, text_chunks: Sequence[str]) -> dict[str, float]:
