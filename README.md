@@ -31,7 +31,7 @@ The key features of the Intelligence Layer are:
 - [License](#license)
 - [For Developers](#for-developers)
   - [Python: Naming Conventions](#python-naming-conventions)
-  - [Tests](#tests)
+  - [Executing tests](#executing-tests)
 
 # Installation
 
@@ -288,15 +288,17 @@ In addition, there are the following naming conventions:
 
 
 
-## Tests
-In VSCode
+## Executing tests
+**In VSCode**
 1. Sidebar > Testing
 2. Select pytest as framework for the tests
 3. Select `intelligence_layer/tests` as source of the tests
 
 You can then run the tests from the sidebar.
 
+**In a terminal**
 In order to run a local proxy w.r.t. to the CI pipeline (required to merge) you can run
 > scripts/all.sh
 
 This will run linters and all tests.
+The scripts to run single steps can also be found in the `scripts` folder.
