@@ -10,4 +10,4 @@ find src/examples -name "*.nbconvert.ipynb" -type f -delete
 find src/examples -name "*.ipynb" ! -name "performance_tips.ipynb" | xargs --max-args 1 --max-procs 6 poetry run jupyter nbconvert --to notebook --execute
 find src/examples -name "*.nbconvert.ipynb" -type f -delete
 
-./scripts/fastapi_example_test.sh
+poetry run ./scripts/fastapi_example_test.sh
