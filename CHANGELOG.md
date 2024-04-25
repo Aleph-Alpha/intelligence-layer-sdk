@@ -4,6 +4,8 @@
 
 ### Breaking Changes
 - feature: `HuggingFaceDatasetRepository` now has a parameter `caching`, which caches a examples of a dataset once loaded. This is `True` by default. This drastically reduces network traffic. For non-breaking changes, set it to `False`.
+- feature: `run_dataset` now takes `max_workers` as an additional argument. Defaults to 10, as it was hardcoded before.
+- breaking_change: `MultipleChunkRetrieverQa` does not take `insert_chunk_size`-parameter but instead takes `ExpandChunks`-task
 
 ### New Features
 - feature: `Llama2InstructModel` to support llama-2 models in Aleph Alpha API
@@ -13,6 +15,9 @@
 
 ### Fixes
  - fix: `HuggingFaceRepository` no longer is a dataset repository. This also means that `HuggingFaceAggregationRepository` no longer is a dataset repository.
+
+### Deprecations
+- `RetrieverBasedQa` is now deprecated and will be removed in future versions. We recommend using `MultipleChunkRetrieverQa` instead.
 
 ## 0.10.0
 
@@ -129,7 +134,6 @@
 - breaking change: Rename TextHighlightTask to TextHighlightbreaking change: Rename ChunkOverlaptTask to ChunkOverlap
 
 ### New Features
-
 - Aggregation:
   - feature: InstructComparisonArgillaAggregationLogic uses full evaluation set instead of sample for aggregation
 

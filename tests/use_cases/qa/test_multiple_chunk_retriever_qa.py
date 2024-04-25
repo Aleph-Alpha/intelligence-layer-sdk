@@ -1,16 +1,27 @@
 from pytest import fixture
 
 from intelligence_layer.connectors import QdrantInMemoryRetriever
-from intelligence_layer.core import NoOpTracer
+from intelligence_layer.core import LuminousControlModel, NoOpTracer
 from intelligence_layer.core.tracer.in_memory_tracer import InMemoryTracer
-from intelligence_layer.use_cases import MultipleChunkRetrieverQa, RetrieverBasedQaInput
+from intelligence_layer.use_cases import (
+    ExpandChunks,
+    MultipleChunkRetrieverQa,
+    RetrieverBasedQaInput,
+)
 
 
 @fixture
 def multiple_chunk_retriever_qa(
+    luminous_control_model: LuminousControlModel,
     asymmetric_in_memory_retriever: QdrantInMemoryRetriever,
 ) -> MultipleChunkRetrieverQa[int]:
-    return MultipleChunkRetrieverQa(retriever=asymmetric_in_memory_retriever)
+    return MultipleChunkRetrieverQa(
+        retriever=asymmetric_in_memory_retriever,
+        model=luminous_control_model,
+        expand_chunks=ExpandChunks(
+            asymmetric_in_memory_retriever, luminous_control_model, 256
+        ),
+    )
 
 
 def test_multiple_chunk_retriever_qa_using_in_memory_retriever(
