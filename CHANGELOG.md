@@ -12,6 +12,7 @@
 - feature: `Runner.run_dataset` now has a configurable number of workers via `max_workers` and defaults to the previous value, which is 10.
 
 ### Fixes
+ - fix: `HuggingFaceRepository` no longer is a dataset repository. This also means that `HuggingFaceAggregationRepository` no longer is a dataset repository.
 
 ## 0.10.0
 
