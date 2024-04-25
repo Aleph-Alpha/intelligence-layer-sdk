@@ -399,7 +399,7 @@ class DocumentIndexClient:
         """Creates an index in a namespace.
 
         Args:
-            namespace: For a collection of documents. Typically corresponds to an organization.
+            index_path: Path to the index.
             index_configuration: Configuration of the index to be created.
         """
 
@@ -412,14 +412,11 @@ class DocumentIndexClient:
         response = requests.put(url, data=dumps(data), headers=self.headers)
         self._raise_for_status(response)
 
-    def index_configuration(
-        self, index_path: IndexPath
-    ) -> IndexConfiguration:
+    def index_configuration(self, index_path: IndexPath) -> IndexConfiguration:
         """Retrieve the configuration of an index in a namespace given its name.
 
         Args:
-            namespace: For a collection of documents. Typically corresponds to an organization.
-            index_name: Name of the index.
+            index_path: Path to the index.
 
         Returns:
             Configuration of the index.
@@ -477,7 +474,7 @@ class DocumentIndexClient:
         url = f"{self._base_document_index_url}/collections/{collection_path.namespace}/{collection_path.collection}/indexes"
         response = requests.get(url, headers=self.headers)
         self._raise_for_status(response)
-        return [index["index"] for index in response.json()]
+        return [str(index_name) for index_name in response.json()]
 
     def add_document(
         self,

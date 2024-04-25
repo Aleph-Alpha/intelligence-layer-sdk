@@ -9,6 +9,7 @@ from intelligence_layer.connectors.document_index.document_index import (
     DocumentFilterQueryParams,
     DocumentIndexClient,
     DocumentPath,
+    IndexPath,
     ResourceNotFound,
     SearchQuery,
 )
@@ -201,7 +202,8 @@ def test_document_indexes_are_returned(
     index_names = document_index.list_assigned_index_names(collection_path)
     index_name = index_names[0]
     index_configuration = document_index.index_configuration(
-        collection_path.namespace, index_name=index_name
+        IndexPath(namespace=collection_path.namespace, index=index_name)
     )
 
-    assert index_name == index_configuration.name
+    assert index_configuration.embedding_type == "asymmetric"
+    assert index_configuration.chunk_size == 512
