@@ -99,7 +99,7 @@ class RetrieverBasedQa(
         self, input: RetrieverBasedQaInput, task_span: TaskSpan
     ) -> RetrieverBasedQaOutput[ID]:
         warnings.warn(
-            "`RetrieverBasedQa` is deprecated and will be removed in future versions.",
+            "`RetrieverBasedQa` is deprecated and will be removed in future versions. We recommend using `MultipleChunkRetrieverQa` instead.",
             DeprecationWarning,
         )
 
