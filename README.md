@@ -31,6 +31,7 @@ The key features of the Intelligence Layer are:
 - [License](#license)
 - [For Developers](#for-developers)
   - [Python: Naming Conventions](#python-naming-conventions)
+  - [Executing tests](#executing-tests)
 
 # Installation
 
@@ -203,7 +204,7 @@ The tutorials aim to guide you through implementing several common use-cases wit
 | 6     | Document Index     | Connect your proprietary knowledge base              | [document_index.ipynb](./src/examples/document_index.ipynb)     |
 | 7     | Human Evaluation   | Connect to Argilla for manual evaluation             | [human_evaluation.ipynb](./src/examples/human_evaluation.ipynb) |
 | 8     | Performance tips   | Contains some small tips for performance             | [performance_tips.ipynb](./src/examples/performance_tips.ipynb) |
-| 9     | Deployment         | Shows how to deploy a Task in a minimal FastAPI app. | [fastapi_tutorial.md](./src/examples/fastapi_tutorial.md)       |
+| 9     | Deployment         | Shows how to deploy a Task in a minimal FastAPI app. | [fastapi_tutorial.ipynb](./src/examples/fastapi_tutorial.ipynb) |
 | 10    | Issue Classification | In-depth tutorial about implementing and evaluating an email classificator | [issue_classification_user_journy.ipynb](./src/examples/issue_classification_user_journey.ipynb)
 
 ## How-Tos
@@ -287,15 +288,17 @@ In addition, there are the following naming conventions:
 
 
 
-## Tests
-In VSCode
+## Executing tests
+**In VSCode**
 1. Sidebar > Testing
 2. Select pytest as framework for the tests
 3. Select `intelligence_layer/tests` as source of the tests
 
 You can then run the tests from the sidebar.
 
+**In a terminal**
 In order to run a local proxy w.r.t. to the CI pipeline (required to merge) you can run
 > scripts/all.sh
 
 This will run linters and all tests.
+The scripts to run single steps can also be found in the `scripts` folder.
