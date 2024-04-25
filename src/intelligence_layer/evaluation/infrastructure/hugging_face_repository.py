@@ -2,12 +2,12 @@ from pathlib import Path
 
 import huggingface_hub  # type: ignore
 
-from intelligence_layer.evaluation.dataset.file_dataset_repository import (
-    FileSystemDatasetRepository,
+from intelligence_layer.evaluation.infrastructure.file_system_based_repository import (
+    FileSystemBasedRepository,
 )
 
 
-class HuggingFaceRepository(FileSystemDatasetRepository):
+class HuggingFaceRepository(FileSystemBasedRepository):
     """HuggingFace base repository"""
 
     _REPO_TYPE = "dataset"
