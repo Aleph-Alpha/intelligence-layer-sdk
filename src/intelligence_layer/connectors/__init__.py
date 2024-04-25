@@ -6,6 +6,8 @@ from .argilla.argilla_client import Question as Question
 from .argilla.argilla_client import Record as Record
 from .argilla.argilla_client import RecordData as RecordData
 from .base.json_serializable import JsonSerializable as JsonSerializable
+from .document_index.document_index import IndexPath as IndexPath
+from .document_index.document_index import IndexConfiguration as IndexConfiguration
 from .document_index.document_index import CollectionPath as CollectionPath
 from .document_index.document_index import ConstraintViolation as ConstraintViolation
 from .document_index.document_index import DocumentContents as DocumentContents
