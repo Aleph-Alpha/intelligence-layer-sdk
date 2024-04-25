@@ -338,7 +338,8 @@ class Evaluator(Generic[Input, Output, ExpectedOutput, Evaluation]):
                             args[0], args[1], abort_on_error, *args[2]
                         ),
                         generate_evaluation_inputs(),
-                    )
+                    ),
+                    desc="Evaluating",
                 )
             )
 

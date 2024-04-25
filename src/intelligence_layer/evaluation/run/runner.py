@@ -126,7 +126,7 @@ class Runner(Generic[Input, Output]):
         run_id = str(uuid4())
         start = utc_now()
         with ThreadPoolExecutor(max_workers=max_workers) as executor:
-            ids_and_outputs = tqdm(executor.map(run, examples), desc="Evaluating")
+            ids_and_outputs = tqdm(executor.map(run, examples), desc="Running")
 
             failed_count = 0
             successful_count = 0
