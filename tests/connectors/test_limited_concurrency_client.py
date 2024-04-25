@@ -3,6 +3,7 @@ from threading import Lock
 from time import sleep
 from typing import cast
 
+import pytest
 from aleph_alpha_client import CompletionRequest, CompletionResponse, Prompt
 from pytest import fixture
 
@@ -37,6 +38,25 @@ class ConcurrencyCountingClient:
         )
 
 
+class BusyClient:
+    def __init__(
+        self,
+        return_value: CompletionResponse | Exception,
+    ) -> None:
+        self.number_of_retries: int = 0
+        self.return_value = return_value
+
+    def complete(self, request: CompletionRequest, model: str) -> CompletionResponse:
+        self.number_of_retries += 1
+        if self.number_of_retries < 2:
+            raise Exception(503)
+        else:
+            if isinstance(self.return_value, Exception):
+                raise self.return_value
+            else:
+                return self.return_value
+
+
 TEST_MAX_CONCURRENCY = 3
 
 
@@ -66,3 +86,34 @@ def test_methods_concurrency_is_limited(
             ["model"] * TEST_MAX_CONCURRENCY * 10,
         )
     assert concurrency_counting_client.max_concurrency_counter == TEST_MAX_CONCURRENCY
+
+
+def test_limited_concurrency_client_retries() -> None:
+    expected_completion = CompletionResponse(
+        model_version="model-version",
+        completions=[],
+        optimized_prompt=None,
+        num_tokens_generated=0,
+        num_tokens_prompt_total=0,
+    )
+    busy_client = BusyClient(return_value=expected_completion)
+    limited_concurrency_client = LimitedConcurrencyClient(
+        cast(AlephAlphaClientProtocol, busy_client)
+    )
+    completion = limited_concurrency_client.complete(
+        CompletionRequest(prompt=Prompt("")), "model"
+    )
+    assert completion == expected_completion
+
+
+def test_limited_concurrency_client_throws_exception() -> None:
+    expected_exception = Exception(404)
+    busy_client = BusyClient(return_value=expected_exception)
+    limited_concurrency_client = LimitedConcurrencyClient(
+        cast(AlephAlphaClientProtocol, busy_client)
+    )
+    with pytest.raises(Exception) as e:
+        limited_concurrency_client.complete(
+            CompletionRequest(prompt=Prompt("")), "model"
+        )
+    assert e.value == expected_exception

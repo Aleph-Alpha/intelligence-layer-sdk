@@ -1,3 +1,4 @@
+import time
 from functools import lru_cache
 from os import getenv
 from threading import Semaphore
@@ -102,14 +103,19 @@ class LimitedConcurrencyClient:
         client: The wrapped `Client`.
         max_concurrency: the maximal number of requests that may run concurrently
             against the API.
+        max_retry_time: the maximal time in seconds a complete is retried in case a `BusyError` is raised.
 
     """
 
     def __init__(
-        self, client: AlephAlphaClientProtocol, max_concurrency: int = 20
+        self,
+        client: AlephAlphaClientProtocol,
+        max_concurrency: int = 20,
+        max_retry_time: int = 600,
     ) -> None:
         self._client = client
         self._concurrency_limit_semaphore = Semaphore(max_concurrency)
+        self._max_retry_time = max_retry_time
 
     @classmethod
     @lru_cache(maxsize=1)
@@ -143,7 +149,27 @@ class LimitedConcurrencyClient:
         model: str,
     ) -> CompletionResponse:
         with self._concurrency_limit_semaphore:
-            return self._client.complete(request, model)
+            retries = 0
+            start_time = time.time()
+            latest_exception = None
+            while time.time() - start_time < self._max_retry_time:
+                try:
+                    return self._client.complete(request, model)
+                except Exception as e:
+                    latest_exception = e
+                    if e.args[0] == 503:
+                        time.sleep(
+                            min(
+                                2**retries,
+                                self._max_retry_time - (time.time() - start_time),
+                            )
+                        )
+                        retries += 1
+                        continue
+                    else:
+                        raise e
+            assert latest_exception is not None
+            raise latest_exception
 
     def get_version(self) -> str:
         with self._concurrency_limit_semaphore:
