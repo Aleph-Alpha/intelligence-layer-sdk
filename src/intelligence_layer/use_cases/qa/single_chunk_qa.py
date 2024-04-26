@@ -120,7 +120,7 @@ class SingleChunkQa(Task[SingleChunkQaInput, SingleChunkQaOutput]):
         model: ControlModel | None = None,
         text_highlight: Task[TextHighlightInput, TextHighlightOutput] | None = None,
         instruction_config: Mapping[Language, QaSetup] = QA_INSTRUCTIONS,
-        maximum_tokens: int = 64,
+        maximum_tokens: int = 256,
     ):
         super().__init__()
         self._model = model or LuminousControlModel("luminous-supreme-control")
