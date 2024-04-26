@@ -38,10 +38,10 @@ opentelemetry-exporter-otlp-proto-http = "1.23.0"
 # lint & format
 mypy = "^1.10.0"
 nbqa = "^1.8.5"
-ruff = "^0.4.1"
+ruff = "^0.4.2"
 pre-commit = "*"
 pylama = { extras = ["radon", "vulture", "toml"], version = "^8.4.1" }
-faker = "^24.11.0"
+faker = "^24.14.0"
 
 # tests
 pytest = "*"
