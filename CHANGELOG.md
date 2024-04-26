@@ -4,8 +4,8 @@
 
 ### Breaking Changes
 - feature: `HuggingFaceDatasetRepository` now has a parameter `caching`, which caches a examples of a dataset once loaded. This is `True` by default. This drastically reduces network traffic. For non-breaking changes, set it to `False`.
-- feature: `run_dataset` now takes `max_workers` as an additional argument. Defaults to 10, as it was hardcoded before.
 - breaking_change: `MultipleChunkRetrieverQa` does not take `insert_chunk_size`-parameter but instead takes `ExpandChunks`-task
+- breaking_change: the `issue_cassification_user_journey` notebook is moved to its own repository
 
 ### New Features
 - feature: `Llama2InstructModel` to support llama-2 models in Aleph Alpha API
