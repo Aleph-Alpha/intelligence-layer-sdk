@@ -2,11 +2,12 @@ import time
 from functools import lru_cache
 from os import getenv
 from threading import Semaphore
-from typing import Any, Mapping, Optional, Protocol, Sequence
+from typing import Any, Callable, Mapping, Optional, Protocol, Sequence, TypeVar
 
 from aleph_alpha_client import (
     BatchSemanticEmbeddingRequest,
     BatchSemanticEmbeddingResponse,
+    BusyError,
     Client,
     CompletionRequest,
     CompletionResponse,
@@ -111,7 +112,7 @@ class LimitedConcurrencyClient:
         self,
         client: AlephAlphaClientProtocol,
         max_concurrency: int = 20,
-        max_retry_time: int = 600,
+        max_retry_time: int = 24 * 60 * 60,  # one day in seconds
     ) -> None:
         self._client = client
         self._concurrency_limit_semaphore = Semaphore(max_concurrency)
@@ -143,41 +144,47 @@ class LimitedConcurrencyClient:
 
         return cls(Client(token, host=host))
 
+    T = TypeVar("T")
+
+    def _retry_on_busy_error(self, func: Callable[[], T]) -> T:
+        retries = 0
+        start_time = time.time()
+        latest_exception = None
+        while (
+            time.time() - start_time < self._max_retry_time or self._max_retry_time < 0
+        ):
+            try:
+                return func()
+            except BusyError as e:
+                latest_exception = e
+                time.sleep(
+                    min(
+                        2**retries,
+                        self._max_retry_time - (time.time() - start_time),
+                    )
+                )
+                retries += 1
+                continue
+        assert latest_exception is not None
+        raise latest_exception
+
     def complete(
         self,
         request: CompletionRequest,
         model: str,
     ) -> CompletionResponse:
         with self._concurrency_limit_semaphore:
-            retries = 0
-            start_time = time.time()
-            latest_exception = None
-            while time.time() - start_time < self._max_retry_time:
-                try:
-                    return self._client.complete(request, model)
-                except Exception as e:
-                    latest_exception = e
-                    if e.args[0] == 503:
-                        time.sleep(
-                            min(
-                                2**retries,
-                                self._max_retry_time - (time.time() - start_time),
-                            )
-                        )
-                        retries += 1
-                        continue
-                    else:
-                        raise e
-            assert latest_exception is not None
-            raise latest_exception
+            return self._retry_on_busy_error(
+                lambda: self._client.complete(request, model)
+            )
 
     def get_version(self) -> str:
         with self._concurrency_limit_semaphore:
-            return self._client.get_version()
+            return self._retry_on_busy_error(lambda: self._client.get_version())
 
     def models(self) -> Sequence[Mapping[str, Any]]:
         with self._concurrency_limit_semaphore:
-            return self._client.models()
+            return self._retry_on_busy_error(lambda: self._client.models())
 
     def tokenize(
         self,
@@ -185,7 +192,9 @@ class LimitedConcurrencyClient:
         model: str,
     ) -> TokenizationResponse:
         with self._concurrency_limit_semaphore:
-            return self._client.tokenize(request, model)
+            return self._retry_on_busy_error(
+                lambda: self._client.tokenize(request, model)
+            )
 
     def detokenize(
         self,
@@ -193,7 +202,9 @@ class LimitedConcurrencyClient:
         model: str,
     ) -> DetokenizationResponse:
         with self._concurrency_limit_semaphore:
-            return self._client.detokenize(request, model)
+            return self._retry_on_busy_error(
+                lambda: self._client.detokenize(request, model)
+            )
 
     def embed(
         self,
@@ -201,7 +212,7 @@ class LimitedConcurrencyClient:
         model: str,
     ) -> EmbeddingResponse:
         with self._concurrency_limit_semaphore:
-            return self._client.embed(request, model)
+            return self._retry_on_busy_error(lambda: self._client.embed(request, model))
 
     def semantic_embed(
         self,
@@ -209,7 +220,9 @@ class LimitedConcurrencyClient:
         model: str,
     ) -> SemanticEmbeddingResponse:
         with self._concurrency_limit_semaphore:
-            return self._client.semantic_embed(request, model)
+            return self._retry_on_busy_error(
+                lambda: self._client.semantic_embed(request, model)
+            )
 
     def batch_semantic_embed(
         self,
@@ -217,7 +230,9 @@ class LimitedConcurrencyClient:
         model: Optional[str] = None,
     ) -> BatchSemanticEmbeddingResponse:
         with self._concurrency_limit_semaphore:
-            return self._client.batch_semantic_embed(request, model)
+            return self._retry_on_busy_error(
+                lambda: self._client.batch_semantic_embed(request, model)
+            )
 
     def evaluate(
         self,
@@ -225,7 +240,9 @@ class LimitedConcurrencyClient:
         model: str,
     ) -> EvaluationResponse:
         with self._concurrency_limit_semaphore:
-            return self._client.evaluate(request, model)
+            return self._retry_on_busy_error(
+                lambda: self._client.evaluate(request, model)
+            )
 
     def explain(
         self,
@@ -233,8 +250,10 @@ class LimitedConcurrencyClient:
         model: str,
     ) -> ExplanationResponse:
         with self._concurrency_limit_semaphore:
-            return self._client.explain(request, model)
+            return self._retry_on_busy_error(
+                lambda: self._client.explain(request, model)
+            )
 
     def tokenizer(self, model: str) -> Tokenizer:
         with self._concurrency_limit_semaphore:
-            return self._client.tokenizer(model)
+            return self._retry_on_busy_error(lambda: self._client.tokenizer(model))

@@ -4,7 +4,7 @@ from time import sleep
 from typing import cast
 
 import pytest
-from aleph_alpha_client import CompletionRequest, CompletionResponse, Prompt
+from aleph_alpha_client import BusyError, CompletionRequest, CompletionResponse, Prompt
 from pytest import fixture
 
 from intelligence_layer.connectors.limited_concurrency_client import (
@@ -49,7 +49,7 @@ class BusyClient:
     def complete(self, request: CompletionRequest, model: str) -> CompletionResponse:
         self.number_of_retries += 1
         if self.number_of_retries < 2:
-            raise Exception(503)
+            raise BusyError(503)  # type: ignore
         else:
             if isinstance(self.return_value, Exception):
                 raise self.return_value
@@ -112,8 +112,8 @@ def test_limited_concurrency_client_throws_exception() -> None:
     limited_concurrency_client = LimitedConcurrencyClient(
         cast(AlephAlphaClientProtocol, busy_client)
     )
-    with pytest.raises(Exception) as e:
+    with pytest.raises(Exception) as exception_info:
         limited_concurrency_client.complete(
             CompletionRequest(prompt=Prompt("")), "model"
         )
-    assert e.value == expected_exception
+    assert exception_info.value == expected_exception
