@@ -1,4 +1,4 @@
-from typing import Generic, Optional, Sequence
+from typing import Generic, Mapping, Optional, Sequence
 
 from pydantic import BaseModel
 
@@ -8,6 +8,7 @@ from intelligence_layer.connectors.retrievers.base_retriever import (
     SearchResult,
 )
 from intelligence_layer.core.chunk import TextChunk
+from intelligence_layer.core.detect_language import Language
 from intelligence_layer.core.model import ControlModel, LuminousControlModel
 from intelligence_layer.core.task import Task
 from intelligence_layer.core.text_highlight import ScoredTextHighlight
@@ -38,6 +39,15 @@ class MultipleChunkRetrieverQaOutput(BaseModel, Generic[ID]):
     answer: Optional[str]
     sources: Sequence[AnswerSource[ID]]
     search_results: Sequence[SearchResult[ID]]
+
+
+SOURCE_PREFIX_CONFIG = {
+    Language("en"): "Source {i}:\n",
+    Language("de"): "Quelle {i}:\n",
+    Language("fr"): "Source {i}:\n",
+    Language("es"): "Fuente {i}:\n",
+    Language("it"): "Fonte {i}:\n",
+}
 
 
 class MultipleChunkRetrieverQa(
@@ -72,6 +82,7 @@ class MultipleChunkRetrieverQa(
         model: ControlModel | None = None,
         expand_chunks: Task[ExpandChunksInput[ID], ExpandChunksOutput] | None = None,
         single_chunk_qa: Task[SingleChunkQaInput, SingleChunkQaOutput] | None = None,
+        source_prefix_config: Mapping[Language, str] = SOURCE_PREFIX_CONFIG,
     ):
         super().__init__()
         self._search = Search(retriever)
@@ -79,6 +90,10 @@ class MultipleChunkRetrieverQa(
         self._model = model or LuminousControlModel("luminous-supreme-control")
         self._expand_chunks = expand_chunks or ExpandChunks(retriever, self._model)
         self._single_chunk_qa = single_chunk_qa or SingleChunkQa(self._model)
+
+        if any("{i}" not in value for value in source_prefix_config.values()):
+            raise ValueError("All values in `source_prefix_config` must contain '{i}'.")
+        self._source_prefix_config = source_prefix_config
 
     def do_run(
         self, input: RetrieverBasedQaInput, task_span: TaskSpan
@@ -94,8 +109,9 @@ class MultipleChunkRetrieverQa(
             sorted_search_results, task_span
         )
 
+        source_prefix = input.language.language_config(self._source_prefix_config)
         chunk_for_prompt, chunk_start_indices = self._combine_input_texts(
-            [c.chunk for c in chunks_to_insert]
+            [c.chunk for c in chunks_to_insert], source_prefix
         )
 
         single_chunk_qa_input = SingleChunkQaInput(
@@ -127,12 +143,14 @@ class MultipleChunkRetrieverQa(
         )
 
     @staticmethod
-    def _combine_input_texts(chunks: Sequence[str]) -> tuple[TextChunk, Sequence[int]]:
+    def _combine_input_texts(
+        chunks: Sequence[str], source_appendix: str
+    ) -> tuple[TextChunk, Sequence[int]]:
         start_indices: list[int] = []
         combined_text = ""
-        for chunk in chunks:
+        for i, chunk in enumerate(chunks):
             start_indices.append(len(combined_text))
-            combined_text += chunk.strip() + "\n\n"
+            combined_text += source_appendix.format(i=i + 1) + chunk.strip() + "\n\n"
         return (TextChunk(combined_text.strip()), start_indices)
 
     @staticmethod
