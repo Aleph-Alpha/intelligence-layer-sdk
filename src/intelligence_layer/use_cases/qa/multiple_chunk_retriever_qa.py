@@ -104,6 +104,12 @@ class MultipleChunkRetrieverQa(
         sorted_search_results = sorted(
             search_output, key=lambda output: output.score, reverse=True
         )
+        if not sorted_search_results:
+            return MultipleChunkRetrieverQaOutput(
+                answer=None,
+                sources=[],
+                search_results=[],
+            )
 
         chunks_to_insert = self._expand_search_result_chunks(
             sorted_search_results, task_span
