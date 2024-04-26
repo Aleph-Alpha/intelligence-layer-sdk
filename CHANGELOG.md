@@ -19,6 +19,7 @@
             - `list_assigned_index_names`
 - feature: `DocumentIndexRetriever` now supports `index_name`
 - feature: `Runner.run_dataset` now has a configurable number of workers via `max_workers` and defaults to the previous value, which is 10.
+- feature: In case a `BusyError` is raised during a `complete` the `LimitedConcurrencyClient` will retry until `max_retry_time` is reached.
 - feature: `FileTracer` now accepts as `log_file_path` both, a `str` and a `Path`
 
 ### Fixes
