@@ -30,9 +30,9 @@ class FileTracer(PersistentTracer):
             the child-elements for a tracer can be identified by referring to this id as parent.
     """
 
-    def __init__(self, log_file_path: Path) -> None:
+    def __init__(self, log_file_path: Path | str) -> None:
         super().__init__()
-        self._log_file_path = log_file_path
+        self._log_file_path = Path(log_file_path)
 
     def _log_entry(self, id: str, entry: BaseModel) -> None:
         self._log_file_path.parent.mkdir(parents=True, exist_ok=True)

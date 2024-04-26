@@ -27,5 +27,6 @@ COPY --from=build-env /app/build /app/build
 COPY --from=build-env /app/package.json /app/package.json
 COPY --from=prod-deps /app/node_modules /app/node_modules
 ENV NODE_ENV="production"
+ENV ORIGIN=http://localhost:3000
 WORKDIR /app
 CMD ["build"]
