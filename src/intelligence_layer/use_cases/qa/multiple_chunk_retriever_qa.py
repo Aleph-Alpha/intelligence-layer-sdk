@@ -133,7 +133,7 @@ class MultipleChunkRetrieverQa(
         highlights_per_chunk = self._get_highlights_per_chunk(
             chunk_start_indices, single_chunk_qa_output.highlights
         )
-
+        
         return MultipleChunkRetrieverQaOutput(
             answer=single_chunk_qa_output.answer,
             sources=[
@@ -155,8 +155,9 @@ class MultipleChunkRetrieverQa(
         start_indices: list[int] = []
         combined_text = ""
         for i, chunk in enumerate(chunks):
+            combined_text += source_appendix.format(i=i + 1)
             start_indices.append(len(combined_text))
-            combined_text += source_appendix.format(i=i + 1) + chunk.strip() + "\n\n"
+            combined_text += chunk + "\n\n"
         return (TextChunk(combined_text.strip()), start_indices)
 
     @staticmethod
