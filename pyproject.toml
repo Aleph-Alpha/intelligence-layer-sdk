@@ -41,7 +41,7 @@ nbqa = "^1.8.5"
 ruff = "^0.4.2"
 pre-commit = "*"
 pylama = { extras = ["radon", "vulture", "toml"], version = "^8.4.1" }
-faker = "^24.14.0"
+faker = "^25.0.0"
 
 # tests
 pytest = "*"
