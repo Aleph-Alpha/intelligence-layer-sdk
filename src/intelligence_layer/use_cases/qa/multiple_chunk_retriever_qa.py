@@ -133,7 +133,7 @@ class MultipleChunkRetrieverQa(
         highlights_per_chunk = self._get_highlights_per_chunk(
             chunk_start_indices, single_chunk_qa_output.highlights
         )
-        
+
         return MultipleChunkRetrieverQaOutput(
             answer=single_chunk_qa_output.answer,
             sources=[
