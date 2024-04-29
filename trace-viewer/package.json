@@ -21,8 +21,8 @@
 		"@tailwindcss/container-queries": "^0.1.1",
 		"@tailwindcss/forms": "^0.5.7",
 		"@tailwindcss/typography": "^0.5.13",
-		"@typescript-eslint/eslint-plugin": "^7.7.1",
-		"@typescript-eslint/parser": "^7.7.1",
+		"@typescript-eslint/eslint-plugin": "^7.8.0",
+		"@typescript-eslint/parser": "^7.8.0",
 		"autoprefixer": "^10.4.19",
 		"class-variance-authority": "^0.7.0",
 		"codemirror": "^6.0.1",
@@ -45,7 +45,7 @@
 		"typescript": "^5.4.5",
 		"vite": "^5.2.10",
 		"vitest": "^1.5.2",
-		"zod": "^3.23.4"
+		"zod": "^3.23.5"
 	},
 	"name": "trace-viewer",
 	"private": true,
