@@ -23,7 +23,7 @@ import requests # type: ignore
 # Use 'type: ignore' for libraries that cause mypy issues (if there's no other fix).
 
 # 3) Local application libraries
-from intelligence_layer.use_cases.nested_task import NestedTask
+from intelligence_layer.examples.nested_task import NestedTask
 from intelligence_layer.core.task import Task
 from intelligence_layer.core.tracer import Tracer
 

@@ -52,7 +52,7 @@ class QdrantSearch(Task[QdrantSearchInput, SearchOutput[int]]):
         ...     QdrantInMemoryRetriever,
         ... )
         >>> from intelligence_layer.core import InMemoryTracer
-        >>> from intelligence_layer.use_cases import (
+        >>> from intelligence_layer.examples import (
         ...     QdrantSearch,
         ...     QdrantSearchInput,
         ... )
@@ -131,8 +131,8 @@ class EmbeddingBasedClassify(Task[ClassifyInput, MultiLabelClassifyOutput]):
         ...     LimitedConcurrencyClient,
         ... )
         >>> from intelligence_layer.core import TextChunk, InMemoryTracer
-        >>> from intelligence_layer.use_cases.classify.classify import ClassifyInput
-        >>> from intelligence_layer.use_cases.classify.embedding_based_classify import (
+        >>> from intelligence_layer.examples.classify.classify import ClassifyInput
+        >>> from intelligence_layer.examples.classify.embedding_based_classify import (
         ...     EmbeddingBasedClassify,
         ...     LabelWithExamples,
         ... )

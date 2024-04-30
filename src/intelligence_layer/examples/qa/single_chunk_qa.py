@@ -103,7 +103,7 @@ class SingleChunkQa(Task[SingleChunkQaInput, SingleChunkQaOutput]):
         >>> import os
         >>> from intelligence_layer.core import Language, InMemoryTracer
         >>> from intelligence_layer.core import TextChunk
-        >>> from intelligence_layer.use_cases import SingleChunkQa, SingleChunkQaInput
+        >>> from intelligence_layer.examples import SingleChunkQa, SingleChunkQaInput
         >>>
         >>> task = SingleChunkQa()
         >>> input = SingleChunkQaInput(

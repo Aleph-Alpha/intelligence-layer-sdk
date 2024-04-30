@@ -74,7 +74,7 @@ class RetrieverBasedQa(
         >>> from intelligence_layer.connectors import DocumentIndexClient
         >>> from intelligence_layer.connectors import DocumentIndexRetriever
         >>> from intelligence_layer.core import InMemoryTracer
-        >>> from intelligence_layer.use_cases import RetrieverBasedQa, RetrieverBasedQaInput
+        >>> from intelligence_layer.examples import RetrieverBasedQa, RetrieverBasedQaInput
 
 
         >>> token = os.getenv("AA_TOKEN")

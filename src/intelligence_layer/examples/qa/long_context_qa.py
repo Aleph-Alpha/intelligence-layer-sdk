@@ -56,7 +56,7 @@ class LongContextQa(Task[LongContextQaInput, MultipleChunkQaOutput]):
 
     Example:
         >>> from intelligence_layer.core import InMemoryTracer
-        >>> from intelligence_layer.use_cases import LongContextQa, LongContextQaInput
+        >>> from intelligence_layer.examples import LongContextQa, LongContextQaInput
 
 
         >>> task = LongContextQa()

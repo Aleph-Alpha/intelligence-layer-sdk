@@ -22,7 +22,7 @@ class CompositeTracer(Tracer, Generic[TracerVar]):
 
     Example:
         >>> from intelligence_layer.core import InMemoryTracer, FileTracer, CompositeTracer, TextChunk
-        >>> from intelligence_layer.use_cases import PromptBasedClassify, ClassifyInput
+        >>> from intelligence_layer.examples import PromptBasedClassify, ClassifyInput
 
         >>> tracer_1 = InMemoryTracer()
         >>> tracer_2 = InMemoryTracer()

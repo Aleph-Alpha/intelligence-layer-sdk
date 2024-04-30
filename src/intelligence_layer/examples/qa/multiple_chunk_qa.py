@@ -140,7 +140,7 @@ class MultipleChunkQa(Task[MultipleChunkQaInput, MultipleChunkQaOutput]):
         ... )
         >>> from intelligence_layer.core import Language, InMemoryTracer
         >>> from intelligence_layer.core.chunk import TextChunk
-        >>> from intelligence_layer.use_cases import (
+        >>> from intelligence_layer.examples import (
         ...     MultipleChunkQa,
         ...     MultipleChunkQaInput,
         ... )
