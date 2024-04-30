@@ -17,23 +17,6 @@ jobs:
       id-token: write
     runs-on: ubuntu-latest
     steps:
-      - name: Get Identity Token From Github
-        run: |
-          ID_TOKEN=$(curl -sLS -H "User-Agent: actions/oidc-client" -H "Authorization: Bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" \
-          "${ACTIONS_ID_TOKEN_REQUEST_URL}&audience=https://alephalpha.jfrog.io" | jq .value | tr -d '"')
-          echo "ID_TOKEN=${ID_TOKEN}" >> $GITHUB_ENV
-      - name: Get Jfrog Access Token with Github Identity Token
-        env:
-          ID_TOKEN: ${{ env.ID_TOKEN }}
-        run: |
-          JFROG_ACCESS_TOKEN=$(curl \
-            -X POST \
-            -H "Content-type: application/json" \
-            $ARTIFACTORY_URL/access/api/v1/oidc/token \
-            -d \
-            "{\"grant_type\": \"urn:ietf:params:oauth:grant-type:token-exchange\", \"subject_token_type\":\"urn:ietf:params:oauth:token-type:id_token\", \"subject_token\": \"$ID_TOKEN\", \"provider_name\": \"github\"}" \
-          | jq .access_token -r)
-          echo "JFROG_ACCESS_TOKEN=${JFROG_ACCESS_TOKEN}" >> $GITHUB_ENV
       - name: Checkout
         uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -46,11 +29,9 @@ jobs:
           virtualenvs-in-project: true
           installer-parallel: true
       - name: Build package and push to Artifactory
-        env:
-          JFROG_ACCESS_TOKEN: ${{ env.JFROG_ACCESS_TOKEN }}
         run: |
           poetry build
           poetry config repositories.artifactory $ARTIFACTORY_URL/artifactory/api/pypi/$ARTIFACTORY_PYPI_REPOSITORY
-          JFROG_ACCESS_TOKEN_SUBJECT=$(echo $JFROG_ACCESS_TOKEN | awk -F'.' '{print $2}'  | sed 's/.\{1,3\}$/&==/' | base64 -d | jq '.sub' -r)
-          poetry config http-basic.artifactory "$JFROG_ACCESS_TOKEN_SUBJECT" "$JFROG_ACCESS_TOKEN"
+          export POETRY_HTTP_BASIC_ARTIFACTORY_PASSWORD=$(.github/workflows/get_jfrog_access_token.sh)
+          export POETRY_HTTP_BASIC_ARTIFACTORY_USERNAME=$(.github/workflows/get_jfrog_access_token_subject.sh $POETRY_HTTP_BASIC_ARTIFACTORY_PASSWORD)
           poetry publish -r artifactory
