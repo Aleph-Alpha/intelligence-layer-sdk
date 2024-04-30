@@ -13,12 +13,12 @@ from intelligence_layer.connectors.limited_concurrency_client import (
     AlephAlphaClientProtocol,
 )
 from intelligence_layer.core import Task, TaskSpan, TextChunk
-from intelligence_layer.use_cases.classify.classify import (
+from intelligence_layer.examples.classify.classify import (
     ClassifyInput,
     MultiLabelClassifyOutput,
     Probability,
 )
-from intelligence_layer.use_cases.search.search import SearchOutput
+from intelligence_layer.examples.search.search import SearchOutput
 
 
 class QdrantSearchInput(BaseModel):
@@ -52,7 +52,7 @@ class QdrantSearch(Task[QdrantSearchInput, SearchOutput[int]]):
         ...     QdrantInMemoryRetriever,
         ... )
         >>> from intelligence_layer.core import InMemoryTracer
-        >>> from intelligence_layer.use_cases import (
+        >>> from intelligence_layer.examples import (
         ...     QdrantSearch,
         ...     QdrantSearchInput,
         ... )
@@ -131,8 +131,8 @@ class EmbeddingBasedClassify(Task[ClassifyInput, MultiLabelClassifyOutput]):
         ...     LimitedConcurrencyClient,
         ... )
         >>> from intelligence_layer.core import TextChunk, InMemoryTracer
-        >>> from intelligence_layer.use_cases.classify.classify import ClassifyInput
-        >>> from intelligence_layer.use_cases.classify.embedding_based_classify import (
+        >>> from intelligence_layer.examples.classify.classify import ClassifyInput
+        >>> from intelligence_layer.examples.classify.embedding_based_classify import (
         ...     EmbeddingBasedClassify,
         ...     LabelWithExamples,
         ... )

@@ -55,7 +55,7 @@ class Search(Generic[ID], Task[SearchInput, SearchOutput[ID]]):
         ...     DocumentIndexRetriever,
         ... )
         >>> from intelligence_layer.core import InMemoryTracer
-        >>> from intelligence_layer.use_cases import Search, SearchInput
+        >>> from intelligence_layer.examples import Search, SearchInput
 
 
         >>> document_index = DocumentIndexClient(getenv("AA_TOKEN"))

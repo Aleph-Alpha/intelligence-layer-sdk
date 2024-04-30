@@ -1,10 +1,10 @@
 from pytest import fixture
 
 from intelligence_layer.core import Chunk, LuminousControlModel, TextChunk
-from intelligence_layer.use_cases.summarize.steerable_long_context_summarize import (
+from intelligence_layer.examples.summarize.steerable_long_context_summarize import (
     SteerableLongContextSummarize,
 )
-from intelligence_layer.use_cases.summarize.steerable_single_chunk_summarize import (
+from intelligence_layer.examples.summarize.steerable_single_chunk_summarize import (
     SteerableSingleChunkSummarize,
 )
 

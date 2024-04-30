@@ -7,10 +7,10 @@ from intelligence_layer.core import (
     Task,
     TaskSpan,
 )
-from intelligence_layer.use_cases.summarize.steerable_single_chunk_summarize import (
+from intelligence_layer.examples.summarize.steerable_single_chunk_summarize import (
     SteerableSingleChunkSummarize,
 )
-from intelligence_layer.use_cases.summarize.summarize import (
+from intelligence_layer.examples.summarize.summarize import (
     LongContextSummarizeInput,
     LongContextSummarizeOutput,
     PartialSummary,

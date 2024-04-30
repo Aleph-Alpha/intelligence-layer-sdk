@@ -76,10 +76,10 @@ The program will warn you in case no `CLIENT_URL` is set explicitly set.
 
 ---
 After correctly setting up the environment variables you can run the jupyter notebooks.
-For this, run `jupyter lab` inside the virtual environment and go to the [examples](http://localhost:8888/lab/workspaces/auto-C/tree/src/examples) directory.
+For this, run `jupyter lab` inside the virtual environment and go to the [examples](http://localhost:8888/lab/workspaces/auto-C/tree/src/documentation) directory.
 
 ```bash
-cd src/examples && poetry run jupyter lab
+cd src/documentation && poetry run jupyter lab
 ```
 
 ## How to use the Intelligence Layer in your project
@@ -196,15 +196,15 @@ The tutorials aim to guide you through implementing several common use-cases wit
 
 | Order | Topic              | Description                                          | Notebook 📓                                                     |
 | ----- | ------------------ |------------------------------------------------------|-----------------------------------------------------------------|
-| 1     | Summarization      | Summarize a document                                 | [summarization.ipynb](./src/examples/summarization.ipynb)       |
-| 2     | Question Answering | Various approaches for QA                            | [qa.ipynb](./src/examples/qa.ipynb)                             |
-| 3     | Classification     | Learn about two methods of classification            | [classification.ipynb](./src/examples/classification.ipynb)     |
-| 4     | Evaluation         | Evaluate LLM-based methodologies                     | [evaluation.ipynb](./src/examples/evaluation.ipynb)             |
-| 5     | Quickstart Task    | Build a custom `Task` for your use case              | [quickstart_task.ipynb](./src/examples/quickstart_task.ipynb)   |
-| 6     | Document Index     | Connect your proprietary knowledge base              | [document_index.ipynb](./src/examples/document_index.ipynb)     |
-| 7     | Human Evaluation   | Connect to Argilla for manual evaluation             | [human_evaluation.ipynb](./src/examples/human_evaluation.ipynb) |
-| 8     | Performance tips   | Contains some small tips for performance             | [performance_tips.ipynb](./src/examples/performance_tips.ipynb) |
-| 9     | Deployment         | Shows how to deploy a Task in a minimal FastAPI app. | [fastapi_tutorial.ipynb](./src/examples/fastapi_tutorial.ipynb) |
+| 1     | Summarization      | Summarize a document                                 | [summarization.ipynb](./src/documentation/summarization.ipynb)       |
+| 2     | Question Answering | Various approaches for QA                            | [qa.ipynb](./src/documentation/qa.ipynb)                             |
+| 3     | Classification     | Learn about two methods of classification            | [classification.ipynb](./src/documentation/classification.ipynb)     |
+| 4     | Evaluation         | Evaluate LLM-based methodologies                     | [evaluation.ipynb](./src/documentation/evaluation.ipynb)             |
+| 5     | Quickstart Task    | Build a custom `Task` for your use case              | [quickstart_task.ipynb](./src/documentation/quickstart_task.ipynb)   |
+| 6     | Document Index     | Connect your proprietary knowledge base              | [document_index.ipynb](./src/documentation/document_index.ipynb)     |
+| 7     | Human Evaluation   | Connect to Argilla for manual evaluation             | [human_evaluation.ipynb](./src/documentation/human_evaluation.ipynb) |
+| 8     | Performance tips   | Contains some small tips for performance             | [performance_tips.ipynb](./src/documentation/performance_tips.ipynb) |
+| 9     | Deployment         | Shows how to deploy a Task in a minimal FastAPI app. | [fastapi_tutorial.ipynb](./src/documentation/fastapi_tutorial.ipynb) |
 | 10    | Issue Classification | Deploy a Task in Kubernetes to classify Jira issues     | [Found in adjacent repository](https://github.com/Aleph-Alpha/IL-Classification-Journey) |
 
 ## How-Tos
@@ -213,18 +213,18 @@ The how-tos are quick lookups about how to do things. Compared to the tutorials,
 | Tutorial                                                                                                                                          | Description                                                                |
 | ------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------- |
 | **Tasks**                                                                                                                                         |                                                                            |
-| [...define a task](./src/examples/how_tos/how_to_define_a_task.ipynb)                                                                             | How to come up with a new task and formulate it                            |
-| [...implement a task](./src/examples/how_tos/how_to_implement_a_task.ipynb)                                                                       | Implement a formulated task and make it run with the Intelligence Layer    |
-| [...debug and log a task](./src/examples/how_tos/how_to_log_and_debug_a_task.ipynb)                                                               | Tools for logging and debugging in tasks                                   |
-| [...run the trace viewer](./src/examples/how_tos/how_to_run_the_trace_viewer.ipynb)                                                               | Downloading and running the trace viewer for debugging traces              |
+| [...define a task](./src/documentation/how_tos/how_to_define_a_task.ipynb)                                                                             | How to come up with a new task and formulate it                            |
+| [...implement a task](./src/documentation/how_tos/how_to_implement_a_task.ipynb)                                                                       | Implement a formulated task and make it run with the Intelligence Layer    |
+| [...debug and log a task](./src/documentation/how_tos/how_to_log_and_debug_a_task.ipynb)                                                               | Tools for logging and debugging in tasks                                   |
+| [...run the trace viewer](./src/documentation/how_tos/how_to_run_the_trace_viewer.ipynb)                                                               | Downloading and running the trace viewer for debugging traces              |
 | **Analysis Pipeline**                                                                                                                             |                                                                            |
-| [...implement a simple evaluation and aggregation logic](./src/examples/how_tos/how_to_implement_a_simple_evaluation_and_aggregation_logic.ipynb) | Basic examples of evaluation and aggregation logic                         |
-| [...create a dataset](./src/examples/how_tos/how_to_create_a_dataset.ipynb)                                                                       | Create a dataset used for running a task                                   |
-| [...run a task on a dataset](./src/examples/how_tos/how_to_run_a_task_on_a_dataset.ipynb)                                                         | Run a task on a whole dataset instead of single examples                   |
-| [...evaluate multiple runs](./src/examples/how_tos/how_to_evaluate_runs.ipynb)                                                                    | Evaluate (multiple) runs in a single evaluation                            |
-| [...aggregate multiple evaluations](./src/examples/how_tos/how_to_aggregate_evaluations.ipynb)                                                    | Aggregate (multiple) evaluations in a single aggregation                   |
-| [...retrieve data for analysis](./src/examples/how_tos/how_to_retrieve_data_for_analysis.ipynb)                                                   | Retrieve experiment data in multiple different ways                        |
-| [...implement a custom human evaluation](./src/examples/how_tos/how_to_human_evaluation_via_argilla.ipynb)                                        | Necessary steps to create an evaluation with humans as a judge via Argilla |
+| [...implement a simple evaluation and aggregation logic](./src/documentation/how_tos/how_to_implement_a_simple_evaluation_and_aggregation_logic.ipynb) | Basic examples of evaluation and aggregation logic                         |
+| [...create a dataset](./src/documentation/how_tos/how_to_create_a_dataset.ipynb)                                                                       | Create a dataset used for running a task                                   |
+| [...run a task on a dataset](./src/documentation/how_tos/how_to_run_a_task_on_a_dataset.ipynb)                                                         | Run a task on a whole dataset instead of single examples                   |
+| [...evaluate multiple runs](./src/documentation/how_tos/how_to_evaluate_runs.ipynb)                                                                    | Evaluate (multiple) runs in a single evaluation                            |
+| [...aggregate multiple evaluations](./src/documentation/how_tos/how_to_aggregate_evaluations.ipynb)                                                    | Aggregate (multiple) evaluations in a single aggregation                   |
+| [...retrieve data for analysis](./src/documentation/how_tos/how_to_retrieve_data_for_analysis.ipynb)                                                   | Retrieve experiment data in multiple different ways                        |
+| [...implement a custom human evaluation](./src/documentation/how_tos/how_to_human_evaluation_via_argilla.ipynb)                                        | Necessary steps to create an evaluation with humans as a judge via Argilla |
 
 # Models
 

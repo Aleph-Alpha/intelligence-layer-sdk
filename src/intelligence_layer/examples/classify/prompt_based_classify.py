@@ -16,7 +16,7 @@ from intelligence_layer.core import (
     Token,
     TokenWithLogProb,
 )
-from intelligence_layer.use_cases.classify.classify import (
+from intelligence_layer.examples.classify.classify import (
     ClassifyInput,
     Probability,
     SingleLabelClassifyOutput,
@@ -55,8 +55,8 @@ class PromptBasedClassify(Task[ClassifyInput, SingleLabelClassifyOutput]):
     Example:
         >>> from intelligence_layer.core import InMemoryTracer
         >>> from intelligence_layer.core import TextChunk
-        >>> from intelligence_layer.use_cases import ClassifyInput
-        >>> from intelligence_layer.use_cases import PromptBasedClassify
+        >>> from intelligence_layer.examples import ClassifyInput
+        >>> from intelligence_layer.examples import PromptBasedClassify
 
 
         >>> task = PromptBasedClassify()

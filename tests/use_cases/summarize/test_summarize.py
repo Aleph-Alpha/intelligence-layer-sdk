@@ -14,7 +14,7 @@ from intelligence_layer.evaluation import (
     Runner,
     RunRepository,
 )
-from intelligence_layer.use_cases import (
+from intelligence_layer.examples import (
     AggregatedSummarizeEvaluation,
     LongContextSummarizeAggregationLogic,
     LongContextSummarizeEvaluationLogic,

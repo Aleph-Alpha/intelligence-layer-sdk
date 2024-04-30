@@ -10,7 +10,7 @@ from fastapi.datastructures import URL
 
 from intelligence_layer.connectors import AlephAlphaClientProtocol
 from intelligence_layer.core import LuminousControlModel, NoOpTracer, Task
-from intelligence_layer.use_cases import (
+from intelligence_layer.examples import (
     SingleChunkSummarizeInput,
     SteerableSingleChunkSummarize,
     SummarizeOutput,

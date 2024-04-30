@@ -13,7 +13,7 @@ from intelligence_layer.core import (
     TextChunk,
 )
 from intelligence_layer.core.text_highlight import ScoredTextHighlight
-from intelligence_layer.use_cases.qa.single_chunk_qa import (
+from intelligence_layer.examples.qa.single_chunk_qa import (
     SingleChunkQa,
     SingleChunkQaInput,
     SingleChunkQaOutput,
@@ -140,7 +140,7 @@ class MultipleChunkQa(Task[MultipleChunkQaInput, MultipleChunkQaOutput]):
         ... )
         >>> from intelligence_layer.core import Language, InMemoryTracer
         >>> from intelligence_layer.core.chunk import TextChunk
-        >>> from intelligence_layer.use_cases import (
+        >>> from intelligence_layer.examples import (
         ...     MultipleChunkQa,
         ...     MultipleChunkQaInput,
         ... )

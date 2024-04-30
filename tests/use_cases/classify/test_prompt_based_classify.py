@@ -16,7 +16,7 @@ from intelligence_layer.evaluation import (
     Runner,
     RunRepository,
 )
-from intelligence_layer.use_cases.classify.classify import (
+from intelligence_layer.examples.classify.classify import (
     AggregatedSingleLabelClassifyEvaluation,
     ClassifyInput,
     SingleLabelClassifyAggregationLogic,
@@ -24,7 +24,7 @@ from intelligence_layer.use_cases.classify.classify import (
     SingleLabelClassifyEvaluationLogic,
     SingleLabelClassifyOutput,
 )
-from intelligence_layer.use_cases.classify.prompt_based_classify import (
+from intelligence_layer.examples.classify.prompt_based_classify import (
     PromptBasedClassify,
 )
 

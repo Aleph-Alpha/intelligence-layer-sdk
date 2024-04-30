@@ -3,7 +3,7 @@ from pytest import fixture
 from intelligence_layer.connectors import QdrantInMemoryRetriever
 from intelligence_layer.core import LuminousControlModel, NoOpTracer
 from intelligence_layer.core.tracer.in_memory_tracer import InMemoryTracer
-from intelligence_layer.use_cases import (
+from intelligence_layer.examples import (
     ExpandChunks,
     MultipleChunkRetrieverQa,
     RetrieverBasedQaInput,

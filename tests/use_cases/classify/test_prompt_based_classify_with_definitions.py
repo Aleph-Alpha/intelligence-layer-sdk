@@ -3,7 +3,7 @@ from typing import Sequence
 from pytest import fixture
 
 from intelligence_layer.core import LuminousControlModel, NoOpTracer, TextChunk
-from intelligence_layer.use_cases import (
+from intelligence_layer.examples import (
     ClassifyInput,
     LabelWithDefinition,
     PromptBasedClassifyWithDefinitions,

@@ -8,7 +8,7 @@ from intelligence_layer.core import (
     TextHighlight,
 )
 from intelligence_layer.core.detect_language import LanguageNotSupportedError
-from intelligence_layer.use_cases.qa.single_chunk_qa import (
+from intelligence_layer.examples.qa.single_chunk_qa import (
     QaSetup,
     SingleChunkQa,
     SingleChunkQaInput,

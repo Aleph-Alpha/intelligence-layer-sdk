@@ -5,13 +5,13 @@ from pydantic import BaseModel
 
 from intelligence_layer.connectors.retrievers.base_retriever import ID, BaseRetriever
 from intelligence_layer.core import Language, Task, TaskSpan, TextChunk
-from intelligence_layer.use_cases.qa.multiple_chunk_qa import (
+from intelligence_layer.examples.qa.multiple_chunk_qa import (
     MultipleChunkQa,
     MultipleChunkQaInput,
     MultipleChunkQaOutput,
     Subanswer,
 )
-from intelligence_layer.use_cases.search.search import Search, SearchInput
+from intelligence_layer.examples.search.search import Search, SearchInput
 
 
 class RetrieverBasedQaInput(BaseModel):
@@ -74,7 +74,7 @@ class RetrieverBasedQa(
         >>> from intelligence_layer.connectors import DocumentIndexClient
         >>> from intelligence_layer.connectors import DocumentIndexRetriever
         >>> from intelligence_layer.core import InMemoryTracer
-        >>> from intelligence_layer.use_cases import RetrieverBasedQa, RetrieverBasedQaInput
+        >>> from intelligence_layer.examples import RetrieverBasedQa, RetrieverBasedQaInput
 
 
         >>> token = os.getenv("AA_TOKEN")

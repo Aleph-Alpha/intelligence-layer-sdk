@@ -3,7 +3,7 @@ import pytest
 from intelligence_layer.core import NoOpTracer
 from intelligence_layer.core.chunk import TextChunk
 from intelligence_layer.core.detect_language import Language, LanguageNotSupportedError
-from intelligence_layer.use_cases.classify.keyword_extract import (
+from intelligence_layer.examples.classify.keyword_extract import (
     KeywordExtract,
     KeywordExtractInput,
 )

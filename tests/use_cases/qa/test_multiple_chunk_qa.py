@@ -3,7 +3,7 @@ from typing import Sequence
 from intelligence_layer.core import NoOpTracer
 from intelligence_layer.core.chunk import TextChunk
 from intelligence_layer.core.detect_language import Language
-from intelligence_layer.use_cases.qa.multiple_chunk_qa import (
+from intelligence_layer.examples.qa.multiple_chunk_qa import (
     MultipleChunkQa,
     MultipleChunkQaInput,
 )
