@@ -943,13 +943,13 @@ python-dateutil = ">=2.4"
 
 [[package]]
 name = "fastapi"
-version = "0.110.2"
+version = "0.110.3"
 description = "FastAPI framework, high performance, easy to learn, fast to code, ready for production"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "fastapi-0.110.2-py3-none-any.whl", hash = "sha256:239403f2c0a3dda07a9420f95157a7f014ddb2b770acdbc984f9bdf3ead7afdb"},
-    {file = "fastapi-0.110.2.tar.gz", hash = "sha256:b53d673652da3b65e8cd787ad214ec0fe303cad00d2b529b86ce7db13f17518d"},
+    {file = "fastapi-0.110.3-py3-none-any.whl", hash = "sha256:fd7600612f755e4050beb74001310b5a7e1796d149c2ee363124abdfa0289d32"},
+    {file = "fastapi-0.110.3.tar.gz", hash = "sha256:555700b0159379e94fdbfc6bb66a0f1c43f4cf7060f25239af3d84b63a656626"},
 ]
 
 [package.dependencies]
@@ -958,7 +958,7 @@ starlette = ">=0.37.2,<0.38.0"
 typing-extensions = ">=4.8.0"
 
 [package.extras]
-all = ["email-validator (>=2.0.0)", "httpx (>=0.23.0)", "itsdangerous (>=1.1.0)", "jinja2 (>=2.11.2)", "orjson (>=3.2.1)", "pydantic-extra-types (>=2.0.0)", "pydantic-settings (>=2.0.0)", "python-multipart (>=0.0.7)", "pyyaml (>=5.3.1)", "ujson (>=4.0.1,!=4.0.2,!=4.1.0,!=4.2.0,!=4.3.0,!=5.0.0,!=5.1.0)", "uvicorn[standard] (>=0.12.0)"]
+all = ["email_validator (>=2.0.0)", "httpx (>=0.23.0)", "itsdangerous (>=1.1.0)", "jinja2 (>=2.11.2)", "orjson (>=3.2.1)", "pydantic-extra-types (>=2.0.0)", "pydantic-settings (>=2.0.0)", "python-multipart (>=0.0.7)", "pyyaml (>=5.3.1)", "ujson (>=4.0.1,!=4.0.2,!=4.1.0,!=4.2.0,!=4.3.0,!=5.0.0,!=5.1.0)", "uvicorn[standard] (>=0.12.0)"]
 
 [[package]]
 name = "fastjsonschema"
@@ -2590,13 +2590,13 @@ test = ["flaky", "ipykernel (>=6.19.3)", "ipython", "ipywidgets", "nbconvert (>=
 
 [[package]]
 name = "nbconvert"
-version = "7.16.3"
+version = "7.16.4"
 description = "Converting Jupyter Notebooks (.ipynb files) to other formats.  Output formats include asciidoc, html, latex, markdown, pdf, py, rst, script.  nbconvert can be used both as a Python library (`import nbconvert`) or as a command line tool (invoked as `jupyter nbconvert ...`)."
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "nbconvert-7.16.3-py3-none-any.whl", hash = "sha256:ddeff14beeeedf3dd0bc506623e41e4507e551736de59df69a91f86700292b3b"},
-    {file = "nbconvert-7.16.3.tar.gz", hash = "sha256:a6733b78ce3d47c3f85e504998495b07e6ea9cf9bf6ec1c98dda63ec6ad19142"},
+    {file = "nbconvert-7.16.4-py3-none-any.whl", hash = "sha256:05873c620fe520b6322bf8a5ad562692343fe3452abda5765c7a34b7d1aa3eb3"},
+    {file = "nbconvert-7.16.4.tar.gz", hash = "sha256:86ca91ba266b0a448dc96fa6c5b9d98affabde2867b363258703536807f9f7f4"},
 ]
 
 [package.dependencies]
@@ -2617,9 +2617,9 @@ tinycss2 = "*"
 traitlets = ">=5.1"
 
 [package.extras]
-all = ["nbconvert[docs,qtpdf,serve,test,webpdf]"]
+all = ["flaky", "ipykernel", "ipython", "ipywidgets (>=7.5)", "myst-parser", "nbsphinx (>=0.2.12)", "playwright", "pydata-sphinx-theme", "pyqtwebengine (>=5.15)", "pytest (>=7)", "sphinx (==5.0.2)", "sphinxcontrib-spelling", "tornado (>=6.1)"]
 docs = ["ipykernel", "ipython", "myst-parser", "nbsphinx (>=0.2.12)", "pydata-sphinx-theme", "sphinx (==5.0.2)", "sphinxcontrib-spelling"]
-qtpdf = ["nbconvert[qtpng]"]
+qtpdf = ["pyqtwebengine (>=5.15)"]
 qtpng = ["pyqtwebengine (>=5.15)"]
 serve = ["tornado (>=6.1)"]
 test = ["flaky", "ipykernel", "ipywidgets (>=7.5)", "pytest (>=7)"]
@@ -3666,13 +3666,13 @@ diagrams = ["jinja2", "railroad-diagrams"]
 
 [[package]]
 name = "pytest"
-version = "8.1.2"
+version = "8.2.0"
 description = "pytest: simple powerful testing with Python"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "pytest-8.1.2-py3-none-any.whl", hash = "sha256:6c06dc309ff46a05721e6fd48e492a775ed8165d2ecdf57f156a80c7e95bb142"},
-    {file = "pytest-8.1.2.tar.gz", hash = "sha256:f3c45d1d5eed96b01a2aea70dee6a4a366d51d38f9957768083e4fecfc77f3ef"},
+    {file = "pytest-8.2.0-py3-none-any.whl", hash = "sha256:1733f0620f6cda4095bbf0d9ff8022486e91892245bb9e7d5542c018f612f233"},
+    {file = "pytest-8.2.0.tar.gz", hash = "sha256:d507d4482197eac0ba2bae2e9babf0672eb333017bcedaa5fb1a3d42c1174b3f"},
 ]
 
 [package.dependencies]
@@ -3680,26 +3680,26 @@ colorama = {version = "*", markers = "sys_platform == \"win32\""}
 exceptiongroup = {version = ">=1.0.0rc8", markers = "python_version < \"3.11\""}
 iniconfig = "*"
 packaging = "*"
-pluggy = ">=1.4,<2.0"
+pluggy = ">=1.5,<2.0"
 tomli = {version = ">=1", markers = "python_version < \"3.11\""}
 
 [package.extras]
-testing = ["argcomplete", "attrs (>=19.2)", "hypothesis (>=3.56)", "mock", "pygments (>=2.7.2)", "requests", "setuptools", "xmlschema"]
+dev = ["argcomplete", "attrs (>=19.2)", "hypothesis (>=3.56)", "mock", "pygments (>=2.7.2)", "requests", "setuptools", "xmlschema"]
 
 [[package]]
 name = "pytest-xdist"
-version = "3.5.0"
+version = "3.6.1"
 description = "pytest xdist plugin for distributed testing, most importantly across multiple CPUs"
 optional = false
-python-versions = ">=3.7"
+python-versions = ">=3.8"
 files = [
-    {file = "pytest-xdist-3.5.0.tar.gz", hash = "sha256:cbb36f3d67e0c478baa57fa4edc8843887e0f6cfc42d677530a36d7472b32d8a"},
-    {file = "pytest_xdist-3.5.0-py3-none-any.whl", hash = "sha256:d075629c7e00b611df89f490a5063944bee7a4362a5ff11c7cc7824a03dfce24"},
+    {file = "pytest_xdist-3.6.1-py3-none-any.whl", hash = "sha256:9ed4adfb68a016610848639bb7e02c9352d5d9f03d04809919e2dafc3be4cca7"},
+    {file = "pytest_xdist-3.6.1.tar.gz", hash = "sha256:ead156a4db231eec769737f57668ef58a2084a34b2e55c4a8fa20d861107300d"},
 ]
 
 [package.dependencies]
-execnet = ">=1.1"
-pytest = ">=6.2.0"
+execnet = ">=2.1"
+pytest = ">=7.0.0"
 
 [package.extras]
 psutil = ["psutil (>=3.0)"]
@@ -4387,22 +4387,22 @@ files = [
 
 [[package]]
 name = "semantic-text-splitter"
-version = "0.12.0"
+version = "0.12.2"
 description = "Split text into semantic chunks, up to a desired chunk size. Supports calculating length by characters and tokens, and is callable from Rust and Python."
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "semantic_text_splitter-0.12.0-cp38-abi3-macosx_10_12_x86_64.whl", hash = "sha256:e6ec3807026e0637c04a5490cf26795eb10d22b629b651b3eaef37acce11fcc9"},
-    {file = "semantic_text_splitter-0.12.0-cp38-abi3-macosx_11_0_arm64.whl", hash = "sha256:55c91133783e6d323d87defbd25704ada2bdcec4ea79bab1cd0f8563cc457d02"},
-    {file = "semantic_text_splitter-0.12.0-cp38-abi3-manylinux_2_12_i686.manylinux2010_i686.whl", hash = "sha256:b22bcc90269454b9107fb8f4b074977791f8f370942ff9cbd048f87862adab60"},
-    {file = "semantic_text_splitter-0.12.0-cp38-abi3-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:4283948ad34b36807017f3b663908869a371fafe32922990b4989376bd7467c3"},
-    {file = "semantic_text_splitter-0.12.0-cp38-abi3-manylinux_2_17_armv7l.manylinux2014_armv7l.whl", hash = "sha256:26208a262dbf0d4350bba80badb27807982af3a289c5ed08f7edd5ffaebfbf16"},
-    {file = "semantic_text_splitter-0.12.0-cp38-abi3-manylinux_2_17_ppc64le.manylinux2014_ppc64le.whl", hash = "sha256:bb62cdf886596dd6c411812092dc6132555546157079423b1af887d672e90300"},
-    {file = "semantic_text_splitter-0.12.0-cp38-abi3-manylinux_2_17_s390x.manylinux2014_s390x.whl", hash = "sha256:68b92b217c79317aaca6353c8057eb880d35e01b8b4de942382161ece990d472"},
-    {file = "semantic_text_splitter-0.12.0-cp38-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:9e3a26db68d4e6da5f47c71e797f837dfaf7c2d3d1a1ac733efa8983adf35dd5"},
-    {file = "semantic_text_splitter-0.12.0-cp38-abi3-win32.whl", hash = "sha256:e191be257b9e061211f4bb7c17d00fb7888c54f00dd5015f7d66136ca6b10549"},
-    {file = "semantic_text_splitter-0.12.0-cp38-abi3-win_amd64.whl", hash = "sha256:4c3c9855596776da5d5a3f216385f6362f1db46cc541cfe7e67aeb975c65f37a"},
-    {file = "semantic_text_splitter-0.12.0.tar.gz", hash = "sha256:d4f44fce36b42265cfccfcf6d7b6acfaa60e58c4f8dc027fa623d09473cab868"},
+    {file = "semantic_text_splitter-0.12.2-cp38-abi3-macosx_10_12_x86_64.whl", hash = "sha256:961aaec45f63ea9c0b1b1f9d5a57857ffa272685fc9698bb48647dae37e20f64"},
+    {file = "semantic_text_splitter-0.12.2-cp38-abi3-macosx_11_0_arm64.whl", hash = "sha256:6d42f03bf1e905026419c975e073b9ae50ec5ef85e889eadc4f1974aac65bdd4"},
+    {file = "semantic_text_splitter-0.12.2-cp38-abi3-manylinux_2_12_i686.manylinux2010_i686.whl", hash = "sha256:1564e41e2b19a784313f9c0df98e2be90f33822cf2a378cc2b21c5e3428791d1"},
+    {file = "semantic_text_splitter-0.12.2-cp38-abi3-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:08f8c487533a3fffef71392dba86c9cbddeba687dda29af7288decb1eac923ca"},
+    {file = "semantic_text_splitter-0.12.2-cp38-abi3-manylinux_2_17_armv7l.manylinux2014_armv7l.whl", hash = "sha256:418df279034b2554d34dbc722ecab8d5d796c28da1856e5907b25a3897fe619f"},
+    {file = "semantic_text_splitter-0.12.2-cp38-abi3-manylinux_2_17_ppc64le.manylinux2014_ppc64le.whl", hash = "sha256:2dfdabf4deea6f8fa74e0674ff973742928e547a73d1159e7ccabf7180ffb918"},
+    {file = "semantic_text_splitter-0.12.2-cp38-abi3-manylinux_2_17_s390x.manylinux2014_s390x.whl", hash = "sha256:12d536972b4384727c2e5e5c055ae214a0ab229a95cd6c88354b93c244bf3e0d"},
+    {file = "semantic_text_splitter-0.12.2-cp38-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:987c18ee283bcfb6336df28e7b44b8498dc75c6cf663be6cef87825b30652239"},
+    {file = "semantic_text_splitter-0.12.2-cp38-abi3-win32.whl", hash = "sha256:a7ce03ad97320a4585aeb0f81384138f42c2ae1fb07d0cf718fd0366b0121963"},
+    {file = "semantic_text_splitter-0.12.2-cp38-abi3-win_amd64.whl", hash = "sha256:4b6d166282e75c37792f58b1d80b19c3c343663c879e50f8eec57f43983ac6f5"},
+    {file = "semantic_text_splitter-0.12.2.tar.gz", hash = "sha256:7a7a2db79209e3d6fe3abb9f4f002fb372432955f18cafb687a6b10898258b19"},
 ]
 
 [package.extras]
@@ -5548,4 +5548,4 @@ testing = ["big-O", "jaraco.functools", "jaraco.itertools", "more-itertools", "p
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.10,<3.12"
-content-hash = "16effe1ca63608828a41caab5434ecbcdcaa08947c0140bdd87f6e26b29cd6be"
+content-hash = "7f9c3db9cf308dc1bc86ace6f294eb5b57cf36cc70b1d65141d2e19f6af21140"
