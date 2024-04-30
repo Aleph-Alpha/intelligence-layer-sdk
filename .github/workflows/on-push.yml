@@ -2,9 +2,6 @@ name: Intelligence Layer SDK Tests
 
 on:
   push:
-    paths-ignore:
-      - "trace-viewer/**"
-      - ".github/workflows/frontend.yml"
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
