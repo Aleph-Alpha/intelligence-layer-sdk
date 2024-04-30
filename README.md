@@ -5,14 +5,12 @@ With a unified framework for LLM-based workflows, it facilitates seamless AI pro
 
 The key features of the Intelligence Layer are:
 
-- **Best practices:** We provide you with **state-of-the-art** methods tailored for prevalent LLM use cases.
-  Utilize our off-the-shelf techniques to swiftly prototype based on your primary data.
-  Our approach integrates the best industry practices, allowing for optimal performance.
-- **Composability:** The Intelligence Layer streamlines your journey from prototyping to scalable deployment.
-  It offers seamless integration with diverse evaluation methods, manages concurrency, and orchestrates smaller tasks into complex workflows.
-- **Auditability:** At the core of the Intelligence Layer is the belief that all AI processes must be auditable and traceable.
-  To ensure this, we provide full comprehensibility, by seamlessly logging each step of every workflow.
-  This enhances your debugging capabilities and offers greater control post-deployment when examining model responses.
+- **Composability:** Streamline your journey from prototyping to scalable deployment. The Intelligence Layer SDK offers seamless integration with diverse evaluation methods, manages concurrency, and orchestrates smaller tasks into complex workflows.
+- **Evaluatability:** Continuously evaluate your AI applications against your quantitaive quality requirements. With the Intelligence Layer SDK you can quickly iterate on different solution strategies, ensuring confidence in the performance of your final product. Take inspiration from the provided evaluations for summary and search when building a custom evaluation logic for your own use case.
+- **Tracability:** At the core of the Intelligence Layer is the belief that all AI processes must be auditable and traceable. We provide full observability by seamlessly logging each step of every workflow. This enhances your debugging capabilities and offers greater control post-deployment when examining model responses.
+- **Examples:** Get started by following our hands-on examples, demonstrating how to use the Intelligence Layer SDK and interact with its API.
+
+
 
 # Table of contents
 - [Aleph Alpha Intelligence Layer](#aleph-alpha-intelligence-layer)
@@ -26,7 +24,7 @@ The key features of the Intelligence Layer are:
   - [Tutorials](#tutorials)
   - [How-Tos](#how-tos)
 - [Models](#models)
-- [Use-case index](#use-case-index)
+- [Example index](#example-index)
 - [References](#references)
 - [License](#license)
 - [For Developers](#for-developers)
@@ -86,45 +84,23 @@ cd src/documentation && poetry run jupyter lab
 To install this as a dependency in your project, you need a [Github access token](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens#creating-a-personal-access-token-classic).
 This token needs the following permissions
 
-- `repo`
-- `read:packages`
 
-Set your access token:
-
+To install the Aleph-Alpha Intelligence Layer from the JFrog artifactory in you project, you have to add this information to your poetry setup via the following four steps. First, add the artifactory as a source to your project via
 ```bash
-export GITHUB_TOKEN=<YOUR_GITHUB_TOKEN>
+poetry source add --priority=explicit artifactory https://alephalpha.jfrog.io/artifactory/api/pypi/python/simple
 ```
-
-[](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens#creating-a-personal-access-token-classic)
-
-We recommend setting up a dedicated virtual environment. You can do so by using [conda](https://conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html#creating-an-environment-with-commands) or [venv](https://docs.python.org/3/library/venv.html) or [poetry](https://python-poetry.org/).
-
-You can add `intelligence-layer` to poetry dependencies. To do so, due to the limitations of poetry, you will need to modify the `git config` to make use of the `GITHUB_TOKEN`. To do so, prior to `poetry install`, run:
-
+Second, to install the poetry environment, export your JFrog credentials to the environment
 ```bash
-git config --global url."https://${GITHUB_TOKEN}@github.com/Aleph-Alpha/intelligence-layer".insteadOf "https://github.com/Aleph-Alpha/intelligence-layer"
+export POETRY_HTTP_BASIC_ARTIFACTORY_USERNAME=your@username.here
+export POETRY_HTTP_BASIC_ARTIFACTORY_PASSWORD=your-token-here
 ```
-
-after that add
-
-```toml
-[tool.poetry.dependencies]
-python = ">=3.10,<3.12"
-intelligence-layer = { git = "https://github.com/Aleph-Alpha/intelligence-layer.git", tag = "VERSION_TAG"}
-```
-
-to your `pyproject.toml` and run `poetry update`
-
-Alternatively you can also add it to a `requirements.txt`.
-
-```txt
-git+https://${GITHUB_TOKEN}@github.com/Aleph-Alpha/intelligence-layer.git@VERSION_TAG
-```
-
-Finally you can also install the package manually using pip.
-
+Third, add the Intelligence Layer to the project
 ```bash
-pip install git+https://$GITHUB_TOKEN@github.com/Aleph-Alpha/intelligence-layer.git@VERSION_TAG
+poetry add --source artifactory intelligence-layer
+```
+Fourth, execute
+```bash
+poetry install
 ```
 
 Now the Intelligence Layer should be available as a Python package and ready to use.
@@ -145,6 +121,8 @@ In VSCode, to enable auto-import up to the second depth, where all symbols are e
 ```
 ## How to use the Intelligence Layer in Docker
 
+### Via the GitHub repository
+
 To use the Intelligence Layer in Docker, a few settings are needed to not leak your Github token.
 
 You will need your Github token set in your environment.
@@ -156,43 +134,17 @@ RUN apt-get -y update
 RUN apt-get -y install git curl gcc python3-dev
 RUN pip install poetry
 
-RUN --mount=type=secret,id=GITHUB_TOKEN \
-    git config --global url."https://$(cat /run/secrets/GITHUB_TOKEN)@github.com/Aleph-Alpha/intelligence-layer".insteadOf "https://github.com/Aleph-Alpha/intelligence-layer" \
-    && poetry install --no-dev --no-interaction --no-ansi \
+RUN poetry install --no-dev --no-interaction --no-ansi \
     &&  rm -f ~/.gitconfig
 ```
 
-Then to build your container, use the following command:
-
-```bash
-GITHUB_TOKEN=$GITHUB_TOKEN docker build --secret id=GITHUB_TOKEN <PATH_TO_DOCKERFILE>
-```
-
-If using a Docker compose file, add the following to your `docker-compose.yml`:
-
-```yaml
-services:
-  service-using-intelligence-layer:
-    build:
-      context: .
-      secrets:
-        - GITHUB_TOKEN
-
-secrets:
-  GITHUB_TOKEN:
-    # Needs to be set in your environment (.env) under the same name.
-    environment: "GITHUB_TOKEN"
-```
-
-You can read more about this in the [official documentation](https://docs.docker.com/engine/swarm/secrets/).
-
 # Getting started
 
-Not sure where to start? Familiarize yourself with the Intelligence Layer using the below notebook as interactive tutorials.
+Not sure where to start? Familiarize yourself with the Intelligence Layer SDK using the below notebook as interactive tutorials.
 If you prefer you can also read about the [concepts](Concepts.md) first.
 
 ## Tutorials
-The tutorials aim to guide you through implementing several common use-cases with the Intelligence Layer. They introduce you to key concepts and enable you to create your own use-cases. In general the tutorials are build in a way that you can simply hop into the topic you are most interested in. However, for starters we recommend to read through the `Summarization` tutorial first. It explains the core concepts of the intelligence layer in more depth while for the other tutorials we assume that these concepts are known.
+The tutorials aim to guide you through implementing several common use-cases with the Intelligence Layer SDK. They introduce you to key concepts and enable you to create your own use-cases. In general the tutorials are build in a way that you can simply hop into the topic you are most interested in. However, for starters we recommend to read through the `Summarization` tutorial first. It explains the core concepts of the intelligence layer in more depth while for the other tutorials we assume that these concepts are known.
 
 | Order | Topic              | Description                                          | Notebook 📓                                                     |
 | ----- | ------------------ |------------------------------------------------------|-----------------------------------------------------------------|
@@ -236,7 +188,7 @@ Currently, we support a bunch of models accessible via the Aleph Alpha API. Depe
 | [Llama2InstructModel](https://aleph-alpha-intelligence-layer.readthedocs-hosted.com/en/latest/intelligence_layer.core.html#intelligence_layer.core.Llama2InstructModel)   | Llama-2 based models prompted for one-turn instruction answering. Includes `llama-2-7b-chat`, `llama-2-13b-chat` and `llama-2-70b-chat`. Best suited for English tasks.                         |
 | [Llama3InstructModel](https://aleph-alpha-intelligence-layer.readthedocs-hosted.com/en/latest/intelligence_layer.core.html#intelligence_layer.core.Llama3InstructModel)   | Llama-3 based models prompted for one-turn instruction answering. Includes `llama-3-8b-instruct` and `llama-3-70b-instruct`. Best suited for English tasks and recommended over llama-2 models. |
 
-# Use-case index
+# Example index
 
 To give you a starting point for using the Intelligence Layer, we provide some pre-configured `Task`s that are ready to use out-of-the-box, as well as an accompanying "Getting started" guide in the form of Jupyter Notebooks.
 
