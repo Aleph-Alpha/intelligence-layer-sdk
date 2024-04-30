@@ -1,7 +1,7 @@
 #!/usr/bin/env -S bash -eu -o pipefail
 
 # start the server in the background
-hypercorn src/examples/fastapi_example:app --bind localhost:8000 &
+hypercorn src/documentation/fastapi_example:app --bind localhost:8000 &
 server_pid=$!
 
 attempt_counter=0
