@@ -5,13 +5,13 @@ from pydantic import BaseModel
 
 from intelligence_layer.connectors.retrievers.base_retriever import ID, BaseRetriever
 from intelligence_layer.core import Language, Task, TaskSpan, TextChunk
-from intelligence_layer.use_cases.qa.multiple_chunk_qa import (
+from intelligence_layer.examples.qa.multiple_chunk_qa import (
     MultipleChunkQa,
     MultipleChunkQaInput,
     MultipleChunkQaOutput,
     Subanswer,
 )
-from intelligence_layer.use_cases.search.search import Search, SearchInput
+from intelligence_layer.examples.search.search import Search, SearchInput
 
 
 class RetrieverBasedQaInput(BaseModel):

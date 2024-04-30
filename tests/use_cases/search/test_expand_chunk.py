@@ -8,7 +8,7 @@ from intelligence_layer.connectors import (
     QdrantInMemoryRetriever,
 )
 from intelligence_layer.core import LuminousControlModel, NoOpTracer
-from intelligence_layer.use_cases import ExpandChunks, ExpandChunksInput
+from intelligence_layer.examples import ExpandChunks, ExpandChunksInput
 
 
 @fixture

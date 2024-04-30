@@ -13,12 +13,12 @@ from intelligence_layer.core.model import ControlModel, LuminousControlModel
 from intelligence_layer.core.task import Task
 from intelligence_layer.core.text_highlight import ScoredTextHighlight
 from intelligence_layer.core.tracer.tracer import TaskSpan
-from intelligence_layer.use_cases.search.expand_chunks import (
+from intelligence_layer.examples.search.expand_chunks import (
     ExpandChunks,
     ExpandChunksInput,
     ExpandChunksOutput,
 )
-from intelligence_layer.use_cases.search.search import Search, SearchInput
+from intelligence_layer.examples.search.search import Search, SearchInput
 
 from .retriever_based_qa import RetrieverBasedQaInput
 from .single_chunk_qa import SingleChunkQa, SingleChunkQaInput, SingleChunkQaOutput

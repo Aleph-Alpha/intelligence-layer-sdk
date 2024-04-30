@@ -15,12 +15,12 @@ from intelligence_layer.core import (
     TaskSpan,
     TextChunk,
 )
-from intelligence_layer.use_cases.qa.multiple_chunk_qa import (
+from intelligence_layer.examples.qa.multiple_chunk_qa import (
     MultipleChunkQa,
     MultipleChunkQaInput,
     MultipleChunkQaOutput,
 )
-from intelligence_layer.use_cases.search.search import Search, SearchInput
+from intelligence_layer.examples.search.search import Search, SearchInput
 
 
 class LongContextQaInput(BaseModel):

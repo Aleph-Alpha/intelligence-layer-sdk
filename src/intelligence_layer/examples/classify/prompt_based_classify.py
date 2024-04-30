@@ -16,7 +16,7 @@ from intelligence_layer.core import (
     Token,
     TokenWithLogProb,
 )
-from intelligence_layer.use_cases.classify.classify import (
+from intelligence_layer.examples.classify.classify import (
     ClassifyInput,
     Probability,
     SingleLabelClassifyOutput,

@@ -4,7 +4,7 @@ from pytest import fixture
 
 from intelligence_layer.connectors import Document
 from intelligence_layer.core import LuminousControlModel
-from intelligence_layer.use_cases import MultipleChunkQa, SingleChunkQa
+from intelligence_layer.examples import MultipleChunkQa, SingleChunkQa
 
 
 @fixture

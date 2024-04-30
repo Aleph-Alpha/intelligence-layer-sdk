@@ -13,12 +13,12 @@ from intelligence_layer.connectors.limited_concurrency_client import (
     AlephAlphaClientProtocol,
 )
 from intelligence_layer.core import Task, TaskSpan, TextChunk
-from intelligence_layer.use_cases.classify.classify import (
+from intelligence_layer.examples.classify.classify import (
     ClassifyInput,
     MultiLabelClassifyOutput,
     Probability,
 )
-from intelligence_layer.use_cases.search.search import SearchOutput
+from intelligence_layer.examples.search.search import SearchOutput
 
 
 class QdrantSearchInput(BaseModel):

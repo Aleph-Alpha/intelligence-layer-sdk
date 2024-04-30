@@ -1,9 +1,9 @@
 from intelligence_layer.core import Chunk, Language, LuminousControlModel, NoOpTracer
-from intelligence_layer.use_cases import (
+from intelligence_layer.examples import (
     LongContextSummarizeInput,
     SteerableLongContextSummarize,
 )
-from intelligence_layer.use_cases.summarize.steerable_single_chunk_summarize import (
+from intelligence_layer.examples.summarize.steerable_single_chunk_summarize import (
     SteerableSingleChunkSummarize,
 )
 

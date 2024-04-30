@@ -8,7 +8,7 @@ from intelligence_layer.core import (
     Task,
     TaskSpan,
 )
-from intelligence_layer.use_cases.summarize.summarize import (
+from intelligence_layer.examples.summarize.summarize import (
     SingleChunkSummarizeInput,
     SummarizeOutput,
 )

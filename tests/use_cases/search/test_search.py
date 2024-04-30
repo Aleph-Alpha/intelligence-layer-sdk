@@ -11,7 +11,7 @@ from intelligence_layer.connectors import (
 )
 from intelligence_layer.core import NoOpTracer
 from intelligence_layer.evaluation import Example
-from intelligence_layer.use_cases import (
+from intelligence_layer.examples import (
     ExpectedSearchOutput,
     Search,
     SearchAggregationLogic,

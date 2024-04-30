@@ -12,11 +12,11 @@ from intelligence_layer.connectors.retrievers.qdrant_in_memory_retriever import 
 )
 from intelligence_layer.core import NoOpTracer
 from intelligence_layer.core.chunk import TextChunk
-from intelligence_layer.use_cases.classify.classify import (
+from intelligence_layer.examples.classify.classify import (
     ClassifyInput,
     MultiLabelClassifyOutput,
 )
-from intelligence_layer.use_cases.classify.embedding_based_classify import (
+from intelligence_layer.examples.classify.embedding_based_classify import (
     EmbeddingBasedClassify,
     LabelWithExamples,
     QdrantSearch,

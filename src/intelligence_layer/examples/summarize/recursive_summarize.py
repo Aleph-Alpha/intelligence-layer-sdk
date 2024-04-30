@@ -2,10 +2,10 @@ from pydantic import BaseModel
 
 from intelligence_layer.core import Task, TaskSpan
 from intelligence_layer.core.detect_language import Language
-from intelligence_layer.use_cases.summarize.steerable_long_context_summarize import (
+from intelligence_layer.examples.summarize.steerable_long_context_summarize import (
     SteerableLongContextSummarize,
 )
-from intelligence_layer.use_cases.summarize.summarize import (
+from intelligence_layer.examples.summarize.summarize import (
     LongContextSummarizeInput,
     LongContextSummarizeOutput,
     SummarizeOutput,
