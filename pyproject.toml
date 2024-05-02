@@ -18,10 +18,10 @@ fastapi = "*"
 uvicorn = "*"
 aleph-alpha-client = ">=7.1.0"
 python-dotenv = "*"
-semantic-text-splitter = "^0.12.0"
+semantic-text-splitter = "^0.12.3"
 qdrant-client = "^1.9.0"
 rich = "^13.7.1"
-nbconvert = "^7.16.3"
+nbconvert = "^7.16.4"
 datasets = "^2.19.0"
 jupyter = "^1.0.0"
 requests = "^2.31.0"
@@ -31,7 +31,7 @@ pycountry = "23.12.11"
 rouge = "^1.0.1"
 opentelemetry-api = "^1.22.0"
 opentelemetry-sdk = "^1.22.0"
-huggingface-hub = "^0.22.2"
+huggingface-hub = "^0.23.0"
 opentelemetry-exporter-otlp-proto-http = "1.23.0"
 
 [tool.poetry.group.dev.dependencies]
@@ -45,7 +45,7 @@ faker = "^24.14.0"
 
 # tests
 pytest = "*"
-pytest-xdist = "^3.5.0"
+pytest-xdist = "^3.6.1"
 hypercorn = "0.16.0"
 
 # typing
