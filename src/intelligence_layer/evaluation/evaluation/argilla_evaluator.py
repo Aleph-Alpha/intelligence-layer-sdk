@@ -1,7 +1,9 @@
 import random
 from abc import ABC, abstractmethod
+from datetime import datetime
 from itertools import combinations
-from typing import Mapping, Optional
+from typing import Mapping, Optional, Sequence
+from uuid import uuid4
 
 from intelligence_layer.connectors.argilla.argilla_client import (
     ArgillaClient,
@@ -17,6 +19,7 @@ from intelligence_layer.evaluation.evaluation.argilla_evaluation_repository impo
     ArgillaEvaluationRepository,
     RecordDataSequence,
 )
+from intelligence_layer.evaluation.evaluation.domain import EvaluationOverview
 from intelligence_layer.evaluation.evaluation.evaluation_repository import (
     EvaluationRepository,
 )
@@ -31,13 +34,20 @@ from intelligence_layer.evaluation.run.run_repository import RunRepository
 class ArgillaEvaluationLogic(
     EvaluationLogic[Input, Output, ExpectedOutput, RecordDataSequence], ABC
 ):
+    def fields(self) -> Sequence[Field]:
+        return [Field(name="name", title="title")]
+
+    def questions(self) -> Sequence[Question]:
+        return [
+            Question(name="name", title="title", description="description", options=[0])
+        ]
+
     def do_evaluate(
         self,
         example: Example[Input, ExpectedOutput],
         *output: SuccessfulExampleOutput[Output],
     ) -> RecordDataSequence:
-        
-        Hier eher download logic als to-record
+        # Hier eher download logic als to-record
         return self._to_record(example, *output)
 
     @abstractmethod
@@ -95,25 +105,54 @@ class ArgillaEvaluator(
             description,
             evaluation_logic,  # type: ignore
         )
-        self._client  = argilla_client
-        
+        self._client = argilla_client
+
+    def new_evaluate_runs(
+        self,
+        argilla_id: str,
+    ) -> EvaluationOverview:
+        return EvaluationOverview(
+            run_overviews=frozenset(),
+            id=argilla_id,
+            start=datetime.now(),
+            description="",
+            end_date=datetime.now(),
+            successful_examples=1,
+            crashed_examples=0,
+        )
 
     def evaluation_type(self) -> type[ArgillaEvaluation]:  # type: ignore
         return ArgillaEvaluation
-    
-    #Submission logic vom evaluate in submit (ArgillaEvaluator methoden)
-    
-    def submit(self, evaluation_id: str, evaluation_type:type[Evaluation]) -> None:
-        recordData = self._evaluation_logic._to_record()
-        if isinstance(evaluation.result, RecordDataSequence):
-            for record in evaluation.result.records:
-                self._client.add_record(evaluation.evaluation_id, record)
-        elif isinstance(evaluation.result, FailedExampleEvaluation):
-            self._evaluation_repository.store_example_evaluation(evaluation)
-        else:
-            raise TypeError(
-                "ArgillaEvaluationRepository does not support storing non-RecordDataSequence evaluations."
-            )
+
+    # Submission logic vom evaluate in submit (ArgillaEvaluator methods)
+
+    def submit(
+        self,
+        run_id: str,
+        workspace_id: str,
+        num_examples: Optional[int] = None,
+        abort_on_error: bool = False,
+    ) -> str:
+        self._client.ensure_dataset_exists(
+            workspace_id,
+            dataset_name=run_id,
+            fields=self._evaluation_logic.fields(),
+            questions=self._evaluation_logic.questions(),
+        )
+        return str(uuid4())
+
+    #    if isinstance(evaluation.result, RecordDataSequence):
+    #        for record in evaluation.result.records:
+    #            self._client.add_record(evaluation.evaluation_id, record)
+    #          pass
+    #
+    #    elif isinstance(evaluation.result, FailedExampleEvaluation):
+    #        self._evaluation_repository.store_example_evaluation(evaluation)
+    #    else:
+    #        raise TypeError(
+    #            "ArgillaEvaluationRepository does not support storing non-RecordDataSequence evaluations."
+    #        )
+
 
 class InstructComparisonArgillaEvaluationLogic(
     ArgillaEvaluationLogic[InstructInput, CompleteOutput, None]
@@ -169,9 +208,8 @@ class InstructComparisonArgillaEvaluationLogic(
         )
 
     def _do_submit(self) -> None:
-        Hier 
+        # Hier
         return
-
 
 
 def create_instruct_comparison_argilla_evaluation_classes(

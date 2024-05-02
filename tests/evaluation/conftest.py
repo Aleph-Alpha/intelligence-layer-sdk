@@ -201,7 +201,7 @@ class StubArgillaClient(ArgillaClient):
     def ensure_dataset_exists(
         self,
         workspace_id: str,
-        _: str,
+        dataset_name: str,
         fields: Sequence[Field],
         questions: Sequence[Question],
     ) -> str:

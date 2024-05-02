@@ -132,6 +132,7 @@ def string_argilla_evaluator(
         in_memory_run_repository,
         argilla_evaluation_repository,
         "dummy-string-task",
+        StubArgillaClient(),
         DummyStringTaskArgillaEvaluationLogic(),
     )
     return evaluator
@@ -163,6 +164,32 @@ def string_argilla_runner(
         in_memory_run_repository,
         "dummy-task",
     )
+
+
+def test_argilla_evaluator_can_submit_evals_to_argilla(
+    string_argilla_evaluator: ArgillaEvaluator[
+        DummyStringInput,
+        DummyStringOutput,
+        DummyStringOutput,
+    ],
+    string_argilla_runner: Runner[DummyStringInput, DummyStringOutput],
+    string_dataset_id: str,
+) -> None:
+    # fetch run_overview
+    # put run_oervrw ionto submit function
+    # check if stuff is correctly submitted -> ArgillaStubClient has receveid data
+
+    run_overview = string_argilla_runner.run_dataset(string_dataset_id)
+
+    argilla_id = string_argilla_evaluator.submit(run_overview.id, workspace_id="1")
+
+    eval_overview = string_argilla_evaluator.new_evaluate_runs(argilla_id)
+
+    assert eval_overview.end_date is not None
+    assert eval_overview.successful_examples == 1
+    assert eval_overview.crashed_examples == 0
+
+    assert len(StubArgillaClient()._datasets[argilla_id]) == 1
 
 
 def test_argilla_evaluator_can_do_sync_evaluation(
