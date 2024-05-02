@@ -1,7 +1,7 @@
 # Changelog
 
 ## Unreleased
-...
+- feature: `AlephAlphaModel` now supports a `context_size`-property
 
 ### Breaking Changes
 ...
