@@ -158,7 +158,7 @@ class AlephAlphaModel:
         self._explain = _Explain(self._client, name)
 
     @property
-    @lru_cache(maxsize=1)
+    @lru_cache(maxsize=10)
     def context_size(self) -> int:
         models_info = self._client.models()
         context_size: Optional[int] = next(
@@ -182,7 +182,7 @@ class AlephAlphaModel:
     def explain(self, input: ExplainInput, tracer: Tracer) -> ExplainOutput:
         return self._explain.run(input, tracer)
 
-    @lru_cache(maxsize=1)
+    @lru_cache(maxsize=10)
     def get_tokenizer(self) -> Tokenizer:
         return self._client.tokenizer(self.name)
 
