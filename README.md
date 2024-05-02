@@ -17,12 +17,12 @@ The key features of the Intelligence Layer are:
 - [Table of contents](#table-of-contents)
 - [Installation](#installation)
   - [Local installation (for development and tutorials)](#local-installation-for-development-and-tutorials)
-    - [Getting started with the Jupyter Notebooks](#getting-started-with-the-jupyter-notebooks)
-  - [How to use the Intelligence Layer in your project](#how-to-use-the-intelligence-layer-in-your-project)
+  - [Add the Intelligence Layer to your project dependencies](#add-the-intelligence-layer-to-your-project-dependencies)
   - [How to use the Intelligence Layer in Docker](#how-to-use-the-intelligence-layer-in-docker)
     - [Via the GitHub repository](#via-the-github-repository)
 - [Getting started](#getting-started)
-  - [Tutorials](#tutorials)
+  - [Setup LLM access](#setup-llm-access)
+  - [Tutorial Notebooks](#tutorial-notebooks)
   - [How-Tos](#how-tos)
 - [Models](#models)
 - [Example index](#example-index)
@@ -35,56 +35,23 @@ The key features of the Intelligence Layer are:
 # Installation
 
 ## Local installation (for development and tutorials)
+
 Clone the Intelligence Layer repository from github.
+
 ```bash
 git clone git@github.com:Aleph-Alpha/intelligence-layer.git
 ```
-The Intelligence Layer uses `poetry` as a package manager. Follow the [official instructions](https://python-poetry.org/docs/#installation) to install it.
-Afterwards, simply run `poetry install` to install all dependencies in a virtual environment.
+
+The Intelligence Layer uses `poetry`, which serves as the package manager and manages the virtual environments. We recommend installing peotry globally, while still isolating it in a virtual environment, using pipx, following the [official instructions](https://python-poetry.org/docs/#installation).
+Afterwards, simply run `poetry install` to create a new virtual enviorment and install all project dependencies.
+
 ```bash
 poetry install
 ```
+
 The environment can be activated via `poetry shell`. See the official poetry documentation for more information.
 
-
-### Getting started with the Jupyter Notebooks
-
-After running the local installation steps, you can set whether you are using the Aleph-Alpha API or an on-prem setup via the environment variables.
-
----
-**Using the Aleph-Alpha API** \
-  \
-In the Intelligence Layer the Aleph-Alpha API (`https://api.aleph-alpha.com`) is set as default host URL. However, you will need an [Aleph Alpha access token](https://docs.aleph-alpha.com/docs/account/#create-a-new-token) to run the examples.
-Set your access token with
-
-```bash
-export AA_TOKEN=<YOUR TOKEN HERE>
-```
-
----
-
-**Using an on-prem setup** \
-  \
-In case you want to use an on-prem endpoint you will have to change the host URL by setting the `CLIENT_URL` environment variable:
-
-```bash
-export CLIENT_URL=<YOUR_ENDPOINT_URL_HERE>
-```
-
-The program will warn you in case no `CLIENT_URL` is set explicitly set.
-
----
-After correctly setting up the environment variables you can run the jupyter notebooks.
-For this, run `jupyter lab` inside the virtual environment and go to the [examples](http://localhost:8888/lab/workspaces/auto-C/tree/src/documentation) directory.
-
-```bash
-cd src/documentation && poetry run jupyter lab
-```
-
-## How to use the Intelligence Layer in your project
-To install this as a dependency in your project, you need a [Github access token](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens#creating-a-personal-access-token-classic).
-This token needs the following permissions
-
+## Add the Intelligence Layer to your project dependencies
 
 To install the Aleph-Alpha Intelligence Layer from the JFrog artifactory in you project, you have to add this information to your poetry setup via the following four steps. First, add the artifactory as a source to your project via
 ```bash
@@ -141,11 +108,20 @@ RUN poetry install --no-dev --no-interaction --no-ansi \
 
 # Getting started
 
-Not sure where to start? Familiarize yourself with the Intelligence Layer SDK using the below notebook as interactive tutorials.
-If you prefer you can also read about the [concepts](Concepts.md) first.
+> 📘 Not sure where to start? Familiarize yourself with the Intelligence Layer using the **below notebook as interactive tutorials**.
+> If you prefer you can also **read about the [concepts](Concepts.md)** first.
 
-## Tutorials
-The tutorials aim to guide you through implementing several common use-cases with the Intelligence Layer SDK. They introduce you to key concepts and enable you to create your own use-cases. In general the tutorials are build in a way that you can simply hop into the topic you are most interested in. However, for starters we recommend to read through the `Summarization` tutorial first. It explains the core concepts of the intelligence layer in more depth while for the other tutorials we assume that these concepts are known.
+The tutorials aim to guide you through implementing several common use-cases with the Intelligence Layer. They introduce you to key concepts and enable you to create your own use-cases. In general the tutorials are build in a way that you can simply hop into the topic you are most interested in. However, for starters we recommend to read through the `Summarization` tutorial first. It explains the core concepts of the intelligence layer in more depth while for the other tutorials we assume that these concepts are known.
+
+### Setup LLM access
+
+The tutorials require access to an LLM endpoint. You can choose between using the Aleph Alpha API (`https://api.aleph-alpha.com`) or an on-premise setup by configuring the appropriate environment variables. To configure the enviorment variables, create a `.env` file in the root directory of the project and copy the contents of the `.env.sample` file into it.
+
+To use the **Aleph Alpha API**, that is set as the default host URL, set the `AA_TOKEN` variable to your [Aleph Alpha access token](https://docs.aleph-alpha.com/docs/account/#create-a-new-token) and you are good to go.
+
+To use an **on-premises setup**, set the `CLIENT_URL` variable to your host URL.
+
+### Tutorial Notebooks
 
 | Order | Topic              | Description                                          | Notebook 📓                                                     |
 | ----- | ------------------ |------------------------------------------------------|-----------------------------------------------------------------|
