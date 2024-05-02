@@ -36,6 +36,8 @@ class ArgillaEvaluationLogic(
         example: Example[Input, ExpectedOutput],
         *output: SuccessfulExampleOutput[Output],
     ) -> RecordDataSequence:
+        
+        Hier eher download logic als to-record
         return self._to_record(example, *output)
 
     @abstractmethod
@@ -83,6 +85,7 @@ class ArgillaEvaluator(
         run_repository: RunRepository,
         evaluation_repository: ArgillaEvaluationRepository,
         description: str,
+        argilla_client: ArgillaClient,
         evaluation_logic: ArgillaEvaluationLogic[Input, Output, ExpectedOutput],
     ) -> None:
         super().__init__(
@@ -92,10 +95,25 @@ class ArgillaEvaluator(
             description,
             evaluation_logic,  # type: ignore
         )
+        self._client  = argilla_client
+        
 
     def evaluation_type(self) -> type[ArgillaEvaluation]:  # type: ignore
         return ArgillaEvaluation
-
+    
+    #Submission logic vom evaluate in submit (ArgillaEvaluator methoden)
+    
+    def submit(self, evaluation_id: str, evaluation_type:type[Evaluation]) -> None:
+        recordData = self._evaluation_logic._to_record()
+        if isinstance(evaluation.result, RecordDataSequence):
+            for record in evaluation.result.records:
+                self._client.add_record(evaluation.evaluation_id, record)
+        elif isinstance(evaluation.result, FailedExampleEvaluation):
+            self._evaluation_repository.store_example_evaluation(evaluation)
+        else:
+            raise TypeError(
+                "ArgillaEvaluationRepository does not support storing non-RecordDataSequence evaluations."
+            )
 
 class InstructComparisonArgillaEvaluationLogic(
     ArgillaEvaluationLogic[InstructInput, CompleteOutput, None]
@@ -149,6 +167,11 @@ class InstructComparisonArgillaEvaluationLogic(
                 self._fields["KEY_RESPONSE_2"].name: second.run_id,
             },
         )
+
+    def _do_submit(self) -> None:
+        Hier 
+        return
+
 
 
 def create_instruct_comparison_argilla_evaluation_classes(

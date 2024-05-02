@@ -79,6 +79,9 @@ class EvaluationOverview(BaseModel, frozen=True):
     id: str
     start: Optional[datetime]
     description: str
+    end_date: datetime
+    successful_examples: int
+    crashed_examples: int
 
     def __repr__(self) -> str:
         return self.__str__()
