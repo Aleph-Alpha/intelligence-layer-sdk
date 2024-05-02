@@ -80,3 +80,7 @@ def test_llama_3_model_works(no_op_tracer: NoOpTracer) -> None:
     explain_input = CompleteInput(prompt=prompt)
     output = llama_3_model.complete(explain_input, no_op_tracer)
     assert "Jessica" in output.completion
+
+
+def test_model_knows_its_context_size(model: AlephAlphaModel) -> None:
+    assert model.context_size == 2048

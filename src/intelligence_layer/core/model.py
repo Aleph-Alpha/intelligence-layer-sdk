@@ -157,6 +157,22 @@ class AlephAlphaModel:
         )
         self._explain = _Explain(self._client, name)
 
+    @property
+    @lru_cache(maxsize=1)
+    def context_size(self) -> int:
+        models_info = self._client.models()
+        context_size: Optional[int] = next(
+            (
+                model_info["max_context_size"]
+                for model_info in models_info
+                if model_info["name"] == self.name
+            ),
+            None,
+        )
+        if context_size is None:
+            raise ValueError(f"No matching model found for name {self.name}")
+        return context_size
+
     def complete_task(self) -> Task[CompleteInput, CompleteOutput]:
         return self._complete
 
