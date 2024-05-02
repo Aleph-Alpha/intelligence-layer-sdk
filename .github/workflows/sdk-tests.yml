@@ -85,9 +85,7 @@ jobs:
         run: |
           poetry config installer.max-workers 10
           poetry install --no-interaction
-          - name: install Sphinx
-          run: sudo apt-get update -y && sudo apt-get install python3-sphinx
-      - name: run doctest
+      - name: Run doctest
         env:
           AA_TOKEN: ${{ secrets.AA_TOKEN }}
           HUGGING_FACE_TOKEN: ${{ secrets.HUGGING_FACE_TOKEN }}
