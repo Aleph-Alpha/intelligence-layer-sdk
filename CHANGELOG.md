@@ -7,7 +7,8 @@
 ...
 
 ### New Features
-...
+ - Add new `IncrementalEvaluator` for easier addition of runs to existing evaluations without repeated evaluation.
+   - Add `IncrementalEvaluationLogic` for use in `IncrementalEvaluator`
 
 ### Fixes
 ...
