@@ -154,6 +154,10 @@ class ArgillaEvaluator(
     #        )
 
 
+## An eval ids rankommen
+# wo ergibt es sinn field und questions zu setzen?
+
+
 class InstructComparisonArgillaEvaluationLogic(
     ArgillaEvaluationLogic[InstructInput, CompleteOutput, None]
 ):
