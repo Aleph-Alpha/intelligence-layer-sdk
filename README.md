@@ -147,18 +147,19 @@ If you prefer you can also read about the [concepts](Concepts.md) first.
 ## Tutorials
 The tutorials aim to guide you through implementing several common use-cases with the Intelligence Layer SDK. They introduce you to key concepts and enable you to create your own use-cases. In general the tutorials are build in a way that you can simply hop into the topic you are most interested in. However, for starters we recommend to read through the `Summarization` tutorial first. It explains the core concepts of the intelligence layer in more depth while for the other tutorials we assume that these concepts are known.
 
-| Order | Topic              | Description                                          | Notebook 📓                                                     |
-| ----- | ------------------ |------------------------------------------------------|-----------------------------------------------------------------|
-| 1     | Summarization      | Summarize a document                                 | [summarization.ipynb](./src/documentation/summarization.ipynb)       |
-| 2     | Question Answering | Various approaches for QA                            | [qa.ipynb](./src/documentation/qa.ipynb)                             |
-| 3     | Classification     | Learn about two methods of classification            | [classification.ipynb](./src/documentation/classification.ipynb)     |
-| 4     | Evaluation         | Evaluate LLM-based methodologies                     | [evaluation.ipynb](./src/documentation/evaluation.ipynb)             |
-| 5     | Quickstart Task    | Build a custom `Task` for your use case              | [quickstart_task.ipynb](./src/documentation/quickstart_task.ipynb)   |
-| 6     | Document Index     | Connect your proprietary knowledge base              | [document_index.ipynb](./src/documentation/document_index.ipynb)     |
-| 7     | Human Evaluation   | Connect to Argilla for manual evaluation             | [human_evaluation.ipynb](./src/documentation/human_evaluation.ipynb) |
-| 8     | Performance tips   | Contains some small tips for performance             | [performance_tips.ipynb](./src/documentation/performance_tips.ipynb) |
-| 9     | Deployment         | Shows how to deploy a Task in a minimal FastAPI app. | [fastapi_tutorial.ipynb](./src/documentation/fastapi_tutorial.ipynb) |
-| 10    | Issue Classification | Deploy a Task in Kubernetes to classify Jira issues     | [Found in adjacent repository](https://github.com/Aleph-Alpha/IL-Classification-Journey) |
+| Order | Topic                | Description                                          | Notebook 📓                                                                              |
+|-------|----------------------|------------------------------------------------------|------------------------------------------------------------------------------------------|
+| 1     | Summarization        | Summarize a document                                 | [summarization.ipynb](./src/documentation/summarization.ipynb)                           |
+| 2     | Question Answering   | Various approaches for QA                            | [qa.ipynb](./src/documentation/qa.ipynb)                                                 |
+| 3     | Classification       | Learn about two methods of classification            | [classification.ipynb](./src/documentation/classification.ipynb)                         |
+| 4     | Evaluation           | Evaluate LLM-based methodologies                     | [evaluation.ipynb](./src/documentation/evaluation.ipynb)                                 |
+| 5     | Elo QA Evaluation    | Evaluate QA tasks in an Elo ranking                  | [elo_qa_eval.ipynb](./src/documentation/elo_qa_eval.ipynb)  |
+| 6     | Quickstart Task      | Build a custom `Task` for your use case              | [quickstart_task.ipynb](./src/documentation/quickstart_task.ipynb)                       |
+| 7     | Document Index       | Connect your proprietary knowledge base              | [document_index.ipynb](./src/documentation/document_index.ipynb)                         |
+| 8     | Human Evaluation     | Connect to Argilla for manual evaluation             | [human_evaluation.ipynb](./src/documentation/human_evaluation.ipynb)                     |
+| 9     | Performance tips     | Contains some small tips for performance             | [performance_tips.ipynb](./src/documentation/performance_tips.ipynb)                     |
+| 10    | Deployment           | Shows how to deploy a Task in a minimal FastAPI app. | [fastapi_tutorial.ipynb](./src/documentation/fastapi_tutorial.ipynb)                     |
+| 11    | Issue Classification | Deploy a Task in Kubernetes to classify Jira issues  | [Found in adjacent repository](https://github.com/Aleph-Alpha/IL-Classification-Journey) |
 
 ## How-Tos
 The how-tos are quick lookups about how to do things. Compared to the tutorials, they are shorter and do not explain the concepts they are using in-depth.

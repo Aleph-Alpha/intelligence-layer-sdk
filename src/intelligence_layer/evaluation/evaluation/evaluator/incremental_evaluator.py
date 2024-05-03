@@ -50,20 +50,16 @@ class IncrementalEvaluationLogic(
         Returns:
             :class:`Evaluation`: The metrics that come from the evaluated :class:`Task`.
         """
-        flattened_run_output_ids: set[str] = set()
-        evaluated_outputs = []
+
+        already_evaluated_outputs = []
         for run_output_ids in self._previous_run_output_ids:
-            flattened_run_output_ids = flattened_run_output_ids.union(run_output_ids)
-            evaluated_outputs.append(
+            already_evaluated_outputs.append(
                 [output for output in outputs if output.run_id in run_output_ids]
             )
 
-        new_outputs = [
-            output
-            for output in outputs
-            if output.run_id not in flattened_run_output_ids
-        ]
-        return self.do_incremental_evaluate(example, new_outputs, evaluated_outputs)
+        return self.do_incremental_evaluate(
+            example, list(outputs), already_evaluated_outputs
+        )
 
     @abstractmethod
     def do_incremental_evaluate(

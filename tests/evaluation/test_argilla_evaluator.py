@@ -16,8 +16,8 @@ from intelligence_layer.evaluation import (
     ArgillaEvaluationLogic,
     ArgillaEvaluator,
     AsyncInMemoryEvaluationRepository,
-    ComparisonAggregationLogic,
     ComparisonEvaluation,
+    ComparisonEvaluationAggregationLogic,
     DatasetRepository,
     Example,
     InMemoryDatasetRepository,
@@ -327,12 +327,12 @@ def test_argilla_evaluator_abort_on_error_works(
 
 
 def test_argilla_aggregation_logic_works() -> None:
-    argilla_aggregation_logic = ComparisonAggregationLogic()
+    argilla_aggregation_logic = ComparisonEvaluationAggregationLogic()
     evaluations = (
         ComparisonEvaluation(
-            first="player_1",
-            second="player_2" if i < 9000 else "player_3",
-            winner=MatchOutcome.from_rank_literal(
+            first_player="player_1",
+            second_player="player_2" if i < 9000 else "player_3",
+            outcome=MatchOutcome.from_rank_literal(
                 random.choices([1, 2, 3], [0.5, 0.25, 0.25], k=1)[0]
             ),
         )
