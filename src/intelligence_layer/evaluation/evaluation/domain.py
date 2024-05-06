@@ -115,8 +115,9 @@ class EvaluationOverview(BaseModel, frozen=True):
     id: str
     start_date: datetime
     end_date: datetime
-    successful_example_count: int
-    failed_example_count: int
+    successful_evaluation_count: int
+    failed_evaluation_count: int
+    skipped_evaluation_count: int
     description: str
 
     def __repr__(self) -> str:
@@ -136,8 +137,8 @@ class EvaluationOverview(BaseModel, frozen=True):
             f"Evaluation Overview ID = {self.id}\n"
             f"Start time = {self.start_date}\n"
             f"End time = {self.end_date}\n"
-            f"Successful examples = {self.successful_example_count}\n"
-            f"Crashed examples = {self.failed_example_count}\n"
+            f"Successful examples = {self.successful_evaluation_count}\n"
+            f"Crashed examples = {self.failed_evaluation_count}\n"
             f'Description = "{self.description}"\n'
             f"{run_overview_str}"
         )

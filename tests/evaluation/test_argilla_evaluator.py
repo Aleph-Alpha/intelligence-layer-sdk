@@ -71,6 +71,13 @@ class DummyStringTaskArgillaEvaluationLogic(
             ]
         )
 
+    def submit(
+        self,
+        example: Example[DummyStringInput, DummyStringOutput],
+        *output: SuccessfulExampleOutput[DummyStringOutput],
+    ) -> None:
+        return self._to_record(example, *output)
+
 
 class DummyArgillaClient(ArgillaClient):
     _datasets: dict[str, list[RecordData]] = {}
@@ -228,13 +235,13 @@ def test_argilla_evaluator_can_submit_evals_to_argilla(
 
     run_overview = string_argilla_runner.run_dataset(string_dataset_id)
 
-    partial_evaluation_overview = evaluator.evaluate_runs(run_overview.id)
+    partial_evaluation_overview = evaluator.submit(run_overview.id)
 
     eval_overview = evaluator.retrieve(partial_evaluation_overview.id)
 
     assert eval_overview.end_date is not None
-    assert eval_overview.successful_example_count == 1
-    assert eval_overview.failed_example_count == 0
+    assert eval_overview.successful_evaluation_count == 1
+    assert eval_overview.failed_evaluation_count == 0
 
     assert len(DummyArgillaClient()._datasets[partial_evaluation_overview.id]) == 1
 

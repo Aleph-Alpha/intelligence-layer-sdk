@@ -1,4 +1,3 @@
-import typing
 from abc import ABC, abstractmethod
 from concurrent.futures import ThreadPoolExecutor
 from functools import lru_cache
@@ -306,107 +305,50 @@ class Evaluator(Generic[Input, Output, ExpectedOutput, Evaluation]):
             __init__.
         """
 
-        def load_run_overview(run_id: str) -> RunOverview:
-            run_overview = self._run_repository.run_overview(run_id)
-            if not run_overview:
-                raise ValueError(f"No RunOverview found for run-id: {run_id}")
-            return run_overview
-
-        if not run_ids:
-            raise ValueError("At least one run-id needs to be provided")
-        run_overviews = frozenset(load_run_overview(run_id) for run_id in run_ids)
-        if not all(
-            next(iter(run_overviews)).dataset_id == run_overview.dataset_id
-            for run_overview in run_overviews
-        ):
-            raise ValueError(
-                f"All run-overviews must reference the same dataset: {run_overviews}"
-            )
-        eval_id = self._evaluation_repository.initialize_evaluation()
-        dataset_id = next(iter(run_overviews)).dataset_id
-        examples = self._dataset_repository.examples(
-            dataset_id,
-            self.input_type(),
-            self.expected_output_type(),
-        )
-        if examples is None:
-            raise ValueError(f"Dataset: {dataset_id} not found")
         start = utc_now()
-
-        examples_zipped: Iterable[tuple[ExampleOutput[Output], ...]] = zip(
-            *(
-                self._run_repository.example_outputs(
-                    run_overview.id, self.output_type()
-                )
-                for run_overview in run_overviews
-            ),
-            strict=True,
-        )
-
-        def generate_evaluation_inputs() -> (
-            Iterable[
-                Tuple[
-                    Example[Input, ExpectedOutput],
-                    str,
-                    Sequence[SuccessfulExampleOutput[Output]],
-                ]
-            ]
-        ):
-            current_example = 0
-            for example_outputs in examples_zipped:
-                successful_example_outputs = [
-                    typing.cast(SuccessfulExampleOutput[Output], output)
-                    for output in example_outputs
-                    if not isinstance(output.output, FailedExampleRun)
-                ]
-                if not successful_example_outputs:
-                    continue
-                example_id = successful_example_outputs[0].example_id
-                assert all(
-                    example_output.example_id == example_id
-                    for example_output in successful_example_outputs
-                )
-
-                example = self._dataset_repository.example(
-                    dataset_id,
-                    example_id,
-                    self.input_type(),
-                    self.expected_output_type(),
-                )
-                assert example is not None
-
-                if num_examples and current_example >= num_examples:
-                    break
-                current_example += 1
-
-                yield (
-                    example,
-                    eval_id,
-                    successful_example_outputs,
-                )
+        run_overviews = self._load_run_overviews(*run_ids)
+        eval_id = self._evaluation_repository.initialize_evaluation()
 
         with ThreadPoolExecutor(max_workers=10) as executor:
-            list(  # the list is needed to consume the iterator returned from the executor.map
+            example_evaluations = list(  # the list is needed to consume the iterator returned from the executor.map
                 tqdm(
                     executor.map(
                         lambda args: self.evaluate(
-                            args[0], args[1], abort_on_error, *args[2]
+                            args[0], eval_id, abort_on_error, *args[1]
                         ),
-                        generate_evaluation_inputs(),
+                        self.retrieve_eval_logic_input(
+                            run_overviews, num_examples=num_examples
+                        ),
                     ),
                     desc="Evaluating",
                 )
             )
 
-        partial_overview = EvaluationOverview(
-            run_overviews=run_overviews,
+        crashed_example_count = sum(
+            isinstance(example_evaluation, FailedExampleEvaluation)
+            for example_evaluation in example_evaluations
+        )
+
+        example_count = (
+            next(iter(run_overviews)).failed_example_count
+            + next(iter(run_overviews)).successful_example_count
+        )
+        successful_evaluation_count = len(example_evaluations) - crashed_example_count
+        overview = EvaluationOverview(
+            run_overviews=frozenset(run_overviews),
             id=eval_id,
             start_date=start,
+            end_date=utc_now(),
+            successful_evaluation_count=successful_evaluation_count,
+            failed_evaluation_count=crashed_example_count,
+            skipped_evaluation_count=example_count
+            - successful_evaluation_count
+            - crashed_example_count,
             description=self.description,
         )
-        self._evaluation_repository.store_evaluation_overview(partial_overview)
+        self._evaluation_repository.store_evaluation_overview(overview)
 
-        return partial_overview
+        return overview
 
     @final
     def evaluate(
@@ -415,7 +357,7 @@ class Evaluator(Generic[Input, Output, ExpectedOutput, Evaluation]):
         evaluation_id: str,
         abort_on_error: bool,
         *example_outputs: SuccessfulExampleOutput[Output],
-    ) -> None:
+    ) -> Evaluation | FailedExampleEvaluation:
         try:
             result: Evaluation | FailedExampleEvaluation = (
                 self._evaluation_logic.do_evaluate(
@@ -435,6 +377,8 @@ class Evaluator(Generic[Input, Output, ExpectedOutput, Evaluation]):
                 evaluation_id=evaluation_id, example_id=example.id, result=result
             )
         )
+
+        return result
 
     def failed_evaluations(
         self, evaluation_id: str

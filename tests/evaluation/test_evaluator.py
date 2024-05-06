@@ -232,21 +232,29 @@ def comparing_aggregator(
     )
 
 
-def test_eval_and_aggregate_runs_returns_generic_statistics(
+def test_eval_runs_returns_generic_statistics(
     dummy_evaluator: Evaluator[str, str, None, DummyEvaluation],
-    dummy_aggregator: Aggregator[
-        DummyEvaluation, DummyAggregatedEvaluationWithResultList
-    ],
     dummy_runner: Runner[str, str],
-    dataset_id: str,
+    in_memory_dataset_repository: InMemoryDatasetRepository,
 ) -> None:
+    examples = [
+        Example(input="success", expected_output=None, id="example-1"),
+        Example(input="success", expected_output=None, id="example-2"),
+        Example(input="success", expected_output=None, id="example-3"),
+        Example(input=FAIL_IN_TASK_INPUT, expected_output=None, id="example-4"),
+        Example(input=FAIL_IN_TASK_INPUT, expected_output=None, id="example-5"),
+        Example(input=FAIL_IN_EVAL_INPUT, expected_output=None, id="example-6"),
+    ]
+    dataset_id = in_memory_dataset_repository.create_dataset(
+        examples=examples, dataset_name="test-dataset"
+    ).id
+
     run_overview = dummy_runner.run_dataset(dataset_id)
     evaluation_overview = dummy_evaluator.evaluate_runs(run_overview.id)
-    aggregation_overview = dummy_aggregator.aggregate_evaluation(evaluation_overview.id)
 
-    assert next(iter(aggregation_overview.run_overviews())).dataset_id == dataset_id
-    assert aggregation_overview.successful_evaluation_count == 1
-    assert aggregation_overview.failed_evaluation_count == 2
+    assert evaluation_overview.successful_evaluation_count == 3
+    assert evaluation_overview.skipped_evaluation_count == 2
+    assert evaluation_overview.failed_evaluation_count == 1
 
 
 def test_evaluator_aborts_on_error(
