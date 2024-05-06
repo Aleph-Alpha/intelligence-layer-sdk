@@ -2,7 +2,8 @@ import random
 from abc import ABC, abstractmethod
 from datetime import datetime
 from itertools import combinations
-from typing import Mapping, Optional, Sequence
+from typing import Generic, Iterable, Mapping, Optional, Sequence, Tuple, cast
+import typing
 from uuid import uuid4
 
 from intelligence_layer.connectors.argilla.argilla_client import (
@@ -13,13 +14,19 @@ from intelligence_layer.connectors.argilla.argilla_client import (
     RecordData,
 )
 from intelligence_layer.core import CompleteOutput, Input, InstructInput, Output
+from intelligence_layer.core.tracer.tracer import utc_now
 from intelligence_layer.evaluation.dataset.dataset_repository import DatasetRepository
 from intelligence_layer.evaluation.dataset.domain import Example, ExpectedOutput
 from intelligence_layer.evaluation.evaluation.argilla_evaluation_repository import (
     ArgillaEvaluationRepository,
     RecordDataSequence,
 )
-from intelligence_layer.evaluation.evaluation.domain import EvaluationOverview
+from intelligence_layer.evaluation.evaluation.async_evaluation import AsyncEvaluator
+from intelligence_layer.evaluation.evaluation.domain import (
+    Evaluation,
+    EvaluationOverview,
+    PartialEvaluationOverview,
+)
 from intelligence_layer.evaluation.evaluation.evaluation_repository import (
     EvaluationRepository,
 )
@@ -27,7 +34,12 @@ from intelligence_layer.evaluation.evaluation.evaluator import (
     EvaluationLogic,
     Evaluator,
 )
-from intelligence_layer.evaluation.run.domain import SuccessfulExampleOutput
+from intelligence_layer.evaluation.run.domain import (
+    ExampleOutput,
+    FailedExampleRun,
+    RunOverview,
+    SuccessfulExampleOutput,
+)
 from intelligence_layer.evaluation.run.run_repository import RunRepository
 
 
@@ -67,8 +79,7 @@ class ArgillaEvaluationLogic(
 
 
 class ArgillaEvaluator(
-    Evaluator[Input, Output, ExpectedOutput, ArgillaEvaluation],
-    ABC,
+    AsyncEvaluator[Input, Output, ExpectedOutput, ArgillaEvaluation]
 ):
     """Evaluator used to integrate with Argilla (https://github.com/argilla-io/argilla).
 
@@ -95,8 +106,9 @@ class ArgillaEvaluator(
         run_repository: RunRepository,
         evaluation_repository: ArgillaEvaluationRepository,
         description: str,
-        argilla_client: ArgillaClient,
         evaluation_logic: ArgillaEvaluationLogic[Input, Output, ExpectedOutput],
+        argilla_client: ArgillaClient,
+        workspace_id: str,
     ) -> None:
         super().__init__(
             dataset_repository,
@@ -106,19 +118,20 @@ class ArgillaEvaluator(
             evaluation_logic,  # type: ignore
         )
         self._client = argilla_client
+        self._workspace_id = workspace_id
 
-    def new_evaluate_runs(
+    def retrieve(
         self,
         argilla_id: str,
     ) -> EvaluationOverview:
         return EvaluationOverview(
             run_overviews=frozenset(),
             id=argilla_id,
-            start=datetime.now(),
+            start_date=datetime.now(),
             description="",
             end_date=datetime.now(),
-            successful_examples=1,
-            crashed_examples=0,
+            successful_example_count=1,
+            failed_example_count=0,
         )
 
     def evaluation_type(self) -> type[ArgillaEvaluation]:  # type: ignore
@@ -126,32 +139,124 @@ class ArgillaEvaluator(
 
     # Submission logic vom evaluate in submit (ArgillaEvaluator methods)
 
+    def load_run_overviews(self, *run_ids: str) -> Sequence[RunOverview]:
+        if not run_ids:
+            raise ValueError("At least one run-id needs to be provided")
+        run_overviews = set()
+        for run_id in run_ids:
+            run_overview = self._run_repository.run_overview(run_id)
+            if not run_overview:
+                raise ValueError(f"No RunOverview found for run-id: {run_id}")
+            run_overviews.add(run_overview)
+        return run_overviews
+
+    def raise_if_overviews_have_different_dataset(*run_overviews: RunOverview):
+        if not all(
+            next(iter(run_overviews)).dataset_id == run_overview.dataset_id
+            for run_overview in run_overviews
+        ):
+            raise ValueError(
+                f"All run-overviews must reference the same dataset: {run_overviews}"
+            )
+
+    def retrieve_example_outputs(
+        self, run_overviews: Sequence[RunOverview]
+    ) -> Iterable[tuple[ExampleOutput[Output], ...]]:
+        # this uses the assumption that the example outputs are sorted
+        example_outputs_for_example: Iterable[tuple[ExampleOutput[Output], ...]] = zip(
+            *(
+                self._run_repository.example_outputs(
+                    run_overview.id, self.output_type()
+                )
+                for run_overview in run_overviews
+            ),
+            strict=True,
+        )
+
+        return example_outputs_for_example
+
+    def retrieve_examples(self, dataset_id: str):
+        examples = self._dataset_repository.examples(
+            dataset_id,
+            self.input_type(),
+            self.expected_output_type(),
+        )
+        if examples is None:
+            raise ValueError(f"Dataset: {dataset_id} not found")
+
+    def generate_evaluation_inputs(
+        self, examples, example_outputs_for_example
+    ):
+        for example, example_outputs in zip(examples, example_outputs_for_example):
+            successful_example_outputs = [
+                cast(SuccessfulExampleOutput[Output], output)
+                for output in example_outputs
+                if not isinstance(output.output, FailedExampleRun)
+            ]
+
+            if not successful_example_outputs:
+                continue
+
+            yield (
+                example,
+                successful_example_outputs,
+            )
+            # if num_examples and current_example >= num_examples:
+            #     break
+            # current_example += 1
+
+    def retrieve_eval_logic_input(
+        self,
+        *run_ids: str,
+        num_examples: Optional[int] = None,
+    ) -> Iterable[
+        Tuple[
+            Example[Input, ExpectedOutput],
+            str,
+            Sequence[SuccessfulExampleOutput[Output]],
+        ]
+    ]:
+        start = utc_now()
+        run_overviews = self.load_run_overviews(run_ids)
+        self.raise_if_overviews_have_different_dataset(run_overviews)
+        eval_id = self._evaluation_repository.initialize_evaluation()
+        example_outputs_for_example = self.retrieve_example_outputs(run_overviews)
+        dataset_id = next(iter(run_overviews)).dataset_id
+        examples = self.retrieve_examples(dataset_id)
+        return self.generate_evaluation_inputs(
+            examples, example_outputs_for_example, eval_id
+        )
+
     def submit(
         self,
-        run_id: str,
-        workspace_id: str,
+        *run_ids: str,
         num_examples: Optional[int] = None,
         abort_on_error: bool = False,
-    ) -> str:
-        self._client.ensure_dataset_exists(
-            workspace_id,
-            dataset_name=run_id,
+    ) -> PartialEvaluationOverview:
+        argilla_dataset_id = self._client.ensure_dataset_exists(
+            self._workspace_id,
+            dataset_name="name",
             fields=self._evaluation_logic.fields(),
             questions=self._evaluation_logic.questions(),
         )
-        return str(uuid4())
 
-    #    if isinstance(evaluation.result, RecordDataSequence):
-    #        for record in evaluation.result.records:
-    #            self._client.add_record(evaluation.evaluation_id, record)
-    #          pass
-    #
-    #    elif isinstance(evaluation.result, FailedExampleEvaluation):
-    #        self._evaluation_repository.store_example_evaluation(evaluation)
-    #    else:
-    #        raise TypeError(
-    #            "ArgillaEvaluationRepository does not support storing non-RecordDataSequence evaluations."
-    #        )
+        record_sequence = self._evaluation_logic._to_record()
+
+        # if isinstance(record_sequence, RecordDataSequence):
+        #     for record in record_sequence:
+        #         self._client.add_record(workspace_id, record)
+        #         pass
+        # else:
+        #     raise TypeError(
+        #         "Argilla does not support submitting non-RecordDataSequence."
+        #     )
+
+        return PartialEvaluationOverview(
+            run_overviews=[],
+            id=argilla_dataset_id,
+            start_date=datetime.now(),
+            description=self.description,
+        )
 
 
 ## An eval ids rankommen
