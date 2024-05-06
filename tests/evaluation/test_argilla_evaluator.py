@@ -243,6 +243,8 @@ def test_argilla_evaluator_can_submit_evals_to_argilla(
     assert eval_overview.successful_evaluation_count == 1
     assert eval_overview.failed_evaluation_count == 0
 
+    assert len(in_memory_evaluation_repository.example_evaluations(eval_overview.id, DummyStringOutput)) == 1
+
     assert len(DummyArgillaClient()._datasets[partial_evaluation_overview.id]) == 1
 
 

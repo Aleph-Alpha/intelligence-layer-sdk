@@ -2,7 +2,7 @@ import random
 from abc import ABC, abstractmethod
 from datetime import datetime
 from itertools import combinations
-from typing import Mapping, Optional, Sequence
+from typing import Mapping, Optional, Sequence, cast
 
 from intelligence_layer.connectors.argilla.argilla_client import (
     ArgillaClient,
@@ -18,22 +18,29 @@ from intelligence_layer.evaluation.evaluation.argilla_evaluation_repository impo
     ArgillaEvaluationRepository,
     RecordDataSequence,
 )
-from intelligence_layer.evaluation.evaluation.async_evaluation import AsyncEvaluator
+from intelligence_layer.evaluation.evaluation.async_evaluation import (
+    AsyncEvaluationLogic,
+    AsyncEvaluator,
+)
 from intelligence_layer.evaluation.evaluation.domain import (
+    Evaluation,
     EvaluationOverview,
+    ExampleEvaluation,
     PartialEvaluationOverview,
 )
 from intelligence_layer.evaluation.evaluation.evaluation_repository import (
     EvaluationRepository,
 )
-from intelligence_layer.evaluation.evaluation.evaluator import EvaluationLogic
 from intelligence_layer.evaluation.run.domain import SuccessfulExampleOutput
 from intelligence_layer.evaluation.run.run_repository import RunRepository
 
 
 class ArgillaEvaluationLogic(
-    EvaluationLogic[Input, Output, ExpectedOutput, RecordDataSequence], ABC
+    AsyncEvaluationLogic[Input, Output, ExpectedOutput, Evaluation], ABC
 ):
+    def __init__(self, client: ArgillaClient):
+        self._client = client
+
     def fields(self) -> Sequence[Field]:
         return [Field(name="name", title="title")]
 
@@ -41,14 +48,6 @@ class ArgillaEvaluationLogic(
         return [
             Question(name="name", title="title", description="description", options=[0])
         ]
-
-    def do_evaluate(
-        self,
-        example: Example[Input, ExpectedOutput],
-        *output: SuccessfulExampleOutput[Output],
-    ) -> RecordDataSequence:
-        # Hier eher download logic als to-record
-        return self._to_record(example, *output)
 
     @abstractmethod
     def _to_record(
@@ -63,7 +62,9 @@ class ArgillaEvaluationLogic(
             example: The example to be translated.
             output: The output of the example that was run.
         """
-        ...
+        ...        
+
+    def _from_record(argilla_evaluation: ArgillaEvaluation) -> Evaluation: ...
 
 
 class ArgillaEvaluator(
@@ -111,8 +112,21 @@ class ArgillaEvaluator(
 
     def retrieve(
         self,
-        id: str,
+        evaluation_id: str,
     ) -> EvaluationOverview:
+        example_evaluations = [
+            ExampleEvaluation(
+                evaluation_id=evaluation_id,
+                example_id=example_evaluation.example_id,
+                # cast to Evaluation because mypy thinks ArgillaEvaluation cannot be Evaluation
+                result=self._from_record(example_evaluation),
+            )
+            for example_evaluation in self._client.evaluations(evaluation_id)
+        ]
+        evaluations = sorted(example_evaluations, key=lambda i: i.example_id)
+        for evaluation in evaluations:
+            self._evaluation_repository.store_example_evaluation(evaluation)
+
         return EvaluationOverview(
             run_overviews=frozenset(),
             id=id,
@@ -140,15 +154,17 @@ class ArgillaEvaluator(
             questions=self._evaluation_logic.questions(),
         )
 
+        run_overviews = self._load_run_overviews(*run_ids)
         for example, outputs in self.retrieve_eval_logic_input(
-            *run_ids, num_examples=num_examples
+            run_overviews, num_examples=num_examples
         ):
+            self._evaluation_logic._to_record(example, outputs)
             record_sequence = self._evaluation_logic.submit(example, outputs)
             for record in record_sequence:
                 self._client.add_record(self._workspace_id, record)
 
         return PartialEvaluationOverview(
-            run_overviews=[],
+            run_overviews=frozenset(run_overviews),
             id=argilla_dataset_id,
             start_date=datetime.now(),
             description=self.description,
@@ -211,10 +227,6 @@ class InstructComparisonArgillaEvaluationLogic(
                 self._fields["KEY_RESPONSE_2"].name: second.run_id,
             },
         )
-
-    def _do_submit(self) -> None:
-        # Hier
-        return
 
 
 def create_instruct_comparison_argilla_evaluation_classes(
