@@ -401,7 +401,7 @@ class Evaluator(Generic[Input, Output, ExpectedOutput, Evaluation]):
         partial_overview = EvaluationOverview(
             run_overviews=run_overviews,
             id=eval_id,
-            start=start,
+            start_date=start,
             description=self.description,
         )
         self._evaluation_repository.store_evaluation_overview(partial_overview)

@@ -65,7 +65,7 @@ class ExampleEvaluation(BaseModel, Generic[Evaluation]):
         return tree
 
 
-class EvaluationOverview(BaseModel, frozen=True):
+class PartialEvaluationOverview(BaseModel, frozen=True):
     """Overview of the un-aggregated results of evaluating a :class:`Task` on a dataset.
 
     Attributes:
@@ -77,11 +77,8 @@ class EvaluationOverview(BaseModel, frozen=True):
 
     run_overviews: frozenset[RunOverview]
     id: str
-    start: Optional[datetime]
+    start_date: Optional[datetime]
     description: str
-    end_date: datetime
-    successful_examples: int
-    crashed_examples: int
 
     def __repr__(self) -> str:
         return self.__str__()
@@ -98,7 +95,49 @@ class EvaluationOverview(BaseModel, frozen=True):
 
         return (
             f"Evaluation Overview ID = {self.id}\n"
-            f"Start time = {self.start}\n"
+            f"Start time = {self.start_date}\n"
+            f'Description = "{self.description}"\n'
+            f"{run_overview_str}"
+        )
+
+
+class EvaluationOverview(BaseModel, frozen=True):
+    """Overview of the un-aggregated results of evaluating a :class:`Task` on a dataset.
+
+    Attributes:
+        run_overviews: Overviews of the runs that were evaluated.
+        id: The unique identifier of this evaluation.
+        start: The time when the evaluation run was started
+        description: human-readable for the evaluator that created the evaluation
+    """
+
+    run_overviews: frozenset[RunOverview]
+    id: str
+    start_date: datetime
+    end_date: datetime
+    successful_example_count: int
+    failed_example_count: int
+    description: str
+
+    def __repr__(self) -> str:
+        return self.__str__()
+
+    def __str__(self) -> str:
+        run_overview_str: str = "Run Overviews={\n"
+        comma_counter = 0
+        for overview in self.run_overviews:
+            run_overview_str += f"{overview}"
+            if comma_counter < len(self.run_overviews) - 1:
+                run_overview_str += ", "
+                comma_counter += 1
+        run_overview_str += "}\n"
+
+        return (
+            f"Evaluation Overview ID = {self.id}\n"
+            f"Start time = {self.start_date}\n"
+            f"End time = {self.end_date}\n"
+            f"Successful examples = {self.successful_example_count}\n"
+            f"Crashed examples = {self.failed_example_count}\n"
             f'Description = "{self.description}"\n'
             f"{run_overview_str}"
         )

@@ -2,9 +2,7 @@ import random
 from abc import ABC, abstractmethod
 from datetime import datetime
 from itertools import combinations
-from typing import Generic, Iterable, Mapping, Optional, Sequence, Tuple, cast
-import typing
-from uuid import uuid4
+from typing import Iterable, Mapping, Optional, Sequence, Tuple, cast
 
 from intelligence_layer.connectors.argilla.argilla_client import (
     ArgillaClient,
@@ -23,17 +21,13 @@ from intelligence_layer.evaluation.evaluation.argilla_evaluation_repository impo
 )
 from intelligence_layer.evaluation.evaluation.async_evaluation import AsyncEvaluator
 from intelligence_layer.evaluation.evaluation.domain import (
-    Evaluation,
     EvaluationOverview,
     PartialEvaluationOverview,
 )
 from intelligence_layer.evaluation.evaluation.evaluation_repository import (
     EvaluationRepository,
 )
-from intelligence_layer.evaluation.evaluation.evaluator import (
-    EvaluationLogic,
-    Evaluator,
-)
+from intelligence_layer.evaluation.evaluation.evaluator import EvaluationLogic
 from intelligence_layer.evaluation.run.domain import (
     ExampleOutput,
     FailedExampleRun,
@@ -184,9 +178,7 @@ class ArgillaEvaluator(
         if examples is None:
             raise ValueError(f"Dataset: {dataset_id} not found")
 
-    def generate_evaluation_inputs(
-        self, examples, example_outputs_for_example
-    ):
+    def generate_evaluation_inputs(self, examples, example_outputs_for_example):
         for example, example_outputs in zip(examples, example_outputs_for_example):
             successful_example_outputs = [
                 cast(SuccessfulExampleOutput[Output], output)

@@ -1,9 +1,11 @@
 import random
 from typing import Iterable, Sequence, cast
+from uuid import uuid4
 
 from pytest import fixture
 
 from intelligence_layer.connectors import ArgillaEvaluation, Field, Question, RecordData
+from intelligence_layer.connectors.argilla.argilla_client import ArgillaClient
 from intelligence_layer.evaluation import (
     AggregationLogic,
     ArgillaAggregator,
@@ -68,6 +70,43 @@ class DummyStringTaskArgillaEvaluationLogic(
                 )
             ]
         )
+
+
+class DummyArgillaClient(ArgillaClient):
+    _datasets: dict[str, list[RecordData]] = {}
+    _score = 3.0
+
+    def ensure_dataset_exists(
+        self,
+        workspace_id: str,
+        dataset_name: str,
+        fields: Sequence[Field],
+        questions: Sequence[Question],
+    ) -> str:
+        dataset_id = str(uuid4())
+        self._datasets[dataset_id] = []
+        return dataset_id
+
+    def add_record(self, dataset_id: str, record: RecordData) -> None:
+        if dataset_id not in self._datasets:
+            raise Exception("Add record: dataset not found")
+        self._datasets[dataset_id].append(record)
+
+    def evaluations(self, dataset_id: str) -> Iterable[ArgillaEvaluation]:
+        dataset = self._datasets.get(dataset_id)
+        assert dataset
+        return [
+            ArgillaEvaluation(
+                example_id=record.example_id,
+                record_id="ignored",
+                responses={"human-score": self._score},
+                metadata=dict(),
+            )
+            for record in dataset
+        ]
+
+    def split_dataset(self, dataset_id: str, n_splits: int) -> None:
+        raise NotImplementedError
 
 
 @fixture
@@ -167,29 +206,37 @@ def string_argilla_runner(
 
 
 def test_argilla_evaluator_can_submit_evals_to_argilla(
-    string_argilla_evaluator: ArgillaEvaluator[
-        DummyStringInput,
-        DummyStringOutput,
-        DummyStringOutput,
-    ],
     string_argilla_runner: Runner[DummyStringInput, DummyStringOutput],
     string_dataset_id: str,
+    in_memory_dataset_repository: InMemoryDatasetRepository,
+    in_memory_run_repository: InMemoryRunRepository,
+    in_memory_evaluation_repository: InMemoryEvaluationRepository,
 ) -> None:
     # fetch run_overview
     # put run_oervrw ionto submit function
     # check if stuff is correctly submitted -> ArgillaStubClient has receveid data
 
+    evaluator = ArgillaEvaluator(
+        in_memory_dataset_repository,
+        in_memory_run_repository,
+        in_memory_evaluation_repository,
+        "dummy-string-task",
+        DummyStringTaskArgillaEvaluationLogic(),
+        DummyArgillaClient(),
+        workspace_id="1",
+    )
+
     run_overview = string_argilla_runner.run_dataset(string_dataset_id)
 
-    argilla_id = string_argilla_evaluator.submit(run_overview.id, workspace_id="1")
+    partial_evaluation_overview = evaluator.evaluate_runs(run_overview.id)
 
-    eval_overview = string_argilla_evaluator.new_evaluate_runs(argilla_id)
+    eval_overview = evaluator.retrieve(partial_evaluation_overview.id)
 
     assert eval_overview.end_date is not None
-    assert eval_overview.successful_examples == 1
-    assert eval_overview.crashed_examples == 0
+    assert eval_overview.successful_example_count == 1
+    assert eval_overview.failed_example_count == 0
 
-    assert len(StubArgillaClient()._datasets[argilla_id]) == 1
+    assert len(DummyArgillaClient()._datasets[partial_evaluation_overview.id]) == 1
 
 
 def test_argilla_evaluator_can_do_sync_evaluation(
