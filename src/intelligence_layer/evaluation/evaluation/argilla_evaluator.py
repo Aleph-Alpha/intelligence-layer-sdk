@@ -20,15 +20,15 @@ from intelligence_layer.evaluation.aggregation.elo import (
 )
 from intelligence_layer.evaluation.dataset.dataset_repository import DatasetRepository
 from intelligence_layer.evaluation.dataset.domain import Example, ExpectedOutput
-from intelligence_layer.evaluation.evaluation.async_evaluation import AsyncEvaluator
+from intelligence_layer.evaluation.evaluation.async_evaluation import (
+    AsyncEvaluationRepository,
+    AsyncEvaluator,
+)
 from intelligence_layer.evaluation.evaluation.domain import (
     Evaluation,
     EvaluationOverview,
     ExampleEvaluation,
     PartialEvaluationOverview,
-)
-from intelligence_layer.evaluation.evaluation.evaluation_repository import (
-    EvaluationRepository,
 )
 from intelligence_layer.evaluation.evaluation.evaluator import EvaluationLogicBase
 from intelligence_layer.evaluation.run.domain import SuccessfulExampleOutput
@@ -89,7 +89,7 @@ class ArgillaEvaluator(AsyncEvaluator[Input, Output, ExpectedOutput, Evaluation]
         self,
         dataset_repository: DatasetRepository,
         run_repository: RunRepository,
-        evaluation_repository: EvaluationRepository,
+        evaluation_repository: AsyncEvaluationRepository,
         description: str,
         evaluation_logic: ArgillaEvaluationLogic[
             Input, Output, ExpectedOutput, Evaluation
@@ -109,6 +109,38 @@ class ArgillaEvaluator(AsyncEvaluator[Input, Output, ExpectedOutput, Evaluation]
         self._evaluation_logic: ArgillaEvaluationLogic[  # type: ignore
             Input, Output, ExpectedOutput, Evaluation
         ]
+        self._evaluation_repository: AsyncEvaluationRepository
+
+    def submit(
+        self,
+        *run_ids: str,
+        num_examples: Optional[int] = None,
+        abort_on_error: bool = False,
+    ) -> PartialEvaluationOverview:
+        argilla_dataset_id = self._client.ensure_dataset_exists(
+            self._workspace_id,
+            dataset_name="name",
+            fields=list(self._evaluation_logic.fields.values()),
+            questions=self._evaluation_logic.questions,
+        )
+
+        run_overviews = self._load_run_overviews(*run_ids)
+        for example, outputs in self.retrieve_eval_logic_input(
+            run_overviews, num_examples=num_examples
+        ):
+            record_sequence = self._evaluation_logic._to_record(example, *outputs)
+            for record in record_sequence.records:
+                self._client.add_record(argilla_dataset_id, record)
+
+        partial_overview = PartialEvaluationOverview(
+            run_overviews=frozenset(run_overviews),
+            id=argilla_dataset_id,
+            start_date=datetime.now(),
+            description=self.description,
+        )
+
+        self._evaluation_repository.store_partial_evaluation_overview(partial_overview)
+        return partial_overview
 
     def retrieve(
         self,
@@ -140,37 +172,6 @@ class ArgillaEvaluator(AsyncEvaluator[Input, Output, ExpectedOutput, Evaluation]
         )
         self._evaluation_repository.store_evaluation_overview(overview)
         return overview
-
-    def evaluation_type(self) -> type[ArgillaEvaluation]:  # type: ignore
-        return ArgillaEvaluation
-
-    def submit(
-        self,
-        *run_ids: str,
-        num_examples: Optional[int] = None,
-        abort_on_error: bool = False,
-    ) -> PartialEvaluationOverview:
-        argilla_dataset_id = self._client.ensure_dataset_exists(
-            self._workspace_id,
-            dataset_name="name",
-            fields=list(self._evaluation_logic.fields.values()),
-            questions=self._evaluation_logic.questions,
-        )
-
-        run_overviews = self._load_run_overviews(*run_ids)
-        for example, outputs in self.retrieve_eval_logic_input(
-            run_overviews, num_examples=num_examples
-        ):
-            record_sequence = self._evaluation_logic._to_record(example, *outputs)
-            for record in record_sequence.records:
-                self._client.add_record(argilla_dataset_id, record)
-
-        return PartialEvaluationOverview(
-            run_overviews=frozenset(run_overviews),
-            id=argilla_dataset_id,
-            start_date=datetime.now(),
-            description=self.description,
-        )
 
 
 class InstructComparisonArgillaEvaluationLogic(

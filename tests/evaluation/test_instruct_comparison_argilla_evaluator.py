@@ -23,7 +23,6 @@ from intelligence_layer.evaluation import (
     ExampleOutput,
     InMemoryAggregationRepository,
     InMemoryDatasetRepository,
-    InMemoryEvaluationRepository,
     InMemoryRunRepository,
     InstructComparisonEvaluation,
     MatchOutcome,
@@ -39,6 +38,9 @@ from intelligence_layer.evaluation.evaluation.argilla_evaluator import (
 )
 from intelligence_layer.evaluation.evaluation.evaluation_repository import (
     EvaluationRepository,
+)
+from intelligence_layer.evaluation.evaluation.in_memory_evaluation_repository import (
+    AsyncInMemoryEvaluationRepository,
 )
 
 
@@ -89,7 +91,7 @@ def argilla_fake() -> ArgillaClient:
 def evaluator(
     in_memory_dataset_repository: InMemoryDatasetRepository,
     in_memory_run_repository: InMemoryRunRepository,
-    in_memory_evaluation_repository: InMemoryEvaluationRepository,
+    async_in_memory_evaluation_repository: AsyncInMemoryEvaluationRepository,
     argilla_fake: ArgillaClient,
 ) -> ArgillaEvaluator[
     InstructInput, CompleteOutput, None, InstructComparisonEvaluation
@@ -99,7 +101,7 @@ def evaluator(
     return ArgillaEvaluator(
         dataset_repository=in_memory_dataset_repository,
         run_repository=in_memory_run_repository,
-        evaluation_repository=in_memory_evaluation_repository,
+        evaluation_repository=async_in_memory_evaluation_repository,
         description="instruct-evaluator",
         workspace_id="workspace",
         argilla_client=argilla_fake,
@@ -109,12 +111,12 @@ def evaluator(
 
 @fixture
 def aggregator(
-    argilla_repository: EvaluationRepository,
+    in_memory_evaluation_repository: EvaluationRepository,
     in_memory_aggregation_repository: InMemoryAggregationRepository,
     argilla_aggregation_logic: InstructComparisonAggregationLogic,
 ) -> Aggregator[InstructComparisonEvaluation, AggregatedInstructComparison]:
     return Aggregator(
-        argilla_repository,
+        in_memory_evaluation_repository,
         in_memory_aggregation_repository,
         "instruct-evaluator",
         argilla_aggregation_logic,
@@ -195,7 +197,7 @@ def test_evaluate_run_submits_pairwise_comparison_records(
         in_memory_run_repository, any_instruct_output, run_ids, dataset_id
     )
 
-    evaluation_overview = evaluator.evaluate_runs(*run_ids)
+    evaluation_overview = evaluator.submit(*run_ids)
 
     pairs = combinations(run_ids, 2)
     assert sorted(
@@ -214,7 +216,7 @@ def test_evaluate_run_submits_pairwise_comparison_records(
 def test_evaluate_run_only_evaluates_high_priority(
     in_memory_dataset_repository: InMemoryDatasetRepository,
     in_memory_run_repository: InMemoryRunRepository,
-    in_memory_evaluation_repository: InMemoryEvaluationRepository,
+    async_in_memory_evaluation_repository: AsyncInMemoryEvaluationRepository,
     any_instruct_output: CompleteOutput,
     argilla_fake: ArgillaFake,
 ) -> None:
@@ -224,7 +226,7 @@ def test_evaluate_run_only_evaluates_high_priority(
     evaluator = ArgillaEvaluator(
         dataset_repository=in_memory_dataset_repository,
         run_repository=in_memory_run_repository,
-        evaluation_repository=in_memory_evaluation_repository,
+        evaluation_repository=async_in_memory_evaluation_repository,
         description="instruct-evaluator",
         workspace_id="workspace",
         argilla_client=argilla_fake,

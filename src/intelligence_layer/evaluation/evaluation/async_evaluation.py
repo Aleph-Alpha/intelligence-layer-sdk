@@ -8,6 +8,9 @@ from intelligence_layer.evaluation.evaluation.domain import (
     EvaluationOverview,
     PartialEvaluationOverview,
 )
+from intelligence_layer.evaluation.evaluation.evaluation_repository import (
+    EvaluationRepository,
+)
 from intelligence_layer.evaluation.evaluation.evaluator import Evaluator
 
 
@@ -24,7 +27,7 @@ class AsyncEvaluator(Evaluator[Input, Output, ExpectedOutput, Evaluation], ABC):
     def retrieve(self, id: str) -> EvaluationOverview: ...
 
 
-class AsyncEvaluationRepository(ABC):
+class AsyncEvaluationRepository(EvaluationRepository):
     @abstractmethod
     def store_partial_evaluation_overview(
         self, partial_evaluation_overview: PartialEvaluationOverview
@@ -51,18 +54,18 @@ class AsyncEvaluationRepository(ABC):
         ...
 
     def partial_evaluation_overviews(self) -> Iterable[PartialEvaluationOverview]:
-        """Returns all :class:`EvaluationOverview`s sorted by their ID.
+        """Returns all :class:`PartialEvaluationOverview`s sorted by their ID.
 
         Returns:
             :class:`Iterable` of :class:`PartialEvaluationOverview`s.
         """
-        for eval_id in self.evaluation_overview_ids():
+        for eval_id in self.partial_evaluation_overview_ids():
             evaluation_overview = self.partial_evaluation_overview(eval_id)
             if evaluation_overview is not None:
                 yield evaluation_overview
 
     @abstractmethod
-    def evaluation_overview_ids(self) -> Sequence[str]:
+    def partial_evaluation_overview_ids(self) -> Sequence[str]:
         """Returns sorted IDs of all stored :class:`PartialEvaluationOverview`s.
 
         Returns:

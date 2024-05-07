@@ -11,7 +11,6 @@ from intelligence_layer.evaluation import (
     ArgillaEvaluator,
     Example,
     InMemoryDatasetRepository,
-    InMemoryEvaluationRepository,
     InMemoryRunRepository,
     Runner,
     SuccessfulExampleOutput,
@@ -23,6 +22,9 @@ from intelligence_layer.evaluation.aggregation.elo import (
 )
 from intelligence_layer.evaluation.evaluation.argilla_evaluator import (
     RecordDataSequence,
+)
+from intelligence_layer.evaluation.evaluation.in_memory_evaluation_repository import (
+    AsyncInMemoryEvaluationRepository,
 )
 from tests.conftest import (
     DummyStringEvaluation,
@@ -145,7 +147,7 @@ def argilla_fields() -> Sequence[Field]:
 def string_argilla_evaluator(
     in_memory_dataset_repository: InMemoryDatasetRepository,
     in_memory_run_repository: InMemoryRunRepository,
-    evaluation_repository: InMemoryEvaluationRepository,
+    async_in_memory_evaluation_repository: AsyncInMemoryEvaluationRepository,
 ) -> ArgillaEvaluator[
     DummyStringInput,
     DummyStringOutput,
@@ -155,7 +157,7 @@ def string_argilla_evaluator(
     evaluator = ArgillaEvaluator(
         in_memory_dataset_repository,
         in_memory_run_repository,
-        evaluation_repository,
+        async_in_memory_evaluation_repository,
         "dummy-string-task",
         DummyStringTaskArgillaEvaluationLogic(),
         StubArgillaClient(),
@@ -183,7 +185,7 @@ def test_argilla_evaluator_can_submit_evals_to_argilla(
     string_dataset_id: str,
     in_memory_dataset_repository: InMemoryDatasetRepository,
     in_memory_run_repository: InMemoryRunRepository,
-    in_memory_evaluation_repository: InMemoryEvaluationRepository,
+    async_in_memory_evaluation_repository: AsyncInMemoryEvaluationRepository,
 ) -> None:
     # fetch run_overview
     # put run_oervrw ionto submit function
@@ -192,7 +194,7 @@ def test_argilla_evaluator_can_submit_evals_to_argilla(
     evaluator = ArgillaEvaluator(
         in_memory_dataset_repository,
         in_memory_run_repository,
-        in_memory_evaluation_repository,
+        async_in_memory_evaluation_repository,
         "dummy-string-task",
         DummyStringTaskArgillaEvaluationLogic(),
         DummyArgillaClient(),
@@ -211,14 +213,14 @@ def test_argilla_evaluator_can_submit_evals_to_argilla(
 
     assert (
         len(
-            in_memory_evaluation_repository.example_evaluations(
+            async_in_memory_evaluation_repository.example_evaluations(
                 eval_overview.id, DummyStringOutput
             )
         )
         == 1
     )
 
-    assert len(list(in_memory_evaluation_repository.evaluation_overviews())) == 1
+    assert len(list(async_in_memory_evaluation_repository.evaluation_overviews())) == 1
     assert len(DummyArgillaClient()._datasets[partial_evaluation_overview.id]) == 1
 
 
