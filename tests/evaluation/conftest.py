@@ -28,9 +28,11 @@ from intelligence_layer.evaluation import (
     FileRunRepository,
     InMemoryDatasetRepository,
     InMemoryRunRepository,
-    InstructComparisonArgillaAggregationLogic,
     Runner,
     RunOverview,
+)
+from intelligence_layer.evaluation.aggregation.elo import (
+    InstructComparisonAggregationLogic,
 )
 from tests.conftest import DummyStringInput, DummyStringOutput
 
@@ -189,8 +191,8 @@ def dummy_runner(
 
 
 @fixture
-def argilla_aggregation_logic() -> InstructComparisonArgillaAggregationLogic:
-    return InstructComparisonArgillaAggregationLogic()
+def argilla_aggregation_logic() -> InstructComparisonAggregationLogic:
+    return InstructComparisonAggregationLogic()
 
 
 class StubArgillaClient(ArgillaClient):

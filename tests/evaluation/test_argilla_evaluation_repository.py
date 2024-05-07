@@ -7,12 +7,10 @@ from pytest import fixture
 from intelligence_layer.connectors import ArgillaEvaluation, Field, Question, RecordData
 from intelligence_layer.core import utc_now
 from intelligence_layer.evaluation import (
-    ArgillaEvaluationRepository,
     EvaluationOverview,
     ExampleEvaluation,
     FailedExampleEvaluation,
     InMemoryEvaluationRepository,
-    RecordDataSequence,
     RunOverview,
 )
 from tests.evaluation.conftest import DummyEvaluation, StubArgillaClient

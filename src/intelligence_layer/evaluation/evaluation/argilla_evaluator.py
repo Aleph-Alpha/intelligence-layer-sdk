@@ -14,12 +14,12 @@ from intelligence_layer.connectors.argilla.argilla_client import (
     RecordData,
 )
 from intelligence_layer.core import CompleteOutput, Input, InstructInput, Output
-from intelligence_layer.evaluation.aggregation.elo import MatchOutcome
+from intelligence_layer.evaluation.aggregation.elo import (
+    InstructComparisonEvaluation,
+    MatchOutcome,
+)
 from intelligence_layer.evaluation.dataset.dataset_repository import DatasetRepository
 from intelligence_layer.evaluation.dataset.domain import Example, ExpectedOutput
-from intelligence_layer.evaluation.evaluation.argilla_evaluation_repository import (
-    RecordDataSequence,
-)
 from intelligence_layer.evaluation.evaluation.async_evaluation import AsyncEvaluator
 from intelligence_layer.evaluation.evaluation.domain import (
     Evaluation,
@@ -33,6 +33,10 @@ from intelligence_layer.evaluation.evaluation.evaluation_repository import (
 from intelligence_layer.evaluation.evaluation.evaluator import EvaluationLogicBase
 from intelligence_layer.evaluation.run.domain import SuccessfulExampleOutput
 from intelligence_layer.evaluation.run.run_repository import RunRepository
+
+
+class RecordDataSequence(BaseModel):
+    records: Sequence[RecordData]
 
 
 class ArgillaEvaluationLogic(
@@ -169,17 +173,9 @@ class ArgillaEvaluator(AsyncEvaluator[Input, Output, ExpectedOutput, Evaluation]
         )
 
 
-## An eval ids rankommen
-# wo ergibt es sinn field und questions zu setzen?
-class InstructComparisonArgillaEvaluation(BaseModel):
-    first: str
-    second: str
-    winner: MatchOutcome
-
-
 class InstructComparisonArgillaEvaluationLogic(
     ArgillaEvaluationLogic[
-        InstructInput, CompleteOutput, None, InstructComparisonArgillaEvaluation
+        InstructInput, CompleteOutput, None, InstructComparisonEvaluation
     ]
 ):
     KEY_INSTRUCTION = "instruction"
@@ -255,8 +251,8 @@ class InstructComparisonArgillaEvaluationLogic(
 
     def _from_record(
         self, argilla_evaluation: ArgillaEvaluation
-    ) -> InstructComparisonArgillaEvaluation:
-        return InstructComparisonArgillaEvaluation(
+    ) -> InstructComparisonEvaluation:
+        return InstructComparisonEvaluation(
             first=argilla_evaluation.metadata["first"],
             second=argilla_evaluation.metadata["second"],
             winner=MatchOutcome.from_rank_literal(

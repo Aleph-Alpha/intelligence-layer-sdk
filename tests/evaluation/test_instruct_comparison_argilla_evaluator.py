@@ -17,9 +17,6 @@ from intelligence_layer.connectors.argilla.argilla_client import (
 )
 from intelligence_layer.core import CompleteOutput, InstructInput, utc_now
 from intelligence_layer.evaluation import (
-    AggregatedInstructComparison,
-    ArgillaAggregator,
-    ArgillaEvaluationRepository,
     ArgillaEvaluator,
     EloCalculator,
     Example,
@@ -28,13 +25,20 @@ from intelligence_layer.evaluation import (
     InMemoryDatasetRepository,
     InMemoryEvaluationRepository,
     InMemoryRunRepository,
-    InstructComparisonArgillaAggregationLogic,
+    InstructComparisonEvaluation,
     MatchOutcome,
     RunOverview,
 )
+from intelligence_layer.evaluation.aggregation.aggregator import Aggregator
+from intelligence_layer.evaluation.aggregation.elo import (
+    AggregatedInstructComparison,
+    InstructComparisonAggregationLogic,
+)
 from intelligence_layer.evaluation.evaluation.argilla_evaluator import (
-    InstructComparisonArgillaEvaluation,
     InstructComparisonArgillaEvaluationLogic,
+)
+from intelligence_layer.evaluation.evaluation.evaluation_repository import (
+    EvaluationRepository,
 )
 
 
@@ -88,7 +92,7 @@ def evaluator(
     in_memory_evaluation_repository: InMemoryEvaluationRepository,
     argilla_fake: ArgillaClient,
 ) -> ArgillaEvaluator[
-    InstructInput, CompleteOutput, None, InstructComparisonArgillaEvaluation
+    InstructInput, CompleteOutput, None, InstructComparisonEvaluation
 ]:
     evaluation_logic = InstructComparisonArgillaEvaluationLogic()
 
@@ -105,11 +109,11 @@ def evaluator(
 
 @fixture
 def aggregator(
-    argilla_repository: ArgillaEvaluationRepository,
+    argilla_repository: EvaluationRepository,
     in_memory_aggregation_repository: InMemoryAggregationRepository,
-    argilla_aggregation_logic: InstructComparisonArgillaAggregationLogic,
-) -> ArgillaAggregator[AggregatedInstructComparison]:
-    return ArgillaAggregator(
+    argilla_aggregation_logic: InstructComparisonAggregationLogic,
+) -> Aggregator[InstructComparisonEvaluation, AggregatedInstructComparison]:
+    return Aggregator(
         argilla_repository,
         in_memory_aggregation_repository,
         "instruct-evaluator",
@@ -176,9 +180,9 @@ def create_dummy_runs(
 
 def test_evaluate_run_submits_pairwise_comparison_records(
     evaluator: ArgillaEvaluator[
-        InstructInput, CompleteOutput, None, InstructComparisonArgillaEvaluation
+        InstructInput, CompleteOutput, None, InstructComparisonEvaluation
     ],
-    aggregator: ArgillaAggregator[AggregatedInstructComparison],
+    aggregator: Aggregator[InstructComparisonEvaluation, AggregatedInstructComparison],
     in_memory_dataset_repository: InMemoryDatasetRepository,
     in_memory_run_repository: InMemoryRunRepository,
     any_instruct_output: CompleteOutput,

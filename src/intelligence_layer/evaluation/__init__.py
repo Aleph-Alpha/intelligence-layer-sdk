@@ -4,17 +4,12 @@ from .aggregation.aggregation_repository import (
 )
 from .aggregation.aggregator import AggregationLogic as AggregationLogic
 from .aggregation.aggregator import Aggregator as Aggregator
-from .aggregation.argilla_aggregator import (
-    AggregatedInstructComparison as AggregatedInstructComparison,
-)
-from .aggregation.argilla_aggregator import ArgillaAggregator as ArgillaAggregator
-from .aggregation.argilla_aggregator import (
-    InstructComparisonArgillaAggregationLogic as InstructComparisonArgillaAggregationLogic,
-)
-from .aggregation.argilla_aggregator import PlayerScore as PlayerScore
 from .aggregation.domain import AggregatedEvaluation as AggregatedEvaluation
 from .aggregation.domain import AggregationOverview as AggregationOverview
 from .aggregation.elo import EloCalculator as EloCalculator
+from .aggregation.elo import (
+    InstructComparisonEvaluation as InstructComparisonEvaluation,
+)
 from .aggregation.elo import MatchOutcome as MatchOutcome
 from .aggregation.elo import WinRateCalculator as WinRateCalculator
 from .aggregation.file_aggregation_repository import (
@@ -44,12 +39,6 @@ from .dataset.single_huggingface_dataset_repository import (
 )
 from .dataset.single_huggingface_dataset_repository import (
     SingleHuggingfaceDatasetRepository as SingleHuggingfaceDatasetRepository,
-)
-from .evaluation.argilla_evaluation_repository import (
-    ArgillaEvaluationRepository as ArgillaEvaluationRepository,
-)
-from .evaluation.argilla_evaluation_repository import (
-    RecordDataSequence as RecordDataSequence,
 )
 from .evaluation.argilla_evaluator import (
     ArgillaEvaluationLogic as ArgillaEvaluationLogic,

@@ -1,5 +1,5 @@
 import random
-from typing import Iterable, Sequence, cast
+from typing import Iterable, Sequence
 from uuid import uuid4
 
 from pytest import fixture
@@ -7,20 +7,22 @@ from pytest import fixture
 from intelligence_layer.connectors import ArgillaEvaluation, Field, Question, RecordData
 from intelligence_layer.connectors.argilla.argilla_client import ArgillaClient
 from intelligence_layer.evaluation import (
-    AggregationLogic,
-    ArgillaAggregator,
     ArgillaEvaluationLogic,
-    ArgillaEvaluationRepository,
     ArgillaEvaluator,
     Example,
-    InMemoryAggregationRepository,
     InMemoryDatasetRepository,
     InMemoryEvaluationRepository,
     InMemoryRunRepository,
-    InstructComparisonArgillaAggregationLogic,
-    RecordDataSequence,
     Runner,
     SuccessfulExampleOutput,
+)
+from intelligence_layer.evaluation.aggregation.elo import (
+    InstructComparisonAggregationLogic,
+    InstructComparisonEvaluation,
+    MatchOutcome,
+)
+from intelligence_layer.evaluation.evaluation.argilla_evaluator import (
+    RecordDataSequence,
 )
 from tests.conftest import (
     DummyStringEvaluation,
@@ -28,26 +30,7 @@ from tests.conftest import (
     DummyStringOutput,
     DummyStringTask,
 )
-from tests.evaluation.conftest import DummyAggregatedEvaluation, StubArgillaClient
-
-
-class DummyStringTaskArgillaAggregationLogic(
-    AggregationLogic[
-        ArgillaEvaluation,
-        DummyAggregatedEvaluation,
-    ]
-):
-    def aggregate(
-        self,
-        evaluations: Iterable[ArgillaEvaluation],
-    ) -> DummyAggregatedEvaluation:
-        evaluations = list(evaluations)
-        total_human_score = sum(
-            cast(float, a.responses["human-score"]) for a in evaluations
-        )
-        return DummyAggregatedEvaluation(
-            score=total_human_score / len(evaluations),
-        )
+from tests.evaluation.conftest import StubArgillaClient
 
 
 class DummyStringTaskArgillaEvaluationLogic(
@@ -159,32 +142,10 @@ def argilla_fields() -> Sequence[Field]:
 
 
 @fixture
-def argilla_evaluation_repository(
-    in_memory_evaluation_repository: InMemoryEvaluationRepository,
-    stub_argilla_client: StubArgillaClient,
-    argilla_questions: Sequence[Question],
-    argilla_fields: Sequence[Field],
-) -> ArgillaEvaluationRepository:
-    stub_argilla_client._expected_workspace_id = "workspace-id"
-    stub_argilla_client._expected_questions = argilla_questions
-    stub_argilla_client._expected_fields = argilla_fields
-
-    workspace_id = stub_argilla_client._expected_workspace_id
-
-    return ArgillaEvaluationRepository(
-        in_memory_evaluation_repository,
-        stub_argilla_client,
-        workspace_id,
-        argilla_fields,
-        argilla_questions,
-    )
-
-
-@fixture
 def string_argilla_evaluator(
     in_memory_dataset_repository: InMemoryDatasetRepository,
     in_memory_run_repository: InMemoryRunRepository,
-    argilla_evaluation_repository: ArgillaEvaluationRepository,
+    evaluation_repository: InMemoryEvaluationRepository,
 ) -> ArgillaEvaluator[
     DummyStringInput,
     DummyStringOutput,
@@ -194,27 +155,13 @@ def string_argilla_evaluator(
     evaluator = ArgillaEvaluator(
         in_memory_dataset_repository,
         in_memory_run_repository,
-        argilla_evaluation_repository,
+        evaluation_repository,
         "dummy-string-task",
         DummyStringTaskArgillaEvaluationLogic(),
         StubArgillaClient(),
         "workspace-id",
     )
     return evaluator
-
-
-@fixture
-def string_argilla_aggregator(
-    argilla_evaluation_repository: ArgillaEvaluationRepository,
-    in_memory_aggregation_repository: InMemoryAggregationRepository,
-) -> ArgillaAggregator[DummyAggregatedEvaluation]:
-    aggregator = ArgillaAggregator(
-        argilla_evaluation_repository,
-        in_memory_aggregation_repository,
-        "dummy-string-task",
-        DummyStringTaskArgillaAggregationLogic(),
-    )
-    return aggregator
 
 
 @fixture
@@ -276,16 +223,14 @@ def test_argilla_evaluator_can_submit_evals_to_argilla(
 
 
 def test_argilla_aggregation_logic_works() -> None:
-    argilla_aggregation_logic = InstructComparisonArgillaAggregationLogic()
+    argilla_aggregation_logic = InstructComparisonAggregationLogic()
     evaluations = (
-        ArgillaEvaluation(
-            example_id=str(i),
-            record_id=str(i),
-            responses={"winner": random.choices([1, 2, 3], [0.5, 0.25, 0.25], k=1)[0]},
-            metadata={
-                "first": "player_1",
-                "second": "player_2" if i < 9000 else "player_3",
-            },
+        InstructComparisonEvaluation(
+            first="player_1",
+            second="player_2" if i < 9000 else "player_3",
+            winner=MatchOutcome.from_rank_literal(
+                random.choices([1, 2, 3], [0.5, 0.25, 0.25], k=1)[0]
+            ),
         )
         for i in range(10000)
     )
