@@ -126,6 +126,10 @@ def evaluation_overviews(run_overview: RunOverview) -> Iterable[EvaluationOvervi
             EvaluationOverview(
                 id=evaluation_id,
                 start_date=utc_now(),
+                end_date=utc_now(),
+                successful_evaluation_count=3,
+                failed_evaluation_count=2,
+                skipped_evaluation_count=1,
                 run_overviews=frozenset([run_overview]),
                 description="test evaluation overview 1",
             )

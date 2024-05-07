@@ -2,7 +2,9 @@ import random
 from abc import ABC, abstractmethod
 from datetime import datetime
 from itertools import combinations
-from typing import Mapping, Optional, Sequence, cast
+from typing import Generic, Mapping, Optional, Sequence
+
+from pydantic import BaseModel
 
 from intelligence_layer.connectors.argilla.argilla_client import (
     ArgillaClient,
@@ -12,16 +14,13 @@ from intelligence_layer.connectors.argilla.argilla_client import (
     RecordData,
 )
 from intelligence_layer.core import CompleteOutput, Input, InstructInput, Output
+from intelligence_layer.evaluation.aggregation.elo import MatchOutcome
 from intelligence_layer.evaluation.dataset.dataset_repository import DatasetRepository
 from intelligence_layer.evaluation.dataset.domain import Example, ExpectedOutput
 from intelligence_layer.evaluation.evaluation.argilla_evaluation_repository import (
-    ArgillaEvaluationRepository,
     RecordDataSequence,
 )
-from intelligence_layer.evaluation.evaluation.async_evaluation import (
-    AsyncEvaluationLogic,
-    AsyncEvaluator,
-)
+from intelligence_layer.evaluation.evaluation.async_evaluation import AsyncEvaluator
 from intelligence_layer.evaluation.evaluation.domain import (
     Evaluation,
     EvaluationOverview,
@@ -35,19 +34,10 @@ from intelligence_layer.evaluation.run.domain import SuccessfulExampleOutput
 from intelligence_layer.evaluation.run.run_repository import RunRepository
 
 
-class ArgillaEvaluationLogic(
-    AsyncEvaluationLogic[Input, Output, ExpectedOutput, Evaluation], ABC
-):
-    def __init__(self, client: ArgillaClient):
-        self._client = client
-
-    def fields(self) -> Sequence[Field]:
-        return [Field(name="name", title="title")]
-
-    def questions(self) -> Sequence[Question]:
-        return [
-            Question(name="name", title="title", description="description", options=[0])
-        ]
+class ArgillaEvaluationLogic(Generic[Input, Output, ExpectedOutput, Evaluation], ABC):
+    def __init__(self, fields: Mapping[str, Field], questions: Sequence[Question]):
+        self.fields = fields
+        self.questions = questions
 
     @abstractmethod
     def _to_record(
@@ -62,14 +52,13 @@ class ArgillaEvaluationLogic(
             example: The example to be translated.
             output: The output of the example that was run.
         """
-        ...        
+        ...
 
-    def _from_record(argilla_evaluation: ArgillaEvaluation) -> Evaluation: ...
+    @abstractmethod
+    def _from_record(self, argilla_evaluation: ArgillaEvaluation) -> Evaluation: ...
 
 
-class ArgillaEvaluator(
-    AsyncEvaluator[Input, Output, ExpectedOutput, ArgillaEvaluation]
-):
+class ArgillaEvaluator(AsyncEvaluator[Input, Output, ExpectedOutput, Evaluation]):
     """Evaluator used to integrate with Argilla (https://github.com/argilla-io/argilla).
 
     Use this evaluator if you would like to easily do human eval.
@@ -93,9 +82,11 @@ class ArgillaEvaluator(
         self,
         dataset_repository: DatasetRepository,
         run_repository: RunRepository,
-        evaluation_repository: ArgillaEvaluationRepository,
+        evaluation_repository: EvaluationRepository,
         description: str,
-        evaluation_logic: ArgillaEvaluationLogic[Input, Output, ExpectedOutput],
+        evaluation_logic: ArgillaEvaluationLogic[
+            Input, Output, ExpectedOutput, Evaluation
+        ],
         argilla_client: ArgillaClient,
         workspace_id: str,
     ) -> None:
@@ -108,7 +99,9 @@ class ArgillaEvaluator(
         )
         self._client = argilla_client
         self._workspace_id = workspace_id
-        self._evaluation_logic: ArgillaEvaluationLogic[Input, Output, ExpectedOutput]
+        self._evaluation_logic: ArgillaEvaluationLogic[  # type: ignore
+            Input, Output, ExpectedOutput, Evaluation
+        ]
 
     def retrieve(
         self,
@@ -119,17 +112,18 @@ class ArgillaEvaluator(
                 evaluation_id=evaluation_id,
                 example_id=example_evaluation.example_id,
                 # cast to Evaluation because mypy thinks ArgillaEvaluation cannot be Evaluation
-                result=self._from_record(example_evaluation),
+                result=self._evaluation_logic._from_record(example_evaluation),
             )
             for example_evaluation in self._client.evaluations(evaluation_id)
         ]
         evaluations = sorted(example_evaluations, key=lambda i: i.example_id)
+
         for evaluation in evaluations:
             self._evaluation_repository.store_example_evaluation(evaluation)
 
-        return EvaluationOverview(
+        overview = EvaluationOverview(
             run_overviews=frozenset(),
-            id=id,
+            id=evaluation_id,
             start_date=datetime.now(),
             description="",
             end_date=datetime.now(),
@@ -137,6 +131,8 @@ class ArgillaEvaluator(
             failed_evaluation_count=0,
             skipped_evaluation_count=0,
         )
+        self._evaluation_repository.store_evaluation_overview(overview)
+        return overview
 
     def evaluation_type(self) -> type[ArgillaEvaluation]:  # type: ignore
         return ArgillaEvaluation
@@ -150,17 +146,16 @@ class ArgillaEvaluator(
         argilla_dataset_id = self._client.ensure_dataset_exists(
             self._workspace_id,
             dataset_name="name",
-            fields=self._evaluation_logic.fields(),
-            questions=self._evaluation_logic.questions(),
+            fields=list(self._evaluation_logic.fields.values()),
+            questions=self._evaluation_logic.questions,
         )
 
         run_overviews = self._load_run_overviews(*run_ids)
         for example, outputs in self.retrieve_eval_logic_input(
             run_overviews, num_examples=num_examples
         ):
-            self._evaluation_logic._to_record(example, outputs)
-            record_sequence = self._evaluation_logic.submit(example, outputs)
-            for record in record_sequence:
+            record_sequence = self._evaluation_logic._to_record(example, *outputs)
+            for record in record_sequence.records:
                 self._client.add_record(self._workspace_id, record)
 
         return PartialEvaluationOverview(
@@ -173,20 +168,47 @@ class ArgillaEvaluator(
 
 ## An eval ids rankommen
 # wo ergibt es sinn field und questions zu setzen?
+class InstructComparisonArgillaEvaluation(BaseModel):
+    first: str
+    second: str
+    winner: MatchOutcome
 
 
 class InstructComparisonArgillaEvaluationLogic(
-    ArgillaEvaluationLogic[InstructInput, CompleteOutput, None]
+    ArgillaEvaluationLogic[
+        InstructInput, CompleteOutput, None, InstructComparisonArgillaEvaluation
+    ]
 ):
+    KEY_INSTRUCTION = "instruction"
+    KEY_INPUT = "input"
+    KEY_RESPONSE_1 = "first"
+    KEY_RESPONSE_2 = "second"
+    KEY_QUESTION = "winner"
+    OPTIONS = [1, 2, 3]
+
     def __init__(
         self,
-        workspace_id: str,
-        fields: Mapping[str, Field],
         high_priority_runs: Optional[frozenset[str]] = None,
     ) -> None:
-        self._workspace_id = workspace_id
-        self._fields = fields
         self._high_priority_runs = high_priority_runs
+        super().__init__(
+            fields={
+                "KEY_INSTRUCTION": Field(
+                    name=self.KEY_INSTRUCTION, title="Instruction"
+                ),
+                "KEY_INPUT": Field(name=self.KEY_INPUT, title="Input"),
+                "KEY_RESPONSE_1": Field(name=self.KEY_RESPONSE_1, title="Response 1"),
+                "KEY_RESPONSE_2": Field(name=self.KEY_RESPONSE_2, title="Response 2"),
+            },
+            questions=[
+                Question(
+                    name=self.KEY_QUESTION,
+                    title="Which response is better?",
+                    description="1: The first completion is better.\n2: The second completion is better.\n3: They are both equally good.",
+                    options=self.OPTIONS,
+                )
+            ],
+        )
 
     def _to_record(
         self,
@@ -216,53 +238,25 @@ class InstructComparisonArgillaEvaluationLogic(
             first, second = second, first
         return RecordData(
             content={
-                self._fields["KEY_INSTRUCTION"].name: example.input.instruction,
-                self._fields["KEY_INPUT"].name: example.input.input or "",
-                self._fields["KEY_RESPONSE_1"].name: first.output.completion,
-                self._fields["KEY_RESPONSE_2"].name: second.output.completion,
+                self.fields["KEY_INSTRUCTION"].name: example.input.instruction,
+                self.fields["KEY_INPUT"].name: example.input.input or "",
+                self.fields["KEY_RESPONSE_1"].name: first.output.completion,
+                self.fields["KEY_RESPONSE_2"].name: second.output.completion,
             },
             example_id=example.id,
             metadata={
-                self._fields["KEY_RESPONSE_1"].name: first.run_id,
-                self._fields["KEY_RESPONSE_2"].name: second.run_id,
+                self.fields["KEY_RESPONSE_1"].name: first.run_id,
+                self.fields["KEY_RESPONSE_2"].name: second.run_id,
             },
         )
 
-
-def create_instruct_comparison_argilla_evaluation_classes(
-    workspace_id: str,
-    evaluation_repository: EvaluationRepository,
-    argilla_client: ArgillaClient,
-    high_priority_runs: Optional[frozenset[str]] = None,
-) -> tuple[InstructComparisonArgillaEvaluationLogic, ArgillaEvaluationRepository]:
-    KEY_INSTRUCTION = "instruction"
-    KEY_INPUT = "input"
-    KEY_RESPONSE_1 = "first"
-    KEY_RESPONSE_2 = "second"
-    KEY_QUESTION = "winner"
-    OPTIONS = [1, 2, 3]
-
-    fields = {
-        "KEY_INSTRUCTION": Field(name=KEY_INSTRUCTION, title="Instruction"),
-        "KEY_INPUT": Field(name=KEY_INPUT, title="Input"),
-        "KEY_RESPONSE_1": Field(name=KEY_RESPONSE_1, title="Response 1"),
-        "KEY_RESPONSE_2": Field(name=KEY_RESPONSE_2, title="Response 2"),
-    }
-    questions = [
-        Question(
-            name=KEY_QUESTION,
-            title="Which response is better?",
-            description="1: The first completion is better.\n2: The second completion is better.\n3: They are both equally good.",
-            options=OPTIONS,
+    def _from_record(
+        self, argilla_evaluation: ArgillaEvaluation
+    ) -> InstructComparisonArgillaEvaluation:
+        return InstructComparisonArgillaEvaluation(
+            first=argilla_evaluation.metadata["first"],
+            second=argilla_evaluation.metadata["second"],
+            winner=MatchOutcome.from_rank_literal(
+                int(argilla_evaluation.responses["winner"])
+            ),
         )
-    ]
-
-    return InstructComparisonArgillaEvaluationLogic(
-        workspace_id, fields, high_priority_runs
-    ), ArgillaEvaluationRepository(
-        evaluation_repository,
-        argilla_client,
-        workspace_id,
-        list(fields.values()),
-        questions,
-    )

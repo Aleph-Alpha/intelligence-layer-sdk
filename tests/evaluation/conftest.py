@@ -136,6 +136,10 @@ def evaluation_overview(
     return EvaluationOverview(
         id=evaluation_id,
         start_date=utc_now(),
+        end_date=utc_now(),
+        successful_evaluation_count=1,
+        failed_evaluation_count=1,
+        skipped_evaluation_count=1,
         run_overviews=frozenset([run_overview]),
         description="test evaluation overview 1",
     )

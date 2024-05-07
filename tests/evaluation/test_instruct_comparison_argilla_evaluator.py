@@ -33,7 +33,8 @@ from intelligence_layer.evaluation import (
     RunOverview,
 )
 from intelligence_layer.evaluation.evaluation.argilla_evaluator import (
-    create_instruct_comparison_argilla_evaluation_classes,
+    InstructComparisonArgillaEvaluation,
+    InstructComparisonArgillaEvaluationLogic,
 )
 
 
@@ -81,38 +82,24 @@ def argilla_fake() -> ArgillaClient:
 
 
 @fixture
-def argilla_repository(
-    in_memory_evaluation_repository: InMemoryEvaluationRepository,
-    argilla_fake: ArgillaClient,
-) -> ArgillaEvaluationRepository:
-    (
-        evaluation_logic,
-        evaluation_repository,
-    ) = create_instruct_comparison_argilla_evaluation_classes(
-        "workspace", in_memory_evaluation_repository, argilla_fake, None
-    )
-    return evaluation_repository
-
-
-@fixture
 def evaluator(
     in_memory_dataset_repository: InMemoryDatasetRepository,
     in_memory_run_repository: InMemoryRunRepository,
     in_memory_evaluation_repository: InMemoryEvaluationRepository,
     argilla_fake: ArgillaClient,
-) -> ArgillaEvaluator[InstructInput, CompleteOutput, None]:
-    (
-        evaluation_logic,
-        evaluation_repository,
-    ) = create_instruct_comparison_argilla_evaluation_classes(
-        "workspace", in_memory_evaluation_repository, argilla_fake, None
-    )
+) -> ArgillaEvaluator[
+    InstructInput, CompleteOutput, None, InstructComparisonArgillaEvaluation
+]:
+    evaluation_logic = InstructComparisonArgillaEvaluationLogic()
+
     return ArgillaEvaluator(
-        in_memory_dataset_repository,
-        in_memory_run_repository,
-        evaluation_repository,
-        "instruct-evaluator",
-        evaluation_logic,
+        dataset_repository=in_memory_dataset_repository,
+        run_repository=in_memory_run_repository,
+        evaluation_repository=in_memory_evaluation_repository,
+        description="instruct-evaluator",
+        workspace_id="workspace",
+        argilla_client=argilla_fake,
+        evaluation_logic=evaluation_logic,
     )
 
 
@@ -188,7 +175,9 @@ def create_dummy_runs(
 
 
 def test_evaluate_run_submits_pairwise_comparison_records(
-    evaluator: ArgillaEvaluator[InstructInput, CompleteOutput, None],
+    evaluator: ArgillaEvaluator[
+        InstructInput, CompleteOutput, None, InstructComparisonArgillaEvaluation
+    ],
     aggregator: ArgillaAggregator[AggregatedInstructComparison],
     in_memory_dataset_repository: InMemoryDatasetRepository,
     in_memory_run_repository: InMemoryRunRepository,
@@ -226,15 +215,16 @@ def test_evaluate_run_only_evaluates_high_priority(
     argilla_fake: ArgillaFake,
 ) -> None:
     relevant_ids = frozenset({"1", "2"})
-    eval_logic, eval_repository = create_instruct_comparison_argilla_evaluation_classes(
-        "workspace", in_memory_evaluation_repository, argilla_fake, relevant_ids
-    )
+    evaluation_logic = InstructComparisonArgillaEvaluationLogic(relevant_ids)
+
     evaluator = ArgillaEvaluator(
-        in_memory_dataset_repository,
-        in_memory_run_repository,
-        eval_repository,
-        "instruct-evaluator",
-        eval_logic,
+        dataset_repository=in_memory_dataset_repository,
+        run_repository=in_memory_run_repository,
+        evaluation_repository=in_memory_evaluation_repository,
+        description="instruct-evaluator",
+        workspace_id="workspace",
+        argilla_client=argilla_fake,
+        evaluation_logic=evaluation_logic,
     )
 
     run_count = 10

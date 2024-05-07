@@ -50,8 +50,22 @@ class DummyStringTaskArgillaEvaluationLogic(
         DummyStringInput,
         DummyStringOutput,
         DummyStringOutput,
+        DummyStringOutput,
     ]
 ):
+    def __init__(self) -> None:
+        super().__init__(
+            fields={
+                "output": Field(name="output", title="Output"),
+                "input": Field(name="input", title="Input"),
+            },
+            questions=[
+                Question(
+                    name="name", title="title", description="description", options=[0]
+                )
+            ],
+        )
+
     def _to_record(
         self,
         example: Example[DummyStringInput, DummyStringOutput],
@@ -71,12 +85,8 @@ class DummyStringTaskArgillaEvaluationLogic(
             ]
         )
 
-    def submit(
-        self,
-        example: Example[DummyStringInput, DummyStringOutput],
-        *output: SuccessfulExampleOutput[DummyStringOutput],
-    ) -> None:
-        return self._to_record(example, *output)
+    def _from_record(self, argilla_evaluation: ArgillaEvaluation) -> DummyStringOutput:
+        return DummyStringOutput(output="test")
 
 
 class DummyArgillaClient(ArgillaClient):
@@ -172,14 +182,16 @@ def string_argilla_evaluator(
     DummyStringInput,
     DummyStringOutput,
     DummyStringOutput,
+    DummyStringOutput,
 ]:
     evaluator = ArgillaEvaluator(
         in_memory_dataset_repository,
         in_memory_run_repository,
         argilla_evaluation_repository,
         "dummy-string-task",
-        StubArgillaClient(),
         DummyStringTaskArgillaEvaluationLogic(),
+        StubArgillaClient(),
+        "workspace-id",
     )
     return evaluator
 
@@ -243,14 +255,23 @@ def test_argilla_evaluator_can_submit_evals_to_argilla(
     assert eval_overview.successful_evaluation_count == 1
     assert eval_overview.failed_evaluation_count == 0
 
-    assert len(in_memory_evaluation_repository.example_evaluations(eval_overview.id, DummyStringOutput)) == 1
+    assert (
+        len(
+            in_memory_evaluation_repository.example_evaluations(
+                eval_overview.id, DummyStringOutput
+            )
+        )
+        == 1
+    )
 
+    assert len(list(in_memory_evaluation_repository.evaluation_overviews())) == 1
     assert len(DummyArgillaClient()._datasets[partial_evaluation_overview.id]) == 1
 
 
 def test_argilla_evaluator_can_do_sync_evaluation(
     string_argilla_evaluator: ArgillaEvaluator[
         DummyStringInput,
+        DummyStringOutput,
         DummyStringOutput,
         DummyStringOutput,
     ],
@@ -280,6 +301,7 @@ def test_argilla_evaluator_can_do_sync_evaluation(
 def test_argilla_evaluator_can_aggregate_evaluation(
     string_argilla_evaluator: ArgillaEvaluator[
         DummyStringInput,
+        DummyStringOutput,
         DummyStringOutput,
         DummyStringOutput,
     ],
