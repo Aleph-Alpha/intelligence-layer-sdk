@@ -2,7 +2,7 @@ import random
 from abc import ABC, abstractmethod
 from datetime import datetime
 from itertools import combinations
-from typing import Generic, Mapping, Optional, Sequence
+from typing import Mapping, Optional, Sequence
 
 from pydantic import BaseModel
 
@@ -30,11 +30,14 @@ from intelligence_layer.evaluation.evaluation.domain import (
 from intelligence_layer.evaluation.evaluation.evaluation_repository import (
     EvaluationRepository,
 )
+from intelligence_layer.evaluation.evaluation.evaluator import EvaluationLogicBase
 from intelligence_layer.evaluation.run.domain import SuccessfulExampleOutput
 from intelligence_layer.evaluation.run.run_repository import RunRepository
 
 
-class ArgillaEvaluationLogic(Generic[Input, Output, ExpectedOutput, Evaluation], ABC):
+class ArgillaEvaluationLogic(
+    EvaluationLogicBase[Input, Output, ExpectedOutput, Evaluation], ABC
+):
     def __init__(self, fields: Mapping[str, Field], questions: Sequence[Question]):
         self.fields = fields
         self.questions = questions
@@ -156,7 +159,7 @@ class ArgillaEvaluator(AsyncEvaluator[Input, Output, ExpectedOutput, Evaluation]
         ):
             record_sequence = self._evaluation_logic._to_record(example, *outputs)
             for record in record_sequence.records:
-                self._client.add_record(self._workspace_id, record)
+                self._client.add_record(argilla_dataset_id, record)
 
         return PartialEvaluationOverview(
             run_overviews=frozenset(run_overviews),

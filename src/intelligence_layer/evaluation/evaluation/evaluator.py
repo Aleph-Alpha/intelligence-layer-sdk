@@ -42,7 +42,13 @@ from intelligence_layer.evaluation.run.domain import (
 from intelligence_layer.evaluation.run.run_repository import RunRepository
 
 
-class EvaluationLogic(ABC, Generic[Input, Output, ExpectedOutput, Evaluation]):
+class EvaluationLogicBase(Generic[Input, Output, ExpectedOutput, Evaluation]):
+    pass
+
+
+class EvaluationLogic(
+    ABC, EvaluationLogicBase[Input, Output, ExpectedOutput, Evaluation]
+):
     @abstractmethod
     def do_evaluate(
         self,
@@ -186,7 +192,7 @@ class Evaluator(Generic[Input, Output, ExpectedOutput, Evaluation]):
 
         def is_eligible_subclass(parent: type) -> bool:
             return hasattr(parent, "__orig_bases__") and issubclass(
-                parent, EvaluationLogic
+                parent, EvaluationLogicBase
             )
 
         def update_types() -> None:
@@ -204,7 +210,7 @@ class Evaluator(Generic[Input, Output, ExpectedOutput, Evaluation]):
                     num_types_set += 1
 
         # mypy does not know __orig_bases__
-        base_types = EvaluationLogic.__orig_bases__[1]  # type: ignore
+        base_types = EvaluationLogicBase.__orig_bases__[0]  # type: ignore
         type_list: list[type | TypeVar] = list(get_args(base_types))
         possible_parent_classes = [
             p
@@ -215,7 +221,7 @@ class Evaluator(Generic[Input, Output, ExpectedOutput, Evaluation]):
             # mypy does not know __orig_bases__
             for base in parent.__orig_bases__:  # type: ignore
                 origin = get_origin(base)
-                if origin is None or not issubclass(origin, EvaluationLogic):
+                if origin is None or not issubclass(origin, EvaluationLogicBase):
                     continue
                 current_types = list(get_args(base))
                 update_types()

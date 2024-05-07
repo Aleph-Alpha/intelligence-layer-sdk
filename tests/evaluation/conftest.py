@@ -165,9 +165,7 @@ def aggregation_overview(
 
 @fixture
 def dummy_string_example() -> Example[DummyStringInput, DummyStringOutput]:
-    return Example(
-        input=DummyStringInput.any(), expected_output=DummyStringOutput.any()
-    )
+    return Example(input=DummyStringInput(), expected_output=DummyStringOutput())
 
 
 @fixture

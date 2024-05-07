@@ -4,7 +4,6 @@ from typing import Sequence, cast
 
 from aleph_alpha_client import Client, Image
 from dotenv import load_dotenv
-from faker import Faker
 from pydantic import BaseModel
 from pytest import fixture
 
@@ -110,26 +109,20 @@ def to_document(document_chunk: DocumentChunk) -> Document:
 
 
 class DummyStringInput(BaseModel):
-    input: str
-
-    @classmethod
-    def any(cls) -> "DummyStringInput":
-        fake = Faker()
-        return cls(input=fake.text())
+    input: str = "dummy-input"
 
 
 class DummyStringOutput(BaseModel):
-    output: str
+    output: str = "dummy-output"
 
-    @classmethod
-    def any(cls) -> "DummyStringOutput":
-        fake = Faker()
-        return cls(output=fake.text())
+
+class DummyStringEvaluation(BaseModel):
+    evaluation: str = "dummy-evaluation"
 
 
 class DummyStringTask(Task[DummyStringInput, DummyStringOutput]):
     def do_run(self, input: DummyStringInput, task_span: TaskSpan) -> DummyStringOutput:
-        return DummyStringOutput.any()
+        return DummyStringOutput()
 
 
 @fixture

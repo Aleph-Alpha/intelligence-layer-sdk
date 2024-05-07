@@ -243,8 +243,8 @@ def test_examples_returns_all_examples_sorted_by_their_id(
     dataset_repository: DatasetRepository = request.getfixturevalue(repository_fixture)
     examples = [
         Example(
-            input=DummyStringInput.any(),
-            expected_output=DummyStringOutput.any(),
+            input=DummyStringInput(),
+            expected_output=DummyStringOutput(),
         )
         for i in range(0, 10)
     ]
