@@ -82,15 +82,15 @@ cd src/documentation && poetry run jupyter lab
 ```
 
 ## How to use the Intelligence Layer in your project
-To install this as a dependency in your project, you need a [Github access token](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens#creating-a-personal-access-token-classic).
-This token needs the following permissions
+To install the Aleph-Alpha Intelligence Layer from the JFrog artifactory in you project, you need an artifactory identity token. To generate this, log into artifactory in
+your browser and open the user menu by clicking in the top-right corner. Then select 'Edit Profile' from the resulting dropdown menu. On the following page you can generate
+an identity token by clicking the respective button after entering you password. Save the token at some secure place, e.g. your password manager.
 
-
-To install the Aleph-Alpha Intelligence Layer from the JFrog artifactory in you project, you have to add this information to your poetry setup via the following four steps. First, add the artifactory as a source to your project via
+With the token generated, you have to add this information to your poetry setup via the following four steps. First, add the artifactory as a source to your project via
 ```bash
 poetry source add --priority=explicit artifactory https://alephalpha.jfrog.io/artifactory/api/pypi/python/simple
 ```
-Second, to install the poetry environment, export your JFrog credentials to the environment
+Second, to install the poetry environment, export your JFrog username and the generated token (NOT your actual password)
 ```bash
 export POETRY_HTTP_BASIC_ARTIFACTORY_USERNAME=your@username.here
 export POETRY_HTTP_BASIC_ARTIFACTORY_PASSWORD=your-token-here
