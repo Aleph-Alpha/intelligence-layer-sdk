@@ -18,7 +18,7 @@ fastapi = "*"
 uvicorn = "*"
 aleph-alpha-client = ">=7.1.0"
 python-dotenv = "*"
-semantic-text-splitter = "^0.13.0"
+semantic-text-splitter = "^0.13.1"
 qdrant-client = "^1.9.1"
 rich = "^13.7.1"
 nbconvert = "^7.16.4"
@@ -38,10 +38,10 @@ opentelemetry-exporter-otlp-proto-http = "1.23.0"
 # lint & format
 mypy = "^1.10.0"
 nbqa = "^1.8.5"
-ruff = "^0.4.3"
+ruff = "^0.4.4"
 pre-commit = "*"
 pylama = { extras = ["radon", "vulture", "toml"], version = "^8.4.1" }
-faker = "^25.0.1"
+faker = "^25.1.0"
 
 # tests
 pytest = "*"
