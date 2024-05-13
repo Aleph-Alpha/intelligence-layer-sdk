@@ -1,22 +1,29 @@
+from pathlib import Path
 from typing import Iterable, List, Sequence
+from uuid import uuid4
 
 from pytest import fixture
 
 from intelligence_layer.connectors import AlephAlphaClientProtocol
-from intelligence_layer.core import Task, TextChunk
+from intelligence_layer.core import Task, TextChunk, utc_now
 from intelligence_layer.evaluation import (
+    AggregationOverview,
     Aggregator,
     DatasetRepository,
+    EvaluationOverview,
     Evaluator,
     Example,
+    FileAggregationRepository,
     InMemoryAggregationRepository,
     InMemoryDatasetRepository,
     InMemoryEvaluationRepository,
+    InMemoryRunRepository,
     Runner,
-    RunRepository,
 )
 from intelligence_layer.examples import (
+    AggregatedLabelInfo,
     AggregatedMultiLabelClassifyEvaluation,
+    AggregatedSingleLabelClassifyEvaluation,
     ClassifyInput,
     EmbeddingBasedClassify,
     LabelWithExamples,
@@ -143,7 +150,7 @@ def multi_label_classify_aggregation_logic() -> MultiLabelClassifyAggregationLog
 @fixture
 def classify_evaluator(
     in_memory_dataset_repository: DatasetRepository,
-    in_memory_run_repository: RunRepository,
+    in_memory_run_repository: InMemoryRunRepository,
     in_memory_evaluation_repository: InMemoryEvaluationRepository,
     multi_label_classify_evaluation_logic: MultiLabelClassifyEvaluationLogic,
 ) -> Evaluator[
@@ -179,10 +186,27 @@ def classify_aggregator(
 
 
 @fixture
+def classify_aggregator_file_repo(
+    in_memory_evaluation_repository: InMemoryEvaluationRepository,
+    file_aggregation_repository: FileAggregationRepository,
+    multi_label_classify_aggregation_logic: MultiLabelClassifyAggregationLogic,
+) -> Aggregator[
+    MultiLabelClassifyEvaluation,
+    AggregatedMultiLabelClassifyEvaluation,
+]:
+    return Aggregator(
+        in_memory_evaluation_repository,
+        file_aggregation_repository,
+        "multi-label-classify",
+        multi_label_classify_aggregation_logic,
+    )
+
+
+@fixture
 def classify_runner(
     embedding_based_classify: Task[ClassifyInput, MultiLabelClassifyOutput],
     in_memory_dataset_repository: DatasetRepository,
-    in_memory_run_repository: RunRepository,
+    in_memory_run_repository: InMemoryRunRepository,
 ) -> Runner[ClassifyInput, MultiLabelClassifyOutput]:
     return Runner(
         embedding_based_classify,
@@ -240,3 +264,47 @@ def test_multi_label_classify_evaluator_full_dataset(
     assert {"positive", "negative", "finance", "school"} == set(
         aggregation_overview.statistics.class_metrics.keys()
     )
+
+
+def test_confusion_matrix_in_single_label_classify_aggregation_is_compatible_with_file_repository(
+    evaluation_overview: EvaluationOverview,
+    tmp_path: Path,
+) -> None:
+    aggregated_single_label_classify_evaluation = (
+        AggregatedSingleLabelClassifyEvaluation(
+            percentage_correct=0.123,
+            confusion_matrix={
+                "happy": {"happy": 1},
+                "sad": {"sad": 2},
+                "angry": {"sad": 1},
+            },
+            by_label={
+                "happy": AggregatedLabelInfo(expected_count=1, predicted_count=1),
+                "sad": AggregatedLabelInfo(expected_count=3, predicted_count=2),
+                "angry": AggregatedLabelInfo(expected_count=0, predicted_count=1),
+            },
+            missing_labels={"tired": 1},
+        )
+    )
+
+    aggregation_overview = AggregationOverview(
+        id=str(uuid4()),
+        evaluation_overviews=frozenset([evaluation_overview]),
+        start=utc_now(),
+        end=utc_now(),
+        successful_evaluation_count=5,
+        crashed_during_evaluation_count=3,
+        statistics=aggregated_single_label_classify_evaluation,
+        description="dummy-aggregator",
+    )
+
+    aggregation_file_repository = FileAggregationRepository(tmp_path)
+    aggregation_file_repository.store_aggregation_overview(aggregation_overview)
+
+    aggregation_overview_from_file_repository = (
+        aggregation_file_repository.aggregation_overview(
+            aggregation_overview.id, AggregatedSingleLabelClassifyEvaluation
+        )
+    )
+
+    assert aggregation_overview_from_file_repository == aggregation_overview

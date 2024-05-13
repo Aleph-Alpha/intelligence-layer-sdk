@@ -90,9 +90,9 @@ class AggregatedSingleLabelClassifyEvaluation(BaseModel):
     """
 
     percentage_correct: float
-    confusion_matrix: Mapping[tuple[str, str], int]
-    by_label: Mapping[str, AggregatedLabelInfo]
-    missing_labels: Mapping[str, int]
+    confusion_matrix: dict[str, dict[str, int]]
+    by_label: dict[str, AggregatedLabelInfo]
+    missing_labels: dict[str, int]
 
 
 class SingleLabelClassifyAggregationLogic(
@@ -105,14 +105,16 @@ class SingleLabelClassifyAggregationLogic(
     ) -> AggregatedSingleLabelClassifyEvaluation:
         acc = MeanAccumulator()
         missing_labels: dict[str, int] = defaultdict(int)
-        confusion_matrix: dict[tuple[str, str], int] = defaultdict(int)
+        confusion_matrix: dict[str, dict[str, int]] = defaultdict(
+            lambda: defaultdict(int)
+        )
         by_label: dict[str, dict[str, int]] = defaultdict(lambda: defaultdict(int))
         for evaluation in evaluations:
             acc.add(1.0 if evaluation.correct else 0.0)
             if evaluation.expected_label_missing:
                 missing_labels[evaluation.expected] += 1
             else:
-                confusion_matrix[(evaluation.predicted, evaluation.expected)] += 1
+                confusion_matrix[evaluation.predicted][evaluation.expected] += 1
                 by_label[evaluation.predicted]["predicted"] += 1
                 by_label[evaluation.expected]["expected"] += 1
 

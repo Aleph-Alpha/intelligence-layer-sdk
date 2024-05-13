@@ -1,3 +1,4 @@
+from .classify.classify import AggregatedLabelInfo as AggregatedLabelInfo
 from .classify.classify import (
     AggregatedMultiLabelClassifyEvaluation as AggregatedMultiLabelClassifyEvaluation,
 )

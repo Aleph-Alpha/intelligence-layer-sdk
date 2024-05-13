@@ -17,13 +17,21 @@ from intelligence_layer.connectors import (
     QdrantInMemoryRetriever,
     RetrieverType,
 )
-from intelligence_layer.core import LuminousControlModel, NoOpTracer, Task, TaskSpan
+from intelligence_layer.core import (
+    LuminousControlModel,
+    NoOpTracer,
+    Task,
+    TaskSpan,
+    utc_now,
+)
 from intelligence_layer.evaluation import (
     AsyncInMemoryEvaluationRepository,
+    EvaluationOverview,
     InMemoryAggregationRepository,
     InMemoryDatasetRepository,
     InMemoryEvaluationRepository,
     InMemoryRunRepository,
+    RunOverview,
 )
 
 
@@ -154,3 +162,36 @@ def in_memory_aggregation_repository() -> InMemoryAggregationRepository:
 @fixture()
 def async_in_memory_evaluation_repository() -> AsyncInMemoryEvaluationRepository:
     return AsyncInMemoryEvaluationRepository()
+
+
+@fixture
+def run_overview() -> RunOverview:
+    return RunOverview(
+        dataset_id="dataset-id",
+        id="run-id-1",
+        start=utc_now(),
+        end=utc_now(),
+        failed_example_count=0,
+        successful_example_count=3,
+        description="test run overview 1",
+    )
+
+
+@fixture
+def evaluation_id() -> str:
+    return "evaluation-id-1"
+
+
+@fixture
+def evaluation_overview(
+    evaluation_id: str, run_overview: RunOverview
+) -> EvaluationOverview:
+    return EvaluationOverview(
+        id=evaluation_id,
+        start_date=utc_now(),
+        end_date=utc_now(),
+        successful_evaluation_count=1,
+        failed_evaluation_count=1,
+        run_overviews=frozenset([run_overview]),
+        description="test evaluation overview 1",
+    )
