@@ -482,7 +482,8 @@ class EvaluatorBase(Generic[Input, Output, ExpectedOutput, Evaluation], ABC):
             output_type=self.output_type(),
             evaluation_type=self.evaluation_type(),
         )
-    
+
+
 class Evaluator(EvaluatorBase[Input, Output, ExpectedOutput, Evaluation]):
     """Evaluator designed for most evaluation tasks. Only supports synchronous evaluation.
 
@@ -508,7 +509,6 @@ class Evaluator(EvaluatorBase[Input, Output, ExpectedOutput, Evaluation]):
             Input, Output, ExpectedOutput, Evaluation
         ]
 
-    @final
     def evaluate_runs(
         self,
         *run_ids: str,
@@ -605,7 +605,8 @@ class Evaluator(EvaluatorBase[Input, Output, ExpectedOutput, Evaluation]):
         )
 
         return result
-    
+
+
 class IncrementalEvaluator(Evaluator[Input, Output, ExpectedOutput, Evaluation]):
     """:class:`Evaluator` for evaluating additional runs on top of previous evaluations. Intended for use with :class:`IncrementalEvaluationLogic`.
 
@@ -629,7 +630,6 @@ class IncrementalEvaluator(Evaluator[Input, Output, ExpectedOutput, Evaluation])
         run_repository: RunRepository,
         evaluation_repository: EvaluationRepository,
         description: str,
-        
         incremental_evaluation_logic: IncrementalEvaluationLogic[
             Input, Output, ExpectedOutput, Evaluation
         ],
@@ -641,6 +641,9 @@ class IncrementalEvaluator(Evaluator[Input, Output, ExpectedOutput, Evaluation])
             description=description,
             evaluation_logic=incremental_evaluation_logic,
         )
+        self._evaluation_logic: IncrementalEvaluationLogic[
+            Input, Output, ExpectedOutput, Evaluation
+        ]
 
     def evaluate_additional_runs(
         self,
@@ -684,10 +687,7 @@ class IncrementalEvaluator(Evaluator[Input, Output, ExpectedOutput, Evaluation])
                     prev_run_ids.add(output.run_id)
             previous_run_ids.append(prev_run_ids)
 
-        cast(
-            IncrementalEvaluationLogic[Input, Output, ExpectedOutput, Evaluation],
-            self._evaluation_logic,
-        ).set_previous_run_output_ids(previous_run_ids)
+        self._evaluation_logic.set_previous_run_output_ids(previous_run_ids)
         return super().evaluate_runs(
             *run_ids, num_examples=num_examples, abort_on_error=abort_on_error
         )
@@ -698,10 +698,7 @@ class IncrementalEvaluator(Evaluator[Input, Output, ExpectedOutput, Evaluation])
         num_examples: Optional[int] = None,
         abort_on_error: bool = False,
     ) -> EvaluationOverview:
-        cast(
-            IncrementalEvaluationLogic[Input, Output, ExpectedOutput, Evaluation],
-            self._evaluation_logic,
-        ).set_previous_run_output_ids([])
+        self._evaluation_logic.set_previous_run_output_ids([])
         return super().evaluate_runs(
             *run_ids, num_examples=num_examples, abort_on_error=abort_on_error
         )
