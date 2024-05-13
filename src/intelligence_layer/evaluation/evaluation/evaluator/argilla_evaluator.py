@@ -163,24 +163,24 @@ class ArgillaEvaluator(AsyncEvaluator[Input, Output, ExpectedOutput, Evaluation]
 
     def retrieve(
         self,
-        evaluation_id: str,
+        partial_evaluation_id: str,
     ) -> EvaluationOverview:
         partial_overview = self._evaluation_repository.partial_evaluation_overview(
-            evaluation_id
+            partial_evaluation_id
         )
         if not partial_overview:
             raise ValueError(
-                f"Partial overview for evaluation id {evaluation_id} not found."
+                f"Partial overview for evaluation id {partial_evaluation_id} not found."
             )
 
         example_evaluations = [
             ExampleEvaluation(
-                evaluation_id=evaluation_id,
+                evaluation_id=partial_evaluation_id,
                 example_id=example_evaluation.example_id,
                 # cast to Evaluation because mypy thinks ArgillaEvaluation cannot be Evaluation
                 result=self._evaluation_logic.from_record(example_evaluation),
             )
-            for example_evaluation in self._client.evaluations(evaluation_id)
+            for example_evaluation in self._client.evaluations(partial_evaluation_id)
         ]
         evaluations = sorted(example_evaluations, key=lambda i: i.example_id)
 
@@ -188,7 +188,7 @@ class ArgillaEvaluator(AsyncEvaluator[Input, Output, ExpectedOutput, Evaluation]
             self._evaluation_repository.store_example_evaluation(evaluation)
         num_failed_evaluations = len(
             self._evaluation_repository.failed_example_evaluations(
-                evaluation_id, self.evaluation_type()
+                partial_evaluation_id, self.evaluation_type()
             )
         )
         num_not_yet_evaluated_evals = partial_overview.submitted_evaluation_count - len(
@@ -197,7 +197,7 @@ class ArgillaEvaluator(AsyncEvaluator[Input, Output, ExpectedOutput, Evaluation]
 
         overview = EvaluationOverview(
             run_overviews=partial_overview.run_overviews,
-            id=evaluation_id,
+            id=partial_evaluation_id,
             start_date=partial_overview.start_date,
             description=partial_overview.description,
             end_date=datetime.now(),
