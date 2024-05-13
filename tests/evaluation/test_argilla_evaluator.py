@@ -2,6 +2,7 @@ import random
 from typing import Iterable, Sequence
 from uuid import uuid4
 
+import pytest
 from pytest import fixture
 
 from intelligence_layer.connectors import ArgillaEvaluation, Field, Question, RecordData
@@ -20,6 +21,7 @@ from intelligence_layer.evaluation.aggregation.elo import (
     InstructComparisonEvaluation,
     MatchOutcome,
 )
+from intelligence_layer.evaluation.dataset.dataset_repository import DatasetRepository
 from intelligence_layer.evaluation.evaluation.argilla_evaluator import (
     RecordDataSequence,
 )
@@ -81,6 +83,10 @@ class DummyStringTaskArgillaEvaluationLogic(
         return DummyStringEvaluation()
 
 
+class CustomException(Exception):
+    pass
+
+
 class DummyArgillaClient(ArgillaClient):
     _datasets: dict[str, list[RecordData]] = {}
     _score = 3.0
@@ -112,6 +118,47 @@ class DummyArgillaClient(ArgillaClient):
                 metadata=dict(),
             )
             for record in dataset
+        ]
+
+    def split_dataset(self, dataset_id: str, n_splits: int) -> None:
+        raise NotImplementedError
+
+
+class FailedEvaluationDummyArgillaClient(ArgillaClient):
+    """fails on first upload, only returns 1 evaluated evaluation"""
+
+    _upload_count = 0
+    _datasets: dict[str, list[RecordData]] = {}
+
+    def ensure_dataset_exists(
+        self,
+        workspace_id: str,
+        dataset_name: str,
+        fields: Sequence[Field],
+        questions: Sequence[Question],
+    ) -> str:
+        dataset_id = str(uuid4())
+        self._datasets[dataset_id] = []
+
+        return dataset_id
+
+    def add_record(self, dataset_id: str, record: RecordData) -> None:
+        if self._upload_count == 0:
+            self._upload_count += 1
+            raise CustomException("First upload fails")
+        self._datasets[dataset_id].append(record)
+
+    def evaluations(self, dataset_id: str) -> Iterable[ArgillaEvaluation]:
+        dataset = self._datasets.get(dataset_id)
+        assert dataset
+        record = dataset[0]
+        return [
+            ArgillaEvaluation(
+                example_id=record.example_id,
+                record_id="ignored",
+                responses={"human-score": 0},
+                metadata=dict(),
+            )
         ]
 
     def split_dataset(self, dataset_id: str, n_splits: int) -> None:
@@ -187,10 +234,6 @@ def test_argilla_evaluator_can_submit_evals_to_argilla(
     in_memory_run_repository: InMemoryRunRepository,
     async_in_memory_evaluation_repository: AsyncInMemoryEvaluationRepository,
 ) -> None:
-    # fetch run_overview
-    # put run_oervrw ionto submit function
-    # check if stuff is correctly submitted -> ArgillaStubClient has receveid data
-
     evaluator = ArgillaEvaluator(
         in_memory_dataset_repository,
         in_memory_run_repository,
@@ -204,6 +247,7 @@ def test_argilla_evaluator_can_submit_evals_to_argilla(
     run_overview = string_argilla_runner.run_dataset(string_dataset_id)
 
     partial_evaluation_overview = evaluator.submit(run_overview.id)
+    assert partial_evaluation_overview.submitted_evaluation_count == 1
 
     eval_overview = evaluator.retrieve(partial_evaluation_overview.id)
 
@@ -222,6 +266,65 @@ def test_argilla_evaluator_can_submit_evals_to_argilla(
 
     assert len(list(async_in_memory_evaluation_repository.evaluation_overviews())) == 1
     assert len(DummyArgillaClient()._datasets[partial_evaluation_overview.id]) == 1
+
+
+def test_argilla_evaluator_correctly_lists_failed_eval_counts(
+    dummy_string_example: Example[DummyStringInput, DummyStringOutput],
+    in_memory_dataset_repository: DatasetRepository,
+    in_memory_run_repository: InMemoryRunRepository,
+    async_in_memory_evaluation_repository: AsyncInMemoryEvaluationRepository,
+    string_argilla_runner: Runner[DummyStringInput, DummyStringOutput],
+) -> None:
+    dataset_id = in_memory_dataset_repository.create_dataset(
+        examples=[dummy_string_example] * 3, dataset_name="test-dataset"
+    ).id
+    run_overview = string_argilla_runner.run_dataset(dataset_id)
+
+    evaluator = ArgillaEvaluator(
+        in_memory_dataset_repository,
+        in_memory_run_repository,
+        async_in_memory_evaluation_repository,
+        "dummy-string-task",
+        DummyStringTaskArgillaEvaluationLogic(),
+        FailedEvaluationDummyArgillaClient(),
+        workspace_id="workspace-id",
+    )
+
+    partial_evaluation_overview = evaluator.submit(run_overview.id)
+    assert (
+        len(
+            async_in_memory_evaluation_repository.failed_example_evaluations(
+                partial_evaluation_overview.id, DummyStringEvaluation
+            )
+        )
+        == 1
+    )
+    eval_overview = evaluator.retrieve(partial_evaluation_overview.id)
+
+    assert eval_overview.successful_evaluation_count == 1
+    assert eval_overview.failed_evaluation_count == 2
+
+
+def test_argilla_evaluator_abort_on_error_works(
+    string_argilla_runner: Runner[DummyStringInput, DummyStringOutput],
+    string_dataset_id: str,
+    in_memory_dataset_repository: DatasetRepository,
+    in_memory_run_repository: InMemoryRunRepository,
+    async_in_memory_evaluation_repository: AsyncInMemoryEvaluationRepository,
+) -> None:
+    run_overview = string_argilla_runner.run_dataset(string_dataset_id)
+
+    evaluator = ArgillaEvaluator(
+        in_memory_dataset_repository,
+        in_memory_run_repository,
+        async_in_memory_evaluation_repository,
+        "dummy-string-task",
+        DummyStringTaskArgillaEvaluationLogic(),
+        FailedEvaluationDummyArgillaClient(),
+        workspace_id="workspace-id",
+    )
+    with pytest.raises(CustomException):
+        evaluator.submit(run_overview.id, abort_on_error=True)
 
 
 def test_argilla_aggregation_logic_works() -> None:

@@ -71,13 +71,15 @@ class PartialEvaluationOverview(BaseModel, frozen=True):
     Attributes:
         run_overviews: Overviews of the runs that were evaluated.
         id: The unique identifier of this evaluation.
-        start: The time when the evaluation run was started
-        description: human-readable for the evaluator that created the evaluation
+        start: The time when the evaluation run was started.
+        submitted_evaluation_count: The amount of evaluations that were submitted successfully.
+        description: human-readable for the evaluator that created the evaluation.
     """
 
     run_overviews: frozenset[RunOverview]
     id: str
     start_date: datetime
+    submitted_evaluation_count: int
     description: str
 
     def __repr__(self) -> str:
@@ -107,8 +109,9 @@ class EvaluationOverview(BaseModel, frozen=True):
     Attributes:
         run_overviews: Overviews of the runs that were evaluated.
         id: The unique identifier of this evaluation.
-        start: The time when the evaluation run was started
-        description: human-readable for the evaluator that created the evaluation
+        start: The time when the evaluation run was started.
+        description: human-readable for the evaluator that created the evaluation.
+        TODO
     """
 
     run_overviews: frozenset[RunOverview]

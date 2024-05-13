@@ -28,6 +28,7 @@ from intelligence_layer.evaluation.evaluation.domain import (
     Evaluation,
     EvaluationOverview,
     ExampleEvaluation,
+    FailedExampleEvaluation,
     PartialEvaluationOverview,
 )
 from intelligence_layer.evaluation.evaluation.evaluator import EvaluationLogicBase
@@ -125,17 +126,35 @@ class ArgillaEvaluator(AsyncEvaluator[Input, Output, ExpectedOutput, Evaluation]
         )
 
         run_overviews = self._load_run_overviews(*run_ids)
+        submit_count = 0
         for example, outputs in self.retrieve_eval_logic_input(
             run_overviews, num_examples=num_examples
         ):
             record_sequence = self._evaluation_logic._to_record(example, *outputs)
             for record in record_sequence.records:
-                self._client.add_record(argilla_dataset_id, record)
+                try:
+                    self._client.add_record(argilla_dataset_id, record)
+                    submit_count += 1
+                except Exception as e:
+                    if abort_on_error:
+                        raise e
+                    evaluation = FailedExampleEvaluation.from_exception(e)
+                    self._evaluation_repository.store_example_evaluation(
+                        ExampleEvaluation(
+                            evaluation_id=argilla_dataset_id,
+                            example_id=example.id,
+                            result=evaluation,
+                        )
+                    )
+                    print(
+                        f"Uploading a record to argilla failed with the following error:\n{e}"
+                    )
 
         partial_overview = PartialEvaluationOverview(
             run_overviews=frozenset(run_overviews),
             id=argilla_dataset_id,
             start_date=datetime.now(),
+            submitted_evaluation_count=submit_count,
             description=self.description,
         )
 
@@ -167,6 +186,14 @@ class ArgillaEvaluator(AsyncEvaluator[Input, Output, ExpectedOutput, Evaluation]
 
         for evaluation in evaluations:
             self._evaluation_repository.store_example_evaluation(evaluation)
+        num_failed_evaluations = len(
+            self._evaluation_repository.failed_example_evaluations(
+                evaluation_id, self.evaluation_type()
+            )
+        )
+        num_not_yet_evaluated_evals = partial_overview.submitted_evaluation_count - len(
+            evaluations
+        )
 
         overview = EvaluationOverview(
             run_overviews=partial_overview.run_overviews,
@@ -175,7 +202,8 @@ class ArgillaEvaluator(AsyncEvaluator[Input, Output, ExpectedOutput, Evaluation]
             description=partial_overview.description,
             end_date=datetime.now(),
             successful_evaluation_count=len(evaluations),
-            failed_evaluation_count=0,
+            failed_evaluation_count=num_not_yet_evaluated_evals
+            + num_failed_evaluations,
         )
         self._evaluation_repository.store_evaluation_overview(overview)
         return overview

@@ -129,12 +129,12 @@ class ArgillaClient(ABC):
 
     @abstractmethod
     def evaluations(self, dataset_id: str) -> Iterable[ArgillaEvaluation]:
-        """Returns all submitted evaluations for the given dataset.
+        """Returns all human-evaluated evaluations for the given dataset.
 
         Args:
             dataset_id: the id of the dataset.
         Returns:
-            An `Iterable` over all submitted evaluations for the given dataset.
+            An `Iterable` over all human-evaluated evaluations for the given dataset.
         """
         ...
 

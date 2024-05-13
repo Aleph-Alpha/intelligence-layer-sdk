@@ -21,10 +21,42 @@ class AsyncEvaluator(Evaluator[Input, Output, ExpectedOutput, Evaluation], ABC):
         *run_ids: str,
         num_examples: Optional[int] = None,
         abort_on_error: bool = False,
-    ) -> PartialEvaluationOverview: ...
+    ) -> PartialEvaluationOverview:
+        """Submits evaluations to external service to be evaluated.
+
+        Failed submissions are saved as FailedExampleEvaluations.
+
+        Args:
+            run_ids: The runs to be evaluated. Each run is expected to have the same
+                dataset as input (which implies their tasks have the same input-type)
+                and their tasks have the same output-type. For each example in the
+                dataset referenced by the runs the outputs of all runs are collected
+                and if all of them were successful they are passed on to the implementation
+                specific evaluation. The method compares all run of the provided ids to each other.
+            num_examples: The number of examples which should be evaluated from the given runs.
+                Always the first n runs stored in the evaluation repository. Defaults to None.
+            abort_on_error: Abort the whole submission process if a single submission fails.
+                Defaults to False.
+
+        Returns:
+            A :class:`PartialEvaluationOverview` containing submission information.
+        """
+        ...
 
     @abstractmethod
-    def retrieve(self, id: str) -> EvaluationOverview: ...
+    def retrieve(self, id: str) -> EvaluationOverview:
+        """Retrieves external evaluations and saves them to an evaluation repository.
+
+        Failed or skipped submissions should be viewed as failed evaluations.
+        Evaluations that are submitted but not yet evaluated also count as failed evaluations.
+
+        Args:
+            id: the id of the corresponding :class:`PartialEvaluationOverview`.
+
+        Returns:
+            An :class:`EvaluationOverview` that describes the whole evaluation.
+        """
+        ...
 
 
 class AsyncEvaluationRepository(EvaluationRepository):

@@ -41,6 +41,7 @@ def partial_evaluation_overviews(
                 id=evaluation_id,
                 start_date=utc_now(),
                 run_overviews=frozenset([run_overview]),
+                submitted_evaluation_count=10,
                 description="test evaluation overview",
             )
         )
@@ -55,6 +56,7 @@ def partial_evaluation_overview(
         id=evaluation_id,
         start_date=utc_now(),
         run_overviews=frozenset([run_overview]),
+        submitted_evaluation_count=10,
         description="test evaluation overview",
     )
 

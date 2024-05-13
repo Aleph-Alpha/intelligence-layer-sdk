@@ -302,7 +302,7 @@ class Evaluator(Generic[Input, Output, ExpectedOutput, Evaluation]):
                 and if all of them were successful they are passed on to the implementation
                 specific evaluation. The method compares all run of the provided ids to each other.
             num_examples: The number of examples which should be evaluated from the given runs.
-                Always the first n runs stored in the evaluation repository
+                Always the first n runs stored in the evaluation repository. Defaults to None.
             abort_on_error: Flag to abort all evaluations when an error occurs. Defaults to False.
 
         Returns:
