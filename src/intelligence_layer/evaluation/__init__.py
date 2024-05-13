@@ -65,6 +65,12 @@ from .evaluation.evaluator.evaluator import Evaluator as Evaluator
 from .evaluation.evaluator.evaluator import (
     SingleOutputEvaluationLogic as SingleOutputEvaluationLogic,
 )
+from .evaluation.evaluator.incremental_evaluator import (
+    IncrementalEvaluationLogic as IncrementalEvaluationLogic,
+)
+from .evaluation.evaluator.incremental_evaluator import (
+    IncrementalEvaluator as IncrementalEvaluator,
+)
 from .evaluation.file_evaluation_repository import (
     AsyncFileEvaluationRepository as AsyncFileEvaluationRepository,
 )

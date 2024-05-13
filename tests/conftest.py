@@ -19,13 +19,11 @@ from intelligence_layer.connectors import (
 )
 from intelligence_layer.core import LuminousControlModel, NoOpTracer, Task, TaskSpan
 from intelligence_layer.evaluation import (
+    AsyncInMemoryEvaluationRepository,
     InMemoryAggregationRepository,
     InMemoryDatasetRepository,
     InMemoryEvaluationRepository,
     InMemoryRunRepository,
-)
-from intelligence_layer.evaluation.evaluation.in_memory_evaluation_repository import (
-    AsyncInMemoryEvaluationRepository,
 )
 
 

@@ -98,6 +98,7 @@ class PartialEvaluationOverview(BaseModel, frozen=True):
         return (
             f"Evaluation Overview ID = {self.id}\n"
             f"Start time = {self.start_date}\n"
+            f"Submitted Evaluations = {self.submitted_evaluation_count}\n"
             f'Description = "{self.description}"\n'
             f"{run_overview_str}"
         )
@@ -109,9 +110,12 @@ class EvaluationOverview(BaseModel, frozen=True):
     Attributes:
         run_overviews: Overviews of the runs that were evaluated.
         id: The unique identifier of this evaluation.
-        start: The time when the evaluation run was started.
+        start_date: The time when the evaluation run was started.
+        end_date: The time when the evaluation run was finished.
+        successful_evaluation_count: Number of successfully evaluated examples.
+        failed_evaluation_count: Number of examples that produced an error during evaluation.
+            Note: failed runs are skipped in the evaluation and therefore not counted as failures
         description: human-readable for the evaluator that created the evaluation.
-        TODO
     """
 
     run_overviews: frozenset[RunOverview]
@@ -140,7 +144,7 @@ class EvaluationOverview(BaseModel, frozen=True):
             f"Start time = {self.start_date}\n"
             f"End time = {self.end_date}\n"
             f"Successful examples = {self.successful_evaluation_count}\n"
-            f"Crashed examples = {self.failed_evaluation_count}\n"
+            f"Failed examples = {self.failed_evaluation_count}\n"
             f'Description = "{self.description}"\n'
             f"{run_overview_str}"
         )

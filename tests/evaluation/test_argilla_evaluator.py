@@ -57,7 +57,7 @@ class DummyStringTaskArgillaEvaluationLogic(
             ],
         )
 
-    def _to_record(
+    def to_record(
         self,
         example: Example[DummyStringInput, DummyStringOutput],
         *output: SuccessfulExampleOutput[DummyStringOutput],
@@ -76,7 +76,7 @@ class DummyStringTaskArgillaEvaluationLogic(
             ]
         )
 
-    def _from_record(
+    def from_record(
         self, argilla_evaluation: ArgillaEvaluation
     ) -> DummyStringEvaluation:
         return DummyStringEvaluation()

@@ -1,23 +1,16 @@
 from pydantic import BaseModel
 
-from intelligence_layer.core.task import Task
-from intelligence_layer.core.tracer.tracer import Tracer
-from intelligence_layer.evaluation.dataset.domain import Example
-from intelligence_layer.evaluation.dataset.in_memory_dataset_repository import (
-    InMemoryDatasetRepository,
-)
-from intelligence_layer.evaluation.evaluation.evaluator.incremental_evaluator import (
+from intelligence_layer.core import Task, Tracer
+from intelligence_layer.evaluation import (
+    Example,
     IncrementalEvaluationLogic,
     IncrementalEvaluator,
-)
-from intelligence_layer.evaluation.evaluation.in_memory_evaluation_repository import (
+    InMemoryDatasetRepository,
     InMemoryEvaluationRepository,
-)
-from intelligence_layer.evaluation.run.domain import SuccessfulExampleOutput
-from intelligence_layer.evaluation.run.in_memory_run_repository import (
     InMemoryRunRepository,
+    Runner,
+    SuccessfulExampleOutput,
 )
-from intelligence_layer.evaluation.run.runner import Runner
 
 
 class DummyEvaluation(BaseModel):

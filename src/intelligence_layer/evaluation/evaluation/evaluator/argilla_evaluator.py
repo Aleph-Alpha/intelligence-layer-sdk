@@ -50,7 +50,7 @@ class ArgillaEvaluationLogic(
         self.questions = questions
 
     @abstractmethod
-    def _to_record(
+    def to_record(
         self,
         example: Example[Input, ExpectedOutput],
         *output: SuccessfulExampleOutput[Output],
@@ -65,7 +65,7 @@ class ArgillaEvaluationLogic(
         ...
 
     @abstractmethod
-    def _from_record(self, argilla_evaluation: ArgillaEvaluation) -> Evaluation: ...
+    def from_record(self, argilla_evaluation: ArgillaEvaluation) -> Evaluation: ...
 
 
 class ArgillaEvaluator(AsyncEvaluator[Input, Output, ExpectedOutput, Evaluation]):
@@ -130,7 +130,7 @@ class ArgillaEvaluator(AsyncEvaluator[Input, Output, ExpectedOutput, Evaluation]
         for example, outputs in self._retrieve_eval_logic_input(
             run_overviews, num_examples=num_examples
         ):
-            record_sequence = self._evaluation_logic._to_record(example, *outputs)
+            record_sequence = self._evaluation_logic.to_record(example, *outputs)
             for record in record_sequence.records:
                 try:
                     self._client.add_record(argilla_dataset_id, record)
@@ -178,7 +178,7 @@ class ArgillaEvaluator(AsyncEvaluator[Input, Output, ExpectedOutput, Evaluation]
                 evaluation_id=evaluation_id,
                 example_id=example_evaluation.example_id,
                 # cast to Evaluation because mypy thinks ArgillaEvaluation cannot be Evaluation
-                result=self._evaluation_logic._from_record(example_evaluation),
+                result=self._evaluation_logic.from_record(example_evaluation),
             )
             for example_evaluation in self._client.evaluations(evaluation_id)
         ]
@@ -243,7 +243,7 @@ class InstructComparisonArgillaEvaluationLogic(
             ],
         )
 
-    def _to_record(
+    def to_record(
         self,
         example: Example[InstructInput, None],
         *outputs: SuccessfulExampleOutput[CompleteOutput],
@@ -283,7 +283,7 @@ class InstructComparisonArgillaEvaluationLogic(
             },
         )
 
-    def _from_record(
+    def from_record(
         self, argilla_evaluation: ArgillaEvaluation
     ) -> ComparisonEvaluation:
         return ComparisonEvaluation(

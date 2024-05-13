@@ -46,14 +46,14 @@ class AsyncEvaluator(EvaluatorBase[Input, Output, ExpectedOutput, Evaluation], A
         ...
 
     @abstractmethod
-    def retrieve(self, id: str) -> EvaluationOverview:
+    def retrieve(self, partial_overview_id: str) -> EvaluationOverview:
         """Retrieves external evaluations and saves them to an evaluation repository.
 
         Failed or skipped submissions should be viewed as failed evaluations.
         Evaluations that are submitted but not yet evaluated also count as failed evaluations.
 
         Args:
-            id: the id of the corresponding :class:`PartialEvaluationOverview`.
+            partial_overview_id: The id of the corresponding :class:`PartialEvaluationOverview`.
 
         Returns:
             An :class:`EvaluationOverview` that describes the whole evaluation.

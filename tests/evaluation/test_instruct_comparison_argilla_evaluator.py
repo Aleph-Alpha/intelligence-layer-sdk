@@ -17,7 +17,10 @@ from intelligence_layer.connectors.argilla.argilla_client import (
 )
 from intelligence_layer.core import CompleteOutput, InstructInput, utc_now
 from intelligence_layer.evaluation import (
+    Aggregator,
     ArgillaEvaluator,
+    AsyncInMemoryEvaluationRepository,
+    ComparisonAggregationLogic,
     ComparisonEvaluation,
     EloCalculator,
     Example,
@@ -25,16 +28,9 @@ from intelligence_layer.evaluation import (
     InMemoryAggregationRepository,
     InMemoryDatasetRepository,
     InMemoryRunRepository,
+    InstructComparisonArgillaEvaluationLogic,
     MatchOutcome,
     RunOverview,
-)
-from intelligence_layer.evaluation.aggregation.aggregator import Aggregator
-from intelligence_layer.evaluation.aggregation.elo import ComparisonAggregationLogic
-from intelligence_layer.evaluation.evaluation.evaluator.argilla_evaluator import (
-    InstructComparisonArgillaEvaluationLogic,
-)
-from intelligence_layer.evaluation.evaluation.in_memory_evaluation_repository import (
-    AsyncInMemoryEvaluationRepository,
 )
 
 
