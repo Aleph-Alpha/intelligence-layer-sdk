@@ -145,12 +145,10 @@ class SingleOutputEvaluationLogic(
         pass
 
 
-class Evaluator(Generic[Input, Output, ExpectedOutput, Evaluation]):
-    """Evaluator that can handle automatic evaluation scenarios.
+class EvaluatorBase(Generic[Input, Output, ExpectedOutput, Evaluation], ABC):
+    """Base class for Evaluators that can handle automatic evaluation scenarios.
 
-    This evaluator should be used for automatic eval. A user still has to implement
-    :class:`EvaluationLogic`.
-
+    Provides methods for type inference and loading data from the repositories.
 
     Arguments:
         dataset_repository: The repository with the examples that will be taken for the evaluation.
@@ -160,10 +158,10 @@ class Evaluator(Generic[Input, Output, ExpectedOutput, Evaluation]):
         evaluation_logic: The logic to use for evaluation.
 
     Generics:
-        Input: Interface to be passed to the :class:`Task` that shall be evaluated.
-        Output: Type of the output of the :class:`Task` to be evaluated.
-        ExpectedOutput: Output that is expected from the run with the supplied input.
-        Evaluation: Interface of the metrics that come from the evaluated :class:`Task`.
+        Input: Type to be passed to the :class:`Task` as input. Part of `Example`.
+        Output: Type of the output of the :class:`Task` to be evaluated. Part of `ExampleOutput`
+        ExpectedOutput: Type that the `Output` will be compared against. Part of `Example`.
+        Evaluation: Type of the metrics that come from the evaluated :class:`Task`. Part of `ExampleEvaluation`
     """
 
     def __init__(
@@ -172,19 +170,22 @@ class Evaluator(Generic[Input, Output, ExpectedOutput, Evaluation]):
         run_repository: RunRepository,
         evaluation_repository: EvaluationRepository,
         description: str,
-        evaluation_logic: EvaluationLogic[Input, Output, ExpectedOutput, Evaluation],
+        evaluation_logic: EvaluationLogicBase[
+            Input, Output, ExpectedOutput, Evaluation
+        ],
     ) -> None:
         self._dataset_repository = dataset_repository
         self._run_repository = run_repository
         self._evaluation_repository = evaluation_repository
         self._evaluation_logic = evaluation_logic
+
         self.description = description
 
     @lru_cache(maxsize=1)
     def _get_types(self) -> Mapping[str, type]:
         """Type magic function that gets the actual types of the generic parameters.
 
-        Traverses the inheritance history of `BaseEvaluator`-subclass to find an actual type every time a TypeVar is replaced.
+        Traverses the inheritance history of `EvaluationLogicBase`-subclasses to find an actual type every time a TypeVar is replaced.
 
         Returns:
             Name of generic parameter to the type found.
@@ -235,6 +236,14 @@ class Evaluator(Generic[Input, Output, ExpectedOutput, Evaluation]):
         }
 
     def input_type(self) -> type[Input]:
+        """Returns the type of the evaluated task's input.
+
+        This can be used to retrieve properly typed :class:`Example`s of a dataset
+        from a :class:`DatasetRepository`.
+
+        Returns:
+            The type of the evaluated task's input.
+        """
         try:
             input_type = self._get_types()["Input"]
         except KeyError:
@@ -245,10 +254,10 @@ class Evaluator(Generic[Input, Output, ExpectedOutput, Evaluation]):
         """Returns the type of the evaluated task's output.
 
         This can be used to retrieve properly typed outputs of an evaluation run
-        from a :class:`EvaluationRepository`
+        from a :class:`RunRepository`.
 
         Returns:
-            the type of the evaluated task's output.
+            The type of the evaluated task's output.
         """
         try:
             output_type = self._get_types()["Output"]
@@ -257,6 +266,14 @@ class Evaluator(Generic[Input, Output, ExpectedOutput, Evaluation]):
         return cast(type[Output], output_type)
 
     def expected_output_type(self) -> type[ExpectedOutput]:
+        """Returns the type of the evaluated task's expected output.
+
+        This can be used to retrieve properly typed :class:`Example`s of a dataset
+        from a :class:`DatasetRepository`.
+
+        Returns:
+            The type of the evaluated task's expected output.
+        """
         try:
             expected_output_type = self._get_types()["ExpectedOutput"]
         except KeyError:
@@ -269,7 +286,7 @@ class Evaluator(Generic[Input, Output, ExpectedOutput, Evaluation]):
         """Returns the type of the evaluation result of an example.
 
         This can be used to retrieve properly typed evaluations of an evaluation run
-        from a :class:`EvaluationRepository`
+        from an :class:`EvaluationRepository`
 
         Returns:
             Returns the type of the evaluation result of an example.
@@ -282,102 +299,120 @@ class Evaluator(Generic[Input, Output, ExpectedOutput, Evaluation]):
             )
         return cast(type[Evaluation], evaluation_type)
 
-    def evaluate_runs(
-        self,
-        *run_ids: str,
-        num_examples: Optional[int] = None,
-        abort_on_error: bool = False,
-    ) -> EvaluationOverview:
-        """Evaluates all generated outputs in the run.
+    def _load_run_overviews(self, *run_ids: str) -> set[RunOverview]:
+        if not run_ids:
+            raise ValueError("At least one run-id needs to be provided")
+        run_overviews = set()
+        for run_id in run_ids:
+            run_overview = self._run_repository.run_overview(run_id)
+            if not run_overview:
+                raise ValueError(f"No RunOverview found for run-id: {run_id}")
+            run_overviews.add(run_overview)
+        return run_overviews
 
-        For each set of successful outputs in the referenced runs,
-        :func:`EvaluationLogic.do_evaluate` is called and eval metrics are produced &
-        stored in the provided :class:`EvaluationRepository`.
+    def _raise_if_overviews_have_different_dataset(
+        self, run_overviews: set[RunOverview]
+    ) -> None:
+        if not all(
+            next(iter(run_overviews)).dataset_id == run_overview.dataset_id
+            for run_overview in run_overviews
+        ):
+            raise ValueError(
+                f"All run-overviews must reference the same dataset: {run_overviews}"
+            )
+
+    def _retrieve_example_outputs(
+        self, run_overviews: set[RunOverview]
+    ) -> Iterable[tuple[ExampleOutput[Output], ...]]:
+        # this uses the assumption that the example outputs are sorted and there is never a missing example
+        example_outputs_for_example: Iterable[tuple[ExampleOutput[Output], ...]] = zip(
+            *(
+                self._run_repository.example_outputs(
+                    run_overview.id, self.output_type()
+                )
+                for run_overview in run_overviews
+            ),
+            strict=True,
+        )
+
+        return example_outputs_for_example
+
+    def _retrieve_examples(
+        self, dataset_id: str
+    ) -> Iterable[Example[Input, ExpectedOutput]]:
+        examples = self._dataset_repository.examples(
+            dataset_id,
+            self.input_type(),
+            self.expected_output_type(),
+        )
+        if examples is None:
+            raise ValueError(f"Dataset: {dataset_id} not found")
+
+        return examples
+
+    def _generate_evaluation_inputs(
+        self,
+        examples: Iterable[Example[Input, ExpectedOutput]],
+        example_outputs_for_example: Iterable[tuple[ExampleOutput[Output], ...]],
+        num_examples: Optional[int],
+    ) -> Iterable[
+        Tuple[
+            Example[Input, ExpectedOutput],
+            Sequence[SuccessfulExampleOutput[Output]],
+        ]
+    ]:
+        current_example = 0
+
+        for example, example_outputs in zip(examples, example_outputs_for_example):
+            if any(
+                isinstance(output.output, FailedExampleRun)
+                for output in example_outputs
+            ):
+                continue
+
+            successful_example_outputs = [
+                cast(SuccessfulExampleOutput[Output], output)
+                for output in example_outputs
+            ]
+
+            if num_examples and current_example >= num_examples:
+                break
+            current_example += 1
+
+            yield (
+                example,
+                successful_example_outputs,
+            )
+
+    def _retrieve_eval_logic_input(
+        self,
+        run_overviews: set[RunOverview],
+        num_examples: Optional[int] = None,
+    ) -> Iterable[
+        Tuple[
+            Example[Input, ExpectedOutput],
+            Sequence[SuccessfulExampleOutput[Output]],
+        ]
+    ]:
+        """Create pairings of :class:`Example` and all corresponding :class:`ExampleOutputs`.
+
+        In case an Example is matched with a FailedExampleRun, that example is skipped, even if
+        there are other successful ExampleOutputs present for this example.
 
         Args:
-            run_ids: The runs to be evaluated. Each run is expected to have the same
-                dataset as input (which implies their tasks have the same input-type)
-                and their tasks have the same output-type. For each example in the
-                dataset referenced by the runs the outputs of all runs are collected
-                and if all of them were successful they are passed on to the implementation
-                specific evaluation. The method compares all run of the provided ids to each other.
-            num_examples: The number of examples which should be evaluated from the given runs.
-                Always the first n runs stored in the evaluation repository. Defaults to None.
-            abort_on_error: Flag to abort all evaluations when an error occurs. Defaults to False.
+            run_overviews: Run overviews to gather data from.
+            num_examples: Maximum amount of examples to gather. Defaults to None.
 
         Returns:
-            EvaluationOverview: An overview of the evaluation. Individual :class:`Evaluation`s will not be
-            returned but instead stored in the :class:`EvaluationRepository` provided in the
-            __init__.
+            Iterable over pairs of :class:`Example` and all corresponding :class:`ExampleOutputs`.
         """
-
-        start = utc_now()
-        run_overviews = self._load_run_overviews(*run_ids)
-        eval_id = self._evaluation_repository.initialize_evaluation()
-
-        with ThreadPoolExecutor(max_workers=10) as executor:
-            example_evaluations = list(  # the list is needed to consume the iterator returned from the executor.map
-                tqdm(
-                    executor.map(
-                        lambda args: self.evaluate(
-                            args[0], eval_id, abort_on_error, *args[1]
-                        ),
-                        self.retrieve_eval_logic_input(
-                            run_overviews, num_examples=num_examples
-                        ),
-                    ),
-                    desc="Evaluating",
-                )
-            )
-
-        failed_evaluation_count = sum(
-            isinstance(example_evaluation, FailedExampleEvaluation)
-            for example_evaluation in example_evaluations
+        self._raise_if_overviews_have_different_dataset(run_overviews)
+        example_outputs_for_example = self._retrieve_example_outputs(run_overviews)
+        dataset_id = next(iter(run_overviews)).dataset_id
+        examples = self._retrieve_examples(dataset_id)
+        return self._generate_evaluation_inputs(
+            examples, example_outputs_for_example, num_examples
         )
-
-        successful_evaluation_count = len(example_evaluations) - failed_evaluation_count
-        overview = EvaluationOverview(
-            run_overviews=frozenset(run_overviews),
-            id=eval_id,
-            start_date=start,
-            end_date=utc_now(),
-            successful_evaluation_count=successful_evaluation_count,
-            failed_evaluation_count=failed_evaluation_count,
-            description=self.description,
-        )
-        self._evaluation_repository.store_evaluation_overview(overview)
-
-        return overview
-
-    @final
-    def evaluate(
-        self,
-        example: Example[Input, ExpectedOutput],
-        evaluation_id: str,
-        abort_on_error: bool,
-        *example_outputs: SuccessfulExampleOutput[Output],
-    ) -> Evaluation | FailedExampleEvaluation:
-        try:
-            result: Evaluation | FailedExampleEvaluation = (
-                self._evaluation_logic.do_evaluate(
-                    example,
-                    *example_outputs,
-                )
-            )
-        except Exception as e:
-            if abort_on_error:
-                raise e
-            print(
-                f'FAILED EVALUATION: example "{example.id}", {type(e).__qualname__}: "{e}"'
-            )
-            result = FailedExampleEvaluation.from_exception(e)
-        self._evaluation_repository.store_example_evaluation(
-            ExampleEvaluation(
-                evaluation_id=evaluation_id, example_id=example.id, result=result
-            )
-        )
-
-        return result
 
     def failed_evaluations(
         self, evaluation_id: str
@@ -447,8 +482,130 @@ class Evaluator(Generic[Input, Output, ExpectedOutput, Evaluation]):
             output_type=self.output_type(),
             evaluation_type=self.evaluation_type(),
         )
+    
+class Evaluator(EvaluatorBase[Input, Output, ExpectedOutput, Evaluation]):
+    """Evaluator designed for most evaluation tasks. Only supports synchronous evaluation.
 
+    See the :class:`EvaluatorBase` for more information.
+    """
 
+    def __init__(
+        self,
+        dataset_repository: DatasetRepository,
+        run_repository: RunRepository,
+        evaluation_repository: EvaluationRepository,
+        description: str,
+        evaluation_logic: EvaluationLogic[Input, Output, ExpectedOutput, Evaluation],
+    ) -> None:
+        super().__init__(
+            dataset_repository,
+            run_repository,
+            evaluation_repository,
+            description,
+            evaluation_logic,
+        )
+        self._evaluation_logic: EvaluationLogic[
+            Input, Output, ExpectedOutput, Evaluation
+        ]
+
+    @final
+    def evaluate_runs(
+        self,
+        *run_ids: str,
+        num_examples: Optional[int] = None,
+        abort_on_error: bool = False,
+    ) -> EvaluationOverview:
+        """Evaluates all generated outputs in the run.
+
+        For each set of successful outputs in the referenced runs,
+        :func:`EvaluationLogic.do_evaluate` is called and eval metrics are produced &
+        stored in the provided :class:`EvaluationRepository`.
+
+        Args:
+            run_ids: The runs to be evaluated. Each run is expected to have the same
+                dataset as input (which implies their tasks have the same input-type)
+                and their tasks have the same output-type. For each example in the
+                dataset referenced by the runs the outputs of all runs are collected
+                and if all of them were successful they are passed on to the implementation
+                specific evaluation. The method compares all run of the provided ids to each other.
+            num_examples: The number of examples which should be evaluated from the given runs.
+                Always the first n runs stored in the evaluation repository. Defaults to None.
+            abort_on_error: Flag to abort all evaluations when an error occurs. Defaults to False.
+
+        Returns:
+            EvaluationOverview: An overview of the evaluation. Individual :class:`Evaluation`s will not be
+            returned but instead stored in the :class:`EvaluationRepository` provided in the
+            __init__.
+        """
+
+        start = utc_now()
+        run_overviews = self._load_run_overviews(*run_ids)
+        eval_id = self._evaluation_repository.initialize_evaluation()
+
+        with ThreadPoolExecutor(max_workers=10) as executor:
+            example_evaluations = list(  # the list is needed to consume the iterator returned from the executor.map
+                tqdm(
+                    executor.map(
+                        lambda args: self.evaluate(
+                            args[0], eval_id, abort_on_error, *args[1]
+                        ),
+                        self._retrieve_eval_logic_input(
+                            run_overviews, num_examples=num_examples
+                        ),
+                    ),
+                    desc="Evaluating",
+                )
+            )
+
+        failed_evaluation_count = sum(
+            isinstance(example_evaluation, FailedExampleEvaluation)
+            for example_evaluation in example_evaluations
+        )
+
+        successful_evaluation_count = len(example_evaluations) - failed_evaluation_count
+        overview = EvaluationOverview(
+            run_overviews=frozenset(run_overviews),
+            id=eval_id,
+            start_date=start,
+            end_date=utc_now(),
+            successful_evaluation_count=successful_evaluation_count,
+            failed_evaluation_count=failed_evaluation_count,
+            description=self.description,
+        )
+        self._evaluation_repository.store_evaluation_overview(overview)
+
+        return overview
+
+    @final
+    def evaluate(
+        self,
+        example: Example[Input, ExpectedOutput],
+        evaluation_id: str,
+        abort_on_error: bool,
+        *example_outputs: SuccessfulExampleOutput[Output],
+    ) -> Evaluation | FailedExampleEvaluation:
+        try:
+            result: Evaluation | FailedExampleEvaluation = (
+                self._evaluation_logic.do_evaluate(
+                    example,
+                    *example_outputs,
+                )
+            )
+        except Exception as e:
+            if abort_on_error:
+                raise e
+            print(
+                f'FAILED EVALUATION: example "{example.id}", {type(e).__qualname__}: "{e}"'
+            )
+            result = FailedExampleEvaluation.from_exception(e)
+        self._evaluation_repository.store_example_evaluation(
+            ExampleEvaluation(
+                evaluation_id=evaluation_id, example_id=example.id, result=result
+            )
+        )
+
+        return result
+    
 class IncrementalEvaluator(Evaluator[Input, Output, ExpectedOutput, Evaluation]):
     """:class:`Evaluator` for evaluating additional runs on top of previous evaluations. Intended for use with :class:`IncrementalEvaluationLogic`.
 
@@ -472,6 +629,7 @@ class IncrementalEvaluator(Evaluator[Input, Output, ExpectedOutput, Evaluation])
         run_repository: RunRepository,
         evaluation_repository: EvaluationRepository,
         description: str,
+        
         incremental_evaluation_logic: IncrementalEvaluationLogic[
             Input, Output, ExpectedOutput, Evaluation
         ],
@@ -506,7 +664,7 @@ class IncrementalEvaluator(Evaluator[Input, Output, ExpectedOutput, Evaluation])
                 specific evaluation. The method compares all run of the provided ids to each other.
             previous_evaluation_ids: IDs of previous evaluation to consider
             num_examples: The number of examples which should be evaluated from the given runs.
-                Always the first n runs stored in the evaluation repository
+                Always the first n runs stored in the evaluation repository. Defaults to None.
             abort_on_error: Flag to abort all evaluations when an error occurs. Defaults to False.
 
         Returns:

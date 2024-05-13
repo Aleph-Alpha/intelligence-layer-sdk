@@ -112,7 +112,7 @@ class Aggregator(Generic[Evaluation, AggregatedEvaluation]):
     def _get_types(self) -> Mapping[str, type]:
         """Type magic function that gets the actual types of the generic parameters.
 
-        Traverses the inheritance history of `BaseEvaluator`-subclass to find an actual type every time a TypeVar is replaced.
+        Traverses the inheritance history of `AggregationLogic`-subclass to find an actual type every time a TypeVar is replaced.
 
         Returns:
             Name of generic parameter to the type found.
@@ -186,7 +186,7 @@ class Aggregator(Generic[Evaluation, AggregatedEvaluation]):
     ) -> AggregationOverview[AggregatedEvaluation]:
         """Aggregates all evaluations into an overview that includes high-level statistics.
 
-        Aggregates :class:`Evaluation`s according to the implementation of :func:`BaseEvaluator.aggregate`.
+        Aggregates :class:`Evaluation`s according to the implementation of :func:`AggregationLogic.aggregate`.
 
         Args:
             eval_ids: An overview of the evaluation to be aggregated. Does not include
