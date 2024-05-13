@@ -146,6 +146,14 @@ class ArgillaEvaluator(AsyncEvaluator[Input, Output, ExpectedOutput, Evaluation]
         self,
         evaluation_id: str,
     ) -> EvaluationOverview:
+        partial_overview = self._evaluation_repository.partial_evaluation_overview(
+            evaluation_id
+        )
+        if not partial_overview:
+            raise ValueError(
+                f"Partial overview for evaluation id {evaluation_id} not found."
+            )
+
         example_evaluations = [
             ExampleEvaluation(
                 evaluation_id=evaluation_id,
@@ -161,14 +169,13 @@ class ArgillaEvaluator(AsyncEvaluator[Input, Output, ExpectedOutput, Evaluation]
             self._evaluation_repository.store_example_evaluation(evaluation)
 
         overview = EvaluationOverview(
-            run_overviews=frozenset(),
+            run_overviews=partial_overview.run_overviews,
             id=evaluation_id,
-            start_date=datetime.now(),
-            description="",
+            start_date=partial_overview.start_date,
+            description=partial_overview.description,
             end_date=datetime.now(),
-            successful_evaluation_count=1,
+            successful_evaluation_count=len(evaluations),
             failed_evaluation_count=0,
-            skipped_evaluation_count=0,
         )
         self._evaluation_repository.store_evaluation_overview(overview)
         return overview

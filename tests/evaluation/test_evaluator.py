@@ -253,7 +253,6 @@ def test_eval_runs_returns_generic_statistics(
     evaluation_overview = dummy_evaluator.evaluate_runs(run_overview.id)
 
     assert evaluation_overview.successful_evaluation_count == 3
-    assert evaluation_overview.skipped_evaluation_count == 2
     assert evaluation_overview.failed_evaluation_count == 1
 
 

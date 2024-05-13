@@ -1,11 +1,20 @@
 from pathlib import Path
 from typing import Iterable
 from uuid import uuid4
+
 from pytest import FixtureRequest, fixture, mark
+
 from intelligence_layer.core.tracer.tracer import utc_now
-from intelligence_layer.evaluation.evaluation.async_evaluation import AsyncEvaluationRepository
-from intelligence_layer.evaluation.evaluation.domain import EvaluationOverview, PartialEvaluationOverview
-from intelligence_layer.evaluation.evaluation.file_evaluation_repository import AsyncFileEvaluationRepository
+from intelligence_layer.evaluation.evaluation.async_evaluation import (
+    AsyncEvaluationRepository,
+)
+from intelligence_layer.evaluation.evaluation.domain import (
+    EvaluationOverview,
+    PartialEvaluationOverview,
+)
+from intelligence_layer.evaluation.evaluation.file_evaluation_repository import (
+    AsyncFileEvaluationRepository,
+)
 from intelligence_layer.evaluation.run.domain import RunOverview
 
 
@@ -13,13 +22,17 @@ from intelligence_layer.evaluation.run.domain import RunOverview
 def async_file_evaluation_repository(tmp_path: Path) -> AsyncFileEvaluationRepository:
     return AsyncFileEvaluationRepository(tmp_path)
 
+
 test_repository_fixtures = [
     "async_file_evaluation_repository",
     "async_in_memory_evaluation_repository",
 ]
 
+
 @fixture
-def partial_evaluation_overviews(run_overview: RunOverview) -> Iterable[PartialEvaluationOverview]:
+def partial_evaluation_overviews(
+    run_overview: RunOverview,
+) -> Iterable[PartialEvaluationOverview]:
     evaluation_ids = [str(uuid4()) for _ in range(10)]
     evaluation_overviews = []
     for evaluation_id in evaluation_ids:
@@ -33,14 +46,18 @@ def partial_evaluation_overviews(run_overview: RunOverview) -> Iterable[PartialE
         )
     return evaluation_overviews
 
+
 @fixture
-def partial_evaluation_overview(evaluation_id: str,run_overview: RunOverview) -> PartialEvaluationOverview:
-        return PartialEvaluationOverview(
-                id=evaluation_id,
-                start_date=utc_now(),
-                run_overviews=frozenset([run_overview]),
-                description="test evaluation overview",
-            )
+def partial_evaluation_overview(
+    evaluation_id: str, run_overview: RunOverview
+) -> PartialEvaluationOverview:
+    return PartialEvaluationOverview(
+        id=evaluation_id,
+        start_date=utc_now(),
+        run_overviews=frozenset([run_overview]),
+        description="test evaluation overview",
+    )
+
 
 @mark.parametrize(
     "repository_fixture",
@@ -97,7 +114,9 @@ def test_partial_evaluation_overviews_returns_all_evaluation_overviews(
     for evaluation_overview in partial_evaluation_overviews:
         evaluation_repository.store_partial_evaluation_overview(evaluation_overview)
 
-    stored_evaluation_overviews = list(evaluation_repository.partial_evaluation_overviews())
+    stored_evaluation_overviews = list(
+        evaluation_repository.partial_evaluation_overviews()
+    )
 
     assert stored_evaluation_overviews == sorted(
         partial_evaluation_overviews, key=lambda eval_overview: eval_overview.id
@@ -121,8 +140,10 @@ def test_partial_and_full_evaluation_overview_dont_overlap(
     evaluation_repository.store_partial_evaluation_overview(partial_evaluation_overview)
     evaluation_repository.store_evaluation_overview(evaluation_overview)
 
-    retrieved_partial_evaluation_overview = evaluation_repository.partial_evaluation_overview(
-        partial_evaluation_overview.id
+    retrieved_partial_evaluation_overview = (
+        evaluation_repository.partial_evaluation_overview(
+            partial_evaluation_overview.id
+        )
     )
     retrieved_evaluation_overview = evaluation_repository.evaluation_overview(
         partial_evaluation_overview.id

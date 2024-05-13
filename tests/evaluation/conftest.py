@@ -31,9 +31,6 @@ from intelligence_layer.evaluation import (
     Runner,
     RunOverview,
 )
-from intelligence_layer.evaluation.aggregation.elo import (
-    InstructComparisonAggregationLogic,
-)
 from tests.conftest import DummyStringInput, DummyStringOutput
 
 FAIL_IN_EVAL_INPUT = "fail in eval"
@@ -141,7 +138,6 @@ def evaluation_overview(
         end_date=utc_now(),
         successful_evaluation_count=1,
         failed_evaluation_count=1,
-        skipped_evaluation_count=1,
         run_overviews=frozenset([run_overview]),
         description="test evaluation overview 1",
     )
@@ -188,11 +184,6 @@ def dummy_runner(
         in_memory_run_repository,
         "dummy-runner",
     )
-
-
-@fixture
-def argilla_aggregation_logic() -> InstructComparisonAggregationLogic:
-    return InstructComparisonAggregationLogic()
 
 
 class StubArgillaClient(ArgillaClient):

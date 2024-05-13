@@ -330,26 +330,19 @@ class Evaluator(Generic[Input, Output, ExpectedOutput, Evaluation]):
                 )
             )
 
-        crashed_example_count = sum(
+        failed_evaluation_count = sum(
             isinstance(example_evaluation, FailedExampleEvaluation)
             for example_evaluation in example_evaluations
         )
 
-        example_count = (
-            next(iter(run_overviews)).failed_example_count
-            + next(iter(run_overviews)).successful_example_count
-        )
-        successful_evaluation_count = len(example_evaluations) - crashed_example_count
+        successful_evaluation_count = len(example_evaluations) - failed_evaluation_count
         overview = EvaluationOverview(
             run_overviews=frozenset(run_overviews),
             id=eval_id,
             start_date=start,
             end_date=utc_now(),
             successful_evaluation_count=successful_evaluation_count,
-            failed_evaluation_count=crashed_example_count,
-            skipped_evaluation_count=example_count
-            - successful_evaluation_count
-            - crashed_example_count,
+            failed_evaluation_count=failed_evaluation_count,
             description=self.description,
         )
         self._evaluation_repository.store_evaluation_overview(overview)

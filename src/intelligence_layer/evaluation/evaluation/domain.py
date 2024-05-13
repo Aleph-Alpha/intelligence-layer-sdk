@@ -1,6 +1,6 @@
 import traceback
 from datetime import datetime
-from typing import Generic, Optional, TypeVar
+from typing import Generic, TypeVar
 
 from pydantic import BaseModel, SerializeAsAny
 from rich.tree import Tree
@@ -77,7 +77,7 @@ class PartialEvaluationOverview(BaseModel, frozen=True):
 
     run_overviews: frozenset[RunOverview]
     id: str
-    start_date: Optional[datetime]
+    start_date: datetime
     description: str
 
     def __repr__(self) -> str:
@@ -117,7 +117,6 @@ class EvaluationOverview(BaseModel, frozen=True):
     end_date: datetime
     successful_evaluation_count: int
     failed_evaluation_count: int
-    skipped_evaluation_count: int
     description: str
 
     def __repr__(self) -> str:
