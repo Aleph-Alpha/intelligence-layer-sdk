@@ -40,13 +40,6 @@ from .dataset.single_huggingface_dataset_repository import (
 from .dataset.single_huggingface_dataset_repository import (
     SingleHuggingfaceDatasetRepository as SingleHuggingfaceDatasetRepository,
 )
-from .evaluation.argilla_evaluator import (
-    ArgillaEvaluationLogic as ArgillaEvaluationLogic,
-)
-from .evaluation.argilla_evaluator import ArgillaEvaluator as ArgillaEvaluator
-from .evaluation.argilla_evaluator import (
-    InstructComparisonArgillaEvaluationLogic as InstructComparisonArgillaEvaluationLogic,
-)
 from .evaluation.domain import Evaluation as Evaluation
 from .evaluation.domain import EvaluationFailed as EvaluationFailed
 from .evaluation.domain import EvaluationOverview as EvaluationOverview
@@ -55,9 +48,16 @@ from .evaluation.domain import FailedExampleEvaluation as FailedExampleEvaluatio
 from .evaluation.evaluation_repository import (
     EvaluationRepository as EvaluationRepository,
 )
-from .evaluation.evaluator import EvaluationLogic as EvaluationLogic
-from .evaluation.evaluator import Evaluator as Evaluator
-from .evaluation.evaluator import (
+from .evaluation.evaluator.argilla_evaluator import (
+    ArgillaEvaluationLogic as ArgillaEvaluationLogic,
+)
+from .evaluation.evaluator.argilla_evaluator import ArgillaEvaluator as ArgillaEvaluator
+from .evaluation.evaluator.argilla_evaluator import (
+    InstructComparisonArgillaEvaluationLogic as InstructComparisonArgillaEvaluationLogic,
+)
+from .evaluation.evaluator.evaluator import EvaluationLogic as EvaluationLogic
+from .evaluation.evaluator.evaluator import Evaluator as Evaluator
+from .evaluation.evaluator.evaluator import (
     SingleOutputEvaluationLogic as SingleOutputEvaluationLogic,
 )
 from .evaluation.file_evaluation_repository import (

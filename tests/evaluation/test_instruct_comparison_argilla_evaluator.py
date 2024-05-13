@@ -32,7 +32,7 @@ from intelligence_layer.evaluation.aggregation.aggregator import Aggregator
 from intelligence_layer.evaluation.aggregation.elo import (
     InstructComparisonAggregationLogic,
 )
-from intelligence_layer.evaluation.evaluation.argilla_evaluator import (
+from intelligence_layer.evaluation.evaluation.evaluator.argilla_evaluator import (
     InstructComparisonArgillaEvaluationLogic,
 )
 from intelligence_layer.evaluation.evaluation.in_memory_evaluation_repository import (

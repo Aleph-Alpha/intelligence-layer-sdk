@@ -20,7 +20,7 @@ from intelligence_layer.evaluation.aggregation.elo import (
 )
 from intelligence_layer.evaluation.dataset.dataset_repository import DatasetRepository
 from intelligence_layer.evaluation.dataset.domain import Example, ExpectedOutput
-from intelligence_layer.evaluation.evaluation.async_evaluation import (
+from intelligence_layer.evaluation.evaluation.evaluator.async_evaluator import (
     AsyncEvaluationRepository,
     AsyncEvaluator,
 )
@@ -31,7 +31,7 @@ from intelligence_layer.evaluation.evaluation.domain import (
     FailedExampleEvaluation,
     PartialEvaluationOverview,
 )
-from intelligence_layer.evaluation.evaluation.evaluator import EvaluationLogicBase
+from intelligence_layer.evaluation.evaluation.evaluator.base_evaluator import EvaluationLogicBase
 from intelligence_layer.evaluation.run.domain import SuccessfulExampleOutput
 from intelligence_layer.evaluation.run.run_repository import RunRepository
 

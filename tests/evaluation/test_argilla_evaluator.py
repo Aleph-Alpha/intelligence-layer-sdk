@@ -22,7 +22,7 @@ from intelligence_layer.evaluation.aggregation.elo import (
     MatchOutcome,
 )
 from intelligence_layer.evaluation.dataset.dataset_repository import DatasetRepository
-from intelligence_layer.evaluation.evaluation.argilla_evaluator import (
+from intelligence_layer.evaluation.evaluation.evaluator.argilla_evaluator import (
     RecordDataSequence,
 )
 from intelligence_layer.evaluation.evaluation.in_memory_evaluation_repository import (

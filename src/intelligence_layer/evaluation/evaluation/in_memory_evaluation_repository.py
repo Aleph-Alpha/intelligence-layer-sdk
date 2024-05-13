@@ -3,9 +3,6 @@ from typing import Optional, Sequence, cast
 
 from pydantic import BaseModel
 
-from intelligence_layer.evaluation.evaluation.async_evaluation import (
-    AsyncEvaluationRepository,
-)
 from intelligence_layer.evaluation.evaluation.domain import (
     Evaluation,
     EvaluationOverview,
@@ -14,6 +11,9 @@ from intelligence_layer.evaluation.evaluation.domain import (
 )
 from intelligence_layer.evaluation.evaluation.evaluation_repository import (
     EvaluationRepository,
+)
+from intelligence_layer.evaluation.evaluation.evaluator.async_evaluator import (
+    AsyncEvaluationRepository,
 )
 
 

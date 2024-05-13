@@ -3,9 +3,6 @@ from typing import Optional, Sequence
 
 from fsspec.implementations.local import LocalFileSystem  # type: ignore
 
-from intelligence_layer.evaluation.evaluation.async_evaluation import (
-    AsyncEvaluationRepository,
-)
 from intelligence_layer.evaluation.evaluation.domain import (
     Evaluation,
     EvaluationOverview,
@@ -15,6 +12,9 @@ from intelligence_layer.evaluation.evaluation.domain import (
 from intelligence_layer.evaluation.evaluation.evaluation_repository import (
     EvaluationRepository,
     SerializedExampleEvaluation,
+)
+from intelligence_layer.evaluation.evaluation.evaluator.async_evaluator import (
+    AsyncEvaluationRepository,
 )
 from intelligence_layer.evaluation.infrastructure.file_system_based_repository import (
     FileSystemBasedRepository,

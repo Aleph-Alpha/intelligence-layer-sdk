@@ -11,7 +11,7 @@ from intelligence_layer.evaluation.evaluation.domain import (
 from intelligence_layer.evaluation.evaluation.evaluation_repository import (
     EvaluationRepository,
 )
-from intelligence_layer.evaluation.evaluation.evaluator import EvaluatorBase
+from intelligence_layer.evaluation.evaluation.evaluator.base_evaluator import EvaluatorBase
 
 
 class AsyncEvaluator(EvaluatorBase[Input, Output, ExpectedOutput, Evaluation], ABC):

@@ -6,7 +6,7 @@ from intelligence_layer.evaluation.dataset.domain import Example
 from intelligence_layer.evaluation.dataset.in_memory_dataset_repository import (
     InMemoryDatasetRepository,
 )
-from intelligence_layer.evaluation.evaluation.evaluator import (
+from intelligence_layer.evaluation.evaluation.evaluator.incremental_evaluator import (
     IncrementalEvaluationLogic,
     IncrementalEvaluator,
 )
