@@ -18,20 +18,18 @@ from intelligence_layer.connectors.argilla.argilla_client import (
 from intelligence_layer.core import CompleteOutput, InstructInput, utc_now
 from intelligence_layer.evaluation import (
     ArgillaEvaluator,
+    ComparisonEvaluation,
     EloCalculator,
     Example,
     ExampleOutput,
     InMemoryAggregationRepository,
     InMemoryDatasetRepository,
     InMemoryRunRepository,
-    InstructComparisonEvaluation,
     MatchOutcome,
     RunOverview,
 )
 from intelligence_layer.evaluation.aggregation.aggregator import Aggregator
-from intelligence_layer.evaluation.aggregation.elo import (
-    InstructComparisonAggregationLogic,
-)
+from intelligence_layer.evaluation.aggregation.elo import ComparisonAggregationLogic
 from intelligence_layer.evaluation.evaluation.evaluator.argilla_evaluator import (
     InstructComparisonArgillaEvaluationLogic,
 )
@@ -89,9 +87,7 @@ def evaluator(
     in_memory_run_repository: InMemoryRunRepository,
     async_in_memory_evaluation_repository: AsyncInMemoryEvaluationRepository,
     argilla_fake: ArgillaClient,
-) -> ArgillaEvaluator[
-    InstructInput, CompleteOutput, None, InstructComparisonEvaluation
-]:
+) -> ArgillaEvaluator[InstructInput, CompleteOutput, None, ComparisonEvaluation]:
     evaluation_logic = InstructComparisonArgillaEvaluationLogic()
 
     return ArgillaEvaluator(
@@ -119,8 +115,8 @@ def any_instruct_output() -> CompleteOutput:
 
 
 @fixture
-def argilla_aggregation_logic() -> InstructComparisonAggregationLogic:
-    return InstructComparisonAggregationLogic()
+def argilla_aggregation_logic() -> ComparisonAggregationLogic:
+    return ComparisonAggregationLogic()
 
 
 def create_dummy_dataset(
@@ -169,13 +165,13 @@ def create_dummy_runs(
 
 def test_evaluate_run_submits_pairwise_comparison_records(
     evaluator: ArgillaEvaluator[
-        InstructInput, CompleteOutput, None, InstructComparisonEvaluation
+        InstructInput, CompleteOutput, None, ComparisonEvaluation
     ],
     in_memory_dataset_repository: InMemoryDatasetRepository,
     in_memory_run_repository: InMemoryRunRepository,
     async_in_memory_evaluation_repository: AsyncInMemoryEvaluationRepository,
     in_memory_aggregation_repository: InMemoryAggregationRepository,
-    argilla_aggregation_logic: InstructComparisonAggregationLogic,
+    argilla_aggregation_logic: ComparisonAggregationLogic,
     any_instruct_output: CompleteOutput,
     argilla_fake: ArgillaFake,
 ) -> None:

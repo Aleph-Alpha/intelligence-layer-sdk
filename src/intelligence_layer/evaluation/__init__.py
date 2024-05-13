@@ -6,10 +6,9 @@ from .aggregation.aggregator import AggregationLogic as AggregationLogic
 from .aggregation.aggregator import Aggregator as Aggregator
 from .aggregation.domain import AggregatedEvaluation as AggregatedEvaluation
 from .aggregation.domain import AggregationOverview as AggregationOverview
+from .aggregation.elo import ComparisonAggregationLogic as ComparisonAggregationLogic
+from .aggregation.elo import ComparisonEvaluation as ComparisonEvaluation
 from .aggregation.elo import EloCalculator as EloCalculator
-from .aggregation.elo import (
-    InstructComparisonEvaluation as InstructComparisonEvaluation,
-)
 from .aggregation.elo import MatchOutcome as MatchOutcome
 from .aggregation.elo import WinRateCalculator as WinRateCalculator
 from .aggregation.file_aggregation_repository import (
@@ -55,10 +54,19 @@ from .evaluation.evaluator.argilla_evaluator import ArgillaEvaluator as ArgillaE
 from .evaluation.evaluator.argilla_evaluator import (
     InstructComparisonArgillaEvaluationLogic as InstructComparisonArgillaEvaluationLogic,
 )
+from .evaluation.evaluator.argilla_evaluator import (
+    RecordDataSequence as RecordDataSequence,
+)
+from .evaluation.evaluator.async_evaluator import (
+    AsyncEvaluationRepository as AsyncEvaluationRepository,
+)
 from .evaluation.evaluator.evaluator import EvaluationLogic as EvaluationLogic
 from .evaluation.evaluator.evaluator import Evaluator as Evaluator
 from .evaluation.evaluator.evaluator import (
     SingleOutputEvaluationLogic as SingleOutputEvaluationLogic,
+)
+from .evaluation.file_evaluation_repository import (
+    AsyncFileEvaluationRepository as AsyncFileEvaluationRepository,
 )
 from .evaluation.file_evaluation_repository import (
     FileEvaluationRepository as FileEvaluationRepository,
@@ -68,6 +76,9 @@ from .evaluation.graders import FScores as FScores
 from .evaluation.graders import HighlightCoverageGrader as HighlightCoverageGrader
 from .evaluation.graders import LanguageMatchesGrader as LanguageMatchesGrader
 from .evaluation.graders import RougeGrader as RougeGrader
+from .evaluation.in_memory_evaluation_repository import (
+    AsyncInMemoryEvaluationRepository as AsyncInMemoryEvaluationRepository,
+)
 from .evaluation.in_memory_evaluation_repository import (
     InMemoryEvaluationRepository as InMemoryEvaluationRepository,
 )

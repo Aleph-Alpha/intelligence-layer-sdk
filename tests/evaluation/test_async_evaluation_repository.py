@@ -5,17 +5,15 @@ from uuid import uuid4
 from pytest import FixtureRequest, fixture, mark
 
 from intelligence_layer.core.tracer.tracer import utc_now
+from intelligence_layer.evaluation import (
+    AsyncEvaluationRepository,
+    AsyncFileEvaluationRepository,
+    RunOverview,
+)
 from intelligence_layer.evaluation.evaluation.domain import (
     EvaluationOverview,
     PartialEvaluationOverview,
 )
-from intelligence_layer.evaluation.evaluation.evaluator.async_evaluator import (
-    AsyncEvaluationRepository,
-)
-from intelligence_layer.evaluation.evaluation.file_evaluation_repository import (
-    AsyncFileEvaluationRepository,
-)
-from intelligence_layer.evaluation.run.domain import RunOverview
 
 
 @fixture

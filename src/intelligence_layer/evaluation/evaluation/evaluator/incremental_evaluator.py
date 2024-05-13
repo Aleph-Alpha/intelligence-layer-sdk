@@ -1,15 +1,21 @@
+from abc import abstractmethod
 from typing import Optional
+
 from intelligence_layer.core import Input, Output
 from intelligence_layer.evaluation.dataset.dataset_repository import DatasetRepository
 from intelligence_layer.evaluation.dataset.domain import Example, ExpectedOutput
-from intelligence_layer.evaluation.evaluation.domain import Evaluation, EvaluationOverview
-from intelligence_layer.evaluation.evaluation.evaluation_repository import EvaluationRepository
-from intelligence_layer.evaluation.evaluation.evaluator.evaluator import EvaluationLogic, Evaluator
+from intelligence_layer.evaluation.evaluation.domain import (
+    Evaluation,
+    EvaluationOverview,
+)
+from intelligence_layer.evaluation.evaluation.evaluation_repository import (
+    EvaluationRepository,
+)
+from intelligence_layer.evaluation.evaluation.evaluator.evaluator import (
+    EvaluationLogic,
+    Evaluator,
+)
 from intelligence_layer.evaluation.run.domain import SuccessfulExampleOutput
-
-
-from abc import abstractmethod
-
 from intelligence_layer.evaluation.run.run_repository import RunRepository
 
 

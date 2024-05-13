@@ -1,9 +1,6 @@
 from abc import ABC, abstractmethod
 from concurrent.futures import ThreadPoolExecutor
-from typing import (
-    Optional,
-    final,
-)
+from typing import Optional, final
 
 from tqdm import tqdm
 
@@ -19,10 +16,11 @@ from intelligence_layer.evaluation.evaluation.domain import (
 from intelligence_layer.evaluation.evaluation.evaluation_repository import (
     EvaluationRepository,
 )
-from intelligence_layer.evaluation.evaluation.evaluator.base_evaluator import EvaluationLogicBase, EvaluatorBase
-from intelligence_layer.evaluation.run.domain import (
-    SuccessfulExampleOutput,
+from intelligence_layer.evaluation.evaluation.evaluator.base_evaluator import (
+    EvaluationLogicBase,
+    EvaluatorBase,
 )
+from intelligence_layer.evaluation.run.domain import SuccessfulExampleOutput
 from intelligence_layer.evaluation.run.run_repository import RunRepository
 
 

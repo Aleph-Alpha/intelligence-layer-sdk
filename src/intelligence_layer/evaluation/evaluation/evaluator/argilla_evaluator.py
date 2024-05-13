@@ -15,15 +15,11 @@ from intelligence_layer.connectors.argilla.argilla_client import (
 )
 from intelligence_layer.core import CompleteOutput, Input, InstructInput, Output
 from intelligence_layer.evaluation.aggregation.elo import (
-    InstructComparisonEvaluation,
+    ComparisonEvaluation,
     MatchOutcome,
 )
 from intelligence_layer.evaluation.dataset.dataset_repository import DatasetRepository
 from intelligence_layer.evaluation.dataset.domain import Example, ExpectedOutput
-from intelligence_layer.evaluation.evaluation.evaluator.async_evaluator import (
-    AsyncEvaluationRepository,
-    AsyncEvaluator,
-)
 from intelligence_layer.evaluation.evaluation.domain import (
     Evaluation,
     EvaluationOverview,
@@ -31,7 +27,13 @@ from intelligence_layer.evaluation.evaluation.domain import (
     FailedExampleEvaluation,
     PartialEvaluationOverview,
 )
-from intelligence_layer.evaluation.evaluation.evaluator.base_evaluator import EvaluationLogicBase
+from intelligence_layer.evaluation.evaluation.evaluator.async_evaluator import (
+    AsyncEvaluationRepository,
+    AsyncEvaluator,
+)
+from intelligence_layer.evaluation.evaluation.evaluator.base_evaluator import (
+    EvaluationLogicBase,
+)
 from intelligence_layer.evaluation.run.domain import SuccessfulExampleOutput
 from intelligence_layer.evaluation.run.run_repository import RunRepository
 
@@ -208,9 +210,7 @@ class ArgillaEvaluator(AsyncEvaluator[Input, Output, ExpectedOutput, Evaluation]
 
 
 class InstructComparisonArgillaEvaluationLogic(
-    ArgillaEvaluationLogic[
-        InstructInput, CompleteOutput, None, InstructComparisonEvaluation
-    ]
+    ArgillaEvaluationLogic[InstructInput, CompleteOutput, None, ComparisonEvaluation]
 ):
     KEY_INSTRUCTION = "instruction"
     KEY_INPUT = "input"
@@ -285,8 +285,8 @@ class InstructComparisonArgillaEvaluationLogic(
 
     def _from_record(
         self, argilla_evaluation: ArgillaEvaluation
-    ) -> InstructComparisonEvaluation:
-        return InstructComparisonEvaluation(
+    ) -> ComparisonEvaluation:
+        return ComparisonEvaluation(
             first=argilla_evaluation.metadata["first"],
             second=argilla_evaluation.metadata["second"],
             winner=MatchOutcome.from_rank_literal(

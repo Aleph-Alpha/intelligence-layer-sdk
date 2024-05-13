@@ -1,14 +1,35 @@
 from abc import ABC
 from functools import lru_cache
-from typing import Generic, Iterable, Mapping, Optional, Sequence, Tuple, TypeVar, cast, get_args, get_origin
+from typing import (
+    Generic,
+    Iterable,
+    Mapping,
+    Optional,
+    Sequence,
+    Tuple,
+    TypeVar,
+    cast,
+    get_args,
+    get_origin,
+)
 
 from intelligence_layer.core import Input, Output
 from intelligence_layer.evaluation.dataset.dataset_repository import DatasetRepository
 from intelligence_layer.evaluation.dataset.domain import Example, ExpectedOutput
 from intelligence_layer.evaluation.evaluation.domain import Evaluation
-from intelligence_layer.evaluation.evaluation.evaluation_repository import EvaluationRepository
-from intelligence_layer.evaluation.infrastructure.repository_navigator import EvaluationLineage, RepositoryNavigator
-from intelligence_layer.evaluation.run.domain import ExampleOutput, FailedExampleRun, RunOverview, SuccessfulExampleOutput
+from intelligence_layer.evaluation.evaluation.evaluation_repository import (
+    EvaluationRepository,
+)
+from intelligence_layer.evaluation.infrastructure.repository_navigator import (
+    EvaluationLineage,
+    RepositoryNavigator,
+)
+from intelligence_layer.evaluation.run.domain import (
+    ExampleOutput,
+    FailedExampleRun,
+    RunOverview,
+    SuccessfulExampleOutput,
+)
 from intelligence_layer.evaluation.run.run_repository import RunRepository
 
 

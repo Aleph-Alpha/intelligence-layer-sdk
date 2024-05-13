@@ -5,28 +5,27 @@ from uuid import uuid4
 import pytest
 from pytest import fixture
 
-from intelligence_layer.connectors import ArgillaEvaluation, Field, Question, RecordData
-from intelligence_layer.connectors.argilla.argilla_client import ArgillaClient
+from intelligence_layer.connectors import (
+    ArgillaClient,
+    ArgillaEvaluation,
+    Field,
+    Question,
+    RecordData,
+)
 from intelligence_layer.evaluation import (
     ArgillaEvaluationLogic,
     ArgillaEvaluator,
+    AsyncInMemoryEvaluationRepository,
+    ComparisonAggregationLogic,
+    ComparisonEvaluation,
+    DatasetRepository,
     Example,
     InMemoryDatasetRepository,
     InMemoryRunRepository,
+    MatchOutcome,
+    RecordDataSequence,
     Runner,
     SuccessfulExampleOutput,
-)
-from intelligence_layer.evaluation.aggregation.elo import (
-    InstructComparisonAggregationLogic,
-    InstructComparisonEvaluation,
-    MatchOutcome,
-)
-from intelligence_layer.evaluation.dataset.dataset_repository import DatasetRepository
-from intelligence_layer.evaluation.evaluation.evaluator.argilla_evaluator import (
-    RecordDataSequence,
-)
-from intelligence_layer.evaluation.evaluation.in_memory_evaluation_repository import (
-    AsyncInMemoryEvaluationRepository,
 )
 from tests.conftest import (
     DummyStringEvaluation,
@@ -328,9 +327,9 @@ def test_argilla_evaluator_abort_on_error_works(
 
 
 def test_argilla_aggregation_logic_works() -> None:
-    argilla_aggregation_logic = InstructComparisonAggregationLogic()
+    argilla_aggregation_logic = ComparisonAggregationLogic()
     evaluations = (
-        InstructComparisonEvaluation(
+        ComparisonEvaluation(
             first="player_1",
             second="player_2" if i < 9000 else "player_3",
             winner=MatchOutcome.from_rank_literal(

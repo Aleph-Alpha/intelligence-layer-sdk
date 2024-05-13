@@ -110,22 +110,22 @@ class PlayerScore(BaseModel):
     num_matches: int
 
 
-class AggregatedInstructComparison(BaseModel):
+class AggregatedComparison(BaseModel):
     scores: Mapping[str, PlayerScore]
 
 
-class InstructComparisonEvaluation(BaseModel):
+class ComparisonEvaluation(BaseModel):
     first: str
     second: str
     winner: MatchOutcome
 
 
-class InstructComparisonAggregationLogic(
-    AggregationLogic[InstructComparisonEvaluation, AggregatedInstructComparison]
+class ComparisonAggregationLogic(
+    AggregationLogic[ComparisonEvaluation, AggregatedComparison]
 ):
     def aggregate(
-        self, evaluations: Iterable[InstructComparisonEvaluation]
-    ) -> AggregatedInstructComparison:
+        self, evaluations: Iterable[ComparisonEvaluation]
+    ) -> AggregatedComparison:
         flattened_evaluations = [
             (
                 evaluation.first,
@@ -151,7 +151,7 @@ class InstructComparisonAggregationLogic(
         win_rate_calc = WinRateCalculator(players)
         win_rate = win_rate_calc.calculate(flattened_evaluations)
 
-        return AggregatedInstructComparison(
+        return AggregatedComparison(
             scores={
                 p: PlayerScore(
                     elo=acc.extract(),
