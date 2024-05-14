@@ -1,8 +1,13 @@
-from collections import defaultdict
+import random
+from collections import Counter, defaultdict
 from enum import Enum
 from typing import Iterable, Mapping, Sequence
 
 import numpy as np
+from pydantic import BaseModel
+
+from intelligence_layer.evaluation.aggregation.accumulator import MeanAccumulator
+from intelligence_layer.evaluation.aggregation.aggregator import AggregationLogic
 
 
 class MatchOutcome(str, Enum):
@@ -96,3 +101,64 @@ class WinRateCalculator:
             player: self.win_count[player] / match_count
             for player, match_count in self.match_count.items()
         }
+
+
+class PlayerScore(BaseModel):
+    elo: float
+    elo_standard_error: float
+    win_rate: float
+    num_matches: int
+
+
+class AggregatedComparison(BaseModel):
+    scores: Mapping[str, PlayerScore]
+
+
+class ComparisonEvaluation(BaseModel):
+    first: str
+    second: str
+    winner: MatchOutcome
+
+
+class ComparisonAggregationLogic(
+    AggregationLogic[ComparisonEvaluation, AggregatedComparison]
+):
+    def aggregate(
+        self, evaluations: Iterable[ComparisonEvaluation]
+    ) -> AggregatedComparison:
+        flattened_evaluations = [
+            (
+                evaluation.first,
+                evaluation.second,
+                evaluation.winner,
+            )
+            for evaluation in evaluations
+        ]
+        player_counter = Counter(
+            player for match in flattened_evaluations for player in [match[0], match[1]]
+        )
+        player_counts = dict(player_counter)
+        players = player_counts.keys()
+
+        accumulators = {p: MeanAccumulator() for p in players}
+        for _ in range(100):
+            elo_calc = EloCalculator(players)
+            random.shuffle(flattened_evaluations)
+            elo_calc.calculate(flattened_evaluations)
+            for p in players:
+                accumulators[p].add(elo_calc.ratings[p])
+
+        win_rate_calc = WinRateCalculator(players)
+        win_rate = win_rate_calc.calculate(flattened_evaluations)
+
+        return AggregatedComparison(
+            scores={
+                p: PlayerScore(
+                    elo=acc.extract(),
+                    elo_standard_error=acc.standard_error(),
+                    win_rate=win_rate[p],
+                    num_matches=player_counts[p],
+                )
+                for p, acc in accumulators.items()
+            },
+        )

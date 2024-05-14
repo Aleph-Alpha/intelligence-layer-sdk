@@ -2,11 +2,33 @@
 
 ## Unreleased
 
+We did a major revamp of the `ArgillaEvaluator` to separate an `AsyncEvaluator` from the normal evaluation scenario.
+This comes with easier to understand interfaces, more information in the `EvaluationOverview` and a simplified aggregation step for Argilla that is no longer dependent on specific Argilla types.
+Check the how-to for detailed information [here](./src/documentation/how_tos/how_to_human_evaluation_via_argilla.ipynb)
+
 ### Breaking Changes
-...
+
+- rename: `AggregatedInstructComparison` to `AggregatedComparison`
+- rename `InstructComparisonArgillaAggregationLogic` to `ComparisonAggregationLogic`
+- remove: `ArgillaAggregator` - the regular aggregator now does the job
+- remove: `ArgillaEvaluationRepository` - `ArgillaEvaluator` now uses `AsyncRepository` which extend existing `EvaluationRepository` for the human-feedback use-case
+- `ArgillaEvaluationLogic` now uses `to_record` and `from_record` instead of `do_evaluate`. The signature of the `to_record` stays the same. The `Field` and `Question` are now defined in the logic instead of passed to the `ArgillaRepository`
+- `ArgillaEvaluator` now takes the `ArgillaClient` as well as the `workspace_id`. It inherits from the abstract `AsyncEvaluator` and no longer has `evalaute_runs` and `evaluate`. Instead it has `submit` and `retrieve`.
+- `EvaluationOverview` gets attributes `end_date`, `successful_evaluation_count` and `failed_evaluation_count`
+  - rename: `start` is now called `start_date` and no longer optional
+- we refactored the internals of `Evaluator`. This is only relevant if you subclass from it. Most of the typing and data handling is moved to `EvaluatorBase`
+
 
 ### New Features
-...
+- Add `ComparisonEvaluation` for the elo evaluation to abstract from the Argilla record
+- Add `AsyncEvaluator` for human-feedback evaluation. `ArgillaEvaluator` inherits from this
+  - `.submit` pushes all evaluations to Argilla to label them
+  - Add `PartialEvaluationOverview` to store the submission details.
+  - `.retrieve` then collects all labelled records from Argilla and stores them in an `AsyncRepository`.
+  - Add `AsyncEvaluationRepository` to store and retrieve `PartialEvaluationOverview`. Also added `AsyncFileEvaluationRepository` and `AsyncInMemoryEvaluationRepository`
+- Add `EvaluatorBase` and `EvaluationLogicBase` for base classes for both async and synchronous evaluation.
+
+
 
 ### Fixes
  - Improve description of using artifactory tokens for installation of IL

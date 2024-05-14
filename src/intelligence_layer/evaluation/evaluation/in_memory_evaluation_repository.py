@@ -7,9 +7,13 @@ from intelligence_layer.evaluation.evaluation.domain import (
     Evaluation,
     EvaluationOverview,
     ExampleEvaluation,
+    PartialEvaluationOverview,
 )
 from intelligence_layer.evaluation.evaluation.evaluation_repository import (
     EvaluationRepository,
+)
+from intelligence_layer.evaluation.evaluation.evaluator.async_evaluator import (
+    AsyncEvaluationRepository,
 )
 
 
@@ -61,3 +65,28 @@ class InMemoryEvaluationRepository(EvaluationRepository):
             for example_evaluation in self._example_evaluations[evaluation_id]
         ]
         return sorted(example_evaluations, key=lambda i: i.example_id)
+
+
+class AsyncInMemoryEvaluationRepository(
+    AsyncEvaluationRepository, InMemoryEvaluationRepository
+):
+    def __init__(self) -> None:
+        super().__init__()
+        self._partial_evaluation_overviews: dict[str, PartialEvaluationOverview] = (
+            dict()
+        )
+
+    def store_partial_evaluation_overview(
+        self, overview: PartialEvaluationOverview
+    ) -> None:
+        self._partial_evaluation_overviews[overview.id] = overview
+        if overview.id not in self._example_evaluations.keys():
+            self._example_evaluations[overview.id] = []
+
+    def partial_evaluation_overview(
+        self, evaluation_id: str
+    ) -> Optional[PartialEvaluationOverview]:
+        return self._partial_evaluation_overviews.get(evaluation_id, None)
+
+    def partial_evaluation_overview_ids(self) -> Sequence[str]:
+        return sorted(list(self._partial_evaluation_overviews.keys()))

@@ -1,6 +1,6 @@
 import traceback
 from datetime import datetime
-from typing import Generic, Optional, TypeVar
+from typing import Generic, TypeVar
 
 from pydantic import BaseModel, SerializeAsAny
 from rich.tree import Tree
@@ -65,19 +65,21 @@ class ExampleEvaluation(BaseModel, Generic[Evaluation]):
         return tree
 
 
-class EvaluationOverview(BaseModel, frozen=True):
+class PartialEvaluationOverview(BaseModel, frozen=True):
     """Overview of the un-aggregated results of evaluating a :class:`Task` on a dataset.
 
     Attributes:
         run_overviews: Overviews of the runs that were evaluated.
         id: The unique identifier of this evaluation.
-        start: The time when the evaluation run was started
-        description: human-readable for the evaluator that created the evaluation
+        start: The time when the evaluation run was started.
+        submitted_evaluation_count: The amount of evaluations that were submitted successfully.
+        description: human-readable for the evaluator that created the evaluation.
     """
 
     run_overviews: frozenset[RunOverview]
     id: str
-    start: Optional[datetime]
+    start_date: datetime
+    submitted_evaluation_count: int
     description: str
 
     def __repr__(self) -> str:
@@ -95,7 +97,54 @@ class EvaluationOverview(BaseModel, frozen=True):
 
         return (
             f"Evaluation Overview ID = {self.id}\n"
-            f"Start time = {self.start}\n"
+            f"Start time = {self.start_date}\n"
+            f"Submitted Evaluations = {self.submitted_evaluation_count}\n"
+            f'Description = "{self.description}"\n'
+            f"{run_overview_str}"
+        )
+
+
+class EvaluationOverview(BaseModel, frozen=True):
+    """Overview of the un-aggregated results of evaluating a :class:`Task` on a dataset.
+
+    Attributes:
+        run_overviews: Overviews of the runs that were evaluated.
+        id: The unique identifier of this evaluation.
+        start_date: The time when the evaluation run was started.
+        end_date: The time when the evaluation run was finished.
+        successful_evaluation_count: Number of successfully evaluated examples.
+        failed_evaluation_count: Number of examples that produced an error during evaluation.
+            Note: failed runs are skipped in the evaluation and therefore not counted as failures
+        description: human-readable for the evaluator that created the evaluation.
+    """
+
+    run_overviews: frozenset[RunOverview]
+    id: str
+    start_date: datetime
+    end_date: datetime
+    successful_evaluation_count: int
+    failed_evaluation_count: int
+    description: str
+
+    def __repr__(self) -> str:
+        return self.__str__()
+
+    def __str__(self) -> str:
+        run_overview_str: str = "Run Overviews={\n"
+        comma_counter = 0
+        for overview in self.run_overviews:
+            run_overview_str += f"{overview}"
+            if comma_counter < len(self.run_overviews) - 1:
+                run_overview_str += ", "
+                comma_counter += 1
+        run_overview_str += "}\n"
+
+        return (
+            f"Evaluation Overview ID = {self.id}\n"
+            f"Start time = {self.start_date}\n"
+            f"End time = {self.end_date}\n"
+            f"Successful examples = {self.successful_evaluation_count}\n"
+            f"Failed examples = {self.failed_evaluation_count}\n"
             f'Description = "{self.description}"\n'
             f"{run_overview_str}"
         )

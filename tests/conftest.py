@@ -4,7 +4,6 @@ from typing import Sequence, cast
 
 from aleph_alpha_client import Client, Image
 from dotenv import load_dotenv
-from faker import Faker
 from pydantic import BaseModel
 from pytest import fixture
 
@@ -20,6 +19,7 @@ from intelligence_layer.connectors import (
 )
 from intelligence_layer.core import LuminousControlModel, NoOpTracer, Task, TaskSpan
 from intelligence_layer.evaluation import (
+    AsyncInMemoryEvaluationRepository,
     InMemoryAggregationRepository,
     InMemoryDatasetRepository,
     InMemoryEvaluationRepository,
@@ -110,26 +110,20 @@ def to_document(document_chunk: DocumentChunk) -> Document:
 
 
 class DummyStringInput(BaseModel):
-    input: str
-
-    @classmethod
-    def any(cls) -> "DummyStringInput":
-        fake = Faker()
-        return cls(input=fake.text())
+    input: str = "dummy-input"
 
 
 class DummyStringOutput(BaseModel):
-    output: str
+    output: str = "dummy-output"
 
-    @classmethod
-    def any(cls) -> "DummyStringOutput":
-        fake = Faker()
-        return cls(output=fake.text())
+
+class DummyStringEvaluation(BaseModel):
+    evaluation: str = "dummy-evaluation"
 
 
 class DummyStringTask(Task[DummyStringInput, DummyStringOutput]):
     def do_run(self, input: DummyStringInput, task_span: TaskSpan) -> DummyStringOutput:
-        return DummyStringOutput.any()
+        return DummyStringOutput()
 
 
 @fixture
@@ -155,3 +149,8 @@ def in_memory_evaluation_repository() -> InMemoryEvaluationRepository:
 @fixture
 def in_memory_aggregation_repository() -> InMemoryAggregationRepository:
     return InMemoryAggregationRepository()
+
+
+@fixture()
+def async_in_memory_evaluation_repository() -> AsyncInMemoryEvaluationRepository:
+    return AsyncInMemoryEvaluationRepository()

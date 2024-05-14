@@ -28,7 +28,6 @@ from intelligence_layer.evaluation import (
     FileRunRepository,
     InMemoryDatasetRepository,
     InMemoryRunRepository,
-    InstructComparisonArgillaAggregationLogic,
     Runner,
     RunOverview,
 )
@@ -135,7 +134,10 @@ def evaluation_overview(
 ) -> EvaluationOverview:
     return EvaluationOverview(
         id=evaluation_id,
-        start=utc_now(),
+        start_date=utc_now(),
+        end_date=utc_now(),
+        successful_evaluation_count=1,
+        failed_evaluation_count=1,
         run_overviews=frozenset([run_overview]),
         description="test evaluation overview 1",
     )
@@ -161,9 +163,7 @@ def aggregation_overview(
 
 @fixture
 def dummy_string_example() -> Example[DummyStringInput, DummyStringOutput]:
-    return Example(
-        input=DummyStringInput.any(), expected_output=DummyStringOutput.any()
-    )
+    return Example(input=DummyStringInput(), expected_output=DummyStringOutput())
 
 
 @fixture
@@ -186,11 +186,6 @@ def dummy_runner(
     )
 
 
-@fixture
-def argilla_aggregation_logic() -> InstructComparisonArgillaAggregationLogic:
-    return InstructComparisonArgillaAggregationLogic()
-
-
 class StubArgillaClient(ArgillaClient):
     _expected_workspace_id: str
     _expected_fields: Sequence[Field]
@@ -201,7 +196,7 @@ class StubArgillaClient(ArgillaClient):
     def ensure_dataset_exists(
         self,
         workspace_id: str,
-        _: str,
+        dataset_name: str,
         fields: Sequence[Field],
         questions: Sequence[Question],
     ) -> str:

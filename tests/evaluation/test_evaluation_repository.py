@@ -86,7 +86,10 @@ def evaluation_overviews(run_overview: RunOverview) -> Iterable[EvaluationOvervi
         evaluation_overviews.append(
             EvaluationOverview(
                 id=evaluation_id,
-                start=utc_now(),
+                start_date=utc_now(),
+                end_date=utc_now(),
+                successful_evaluation_count=1,
+                failed_evaluation_count=1,
                 run_overviews=frozenset([run_overview]),
                 description="test evaluation overview 1",
             )
@@ -362,6 +365,38 @@ def test_store_evaluation_overview_stores_and_returns_given_evaluation_overview(
     )
 
     assert retrieved_evaluation_overview == evaluation_overview
+
+
+@mark.parametrize(
+    "repository_fixture",
+    test_repository_fixtures,
+)
+def test_can_retieve_examples_and_failed_examples_after_storing_an_overview(
+    repository_fixture: str,
+    request: FixtureRequest,
+    evaluation_overview: EvaluationOverview,
+) -> None:
+    some_dummy_type = EvaluationOverview
+
+    evaluation_repository: EvaluationRepository = request.getfixturevalue(
+        repository_fixture
+    )
+
+    evaluation_repository.store_evaluation_overview(evaluation_overview)
+
+    n_failed_examples = len(
+        evaluation_repository.failed_example_evaluations(
+            evaluation_overview.id, some_dummy_type
+        )
+    )
+    assert n_failed_examples == 0
+
+    n_examples = len(
+        evaluation_repository.example_evaluations(
+            evaluation_overview.id, some_dummy_type
+        )
+    )
+    assert n_examples == 0
 
 
 @mark.parametrize(

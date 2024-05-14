@@ -17,23 +17,20 @@ from intelligence_layer.connectors.argilla.argilla_client import (
 )
 from intelligence_layer.core import CompleteOutput, InstructInput, utc_now
 from intelligence_layer.evaluation import (
-    AggregatedInstructComparison,
-    ArgillaAggregator,
-    ArgillaEvaluationRepository,
+    Aggregator,
     ArgillaEvaluator,
+    AsyncInMemoryEvaluationRepository,
+    ComparisonAggregationLogic,
+    ComparisonEvaluation,
     EloCalculator,
     Example,
     ExampleOutput,
     InMemoryAggregationRepository,
     InMemoryDatasetRepository,
-    InMemoryEvaluationRepository,
     InMemoryRunRepository,
-    InstructComparisonArgillaAggregationLogic,
+    InstructComparisonArgillaEvaluationLogic,
     MatchOutcome,
     RunOverview,
-)
-from intelligence_layer.evaluation.evaluation.argilla_evaluator import (
-    create_instruct_comparison_argilla_evaluation_classes,
 )
 
 
@@ -81,52 +78,22 @@ def argilla_fake() -> ArgillaClient:
 
 
 @fixture
-def argilla_repository(
-    in_memory_evaluation_repository: InMemoryEvaluationRepository,
-    argilla_fake: ArgillaClient,
-) -> ArgillaEvaluationRepository:
-    (
-        evaluation_logic,
-        evaluation_repository,
-    ) = create_instruct_comparison_argilla_evaluation_classes(
-        "workspace", in_memory_evaluation_repository, argilla_fake, None
-    )
-    return evaluation_repository
-
-
-@fixture
 def evaluator(
     in_memory_dataset_repository: InMemoryDatasetRepository,
     in_memory_run_repository: InMemoryRunRepository,
-    in_memory_evaluation_repository: InMemoryEvaluationRepository,
+    async_in_memory_evaluation_repository: AsyncInMemoryEvaluationRepository,
     argilla_fake: ArgillaClient,
-) -> ArgillaEvaluator[InstructInput, CompleteOutput, None]:
-    (
-        evaluation_logic,
-        evaluation_repository,
-    ) = create_instruct_comparison_argilla_evaluation_classes(
-        "workspace", in_memory_evaluation_repository, argilla_fake, None
-    )
+) -> ArgillaEvaluator[InstructInput, CompleteOutput, None, ComparisonEvaluation]:
+    evaluation_logic = InstructComparisonArgillaEvaluationLogic()
+
     return ArgillaEvaluator(
-        in_memory_dataset_repository,
-        in_memory_run_repository,
-        evaluation_repository,
-        "instruct-evaluator",
-        evaluation_logic,
-    )
-
-
-@fixture
-def aggregator(
-    argilla_repository: ArgillaEvaluationRepository,
-    in_memory_aggregation_repository: InMemoryAggregationRepository,
-    argilla_aggregation_logic: InstructComparisonArgillaAggregationLogic,
-) -> ArgillaAggregator[AggregatedInstructComparison]:
-    return ArgillaAggregator(
-        argilla_repository,
-        in_memory_aggregation_repository,
-        "instruct-evaluator",
-        argilla_aggregation_logic,
+        dataset_repository=in_memory_dataset_repository,
+        run_repository=in_memory_run_repository,
+        evaluation_repository=async_in_memory_evaluation_repository,
+        description="instruct-evaluator",
+        workspace_id="workspace",
+        argilla_client=argilla_fake,
+        evaluation_logic=evaluation_logic,
     )
 
 
@@ -141,6 +108,11 @@ def any_instruct_output() -> CompleteOutput:
             num_tokens_prompt_total=0,
         ),
     )
+
+
+@fixture
+def argilla_aggregation_logic() -> ComparisonAggregationLogic:
+    return ComparisonAggregationLogic()
 
 
 def create_dummy_dataset(
@@ -188,13 +160,24 @@ def create_dummy_runs(
 
 
 def test_evaluate_run_submits_pairwise_comparison_records(
-    evaluator: ArgillaEvaluator[InstructInput, CompleteOutput, None],
-    aggregator: ArgillaAggregator[AggregatedInstructComparison],
+    evaluator: ArgillaEvaluator[
+        InstructInput, CompleteOutput, None, ComparisonEvaluation
+    ],
     in_memory_dataset_repository: InMemoryDatasetRepository,
     in_memory_run_repository: InMemoryRunRepository,
+    async_in_memory_evaluation_repository: AsyncInMemoryEvaluationRepository,
+    in_memory_aggregation_repository: InMemoryAggregationRepository,
+    argilla_aggregation_logic: ComparisonAggregationLogic,
     any_instruct_output: CompleteOutput,
     argilla_fake: ArgillaFake,
 ) -> None:
+    aggregator = Aggregator(
+        async_in_memory_evaluation_repository,
+        in_memory_aggregation_repository,
+        "instruct-evaluator",
+        argilla_aggregation_logic,
+    )
+
     run_count = 10
     run_ids = [f"{i}" for i in range(run_count)]
     dataset_id = create_dummy_dataset(in_memory_dataset_repository)
@@ -202,15 +185,16 @@ def test_evaluate_run_submits_pairwise_comparison_records(
         in_memory_run_repository, any_instruct_output, run_ids, dataset_id
     )
 
-    evaluation_overview = evaluator.evaluate_runs(*run_ids)
+    partial_overview = evaluator.submit(*run_ids)
 
     pairs = combinations(run_ids, 2)
     assert sorted(
         tuple(sorted((record_data.metadata["first"], record_data.metadata["second"])))
-        for record_data in argilla_fake.record_data(evaluation_overview.id)
+        for record_data in argilla_fake.record_data(partial_overview.id)
     ) == sorted(pairs)
+    eval_overview = evaluator.retrieve(partial_overview.id)
 
-    elo_score = aggregator.aggregate_evaluation(evaluation_overview.id)
+    elo_score = aggregator.aggregate_evaluation(eval_overview.id)
     scores = elo_score.statistics.scores
     # lower id always wins, should be sorted
     for i in range(run_count - 1):
@@ -221,20 +205,21 @@ def test_evaluate_run_submits_pairwise_comparison_records(
 def test_evaluate_run_only_evaluates_high_priority(
     in_memory_dataset_repository: InMemoryDatasetRepository,
     in_memory_run_repository: InMemoryRunRepository,
-    in_memory_evaluation_repository: InMemoryEvaluationRepository,
+    async_in_memory_evaluation_repository: AsyncInMemoryEvaluationRepository,
     any_instruct_output: CompleteOutput,
     argilla_fake: ArgillaFake,
 ) -> None:
     relevant_ids = frozenset({"1", "2"})
-    eval_logic, eval_repository = create_instruct_comparison_argilla_evaluation_classes(
-        "workspace", in_memory_evaluation_repository, argilla_fake, relevant_ids
-    )
+    evaluation_logic = InstructComparisonArgillaEvaluationLogic(relevant_ids)
+
     evaluator = ArgillaEvaluator(
-        in_memory_dataset_repository,
-        in_memory_run_repository,
-        eval_repository,
-        "instruct-evaluator",
-        eval_logic,
+        dataset_repository=in_memory_dataset_repository,
+        run_repository=in_memory_run_repository,
+        evaluation_repository=async_in_memory_evaluation_repository,
+        description="instruct-evaluator",
+        workspace_id="workspace",
+        argilla_client=argilla_fake,
+        evaluation_logic=evaluation_logic,
     )
 
     run_count = 10
@@ -245,7 +230,8 @@ def test_evaluate_run_only_evaluates_high_priority(
         in_memory_run_repository, any_instruct_output, run_ids, dataset_id
     )
 
-    evaluation_overview = evaluator.evaluate_runs(*run_ids)
+    partial_overview = evaluator.submit(*run_ids)
+    evaluation_overview = evaluator.retrieve(partial_overview.id)
 
     def relevant_ids_in_record(record: RecordData) -> bool:
         players = [record.metadata["first"], record.metadata["second"]]
