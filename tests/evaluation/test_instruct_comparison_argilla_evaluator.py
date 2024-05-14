@@ -5,7 +5,6 @@ from uuid import uuid4
 
 from aleph_alpha_client import CompletionResponse
 from aleph_alpha_client.completion import CompletionResult
-from faker import Faker
 from pytest import fixture
 
 from intelligence_layer.connectors.argilla.argilla_client import (
@@ -99,11 +98,10 @@ def evaluator(
 
 @fixture
 def any_instruct_output() -> CompleteOutput:
-    faker = Faker()
     return CompleteOutput.from_completion_response(
         CompletionResponse(
             model_version="",
-            completions=[CompletionResult(completion=faker.text())],
+            completions=[CompletionResult(completion="some text")],
             num_tokens_generated=0,
             num_tokens_prompt_total=0,
         ),
