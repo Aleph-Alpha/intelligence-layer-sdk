@@ -160,3 +160,27 @@ def test_partial_and_full_evaluation_overview_dont_overlap(
 
     assert all_partial_overviews[0] == partial_evaluation_overview
     assert all_full_overviews[0] == evaluation_overview
+
+
+@mark.parametrize(
+    "repository_fixture",
+    test_repository_fixtures,
+)
+def test_can_retrieve_failed_evaluations_for_partial_evaluations(
+    repository_fixture: str,
+    request: FixtureRequest,
+    partial_evaluation_overview: PartialEvaluationOverview,
+) -> None:
+    evaluation_repository: AsyncEvaluationRepository = request.getfixturevalue(
+        repository_fixture
+    )
+    some_dummy_type = PartialEvaluationOverview
+
+    evaluation_repository.store_partial_evaluation_overview(partial_evaluation_overview)
+    n_failed = len(
+        evaluation_repository.failed_example_evaluations(
+            partial_evaluation_overview.id, some_dummy_type
+        )
+    )
+
+    assert n_failed == 0

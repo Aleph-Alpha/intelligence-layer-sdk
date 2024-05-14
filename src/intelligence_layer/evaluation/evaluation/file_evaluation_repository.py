@@ -30,7 +30,8 @@ class FileSystemEvaluationRepository(EvaluationRepository, FileSystemBasedReposi
             overview.model_dump_json(indent=2),
             create_parents=True,
         )
-        # initialize the correct folders
+        # initialize the evaluation directory to make sure the evaluation "exists", even
+        # if we did not store any examples in it
         self.mkdir(self._eval_directory(overview.id))
 
     def evaluation_overview(self, evaluation_id: str) -> Optional[EvaluationOverview]:
@@ -129,6 +130,9 @@ class AsyncFileEvaluationRepository(
             overview.model_dump_json(indent=2),
             create_parents=True,
         )
+        # initialize the evaluation directory to make sure the evaluation "exists", even
+        # if we did not store any examples in it
+        self.mkdir(self._eval_directory(overview.id))
 
     def partial_evaluation_overview(
         self, evaluation_id: str
