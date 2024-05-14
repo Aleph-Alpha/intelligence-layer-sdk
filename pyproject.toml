@@ -14,8 +14,8 @@ packages = [{ include = "intelligence_layer", from = "src" }]
 [tool.poetry.dependencies]
 python = ">=3.10,<3.12"
 pydantic = "2.7.*"
-fastapi = "*"
-uvicorn = "*"
+fastapi = "^0.111.0"
+uvicorn = "^0.29.0"
 aleph-alpha-client = ">=7.1.0"
 python-dotenv = "*"
 semantic-text-splitter = "^0.13.1"
@@ -39,14 +39,12 @@ opentelemetry-exporter-otlp-proto-http = "1.23.0"
 mypy = "^1.10.0"
 nbqa = "^1.8.5"
 ruff = "^0.4.4"
-pre-commit = "*"
-pylama = { extras = ["radon", "vulture", "toml"], version = "^8.4.1" }
-faker = "^25.2.0"
+pre-commit = "^3.7.1"
 
 # tests
-pytest = "*"
+pytest = "^8.2"
 pytest-xdist = "^3.6.1"
-hypercorn = "0.16.0"
+hypercorn = "^0.16.0"
 
 # typing
 httpx = "*"
@@ -58,6 +56,7 @@ types-decorator = "*"
 types-requests = "*"
 types-tqdm = "*"
 pandas-stubs = "^2.2.1.240316"
+
 # docs
 sphinx-rtd-theme = "^2.0.0"
 sphinx = "^7.3.7"
@@ -77,19 +76,9 @@ filterwarnings = [
     'ignore:.*\`general_plain_validator_function\` is deprecated.*',
 ]
 
-[tool.pylama]
-skip = "*/__init__.py,.venv/*,*/node_modules/*"
-ignore = "E501,E203"
 
 [tool.ruff]
 extend-include = ["*.ipynb"]
-
-[tool.ruff.lint.mccabe]
-max-complexity = 11
-
-# we double check this, maybe pylama isn't necessary anymore
-[tool.pylama.linter.mccabe]
-max-complexity = "11"
 
 [tool.isort]
 profile = "black"

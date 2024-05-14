@@ -963,20 +963,6 @@ files = [
 tests = ["asttokens (>=2.1.0)", "coverage", "coverage-enable-subprocess", "ipython", "littleutils", "pytest", "rich"]
 
 [[package]]
-name = "faker"
-version = "25.2.0"
-description = "Faker is a Python package that generates fake data for you."
-optional = false
-python-versions = ">=3.8"
-files = [
-    {file = "Faker-25.2.0-py3-none-any.whl", hash = "sha256:cfe97c4857c4c36ee32ea4aaabef884895992e209bae4cbd26807cf3e05c6918"},
-    {file = "Faker-25.2.0.tar.gz", hash = "sha256:45b84f47ff1ef86e3d1a8d11583ca871ecf6730fad0660edadc02576583a2423"},
-]
-
-[package.dependencies]
-python-dateutil = ">=2.4"
-
-[[package]]
 name = "fastapi"
 version = "0.111.0"
 description = "FastAPI framework, high performance, easy to learn, fast to code, ready for production"
@@ -2280,23 +2266,6 @@ files = [
 six = "*"
 
 [[package]]
-name = "mando"
-version = "0.7.1"
-description = "Create Python CLI apps with little to no effort at all!"
-optional = false
-python-versions = "*"
-files = [
-    {file = "mando-0.7.1-py2.py3-none-any.whl", hash = "sha256:26ef1d70928b6057ee3ca12583d73c63e05c49de8972d620c278a7b206581a8a"},
-    {file = "mando-0.7.1.tar.gz", hash = "sha256:18baa999b4b613faefb00eac4efadcf14f510b59b924b66e08289aa1de8c3500"},
-]
-
-[package.dependencies]
-six = "*"
-
-[package.extras]
-restructuredtext = ["rst2ansi"]
-
-[[package]]
 name = "markdown-it-py"
 version = "3.0.0"
 description = "Python port of markdown-it. Markdown parsing, done right!"
@@ -2450,17 +2419,6 @@ files = [
 
 [package.dependencies]
 traitlets = "*"
-
-[[package]]
-name = "mccabe"
-version = "0.7.0"
-description = "McCabe checker, plugin for flake8"
-optional = false
-python-versions = ">=3.6"
-files = [
-    {file = "mccabe-0.7.0-py2.py3-none-any.whl", hash = "sha256:6c2d30ab6be0e4a46919781807b4f0d834ebdd6c6e3dca0bda5a15f863427b6e"},
-    {file = "mccabe-0.7.0.tar.gz", hash = "sha256:348e0240c33b60bbdf4e523192ef919f28cb2c3d7d5c7794f74009290f236325"},
-]
 
 [[package]]
 name = "mdurl"
@@ -3732,34 +3690,6 @@ files = [
 typing-extensions = ">=4.6.0,<4.7.0 || >4.7.0"
 
 [[package]]
-name = "pydocstyle"
-version = "6.3.0"
-description = "Python docstring style checker"
-optional = false
-python-versions = ">=3.6"
-files = [
-    {file = "pydocstyle-6.3.0-py3-none-any.whl", hash = "sha256:118762d452a49d6b05e194ef344a55822987a462831ade91ec5c06fd2169d019"},
-    {file = "pydocstyle-6.3.0.tar.gz", hash = "sha256:7ce43f0c0ac87b07494eb9c0b462c0b73e6ff276807f204d6b53edc72b7e44e1"},
-]
-
-[package.dependencies]
-snowballstemmer = ">=2.2.0"
-
-[package.extras]
-toml = ["tomli (>=1.2.3)"]
-
-[[package]]
-name = "pyflakes"
-version = "3.2.0"
-description = "passive checker of Python programs"
-optional = false
-python-versions = ">=3.8"
-files = [
-    {file = "pyflakes-3.2.0-py2.py3-none-any.whl", hash = "sha256:84b5be138a2dfbb40689ca07e2152deb896a65c3a3e24c251c5c62489568074a"},
-    {file = "pyflakes-3.2.0.tar.gz", hash = "sha256:1c61603ff154621fb2a9172037d84dca3500def8c8b630657d1701f026f8af3f"},
-]
-
-[[package]]
 name = "pygments"
 version = "2.18.0"
 description = "Pygments is a syntax highlighting package written in Python."
@@ -3772,36 +3702,6 @@ files = [
 
 [package.extras]
 windows-terminal = ["colorama (>=0.4.6)"]
-
-[[package]]
-name = "pylama"
-version = "8.4.1"
-description = "Code audit tool for python"
-optional = false
-python-versions = ">=3.7"
-files = [
-    {file = "pylama-8.4.1-py3-none-any.whl", hash = "sha256:5bbdbf5b620aba7206d688ed9fc917ecd3d73e15ec1a89647037a09fa3a86e60"},
-    {file = "pylama-8.4.1.tar.gz", hash = "sha256:2d4f7aecfb5b7466216d48610c7d6bad1c3990c29cdd392ad08259b161e486f6"},
-]
-
-[package.dependencies]
-mccabe = ">=0.7.0"
-pycodestyle = ">=2.9.1"
-pydocstyle = ">=6.1.1"
-pyflakes = ">=2.5.0"
-radon = {version = "*", optional = true, markers = "extra == \"radon\""}
-toml = {version = ">=0.10.2", optional = true, markers = "extra == \"toml\""}
-vulture = {version = "*", optional = true, markers = "extra == \"vulture\""}
-
-[package.extras]
-all = ["eradicate", "mypy", "pylint", "radon", "vulture"]
-eradicate = ["eradicate"]
-mypy = ["mypy"]
-pylint = ["pylint"]
-radon = ["radon"]
-tests = ["eradicate (>=2.0.0)", "mypy", "pylama-quotes", "pylint (>=2.11.1)", "pytest (>=7.1.2)", "pytest-mypy", "radon (>=5.1.0)", "toml", "types-setuptools", "types-toml", "vulture"]
-toml = ["toml (>=0.10.2)"]
-vulture = ["vulture"]
 
 [[package]]
 name = "pyparsing"
@@ -4204,24 +4104,6 @@ packaging = "*"
 
 [package.extras]
 test = ["pytest (>=6,!=7.0.0,!=7.0.1)", "pytest-cov (>=3.0.0)", "pytest-qt"]
-
-[[package]]
-name = "radon"
-version = "6.0.1"
-description = "Code Metrics in Python"
-optional = false
-python-versions = "*"
-files = [
-    {file = "radon-6.0.1-py2.py3-none-any.whl", hash = "sha256:632cc032364a6f8bb1010a2f6a12d0f14bc7e5ede76585ef29dc0cecf4cd8859"},
-    {file = "radon-6.0.1.tar.gz", hash = "sha256:d1ac0053943a893878940fedc8b19ace70386fc9c9bf0a09229a44125ebf45b5"},
-]
-
-[package.dependencies]
-colorama = {version = ">=0.4.1", markers = "python_version > \"3.4\""}
-mando = ">=0.6,<0.8"
-
-[package.extras]
-toml = ["tomli (>=2.0.1)"]
 
 [[package]]
 name = "referencing"
@@ -5029,17 +4911,6 @@ docs = ["setuptools-rust", "sphinx", "sphinx-rtd-theme"]
 testing = ["black (==22.3)", "datasets", "numpy", "pytest", "requests", "ruff"]
 
 [[package]]
-name = "toml"
-version = "0.10.2"
-description = "Python Library for Tom's Obvious, Minimal Language"
-optional = false
-python-versions = ">=2.6, !=3.0.*, !=3.1.*, !=3.2.*"
-files = [
-    {file = "toml-0.10.2-py2.py3-none-any.whl", hash = "sha256:806143ae5bfb6a3c6e736a764057db0e6a0e05e338b5630894a5f779cabb4f9b"},
-    {file = "toml-0.10.2.tar.gz", hash = "sha256:b3bda1d108d5dd99f4a20d24d9c348e91c4db7ab1b749200bded2f839ccbe68f"},
-]
-
-[[package]]
 name = "tomli"
 version = "2.0.1"
 description = "A lil' TOML parser"
@@ -5444,20 +5315,6 @@ platformdirs = ">=3.9.1,<5"
 [package.extras]
 docs = ["furo (>=2023.7.26)", "proselint (>=0.13)", "sphinx (>=7.1.2,!=7.3)", "sphinx-argparse (>=0.4)", "sphinxcontrib-towncrier (>=0.2.1a0)", "towncrier (>=23.6)"]
 test = ["covdefaults (>=2.3)", "coverage (>=7.2.7)", "coverage-enable-subprocess (>=1)", "flaky (>=3.7)", "packaging (>=23.1)", "pytest (>=7.4)", "pytest-env (>=0.8.2)", "pytest-freezer (>=0.4.8)", "pytest-mock (>=3.11.1)", "pytest-randomly (>=3.12)", "pytest-timeout (>=2.1)", "setuptools (>=68)", "time-machine (>=2.10)"]
-
-[[package]]
-name = "vulture"
-version = "2.11"
-description = "Find dead code"
-optional = false
-python-versions = ">=3.8"
-files = [
-    {file = "vulture-2.11-py2.py3-none-any.whl", hash = "sha256:12d745f7710ffbf6aeb8279ba9068a24d4e52e8ed333b8b044035c9d6b823aba"},
-    {file = "vulture-2.11.tar.gz", hash = "sha256:f0fbb60bce6511aad87ee0736c502456737490a82d919a44e6d92262cb35f1c2"},
-]
-
-[package.dependencies]
-tomli = {version = ">=1.1.0", markers = "python_version < \"3.11\""}
 
 [[package]]
 name = "watchfiles"
@@ -6022,4 +5879,4 @@ testing = ["big-O", "jaraco.functools", "jaraco.itertools", "more-itertools", "p
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.10,<3.12"
-content-hash = "75adaef8009b3b9bd2724965a14902c3274d154363d438635904fb4c39493654"
+content-hash = "b2bfd965e189ac3d699ab132eca63f7f4e45c4127b387897ccf689f0234638ae"
