@@ -55,17 +55,33 @@ class ArgillaEvaluationLogic(
         example: Example[Input, ExpectedOutput],
         *output: SuccessfulExampleOutput[Output],
     ) -> RecordDataSequence:
-        """This method is responsible for translating the `Example` and `Output` of the task to :class:`RecordData`
+        """This method is responsible for translating the `Example` and `Output` of the task to :class:`RecordData`.
+
+        The specific format depends on the `fields`.
 
 
         Args:
             example: The example to be translated.
             output: The output of the example that was run.
+
+        Returns:
+            A :class:`RecordDataSequence` that contains entries that should be evaluated in Argilla.
         """
         ...
 
     @abstractmethod
-    def from_record(self, argilla_evaluation: ArgillaEvaluation) -> Evaluation: ...
+    def from_record(self, argilla_evaluation: ArgillaEvaluation) -> Evaluation:
+        """This method takes the specific Argilla evaluation format and converts into a compatible :class:`Evaluation`.
+
+        The format of argilla_evaluation.responses depends on the `questions` attribute.
+        Each `name` of a question will be a key in the `argilla_evaluation.responses` mapping.
+
+        Args:
+            argilla_evaluation: Argilla-specific data for a single evaluation.
+
+        Returns:
+            An :class:`Evaluation` that contains all evaluation specific data.
+        """
 
 
 class ArgillaEvaluator(AsyncEvaluator[Input, Output, ExpectedOutput, Evaluation]):
