@@ -32,6 +32,7 @@ Check the how-to for detailed information [here](./src/documentation/how_tos/how
 
 ### Fixes
  - Improve description of using artifactory tokens for installation of IL
+ - Change `confusion_matrix` in `SingleLabelClassifyAggregationLogic` such that it can be persisted in a file repository
 
 ### Deprecations
 ...

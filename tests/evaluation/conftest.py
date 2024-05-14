@@ -1,4 +1,3 @@
-from datetime import datetime
 from os import getenv
 from pathlib import Path
 from typing import Iterable, Sequence
@@ -29,7 +28,6 @@ from intelligence_layer.evaluation import (
     InMemoryDatasetRepository,
     InMemoryRunRepository,
     Runner,
-    RunOverview,
 )
 from tests.conftest import DummyStringInput, DummyStringOutput
 
@@ -67,11 +65,6 @@ def sequence_examples() -> Iterable[Example[str, None]]:
         Example(input=FAIL_IN_TASK_INPUT, expected_output=None, id="example-2"),
         Example(input=FAIL_IN_EVAL_INPUT, expected_output=None, id="example-3"),
     ]
-
-
-@fixture
-def evaluation_id() -> str:
-    return "evaluation-id-1"
 
 
 @fixture
@@ -116,44 +109,15 @@ def dummy_aggregated_evaluation() -> DummyAggregatedEvaluation:
 
 
 @fixture
-def run_overview() -> RunOverview:
-    return RunOverview(
-        dataset_id="dataset-id",
-        id="run-id-1",
-        start=utc_now(),
-        end=utc_now(),
-        failed_example_count=0,
-        successful_example_count=3,
-        description="test run overview 1",
-    )
-
-
-@fixture
-def evaluation_overview(
-    evaluation_id: str, run_overview: RunOverview
-) -> EvaluationOverview:
-    return EvaluationOverview(
-        id=evaluation_id,
-        start_date=utc_now(),
-        end_date=utc_now(),
-        successful_evaluation_count=1,
-        failed_evaluation_count=1,
-        run_overviews=frozenset([run_overview]),
-        description="test evaluation overview 1",
-    )
-
-
-@fixture
 def aggregation_overview(
     evaluation_overview: EvaluationOverview,
     dummy_aggregated_evaluation: DummyAggregatedEvaluation,
 ) -> AggregationOverview[DummyAggregatedEvaluation]:
-    now = datetime.now()
     return AggregationOverview(
         evaluation_overviews=frozenset([evaluation_overview]),
         id="aggregation-id",
-        start=now,
-        end=now,
+        start=utc_now(),
+        end=utc_now(),
         successful_evaluation_count=5,
         crashed_during_evaluation_count=3,
         description="dummy-evaluator",
