@@ -37,7 +37,7 @@ The key features of the Intelligence Layer are:
 ## Local installation (for development and tutorials)
 Clone the Intelligence Layer repository from github.
 ```bash
-git clone git@github.com:Aleph-Alpha/intelligence-layer.git
+git clone git@github.com:Aleph-Alpha/intelligence-layer-sdk.git
 ```
 The Intelligence Layer uses `poetry` as a package manager. Follow the [official instructions](https://python-poetry.org/docs/#installation) to install it.
 Afterwards, simply run `poetry install` to install all dependencies in a virtual environment.
