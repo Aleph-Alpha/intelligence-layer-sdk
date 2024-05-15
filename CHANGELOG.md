@@ -2,6 +2,17 @@
 
 ## Unreleased
 
+### Breaking Changes
+...
+### New Features
+...
+### Fixes
+...
+### Deprecations
+...
+
+## 1.2.0
+
 We did a major revamp of the `ArgillaEvaluator` to separate an `AsyncEvaluator` from the normal evaluation scenario.
 This comes with easier to understand interfaces, more information in the `EvaluationOverview` and a simplified aggregation step for Argilla that is no longer dependent on specific Argilla types.
 Check the how-to for detailed information [here](./src/documentation/how_tos/how_to_human_evaluation_via_argilla.ipynb)
@@ -18,7 +29,6 @@ Check the how-to for detailed information [here](./src/documentation/how_tos/how
   - rename: `start` is now called `start_date` and no longer optional
 - we refactored the internals of `Evaluator`. This is only relevant if you subclass from it. Most of the typing and data handling is moved to `EvaluatorBase`
 
-
 ### New Features
 - Add `ComparisonEvaluation` for the elo evaluation to abstract from the Argilla record
 - Add `AsyncEvaluator` for human-feedback evaluation. `ArgillaEvaluator` inherits from this
@@ -28,14 +38,9 @@ Check the how-to for detailed information [here](./src/documentation/how_tos/how
   - Add `AsyncEvaluationRepository` to store and retrieve `PartialEvaluationOverview`. Also added `AsyncFileEvaluationRepository` and `AsyncInMemoryEvaluationRepository`
 - Add `EvaluatorBase` and `EvaluationLogicBase` for base classes for both async and synchronous evaluation.
 
-
-
 ### Fixes
  - Improve description of using artifactory tokens for installation of IL
  - Change `confusion_matrix` in `SingleLabelClassifyAggregationLogic` such that it can be persisted in a file repository
-
-### Deprecations
-...
 
 ## 1.1.0
 
