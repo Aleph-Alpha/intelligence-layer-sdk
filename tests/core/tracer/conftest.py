@@ -1,6 +1,10 @@
+from pathlib import Path
+
 from pytest import fixture
 
 from intelligence_layer.core import Task, TaskSpan
+from intelligence_layer.core.tracer.file_tracer import FileTracer
+from intelligence_layer.core.tracer.in_memory_tracer import InMemoryTracer
 
 
 class TestSubTask(Task[None, None]):
@@ -19,6 +23,20 @@ class TestTask(Task[str, str]):
         return "output"
 
 
+class TestException(Exception):
+    pass
+
+
 @fixture
 def test_task() -> Task[str, str]:
     return TestTask()
+
+
+@fixture
+def file_tracer(tmp_path: Path) -> FileTracer:
+    return FileTracer(tmp_path / "log.log")
+
+
+@fixture
+def in_memory_tracer() -> InMemoryTracer:
+    return InMemoryTracer()

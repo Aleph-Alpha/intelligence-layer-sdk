@@ -1,15 +1,17 @@
 from datetime import datetime
-from typing import Generic, Optional, Sequence
+from typing import Generic, Optional, Sequence, TypeVar
 
 from intelligence_layer.core.tracer.tracer import (
     PydanticSerializable,
     Span,
-    SpanVar,
     TaskSpan,
     Tracer,
-    TracerVar,
     utc_now,
 )
+
+TracerVar = TypeVar("TracerVar", bound=Tracer)
+
+SpanVar = TypeVar("SpanVar", bound=Span)
 
 
 class CompositeTracer(Tracer, Generic[TracerVar]):

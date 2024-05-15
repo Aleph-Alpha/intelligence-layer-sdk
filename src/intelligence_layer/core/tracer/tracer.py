@@ -2,8 +2,9 @@ import traceback
 from abc import ABC, abstractmethod
 from contextlib import AbstractContextManager
 from datetime import datetime, timezone
+from enum import Enum
 from types import TracebackType
-from typing import TYPE_CHECKING, Mapping, Optional, Sequence, TypeVar
+from typing import TYPE_CHECKING, Mapping, Optional, Sequence
 from uuid import UUID, uuid4
 
 from pydantic import BaseModel, Field, RootModel, SerializeAsAny
@@ -48,6 +49,46 @@ def utc_now() -> datetime:
     datetime.utcnow() returns a datetime object without timezone, so this function is preferred.
     """
     return datetime.now(timezone.utc)
+
+
+class Event:
+    name: str
+    message: str
+    body: SerializeAsAny[PydanticSerializable]
+    timestamp: datetime = Field(default_factory=utc_now)
+
+
+class SpanType(Enum):
+    SPAN = "SPAN"
+    TASK_SPAN = "TASK_SPAN"
+
+
+class SpanAttributes(BaseModel):
+    type: SpanType = SpanType.SPAN
+
+
+class TaskSpanAttributes(SpanAttributes):
+    type: SpanType = SpanType.TASK_SPAN
+    input: SerializeAsAny[PydanticSerializable]
+    output: SerializeAsAny[PydanticSerializable]
+
+
+class SpanStatus(Enum):
+    OK = "OK"
+    ERROR = "ERROR"
+
+
+class ExportedSpan:
+    id: str
+    # we ignore context as we only need the id from it
+    name: str | None
+    parent_id: str | None
+    start_time: datetime
+    end_time: datetime
+    attributes: SpanAttributes
+    events: Sequence[Event]
+    status: SpanStatus
+    # we ignore the links concept
 
 
 class Tracer(ABC):
@@ -205,6 +246,18 @@ class Span(Tracer, AbstractContextManager["Span"]):
             self.log(error_value.message, error_value)
         self.end()
 
+    @abstractmethod
+    def export_for_viewing(self) -> Sequence[ExportedSpan]:
+        """Converts the span to a format that can be read by the trace viewer.
+
+        The format is inspired by the OpenTelemetry Format, but does not abide by it,
+        because it is too complex for our use-case.
+
+        Returns:
+            A list of spans which includes the current span and all its child spans.
+        """
+        ...
+
 
 class TaskSpan(Span):
     """Specialized span for instrumenting :class:`Task` input, output, and nested spans and logs.
@@ -242,11 +295,6 @@ class TaskSpan(Span):
             )
             self.record_output(error_value)
         self.end()
-
-
-TracerVar = TypeVar("TracerVar", bound=Tracer)
-
-SpanVar = TypeVar("SpanVar", bound=Span)
 
 
 class NoOpTracer(TaskSpan):
