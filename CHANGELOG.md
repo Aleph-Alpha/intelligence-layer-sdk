@@ -7,7 +7,8 @@
 ### New Features
 ...
 ### Fixes
-...
+- `ExpandChunks`-task is now fast even for very large documents
+
 ### Deprecations
 ...
 

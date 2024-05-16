@@ -60,7 +60,7 @@ class Chunk(Task[ChunkInput, ChunkOutput]):
         return ChunkOutput(chunks=chunks)
 
 
-class ChunkWithStartEndIndices(BaseModel):
+class ChunkWithStartEndIndices(BaseModel, frozen=True):
     """A `TextChunk` and its `start_index` and `end_index` within the given text.
 
     Attributes:
@@ -98,6 +98,7 @@ class ChunkWithIndices(Task[ChunkInput, ChunkWithIndicesOutput]):
 
     def __init__(self, model: AlephAlphaModel, max_tokens_per_chunk: int = 512):
         super().__init__()
+        self._max_tokens = max_tokens_per_chunk
         self._splitter = TextSplitter.from_huggingface_tokenizer(
             model.get_tokenizer(), capacity=max_tokens_per_chunk, trim=False
         )
