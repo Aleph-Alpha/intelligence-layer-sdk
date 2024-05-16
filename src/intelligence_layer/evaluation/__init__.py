@@ -10,6 +10,9 @@ from .aggregation.elo_aggregation import (
     ComparisonEvaluationAggregationLogic as ComparisonEvaluationAggregationLogic,
 )
 from .aggregation.elo_aggregation import EloCalculator as EloCalculator
+from .aggregation.elo_aggregation import (
+    MatchesAggregationLogic as MatchesAggregationLogic,
+)
 from .aggregation.elo_aggregation import WinRateCalculator as WinRateCalculator
 from .aggregation.file_aggregation_repository import (
     FileAggregationRepository as FileAggregationRepository,
