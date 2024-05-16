@@ -1,10 +1,11 @@
+import pytest
 from pydantic import BaseModel
 
-from intelligence_layer.core import InMemoryTracer
 from intelligence_layer.core.tracer.tracer import (
     SpanStatus,
     SpanType,
     TaskSpanAttributes,
+    Tracer,
     utc_now,
 )
 from tests.core.tracer.conftest import TestException
@@ -14,8 +15,18 @@ class DummyObject(BaseModel):
     content: str
 
 
-def test_tracer_exports_spans_to_unified_format() -> None:
-    tracer = InMemoryTracer()
+tracer_fixtures = ["in_memory_tracer", "file_tracer"]
+
+
+@pytest.mark.parametrize(
+    "tracer_fixture",
+    tracer_fixtures,
+)
+def test_tracer_exports_spans_to_unified_format(
+    tracer_fixture: str,
+    request: pytest.FixtureRequest,
+) -> None:
+    tracer: Tracer = request.getfixturevalue(tracer_fixture)
     dummy_object = DummyObject(content="cool")
     with tracer.span("name") as temp_span:
         temp_span.log("test", dummy_object)
@@ -36,8 +47,15 @@ def test_tracer_exports_spans_to_unified_format() -> None:
     assert span.start_time < log.timestamp < span.end_time
 
 
-def test_tracer_exports_task_spans_to_unified_format() -> None:
-    tracer = InMemoryTracer()
+@pytest.mark.parametrize(
+    "tracer_fixture",
+    tracer_fixtures,
+)
+def test_tracer_exports_task_spans_to_unified_format(
+    tracer_fixture: str,
+    request: pytest.FixtureRequest,
+) -> None:
+    tracer: Tracer = request.getfixturevalue(tracer_fixture)
 
     with tracer.task_span("name", "input") as task_span:
         task_span.record_output("output")
@@ -57,8 +75,16 @@ def test_tracer_exports_task_spans_to_unified_format() -> None:
     assert span.context.trace_id == span.context.span_id
 
 
-def test_tracer_exports_error_correctly() -> None:
-    tracer = InMemoryTracer()
+@pytest.mark.parametrize(
+    "tracer_fixture",
+    tracer_fixtures,
+)
+def test_tracer_exports_error_correctly(
+    tracer_fixture: str,
+    request: pytest.FixtureRequest,
+) -> None:
+    tracer: Tracer = request.getfixturevalue(tracer_fixture)
+
     try:
         with tracer.span("name"):
             raise TestException
@@ -75,8 +101,16 @@ def test_tracer_exports_error_correctly() -> None:
     assert span.status == SpanStatus.ERROR
 
 
-def test_tracer_export_nests_correctly() -> None:
-    tracer = InMemoryTracer()
+@pytest.mark.parametrize(
+    "tracer_fixture",
+    tracer_fixtures,
+)
+def test_tracer_export_nests_correctly(
+    tracer_fixture: str,
+    request: pytest.FixtureRequest,
+) -> None:
+    tracer: Tracer = request.getfixturevalue(tracer_fixture)
+
     with tracer.span("name") as parent_span:
         with parent_span.span("name-2") as child_span:
             child_span.log("", value="")
@@ -98,8 +132,16 @@ def test_tracer_export_nests_correctly() -> None:
     assert child.context.span_id != parent.context.span_id
 
 
-def test_tracer_exports_unrelated_spans_correctly() -> None:
-    tracer = InMemoryTracer()
+@pytest.mark.parametrize(
+    "tracer_fixture",
+    tracer_fixtures,
+)
+def test_tracer_exports_unrelated_spans_correctly(
+    tracer_fixture: str,
+    request: pytest.FixtureRequest,
+) -> None:
+    tracer: Tracer = request.getfixturevalue(tracer_fixture)
+
     tracer.span("name")
     tracer.span("name-2")
 
