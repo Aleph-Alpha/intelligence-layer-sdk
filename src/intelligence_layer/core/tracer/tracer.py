@@ -353,6 +353,9 @@ class NoOpTracer(TaskSpan):
     def end(self, timestamp: Optional[datetime] = None) -> None:
         pass
 
+    def export_for_viewing(self) -> Sequence[ExportedSpan]:
+        return []
+
 
 class JsonSerializer(RootModel[PydanticSerializable]):
     root: SerializeAsAny[PydanticSerializable]

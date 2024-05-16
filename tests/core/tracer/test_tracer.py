@@ -1,6 +1,10 @@
 import pytest
+from pytest import fixture
 from pydantic import BaseModel
 
+from intelligence_layer.core import CompositeTracer
+from intelligence_layer.core import FileTracer
+from intelligence_layer.core import InMemoryTracer
 from intelligence_layer.core.tracer.tracer import (
     SpanStatus,
     SpanType,
@@ -15,7 +19,14 @@ class DummyObject(BaseModel):
     content: str
 
 
-tracer_fixtures = ["in_memory_tracer", "file_tracer"]
+@fixture
+def composite_tracer(
+    in_memory_tracer: InMemoryTracer,
+    file_tracer: FileTracer
+):
+    return CompositeTracer(in_memory_tracer, file_tracer)
+
+tracer_fixtures = ["in_memory_tracer", "file_tracer", "composite_tracer"]
 
 
 @pytest.mark.parametrize(
@@ -155,3 +166,52 @@ def test_tracer_exports_unrelated_spans_correctly(
     assert span_2.parent_id is None
 
     assert span_1.context.trace_id != span_2.context.trace_id
+
+
+@pytest.mark.parametrize(
+    "tracer_fixture",
+    tracer_fixtures,
+)
+def test_tracer_exports_part_of_a_trace_correctly(
+    tracer_fixture: str,
+    request: pytest.FixtureRequest,
+) -> None:
+    tracer: Tracer = request.getfixturevalue(tracer_fixture)
+
+    with tracer.span("name") as root_span:
+        child_span = root_span.span("name-2")
+        child_span.log("test_message", "test_body")
+        
+    unified_format = child_span.export_for_viewing()
+
+    assert len(unified_format) == 2
+    span_1, span_2 = unified_format[0], unified_format[1]
+
+    assert span_1.parent_id is None
+    assert span_2.parent_id is None
+
+    assert span_1.context.trace_id != span_2.context.trace_id
+
+
+@pytest.mark.parametrize(
+    "tracer_fixture",
+    tracer_fixtures,
+)
+def test_tracer_can_not_log_on_closed_span(
+    tracer_fixture: str,
+    request: pytest.FixtureRequest,
+) -> None:
+    tracer: Tracer = request.getfixturevalue(tracer_fixture)
+
+    span = tracer.span("name") 
+    with pytest.raises(Exception):
+        span.log("test_message", "test_body")
+
+    with span:
+        span.log("test_message", "test_body")
+    with pytest.raises(Exception):
+        span.log("test_message", "test_body")
+
+
+
+
