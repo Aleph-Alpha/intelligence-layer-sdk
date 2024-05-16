@@ -74,9 +74,7 @@ class Task(ABC, Generic[Input, Output]):
         Returns:
             Generic output defined by the task implementation.
         """
-        with tracer.task_span(
-            type(self).__name__, input, trace_id=trace_id
-        ) as task_span:
+        with tracer.task_span(type(self).__name__, input) as task_span:
             output = self.do_run(input, task_span)
             task_span.record_output(output)
             return output

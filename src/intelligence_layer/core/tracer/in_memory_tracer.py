@@ -1,38 +1,31 @@
-import json
 import os
 from datetime import datetime
 from typing import Optional, Sequence, Union
-from uuid import UUID
 
 import requests
 import rich
-from pydantic import BaseModel, Field, SerializeAsAny
+from pydantic import BaseModel, SerializeAsAny
 from requests import HTTPError
 from rich.tree import Tree
 
 from intelligence_layer.core.tracer.tracer import (
     Context,
-    EndSpan,
-    EndTask,
     Event,
     ExportedSpan,
+    ExportedSpanList,
     LogEntry,
-    LogLine,
-    PlainEntry,
     PydanticSerializable,
     Span,
     SpanAttributes,
-    SpanStatus,
-    StartSpan,
-    StartTask,
     TaskSpan,
+    TaskSpanAttributes,
     Tracer,
     _render_log_value,
     utc_now,
 )
 
 
-class InMemoryTracer(BaseModel, Tracer):
+class InMemoryTracer(Tracer):
     """Collects log entries in a nested structure, and keeps them in memory.
 
     If desired, the structure is serializable with Pydantic, so you can write out the JSON
@@ -44,7 +37,9 @@ class InMemoryTracer(BaseModel, Tracer):
             log entries.
     """
 
-    entries: list[Union[LogEntry, "InMemoryTaskSpan", "InMemorySpan"]] = []
+    def __init__(self, *args, **kwargs) -> None:
+        super().__init__(*args, **kwargs)
+        self.entries: list[Union[LogEntry, "InMemoryTaskSpan", "InMemorySpan"]] = []
 
     def span(
         self,
@@ -95,7 +90,8 @@ class InMemoryTracer(BaseModel, Tracer):
         trace_viewer_trace_upload = f"{trace_viewer_url}/trace"
         try:
             res = requests.post(
-                trace_viewer_trace_upload, json=json.loads(self.model_dump_json())
+                trace_viewer_trace_upload,
+                json=ExportedSpanList(self.export_for_viewing()).model_dump_json(),
             )
             if res.status_code != 200:
                 raise HTTPError(res.status_code)
@@ -122,12 +118,19 @@ class InMemoryTracer(BaseModel, Tracer):
 
 
 class InMemorySpan(InMemoryTracer, Span):
-    name: str
-    start_timestamp: datetime = Field(default_factory=datetime.utcnow)
-    end_timestamp: Optional[datetime] = None
-
-    def id(self) -> str:
-        return self.trace_id
+    def __init__(
+        self,
+        name: str,
+        context: Optional[Context] = None,
+        start_timestamp: Optional[datetime] = None,
+    ) -> None:
+        super().__init__(context=context)
+        self.parent_id = None if context is None else context.span_id
+        self.name = name
+        self.start_timestamp = (
+            start_timestamp if start_timestamp is not None else utc_now()
+        )
+        self.end_timestamp: datetime | None = None
 
     def log(
         self,
@@ -140,7 +143,7 @@ class InMemorySpan(InMemoryTracer, Span):
                 message=message,
                 value=value,
                 timestamp=timestamp or utc_now(),
-                trace_id=self.id(),
+                trace_id=self.context.span_id,
             )
         )
 
@@ -157,6 +160,9 @@ class InMemorySpan(InMemoryTracer, Span):
 
         return tree
 
+    def _span_attributes(self) -> SpanAttributes:
+        return SpanAttributes()
+
     def export_for_viewing(self) -> Sequence[ExportedSpan]:
         logs: list[LogEntry] = []
         exported_spans: list[ExportedSpan] = []
@@ -167,12 +173,12 @@ class InMemorySpan(InMemoryTracer, Span):
                 exported_spans.extend(entry.export_for_viewing())
         exported_spans.append(
             ExportedSpan(
-                context=Context(trace_id=self.id(), span_id="?"),
+                context=self.context,
                 name=self.name,
                 parent_id=self.parent_id,
                 start_time=self.start_timestamp,
                 end_time=self.end_timestamp,
-                attributes=SpanAttributes(),
+                attributes=self._span_attributes(),
                 events=[
                     Event(
                         name="log",
@@ -182,18 +188,29 @@ class InMemorySpan(InMemoryTracer, Span):
                     )
                     for log in logs
                 ],
-                status=SpanStatus.OK,
+                status=self.status_code,
             )
         )
         return exported_spans
 
 
 class InMemoryTaskSpan(InMemorySpan, TaskSpan):
-    input: SerializeAsAny[PydanticSerializable]
-    output: Optional[SerializeAsAny[PydanticSerializable]] = None
+    def __init__(
+        self,
+        name: str,
+        input: SerializeAsAny[PydanticSerializable],
+        context: Optional[Context] = None,
+        start_timestamp: Optional[datetime] = None,
+    ) -> None:
+        super().__init__(name=name, context=context, start_timestamp=start_timestamp)
+        self.input = input
+        self.output: SerializeAsAny[PydanticSerializable] | None = None
 
     def record_output(self, output: PydanticSerializable) -> None:
         self.output = output
+
+    def _span_attributes(self) -> SpanAttributes:
+        return TaskSpanAttributes(input=self.input, output=self.output)
 
     def _rich_render_(self) -> Tree:
         """Renders the trace via classes in the `rich` package"""
@@ -210,56 +227,52 @@ class InMemoryTaskSpan(InMemorySpan, TaskSpan):
 
 
 class TreeBuilder(BaseModel):
-    root: InMemoryTracer = InMemoryTracer()
-    tracers: dict[UUID, InMemoryTracer] = Field(default_factory=dict)
-    tasks: dict[UUID, InMemoryTaskSpan] = Field(default_factory=dict)
-    spans: dict[UUID, InMemorySpan] = Field(default_factory=dict)
+    pass
+    # root: InMemoryTracer = InMemoryTracer()
+    # tracers: dict[UUID, InMemoryTracer] = Field(default_factory=dict)
+    # tasks: dict[UUID, InMemoryTaskSpan] = Field(default_factory=dict)
+    # spans: dict[UUID, InMemorySpan] = Field(default_factory=dict)
 
-    def start_task(self, log_line: LogLine) -> None:
-        start_task = StartTask.model_validate(log_line.entry)
-        child = InMemoryTaskSpan(
-            name=start_task.name,
-            input=start_task.input,
-            start_timestamp=start_task.start,
-            trace_id=start_task.trace_id,
-        )
-        self.tracers[start_task.uuid] = child
-        self.tasks[start_task.uuid] = child
-        self.tracers.get(start_task.parent, self.root).entries.append(child)
+    # def start_task(self, log_line: LogLine) -> None:
+    #     start_task = StartTask.model_validate(log_line.entry)
+    #     child = InMemoryTaskSpan(
+    #         name=start_task.name,
+    #         input=start_task.input,
+    #         start_timestamp=start_task.start,
+    #         trace_id=start_task.trace_id,
+    #     )
+    #     self.tracers[start_task.uuid] = child
+    #     self.tasks[start_task.uuid] = child
+    #     self.tracers.get(start_task.parent, self.root).entries.append(child)
 
-    def end_task(self, log_line: LogLine) -> None:
-        end_task = EndTask.model_validate(log_line.entry)
-        task_span = self.tasks[end_task.uuid]
-        task_span.end_timestamp = end_task.end
-        task_span.record_output(end_task.output)
+    # def end_task(self, log_line: LogLine) -> None:
+    #     end_task = EndTask.model_validate(log_line.entry)
+    #     task_span = self.tasks[end_task.uuid]
+    #     task_span.end_timestamp = end_task.end
+    #     task_span.record_output(end_task.output)
 
-    def start_span(self, log_line: LogLine) -> None:
-        start_span = StartSpan.model_validate(log_line.entry)
-        child = InMemorySpan(
-            name=start_span.name,
-            start_timestamp=start_span.start,
-            trace_id=start_span.trace_id,
-        )
-        self.tracers[start_span.uuid] = child
-        self.spans[start_span.uuid] = child
-        self.tracers.get(start_span.parent, self.root).entries.append(child)
+    # def start_span(self, log_line: LogLine) -> None:
+    #     start_span = StartSpan.model_validate(log_line.entry)
+    #     child = InMemorySpan(
+    #         name=start_span.name,
+    #         start_timestamp=start_span.start,
+    #         trace_id=start_span.trace_id,
+    #     )
+    #     self.tracers[start_span.uuid] = child
+    #     self.spans[start_span.uuid] = child
+    #     self.tracers.get(start_span.parent, self.root).entries.append(child)
 
-    def end_span(self, log_line: LogLine) -> None:
-        end_span = EndSpan.model_validate(log_line.entry)
-        span = self.spans[end_span.uuid]
-        span.end_timestamp = end_span.end
+    # def end_span(self, log_line: LogLine) -> None:
+    #     end_span = EndSpan.model_validate(log_line.entry)
+    #     span = self.spans[end_span.uuid]
+    #     span.end_timestamp = end_span.end
 
-    def plain_entry(self, log_line: LogLine) -> None:
-        plain_entry = PlainEntry.model_validate(log_line.entry)
-        entry = LogEntry(
-            message=plain_entry.message,
-            value=plain_entry.value,
-            timestamp=plain_entry.timestamp,
-            trace_id=plain_entry.trace_id,
-        )
-        self.tracers[plain_entry.parent].entries.append(entry)
-
-
-# Required for sphinx, see also: https://docs.pydantic.dev/2.4/errors/usage_errors/#class-not-fully-defined
-InMemorySpan.model_rebuild()
-InMemoryTracer.model_rebuild()
+    # def plain_entry(self, log_line: LogLine) -> None:
+    #     plain_entry = PlainEntry.model_validate(log_line.entry)
+    #     entry = LogEntry(
+    #         message=plain_entry.message,
+    #         value=plain_entry.value,
+    #         timestamp=plain_entry.timestamp,
+    #         trace_id=plain_entry.trace_id,
+    #     )
+    #     self.tracers[plain_entry.parent].entries.append(entry)

@@ -4,7 +4,7 @@ from contextlib import AbstractContextManager
 from datetime import datetime, timezone
 from enum import Enum
 from types import TracebackType
-from typing import TYPE_CHECKING, Mapping, Optional, Sequence
+from typing import TYPE_CHECKING, List, Mapping, Optional, Sequence
 from uuid import UUID, uuid4
 
 from pydantic import BaseModel, Field, RootModel, SerializeAsAny
@@ -51,7 +51,7 @@ def utc_now() -> datetime:
     return datetime.now(timezone.utc)
 
 
-class Event:
+class Event(BaseModel):
     name: str
     message: str
     body: SerializeAsAny[PydanticSerializable]
@@ -83,7 +83,7 @@ class Context(BaseModel):
     span_id: str
 
 
-class ExportedSpan:
+class ExportedSpan(BaseModel):
     context: Context
     name: str | None
     parent_id: str | None
@@ -93,6 +93,10 @@ class ExportedSpan:
     events: Sequence[Event]
     status: SpanStatus
     # we ignore the links concept
+
+
+class ExportedSpanList(RootModel):
+    root: List[ExportedSpan]
 
 
 class Tracer(ABC):
@@ -200,12 +204,14 @@ class Span(Tracer, AbstractContextManager["Span"]):
     """
 
     def __init__(self, context: Optional[Context] = None):
-        if context is None:
-            trace_id = str(uuid4())
-        else:
-            trace_id = self.context.trace_id
+        super().__init__()
         span_id = str(uuid4())
+        if context is None:
+            trace_id = span_id
+        else:
+            trace_id = context.trace_id
         self.context = Context(trace_id=trace_id, span_id=span_id)
+        self.status_code = SpanStatus.OK
 
     def __enter__(self) -> Self:
         return self
@@ -264,6 +270,7 @@ class Span(Tracer, AbstractContextManager["Span"]):
                 stack_trace=str(traceback.format_exc()),
             )
             self.log(error_value.message, error_value)
+            self.status_code = SpanStatus.ERROR
         self.end()
 
 
@@ -329,7 +336,6 @@ class NoOpTracer(TaskSpan):
         self,
         name: str,
         timestamp: Optional[datetime] = None,
-        trace_id: Optional[str] = None,
     ) -> "NoOpTracer":
         return self
 
@@ -338,7 +344,6 @@ class NoOpTracer(TaskSpan):
         task_name: str,
         input: PydanticSerializable,
         timestamp: Optional[datetime] = None,
-        trace_id: Optional[str] = None,
     ) -> "NoOpTracer":
         return self
 
@@ -382,9 +387,6 @@ class LogEntry(BaseModel):
     value: SerializeAsAny[PydanticSerializable]
     timestamp: datetime = Field(default_factory=datetime.utcnow)
     trace_id: str
-
-    def id(self) -> str:
-        return self.trace_id
 
     def _rich_render_(self) -> Panel:
         """Renders the trace via classes in the `rich` package"""

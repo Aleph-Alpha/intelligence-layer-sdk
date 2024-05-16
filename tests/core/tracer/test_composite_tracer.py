@@ -7,6 +7,14 @@ from intelligence_layer.core import (
 )
 
 
+def test_composite_tracer(test_task: Task[str, str]) -> None:
+    tracer1 = InMemoryTracer()
+    tracer2 = InMemoryTracer()
+    test_task.run(input=input, tracer=CompositeTracer([tracer1, tracer2]))
+
+    assert tracer1 == tracer2
+
+
 def test_composite_tracer_id_consistent_across_children(
     file_tracer: FileTracer, test_task: Task[str, str]
 ) -> None:

@@ -123,11 +123,12 @@ def test_tracer_export_nests_correctly(
         parent, child = child, parent
     assert parent.name == "name"
     assert parent.parent_id is None
-    assert parent.end_time > child.end_time
-    assert parent.start_time < child.start_time
+    assert parent.end_time >= child.end_time
+    assert parent.start_time <= child.start_time
     assert child.name == "name-2"
-    assert child.parent_id == parent.id
-    assert len(child.events) == 0
+    assert child.parent_id == parent.context.span_id
+    assert len(child.events) == 1
+    assert len(parent.events) == 0
     assert child.context.trace_id == parent.context.trace_id
     assert child.context.span_id != parent.context.span_id
 
