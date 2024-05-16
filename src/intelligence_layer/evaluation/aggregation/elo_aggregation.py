@@ -7,7 +7,7 @@ from pydantic import BaseModel
 
 from intelligence_layer.evaluation.aggregation.accumulator import MeanAccumulator
 from intelligence_layer.evaluation.aggregation.aggregator import AggregationLogic
-from intelligence_layer.evaluation.evaluation.evaluator.elo_evaluator import (
+from intelligence_layer.evaluation.evaluation.evaluator.incremental_evaluator import (
     ComparisonEvaluation,
     Matches,
     MatchOutcome,
