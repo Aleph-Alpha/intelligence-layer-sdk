@@ -1,7 +1,7 @@
 import json
 import os
 from datetime import datetime
-from typing import Optional, Union
+from typing import Optional, Sequence, Union
 from uuid import UUID
 
 import requests
@@ -11,13 +11,18 @@ from requests import HTTPError
 from rich.tree import Tree
 
 from intelligence_layer.core.tracer.tracer import (
+    Context,
     EndSpan,
     EndTask,
+    Event,
+    ExportedSpan,
     LogEntry,
     LogLine,
     PlainEntry,
     PydanticSerializable,
     Span,
+    SpanAttributes,
+    SpanStatus,
     StartSpan,
     StartTask,
     TaskSpan,
@@ -45,12 +50,11 @@ class InMemoryTracer(BaseModel, Tracer):
         self,
         name: str,
         timestamp: Optional[datetime] = None,
-        trace_id: Optional[str] = None,
     ) -> "InMemorySpan":
         child = InMemorySpan(
             name=name,
             start_timestamp=timestamp or utc_now(),
-            trace_id=self.ensure_id(trace_id),
+            context=self.context,
         )
         self.entries.append(child)
         return child
@@ -60,13 +64,12 @@ class InMemoryTracer(BaseModel, Tracer):
         task_name: str,
         input: PydanticSerializable,
         timestamp: Optional[datetime] = None,
-        trace_id: Optional[str] = None,
     ) -> "InMemoryTaskSpan":
         child = InMemoryTaskSpan(
             name=task_name,
             input=input,
             start_timestamp=timestamp or utc_now(),
-            trace_id=self.ensure_id(trace_id),
+            context=self.context,
         )
         self.entries.append(child)
         return child
@@ -106,12 +109,22 @@ class InMemoryTracer(BaseModel, Tracer):
             )
             return False
 
+    def export_for_viewing(self) -> Sequence[ExportedSpan]:
+        exported_root_spans: list[ExportedSpan] = []
+        for entry in self.entries:
+            if isinstance(entry, LogEntry):
+                raise Exception(
+                    "Found a log outside of a span. Logs can only be part of a span."
+                )
+            else:
+                exported_root_spans.extend(entry.export_for_viewing())
+        return exported_root_spans
+
 
 class InMemorySpan(InMemoryTracer, Span):
     name: str
     start_timestamp: datetime = Field(default_factory=datetime.utcnow)
     end_timestamp: Optional[datetime] = None
-    trace_id: str
 
     def id(self) -> str:
         return self.trace_id
@@ -143,6 +156,36 @@ class InMemorySpan(InMemoryTracer, Span):
             tree.add(log._rich_render_())
 
         return tree
+
+    def export_for_viewing(self) -> Sequence[ExportedSpan]:
+        logs: list[LogEntry] = []
+        exported_spans: list[ExportedSpan] = []
+        for entry in self.entries:
+            if isinstance(entry, LogEntry):
+                logs.append(entry)
+            else:
+                exported_spans.extend(entry.export_for_viewing())
+        exported_spans.append(
+            ExportedSpan(
+                context=Context(trace_id=self.id(), span_id="?"),
+                name=self.name,
+                parent_id=self.parent_id,
+                start_time=self.start_timestamp,
+                end_time=self.end_timestamp,
+                attributes=SpanAttributes(),
+                events=[
+                    Event(
+                        name="log",
+                        body=log.value,
+                        message=log.message,
+                        timestamp=log.timestamp,
+                    )
+                    for log in logs
+                ],
+                status=SpanStatus.OK,
+            )
+        )
+        return exported_spans
 
 
 class InMemoryTaskSpan(InMemorySpan, TaskSpan):

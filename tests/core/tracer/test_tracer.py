@@ -54,6 +54,7 @@ def test_tracer_exports_task_spans_to_unified_format() -> None:
     assert span.attributes.input == "input"
     assert span.attributes.output == "output"
     assert span.status == SpanStatus.OK
+    assert span.context.trace_id == span.context.span_id
 
 
 def test_tracer_exports_error_correctly() -> None:
@@ -93,3 +94,21 @@ def test_tracer_export_nests_correctly() -> None:
     assert child.name == "name-2"
     assert child.parent_id == parent.id
     assert len(child.events) == 0
+    assert child.context.trace_id == parent.context.trace_id
+    assert child.context.span_id != parent.context.span_id
+
+
+def test_tracer_exports_unrelated_spans_correctly() -> None:
+    tracer = InMemoryTracer()
+    tracer.span("name")
+    tracer.span("name-2")
+
+    unified_format = tracer.export_for_viewing()
+
+    assert len(unified_format) == 2
+    span_1, span_2 = unified_format[0], unified_format[1]
+
+    assert span_1.parent_id is None
+    assert span_2.parent_id is None
+
+    assert span_1.context.trace_id != span_2.context.trace_id

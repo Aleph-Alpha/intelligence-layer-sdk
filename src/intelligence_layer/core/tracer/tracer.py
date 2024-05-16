@@ -78,9 +78,13 @@ class SpanStatus(Enum):
     ERROR = "ERROR"
 
 
+class Context(BaseModel):
+    trace_id: str
+    span_id: str
+
+
 class ExportedSpan:
-    id: str
-    # we ignore context as we only need the id from it
+    context: Context
     name: str | None
     parent_id: str | None
     start_time: datetime
@@ -102,13 +106,14 @@ class Tracer(ABC):
     documentation of each implementation to see how to use the resulting tracer.
     """
 
+    context: Context | None = None
+
     @abstractmethod
     def span(
         self,
         name: str,
         timestamp: Optional[datetime] = None,
-        trace_id: Optional[str] = None,
-    ) -> "Span":
+    ) -> "Span":  # TODO
         """Generate a span from the current span or logging instance.
 
         Allows for grouping multiple logs and duration together as a single, logical step in the
@@ -134,8 +139,7 @@ class Tracer(ABC):
         task_name: str,
         input: PydanticSerializable,
         timestamp: Optional[datetime] = None,
-        trace_id: Optional[str] = None,
-    ) -> "TaskSpan":
+    ) -> "TaskSpan":  # TODO
         """Generate a task-specific span from the current span or logging instance.
 
         Allows for grouping multiple logs together, as well as the task's specific input, output,
@@ -167,6 +171,18 @@ class Tracer(ABC):
 
         return id if id is not None else str(uuid4())
 
+    @abstractmethod
+    def export_for_viewing(self) -> Sequence[ExportedSpan]:
+        """Converts the trace to a format that can be read by the trace viewer.
+
+        The format is inspired by the OpenTelemetry Format, but does not abide by it,
+        because it is too complex for our use-case.
+
+        Returns:
+            A list of spans which includes the current span and all its child spans.
+        """
+        ...
+
 
 class ErrorValue(BaseModel):
     error_type: str
@@ -183,9 +199,13 @@ class Span(Tracer, AbstractContextManager["Span"]):
     span only in scope while it is active.
     """
 
-    @abstractmethod
-    def id(self) -> str:
-        pass
+    def __init__(self, context: Optional[Context] = None):
+        if context is None:
+            trace_id = str(uuid4())
+        else:
+            trace_id = self.context.trace_id
+        span_id = str(uuid4())
+        self.context = Context(trace_id=trace_id, span_id=span_id)
 
     def __enter__(self) -> Self:
         return self
@@ -245,18 +265,6 @@ class Span(Tracer, AbstractContextManager["Span"]):
             )
             self.log(error_value.message, error_value)
         self.end()
-
-    @abstractmethod
-    def export_for_viewing(self) -> Sequence[ExportedSpan]:
-        """Converts the span to a format that can be read by the trace viewer.
-
-        The format is inspired by the OpenTelemetry Format, but does not abide by it,
-        because it is too complex for our use-case.
-
-        Returns:
-            A list of spans which includes the current span and all its child spans.
-        """
-        ...
 
 
 class TaskSpan(Span):

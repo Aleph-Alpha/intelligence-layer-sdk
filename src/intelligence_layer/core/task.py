@@ -87,7 +87,6 @@ class Task(ABC, Generic[Input, Output]):
         inputs: Iterable[Input],
         tracer: Tracer,
         concurrency_limit: int = MAX_CONCURRENCY,
-        trace_id: Optional[str] = None,
     ) -> Sequence[Output]:
         """Executes multiple processes of this task concurrently.
 
@@ -107,9 +106,7 @@ class Task(ABC, Generic[Input, Output]):
             The order of Outputs corresponds to the order of the Inputs.
         """
 
-        with tracer.span(
-            f"Concurrent {type(self).__name__} tasks", trace_id=trace_id
-        ) as span:
+        with tracer.span(f"Concurrent {type(self).__name__} tasks") as span:
             with ThreadPoolExecutor(
                 max_workers=min(concurrency_limit, MAX_CONCURRENCY)
             ) as executor:
