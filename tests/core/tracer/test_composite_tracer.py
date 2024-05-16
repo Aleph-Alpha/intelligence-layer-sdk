@@ -8,11 +8,14 @@ from intelligence_layer.core import (
 
 
 def test_composite_tracer(test_task: Task[str, str]) -> None:
-    tracer1 = InMemoryTracer()
-    tracer2 = InMemoryTracer()
-    test_task.run(input=input, tracer=CompositeTracer([tracer1, tracer2]))
+    tracer_1 = InMemoryTracer()
+    tracer_2 = InMemoryTracer()
+    test_task.run(input="input", tracer=CompositeTracer([tracer_1, tracer_2]))
 
-    assert tracer1 == tracer2
+    trace_1 = tracer_1.export_for_viewing()[0]
+    trace_2 = tracer_2.export_for_viewing()[0]
+    assert trace_1.name == trace_2.name
+    assert trace_1.attributes = trace_2.attributes
 
 
 def test_composite_tracer_id_consistent_across_children(

@@ -2,6 +2,7 @@ from datetime import datetime
 from typing import Generic, Optional, Sequence, TypeVar
 
 from intelligence_layer.core.tracer.tracer import (
+    ExportedSpan,
     PydanticSerializable,
     Span,
     TaskSpan,
@@ -41,12 +42,10 @@ class CompositeTracer(Tracer, Generic[TracerVar]):
         self,
         name: str,
         timestamp: Optional[datetime] = None,
-        trace_id: Optional[str] = None,
     ) -> "CompositeSpan[Span]":
         timestamp = timestamp or utc_now()
-        trace_id = self.ensure_id(trace_id)
         return CompositeSpan(
-            [tracer.span(name, timestamp, trace_id) for tracer in self.tracers]
+            [tracer.span(name, timestamp) for tracer in self.tracers]
         )
 
     def task_span(
@@ -54,16 +53,19 @@ class CompositeTracer(Tracer, Generic[TracerVar]):
         task_name: str,
         input: PydanticSerializable,
         timestamp: Optional[datetime] = None,
-        trace_id: Optional[str] = None,
     ) -> "CompositeTaskSpan":
         timestamp = timestamp or utc_now()
-        trace_id = self.ensure_id(trace_id)
         return CompositeTaskSpan(
             [
-                tracer.task_span(task_name, input, timestamp, trace_id)
+                tracer.task_span(task_name, input, timestamp)
                 for tracer in self.tracers
             ]
         )
+
+    def export_for_viewing(self) -> Sequence[ExportedSpan]:
+        if len(self.tracers) > 0:
+            return self.tracers[0].export_for_viewing()
+        return []
 
 
 class CompositeSpan(Generic[SpanVar], CompositeTracer[SpanVar], Span):
