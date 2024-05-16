@@ -98,7 +98,6 @@ class ChunkWithIndices(Task[ChunkInput, ChunkWithIndicesOutput]):
 
     def __init__(self, model: AlephAlphaModel, max_tokens_per_chunk: int = 512):
         super().__init__()
-        self._max_tokens = max_tokens_per_chunk
         self._splitter = TextSplitter.from_huggingface_tokenizer(
             model.get_tokenizer(), capacity=max_tokens_per_chunk, trim=False
         )
