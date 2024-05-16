@@ -1,3 +1,4 @@
+from datetime import datetime, timedelta
 from typing import Sequence
 
 from pytest import fixture
@@ -6,6 +7,10 @@ from intelligence_layer.connectors import (
     Document,
     DocumentChunk,
     QdrantInMemoryRetriever,
+)
+from intelligence_layer.connectors.document_index.document_index import DocumentPath
+from intelligence_layer.connectors.retrievers.document_index_retriever import (
+    DocumentIndexRetriever,
 )
 from intelligence_layer.core import LuminousControlModel, NoOpTracer
 from intelligence_layer.examples import ExpandChunks, ExpandChunksInput
@@ -168,3 +173,33 @@ def test_expand_chunk_works_for_multiple_chunks(
     combined_chunks = "".join(chunk.chunk for chunk in expand_chunk_output.chunks)
     for chunk_found in multiple_chunks_expand_chunk_input.chunks_found:
         assert chunk_found.text in combined_chunks
+
+
+def test_expand_chunk_is_fast_with_large_document(
+    document_index_retriever: DocumentIndexRetriever,
+    luminous_control_model: LuminousControlModel,
+    no_op_tracer: NoOpTracer,
+) -> None:
+    expand_chunk_input = ExpandChunksInput(
+        document_id=DocumentPath(
+            collection_path=document_index_retriever._collection_path,
+            document_name="Chronik der COVID-19-Pandemie in den Vereinigten Staaten 2020",
+        ),
+        chunks_found=[
+            DocumentChunk(
+                text="",
+                start=0,
+                end=50,
+            )
+        ],
+    )
+    expand_chunk_task = ExpandChunks(
+        document_index_retriever, luminous_control_model, 256
+    )
+
+    time = datetime.now()
+    output = expand_chunk_task.run(expand_chunk_input, no_op_tracer)
+    elapsed = datetime.now() - time
+
+    assert len(output.chunks) == 1
+    assert elapsed < timedelta(seconds=10)

@@ -1,4 +1,4 @@
-from functools import lru_cache
+from collections import OrderedDict
 from typing import Generic, Sequence
 
 from pydantic import BaseModel
@@ -42,29 +42,31 @@ class ExpandChunks(Generic[ID], Task[ExpandChunksInput[ID], ExpandChunksOutput])
     ):
         super().__init__()
         self._retriever = retriever
-        self._chunk_with_indices = ChunkWithIndices(model, max_chunk_size)
+        self._target_chunker = ChunkWithIndices(model, max_chunk_size)
+        self._large_chunker = ChunkWithIndices(model, max_chunk_size * 32)
         self._no_op_tracer = NoOpTracer()
 
     def do_run(
         self, input: ExpandChunksInput[ID], task_span: TaskSpan
     ) -> ExpandChunksOutput:
-        chunked_text = self._retrieve_and_chunk(input.document_id)
-
-        overlapping_chunk_indices = self._overlapping_chunk_indices(
-            [(c.start_index, c.end_index) for c in chunked_text],
-            [(chunk.start, chunk.end) for chunk in input.chunks_found],
+        text = self._retrieve_text(input.document_id)
+        large_chunks = self._expand_chunks(
+            text, input.chunks_found, self._large_chunker
         )
-
+        nested_expanded_chunks = [
+            self._expand_chunks(chunk.chunk, input.chunks_found, self._target_chunker)
+            for chunk in large_chunks
+        ]
         return ExpandChunksOutput(
-            chunks=[chunked_text[index] for index in overlapping_chunk_indices],
+            # deduplicating while preserving order
+            chunks=list(
+                OrderedDict.fromkeys(
+                    chunk
+                    for large_chunk in nested_expanded_chunks
+                    for chunk in large_chunk
+                )
+            )
         )
-
-    @lru_cache(maxsize=100)
-    def _retrieve_and_chunk(
-        self, document_id: ID
-    ) -> Sequence[ChunkWithStartEndIndices]:
-        text = self._retrieve_text(document_id)
-        return self._chunk_text(text)
 
     def _retrieve_text(self, document_id: ID) -> str:
         full_document = self._retriever.get_full_document(document_id)
@@ -72,11 +74,28 @@ class ExpandChunks(Generic[ID], Task[ExpandChunksInput[ID], ExpandChunksOutput])
             raise RuntimeError(f"No document for id '{document_id}' found")
         return full_document.text
 
-    def _chunk_text(self, text: str) -> Sequence[ChunkWithStartEndIndices]:
-        # NoOpTracer used to allow caching {ID: Sequence[ChunkWithStartEndIndices]}
-        return self._chunk_with_indices.run(
+    def _expand_chunks(
+        self,
+        text: str,
+        chunks_found: Sequence[DocumentChunk],
+        chunker: ChunkWithIndices,
+    ) -> Sequence[ChunkWithStartEndIndices]:
+        chunked_text = self._chunk_text(text, chunker)
+
+        overlapping_chunk_indices = self._overlapping_chunk_indices(
+            [(c.start_index, c.end_index) for c in chunked_text],
+            [(chunk.start, chunk.end) for chunk in chunks_found],
+        )
+
+        return [chunked_text[index] for index in overlapping_chunk_indices]
+
+    def _chunk_text(
+        self, text: str, chunker: ChunkWithIndices
+    ) -> Sequence[ChunkWithStartEndIndices]:
+        chunks = chunker.run(
             ChunkInput(text=text), self._no_op_tracer
         ).chunks_with_indices
+        return chunks
 
     def _overlapping_chunk_indices(
         self,

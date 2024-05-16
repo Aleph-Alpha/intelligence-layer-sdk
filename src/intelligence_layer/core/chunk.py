@@ -60,7 +60,7 @@ class Chunk(Task[ChunkInput, ChunkOutput]):
         return ChunkOutput(chunks=chunks)
 
 
-class ChunkWithStartEndIndices(BaseModel):
+class ChunkWithStartEndIndices(BaseModel, frozen=True):
     """A `TextChunk` and its `start_index` and `end_index` within the given text.
 
     Attributes:
