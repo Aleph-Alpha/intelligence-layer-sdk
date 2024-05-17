@@ -19,8 +19,8 @@ from intelligence_layer.evaluation import (
     Aggregator,
     ArgillaEvaluator,
     AsyncInMemoryEvaluationRepository,
-    ComparisonAggregationLogic,
     ComparisonEvaluation,
+    ComparisonEvaluationAggregationLogic,
     EloCalculator,
     Example,
     ExampleOutput,
@@ -109,8 +109,8 @@ def any_instruct_output() -> CompleteOutput:
 
 
 @fixture
-def argilla_aggregation_logic() -> ComparisonAggregationLogic:
-    return ComparisonAggregationLogic()
+def argilla_aggregation_logic() -> ComparisonEvaluationAggregationLogic:
+    return ComparisonEvaluationAggregationLogic()
 
 
 def create_dummy_dataset(
@@ -165,7 +165,7 @@ def test_evaluate_run_submits_pairwise_comparison_records(
     in_memory_run_repository: InMemoryRunRepository,
     async_in_memory_evaluation_repository: AsyncInMemoryEvaluationRepository,
     in_memory_aggregation_repository: InMemoryAggregationRepository,
-    argilla_aggregation_logic: ComparisonAggregationLogic,
+    argilla_aggregation_logic: ComparisonEvaluationAggregationLogic,
     any_instruct_output: CompleteOutput,
     argilla_fake: ArgillaFake,
 ) -> None:
@@ -244,10 +244,10 @@ def test_elo_calculating_works_as_expected() -> None:
     player1 = "player1"
     player2 = "player2"
     matches = [
-        (
-            player1,
-            player2,
-            MatchOutcome.A_WINS,
+        ComparisonEvaluation(
+            first_player=player1,
+            second_player=player2,
+            outcome=MatchOutcome.A_WINS,
         )
         for _ in range(10)
     ]
@@ -258,10 +258,10 @@ def test_elo_calculating_works_as_expected() -> None:
     assert elo.ratings[player2] < 1500
 
     comeback_matches = [
-        (
-            player1,
-            player2,
-            MatchOutcome.B_WINS,
+        ComparisonEvaluation(
+            first_player=player1,
+            second_player=player2,
+            outcome=MatchOutcome.B_WINS,
         )
         for i in range(10)
     ]

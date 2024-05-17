@@ -14,7 +14,7 @@ from intelligence_layer.evaluation import (
 
 
 class DummyEvaluation(BaseModel):
-    new_run_ids: list[str]
+    all_run_ids: list[str]
     old_run_ids: list[list[str]]
 
 
@@ -29,7 +29,7 @@ class DummyIncrementalLogic(IncrementalEvaluationLogic[str, str, str, DummyEvalu
         already_evaluated_outputs: list[list[SuccessfulExampleOutput[str]]],
     ) -> DummyEvaluation:
         return DummyEvaluation(
-            new_run_ids=[output.run_id for output in outputs],
+            all_run_ids=[output.run_id for output in outputs],
             old_run_ids=[
                 [output.run_id for output in evaluated_output]
                 for evaluated_output in already_evaluated_outputs
@@ -46,7 +46,7 @@ class DummyTask(Task[str, str]):
         return f"{input} {self._info}"
 
 
-def test_incremental_evaluator_should_filter_previous_run_ids() -> None:
+def test_incremental_evaluator_separates_all_runs_and_previous_runs() -> None:
     # Given
     examples = [Example(input="a", expected_output="0", id="id_0")]
     dataset_repository = InMemoryDatasetRepository()
@@ -89,8 +89,8 @@ def test_incremental_evaluator_should_filter_previous_run_ids() -> None:
         iter(evaluator.evaluation_lineages(second_evaluation_overview.id))
     ).evaluation.result
     assert isinstance(second_result, DummyEvaluation)
-    assert second_result.new_run_ids == [second_run_id]
-    assert second_result.old_run_ids == [[first_run_id]]
+    assert sorted(second_result.all_run_ids) == sorted([first_run_id, second_run_id])
+    assert sorted(second_result.old_run_ids) == sorted([[first_run_id]])
 
     independent_run_id = create_run("independent")
 
@@ -115,6 +115,8 @@ def test_incremental_evaluator_should_filter_previous_run_ids() -> None:
         iter(evaluator.evaluation_lineages(third_evaluation_overview.id))
     ).evaluation.result
     assert isinstance(third_result, DummyEvaluation)
-    assert third_result.new_run_ids == [third_run_id]
+    assert sorted(third_result.all_run_ids) == sorted(
+        [first_run_id, second_run_id, independent_run_id, third_run_id]
+    )
     assert sorted(third_result.old_run_ids[0]) == sorted([first_run_id, second_run_id])
     assert sorted(third_result.old_run_ids[1]) == sorted([independent_run_id])

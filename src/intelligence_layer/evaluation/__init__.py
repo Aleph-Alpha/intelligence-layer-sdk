@@ -6,11 +6,14 @@ from .aggregation.aggregator import AggregationLogic as AggregationLogic
 from .aggregation.aggregator import Aggregator as Aggregator
 from .aggregation.domain import AggregatedEvaluation as AggregatedEvaluation
 from .aggregation.domain import AggregationOverview as AggregationOverview
-from .aggregation.elo import ComparisonAggregationLogic as ComparisonAggregationLogic
-from .aggregation.elo import ComparisonEvaluation as ComparisonEvaluation
-from .aggregation.elo import EloCalculator as EloCalculator
-from .aggregation.elo import MatchOutcome as MatchOutcome
-from .aggregation.elo import WinRateCalculator as WinRateCalculator
+from .aggregation.elo_aggregation import (
+    ComparisonEvaluationAggregationLogic as ComparisonEvaluationAggregationLogic,
+)
+from .aggregation.elo_aggregation import EloCalculator as EloCalculator
+from .aggregation.elo_aggregation import (
+    MatchesAggregationLogic as MatchesAggregationLogic,
+)
+from .aggregation.elo_aggregation import WinRateCalculator as WinRateCalculator
 from .aggregation.file_aggregation_repository import (
     FileAggregationRepository as FileAggregationRepository,
 )
@@ -60,6 +63,12 @@ from .evaluation.evaluator.argilla_evaluator import (
 from .evaluation.evaluator.async_evaluator import (
     AsyncEvaluationRepository as AsyncEvaluationRepository,
 )
+from .evaluation.evaluator.elo_evaluator import (
+    ComparisonEvaluation as ComparisonEvaluation,
+)
+from .evaluation.evaluator.elo_evaluator import EloEvaluationLogic as EloEvaluationLogic
+from .evaluation.evaluator.elo_evaluator import Matches as Matches
+from .evaluation.evaluator.elo_evaluator import MatchOutcome as MatchOutcome
 from .evaluation.evaluator.evaluator import EvaluationLogic as EvaluationLogic
 from .evaluation.evaluator.evaluator import Evaluator as Evaluator
 from .evaluation.evaluator.evaluator import (
