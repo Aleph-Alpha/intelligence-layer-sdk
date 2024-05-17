@@ -3,10 +3,10 @@
 ## Unreleased
 
 ### Breaking Changes
- - Changed the behavior of `IncrementalEvaluator::do_evaluate`  such that it now promotes all output to `do_incremental_evaluate`instead of only the new outputs.
+ - Changed the behavior of `IncrementalEvaluator::do_evaluate` such that it now sends all `SuccessfulExampleOutput`s to `do_incremental_evaluate` instead of only the new `SuccessfulExampleOutput`s.
  -
 ### New Features
- - Add generic `EloEvaluator` class and `EloEvaluationLogic`for implementation of Elo evaluation use cases.
+ - Add generic `EloEvaluator` class and `EloEvaluationLogic` for implementation of Elo evaluation use cases.
  - Add `EloQaEvaluator` and `EloQaEvaluationLogic` for Elo evaluation of QA runs.
  - Add `IncrementalEloQaEvaluator` and `IncrementalEloQaEvaluationLogic` for Elo evaluation of QA runs with later addition of more runs to an existing evaluation.
  - Add `EloAggregationAdapter` class to simplify using the `ComparisonEvaluationAggregationLogic` for different Elo use cases.
@@ -14,7 +14,7 @@
 ### Fixes
 ...
 ### Deprecations
-...lint
+...
 
 ## 1.2.0
 

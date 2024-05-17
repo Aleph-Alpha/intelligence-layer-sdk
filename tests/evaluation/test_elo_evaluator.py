@@ -8,10 +8,11 @@ from intelligence_layer.core import (
     ControlModel,
     Language,
     LuminousControlModel,
+    NoOpTracer,
     TextChunk,
+    Tracer,
     utc_now,
 )
-from intelligence_layer.core.tracer.tracer import NoOpTracer, Tracer
 from intelligence_layer.evaluation import (
     ComparisonEvaluation,
     EloEvaluationLogic,
@@ -29,8 +30,6 @@ from intelligence_layer.evaluation import (
 )
 from intelligence_layer.examples import SingleChunkQaInput, SingleChunkQaOutput
 
-load_dotenv()
-
 
 class DummyEloQaEvalLogic(
     EloEvaluationLogic[SingleChunkQaInput, SingleChunkQaOutput, SingleChunkQaOutput]
@@ -40,6 +39,7 @@ class DummyEloQaEvalLogic(
         model: ControlModel,
         tracer: Tracer = NoOpTracer(),
     ):
+        load_dotenv()
         super().__init__()
         self._model = model
         self.tracer = tracer
