@@ -1,4 +1,4 @@
-from typing import Sequence, Tuple
+from typing import Sequence
 
 from dotenv import load_dotenv
 from pytest import fixture

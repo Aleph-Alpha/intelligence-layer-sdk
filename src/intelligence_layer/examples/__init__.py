@@ -57,9 +57,6 @@ from .qa.multiple_chunk_retriever_qa import (
 from .qa.multiple_chunk_retriever_qa import (
     MultipleChunkRetrieverQaOutput as MultipleChunkRetrieverQaOutput,
 )
-from .qa.elo_qa_evaluation_logic import (
-    EloQaEvaluationLogic as EloQaEvaluationLogic,
-)
 from .qa.retriever_based_qa import EnrichedSubanswer as EnrichedSubanswer
 from .qa.retriever_based_qa import RetrieverBasedQa as RetrieverBasedQa
 from .qa.retriever_based_qa import RetrieverBasedQaInput as RetrieverBasedQaInput

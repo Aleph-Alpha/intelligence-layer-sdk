@@ -7,7 +7,9 @@ from pydantic import BaseModel
 
 from intelligence_layer.core import Input, Output
 from intelligence_layer.evaluation.dataset.domain import Example, ExpectedOutput
-from intelligence_layer.evaluation.evaluation.evaluator.evaluator import EvaluationLogic
+from intelligence_layer.evaluation.evaluation.evaluator.incremental_evaluator import (
+    IncrementalEvaluationLogic,
+)
 from intelligence_layer.evaluation.run.domain import SuccessfulExampleOutput
 
 
@@ -53,7 +55,9 @@ class EloGradingInput(BaseModel):
     second_completion: str
 
 
-class EloEvaluationLogic(EvaluationLogic[Input, Output, ExpectedOutput, Matches]):
+class EloEvaluationLogic(
+    IncrementalEvaluationLogic[Input, Output, ExpectedOutput, Matches]
+):
     def __init__(self) -> None:
         super().__init__()
         self._previous_run_output_ids: list[set[str]] = []
@@ -62,40 +66,6 @@ class EloEvaluationLogic(EvaluationLogic[Input, Output, ExpectedOutput, Matches]
         self, previous_run_output_ids: list[set[str]]
     ) -> None:
         self._previous_run_output_ids = previous_run_output_ids
-
-    @final
-    def do_evaluate(
-        self,
-        example: Example[Input, ExpectedOutput],
-        *output: SuccessfulExampleOutput[Output],
-    ) -> Matches:
-        """Executes the evaluation for this specific example.
-
-        Responsible for comparing the input & expected output of a task to the
-        actually generated output. The difference to the standard :class:`EvaluationLogic`'s `do_evaluate` is that
-        this method will, in addition, send the collection of already evaluated outputs to `do_incremental_evaluate`.
-
-        Args:
-            example: Input data of :class:`Example` to produce the output.
-            *output: Outputs of the :class:`Task`.
-
-        Returns:
-            :class:`Matches`: The summary of the pairwise comparisons between the provided outputs.
-        """
-
-        already_evaluated_outputs = []
-        for run_output_ids in self._previous_run_output_ids:
-            already_evaluated_outputs.append(
-                [
-                    current_output
-                    for current_output in output
-                    if current_output.run_id in run_output_ids
-                ]
-            )
-
-        return self.do_incremental_evaluate(
-            example, list(output), already_evaluated_outputs
-        )
 
     @final
     def do_incremental_evaluate(
