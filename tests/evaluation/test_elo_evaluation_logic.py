@@ -65,21 +65,6 @@ def model(client: AlephAlphaClientProtocol) -> ControlModel:
 
 
 @fixture
-def in_memory_dataset_repository() -> InMemoryDatasetRepository:
-    return InMemoryDatasetRepository()
-
-
-@fixture
-def in_memory_run_repository() -> InMemoryRunRepository:
-    return InMemoryRunRepository()
-
-
-@fixture
-def in_memory_evaluation_repository() -> InMemoryEvaluationRepository:
-    return InMemoryEvaluationRepository()
-
-
-@fixture
 def dummy_eval_logic(model: ControlModel) -> DummyEloQaEvalLogic:
     return DummyEloQaEvalLogic(model=model)
 
@@ -129,7 +114,7 @@ def qa_setup(
     in_memory_dataset_repository: InMemoryDatasetRepository,
     in_memory_run_repository: InMemoryRunRepository,
     qa_outputs: Sequence[SingleChunkQaOutput],
-) -> Tuple[Sequence[str], str]:
+) -> Sequence[str]:
     qa_input_text = TextChunk(
         """Surface micromachining builds microstructures by deposition and etching structural layers over a substrate.[1] This is different from Bulk micromachining, in which a silicon substrate wafer is selectively etched to produce structures."""
     )
@@ -167,16 +152,16 @@ def qa_setup(
                 description="runner",
             )
         )
-    return run_ids, dataset_id
+    return run_ids
 
 
 def test_evaluate_runs_creates_correct_matches_for_elo_qa_eval(
-    qa_setup: Tuple[Sequence[str], str],
+    qa_setup: Sequence[str],
     elo_evaluator: Evaluator[
         SingleChunkQaInput, SingleChunkQaOutput, SingleChunkQaOutput, Matches
     ],
 ) -> None:
-    run_ids, _ = qa_setup
+    run_ids = qa_setup
     evaluation_overview = elo_evaluator.evaluate_runs(*run_ids)
 
     eval_result = list(elo_evaluator.evaluation_lineages(evaluation_overview.id))[

@@ -54,13 +54,63 @@ class EloGradingInput(BaseModel):
 
 
 class EloEvaluationLogic(EvaluationLogic[Input, Output, ExpectedOutput, Matches]):
+    def __init__(self) -> None:
+        super().__init__()
+        self._previous_run_output_ids: list[set[str]] = []
+
+    def set_previous_run_output_ids(
+        self, previous_run_output_ids: list[set[str]]
+    ) -> None:
+        self._previous_run_output_ids = previous_run_output_ids
+
     @final
     def do_evaluate(
         self,
         example: Example[Input, ExpectedOutput],
         *output: SuccessfulExampleOutput[Output],
     ) -> Matches:
-        pairs = combinations(output, 2)
+        """Executes the evaluation for this specific example.
+
+        Responsible for comparing the input & expected output of a task to the
+        actually generated output. The difference to the standard :class:`EvaluationLogic`'s `do_evaluate` is that
+        this method will, in addition, send the collection of already evaluated outputs to `do_incremental_evaluate`.
+
+        Args:
+            example: Input data of :class:`Example` to produce the output.
+            *output: Outputs of the :class:`Task`.
+
+        Returns:
+            :class:`Matches`: The summary of the pairwise comparisons between the provided outputs.
+        """
+
+        already_evaluated_outputs = []
+        for run_output_ids in self._previous_run_output_ids:
+            already_evaluated_outputs.append(
+                [
+                    current_output
+                    for current_output in output
+                    if current_output.run_id in run_output_ids
+                ]
+            )
+
+        return self.do_incremental_evaluate(
+            example, list(output), already_evaluated_outputs
+        )
+
+    @final
+    def do_incremental_evaluate(
+        self,
+        example: Example[Input, ExpectedOutput],
+        outputs: list[SuccessfulExampleOutput[Output]],
+        already_evaluated_outputs: list[list[SuccessfulExampleOutput[Output]]],
+    ) -> Matches:
+        pairs = combinations(outputs, 2)
+        unique_pre_evaluated_runs: set[str] = set()
+
+        for pre_run_output in already_evaluated_outputs:
+            for current_output in pre_run_output:
+                unique_pre_evaluated_runs.add(current_output.run_id)
+
         return Matches(
             comparison_evaluations=[
                 ComparisonEvaluation(
@@ -69,14 +119,32 @@ class EloEvaluationLogic(EvaluationLogic[Input, Output, ExpectedOutput, Matches]
                     outcome=self.grade(player_a, player_b, example),
                 )
                 for [player_a, player_b] in pairs
+                if unique_pre_evaluated_runs is None
+                or len(unique_pre_evaluated_runs) == 0
+                or not (
+                    player_a.run_id in unique_pre_evaluated_runs
+                    and player_b.run_id in unique_pre_evaluated_runs
+                )
             ]
         )
 
     @abstractmethod
     def grade(
         self,
-        output_a: SuccessfulExampleOutput[Output],
-        output_b: SuccessfulExampleOutput[Output],
+        first: SuccessfulExampleOutput[Output],
+        second: SuccessfulExampleOutput[Output],
         example: Example[Input, ExpectedOutput],
     ) -> MatchOutcome:
+        """Returns a :class: `MatchOutcome`for the provided two contestants on the given example.
+        Defines the use case specific logic how to determine the winner of the two provided outputs.
+
+
+        Args:
+            first: Instance of :class: `SuccessfulExampleOutut[Output]` of the first contestant in the comparison
+            second: Instance of :class: `SuccessfulExampleOutut[Output]` of the second contestant in the comparison
+            example: Datapoint of :class: `Example` on which the two outputs were generated
+
+        Return:
+            Instance of :class: `MatchOutcome`
+        """
         pass

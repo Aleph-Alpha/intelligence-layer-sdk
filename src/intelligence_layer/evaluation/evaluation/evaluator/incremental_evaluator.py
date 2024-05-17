@@ -34,7 +34,7 @@ class IncrementalEvaluationLogic(
     def do_evaluate(
         self,
         example: Example[Input, ExpectedOutput],
-        *outputs: SuccessfulExampleOutput[Output],
+        *output: SuccessfulExampleOutput[Output],
     ) -> Evaluation:
         """Executes the evaluation for this specific example.
 
@@ -45,7 +45,7 @@ class IncrementalEvaluationLogic(
 
         Args:
             example: Input data of :class:`Task` to produce the output.
-            outputs: Outputs of the :class:`Task`.
+            *output: Outputs of the :class:`Task`.
 
         Returns:
             :class:`Evaluation`: The metrics that come from the evaluated :class:`Task`.
@@ -54,11 +54,15 @@ class IncrementalEvaluationLogic(
         already_evaluated_outputs = []
         for run_output_ids in self._previous_run_output_ids:
             already_evaluated_outputs.append(
-                [output for output in outputs if output.run_id in run_output_ids]
+                [
+                    current_output
+                    for current_output in output
+                    if current_output.run_id in run_output_ids
+                ]
             )
 
         return self.do_incremental_evaluate(
-            example, list(outputs), already_evaluated_outputs
+            example, list(output), already_evaluated_outputs
         )
 
     @abstractmethod

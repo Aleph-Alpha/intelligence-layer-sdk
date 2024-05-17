@@ -7,11 +7,11 @@ from liquid import Template
 from intelligence_layer.core.detect_language import Language
 from intelligence_layer.core.model import CompleteInput, CompleteOutput, ControlModel
 from intelligence_layer.core.tracer.tracer import NoOpTracer, TaskSpan, Tracer
-from intelligence_layer.evaluation import MatchOutcome
 from intelligence_layer.evaluation.dataset.domain import Example
 from intelligence_layer.evaluation.evaluation.evaluator.elo_evaluator import (
     EloEvaluationLogic,
     EloGradingInput,
+    MatchOutcome,
 )
 from intelligence_layer.evaluation.run.domain import SuccessfulExampleOutput
 from intelligence_layer.examples.qa.single_chunk_qa import (
@@ -57,6 +57,23 @@ Response: Answer """
         self._model = model
         self.tracer = tracer
 
+    def grade(
+        self,
+        first: SuccessfulExampleOutput[SingleChunkQaOutput],
+        second: SuccessfulExampleOutput[SingleChunkQaOutput],
+        example: Example[SingleChunkQaInput, SingleChunkQaOutput],
+    ) -> MatchOutcome:
+        grading_input = self._create_grading_input(first, second, example)
+
+        return MatchOutcome(
+            self.do_run(
+                grading_input,
+                self.tracer.task_span(
+                    task_name="elo_qa_run_grader", input=grading_input
+                ),
+            )
+        )
+
     @staticmethod
     def _create_grading_input(
         first: SuccessfulExampleOutput[SingleChunkQaOutput],
@@ -94,23 +111,6 @@ Response: Answer """
         complete_output = self._model.complete_task().run(complete_input, task_span)
 
         return self.calculate_winners(complete_output)
-
-    def grade(
-        self,
-        first: SuccessfulExampleOutput[SingleChunkQaOutput],
-        second: SuccessfulExampleOutput[SingleChunkQaOutput],
-        example: Example[SingleChunkQaInput, SingleChunkQaOutput],
-    ) -> MatchOutcome:
-        grading_input = self._create_grading_input(first, second, example)
-
-        return MatchOutcome(
-            self.do_run(
-                grading_input,
-                self.tracer.task_span(
-                    task_name="elo_qa_run_grader", input=grading_input
-                ),
-            )
-        )
 
     def calculate_winners(self, complete_output: CompleteOutput) -> MatchOutcome:
         default_log_prob = float("-inf")

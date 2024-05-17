@@ -45,9 +45,6 @@ from .classify.prompt_based_classify_with_definitions import (
     PromptBasedClassifyWithDefinitions as PromptBasedClassifyWithDefinitions,
 )
 from .qa.elo_qa_evaluation_logic import EloQaEvaluationLogic as EloQaEvaluationLogic
-from .qa.incremental_elo_qa_evaluation_logic import (
-    IncrementalEloQaEvaluationLogic as IncrementalEloQaEvaluationLogic,
-)
 from .qa.long_context_qa import LongContextQa as LongContextQa
 from .qa.long_context_qa import LongContextQaInput as LongContextQaInput
 from .qa.multiple_chunk_qa import MultipleChunkQa as MultipleChunkQa
@@ -59,6 +56,9 @@ from .qa.multiple_chunk_retriever_qa import (
 )
 from .qa.multiple_chunk_retriever_qa import (
     MultipleChunkRetrieverQaOutput as MultipleChunkRetrieverQaOutput,
+)
+from .qa.elo_qa_evaluation_logic import (
+    EloQaEvaluationLogic as EloQaEvaluationLogic,
 )
 from .qa.retriever_based_qa import EnrichedSubanswer as EnrichedSubanswer
 from .qa.retriever_based_qa import RetrieverBasedQa as RetrieverBasedQa
