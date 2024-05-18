@@ -22,16 +22,8 @@ def aleph_alpha_namespace() -> str:
 
 @fixture
 def collection_path(aleph_alpha_namespace: str) -> CollectionPath:
-    return CollectionPath(namespace=aleph_alpha_namespace, collection="ci-collection")
-
-
-@fixture
-def document_path(
-    document_index: DocumentIndexClient, collection_path: CollectionPath
-) -> DocumentPath:
-    document_index.create_collection(collection_path)
-    return DocumentPath(
-        collection_path=collection_path, document_name="Example Document"
+    return CollectionPath(
+        namespace=aleph_alpha_namespace, collection="intelligence-layer-sdk-ci"
     )
 
 
@@ -89,12 +81,29 @@ def test_document_index_creates_collection(
 
 
 @pytest.mark.internal
+@pytest.mark.parametrize(
+    "document_name",
+    [
+        "Example Document",
+        "!@#$%^&*()-_+={}[]\\|;:'\"<>,.?/~`",
+    ],
+)
 def test_document_index_adds_document(
     document_index: DocumentIndexClient,
-    document_path: DocumentPath,
+    collection_path: CollectionPath,
     document_contents: DocumentContents,
+    document_name: str,
 ) -> None:
+    document_path = DocumentPath(
+        collection_path=collection_path,
+        document_name=document_name,
+    )
     document_index.add_document(document_path, document_contents)
+
+    assert any(
+        d.document_path == document_path
+        for d in document_index.documents(collection_path)
+    )
     assert document_contents == document_index.document(document_path)
 
 
@@ -115,11 +124,20 @@ def test_document_index_searches_asymmetrically(
 
 
 @pytest.mark.internal
+@pytest.mark.parametrize(
+    "document_name",
+    [
+        "Document to be deleted",
+        "Document to be deleted !@#$%^&*()-_+={}[]\\|;:'\"<>,.?/~`",
+    ],
+)
 def test_document_index_deletes_document(
-    document_index: DocumentIndexClient, collection_path: CollectionPath
+    document_index: DocumentIndexClient,
+    collection_path: CollectionPath,
+    document_name: str,
 ) -> None:
     document_path = DocumentPath(
-        collection_path=collection_path, document_name="Document to be deleted"
+        collection_path=collection_path, document_name=document_name
     )
     document_contents = DocumentContents.from_text("Some text...")
 
@@ -145,11 +163,30 @@ def test_document_index_raises_on_getting_non_existing_document(
     )
 
 
-def test_document_path_from_string() -> None:
-    abc = DocumentPath.from_slash_separated_str("a/b/c")
-    assert abc == DocumentPath(
-        collection_path=CollectionPath(namespace="a", collection="b"), document_name="c"
-    )
+@pytest.mark.parametrize(
+    "slash_separated_str,expected_document_path",
+    [
+        (
+            "a/b/c",
+            DocumentPath(
+                collection_path=CollectionPath(namespace="a", collection="b"),
+                document_name="c",
+            ),
+        ),
+        (
+            "a/b/c/d",
+            DocumentPath(
+                collection_path=CollectionPath(namespace="a", collection="b"),
+                document_name="c/d",
+            ),
+        ),
+    ],
+)
+def test_document_path_from_string(
+    slash_separated_str: str, expected_document_path: DocumentPath
+) -> None:
+    actual_document_path = DocumentPath.from_slash_separated_str(slash_separated_str)
+    assert actual_document_path == expected_document_path
     with raises(AssertionError):
         DocumentPath.from_slash_separated_str("a/c")
 
@@ -159,7 +196,7 @@ def test_document_list_all_documents(
 ) -> None:
     filter_result = document_index.documents(collection_path)
 
-    assert len(filter_result) == 2
+    assert len(filter_result) == 3
 
 
 def test_document_list_max_n_documents(

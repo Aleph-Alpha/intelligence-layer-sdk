@@ -12,6 +12,7 @@
  - Add `elo_qa_eval` tutorial notebook describing the use of an (incremental) Elo evaluation use case for QA models.
 ### Fixes
 - `ExpandChunks`-task is now fast even for very large documents
+- The document index client now correctly URL-encodes document names in its queries.
 
 ### Deprecations
 ...

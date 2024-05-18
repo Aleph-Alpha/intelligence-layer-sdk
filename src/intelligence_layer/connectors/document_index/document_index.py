@@ -2,6 +2,7 @@ from datetime import datetime
 from http import HTTPStatus
 from json import dumps
 from typing import Annotated, Any, Literal, Mapping, Optional, Sequence
+from urllib.parse import quote
 
 import requests
 from pydantic import BaseModel, Field
@@ -100,6 +101,9 @@ class DocumentPath(BaseModel, frozen=True):
     collection_path: CollectionPath
     document_name: str
 
+    def encoded_document_name(self) -> str:
+        return quote(self.document_name, safe="")
+
     @classmethod
     def from_json(cls, document_path_json: Mapping[str, str]) -> "DocumentPath":
         return cls(
@@ -115,7 +119,7 @@ class DocumentPath(BaseModel, frozen=True):
 
     @classmethod
     def from_slash_separated_str(cls, path: str) -> "DocumentPath":
-        split = path.split("/")
+        split = path.split("/", 2)
         assert len(split) == 3
         return cls(
             collection_path=CollectionPath(
@@ -492,7 +496,7 @@ class DocumentIndexClient:
                 Currently only supports text.
         """
 
-        url = f"{self._base_document_index_url}/collections/{document_path.collection_path.namespace}/{document_path.collection_path.collection}/docs/{document_path.document_name}"
+        url = f"{self._base_document_index_url}/collections/{document_path.collection_path.namespace}/{document_path.collection_path.collection}/docs/{document_path.encoded_document_name()}"
         response = requests.put(
             url, data=dumps(contents._to_modalities_json()), headers=self.headers
         )
@@ -505,7 +509,7 @@ class DocumentIndexClient:
             document_path: Consists of `collection_path` and name of document to be deleted.
         """
 
-        url = f"{self._base_document_index_url}/collections/{document_path.collection_path.namespace}/{document_path.collection_path.collection}/docs/{document_path.document_name}"
+        url = f"{self._base_document_index_url}/collections/{document_path.collection_path.namespace}/{document_path.collection_path.collection}/docs/{document_path.encoded_document_name()}"
         response = requests.delete(url, headers=self.headers)
         self._raise_for_status(response)
 
@@ -519,7 +523,7 @@ class DocumentIndexClient:
             Content of the retrieved document.
         """
 
-        url = f"{self._base_document_index_url}/collections/{document_path.collection_path.namespace}/{document_path.collection_path.collection}/docs/{document_path.document_name}"
+        url = f"{self._base_document_index_url}/collections/{document_path.collection_path.namespace}/{document_path.collection_path.collection}/docs/{document_path.encoded_document_name()}"
         response = requests.get(url, headers=self.headers)
         self._raise_for_status(response)
         return DocumentContents._from_modalities_json(response.json())
