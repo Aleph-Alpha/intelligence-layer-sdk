@@ -3,6 +3,20 @@
 ## Unreleased
 
 ### Breaking Changes
+...
+
+### New Features
+...
+
+### Fixes
+...
+
+### Deprecations
+...
+
+## 2.0.0
+
+### Breaking Changes
  - Changed the behavior of `IncrementalEvaluator::do_evaluate` such that it now sends all `SuccessfulExampleOutput`s to `do_incremental_evaluate` instead of only the new `SuccessfulExampleOutput`s.
 
 ### New Features
