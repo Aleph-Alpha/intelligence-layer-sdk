@@ -177,7 +177,6 @@ The how-tos are quick lookups about how to do things. Compared to the tutorials,
 | [...run a task on a dataset](./src/documentation/how_tos/how_to_run_a_task_on_a_dataset.ipynb)                                                         | Run a task on a whole dataset instead of single examples                   |
 | [...evaluate multiple runs](./src/documentation/how_tos/how_to_evaluate_runs.ipynb)                                                                    | Evaluate (multiple) runs in a single evaluation                            |
 | [...aggregate multiple evaluations](./src/documentation/how_tos/how_to_aggregate_evaluations.ipynb)                                                    | Aggregate (multiple) evaluations in a single
-| [...implement elo evaluations](.src/documentation/how_tos/how_to_implement_elo_evaluations.ipynb)
  aggregation                   |
 | [...retrieve data for analysis](./src/documentation/how_tos/how_to_retrieve_data_for_analysis.ipynb)                                                   | Retrieve experiment data in multiple different ways                        |
 | [...implement a custom human evaluation](./src/documentation/how_tos/how_to_human_evaluation_via_argilla.ipynb)                                        | Necessary steps to create an evaluation with humans as a judge via Argilla |
