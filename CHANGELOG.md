@@ -9,7 +9,7 @@
 ...
 
 ### Fixes
-...
+- The document index client now correctly URL-encodes document names in its queries.
 
 ### Deprecations
 ...
@@ -28,7 +28,6 @@
 
 ### Fixes
 - `ExpandChunks`-task is now fast even for very large documents
-- The document index client now correctly URL-encodes document names in its queries.
 
 ### Deprecations
 ...
