@@ -1,7 +1,5 @@
 from intelligence_layer.core import (
     CompositeTracer,
-    FileTracer,
-    InMemorySpan,
     InMemoryTracer,
     Task,
 )

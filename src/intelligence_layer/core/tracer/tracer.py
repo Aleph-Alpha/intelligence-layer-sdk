@@ -212,8 +212,11 @@ class Span(Tracer, AbstractContextManager["Span"]):
             trace_id = context.trace_id
         self.context = Context(trace_id=trace_id, span_id=span_id)
         self.status_code = SpanStatus.OK
+        self._closed = False
 
     def __enter__(self) -> Self:
+        if self._closed:
+            raise ValueError("Spans cannot be opened once they have been close.")
         return self
 
     @abstractmethod
@@ -228,6 +231,8 @@ class Span(Tracer, AbstractContextManager["Span"]):
         By default, the `Input` and `Output` of each :class:`Task` are logged automatically, but
         you can log anything else that seems relevant to understanding the process of a given task.
 
+        Logging to closed spans is undefined behavior.
+
         Args:
             message: A description of the value you are logging, such as the step in the task this
                 is related to.
@@ -241,6 +246,8 @@ class Span(Tracer, AbstractContextManager["Span"]):
     def end(self, timestamp: Optional[datetime] = None) -> None:
         """Marks the Span as done, with the end time of the span. The Span should be regarded
         as complete, and no further logging should happen with it.
+
+        Ending a closed span in undefined behavior.
 
         Args:
             timestamp: Optional override of the timestamp, otherwise should be set to now.
@@ -272,6 +279,7 @@ class Span(Tracer, AbstractContextManager["Span"]):
             self.log(error_value.message, error_value)
             self.status_code = SpanStatus.ERROR
         self.end()
+        self._closed = True
 
 
 class TaskSpan(Span):

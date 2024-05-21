@@ -44,9 +44,7 @@ class CompositeTracer(Tracer, Generic[TracerVar]):
         timestamp: Optional[datetime] = None,
     ) -> "CompositeSpan[Span]":
         timestamp = timestamp or utc_now()
-        return CompositeSpan(
-            [tracer.span(name, timestamp) for tracer in self.tracers]
-        )
+        return CompositeSpan([tracer.span(name, timestamp) for tracer in self.tracers])
 
     def task_span(
         self,
@@ -56,10 +54,7 @@ class CompositeTracer(Tracer, Generic[TracerVar]):
     ) -> "CompositeTaskSpan":
         timestamp = timestamp or utc_now()
         return CompositeTaskSpan(
-            [
-                tracer.task_span(task_name, input, timestamp)
-                for tracer in self.tracers
-            ]
+            [tracer.task_span(task_name, input, timestamp) for tracer in self.tracers]
         )
 
     def export_for_viewing(self) -> Sequence[ExportedSpan]:

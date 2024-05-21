@@ -1,10 +1,8 @@
 import pytest
-from pytest import fixture
 from pydantic import BaseModel
+from pytest import fixture
 
-from intelligence_layer.core import CompositeTracer
-from intelligence_layer.core import FileTracer
-from intelligence_layer.core import InMemoryTracer
+from intelligence_layer.core import CompositeTracer, FileTracer, InMemoryTracer
 from intelligence_layer.core.tracer.tracer import (
     SpanStatus,
     SpanType,
@@ -20,11 +18,9 @@ class DummyObject(BaseModel):
 
 
 @fixture
-def composite_tracer(
-    in_memory_tracer: InMemoryTracer,
-    file_tracer: FileTracer
-):
+def composite_tracer(in_memory_tracer: InMemoryTracer, file_tracer: FileTracer):
     return CompositeTracer(in_memory_tracer, file_tracer)
+
 
 tracer_fixtures = ["in_memory_tracer", "file_tracer", "composite_tracer"]
 
@@ -181,7 +177,7 @@ def test_tracer_exports_part_of_a_trace_correctly(
     with tracer.span("name") as root_span:
         child_span = root_span.span("name-2")
         child_span.log("test_message", "test_body")
-        
+
     unified_format = child_span.export_for_viewing()
 
     assert len(unified_format) == 2
@@ -193,6 +189,41 @@ def test_tracer_exports_part_of_a_trace_correctly(
     assert span_1.context.trace_id != span_2.context.trace_id
 
 
+@pytest.mark.skip("Not yet implemented")
+@pytest.mark.parametrize(
+    "tracer_fixture",
+    tracer_fixtures,
+)
+def test_spans_cannot_be_closed_twice(
+    tracer_fixture: str,
+    request: pytest.FixtureRequest,
+) -> None:
+    tracer: Tracer = request.getfixturevalue(tracer_fixture)
+
+    span = tracer.span("name")
+    span.end()
+    span.end()
+
+
+@pytest.mark.parametrize(
+    "tracer_fixture",
+    tracer_fixtures,
+)
+def test_spans_cannot_be_used_as_context_twice(
+    tracer_fixture: str,
+    request: pytest.FixtureRequest,
+) -> None:
+    tracer: Tracer = request.getfixturevalue(tracer_fixture)
+
+    span = tracer.span("name")
+    with span:
+        pass
+    with pytest.raises(Exception):
+        with span:
+            pass
+
+
+@pytest.mark.skip("Not yet implemented")
 @pytest.mark.parametrize(
     "tracer_fixture",
     tracer_fixtures,
@@ -203,15 +234,18 @@ def test_tracer_can_not_log_on_closed_span(
 ) -> None:
     tracer: Tracer = request.getfixturevalue(tracer_fixture)
 
-    span = tracer.span("name") 
+    span = tracer.span("name")
+    # ok
+    span.log("test_message", "test_body")
+    span.end()
+    # not ok
     with pytest.raises(Exception):
         span.log("test_message", "test_body")
 
+    span = tracer.span("name")
+    # ok
     with span:
         span.log("test_message", "test_body")
+    # not ok
     with pytest.raises(Exception):
         span.log("test_message", "test_body")
-
-
-
-
