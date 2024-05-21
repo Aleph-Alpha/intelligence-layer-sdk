@@ -30,7 +30,7 @@ from intelligence_layer.evaluation.evaluation.evaluator.async_evaluator import (
 from intelligence_layer.evaluation.evaluation.evaluator.base_evaluator import (
     EvaluationLogicBase,
 )
-from intelligence_layer.evaluation.evaluation.evaluator.elo_evaluator import (
+from intelligence_layer.evaluation.evaluation.evaluator.incremental_evaluator import (
     ComparisonEvaluation,
     MatchOutcome,
 )

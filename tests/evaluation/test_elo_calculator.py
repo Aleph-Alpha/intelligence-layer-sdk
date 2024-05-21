@@ -5,7 +5,7 @@ from pydantic import BaseModel
 from pytest import fixture
 
 from intelligence_layer.evaluation import EloCalculator, MatchOutcome, WinRateCalculator
-from intelligence_layer.evaluation.evaluation.evaluator.elo_evaluator import (
+from intelligence_layer.evaluation.evaluation.evaluator.incremental_evaluator import (
     ComparisonEvaluation,
 )
 

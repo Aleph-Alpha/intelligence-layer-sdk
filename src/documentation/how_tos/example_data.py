@@ -17,6 +17,12 @@ from intelligence_layer.evaluation import (
     SuccessfulExampleOutput,
 )
 from intelligence_layer.evaluation.aggregation.aggregator import AggregationLogic
+from intelligence_layer.evaluation.evaluation.evaluator.incremental_evaluator import (
+    ComparisonEvaluation,
+    EloEvaluationLogic,
+    Matches,
+    MatchOutcome,
+)
 
 
 class DummyExample(Example[str, str]):
@@ -39,6 +45,34 @@ class DummyEvaluationLogic(EvaluationLogic[str, str, str, DummyEvaluation]):
         output_str = "(" + (", ".join(o.output for o in output)) + ")"
         return DummyEvaluation(
             eval=f"{example.input}, {example.expected_output}, {output_str} -> evaluation"
+        )
+
+
+class DummyEloEvaluationLogic(EloEvaluationLogic[str, str, str]):
+    def grade(
+        self,
+        first: SuccessfulExampleOutput[str],
+        second: SuccessfulExampleOutput[str],
+        example: Example[str, str],
+    ) -> MatchOutcome:
+        return MatchOutcome.DRAW
+
+    def do_incremental_evaluate(
+        self,
+        example: Example[str, str],
+        outputs: list[SuccessfulExampleOutput[str]],
+        already_evaluated_outputs: list[list[SuccessfulExampleOutput[str]]],
+    ) -> Matches:
+        player_a = SuccessfulExampleOutput(run_id="1", example_id="1", output="1")
+        player_b = SuccessfulExampleOutput(run_id="2", example_id="2", output="2")
+        return Matches(
+            comparison_evaluations=[
+                ComparisonEvaluation(
+                    first_player="1",
+                    second_player="2",
+                    outcome=self.grade(player_a, player_b, example),
+                )
+            ]
         )
 
 

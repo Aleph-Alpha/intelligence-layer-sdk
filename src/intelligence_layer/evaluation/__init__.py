@@ -63,16 +63,19 @@ from .evaluation.evaluator.argilla_evaluator import (
 from .evaluation.evaluator.async_evaluator import (
     AsyncEvaluationRepository as AsyncEvaluationRepository,
 )
-from .evaluation.evaluator.elo_evaluator import (
-    ComparisonEvaluation as ComparisonEvaluation,
-)
-from .evaluation.evaluator.elo_evaluator import EloEvaluationLogic as EloEvaluationLogic
-from .evaluation.evaluator.elo_evaluator import Matches as Matches
-from .evaluation.evaluator.elo_evaluator import MatchOutcome as MatchOutcome
 from .evaluation.evaluator.evaluator import EvaluationLogic as EvaluationLogic
 from .evaluation.evaluator.evaluator import Evaluator as Evaluator
 from .evaluation.evaluator.evaluator import (
     SingleOutputEvaluationLogic as SingleOutputEvaluationLogic,
+)
+from .evaluation.evaluator.incremental_evaluator import (
+    ComparisonEvaluation as ComparisonEvaluation,
+)
+from .evaluation.evaluator.incremental_evaluator import (
+    EloEvaluationLogic as EloEvaluationLogic,
+)
+from .evaluation.evaluator.incremental_evaluator import (
+    EloGradingInput as EloGradingInput,
 )
 from .evaluation.evaluator.incremental_evaluator import (
     IncrementalEvaluationLogic as IncrementalEvaluationLogic,
@@ -80,6 +83,8 @@ from .evaluation.evaluator.incremental_evaluator import (
 from .evaluation.evaluator.incremental_evaluator import (
     IncrementalEvaluator as IncrementalEvaluator,
 )
+from .evaluation.evaluator.incremental_evaluator import Matches as Matches
+from .evaluation.evaluator.incremental_evaluator import MatchOutcome as MatchOutcome
 from .evaluation.file_evaluation_repository import (
     AsyncFileEvaluationRepository as AsyncFileEvaluationRepository,
 )
