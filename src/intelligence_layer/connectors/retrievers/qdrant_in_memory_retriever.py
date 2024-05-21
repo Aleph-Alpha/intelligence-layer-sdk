@@ -75,10 +75,16 @@ class QdrantInMemoryRetriever(BaseRetriever[int]):
         self._query_representation, self._document_representation = retriever_type.value
         self._distance_metric = distance_metric
 
-        self._search_client.recreate_collection(
+        if self._search_client.collection_exists(collection_name=self._collection_name):
+            self._search_client.delete_collection(
+                collection_name=self._collection_name,
+            )
+
+        self._search_client.create_collection(
             collection_name=self._collection_name,
             vectors_config=VectorParams(size=128, distance=self._distance_metric),
         )
+
         self._add_texts_to_memory(documents)
 
     def get_relevant_documents_with_scores(
