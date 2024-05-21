@@ -4,12 +4,14 @@
 
 ### Breaking Changes
  - Changed the behavior of `IncrementalEvaluator::do_evaluate` such that it now sends all `SuccessfulExampleOutput`s to `do_incremental_evaluate` instead of only the new `SuccessfulExampleOutput`s.
- -
+
 ### New Features
  - Add generic `EloEvaluationLogic` class for implementation of Elo evaluation use cases.
  - Add `EloQaEvaluationLogic` for Elo evaluation of QA runs, with optional later addition of more runs to an existing evaluation.
  - Add `EloAggregationAdapter` class to simplify using the `ComparisonEvaluationAggregationLogic` for different Elo use cases.
  - Add `elo_qa_eval` tutorial notebook describing the use of an (incremental) Elo evaluation use case for QA models.
+ - Add `how_to_implement_elo_evaluations` how-to as skeleton for implementing Elo evaluation cases
+
 ### Fixes
 - `ExpandChunks`-task is now fast even for very large documents
 
