@@ -1,7 +1,7 @@
 from datetime import datetime
 from json import loads
 from pathlib import Path
-from typing import Optional
+from typing import Optional, Sequence
 
 from pydantic import BaseModel
 
@@ -12,7 +12,21 @@ from intelligence_layer.core.tracer.persistent_tracer import (
     PersistentTracer,
 )
 from intelligence_layer.core.tracer.tracer import LogLine, PydanticSerializable
-
+from intelligence_layer.core.tracer.tracer import (
+    Context,
+    Event,
+    ExportedSpan,
+    ExportedSpanList,
+    LogEntry,
+    PydanticSerializable,
+    Span,
+    SpanAttributes,
+    TaskSpan,
+    TaskSpanAttributes,
+    Tracer,
+    _render_log_value,
+    utc_now,
+)
 
 class FileTracer(PersistentTracer):
     """A `Tracer` that logs to a file.
@@ -30,7 +44,7 @@ class FileTracer(PersistentTracer):
             the child-elements for a tracer can be identified by referring to this id as parent.
     """
 
-    def __init__(self, log_file_path: Path | str) -> None:
+    def __init__(self, log_file_path: Path | str, *args, **kwargs) -> None:
         super().__init__()
         self._log_file_path = Path(log_file_path)
 
@@ -48,9 +62,8 @@ class FileTracer(PersistentTracer):
         self,
         name: str,
         timestamp: Optional[datetime] = None,
-        trace_id: Optional[str] = None,
     ) -> "FileSpan":
-        span = FileSpan(self._log_file_path, trace_id=self.ensure_id(trace_id))
+        span = FileSpan(self._log_file_path, context=self.context)
         self._log_span(span, name, timestamp)
         return span
 
@@ -59,11 +72,10 @@ class FileTracer(PersistentTracer):
         task_name: str,
         input: PydanticSerializable,
         timestamp: Optional[datetime] = None,
-        trace_id: Optional[str] = None,
     ) -> "FileTaskSpan":
         task = FileTaskSpan(
             self._log_file_path,
-            trace_id=self.ensure_id(trace_id),
+            context=self.context,
         )
         self._log_task(task, task_name, input, timestamp)
         return task
@@ -79,23 +91,16 @@ class FileTracer(PersistentTracer):
             return self._parse_log(filtered_traces)
 
 
+
 class FileSpan(PersistentSpan, FileTracer):
     """A `Span` created by `FileTracer.span`."""
 
-    def id(self) -> str:
-        return self.trace_id
-
-    def __init__(self, log_file_path: Path, trace_id: str) -> None:
-        super().__init__(log_file_path)
-        self.trace_id = trace_id
+    def __init__(self, log_file_path: Path, context: Optional[Context] = None) -> None:
+        PersistentSpan.__init__(self, context=context)
+        FileTracer.__init__(self, log_file_path=log_file_path)
+    
 
 
 class FileTaskSpan(PersistentTaskSpan, FileSpan):
     """A `TaskSpan` created by `FileTracer.task_span`."""
-
-    def __init__(
-        self,
-        log_file_path: Path,
-        trace_id: str,
-    ) -> None:
-        super().__init__(log_file_path, trace_id)
+    pass

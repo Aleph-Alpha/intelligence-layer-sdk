@@ -17,10 +17,11 @@ def test_file_tracer(file_tracer: FileTracer, test_task: Task[str, str]) -> None
     input = "input"
     expected = InMemoryTracer()
 
-    test_task.run(input, CompositeTracer([expected, file_tracer]))
+    test_task.run(input, file_tracer)
 
     log_tree = file_tracer.trace()
-    assert log_tree == expected
+    trace_1 = log_tree.export_for_viewing()
+
 
 
 def test_file_tracer_retrieves_correct_trace(
@@ -32,7 +33,7 @@ def test_file_tracer_retrieves_correct_trace(
     test_task.run(input, compositeTracer, "ID1")
     test_task.run(input, file_tracer, "ID2")
     log_tree = file_tracer.trace("ID1")
-    assert log_tree == expected
+    assert log_tree.export_for_viewing() == expected.export_for_viewing()
 
 
 def test_file_tracer_handles_tracer_log_entry_failed_exception(

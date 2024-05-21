@@ -19,7 +19,7 @@ class DummyObject(BaseModel):
 
 @fixture
 def composite_tracer(in_memory_tracer: InMemoryTracer, file_tracer: FileTracer):
-    return CompositeTracer(in_memory_tracer, file_tracer)
+    return CompositeTracer(tracers=[in_memory_tracer, file_tracer])
 
 
 tracer_fixtures = ["in_memory_tracer", "file_tracer", "composite_tracer"]
@@ -50,7 +50,7 @@ def test_tracer_exports_spans_to_unified_format(
     assert len(span.events) == 1
     log = span.events[0]
     assert log.message == "test"
-    assert log.body == dummy_object
+    assert log.body == dummy_object or DummyObject.model_validate(log.body) == dummy_object
     assert span.start_time < log.timestamp < span.end_time
 
 
@@ -150,8 +150,8 @@ def test_tracer_exports_unrelated_spans_correctly(
 ) -> None:
     tracer: Tracer = request.getfixturevalue(tracer_fixture)
 
-    tracer.span("name")
-    tracer.span("name-2")
+    tracer.span("name").end()
+    tracer.span("name-2").end()
 
     unified_format = tracer.export_for_viewing()
 

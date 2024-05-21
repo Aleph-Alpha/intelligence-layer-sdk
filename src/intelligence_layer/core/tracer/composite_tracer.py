@@ -8,6 +8,7 @@ from intelligence_layer.core.tracer.tracer import (
     TaskSpan,
     Tracer,
     utc_now,
+    Context
 )
 
 TracerVar = TypeVar("TracerVar", bound=Tracer)
@@ -37,6 +38,7 @@ class CompositeTracer(Tracer, Generic[TracerVar]):
     def __init__(self, tracers: Sequence[TracerVar]) -> None:
         assert len(tracers) > 0
         self.tracers = tracers
+        self.context = tracers[0].context
 
     def span(
         self,
@@ -71,9 +73,9 @@ class CompositeSpan(Generic[SpanVar], CompositeTracer[SpanVar], Span):
     Args:
         tracers: spans that will be forwarded all subsequent log and span calls.
     """
-
-    def id(self) -> str:
-        return self.tracers[0].id()
+    def __init__(self, tracers: Sequence[SpanVar],context: Optional[Context] = None) -> None:
+        CompositeTracer.__init__(self, tracers)
+        Span.__init__(self, context=context)
 
     def log(
         self,

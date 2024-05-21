@@ -1,22 +1,29 @@
 import os
 from datetime import datetime
 from typing import Optional, Sequence, Union
+from uuid import UUID
 
 import requests
 import rich
-from pydantic import BaseModel, SerializeAsAny
+from pydantic import BaseModel, Field, SerializeAsAny
 from requests import HTTPError
 from rich.tree import Tree
 
 from intelligence_layer.core.tracer.tracer import (
     Context,
+    EndSpan,
+    EndTask,
     Event,
     ExportedSpan,
     ExportedSpanList,
     LogEntry,
+    LogLine,
+    PlainEntry,
     PydanticSerializable,
     Span,
     SpanAttributes,
+    StartSpan,
+    StartTask,
     TaskSpan,
     TaskSpanAttributes,
     Tracer,
@@ -37,8 +44,7 @@ class InMemoryTracer(Tracer):
             log entries.
     """
 
-    def __init__(self, *args, **kwargs) -> None:
-        super().__init__(*args, **kwargs)
+    def __init__(self) -> None:
         self.entries: list[Union[LogEntry, "InMemoryTaskSpan", "InMemorySpan"]] = []
 
     def span(
@@ -124,7 +130,8 @@ class InMemorySpan(InMemoryTracer, Span):
         context: Optional[Context] = None,
         start_timestamp: Optional[datetime] = None,
     ) -> None:
-        super().__init__(context=context)
+        InMemoryTracer.__init__(self)
+        Span.__init__(self, context=context)
         self.parent_id = None if context is None else context.span_id
         self.name = name
         self.start_timestamp = (
@@ -226,53 +233,66 @@ class InMemoryTaskSpan(InMemorySpan, TaskSpan):
         return tree
 
 
-class TreeBuilder(BaseModel):
-    pass
-    # root: InMemoryTracer = InMemoryTracer()
-    # tracers: dict[UUID, InMemoryTracer] = Field(default_factory=dict)
-    # tasks: dict[UUID, InMemoryTaskSpan] = Field(default_factory=dict)
-    # spans: dict[UUID, InMemorySpan] = Field(default_factory=dict)
+class TreeBuilder:
+    def __init__(self) -> None:
+        self.root = InMemoryTracer()
+        self.tracers: dict[UUID, InMemoryTracer] = dict()
+        self.tasks: dict[UUID, InMemoryTaskSpan] = dict()
+        self.spans: dict[UUID, InMemorySpan] = dict()
 
-    # def start_task(self, log_line: LogLine) -> None:
-    #     start_task = StartTask.model_validate(log_line.entry)
-    #     child = InMemoryTaskSpan(
-    #         name=start_task.name,
-    #         input=start_task.input,
-    #         start_timestamp=start_task.start,
-    #         trace_id=start_task.trace_id,
-    #     )
-    #     self.tracers[start_task.uuid] = child
-    #     self.tasks[start_task.uuid] = child
-    #     self.tracers.get(start_task.parent, self.root).entries.append(child)
+    def start_task(self, log_line: LogLine) -> None:
+        start_task = StartTask.model_validate(log_line.entry)
+        converted_span = InMemoryTaskSpan(
+            name=start_task.name,
+            input=start_task.input,
+            start_timestamp=start_task.start,
+                context=Context(
+                trace_id=start_task.trace_id, span_id=str(start_task.parent)
+            ) if start_task.trace_id != str(start_task.uuid) else None
+        )
+        # if root, also change the trace id
+        if converted_span.context.trace_id == converted_span.context.span_id:
+            converted_span.context.trace_id = str(start_task.uuid)
+        converted_span.context.span_id = str(start_task.uuid)
+        self.tracers.get(start_task.parent, self.root).entries.append(converted_span)
+        self.tracers[start_task.uuid] = converted_span
+        self.tasks[start_task.uuid] = converted_span
 
-    # def end_task(self, log_line: LogLine) -> None:
-    #     end_task = EndTask.model_validate(log_line.entry)
-    #     task_span = self.tasks[end_task.uuid]
-    #     task_span.end_timestamp = end_task.end
-    #     task_span.record_output(end_task.output)
+    def end_task(self, log_line: LogLine) -> None:
+        end_task = EndTask.model_validate(log_line.entry)
+        task_span = self.tasks[end_task.uuid]
+        task_span.record_output(end_task.output)
+        task_span.end(end_task.end)
 
-    # def start_span(self, log_line: LogLine) -> None:
-    #     start_span = StartSpan.model_validate(log_line.entry)
-    #     child = InMemorySpan(
-    #         name=start_span.name,
-    #         start_timestamp=start_span.start,
-    #         trace_id=start_span.trace_id,
-    #     )
-    #     self.tracers[start_span.uuid] = child
-    #     self.spans[start_span.uuid] = child
-    #     self.tracers.get(start_span.parent, self.root).entries.append(child)
+    def start_span(self, log_line: LogLine) -> None:
+        start_span = StartSpan.model_validate(log_line.entry)
+        converted_span = InMemorySpan(
+            name=start_span.name,
+            start_timestamp=start_span.start,
+            context=Context(
+                trace_id=start_span.trace_id, span_id=str(start_span.parent)
+            ) if start_span.trace_id != str(start_span.uuid) else None
+        )
+        # if root, also change the trace id
+        if converted_span.context.trace_id == converted_span.context.span_id:
+            converted_span.context.trace_id = str(start_span.uuid)
+        converted_span.context.span_id = str(start_span.uuid)
+                
+        self.tracers.get(start_span.parent, self.root).entries.append(converted_span)
+        self.tracers[start_span.uuid] = converted_span
+        self.spans[start_span.uuid] = converted_span
 
-    # def end_span(self, log_line: LogLine) -> None:
-    #     end_span = EndSpan.model_validate(log_line.entry)
-    #     span = self.spans[end_span.uuid]
-    #     span.end_timestamp = end_span.end
+    def end_span(self, log_line: LogLine) -> None:
+        end_span = EndSpan.model_validate(log_line.entry)
+        span = self.spans[end_span.uuid]
+        span.end(end_span.end)
 
-    # def plain_entry(self, log_line: LogLine) -> None:
-    #     plain_entry = PlainEntry.model_validate(log_line.entry)
-    #     entry = LogEntry(
-    #         message=plain_entry.message,
-    #         value=plain_entry.value,
-    #         timestamp=plain_entry.timestamp,
-    #         trace_id=plain_entry.trace_id,
-    #     )
-    #     self.tracers[plain_entry.parent].entries.append(entry)
+    def plain_entry(self, log_line: LogLine) -> None:
+        plain_entry = PlainEntry.model_validate(log_line.entry)
+        entry = LogEntry(
+            message=plain_entry.message,
+            value=plain_entry.value,
+            timestamp=plain_entry.timestamp,
+            trace_id=plain_entry.trace_id,
+        )
+        self.tracers[plain_entry.parent].entries.append(entry)

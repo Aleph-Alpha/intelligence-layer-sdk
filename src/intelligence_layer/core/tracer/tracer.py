@@ -204,7 +204,7 @@ class Span(Tracer, AbstractContextManager["Span"]):
     """
 
     def __init__(self, context: Optional[Context] = None):
-        super().__init__()
+        #super().__init__()
         span_id = str(uuid4())
         if context is None:
             trace_id = span_id
