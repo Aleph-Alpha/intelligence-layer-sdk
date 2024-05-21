@@ -179,6 +179,7 @@ The how-tos are quick lookups about how to do things. Compared to the tutorials,
 | [...aggregate multiple evaluations](./src/documentation/how_tos/how_to_aggregate_evaluations.ipynb)                                                    | Aggregate (multiple) evaluations in a single aggregation                   |
 | [...retrieve data for analysis](./src/documentation/how_tos/how_to_retrieve_data_for_analysis.ipynb)                                                   | Retrieve experiment data in multiple different ways                        |
 | [...implement a custom human evaluation](./src/documentation/how_tos/how_to_human_evaluation_via_argilla.ipynb)                                        | Necessary steps to create an evaluation with humans as a judge via Argilla |
+| [...implement elo evaluations](./src/documentation/how_tos/how_to_implement_elo_evaluations.ipynb)                                                     | Evaluate runs and create ELO ranking for them                               |
 
 # Models
 
