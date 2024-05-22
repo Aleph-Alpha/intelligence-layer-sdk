@@ -204,7 +204,7 @@ class Span(Tracer, AbstractContextManager["Span"]):
     """
 
     def __init__(self, context: Optional[Context] = None):
-        #super().__init__()
+        # super().__init__()
         span_id = str(uuid4())
         if context is None:
             trace_id = span_id
@@ -216,7 +216,7 @@ class Span(Tracer, AbstractContextManager["Span"]):
 
     def __enter__(self) -> Self:
         if self._closed:
-            raise ValueError("Spans cannot be opened once they have been close.")
+            raise ValueError("Spans cannot be opened once they have been closed.")
         return self
 
     @abstractmethod
@@ -252,7 +252,7 @@ class Span(Tracer, AbstractContextManager["Span"]):
         Args:
             timestamp: Optional override of the timestamp, otherwise should be set to now.
         """
-        ...
+        self._closed = True
 
     def ensure_id(self, id: str | None) -> str:
         """Returns a valid id for tracing.
@@ -444,6 +444,7 @@ class EndTask(BaseModel):
     uuid: UUID
     end: datetime
     output: SerializeAsAny[PydanticSerializable]
+    status_code: SpanStatus = SpanStatus.OK
 
 
 class StartSpan(BaseModel):
@@ -475,6 +476,7 @@ class EndSpan(BaseModel):
 
     uuid: UUID
     end: datetime
+    status_code: SpanStatus = SpanStatus.OK
 
 
 class PlainEntry(BaseModel):

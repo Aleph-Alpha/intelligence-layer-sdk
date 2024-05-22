@@ -9,6 +9,7 @@ from intelligence_layer.core.tracer.in_memory_tracer import InMemoryTracer, Tree
 from intelligence_layer.core.tracer.tracer import (
     EndSpan,
     EndTask,
+    ExportedSpan,
     LogLine,
     PlainEntry,
     PydanticSerializable,
@@ -20,26 +21,11 @@ from intelligence_layer.core.tracer.tracer import (
     utc_now,
 )
 
-from intelligence_layer.core.tracer.tracer import (
-    Context,
-    Event,
-    ExportedSpan,
-    ExportedSpanList,
-    LogEntry,
-    PydanticSerializable,
-    Span,
-    SpanAttributes,
-    TaskSpan,
-    TaskSpanAttributes,
-    Tracer,
-    _render_log_value,
-    utc_now,
-)
 
 class PersistentTracer(Tracer, ABC):
     def __init__(self) -> None:
         self.current_id = uuid4()
-        
+
     @abstractmethod
     def _log_entry(self, id: str, entry: BaseModel) -> None:
         pass
@@ -77,7 +63,9 @@ class PersistentTracer(Tracer, ABC):
                 task_span.context.trace_id,
                 StartTask(
                     uuid=task_span.context.span_id,
-                    parent=self.context.span_id if self.context else task_span.context.trace_id,
+                    parent=self.context.span_id
+                    if self.context
+                    else task_span.context.trace_id,
                     name=task_name,
                     start=timestamp or utc_now(),
                     input=input,
@@ -89,7 +77,9 @@ class PersistentTracer(Tracer, ABC):
                 task_span.context.trace_id,
                 StartTask(
                     uuid=task_span.context.span_id,
-                    parent=self.context.span_id if self.context else task_span.context.trace_id,
+                    parent=self.context.span_id
+                    if self.context
+                    else task_span.context.trace_id,
                     name=task_name,
                     start=timestamp or utc_now(),
                     input=error.description,
@@ -151,7 +141,14 @@ class PersistentSpan(Span, PersistentTracer, ABC):
     def end(self, timestamp: Optional[datetime] = None) -> None:
         if not self.end_timestamp:
             self.end_timestamp = timestamp or utc_now()
-            self._log_entry(self.context.trace_id, EndSpan(uuid=self.context.span_id, end=self.end_timestamp))
+            self._log_entry(
+                self.context.trace_id,
+                EndSpan(
+                    uuid=self.context.span_id,
+                    end=self.end_timestamp,
+                    status_code=self.status_code,
+                ),
+            )
 
 
 class PersistentTaskSpan(TaskSpan, PersistentSpan, ABC):
@@ -165,7 +162,12 @@ class PersistentTaskSpan(TaskSpan, PersistentSpan, ABC):
             self.end_timestamp = timestamp or utc_now()
             self._log_entry(
                 self.context.trace_id,
-                EndTask(uuid=self.context.span_id, end=self.end_timestamp, output=self.output),
+                EndTask(
+                    uuid=self.context.span_id,
+                    end=self.end_timestamp,
+                    output=self.output,
+                    status_code=self.status_code,
+                ),
             )
 
 

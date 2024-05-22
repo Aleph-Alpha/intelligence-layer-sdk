@@ -2,13 +2,13 @@ from datetime import datetime
 from typing import Generic, Optional, Sequence, TypeVar
 
 from intelligence_layer.core.tracer.tracer import (
+    Context,
     ExportedSpan,
     PydanticSerializable,
     Span,
     TaskSpan,
     Tracer,
     utc_now,
-    Context
 )
 
 TracerVar = TypeVar("TracerVar", bound=Tracer)
@@ -73,7 +73,10 @@ class CompositeSpan(Generic[SpanVar], CompositeTracer[SpanVar], Span):
     Args:
         tracers: spans that will be forwarded all subsequent log and span calls.
     """
-    def __init__(self, tracers: Sequence[SpanVar],context: Optional[Context] = None) -> None:
+
+    def __init__(
+        self, tracers: Sequence[SpanVar], context: Optional[Context] = None
+    ) -> None:
         CompositeTracer.__init__(self, tracers)
         Span.__init__(self, context=context)
 
@@ -91,6 +94,20 @@ class CompositeSpan(Generic[SpanVar], CompositeTracer[SpanVar], Span):
         timestamp = timestamp or utc_now()
         for tracer in self.tracers:
             tracer.end(timestamp)
+
+    @property
+    def status_code(self):
+        status_codes = {tracer.status_code for tracer in self.tracers}
+        if len(status_codes) > 1:
+            raise ValueError(
+                "Inconsistent status of traces in composite tracer. Status of all traces should be the same but they are different."
+            )
+        return next(iter(status_codes))
+
+    @status_code.setter
+    def status_code(self, value):
+        for tracer in self.tracers:
+            tracer.status_code = value
 
 
 class CompositeTaskSpan(CompositeSpan[TaskSpan], TaskSpan):

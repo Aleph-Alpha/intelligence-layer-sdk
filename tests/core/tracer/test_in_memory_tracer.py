@@ -106,6 +106,7 @@ def test_task_span_records_error_value() -> None:
 def test_task_automatically_logs_input_and_output(
     test_task: Task[str, str],
 ) -> None:
+    input = "input"
     tracer = InMemoryTracer()
     output = test_task.run(input=input, tracer=tracer)
 

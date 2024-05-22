@@ -5,7 +5,7 @@ from uuid import UUID
 
 import requests
 import rich
-from pydantic import BaseModel, Field, SerializeAsAny
+from pydantic import SerializeAsAny
 from requests import HTTPError
 from rich.tree import Tree
 
@@ -157,6 +157,7 @@ class InMemorySpan(InMemoryTracer, Span):
     def end(self, timestamp: Optional[datetime] = None) -> None:
         if not self.end_timestamp:
             self.end_timestamp = timestamp or utc_now()
+        super().end(timestamp)
 
     def _rich_render_(self) -> Tree:
         """Renders the trace via classes in the `rich` package"""
@@ -171,6 +172,10 @@ class InMemorySpan(InMemoryTracer, Span):
         return SpanAttributes()
 
     def export_for_viewing(self) -> Sequence[ExportedSpan]:
+        if not self._closed:
+            raise RuntimeError(
+                "Span is not closed. A Span must be closed before it is exported for viewing."
+            )
         logs: list[LogEntry] = []
         exported_spans: list[ExportedSpan] = []
         for entry in self.entries:
@@ -246,9 +251,11 @@ class TreeBuilder:
             name=start_task.name,
             input=start_task.input,
             start_timestamp=start_task.start,
-                context=Context(
+            context=Context(
                 trace_id=start_task.trace_id, span_id=str(start_task.parent)
-            ) if start_task.trace_id != str(start_task.uuid) else None
+            )
+            if start_task.trace_id != str(start_task.uuid)
+            else None,
         )
         # if root, also change the trace id
         if converted_span.context.trace_id == converted_span.context.span_id:
@@ -262,6 +269,7 @@ class TreeBuilder:
         end_task = EndTask.model_validate(log_line.entry)
         task_span = self.tasks[end_task.uuid]
         task_span.record_output(end_task.output)
+        task_span.status_code = end_task.status_code
         task_span.end(end_task.end)
 
     def start_span(self, log_line: LogLine) -> None:
@@ -271,13 +279,15 @@ class TreeBuilder:
             start_timestamp=start_span.start,
             context=Context(
                 trace_id=start_span.trace_id, span_id=str(start_span.parent)
-            ) if start_span.trace_id != str(start_span.uuid) else None
+            )
+            if start_span.trace_id != str(start_span.uuid)
+            else None,
         )
         # if root, also change the trace id
         if converted_span.context.trace_id == converted_span.context.span_id:
             converted_span.context.trace_id = str(start_span.uuid)
         converted_span.context.span_id = str(start_span.uuid)
-                
+
         self.tracers.get(start_span.parent, self.root).entries.append(converted_span)
         self.tracers[start_span.uuid] = converted_span
         self.spans[start_span.uuid] = converted_span
@@ -285,6 +295,7 @@ class TreeBuilder:
     def end_span(self, log_line: LogLine) -> None:
         end_span = EndSpan.model_validate(log_line.entry)
         span = self.spans[end_span.uuid]
+        span.status_code = end_span.status_code
         span.end(end_span.end)
 
     def plain_entry(self, log_line: LogLine) -> None:

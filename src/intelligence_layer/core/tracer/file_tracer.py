@@ -1,7 +1,7 @@
 from datetime import datetime
 from json import loads
 from pathlib import Path
-from typing import Optional, Sequence
+from typing import Optional
 
 from pydantic import BaseModel
 
@@ -11,22 +11,8 @@ from intelligence_layer.core.tracer.persistent_tracer import (
     PersistentTaskSpan,
     PersistentTracer,
 )
-from intelligence_layer.core.tracer.tracer import LogLine, PydanticSerializable
-from intelligence_layer.core.tracer.tracer import (
-    Context,
-    Event,
-    ExportedSpan,
-    ExportedSpanList,
-    LogEntry,
-    PydanticSerializable,
-    Span,
-    SpanAttributes,
-    TaskSpan,
-    TaskSpanAttributes,
-    Tracer,
-    _render_log_value,
-    utc_now,
-)
+from intelligence_layer.core.tracer.tracer import Context, LogLine, PydanticSerializable
+
 
 class FileTracer(PersistentTracer):
     """A `Tracer` that logs to a file.
@@ -91,16 +77,15 @@ class FileTracer(PersistentTracer):
             return self._parse_log(filtered_traces)
 
 
-
 class FileSpan(PersistentSpan, FileTracer):
     """A `Span` created by `FileTracer.span`."""
 
     def __init__(self, log_file_path: Path, context: Optional[Context] = None) -> None:
         PersistentSpan.__init__(self, context=context)
         FileTracer.__init__(self, log_file_path=log_file_path)
-    
 
 
 class FileTaskSpan(PersistentTaskSpan, FileSpan):
     """A `TaskSpan` created by `FileTracer.task_span`."""
+
     pass

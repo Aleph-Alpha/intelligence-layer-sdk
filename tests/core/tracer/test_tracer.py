@@ -50,7 +50,9 @@ def test_tracer_exports_spans_to_unified_format(
     assert len(span.events) == 1
     log = span.events[0]
     assert log.message == "test"
-    assert log.body == dummy_object or DummyObject.model_validate(log.body) == dummy_object
+    assert (
+        log.body == dummy_object or DummyObject.model_validate(log.body) == dummy_object
+    )
     assert span.start_time < log.timestamp < span.end_time
 
 
@@ -168,7 +170,7 @@ def test_tracer_exports_unrelated_spans_correctly(
     "tracer_fixture",
     tracer_fixtures,
 )
-def test_tracer_exports_part_of_a_trace_correctly(
+def test_tracer_raises_if_open_span_is_exported(
     tracer_fixture: str,
     request: pytest.FixtureRequest,
 ) -> None:
@@ -178,15 +180,8 @@ def test_tracer_exports_part_of_a_trace_correctly(
         child_span = root_span.span("name-2")
         child_span.log("test_message", "test_body")
 
-    unified_format = child_span.export_for_viewing()
-
-    assert len(unified_format) == 2
-    span_1, span_2 = unified_format[0], unified_format[1]
-
-    assert span_1.parent_id is None
-    assert span_2.parent_id is None
-
-    assert span_1.context.trace_id != span_2.context.trace_id
+        with pytest.raises(RuntimeError):
+            child_span.export_for_viewing()
 
 
 @pytest.mark.skip("Not yet implemented")

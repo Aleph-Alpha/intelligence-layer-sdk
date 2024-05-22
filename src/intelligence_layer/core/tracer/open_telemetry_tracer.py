@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Optional
+from typing import Optional, Sequence
 
 from opentelemetry.context import attach, detach
 from opentelemetry.trace import Span as OpenTSpan
@@ -7,6 +7,8 @@ from opentelemetry.trace import Tracer as OpenTTracer
 from opentelemetry.trace import set_span_in_context
 
 from intelligence_layer.core.tracer.tracer import (
+    ExportedSpan,
+    LogEntry,
     PydanticSerializable,
     Span,
     TaskSpan,
@@ -19,7 +21,7 @@ class OpenTelemetryTracer(Tracer):
     """A `Tracer` that uses open telemetry."""
 
     def __init__(self, tracer: OpenTTracer) -> None:
-        self._tracer = tracer
+        self.O_tracer = tracer
 
     def span(
         self,
@@ -34,6 +36,7 @@ class OpenTelemetryTracer(Tracer):
             start_time=None if not timestamp else _open_telemetry_timestamp(timestamp),
         )
         token = attach(set_span_in_context(tracer_span))
+        self._tracer
         return OpenTelemetrySpan(tracer_span, self._tracer, token, trace_id)
 
     def task_span(
@@ -52,6 +55,9 @@ class OpenTelemetryTracer(Tracer):
         )
         token = attach(set_span_in_context(tracer_span))
         return OpenTelemetryTaskSpan(tracer_span, self._tracer, token, trace_id)
+    
+    def export_for_viewing(self) -> Sequence[ExportedSpan]:
+        raise NotImplementedError("The OpenTelemetryTracer does not support export for viewing, as it can not acces its own traces.")
 
 
 class OpenTelemetrySpan(Span, OpenTelemetryTracer):
@@ -87,6 +93,7 @@ class OpenTelemetrySpan(Span, OpenTelemetryTracer):
         self.open_ts_span.end(
             _open_telemetry_timestamp(timestamp) if timestamp is not None else None
         )
+        super().end(timestamp)
 
 
 class OpenTelemetryTaskSpan(TaskSpan, OpenTelemetrySpan):

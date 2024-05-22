@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from concurrent.futures import ThreadPoolExecutor
-from typing import Generic, Iterable, Optional, Sequence, TypeVar, final
+from typing import Generic, Iterable, Sequence, TypeVar, final
 
 from pydantic import BaseModel
 
@@ -58,9 +58,7 @@ class Task(ABC, Generic[Input, Output]):
         ...
 
     @final
-    def run(
-        self, input: Input, tracer: Tracer, trace_id: Optional[str] = None
-    ) -> Output:
+    def run(self, input: Input, tracer: Tracer) -> Output:
         """Executes the implementation of `do_run` for this use case.
 
         This takes an input and runs the implementation to generate an output.
