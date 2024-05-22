@@ -180,7 +180,7 @@ The how-tos are quick lookups about how to do things. Compared to the tutorials,
 | [...retrieve data for analysis](./src/documentation/how_tos/how_to_retrieve_data_for_analysis.ipynb)                                                   | Retrieve experiment data in multiple different ways                        |
 | [...implement a custom human evaluation](./src/documentation/how_tos/how_to_human_evaluation_via_argilla.ipynb)                                        | Necessary steps to create an evaluation with humans as a judge via Argilla |
 | [...implement elo evaluations](./src/documentation/how_tos/how_to_implement_elo_evaluations.ipynb)                                                     | Evaluate runs and create ELO ranking for them                               |
-
+| [...implement complete incremental evaluation flow](./src/documentation/how_tos/how_to_implement_complete_incremental_evaluation_flow.ipynb)           | Run complete incremental evaluation flow from runner to aggretation
 # Models
 
 Currently, we support a bunch of models accessible via the Aleph Alpha API. Depending on your local setup, you may even have additional models available.
