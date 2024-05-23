@@ -6,7 +6,7 @@ With a unified framework for LLM-based workflows, it facilitates seamless AI pro
 The key features of the Intelligence Layer are:
 
 - **Composability:** Streamline your journey from prototyping to scalable deployment. The Intelligence Layer SDK offers seamless integration with diverse evaluation methods, manages concurrency, and orchestrates smaller tasks into complex workflows.
-- **Evaluability:** Continuously evaluate your AI applications against your quantitaive quality requirements. With the Intelligence Layer SDK you can quickly iterate on different solution strategies, ensuring confidence in the performance of your final product. Take inspiration from the provided evaluations for summary and search when building a custom evaluation logic for your own use case.
+- **Evaluability:** Continuously evaluate your AI applications against your quantitative quality requirements. With the Intelligence Layer SDK you can quickly iterate on different solution strategies, ensuring confidence in the performance of your final product. Take inspiration from the provided evaluations for summary and search when building a custom evaluation logic for your own use case.
 - **Traceability:** At the core of the Intelligence Layer is the belief that all AI processes must be auditable and traceable. We provide full observability by seamlessly logging each step of every workflow. This enhances your debugging capabilities and offers greater control post-deployment when examining model responses.
 - **Examples:** Get started by following our hands-on examples, demonstrating how to use the Intelligence Layer SDK and interact with its API.
 
@@ -17,12 +17,12 @@ The key features of the Intelligence Layer are:
 - [Table of contents](#table-of-contents)
 - [Installation](#installation)
   - [Local installation (for development and tutorials)](#local-installation-for-development-and-tutorials)
-    - [Getting started with the Jupyter Notebooks](#getting-started-with-the-jupyter-notebooks)
-  - [How to use the Intelligence Layer in your project](#how-to-use-the-intelligence-layer-in-your-project)
+  - [Add the Intelligence Layer to your project dependencies](#add-the-intelligence-layer-to-your-project-dependencies)
   - [How to use the Intelligence Layer in Docker](#how-to-use-the-intelligence-layer-in-docker)
     - [Via the GitHub repository](#via-the-github-repository)
 - [Getting started](#getting-started)
-  - [Tutorials](#tutorials)
+  - [Setup LLM access](#setup-llm-access)
+  - [Tutorial Notebooks](#tutorial-notebooks)
   - [How-Tos](#how-tos)
 - [Models](#models)
 - [Example index](#example-index)
@@ -35,62 +35,29 @@ The key features of the Intelligence Layer are:
 # Installation
 
 ## Local installation (for development and tutorials)
-Clone the Intelligence Layer repository from github.
+
+Clone the Intelligence Layer repository from GitHub.
+
 ```bash
 git clone git@github.com:Aleph-Alpha/intelligence-layer-sdk.git
 ```
-The Intelligence Layer uses `poetry` as a package manager. Follow the [official instructions](https://python-poetry.org/docs/#installation) to install it.
-Afterwards, simply run `poetry install` to install all dependencies in a virtual environment.
+
+The Intelligence Layer uses `poetry`, which serves as the package manager and manages the virtual environments.
+We recommend installing poetry globally, while still isolating it in a virtual environment, using pipx, following the [official instructions](https://python-poetry.org/docs/#installation).
+Afterward, simply run `poetry install` to create a new virtual environment and install all project dependencies.
+
 ```bash
 poetry install
 ```
 The environment can be activated via `poetry shell`. See the official poetry documentation for more information.
 
+## Add the Intelligence Layer to your project dependencies
 
-### Getting started with the Jupyter Notebooks
-
-After running the local installation steps, you can set whether you are using the Aleph-Alpha API or an on-prem setup via the environment variables.
-
----
-**Using the Aleph-Alpha API** \
-  \
-In the Intelligence Layer the Aleph-Alpha API (`https://api.aleph-alpha.com`) is set as default host URL. However, you will need an [Aleph Alpha access token](https://docs.aleph-alpha.com/docs/account/#create-a-new-token) to run the examples.
-Set your access token with
-
-```bash
-export AA_TOKEN=<YOUR TOKEN HERE>
-```
-
----
-
-**Using an on-prem setup** \
-  \
-In case you want to use an on-prem endpoint you will have to change the host URL by setting the `CLIENT_URL` environment variable:
-
-```bash
-export CLIENT_URL=<YOUR_ENDPOINT_URL_HERE>
-```
-
-The program will warn you in case no `CLIENT_URL` is set explicitly set.
-
----
-After correctly setting up the environment variables you can run the jupyter notebooks.
-For this, run `jupyter lab` inside the virtual environment and go to the [examples](http://localhost:8888/lab/workspaces/auto-C/tree/src/documentation) directory.
-
-```bash
-cd src/documentation && poetry run jupyter lab
-```
-
-## How to use the Intelligence Layer in your project
-To install the Aleph-Alpha Intelligence Layer from the JFrog artifactory in you project, you need an artifactory identity token. To generate this, log into artifactory in
-your browser and open the user menu by clicking in the top-right corner. Then select 'Edit Profile' from the resulting dropdown menu. On the following page you can generate
-an identity token by clicking the respective button after entering you password. Save the token at some secure place, e.g. your password manager.
-
-With the token generated, you have to add this information to your poetry setup via the following four steps. First, add the artifactory as a source to your project via
+To install the Aleph-Alpha Intelligence Layer from the JFrog artifactory in you project, you have to add this information to your poetry setup via the following four steps. First, add the artifactory as a source to your project via
 ```bash
 poetry source add --priority=explicit artifactory https://alephalpha.jfrog.io/artifactory/api/pypi/python/simple
 ```
-Second, to install the poetry environment, export your JFrog username and the generated token (NOT your actual password)
+Second, to install the poetry environment, export your JFrog credentials to the environment
 ```bash
 export POETRY_HTTP_BASIC_ARTIFACTORY_USERNAME=your@username.here
 export POETRY_HTTP_BASIC_ARTIFACTORY_PASSWORD=your-token-here
@@ -120,13 +87,14 @@ In VSCode, to enable auto-import up to the second depth, where all symbols are e
     }
 ]
 ```
+
 ## How to use the Intelligence Layer in Docker
 
 ### Via the GitHub repository
 
-To use the Intelligence Layer in Docker, a few settings are needed to not leak your Github token.
+To use the Intelligence Layer in Docker, a few settings are needed to not leak your GitHub token.
 
-You will need your Github token set in your environment.
+You will need your GitHub token set in your environment.
 
 In order to modify the `git config` add the following to your docker container:
 
@@ -141,11 +109,20 @@ RUN poetry install --no-dev --no-interaction --no-ansi \
 
 # Getting started
 
-Not sure where to start? Familiarize yourself with the Intelligence Layer SDK using the below notebook as interactive tutorials.
-If you prefer you can also read about the [concepts](Concepts.md) first.
+> 📘 Not sure where to start? Familiarize yourself with the Intelligence Layer using the **below notebooks as interactive tutorials**.
+> If you prefer you can also **read about the [concepts](Concepts.md)** first.
 
-## Tutorials
-The tutorials aim to guide you through implementing several common use-cases with the Intelligence Layer SDK. They introduce you to key concepts and enable you to create your own use-cases. In general the tutorials are build in a way that you can simply hop into the topic you are most interested in. However, for starters we recommend to read through the `Summarization` tutorial first. It explains the core concepts of the intelligence layer in more depth while for the other tutorials we assume that these concepts are known.
+The tutorials aim to guide you through implementing several common use-cases with the Intelligence Layer. They introduce you to key concepts and enable you to create your own use-cases. In general the tutorials are build in a way that you can simply hop into the topic you are most interested in. However, for starters we recommend to read through the `Summarization` tutorial first. It explains the core concepts of the intelligence layer in more depth while for the other tutorials we assume that these concepts are known.
+
+### Setup LLM access
+
+The tutorials require access to an LLM endpoint. You can choose between using the Aleph Alpha API (`https://api.aleph-alpha.com`) or an on-premise setup by configuring the appropriate environment variables. To configure the environment variables, create a `.env` file in the root directory of the project and copy the contents of the `.env.sample` file into it.
+
+To use the **Aleph Alpha API**, that is set as the default host URL, set the `AA_TOKEN` variable to your [Aleph Alpha access token,](https://docs.aleph-alpha.com/docs/account/#create-a-new-token) and you are good to go.
+
+To use an **on-premises setup**, set the `CLIENT_URL` variable to your host URL.
+
+## Tutorial Notebooks
 
 | Order | Topic                | Description                                          | Notebook 📓                                                                              |
 |-------|----------------------|------------------------------------------------------|------------------------------------------------------------------------------------------|
@@ -162,16 +139,17 @@ The tutorials aim to guide you through implementing several common use-cases wit
 | 11    | Issue Classification | Deploy a Task in Kubernetes to classify Jira issues  | [Found in adjacent repository](https://github.com/Aleph-Alpha/IL-Classification-Journey) |
 
 ## How-Tos
+
 The how-tos are quick lookups about how to do things. Compared to the tutorials, they are shorter and do not explain the concepts they are using in-depth.
 
-| Tutorial                                                                                                                                          | Description                                                                |
-| ------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------- |
-| **Tasks**                                                                                                                                         |                                                                            |
+| Tutorial                                                                                                                                               | Description                                                                |
+|--------------------------------------------------------------------------------------------------------------------------------------------------------|----------------------------------------------------------------------------|
+| **Tasks**                                                                                                                                              |                                                                            |
 | [...define a task](./src/documentation/how_tos/how_to_define_a_task.ipynb)                                                                             | How to come up with a new task and formulate it                            |
 | [...implement a task](./src/documentation/how_tos/how_to_implement_a_task.ipynb)                                                                       | Implement a formulated task and make it run with the Intelligence Layer    |
 | [...debug and log a task](./src/documentation/how_tos/how_to_log_and_debug_a_task.ipynb)                                                               | Tools for logging and debugging in tasks                                   |
 | [...run the trace viewer](./src/documentation/how_tos/how_to_run_the_trace_viewer.ipynb)                                                               | Downloading and running the trace viewer for debugging traces              |
-| **Analysis Pipeline**                                                                                                                             |                                                                            |
+| **Analysis Pipeline**                                                                                                                                  |                                                                            |
 | [...implement a simple evaluation and aggregation logic](./src/documentation/how_tos/how_to_implement_a_simple_evaluation_and_aggregation_logic.ipynb) | Basic examples of evaluation and aggregation logic                         |
 | [...create a dataset](./src/documentation/how_tos/how_to_create_a_dataset.ipynb)                                                                       | Create a dataset used for running a task                                   |
 | [...run a task on a dataset](./src/documentation/how_tos/how_to_run_a_task_on_a_dataset.ipynb)                                                         | Run a task on a whole dataset instead of single examples                   |
@@ -179,14 +157,15 @@ The how-tos are quick lookups about how to do things. Compared to the tutorials,
 | [...aggregate multiple evaluations](./src/documentation/how_tos/how_to_aggregate_evaluations.ipynb)                                                    | Aggregate (multiple) evaluations in a single aggregation                   |
 | [...retrieve data for analysis](./src/documentation/how_tos/how_to_retrieve_data_for_analysis.ipynb)                                                   | Retrieve experiment data in multiple different ways                        |
 | [...implement a custom human evaluation](./src/documentation/how_tos/how_to_human_evaluation_via_argilla.ipynb)                                        | Necessary steps to create an evaluation with humans as a judge via Argilla |
-| [...implement elo evaluations](./src/documentation/how_tos/how_to_implement_elo_evaluations.ipynb)                                                     | Evaluate runs and create ELO ranking for them                               |
-| [...implement incremental evaluation](./src/documentation/how_tos/how_to_implement_incremental_evaluation.ipynb)           | Implement and run an incremental evaluation
+| [...implement elo evaluations](./src/documentation/how_tos/how_to_implement_elo_evaluations.ipynb)                                                     | Evaluate runs and create ELO ranking for them                              |
+| [...implement incremental evaluation](./src/documentation/how_tos/how_to_implement_incremental_evaluation.ipynb)                                       | Implement and run an incremental evaluation                                |
+
 # Models
 
 Currently, we support a bunch of models accessible via the Aleph Alpha API. Depending on your local setup, you may even have additional models available.
 
 | Model                                                                                                                                                                     | Description                                                                                                                                                                                     |
-| ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | [LuminousControlModel](https://aleph-alpha-intelligence-layer.readthedocs-hosted.com/en/latest/intelligence_layer.core.html#intelligence_layer.core.LuminousControlModel) | Any control-type model based on the first Luminous generation, specifically `luminous-base-control`, `luminous-extended-control` and `luminous-supreme-control`. Multilingual support.          |
 | [Llama2InstructModel](https://aleph-alpha-intelligence-layer.readthedocs-hosted.com/en/latest/intelligence_layer.core.html#intelligence_layer.core.Llama2InstructModel)   | Llama-2 based models prompted for one-turn instruction answering. Includes `llama-2-7b-chat`, `llama-2-13b-chat` and `llama-2-70b-chat`. Best suited for English tasks.                         |
 | [Llama3InstructModel](https://aleph-alpha-intelligence-layer.readthedocs-hosted.com/en/latest/intelligence_layer.core.html#intelligence_layer.core.Llama3InstructModel)   | Llama-3 based models prompted for one-turn instruction answering. Includes `llama-3-8b-instruct` and `llama-3-70b-instruct`. Best suited for English tasks and recommended over llama-2 models. |
@@ -196,7 +175,7 @@ Currently, we support a bunch of models accessible via the Aleph Alpha API. Depe
 To give you a starting point for using the Intelligence Layer, we provide some pre-configured `Task`s that are ready to use out-of-the-box, as well as an accompanying "Getting started" guide in the form of Jupyter Notebooks.
 
 | Type      | Task                                                                                                                                                                                                            | Description                                                                                                                                                                                                                                |
-| --------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+|-----------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | Classify  | [EmbeddingBasedClassify](https://aleph-alpha-intelligence-layer.readthedocs-hosted.com/en/latest/intelligence_layer.use_cases.html#intelligence_layer.use_cases.EmbeddingBasedClassify)                         | Classify a short text by computing its similarity with example texts for each class.                                                                                                                                                       |
 | Classify  | [PromptBasedClassify](https://aleph-alpha-intelligence-layer.readthedocs-hosted.com/en/latest/intelligence_layer.use_cases.html#intelligence_layer.use_cases.PromptBasedClassify)                               | Classify a short text by assessing each class' probability using zero-shot prompting.                                                                                                                                                      |
 | Classify  | [PromptBasedClassifyWithDefinitions](https://aleph-alpha-intelligence-layer.readthedocs-hosted.com/en/latest/intelligence_layer.use_cases.html#intelligence_layer.use_cases.PromptBasedClassifyWithDefinitions) | Classify a short text by assessing each class' probability using zero-shot prompting. Each class is defined by a natural language description.                                                                                             |
@@ -218,11 +197,10 @@ By leveraging these tasks, you gain insights into the framework's capabilities a
 
 We encourage you to copy and paste these use cases directly into your own project.
 From here, you can customize everything, including the prompt, model, and more intricate functional logic.
-For more information, check the [tutorials](#tutorials) and the [how-tos](#how-tos)
-
-
+For more information, check the [tutorials](#tutorial-notebooks) and the [how-tos](#how-tos)
 
 # References
+
 The full code documentation can be found in our read-the-docs [here](https://aleph-alpha-intelligence-layer.readthedocs-hosted.com/en/latest/)
 
 # License
@@ -241,9 +219,8 @@ In addition, there are the following naming conventions:
   * Use a verb for a method name if it has side effects and return nothing
     * E.g., `store_evaluation_overview` which saves a given evaluation overview (and returns nothing)
 
-
-
 ## Executing tests
+
 **In VSCode**
 1. Sidebar > Testing
 2. Select pytest as framework for the tests

@@ -7,6 +7,7 @@
 
 ### New Features
  - Add `how_to_implement_incremental_evaluation`.
+ - Improve README.md
 
 ### Fixes
 - The document index client now correctly URL-encodes document names in its queries.
