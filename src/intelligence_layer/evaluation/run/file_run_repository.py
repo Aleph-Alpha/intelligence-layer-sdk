@@ -121,7 +121,7 @@ class FileSystemRunRepository(RunRepository, FileSystemBasedRepository):
 
     @staticmethod
     def _parse_log(log_path: Path) -> InMemoryTracer:
-        return FileTracer(log_path).trace()
+        return FileTracer(log_path).traces()
 
     def _example_output_path(self, run_id: str, example_id: str) -> Path:
         return (self._run_output_directory(run_id) / example_id).with_suffix(".json")

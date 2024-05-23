@@ -1,6 +1,6 @@
 import json
 import time
-from typing import Any
+from typing import Any, Sequence
 from uuid import uuid4
 
 import pytest
@@ -17,13 +17,14 @@ from opentelemetry.sdk.trace.export import (
 from pytest import fixture
 
 from intelligence_layer.core import OpenTelemetryTracer, Task
+from intelligence_layer.core.tracer.tracer import SpanType
 
 
 class DummyExporter(SpanExporter):
     def __init__(self) -> None:
         self.spans: list[ReadableSpan] = []
 
-    def export(self, spans: trace.Sequence[ReadableSpan]) -> SpanExportResult:
+    def export(self, spans: Sequence[ReadableSpan]) -> SpanExportResult:
         self.spans.extend(spans)
         return SpanExportResult.SUCCESS
 
@@ -91,32 +92,57 @@ def test_open_telemetry_tracer_sets_attributes_correctly(
     spans = exporter.spans
     assert len(spans) == 4
     spans_sorted_by_start: list[ReadableSpan] = sorted(
-        spans, key=lambda span: span.start_time
+        spans, key=lambda span: span.start_time if span.start_time else 0
     )
-
+    assert spans_sorted_by_start[0].attributes is not None
     assert spans_sorted_by_start[0].name == "TestTask"
     assert spans_sorted_by_start[0].attributes["input"] == '"test-input"'
     assert spans_sorted_by_start[0].attributes["output"] == '"output"'
+    assert spans_sorted_by_start[0].attributes["type"] == SpanType.TASK_SPAN.value
+    assert spans_sorted_by_start[0].status.is_ok
 
+    assert spans_sorted_by_start[1].attributes is not None
     assert spans_sorted_by_start[1].name == "span"
     assert "input" not in spans_sorted_by_start[1].attributes.keys()
+    assert spans_sorted_by_start[1].attributes["type"] == SpanType.SPAN.value
+    assert spans_sorted_by_start[1].status.is_ok
 
+    assert spans_sorted_by_start[2].attributes is not None
     assert spans_sorted_by_start[2].name == "TestSubTask"
     assert spans_sorted_by_start[2].attributes["input"] == "null"
     assert spans_sorted_by_start[2].attributes["output"] == "null"
+    assert spans_sorted_by_start[2].attributes["type"] == SpanType.TASK_SPAN.value
+    assert spans_sorted_by_start[2].status.is_ok
 
+    assert spans_sorted_by_start[3].attributes is not None
     assert spans_sorted_by_start[3].name == "TestSubTask"
     assert spans_sorted_by_start[3].attributes["input"] == "null"
     assert spans_sorted_by_start[3].attributes["output"] == "null"
+    assert spans_sorted_by_start[3].attributes["type"] == SpanType.TASK_SPAN.value
+    assert spans_sorted_by_start[3].status.is_ok
 
     spans_sorted_by_end: list[ReadableSpan] = sorted(
-        spans_sorted_by_start, key=lambda span: span.end_time
+        spans_sorted_by_start, key=lambda span: span.end_time if span.end_time else 0
     )
 
     assert spans_sorted_by_end[0] == spans_sorted_by_start[2]
     assert spans_sorted_by_end[1] == spans_sorted_by_start[1]
     assert spans_sorted_by_end[2] == spans_sorted_by_start[3]
     assert spans_sorted_by_end[3] == spans_sorted_by_start[0]
+
+
+def test_open_telemetry_tracer_logs_error_code_correctly(
+    test_opentelemetry_tracer: OpenTelemetryTracer,
+    exporter: DummyExporter,
+    test_task: Task[str, str],
+) -> None:
+    with pytest.raises(ValueError):
+        with test_opentelemetry_tracer.span("failing task"):
+            raise ValueError("my bad, sorry")
+
+    spans = exporter.spans
+    assert len(spans) == 1
+    assert not spans[0].status.is_ok
 
 
 def has_span_with_input(trace: Any, input_value: str) -> bool:
@@ -143,7 +169,7 @@ def test_open_telemetry_tracer_works_with_jaeger(
     input_value = str(uuid4())
     test_task.run(input_value, jaeger_compatible_tracer)
     # the processor needs time to submit the trace to jaeger
-    time.sleep(0.3)
+    time.sleep(1)
 
     res = get_current_traces(url)
 

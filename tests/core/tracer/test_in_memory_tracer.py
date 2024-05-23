@@ -20,13 +20,15 @@ def test_trace_id_exists_for_all_children_of_task_span() -> None:
     parent_span = tracer.task_span("child", "input")
     parent_span.span("child2")
 
-    assert isinstance(tracer.entries[0], InMemorySpan)
+    assert isinstance(tracer.entries[0], InMemoryTaskSpan)
+    assert isinstance(tracer.entries[0].entries[0], InMemorySpan)
     assert (
         tracer.entries[0].entries[0].context.trace_id
         == tracer.entries[0].context.trace_id
     )
 
     parent_span.task_span("child3", "input")
+    assert isinstance(tracer.entries[0].entries[1], InMemoryTaskSpan)
     assert (
         tracer.entries[0].entries[1].context.trace_id
         == tracer.entries[0].context.trace_id
@@ -39,12 +41,14 @@ def test_trace_id_exists_for_all_children_of_span() -> None:
     parent_span.span("child2")
 
     assert isinstance(tracer.entries[0], InMemorySpan)
+    assert isinstance(tracer.entries[0].entries[0], InMemorySpan)
     assert (
         tracer.entries[0].entries[0].context.trace_id
         == tracer.entries[0].context.trace_id
     )
 
     parent_span.task_span("child3", "input")
+    assert isinstance(tracer.entries[0].entries[1], InMemorySpan)
     assert (
         tracer.entries[0].entries[1].context.trace_id
         == tracer.entries[0].context.trace_id

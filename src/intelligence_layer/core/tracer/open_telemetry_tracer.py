@@ -3,17 +3,21 @@ from typing import Optional, Sequence
 
 from opentelemetry.context import attach, detach
 from opentelemetry.trace import Span as OpenTSpan
+from opentelemetry.trace import StatusCode
 from opentelemetry.trace import Tracer as OpenTTracer
 from opentelemetry.trace import set_span_in_context
+from pydantic import BaseModel, SerializeAsAny
 
 from intelligence_layer.core.tracer.tracer import (
     Context,
     ExportedSpan,
+    JsonSerializer,
     PydanticSerializable,
     Span,
+    SpanStatus,
+    SpanType,
     TaskSpan,
     Tracer,
-    _serialize,
 )
 
 
@@ -30,6 +34,7 @@ class OpenTelemetryTracer(Tracer):
     ) -> "OpenTelemetrySpan":
         tracer_span = self._tracer.start_span(
             name,
+            attributes={"type": SpanType.SPAN.value},
             start_time=None if not timestamp else _open_telemetry_timestamp(timestamp),
         )
         token = attach(set_span_in_context(tracer_span))
@@ -43,7 +48,7 @@ class OpenTelemetryTracer(Tracer):
     ) -> "OpenTelemetryTaskSpan":
         tracer_span = self._tracer.start_span(
             task_name,
-            attributes={"input": _serialize(input)},
+            attributes={"input": _serialize(input), "type": SpanType.TASK_SPAN.value},
             start_time=None if not timestamp else _open_telemetry_timestamp(timestamp),
         )
         token = attach(set_span_in_context(tracer_span))
@@ -86,6 +91,9 @@ class OpenTelemetrySpan(Span, OpenTelemetryTracer):
 
     def end(self, timestamp: Optional[datetime] = None) -> None:
         super().end(timestamp)
+        self.open_ts_span.set_status(
+            StatusCode.OK if self.status_code == SpanStatus.OK else StatusCode.ERROR
+        )
         detach(self._token)
         self.open_ts_span.end(
             _open_telemetry_timestamp(timestamp) if timestamp is not None else None
@@ -105,3 +113,8 @@ def _open_telemetry_timestamp(t: datetime) -> int:
     # Open telemetry expects *nanoseconds* since epoch
     t_float = t.timestamp() * 1e9
     return int(t_float)
+
+
+def _serialize(s: SerializeAsAny[PydanticSerializable]) -> str:
+    value = s if isinstance(s, BaseModel) else JsonSerializer(root=s)
+    return value.model_dump_json()

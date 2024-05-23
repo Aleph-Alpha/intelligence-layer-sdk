@@ -5,29 +5,24 @@ from uuid import UUID
 
 import requests
 import rich
-from pydantic import SerializeAsAny
+from pydantic import BaseModel, Field, SerializeAsAny
 from requests import HTTPError
+from rich.panel import Panel
+from rich.syntax import Syntax
 from rich.tree import Tree
 
 from intelligence_layer.core.tracer.tracer import (
     Context,
-    EndSpan,
-    EndTask,
     Event,
     ExportedSpan,
     ExportedSpanList,
-    LogEntry,
-    LogLine,
-    PlainEntry,
+    JsonSerializer,
     PydanticSerializable,
     Span,
     SpanAttributes,
-    StartSpan,
-    StartTask,
     TaskSpan,
     TaskSpanAttributes,
     Tracer,
-    _render_log_value,
     utc_now,
 )
 
@@ -176,6 +171,8 @@ class InMemorySpan(InMemoryTracer, Span):
             raise RuntimeError(
                 "Span is not closed. A Span must be closed before it is exported for viewing."
             )
+        assert self.end_timestamp is not None
+
         logs: list[LogEntry] = []
         exported_spans: list[ExportedSpan] = []
         for entry in self.entries:
@@ -238,72 +235,42 @@ class InMemoryTaskSpan(InMemorySpan, TaskSpan):
         return tree
 
 
-class TreeBuilder:
-    def __init__(self) -> None:
-        self.root = InMemoryTracer()
-        self.tracers: dict[UUID, InMemoryTracer] = dict()
-        self.tasks: dict[UUID, InMemoryTaskSpan] = dict()
-        self.spans: dict[UUID, InMemorySpan] = dict()
+class LogEntry(BaseModel):
+    """An individual log entry, currently used to represent individual logs by the
+    `InMemoryTracer`.
 
-    def start_task(self, log_line: LogLine) -> None:
-        start_task = StartTask.model_validate(log_line.entry)
-        converted_span = InMemoryTaskSpan(
-            name=start_task.name,
-            input=start_task.input,
-            start_timestamp=start_task.start,
-            context=Context(
-                trace_id=start_task.trace_id, span_id=str(start_task.parent)
-            )
-            if start_task.trace_id != str(start_task.uuid)
-            else None,
-        )
-        # if root, also change the trace id
-        if converted_span.context.trace_id == converted_span.context.span_id:
-            converted_span.context.trace_id = str(start_task.uuid)
-        converted_span.context.span_id = str(start_task.uuid)
-        self.tracers.get(start_task.parent, self.root).entries.append(converted_span)
-        self.tracers[start_task.uuid] = converted_span
-        self.tasks[start_task.uuid] = converted_span
+    Attributes:
+        message: A description of the value you are logging, such as the step in the task this
+            is related to.
+        value: The relevant data you want to log. Can be anything that is serializable by
+            Pydantic, which gives the tracers flexibility in how they store and emit the logs.
+        timestamp: The time that the log was emitted.
+        id: The ID of the trace to which this log entry belongs.
+    """
 
-    def end_task(self, log_line: LogLine) -> None:
-        end_task = EndTask.model_validate(log_line.entry)
-        task_span = self.tasks[end_task.uuid]
-        task_span.record_output(end_task.output)
-        task_span.status_code = end_task.status_code
-        task_span.end(end_task.end)
+    message: str
+    value: SerializeAsAny[PydanticSerializable]
+    timestamp: datetime = Field(default_factory=datetime.utcnow)
+    trace_id: UUID
 
-    def start_span(self, log_line: LogLine) -> None:
-        start_span = StartSpan.model_validate(log_line.entry)
-        converted_span = InMemorySpan(
-            name=start_span.name,
-            start_timestamp=start_span.start,
-            context=Context(
-                trace_id=start_span.trace_id, span_id=str(start_span.parent)
-            )
-            if start_span.trace_id != str(start_span.uuid)
-            else None,
-        )
-        # if root, also change the trace id
-        if converted_span.context.trace_id == converted_span.context.span_id:
-            converted_span.context.trace_id = str(start_span.uuid)
-        converted_span.context.span_id = str(start_span.uuid)
+    def _rich_render_(self) -> Panel:
+        """Renders the trace via classes in the `rich` package"""
+        return _render_log_value(self.value, self.message)
 
-        self.tracers.get(start_span.parent, self.root).entries.append(converted_span)
-        self.tracers[start_span.uuid] = converted_span
-        self.spans[start_span.uuid] = converted_span
+    def _ipython_display_(self) -> None:
+        """Default rendering for Jupyter notebooks"""
+        from rich import print
 
-    def end_span(self, log_line: LogLine) -> None:
-        end_span = EndSpan.model_validate(log_line.entry)
-        span = self.spans[end_span.uuid]
-        span.status_code = end_span.status_code
-        span.end(end_span.end)
+        print(self._rich_render_())
 
-    def plain_entry(self, log_line: LogLine) -> None:
-        plain_entry = PlainEntry.model_validate(log_line.entry)
-        entry = LogEntry(
-            message=plain_entry.message,
-            value=plain_entry.value,
-            timestamp=plain_entry.timestamp,
-            trace_id=plain_entry.trace_id,
-        )
-        self.tracers[plain_entry.parent].entries.append(entry)
+
+def _render_log_value(value: PydanticSerializable, title: str) -> Panel:
+    value = value if isinstance(value, BaseModel) else JsonSerializer(root=value)
+    return Panel(
+        Syntax(
+            value.model_dump_json(indent=2, exclude_defaults=True),
+            "json",
+            word_wrap=True,
+        ),
+        title=title,
+    )

@@ -2,16 +2,18 @@ from datetime import datetime
 from json import loads
 from pathlib import Path
 from typing import Optional
+from uuid import UUID
 
 from pydantic import BaseModel
 
 from intelligence_layer.core.tracer.in_memory_tracer import InMemoryTracer
 from intelligence_layer.core.tracer.persistent_tracer import (
+    LogLine,
     PersistentSpan,
     PersistentTaskSpan,
     PersistentTracer,
 )
-from intelligence_layer.core.tracer.tracer import Context, LogLine, PydanticSerializable
+from intelligence_layer.core.tracer.tracer import Context, PydanticSerializable
 
 
 class FileTracer(PersistentTracer):
@@ -30,11 +32,11 @@ class FileTracer(PersistentTracer):
             the child-elements for a tracer can be identified by referring to this id as parent.
     """
 
-    def __init__(self, log_file_path: Path | str, *args, **kwargs) -> None:
+    def __init__(self, log_file_path: Path | str) -> None:
         super().__init__()
         self._log_file_path = Path(log_file_path)
 
-    def _log_entry(self, id: str, entry: BaseModel) -> None:
+    def _log_entry(self, id: UUID, entry: BaseModel) -> None:
         self._log_file_path.parent.mkdir(parents=True, exist_ok=True)
         with self._log_file_path.open(mode="a", encoding="utf-8") as f:
             f.write(
@@ -66,7 +68,7 @@ class FileTracer(PersistentTracer):
         self._log_task(task, task_name, input, timestamp)
         return task
 
-    def trace(self, trace_id: Optional[str] = None) -> InMemoryTracer:
+    def traces(self, trace_id: Optional[str] = None) -> InMemoryTracer:
         with self._log_file_path.open("r") as f:
             traces = (LogLine.model_validate(loads(line)) for line in f)
             filtered_traces = (

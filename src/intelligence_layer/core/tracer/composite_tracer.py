@@ -6,6 +6,7 @@ from intelligence_layer.core.tracer.tracer import (
     ExportedSpan,
     PydanticSerializable,
     Span,
+    SpanStatus,
     TaskSpan,
     Tracer,
     utc_now,
@@ -96,7 +97,7 @@ class CompositeSpan(Generic[SpanVar], CompositeTracer[SpanVar], Span):
             tracer.end(timestamp)
 
     @property
-    def status_code(self):
+    def status_code(self) -> SpanStatus:
         status_codes = {tracer.status_code for tracer in self.tracers}
         if len(status_codes) > 1:
             raise ValueError(
@@ -105,9 +106,9 @@ class CompositeSpan(Generic[SpanVar], CompositeTracer[SpanVar], Span):
         return next(iter(status_codes))
 
     @status_code.setter
-    def status_code(self, value):
+    def status_code(self, span_status: SpanStatus) -> None:
         for tracer in self.tracers:
-            tracer.status_code = value
+            tracer.status_code = span_status
 
 
 class CompositeTaskSpan(CompositeSpan[TaskSpan], TaskSpan):

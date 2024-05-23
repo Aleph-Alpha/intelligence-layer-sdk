@@ -18,7 +18,9 @@ class DummyObject(BaseModel):
 
 
 @fixture
-def composite_tracer(in_memory_tracer: InMemoryTracer, file_tracer: FileTracer):
+def composite_tracer(
+    in_memory_tracer: InMemoryTracer, file_tracer: FileTracer
+) -> CompositeTracer[Tracer]:
     return CompositeTracer(tracers=[in_memory_tracer, file_tracer])
 
 

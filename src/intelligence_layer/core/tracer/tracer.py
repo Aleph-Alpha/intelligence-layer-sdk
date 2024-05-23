@@ -4,12 +4,10 @@ from contextlib import AbstractContextManager
 from datetime import datetime, timezone
 from enum import Enum
 from types import TracebackType
-from typing import TYPE_CHECKING, List, Mapping, Optional, Sequence
+from typing import TYPE_CHECKING, Mapping, Optional, Sequence
 from uuid import UUID, uuid4
 
 from pydantic import BaseModel, Field, RootModel, SerializeAsAny
-from rich.panel import Panel
-from rich.syntax import Syntax
 from typing_extensions import Self, TypeAliasType
 
 if TYPE_CHECKING:
@@ -79,14 +77,14 @@ class SpanStatus(Enum):
 
 
 class Context(BaseModel):
-    trace_id: str
-    span_id: str
+    trace_id: UUID
+    span_id: UUID
 
 
 class ExportedSpan(BaseModel):
     context: Context
     name: str | None
-    parent_id: str | None
+    parent_id: UUID | None
     start_time: datetime
     end_time: datetime
     attributes: SpanAttributes
@@ -95,8 +93,7 @@ class ExportedSpan(BaseModel):
     # we ignore the links concept
 
 
-class ExportedSpanList(RootModel):
-    root: List[ExportedSpan]
+ExportedSpanList = RootModel[Sequence[ExportedSpan]]
 
 
 class Tracer(ABC):
@@ -117,7 +114,7 @@ class Tracer(ABC):
         self,
         name: str,
         timestamp: Optional[datetime] = None,
-    ) -> "Span":  # TODO
+    ) -> "Span":
         """Generate a span from the current span or logging instance.
 
         Allows for grouping multiple logs and duration together as a single, logical step in the
@@ -129,8 +126,7 @@ class Tracer(ABC):
 
         Args:
             name: A descriptive name of what this span will contain logs about.
-            timestamp: optional override of the starting timestamp. Otherwise should default to now.
-            trace_id: optional override of a trace id. Otherwise it creates a new default id.
+            timestamp: Override of the starting timestamp. Defaults to call time.
 
         Returns:
             An instance of a Span.
@@ -143,7 +139,7 @@ class Tracer(ABC):
         task_name: str,
         input: PydanticSerializable,
         timestamp: Optional[datetime] = None,
-    ) -> "TaskSpan":  # TODO
+    ) -> "TaskSpan":
         """Generate a task-specific span from the current span or logging instance.
 
         Allows for grouping multiple logs together, as well as the task's specific input, output,
@@ -155,32 +151,19 @@ class Tracer(ABC):
         Args:
             task_name: The name of the task that is being logged
             input: The input for the task that is being logged.
-            timestamp: optional override of the starting timestamp. Otherwise should default to now.
-            trace_id: optional override of a trace id. Otherwise it creates a new default id.
-
+            timestamp: Override of the starting timestamp. Defaults to call time.
 
         Returns:
             An instance of a TaskSpan.
         """
         ...
 
-    def ensure_id(self, id: Optional[str]) -> str:
-        """Returns a valid id for tracing.
-
-        Args:
-            id: current id to use if present.
-        Returns:
-            `id` if present, otherwise a new unique ID.
-        """
-
-        return id if id is not None else str(uuid4())
-
     @abstractmethod
     def export_for_viewing(self) -> Sequence[ExportedSpan]:
         """Converts the trace to a format that can be read by the trace viewer.
 
-        The format is inspired by the OpenTelemetry Format, but does not abide by it,
-        because it is too complex for our use-case.
+        The format is inspired by the OpenTelemetry Format, but does not abide by it.
+        Specifically, it cuts away unused concepts, such as links.
 
         Returns:
             A list of spans which includes the current span and all its child spans.
@@ -199,13 +182,25 @@ class Span(Tracer, AbstractContextManager["Span"]):
 
     Logs and other spans can be nested underneath.
 
-    Can also be used as a Context Manager to easily capture the start and end time, and keep the
-    span only in scope while it is active.
+    Can also be used as a context manager to easily capture the start and end time, and keep the
+    span only in scope while it is open.
+
+    Attributes:
+        context: The context of the current span. If the span is a root span, the trace id will be equal to its span id.
+        status_code: Status of the span. Will be "OK" unless the span was interrupted by an exception.
     """
 
+    context: Context
+
     def __init__(self, context: Optional[Context] = None):
-        # super().__init__()
-        span_id = str(uuid4())
+        """Creates a span from the context of its parent.
+
+        Initializes the spans `context` based on the parent context and its `status_code`.
+
+        Args:
+            context: Context of the parent. Defaults to None.
+        """
+        span_id = uuid4()
         if context is None:
             trace_id = span_id
         else:
@@ -244,25 +239,15 @@ class Span(Tracer, AbstractContextManager["Span"]):
 
     @abstractmethod
     def end(self, timestamp: Optional[datetime] = None) -> None:
-        """Marks the Span as done, with the end time of the span. The Span should be regarded
+        """Marks the Span as closed, with the end time of the span. The Span should be regarded
         as complete, and no further logging should happen with it.
 
         Ending a closed span in undefined behavior.
 
         Args:
-            timestamp: Optional override of the timestamp, otherwise should be set to now.
+            timestamp: Optional override of the timestamp. Defaults to call time.
         """
         self._closed = True
-
-    def ensure_id(self, id: str | None) -> str:
-        """Returns a valid id for tracing.
-
-        Args:
-            id: current id to use if present.
-        Returns:
-            `id` if present, otherwise id of this `Span`
-        """
-        return id if id is not None else self.id()
 
     def __exit__(
         self,
@@ -295,9 +280,6 @@ class TaskSpan(Span):
     def record_output(self, output: PydanticSerializable) -> None:
         """Record :class:`Task` output. Since a Context Manager can't provide this in the `__exit__`
         method, output should be captured once it is generated.
-
-        This should be handled automatically within the execution of the task, and it is
-        unlikely this would be called directly by you.
 
         Args:
             output: The output of the task that is being logged.
@@ -367,152 +349,3 @@ class NoOpTracer(TaskSpan):
 
 class JsonSerializer(RootModel[PydanticSerializable]):
     root: SerializeAsAny[PydanticSerializable]
-
-
-def _render_log_value(value: PydanticSerializable, title: str) -> Panel:
-    value = value if isinstance(value, BaseModel) else JsonSerializer(root=value)
-    return Panel(
-        Syntax(
-            value.model_dump_json(indent=2, exclude_defaults=True),
-            "json",
-            word_wrap=True,
-        ),
-        title=title,
-    )
-
-
-class LogEntry(BaseModel):
-    """An individual log entry, currently used to represent individual logs by the
-    `InMemoryTracer`.
-
-    Attributes:
-        message: A description of the value you are logging, such as the step in the task this
-            is related to.
-        value: The relevant data you want to log. Can be anything that is serializable by
-            Pydantic, which gives the tracers flexibility in how they store and emit the logs.
-        timestamp: The time that the log was emitted.
-        id: The ID of the trace to which this log entry belongs.
-    """
-
-    message: str
-    value: SerializeAsAny[PydanticSerializable]
-    timestamp: datetime = Field(default_factory=datetime.utcnow)
-    trace_id: str
-
-    def _rich_render_(self) -> Panel:
-        """Renders the trace via classes in the `rich` package"""
-        return _render_log_value(self.value, self.message)
-
-    def _ipython_display_(self) -> None:
-        """Default rendering for Jupyter notebooks"""
-        from rich import print
-
-        print(self._rich_render_())
-
-
-class StartTask(BaseModel):
-    """Represents the payload/entry of a log-line indicating that a `TaskSpan` was opened through `Tracer.task_span`.
-
-    Attributes:
-        uuid: A unique id for the opened `TaskSpan`.
-        parent: The unique id of the parent element of opened `TaskSpan`.
-            This could refer to either a surrounding `TaskSpan`, `Span` or the top-level `Tracer`.
-        name: The name of the task.
-        start: The timestamp when this `Task` was started (i.e. `run` was called).
-        input: The `Input` (i.e. parameter for `run`) the `Task` was started with.
-        trace_id: The trace id of the opened `TaskSpan`.
-
-    """
-
-    uuid: UUID
-    parent: UUID
-    name: str
-    start: datetime
-    input: SerializeAsAny[PydanticSerializable]
-    trace_id: str
-
-
-class EndTask(BaseModel):
-    """Represents the payload/entry of a log-line that indicates that a `TaskSpan` ended (i.e. the context-manager exited).
-
-    Attributes:
-        uuid: The uuid of the corresponding `StartTask`.
-        end: the timestamp when this `Task` completed (i.e. `run` returned).
-        output: the `Output` (i.e. return value of `run`) the `Task` returned.
-    """
-
-    uuid: UUID
-    end: datetime
-    output: SerializeAsAny[PydanticSerializable]
-    status_code: SpanStatus = SpanStatus.OK
-
-
-class StartSpan(BaseModel):
-    """Represents the payload/entry of a log-line indicating that a `Span` was opened through `Tracer.span`.
-
-    Attributes:
-        uuid: A unique id for the opened `Span`.
-        parent: The unique id of the parent element of opened `TaskSpan`.
-            This could refer to either a surrounding `TaskSpan`, `Span` or the top-level `Tracer`.
-        name: The name of the task.
-        start: The timestamp when this `Span` was started.
-        trace_id: The ID of the trace this span belongs to.
-    """
-
-    uuid: UUID
-    parent: UUID
-    name: str
-    start: datetime
-    trace_id: str
-
-
-class EndSpan(BaseModel):
-    """Represents the payload/entry of a log-line that indicates that a `Span` ended.
-
-    Attributes:
-        uuid: The uuid of the corresponding `StartSpan`.
-        end: the timestamp when this `Span` completed.
-    """
-
-    uuid: UUID
-    end: datetime
-    status_code: SpanStatus = SpanStatus.OK
-
-
-class PlainEntry(BaseModel):
-    """Represents a plain log-entry created through `Tracer.log`.
-
-    Attributes:
-        message: the message-parameter of `Tracer.log`
-        value: the value-parameter of `Tracer.log`
-        timestamp: the timestamp when `Tracer.log` was called.
-        parent: The unique id of the parent element of the log.
-            This could refer to either a surrounding `TaskSpan`, `Span` or the top-level `Tracer`.
-        trace_id: The ID of the trace this entry belongs to.
-    """
-
-    message: str
-    value: SerializeAsAny[PydanticSerializable]
-    timestamp: datetime
-    parent: UUID
-    trace_id: str
-
-
-class LogLine(BaseModel):
-    """Represents a complete log-line.
-
-    Attributes:
-        entry_type: The type of the entry. This is the class-name of one of the classes
-            representing a log-entry (e.g. "StartTask").
-        entry: The actual entry.
-
-    """
-
-    trace_id: str
-    entry_type: str
-    entry: SerializeAsAny[PydanticSerializable]
-
-
-def _serialize(s: SerializeAsAny[PydanticSerializable]) -> str:
-    value = s if isinstance(s, BaseModel) else JsonSerializer(root=s)
-    return value.model_dump_json()
