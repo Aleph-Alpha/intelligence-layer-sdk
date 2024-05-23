@@ -38,7 +38,7 @@ opentelemetry-exporter-otlp-proto-http = "1.23.0"
 # lint & format
 mypy = "^1.10.0"
 nbqa = "^1.8.5"
-ruff = "^0.4.4"
+ruff = "^0.4.5"
 pre-commit = "^3.7.1"
 
 # tests
