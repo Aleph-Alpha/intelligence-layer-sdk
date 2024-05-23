@@ -6,7 +6,7 @@
 ...
 
 ### New Features
- - Add `how_to_implement_complete_incremental_evaluation_flow`
+ - Add `how_to_implement_incremental_evaluation`.
 
 ### Fixes
 - The document index client now correctly URL-encodes document names in its queries.
