@@ -14,20 +14,12 @@ updates:
         update-types:
           - minor
           - patch
-    commit-message:  # Workaround for bug https://github.com/dependabot/dependabot-core/issues/9784. Block can be removed once it's fixed
-      prefix: "build(deps)"
-      prefix-development: "build(deps-dev)"
-      include: "scope"
 
   - package-ecosystem: "github-actions"
     # Workflow files stored in the default location of `.github/workflows`. (You don't need to specify `/.github/workflows` for `directory`. You can use `directory: "/"`.)
     directory: "/"
     schedule:
       interval: "daily"
-    commit-message: # Workaround for bug https://github.com/dependabot/dependabot-core/issues/9784. Block can be removed once it's fixed
-      prefix: "build(deps)"
-      prefix-development: "build(deps-dev)"
-      include: "scope"
 
   - package-ecosystem: "npm"
     directory: "/trace-viewer/"
@@ -38,16 +30,8 @@ updates:
         update-types:
           - minor
           - patch
-    commit-message: # Workaround for bug https://github.com/dependabot/dependabot-core/issues/9784. Block can be removed once it's fixed
-      prefix: "build(deps)"
-      prefix-development: "build(deps-dev)"
-      include: "scope"
 
   - package-ecosystem: "docker"
     directory: "/trace-viewer/"
     schedule:
       interval: "daily"
-    commit-message: # Workaround for bug https://github.com/dependabot/dependabot-core/issues/9784. Block can be removed once it's fixed
-      prefix: "build(deps)"
-      prefix-development: "build(deps-dev)"
-      include: "scope"
