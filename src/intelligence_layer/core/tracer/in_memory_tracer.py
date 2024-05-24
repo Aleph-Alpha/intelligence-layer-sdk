@@ -30,11 +30,7 @@ from intelligence_layer.core.tracer.tracer import (
 class InMemoryTracer(Tracer):
     """Collects log entries in a nested structure, and keeps them in memory.
 
-    If desired, the structure is serializable with Pydantic, so you can write out the JSON
-    representation to a file, or return via an API, or something similar.
-
     Attributes:
-        name: A descriptive name of what the tracer contains log entries about.
         entries: A sequential list of log entries and/or nested InMemoryTracers with their own
             log entries.
     """
@@ -119,12 +115,30 @@ class InMemoryTracer(Tracer):
 
 
 class InMemorySpan(InMemoryTracer, Span):
+    """A span that keeps all important information in memory.
+
+    Attributes:
+        context: Ids that uniquely describe the span.
+        parent_id: Id of the parent span. None if the span is a root span.
+        name: The name of the span.
+        start_timestamp: The start of the timestamp.
+        end_timestamp: The end of the timestamp. None until the span is closed.
+        status_code: The status of the context.
+    """
+
     def __init__(
         self,
         name: str,
         context: Optional[Context] = None,
         start_timestamp: Optional[datetime] = None,
     ) -> None:
+        """Initializes a span and sets all necessary attributes.
+
+        Args:
+            name: The name of the span.
+            context: The parent context. Used to derive the span's context. Defaults to None.
+            start_timestamp: Custom start time of the span. Defaults to None.
+        """
         InMemoryTracer.__init__(self)
         Span.__init__(self, context=context)
         self.parent_id = None if context is None else context.span_id
@@ -204,6 +218,19 @@ class InMemorySpan(InMemoryTracer, Span):
 
 
 class InMemoryTaskSpan(InMemorySpan, TaskSpan):
+    """A span of a task that keeps all important information in memory.
+
+    Attributes:
+        context: Ids that uniquely describe the span.
+        parent_id: Id of the parent span. None if the span is a root span.
+        name: The name of the span.
+        start_timestamp: The start of the timestamp.
+        end_timestamp: The end of the timestamp. None until the span is closed.
+        status_code: The status of the context.
+        input: The input of the task.
+        output: The output of the task.
+    """
+
     def __init__(
         self,
         name: str,
@@ -211,6 +238,14 @@ class InMemoryTaskSpan(InMemorySpan, TaskSpan):
         context: Optional[Context] = None,
         start_timestamp: Optional[datetime] = None,
     ) -> None:
+        """Initializes a task span and sets all necessary attributes.
+
+        Args:
+            name: The name of the span.
+            input: The input of a task. Needs to be serializable.
+            context: The parent context. Used to derive the span's context. Defaults to None.
+            start_timestamp: Custom start time of the span. Defaults to None.
+        """
         super().__init__(name=name, context=context, start_timestamp=start_timestamp)
         self.input = input
         self.output: SerializeAsAny[PydanticSerializable] | None = None

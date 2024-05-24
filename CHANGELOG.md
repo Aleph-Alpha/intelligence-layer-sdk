@@ -3,11 +3,12 @@
 ## Unreleased
 
 ### Breaking Changes
-...
+ - `Task.run` no longer takes a trace id. This was an largely unused feature and we revamped the trace ids for the traces.
 
 ### New Features
  - Add `how_to_implement_incremental_evaluation`.
  - Improve README.md
+ - Add `export_for_viewing` to tracers to be able to export traces in a unified format similar to opentelemetry.
 
 ### Fixes
 - The document index client now correctly URL-encodes document names in its queries.
