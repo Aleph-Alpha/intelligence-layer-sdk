@@ -94,7 +94,7 @@ def test_open_telemetry_tracer_sets_attributes_correctly(
         spans, key=lambda span: span.start_time if span.start_time else 0
     )
     assert spans_sorted_by_start[0].attributes is not None
-    assert spans_sorted_by_start[0].name == "TestTask"
+    assert spans_sorted_by_start[0].name == "TracerTestTask"
     assert spans_sorted_by_start[0].attributes["input"] == '"test-input"'
     assert spans_sorted_by_start[0].attributes["output"] == '"output"'
     assert spans_sorted_by_start[0].attributes["type"] == SpanType.TASK_SPAN.value
@@ -107,14 +107,14 @@ def test_open_telemetry_tracer_sets_attributes_correctly(
     assert spans_sorted_by_start[1].status.is_ok
 
     assert spans_sorted_by_start[2].attributes is not None
-    assert spans_sorted_by_start[2].name == "TestSubTask"
+    assert spans_sorted_by_start[2].name == "TracerTestSubTask"
     assert spans_sorted_by_start[2].attributes["input"] == "null"
     assert spans_sorted_by_start[2].attributes["output"] == "null"
     assert spans_sorted_by_start[2].attributes["type"] == SpanType.TASK_SPAN.value
     assert spans_sorted_by_start[2].status.is_ok
 
     assert spans_sorted_by_start[3].attributes is not None
-    assert spans_sorted_by_start[3].name == "TestSubTask"
+    assert spans_sorted_by_start[3].name == "TracerTestSubTask"
     assert spans_sorted_by_start[3].attributes["input"] == "null"
     assert spans_sorted_by_start[3].attributes["output"] == "null"
     assert spans_sorted_by_start[3].attributes["type"] == SpanType.TASK_SPAN.value

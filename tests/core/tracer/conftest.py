@@ -5,13 +5,13 @@ from pytest import fixture
 from intelligence_layer.core import FileTracer, InMemoryTracer, Task, TaskSpan
 
 
-class TestSubTask(Task[None, None]):
+class TracerTestSubTask(Task[None, None]):
     def do_run(self, input: None, task_span: TaskSpan) -> None:
         task_span.log("subtask", "value")
 
 
 class TracerTestTask(Task[str, str]):
-    sub_task = TestSubTask()
+    sub_task = TracerTestSubTask()
 
     def do_run(self, input: str, task_span: TaskSpan) -> str:
         with task_span.span("span") as sub_span:
