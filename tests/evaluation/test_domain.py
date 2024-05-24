@@ -1,6 +1,7 @@
 from pytest import raises
 
-from intelligence_layer.core import InMemorySpan, InMemoryTaskSpan, LogEntry, utc_now
+from intelligence_layer.core import utc_now
+from intelligence_layer.core.tracer.in_memory_tracer import InMemoryTracer
 from intelligence_layer.evaluation import (
     AggregationOverview,
     EvaluationFailed,
@@ -14,22 +15,13 @@ from tests.evaluation.conftest import DummyAggregatedEvaluation
 
 def test_to_trace_entry() -> None:
     now = utc_now()
-    entry = _to_trace_entry(
-        InMemoryTaskSpan(
-            name="task",
-            input="input",
-            output="output",
-            start_timestamp=now,
-            end_timestamp=now,
-            entries=[
-                LogEntry(message="message", value="value", trace_id="ID"),
-                InMemorySpan(
-                    name="span", start_timestamp=now, end_timestamp=now, trace_id="ID"
-                ),
-            ],
-            trace_id="ID",
-        )
-    )
+    span = InMemoryTracer().task_span("task", timestamp=now, input="input")
+    span.span("span", now).end(now)
+    span.log(message="message", value="value", timestamp=now)
+    span.record_output("output")
+    span.end(now)
+
+    entry = _to_trace_entry(span)
 
     assert entry == TaskSpanTrace(
         name="task",
@@ -38,8 +30,8 @@ def test_to_trace_entry() -> None:
         start=now,
         end=now,
         traces=[
-            LogTrace(message="message", value="value"),
             SpanTrace(name="span", traces=[], start=now, end=now),
+            LogTrace(message="message", value="value"),
         ],
     )
 
@@ -49,7 +41,10 @@ def test_deserialize_task_trace() -> None:
         name="task",
         start=utc_now(),
         end=utc_now(),
-        traces=[],
+        traces=[
+            SpanTrace(name="span", traces=[], start=utc_now(), end=utc_now()),
+            LogTrace(message="message", value="value"),
+        ],
         input=[{"a": "b"}],
         output=["c"],
     )
