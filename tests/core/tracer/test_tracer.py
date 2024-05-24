@@ -2,15 +2,17 @@ import pytest
 from pydantic import BaseModel
 from pytest import fixture
 
-from intelligence_layer.core import CompositeTracer, FileTracer, InMemoryTracer
-from intelligence_layer.core.tracer.tracer import (
+from intelligence_layer.core import (
+    CompositeTracer,
+    FileTracer,
+    InMemoryTracer,
     SpanStatus,
     SpanType,
     TaskSpanAttributes,
     Tracer,
     utc_now,
 )
-from tests.core.tracer.conftest import TestException
+from tests.core.tracer.conftest import SpecificTestException
 
 
 class DummyObject(BaseModel):
@@ -98,8 +100,8 @@ def test_tracer_exports_error_correctly(
 
     try:
         with tracer.span("name"):
-            raise TestException
-    except TestException:
+            raise SpecificTestException
+    except SpecificTestException:
         pass
     unified_format = tracer.export_for_viewing()
 

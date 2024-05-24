@@ -16,8 +16,7 @@ from opentelemetry.sdk.trace.export import (
 )
 from pytest import fixture
 
-from intelligence_layer.core import OpenTelemetryTracer, Task
-from intelligence_layer.core.tracer.tracer import SpanType
+from intelligence_layer.core import OpenTelemetryTracer, SpanType, Task
 
 
 class DummyExporter(SpanExporter):
@@ -75,9 +74,9 @@ def jaeger_compatible_tracer(trace_provider: TracerProvider) -> OpenTelemetryTra
 def test_open_telemetry_tracer_has_consistent_trace_id(
     test_opentelemetry_tracer: OpenTelemetryTracer,
     exporter: DummyExporter,
-    test_task: Task[str, str],
+    tracer_test_task: Task[str, str],
 ) -> None:
-    test_task.run("test-input", test_opentelemetry_tracer)
+    tracer_test_task.run("test-input", test_opentelemetry_tracer)
     spans = exporter.spans
     assert len(spans) == 4
     assert len(set(span.context.trace_id for span in spans)) == 1
@@ -86,9 +85,9 @@ def test_open_telemetry_tracer_has_consistent_trace_id(
 def test_open_telemetry_tracer_sets_attributes_correctly(
     test_opentelemetry_tracer: OpenTelemetryTracer,
     exporter: DummyExporter,
-    test_task: Task[str, str],
+    tracer_test_task: Task[str, str],
 ) -> None:
-    test_task.run("test-input", test_opentelemetry_tracer)
+    tracer_test_task.run("test-input", test_opentelemetry_tracer)
     spans = exporter.spans
     assert len(spans) == 4
     spans_sorted_by_start: list[ReadableSpan] = sorted(
@@ -134,7 +133,7 @@ def test_open_telemetry_tracer_sets_attributes_correctly(
 def test_open_telemetry_tracer_logs_error_code_correctly(
     test_opentelemetry_tracer: OpenTelemetryTracer,
     exporter: DummyExporter,
-    test_task: Task[str, str],
+    tracer_test_task: Task[str, str],
 ) -> None:
     with pytest.raises(ValueError):
         with test_opentelemetry_tracer.span("failing task"):
@@ -162,12 +161,12 @@ def get_current_traces(tracing_service: str) -> Any:
 @pytest.mark.docker
 def test_open_telemetry_tracer_works_with_jaeger(
     jaeger_compatible_tracer: OpenTelemetryTracer,
-    test_task: Task[str, str],
+    tracer_test_task: Task[str, str],
     service_name: str,
 ) -> None:
     url = "http://localhost:16686/api/traces?service=" + service_name
     input_value = str(uuid4())
-    test_task.run(input_value, jaeger_compatible_tracer)
+    tracer_test_task.run(input_value, jaeger_compatible_tracer)
     # the processor needs time to submit the trace to jaeger
     time.sleep(1)
 

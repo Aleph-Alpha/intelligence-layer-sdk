@@ -4,10 +4,13 @@ from unittest.mock import Mock
 import pytest
 from pytest import fixture
 
-from intelligence_layer.core import FileTracer, Task
-from intelligence_layer.core.tracer.in_memory_tracer import InMemoryTaskSpan
-from intelligence_layer.core.tracer.persistent_tracer import TracerLogEntryFailed
-from tests.core.tracer.conftest import TestException
+from intelligence_layer.core import (
+    FileTracer,
+    InMemoryTaskSpan,
+    Task,
+    TracerLogEntryFailed,
+)
+from tests.core.tracer.conftest import SpecificTestException
 
 
 @fixture
@@ -16,12 +19,12 @@ def file_tracer(tmp_path: Path) -> FileTracer:
 
 
 def test_file_tracer_retrieves_all_file_traces(
-    file_tracer: FileTracer, test_task: Task[str, str]
+    file_tracer: FileTracer, tracer_test_task: Task[str, str]
 ) -> None:
     input = "input"
 
-    test_task.run(input, file_tracer)
-    test_task.run(input, file_tracer)
+    tracer_test_task.run(input, file_tracer)
+    tracer_test_task.run(input, file_tracer)
     traces = file_tracer.traces()
     assert len(traces.entries) == 2
     assert isinstance(traces.entries[0], InMemoryTaskSpan)
@@ -45,8 +48,10 @@ def test_file_tracer_handles_tracer_log_entry_failed_exception(
 def test_file_tracer_raises_non_log_entry_failed_exceptions(
     file_tracer: FileTracer,
 ) -> None:
-    file_tracer._log_entry = Mock(side_effect=[TestException("Hi I am an error", "21")])  # type: ignore[method-assign]
-    with pytest.raises(TestException):
+    file_tracer._log_entry = Mock(  # type: ignore[method-assign]
+        side_effect=[SpecificTestException("Hi I am an error", "21")]
+    )
+    with pytest.raises(SpecificTestException):
         file_tracer.task_span(task_name="mock_task_name", input="42", timestamp=None)
 
 

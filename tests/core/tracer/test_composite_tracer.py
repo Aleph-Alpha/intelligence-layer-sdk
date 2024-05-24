@@ -1,14 +1,13 @@
 import pytest
 
-from intelligence_layer.core import CompositeTracer, InMemoryTracer, Task
-from intelligence_layer.core.tracer.tracer import SpanStatus
-from tests.core.tracer.conftest import TestException
+from intelligence_layer.core import CompositeTracer, InMemoryTracer, SpanStatus, Task
+from tests.core.tracer.conftest import SpecificTestException
 
 
-def test_composite_tracer(test_task: Task[str, str]) -> None:
+def test_composite_tracer(tracer_test_task: Task[str, str]) -> None:
     tracer_1 = InMemoryTracer()
     tracer_2 = InMemoryTracer()
-    test_task.run(input="input", tracer=CompositeTracer([tracer_1, tracer_2]))
+    tracer_test_task.run(input="input", tracer=CompositeTracer([tracer_1, tracer_2]))
 
     trace_1 = tracer_1.export_for_viewing()[0]
     trace_2 = tracer_2.export_for_viewing()[0]
@@ -20,7 +19,7 @@ def test_composite_tracer(test_task: Task[str, str]) -> None:
 
 
 def test_composite_tracer_can_get_span_status(
-    test_task: Task[str, str],
+    tracer_test_task: Task[str, str],
 ) -> None:
     tracer_1 = InMemoryTracer()
     tracer_2 = InMemoryTracer()
@@ -32,7 +31,7 @@ def test_composite_tracer_can_get_span_status(
 
 
 def test_composite_tracer_raises_for_inconsistent_span_status(
-    test_task: Task[str, str],
+    tracer_test_task: Task[str, str],
 ) -> None:
     tracer_1 = InMemoryTracer()
     tracer_2 = InMemoryTracer()
@@ -44,8 +43,8 @@ def test_composite_tracer_raises_for_inconsistent_span_status(
         single_span = spans[0]
         try:
             with single_span:
-                raise TestException
-        except TestException:
+                raise SpecificTestException
+        except SpecificTestException:
             pass
 
         with pytest.raises(ValueError):

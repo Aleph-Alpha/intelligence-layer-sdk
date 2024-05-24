@@ -5,6 +5,7 @@ from typing import Iterator
 import pytest
 
 from intelligence_layer.core import (
+    ErrorValue,
     InMemorySpan,
     InMemoryTaskSpan,
     InMemoryTracer,
@@ -12,7 +13,6 @@ from intelligence_layer.core import (
     Task,
     utc_now,
 )
-from intelligence_layer.core.tracer.tracer import ErrorValue
 
 
 def test_trace_id_exists_for_all_children_of_task_span() -> None:
@@ -108,16 +108,16 @@ def test_task_span_records_error_value() -> None:
 
 
 def test_task_automatically_logs_input_and_output(
-    test_task: Task[str, str],
+    tracer_test_task: Task[str, str],
 ) -> None:
     input = "input"
     tracer = InMemoryTracer()
-    output = test_task.run(input=input, tracer=tracer)
+    output = tracer_test_task.run(input=input, tracer=tracer)
 
     assert len(tracer.entries) == 1
     task_span = tracer.entries[0]
     assert isinstance(task_span, InMemoryTaskSpan)
-    assert task_span.name == type(test_task).__name__
+    assert task_span.name == type(tracer_test_task).__name__
     assert task_span.input == input
     assert task_span.output == output
     assert task_span.start_timestamp and task_span.end_timestamp
