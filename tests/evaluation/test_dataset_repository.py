@@ -11,6 +11,9 @@ from intelligence_layer.evaluation import (
     Example,
     FileDatasetRepository,
 )
+from intelligence_layer.evaluation.dataset.data_platform_dataset_repository import (
+    DataPlatformDatasetRepository,
+)
 from intelligence_layer.evaluation.dataset.hugging_face_dataset_repository import (
     HuggingFaceDatasetRepository,
 )
@@ -40,10 +43,16 @@ def mocked_hugging_face_dataset_repository(
         return repo
 
 
+@fixture
+def data_platform_dataset_repository() -> DataPlatformDatasetRepository:
+    return DataPlatformDatasetRepository()
+
+
 test_repository_fixtures = [
     "file_dataset_repository",
     "in_memory_dataset_repository",
     "mocked_hugging_face_dataset_repository",
+    "data_platform_dataset_repository",
 ]
 
 
@@ -229,7 +238,7 @@ def test_dataset_ids_returns_all_sorted_ids(
 
     stored_dataset_ids = dataset_repository.dataset_ids()
 
-    assert stored_dataset_ids == sorted(dataset_ids)
+    assert list(stored_dataset_ids) == sorted(dataset_ids)
 
 
 @mark.parametrize(
