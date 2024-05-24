@@ -20,18 +20,3 @@ updates:
     directory: "/"
     schedule:
       interval: "daily"
-
-  - package-ecosystem: "npm"
-    directory: "/trace-viewer/"
-    schedule:
-      interval: "daily"
-    groups:
-      minor:
-        update-types:
-          - minor
-          - patch
-
-  - package-ecosystem: "docker"
-    directory: "/trace-viewer/"
-    schedule:
-      interval: "daily"
