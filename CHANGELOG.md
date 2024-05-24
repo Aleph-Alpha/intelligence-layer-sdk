@@ -5,7 +5,7 @@
 ### Breaking Changes
  - We removed the `trace_id` as a concept from various tracing-related functions and moved them to a `context`. If you did not directly use the `trace_id` there is nothing to change.
    - `Task.run` no longer takes a trace id. This was an largely unused feature and we revamped the trace ids for the traces.
-   - Creating `Span`, `TaskSpan` or logs no longer takes `trace_ids`. This is handled by the spans themselves, who now have a `context` that identifies them.
+   - Creating `Span`, `TaskSpan` or logs no longer takes `trace_id`. This is handled by the spans themselves, who now have a `context` that identifies them.
      - `Span.id` is therefore also removed. This can be accessed by `span.context.trace_id`, but has a different type.
    - The `OpenTelemetryTracer` no longer logs a custom `trace_id` into the attributes. Use the existing ids from its context instead.
    - Accessing a single trace from a `PersistentTracer.trace()` is no longer supported, as the user does not have access to the `trace_id` anyway. The function is now called `traces` and returns all available traces for a tracer.
