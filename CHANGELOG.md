@@ -11,8 +11,8 @@
    - Accessing a single trace from a `PersistentTracer.trace()` is no longer supported, as the user does not have access to the `trace_id` anyway. The function is now called `traces` and returns all available traces for a tracer.
  - `InMemoryTracer` and derivatives are no longer `pydantic.BaseModel`. Use the `export_for_viewing` function to export a serializable representation of the trace.
  - We updated the graders to support python 3.12 and moved away from `nltk`-package:
-    - `BleuGrader` and `RougeGrader` now use the `evaluate`-package from HuggingFace.
-    - `RougeGrader` now returns f1-score `float` instead of previously `FScores`.
+    - `BleuGrader` now uses `sacrebleu`-package.
+    - `RougeGrader` now uses the `rouge_score`-package.
 
 ### New Features
  - Add `how_to_implement_incremental_evaluation`.
