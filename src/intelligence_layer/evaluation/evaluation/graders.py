@@ -3,9 +3,10 @@ from dataclasses import dataclass
 from multiprocessing import Lock
 from typing import List, Sequence, Tuple
 
-import evaluate  # type: ignore
 from langdetect import LangDetectException, detect_langs  # type: ignore
 from langdetect.language import Language as LangdetectLanguage  # type: ignore
+from rouge_score import rouge_scorer  # type: ignore
+from sacrebleu import BLEU
 from semantic_text_splitter import TextSplitter
 
 _evaluate_lock = Lock()
@@ -13,7 +14,7 @@ _evaluate_lock = Lock()
 
 class BleuGrader:
     def __init__(self) -> None:
-        self.bleu = evaluate.load("bleu")
+        self.bleu = BLEU()
 
     def calculate_bleu(self, hypothesis: str, reference: str) -> float:
         """Calculates the BLEU-score for the given hypothesis and reference.
@@ -27,14 +28,11 @@ class BleuGrader:
         Returns:
             BLEU-score, float between 0 and 1. Where 1 means perfect match and 0 no overlap.
         """
-        predictions = [hypothesis]
-        references = [[reference]]
-        with _evaluate_lock:  # for some reason, the internal batching fails on multiprocessing
-            bleu_score: float = self.bleu.compute(
-                predictions=predictions, references=references
-            )["bleu"]
+        bleu_score = self.bleu.corpus_score(
+            hypotheses=[hypothesis], references=[[reference]]
+        )
 
-        return bleu_score
+        return bleu_score.score  # type: ignore
 
 
 @dataclass
@@ -46,9 +44,9 @@ class FScores:
 
 class RougeGrader:
     def __init__(self) -> None:
-        self.rouge = evaluate.load("rouge")
+        self.scorer = rouge_scorer.RougeScorer(["rouge2"], use_stemmer=True)
 
-    def calculate_rouge(self, hypothesis: str, reference: str) -> float:
+    def calculate_rouge(self, hypothesis: str, reference: str) -> FScores:
         """Calculates the ROUGE-score for the hypothesis and reference.
 
         In the summarization use-case the `ROUGE-score <https://aclanthology.org/W04-1013>`_ roughly corresponds to the recall of the generated summary with regard to the expected summary.
@@ -60,12 +58,14 @@ class RougeGrader:
         Returns:
             ROUGE-score, which contains precision, recall and f1 metrics, all will be floats between 0 and 1. Where 1 means perfect match and 0 no overlap.
         """
-        predictions = [hypothesis]
-        references = [reference]
-        rouge_score: float = self.rouge.compute(
-            predictions=predictions, references=references, use_aggregator=True
-        )["rouge2"]
-        return rouge_score
+        rouge_score = self.scorer.score(prediction=hypothesis, target=reference)[
+            "rouge2"
+        ]
+        return FScores(
+            precision=rouge_score.precision,
+            recall=rouge_score.recall,
+            f_score=rouge_score.fmeasure,
+        )
 
 
 class LanguageMatchesGrader:

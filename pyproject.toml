@@ -32,8 +32,8 @@ opentelemetry-sdk = "^1.22.0"
 huggingface-hub = "^0.23.1"
 opentelemetry-exporter-otlp-proto-http = "1.23.0"
 # summary grader
-evaluate = "^0.4.2"
 rouge-score = "^0.1.2"
+sacrebleu = "^2.4.2"
 
 [tool.poetry.group.dev.dependencies]
 # lint & format
