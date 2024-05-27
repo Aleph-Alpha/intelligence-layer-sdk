@@ -12,7 +12,7 @@ license = "Aleph Alpha Licensed"
 packages = [{ include = "intelligence_layer", from = "src" }]
 
 [tool.poetry.dependencies]
-python = ">=3.10,<3.12"
+python = ">=3.10,<3.13"
 pydantic = "2.7.*"
 fastapi = "^0.111.0"
 uvicorn = "^0.29.0"
@@ -26,13 +26,14 @@ datasets = "^2.19.1"
 jupyter = "^1.0.0"
 requests = "^2.32.2"
 langdetect = "^1.0.9"
-nltk = "^3.8.1"
 pycountry = "23.12.11"
-rouge = "^1.0.1"
 opentelemetry-api = "^1.22.0"
 opentelemetry-sdk = "^1.22.0"
 huggingface-hub = "^0.23.1"
 opentelemetry-exporter-otlp-proto-http = "1.23.0"
+# summary grader
+rouge-score = "^0.1.2"
+sacrebleu = "^2.4.2"
 
 [tool.poetry.group.dev.dependencies]
 # lint & format
@@ -74,6 +75,7 @@ markers = [
 addopts = "--capture=tee-sys"
 filterwarnings = [
     'ignore:.*\`general_plain_validator_function\` is deprecated.*',
+    'ignore::DeprecationWarning:.*importlib._bootstrap.*'
 ]
 
 

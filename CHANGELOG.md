@@ -10,6 +10,9 @@
    - The `OpenTelemetryTracer` no longer logs a custom `trace_id` into the attributes. Use the existing ids from its context instead.
    - Accessing a single trace from a `PersistentTracer.trace()` is no longer supported, as the user does not have access to the `trace_id` anyway. The function is now called `traces` and returns all available traces for a tracer.
  - `InMemoryTracer` and derivatives are no longer `pydantic.BaseModel`. Use the `export_for_viewing` function to export a serializable representation of the trace.
+ - We updated the graders to support python 3.12 and moved away from `nltk`-package:
+    - `BleuGrader` now uses `sacrebleu`-package.
+    - `RougeGrader` now uses the `rouge_score`-package.
 
 ### New Features
  - Add `how_to_implement_incremental_evaluation`.
@@ -17,6 +20,7 @@
  - Add `export_for_viewing` to tracers to be able to export traces in a unified format similar to opentelemetry.
    - This is not supported for the `OpenTelemetryTracer` because of technical incompatibilities.
  - All exported spans now contain the status of the span.
+ - We now support python 3.12
 
 ### Fixes
 - The document index client now correctly URL-encodes document names in its queries.

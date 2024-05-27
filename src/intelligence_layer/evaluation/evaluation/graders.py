@@ -1,43 +1,17 @@
 import math
 from dataclasses import dataclass
-from threading import Lock
-from typing import List, Mapping, Sequence, Tuple
+from typing import List, Sequence, Tuple
 
-import nltk  # type: ignore
 from langdetect import LangDetectException, detect_langs  # type: ignore
 from langdetect.language import Language as LangdetectLanguage  # type: ignore
-from nltk.tokenize import RegexpTokenizer  # type: ignore
-from nltk.translate.bleu_score import sentence_bleu  # type: ignore
-from rouge import Rouge  # type: ignore
+from rouge_score import rouge_scorer  # type: ignore
+from sacrebleu import BLEU
 from semantic_text_splitter import TextSplitter
-
-_nltk_lock = Lock()
-
-
-def _download_nltk() -> None:
-    with _nltk_lock:
-        nltk.download("punkt", quiet=True)
-
-
-def _split_into_words(input: str) -> Sequence[str]:
-    """Splits a string into a list of words.
-
-    Removes non-alphanumeric characters and lowercases the given text.
-
-    Args:
-        input: String to split.
-    Returns:
-        List of words.
-    """
-    tokenizer = RegexpTokenizer(r"\w+")
-    tokens = tokenizer.tokenize(input.lower())
-    assert isinstance(tokens, list)
-    return tokens
 
 
 class BleuGrader:
     def __init__(self) -> None:
-        _download_nltk()
+        self.bleu = BLEU()
 
     def calculate_bleu(self, hypothesis: str, reference: str) -> float:
         """Calculates the BLEU-score for the given hypothesis and reference.
@@ -51,12 +25,11 @@ class BleuGrader:
         Returns:
             BLEU-score, float between 0 and 1. Where 1 means perfect match and 0 no overlap.
         """
-        hypothesis_tokens = _split_into_words(hypothesis)
-        reference_tokens = _split_into_words(reference)
-        bleu_score = sentence_bleu(
-            references=[reference_tokens], hypothesis=hypothesis_tokens
+        bleu_score = self.bleu.corpus_score(
+            hypotheses=[hypothesis], references=[[reference]]
         )
-        return bleu_score if isinstance(bleu_score, float) else 0.0
+
+        return bleu_score.score  # type: ignore
 
 
 @dataclass
@@ -65,18 +38,10 @@ class FScores:
     recall: float
     f_score: float
 
-    @classmethod
-    def from_rouge_results(cls, rouge_results: Mapping[str, float]) -> "FScores":
-        return cls(
-            precision=rouge_results["p"],
-            recall=rouge_results["r"],
-            f_score=rouge_results["f"],
-        )
-
 
 class RougeGrader:
     def __init__(self) -> None:
-        _download_nltk()
+        self.scorer = rouge_scorer.RougeScorer(["rouge2"], use_stemmer=True)
 
     def calculate_rouge(self, hypothesis: str, reference: str) -> FScores:
         """Calculates the ROUGE-score for the hypothesis and reference.
@@ -90,11 +55,14 @@ class RougeGrader:
         Returns:
             ROUGE-score, which contains precision, recall and f1 metrics, all will be floats between 0 and 1. Where 1 means perfect match and 0 no overlap.
         """
-        hypothesis = " ".join(_split_into_words(hypothesis))
-        reference = " ".join(_split_into_words(reference))
-        rouge = Rouge()
-        rouge_scores = rouge.get_scores(hypothesis, reference)[0]["rouge-2"]
-        return FScores.from_rouge_results(rouge_scores)
+        rouge_score = self.scorer.score(prediction=hypothesis, target=reference)[
+            "rouge2"
+        ]
+        return FScores(
+            precision=rouge_score.precision,
+            recall=rouge_score.recall,
+            f_score=rouge_score.fmeasure,
+        )
 
 
 class LanguageMatchesGrader:
@@ -108,7 +76,6 @@ class LanguageMatchesGrader:
 
     def __init__(self, acceptance_threshold: float = 0.75) -> None:
         self._acceptance_threshold = acceptance_threshold
-        _download_nltk()
 
     def languages_match(self, input: str, output: str) -> bool:
         """Calculates if the input and output text are of the same language.

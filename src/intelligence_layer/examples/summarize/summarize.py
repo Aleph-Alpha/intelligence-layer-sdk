@@ -78,7 +78,7 @@ class SummarizeEvaluation(BaseModel):
 
     Attributes:
         bleu: roughly corresponds to precision
-        rouge: rougly corresponds to recall
+        rouge: roughly corresponds to recall
         output: The actual output from the task run
     """
 
