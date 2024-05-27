@@ -1,6 +1,5 @@
 import math
 from dataclasses import dataclass
-from multiprocessing import Lock
 from typing import List, Sequence, Tuple
 
 from langdetect import LangDetectException, detect_langs  # type: ignore
@@ -8,8 +7,6 @@ from langdetect.language import Language as LangdetectLanguage  # type: ignore
 from rouge_score import rouge_scorer  # type: ignore
 from sacrebleu import BLEU
 from semantic_text_splitter import TextSplitter
-
-_evaluate_lock = Lock()
 
 
 class BleuGrader:
