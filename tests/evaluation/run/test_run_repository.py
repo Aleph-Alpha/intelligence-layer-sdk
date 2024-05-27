@@ -20,7 +20,7 @@ from intelligence_layer.evaluation import (
     TaskSpanTrace,
 )
 from intelligence_layer.evaluation.run.domain import FailedExampleRun
-from tests.conftest import DummyStringInput
+from tests.evaluation.conftest import DummyStringInput
 
 test_repository_fixtures = [
     "file_run_repository",

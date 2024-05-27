@@ -8,18 +8,9 @@ from fsspec.implementations.memory import MemoryFileSystem  # type: ignore
 from pydantic import BaseModel
 from pytest import fixture
 
-from intelligence_layer.connectors import (
-    ArgillaClient,
-    ArgillaEvaluation,
-    Field,
-    Question,
-    RecordData,
-)
-from intelligence_layer.core import Task, Tracer, utc_now
+from intelligence_layer.core import Task, TaskSpan, Tracer
 from intelligence_layer.evaluation import (
-    AggregationOverview,
     DatasetRepository,
-    EvaluationOverview,
     Example,
     ExampleEvaluation,
     FileAggregationRepository,
@@ -29,10 +20,41 @@ from intelligence_layer.evaluation import (
     InMemoryRunRepository,
     Runner,
 )
-from tests.conftest import DummyStringInput, DummyStringOutput
 
 FAIL_IN_EVAL_INPUT = "fail in eval"
 FAIL_IN_TASK_INPUT = "fail in task"
+
+
+class DummyStringInput(BaseModel):
+    input: str = "dummy-input"
+
+
+class DummyStringOutput(BaseModel):
+    output: str = "dummy-output"
+
+
+class DummyStringEvaluation(BaseModel):
+    evaluation: str = "dummy-evaluation"
+
+
+class DummyStringTask(Task[DummyStringInput, DummyStringOutput]):
+    def do_run(self, input: DummyStringInput, task_span: TaskSpan) -> DummyStringOutput:
+        return DummyStringOutput()
+
+
+@fixture
+def dummy_string_task() -> DummyStringTask:
+    return DummyStringTask()
+
+
+@fixture
+def string_dataset_id(
+    dummy_string_examples: Iterable[Example[DummyStringInput, DummyStringOutput]],
+    in_memory_dataset_repository: DatasetRepository,
+) -> str:
+    return in_memory_dataset_repository.create_dataset(
+        examples=dummy_string_examples, dataset_name="test-dataset"
+    ).id
 
 
 class DummyTask(Task[str, str]):
@@ -40,10 +62,6 @@ class DummyTask(Task[str, str]):
         if input == FAIL_IN_TASK_INPUT:
             raise RuntimeError(input)
         return input
-
-
-class DummyStringEvaluation(BaseModel):
-    same: bool
 
 
 class DummyEvaluation(BaseModel):
@@ -94,38 +112,6 @@ def file_run_repository(tmp_path: Path) -> FileRunRepository:
 
 
 @fixture
-def string_dataset_id(
-    dummy_string_examples: Iterable[Example[DummyStringInput, DummyStringOutput]],
-    in_memory_dataset_repository: DatasetRepository,
-) -> str:
-    return in_memory_dataset_repository.create_dataset(
-        examples=dummy_string_examples, dataset_name="test-dataset"
-    ).id
-
-
-@fixture
-def dummy_aggregated_evaluation() -> DummyAggregatedEvaluation:
-    return DummyAggregatedEvaluation(score=0.5)
-
-
-@fixture
-def aggregation_overview(
-    evaluation_overview: EvaluationOverview,
-    dummy_aggregated_evaluation: DummyAggregatedEvaluation,
-) -> AggregationOverview[DummyAggregatedEvaluation]:
-    return AggregationOverview(
-        evaluation_overviews=frozenset([evaluation_overview]),
-        id="aggregation-id",
-        start=utc_now(),
-        end=utc_now(),
-        successful_evaluation_count=5,
-        crashed_during_evaluation_count=3,
-        description="dummy-evaluator",
-        statistics=dummy_aggregated_evaluation,
-    )
-
-
-@fixture
 def dummy_string_example() -> Example[DummyStringInput, DummyStringOutput]:
     return Example(input=DummyStringInput(), expected_output=DummyStringOutput())
 
@@ -148,66 +134,6 @@ def dummy_runner(
         in_memory_run_repository,
         "dummy-runner",
     )
-
-
-class StubArgillaClient(ArgillaClient):
-    _expected_workspace_id: str
-    _expected_fields: Sequence[Field]
-    _expected_questions: Sequence[Question]
-    _datasets: dict[str, list[RecordData]] = {}
-    _score = 3.0
-
-    def create_dataset(
-        self,
-        workspace_id: str,
-        dataset_name: str,
-        fields: Sequence[Field],
-        questions: Sequence[Question],
-    ) -> str:
-        return self.ensure_dataset_exists(workspace_id, dataset_name, fields, questions)
-
-    def ensure_dataset_exists(
-        self,
-        workspace_id: str,
-        dataset_name: str,
-        fields: Sequence[Field],
-        questions: Sequence[Question],
-    ) -> str:
-        if workspace_id != self._expected_workspace_id:
-            raise Exception("Incorrect workspace id")
-        elif fields != self._expected_fields:
-            raise Exception("Incorrect fields")
-        elif questions != self._expected_questions:
-            raise Exception("Incorrect questions")
-        dataset_id = str(uuid4())
-        self._datasets[dataset_id] = []
-        return dataset_id
-
-    def add_record(self, dataset_id: str, record: RecordData) -> None:
-        if dataset_id not in self._datasets:
-            raise Exception("Add record: dataset not found")
-        self._datasets[dataset_id].append(record)
-
-    def evaluations(self, dataset_id: str) -> Iterable[ArgillaEvaluation]:
-        dataset = self._datasets.get(dataset_id)
-        assert dataset
-        return [
-            ArgillaEvaluation(
-                example_id=record.example_id,
-                record_id="ignored",
-                responses={"human-score": self._score},
-                metadata=dict(),
-            )
-            for record in dataset
-        ]
-
-    def split_dataset(self, dataset_id: str, n_splits: int) -> None:
-        raise NotImplementedError
-
-
-@fixture
-def stub_argilla_client() -> StubArgillaClient:
-    return StubArgillaClient()
 
 
 @fixture()

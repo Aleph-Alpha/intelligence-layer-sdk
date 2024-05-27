@@ -14,7 +14,7 @@ from intelligence_layer.evaluation import (
 from intelligence_layer.evaluation.dataset.hugging_face_dataset_repository import (
     HuggingFaceDatasetRepository,
 )
-from tests.conftest import DummyStringInput, DummyStringOutput
+from tests.evaluation.conftest import DummyStringInput, DummyStringOutput
 
 
 @fixture
