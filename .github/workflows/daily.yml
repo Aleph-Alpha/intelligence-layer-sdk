@@ -45,7 +45,6 @@ jobs:
           ARGILLA_API_KEY: "argilla.apikey"
           CLIENT_URL: "https://api.aleph-alpha.com"
         run: |
-          poetry run python -c "import nltk; nltk.download('punkt')"
           poetry run pytest -n 10 -m "not docker"
   run-notebooks:
     strategy:

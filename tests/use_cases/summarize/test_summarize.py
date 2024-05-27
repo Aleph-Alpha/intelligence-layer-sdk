@@ -182,7 +182,7 @@ def test_single_chunk_summarize_evaluator(
     run_overview = single_chunk_summarize_runner.run_dataset(dataset_id)
 
     evaluation_overview = single_chunk_summarize_evaluator.evaluate_runs(
-        run_overview.id
+        run_overview.id, abort_on_error=True
     )
     aggregation_overview = single_chunk_summarize_aggregator.aggregate_evaluation(
         evaluation_overview.id

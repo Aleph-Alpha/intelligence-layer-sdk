@@ -2,7 +2,6 @@ import langdetect  # type: ignore
 from pytest import fixture
 
 from intelligence_layer.evaluation import HighlightCoverageGrader, LanguageMatchesGrader
-from intelligence_layer.evaluation.evaluation.graders import BleuGrader, BleuGraderHF, RougeGrader, RougeGraderHF
 
 
 @fixture(scope="session", autouse=True)
@@ -150,34 +149,3 @@ def test_highlight_coverage_grader_returns_nonzero_nonperfect_score_with_some_fa
         ).f_score
         == 0.4
     )
-
-def test_hf_bleu_score() -> None:
-    bleu_grader = BleuGrader()
-    hf_grader = BleuGraderHF()
-
-    hypothesis = """BLEU (Bilingual Evaluation Understudy) is an algorithm for evaluating the quality of text which has been machine-translated from one natural language to another. Quality is considered to be the correspondence between a machine’s output and that of a human: “the closer a machine translation is to a professional human translation, the better it is” – this is the central idea behind BLEU. BLEU was one of the first metrics to claim a high correlation with human judgements of quality, and remains one of the most popular automated and inexpensive metrics.
-
-Scores are calculated for individual translated segments—generally sentences—by comparing them with a set of good quality reference translations. Those scores are then averaged over the whole corpus to reach an estimate of the translation’s overall quality. Neither intelligibility nor grammatical correctness are not taken into account."""
-    reference = """BLEU (Bilingual Evaluation Understudy) is an algorithm for evaluating the quality of text which has been machine-translated from one natural language to another. Quality is considered to be the correspondence between a machine’s output and that of a human: “the closer a machine translation is to a professional human translation, the better it is” – this is the central idea behind BLEU. BLEU was one of the first metrics to claim a high correlation with human judgements of quality, and remains one of the most popular automated and inexpensive metrics.
-
-Scores are calculated for individual translated segments—generally sentences—by comparing them with a set of good quality reference translations. Those scores are then averaged over the whole corpus to reach an estimate of the translation’s overall quality. Neither intelligibility nor grammatical correctness are not taken into account."""
-
-    bleu = bleu_grader.calculate_bleu(hypothesis=hypothesis, reference=reference)
-    bleu_hf = hf_grader.calculate_bleu(hypothesis=hypothesis, reference=reference)
-
-    assert bleu == bleu_hf
-
-
-def test_hf_rouge_score() -> None:
-    rouge_grader = RougeGrader()
-    hf_grader = RougeGraderHF()
-
-    hypothesis = """BLEU (Bilingual Evaluation Understudy) is an algorithm for evaluating the quality of text which has been machine-translated from one natural language to another. Quality is considered to be the correspondence between a machine’s output and that of a human: “the closer a machine translation is to a professional human translation, the better it is” – this is the central idea behind BLEU. BLEU was one of the first metrics to claim a high correlation with human judgements of quality, and remains one of the most popular automated and inexpensive metrics.
-
-Scores are calculated for individual translated segments—generally sentences—by comparing them with a set of good quality reference translations. Those scores are then averaged over the whole corpus to reach an estimate of the translation’s overall quality. Neither intelligibility nor grammatical correctness are not taken into account."""
-    reference = """hello hello hello hello segments—generally sentences—by comparing them with a set of good quality reference translations. Those scores are then averaged over the whole corpus to reach an estimate of the translation’s overall quality. Neither intelligibility nor grammatical correctness are not taken into account."""
-
-    rouge = rouge_grader.calculate_rouge(hypothesis=hypothesis, reference=reference)
-    rouge_hf = hf_grader.calculate_rouge(hypothesis=hypothesis, reference=reference)
-
-    assert rouge.f_score == rouge_hf

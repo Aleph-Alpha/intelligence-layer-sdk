@@ -78,7 +78,7 @@ class SummarizeEvaluation(BaseModel):
 
     Attributes:
         bleu: roughly corresponds to precision
-        rouge: rougly corresponds to recall
+        rouge: the Rouge2 f1 score.
         output: The actual output from the task run
     """
 
@@ -132,9 +132,7 @@ class SingleChunkSummarizeEvaluationLogic(
             output.summary, example.expected_output
         )
 
-        return SummarizeEvaluation(
-            bleu=bleu_score, rouge=rouge_score.recall, output=output
-        )
+        return SummarizeEvaluation(bleu=bleu_score, rouge=rouge_score, output=output)
 
 
 class LongContextSummarizeAggregationLogic(
@@ -174,9 +172,7 @@ class LongContextSummarizeEvaluationLogic(
             joint_summary, example.expected_output
         )
 
-        return SummarizeEvaluation(
-            bleu=bleu_score, rouge=rouge_score.recall, output=output
-        )
+        return SummarizeEvaluation(bleu=bleu_score, rouge=rouge_score, output=output)
 
 
 def aggregate_summarize_evaluation(
