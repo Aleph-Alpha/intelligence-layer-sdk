@@ -11,6 +11,8 @@ from nltk.translate.bleu_score import sentence_bleu  # type: ignore
 from rouge import Rouge  # type: ignore
 from semantic_text_splitter import TextSplitter
 
+import evaluate
+
 _nltk_lock = Lock()
 
 
@@ -57,6 +59,27 @@ class BleuGrader:
             references=[reference_tokens], hypothesis=hypothesis_tokens
         )
         return bleu_score if isinstance(bleu_score, float) else 0.0
+    
+class BleuGraderHF:
+    def __init__(self) -> None:
+        self.bleu = evaluate.load("bleu")
+
+    def calculate_bleu(self, hypothesis: str, reference: str) -> float:
+        """Calculates the BLEU-score for the given hypothesis and reference.
+
+        In the summarization use-case the `BLEU-score <https://aclanthology.org/P02-1040/>`_ roughly corresponds to the precision of the generated summary with regard to the expected summary.
+
+        Args:
+            hypothesis: The generation to be evaluated.
+            reference: The baseline for the evaluation.
+
+        Returns:
+            BLEU-score, float between 0 and 1. Where 1 means perfect match and 0 no overlap.
+        """
+        predictions = [hypothesis]
+        references = [[reference]]
+        bleu_score = self.bleu.compute(predictions=predictions, references=references)['bleu']
+        return bleu_score
 
 
 @dataclass
@@ -95,6 +118,27 @@ class RougeGrader:
         rouge = Rouge()
         rouge_scores = rouge.get_scores(hypothesis, reference)[0]["rouge-2"]
         return FScores.from_rouge_results(rouge_scores)
+    
+class RougeGraderHF:
+    def __init__(self) -> None:
+        self.rouge = evaluate.load('rouge')
+
+    def calculate_rouge(self, hypothesis: str, reference: str) -> float:
+        """Calculates the ROUGE-score for the hypothesis and reference.
+
+        In the summarization use-case the `ROUGE-score <https://aclanthology.org/W04-1013>`_ roughly corresponds to the recall of the generated summary with regard to the expected summary.
+
+        Args:
+            hypothesis: The generation to be evaluated.
+            reference: The baseline for the evaluation.
+
+        Returns:
+            ROUGE-score, which contains precision, recall and f1 metrics, all will be floats between 0 and 1. Where 1 means perfect match and 0 no overlap.
+        """
+        predictions = [hypothesis]
+        references = [reference]
+        rouge_score = self.rouge.compute(predictions=predictions,references=references, use_aggregator=True)['rouge2']
+        return rouge_score
 
 
 class LanguageMatchesGrader:
