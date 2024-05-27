@@ -75,6 +75,7 @@ markers = [
 addopts = "--capture=tee-sys"
 filterwarnings = [
     'ignore:.*\`general_plain_validator_function\` is deprecated.*',
+    'ignore::DeprecationWarning:.*importlib._bootstrap.*'
 ]
 
 
