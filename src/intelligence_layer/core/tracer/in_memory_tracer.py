@@ -1,12 +1,9 @@
-import os
 from datetime import datetime
 from typing import Optional, Sequence, Union
 from uuid import UUID
 
-import requests
 import rich
 from pydantic import BaseModel, Field, SerializeAsAny
-from requests import HTTPError
 from rich.panel import Panel
 from rich.syntax import Syntax
 from rich.tree import Tree
@@ -15,7 +12,6 @@ from intelligence_layer.core.tracer.tracer import (
     Context,
     Event,
     ExportedSpan,
-    ExportedSpanList,
     JsonSerializer,
     PydanticSerializable,
     Span,
@@ -80,27 +76,6 @@ class InMemoryTracer(Tracer):
 
         if not self.submit_to_trace_viewer():
             rich.print(self._rich_render_())
-
-    def submit_to_trace_viewer(self) -> bool:
-        """Submits the trace to the UI for visualization"""
-        trace_viewer_url = os.getenv("TRACE_VIEWER_URL", "http://localhost:3000")
-        trace_viewer_trace_upload = f"{trace_viewer_url}/trace"
-        try:
-            res = requests.post(
-                trace_viewer_trace_upload,
-                json=ExportedSpanList(self.export_for_viewing()).model_dump_json(),
-            )
-            if res.status_code != 200:
-                raise HTTPError(res.status_code)
-            rich.print(
-                f"Open the [link={trace_viewer_url}]Trace Viewer[/link] to view the trace."
-            )
-            return True
-        except requests.ConnectionError:
-            print(
-                f"Trace viewer not found under {trace_viewer_url}.\nConsider running it for a better viewing experience.\nIf it is, set `TRACE_VIEWER_URL` in the environment."
-            )
-            return False
 
     def export_for_viewing(self) -> Sequence[ExportedSpan]:
         exported_root_spans: list[ExportedSpan] = []
