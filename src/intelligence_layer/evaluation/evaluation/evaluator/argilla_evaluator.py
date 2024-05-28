@@ -303,8 +303,12 @@ class InstructComparisonArgillaEvaluationLogic(
         self, argilla_evaluation: ArgillaEvaluation
     ) -> ComparisonEvaluation:
         return ComparisonEvaluation(
-            first_player=argilla_evaluation.metadata["first"],
-            second_player=argilla_evaluation.metadata["second"],
+            first_player=argilla_evaluation.metadata[
+                self.fields["KEY_RESPONSE_1"].name
+            ],
+            second_player=argilla_evaluation.metadata[
+                self.fields["KEY_RESPONSE_2"].name
+            ],
             outcome=MatchOutcome.from_rank_literal(
                 int(argilla_evaluation.responses["winner"])
             ),
