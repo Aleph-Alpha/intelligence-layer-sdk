@@ -29,7 +29,7 @@ langdetect = "^1.0.9"
 pycountry = "23.12.11"
 opentelemetry-api = "^1.22.0"
 opentelemetry-sdk = "^1.22.0"
-huggingface-hub = "^0.23.1"
+huggingface-hub = "^0.23.2"
 opentelemetry-exporter-otlp-proto-http = "1.23.0"
 # summary grader
 rouge-score = "^0.1.2"
@@ -45,7 +45,7 @@ pre-commit = "^3.7.1"
 # tests
 pytest = "^8.2"
 pytest-xdist = "^3.6.1"
-hypercorn = "^0.16.0"
+hypercorn = "^0.17.2"
 
 # typing
 httpx = "*"
