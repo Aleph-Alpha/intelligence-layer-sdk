@@ -344,3 +344,30 @@ def test_argilla_aggregation_logic_works() -> None:
         aggregation.scores["player_3"].elo_standard_error
         > aggregation.scores["player_1"].elo_standard_error
     )
+
+
+#def test_argilla_evaluator_has_distinct_names_for_datasets(
+#    string_argilla_runner: Runner[DummyStringInput, DummyStringOutput],
+#    string_dataset_id: str,
+#    in_memory_dataset_repository: InMemoryDatasetRepository,
+#    in_memory_run_repository: InMemoryRunRepository,
+#    async_in_memory_evaluation_repository: AsyncInMemoryEvaluationRepository,
+#    dummy_argilla_client: DummyArgillaClient,
+#) -> None:
+#    workspace_id = "workspace_id"
+#    evaluator = ArgillaEvaluator(
+#        in_memory_dataset_repository,
+#        in_memory_run_repository,
+#        async_in_memory_evaluation_repository,
+#        "dummy-string-task",
+#        DummyStringTaskArgillaEvaluationLogic(),
+#        dummy_argilla_client,
+#        workspace_id,
+#    )
+#
+#    run_overview = string_argilla_runner.run_dataset(string_dataset_id)
+#    _ = evaluator.submit(run_overview.id)
+#    _ = evaluator.submit(run_overview.id)
+#
+#    assert len(dummy_argilla_client._datasets) == 2
+#    assert dummy_argilla_client._datasets.keys() != dummy_argilla_client

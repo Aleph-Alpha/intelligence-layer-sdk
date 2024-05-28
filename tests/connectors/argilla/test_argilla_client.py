@@ -296,3 +296,19 @@ def test_split_dataset_can_split_long_dataset(
     for old_metadata, new_metadata in zip(record_metadata, new_metadata_list):
         del new_metadata["split"]  # type: ignore
         assert old_metadata == new_metadata
+
+
+@pytest.mark.docker
+def test_client_creates_two_datasets_with_same_name(
+    argilla_client: DefaultArgillaClient,
+    workspace_id: str,
+) -> None:
+    id1 = argilla_client.ensure_dataset_exists(
+        workspace_id, dataset_name="name", fields=[], questions=[]
+    )
+
+    id2 = argilla_client.ensure_dataset_exists(
+        workspace_id, dataset_name="name", fields=[], questions=[]
+    )
+
+    assert id1 == id2
