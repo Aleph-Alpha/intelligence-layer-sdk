@@ -15,7 +15,7 @@ packages = [{ include = "intelligence_layer", from = "src" }]
 python = ">=3.10,<3.13"
 pydantic = "2.7.*"
 fastapi = "^0.111.0"
-uvicorn = "^0.29.0"
+uvicorn = "^0.30.0"
 aleph-alpha-client = ">=7.1.0"
 python-dotenv = "*"
 semantic-text-splitter = "^0.13.1"
@@ -39,7 +39,7 @@ sacrebleu = "^2.4.2"
 # lint & format
 mypy = "^1.10.0"
 nbqa = "^1.8.5"
-ruff = "^0.4.5"
+ruff = "^0.4.6"
 pre-commit = "^3.7.1"
 
 # tests
