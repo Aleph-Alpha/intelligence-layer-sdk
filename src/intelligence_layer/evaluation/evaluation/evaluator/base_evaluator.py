@@ -246,6 +246,7 @@ class EvaluatorBase(Generic[Input, Output, ExpectedOutput, Evaluation], ABC):
         self,
         examples: Iterable[Example[Input, ExpectedOutput]],
         example_outputs_for_example: Iterable[tuple[ExampleOutput[Output], ...]],
+        skip_example_on_any_failure: bool,
         num_examples: Optional[int],
     ) -> Iterable[
         Tuple[
@@ -256,7 +257,7 @@ class EvaluatorBase(Generic[Input, Output, ExpectedOutput, Evaluation], ABC):
         current_example = 0
 
         for example, example_outputs in zip(examples, example_outputs_for_example):
-            if any(
+            if skip_example_on_any_failure and any(
                 isinstance(output.output, FailedExampleRun)
                 for output in example_outputs
             ):
@@ -265,6 +266,7 @@ class EvaluatorBase(Generic[Input, Output, ExpectedOutput, Evaluation], ABC):
             successful_example_outputs = [
                 cast(SuccessfulExampleOutput[Output], output)
                 for output in example_outputs
+                if not isinstance(output.output, FailedExampleRun)
             ]
 
             if num_examples and current_example >= num_examples:
@@ -279,6 +281,7 @@ class EvaluatorBase(Generic[Input, Output, ExpectedOutput, Evaluation], ABC):
     def _retrieve_eval_logic_input(
         self,
         run_overviews: set[RunOverview],
+        skip_example_on_any_failure: bool,
         num_examples: Optional[int] = None,
     ) -> Iterable[
         Tuple[
@@ -293,6 +296,7 @@ class EvaluatorBase(Generic[Input, Output, ExpectedOutput, Evaluation], ABC):
 
         Args:
             run_overviews: Run overviews to gather data from.
+            skip_example_on_any_failure: Skip example on any failure.
             num_examples: Maximum amount of examples to gather. Defaults to None.
 
         Returns:
@@ -303,7 +307,10 @@ class EvaluatorBase(Generic[Input, Output, ExpectedOutput, Evaluation], ABC):
         dataset_id = next(iter(run_overviews)).dataset_id
         examples = self._retrieve_examples(dataset_id)
         return self._generate_evaluation_inputs(
-            examples, example_outputs_for_example, num_examples
+            examples,
+            example_outputs_for_example,
+            skip_example_on_any_failure,
+            num_examples,
         )
 
     def failed_evaluations(

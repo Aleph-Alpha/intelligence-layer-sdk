@@ -97,6 +97,7 @@ class Evaluator(EvaluatorBase[Input, Output, ExpectedOutput, Evaluation]):
         *run_ids: str,
         num_examples: Optional[int] = None,
         abort_on_error: bool = False,
+        skip_example_on_any_failure: bool = True,
     ) -> EvaluationOverview:
         """Evaluates all generated outputs in the run.
 
@@ -114,6 +115,7 @@ class Evaluator(EvaluatorBase[Input, Output, ExpectedOutput, Evaluation]):
             num_examples: The number of examples which should be evaluated from the given runs.
                 Always the first n runs stored in the evaluation repository. Defaults to None.
             abort_on_error: Flag to abort all evaluations when an error occurs. Defaults to False.
+            skip_example_on_any_failure: Flag to skip evaluation on any example for which at least one run fails. Defaults to True.
 
         Returns:
             EvaluationOverview: An overview of the evaluation. Individual :class:`Evaluation`s will not be
@@ -133,7 +135,9 @@ class Evaluator(EvaluatorBase[Input, Output, ExpectedOutput, Evaluation]):
                             args[0], eval_id, abort_on_error, *args[1]
                         ),
                         self._retrieve_eval_logic_input(
-                            run_overviews, num_examples=num_examples
+                            run_overviews,
+                            skip_example_on_any_failure=skip_example_on_any_failure,
+                            num_examples=num_examples,
                         ),
                     ),
                     desc="Evaluating",
