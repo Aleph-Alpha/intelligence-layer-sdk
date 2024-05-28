@@ -3,8 +3,19 @@
 ## Unreleased
 
 ### Breaking Changes
+...
+### New Features
+...
+### Fixes
+...
+### Deprecations
+...
+
+## 3.0.0
+
+### Breaking Changes
  - We removed the `trace_id` as a concept from various tracing-related functions and moved them to a `context`. If you did not directly use the `trace_id` there is nothing to change.
-   - `Task.run` no longer takes a trace id. This was an largely unused feature and we revamped the trace ids for the traces.
+   - `Task.run` no longer takes a trace id. This was a largely unused feature, and we revamped the trace ids for the traces.
    - Creating `Span`, `TaskSpan` or logs no longer takes `trace_id`. This is handled by the spans themselves, who now have a `context` that identifies them.
      - `Span.id` is therefore also removed. This can be accessed by `span.context.trace_id`, but has a different type.
    - The `OpenTelemetryTracer` no longer logs a custom `trace_id` into the attributes. Use the existing ids from its context instead.
@@ -18,26 +29,25 @@
    - The `ArgillaClient` now has methods `create_dataset` for less fault-ignoring dataset creation and `add_records` for performant uploads.
 
 ### New Features
+ - Add support for Python 3.12
  - Add `skip_example_on_any_failure` flag to `evaluate_runs` (defaults to True). This allows to configure if you want to keep an example for evaluation, even if it failed for some run.
  - Add `how_to_implement_incremental_evaluation`.
- - Improve README.md
- - Add `export_for_viewing` to tracers to be able to export traces in a unified format similar to opentelemetry.
+ - Add `export_for_viewing` to tracers to be able to export traces in a unified format similar to OpenTelemetry.
    - This is not supported for the `OpenTelemetryTracer` because of technical incompatibilities.
  - All exported spans now contain the status of the span.
- - We now support python 3.12
  - Add `description` parameter to `Evaluator.evaluate_runs` and `Runner.run_dataset` to allow individual descriptions without the need to create a new `Evaluator` or `Runner`.
  - All models raise an error during initialization if an incompatible `name` is passed, instead of only when they are used.
- - Add `aggregation_overviews_to_pandas` function to allow for easier comparison of multiple aggregation overviews
+ - Add `aggregation_overviews_to_pandas` function to allow for easier comparison of multiple aggregation overviews.
  - Add `parameter_optimization.ipynb` notebook to demonstrate the optimization of tasks by comparing different parameter combinations.
+ - Improve README.md
 
 ### Fixes
  - The document index client now correctly URL-encodes document names in its queries.
- - The `ArgillaEvaluator` not properly supports `dataset_name`
- - Update broken README links to Read The Docs
- - The `evaluation` tutorial contained a broken multi-label classify example. This was fixed.
-
-### Deprecations
-...
+ - The `ArgillaEvaluator` not properly supports `dataset_name`.
+ - Update outdated `how_to_human_evaluation_via_argilla.ipynb`.
+ - Fix bug in `FileSystemBasedRepository` causing spurious mkdir failure if the file actually exists.
+ - Update broken README links to Read The Docs.
+ - Fix a broken multi-label classify example in the `evaluation` tutorial.
 
 ## 2.0.0
 
@@ -53,9 +63,6 @@
 
 ### Fixes
 - `ExpandChunks`-task is now fast even for very large documents
-
-### Deprecations
-...
 
 ## 1.2.0
 

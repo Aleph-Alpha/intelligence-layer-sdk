@@ -11,3 +11,5 @@
   - Copy the changelog into the release description. Also add a link to the commits since the last release at the bottom of the description.
 - Make sure the changes have been merged into the main branch.
 - Publish the release.
+- Consider updating the changelog of the [docs](https://gitlab.aleph-alpha.de/engineering/docs). The repository for the docs can be found [here](https://gitlab.aleph-alpha.de/engineering/docs).
+  - Update it when we have big new features we want to communicate or in preparation of the sprint review.
