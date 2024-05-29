@@ -87,8 +87,20 @@ class CustomException(Exception):
 
 
 class DummyArgillaClient(ArgillaClient):
-    _datasets: dict[str, list[RecordData]] = {}
-    _score = 3.0
+    def __init__(self) -> None:
+        self._datasets: dict[str, list[RecordData]] = {}
+        self._names: dict[str, str] = {}
+        self._score = 3.0
+    
+
+    def create_dataset(
+        self,
+        workspace_id: str,
+        dataset_name: str,
+        fields: Sequence[Field],
+        questions: Sequence[Question],
+    ) -> str:
+        return self.ensure_dataset_exists(workspace_id, dataset_name, fields, questions)
 
     def ensure_dataset_exists(
         self,
@@ -99,6 +111,7 @@ class DummyArgillaClient(ArgillaClient):
     ) -> str:
         dataset_id = str(uuid4())
         self._datasets[dataset_id] = []
+        self._names[dataset_id] = dataset_name
         return dataset_id
 
     def add_record(self, dataset_id: str, record: RecordData) -> None:
@@ -128,6 +141,15 @@ class FailedEvaluationDummyArgillaClient(ArgillaClient):
 
     _upload_count = 0
     _datasets: dict[str, list[RecordData]] = {}
+
+    def create_dataset(
+        self,
+        workspace_id: str,
+        dataset_name: str,
+        fields: Sequence[Field],
+        questions: Sequence[Question],
+    ) -> str:
+        return self.ensure_dataset_exists(workspace_id, dataset_name, fields, questions)
 
     def ensure_dataset_exists(
         self,
@@ -165,8 +187,8 @@ class FailedEvaluationDummyArgillaClient(ArgillaClient):
 
 
 @fixture
-def arg() -> StubArgillaClient:
-    return StubArgillaClient()
+def dummy_client() -> DummyArgillaClient:
+    return DummyArgillaClient()
 
 
 @fixture()
@@ -233,13 +255,14 @@ def test_argilla_evaluator_can_submit_evals_to_argilla(
     in_memory_run_repository: InMemoryRunRepository,
     async_in_memory_evaluation_repository: AsyncInMemoryEvaluationRepository,
 ) -> None:
+    client = DummyArgillaClient()
     evaluator = ArgillaEvaluator(
         in_memory_dataset_repository,
         in_memory_run_repository,
         async_in_memory_evaluation_repository,
         "dummy-string-task",
         DummyStringTaskArgillaEvaluationLogic(),
-        DummyArgillaClient(),
+        client,
         workspace_id="workspace-id",
     )
 
@@ -264,7 +287,7 @@ def test_argilla_evaluator_can_submit_evals_to_argilla(
     )
 
     assert len(list(async_in_memory_evaluation_repository.evaluation_overviews())) == 1
-    assert len(DummyArgillaClient()._datasets[partial_evaluation_overview.id]) == 1
+    assert len(client._datasets[partial_evaluation_overview.id]) == 1
 
 
 def test_argilla_evaluator_correctly_lists_failed_eval_counts(
@@ -346,28 +369,54 @@ def test_argilla_aggregation_logic_works() -> None:
     )
 
 
-#def test_argilla_evaluator_has_distinct_names_for_datasets(
-#    string_argilla_runner: Runner[DummyStringInput, DummyStringOutput],
-#    string_dataset_id: str,
-#    in_memory_dataset_repository: InMemoryDatasetRepository,
-#    in_memory_run_repository: InMemoryRunRepository,
-#    async_in_memory_evaluation_repository: AsyncInMemoryEvaluationRepository,
-#    dummy_argilla_client: DummyArgillaClient,
-#) -> None:
-#    workspace_id = "workspace_id"
-#    evaluator = ArgillaEvaluator(
-#        in_memory_dataset_repository,
-#        in_memory_run_repository,
-#        async_in_memory_evaluation_repository,
-#        "dummy-string-task",
-#        DummyStringTaskArgillaEvaluationLogic(),
-#        dummy_argilla_client,
-#        workspace_id,
-#    )
-#
-#    run_overview = string_argilla_runner.run_dataset(string_dataset_id)
-#    _ = evaluator.submit(run_overview.id)
-#    _ = evaluator.submit(run_overview.id)
-#
-#    assert len(dummy_argilla_client._datasets) == 2
-#    assert dummy_argilla_client._datasets.keys() != dummy_argilla_client
+def test_argilla_evaluator_has_distinct_names_for_datasets(
+    string_argilla_runner: Runner[DummyStringInput, DummyStringOutput],
+    string_dataset_id: str,
+    in_memory_dataset_repository: InMemoryDatasetRepository,
+    in_memory_run_repository: InMemoryRunRepository,
+    async_in_memory_evaluation_repository: AsyncInMemoryEvaluationRepository,
+    dummy_client: DummyArgillaClient,
+) -> None:
+    workspace_id = "workspace_id"
+    evaluator = ArgillaEvaluator(
+        in_memory_dataset_repository,
+        in_memory_run_repository,
+        async_in_memory_evaluation_repository,
+        "dummy-string-task",
+        DummyStringTaskArgillaEvaluationLogic(),
+        dummy_client,
+        workspace_id,
+    )
+
+    run_overview = string_argilla_runner.run_dataset(string_dataset_id)
+    _ = evaluator.submit(run_overview.id)
+    _ = evaluator.submit(run_overview.id)
+
+    assert len(dummy_client._datasets) == 2
+    assert dummy_client._datasets.keys() != dummy_client
+
+
+def test_argilla_evaluator_can_take_name(
+    string_argilla_runner: Runner[DummyStringInput, DummyStringOutput],
+    string_dataset_id: str,
+    in_memory_dataset_repository: InMemoryDatasetRepository,
+    in_memory_run_repository: InMemoryRunRepository,
+    async_in_memory_evaluation_repository: AsyncInMemoryEvaluationRepository,
+    dummy_client: DummyArgillaClient,
+) -> None:
+    workspace_id = "workspace_id"
+    evaluator = ArgillaEvaluator(
+        in_memory_dataset_repository,
+        in_memory_run_repository,
+        async_in_memory_evaluation_repository,
+        "dummy-string-task",
+        DummyStringTaskArgillaEvaluationLogic(),
+        dummy_client,
+        workspace_id,
+    )
+
+    run_overview = string_argilla_runner.run_dataset(string_dataset_id)
+    dataset_id = evaluator.submit(run_overview.id, dataset_name="my-dataset").id
+
+    assert len(dummy_client._datasets) == 1
+    assert dummy_client._names[dataset_id] == "my-dataset"
