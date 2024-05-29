@@ -156,7 +156,7 @@ class ArgillaClient(ABC):
 
         Args:
             dataset_id: id of the dataset the record is added to
-            record: contains the actual record data (i.e. content for the dataset's fields)
+            record: the actual record data (i.e. content for the dataset's fields)
         """
         ...
 
@@ -165,7 +165,7 @@ class ArgillaClient(ABC):
 
         Args:
             dataset_id: id of the dataset the record is added to
-            records: contains the actual record data (i.e. content for the dataset's fields)
+            records: list containing the record data (i.e. content for the dataset's fields)
         """
         for record in records:
             return self.add_record(dataset_id, record)
@@ -259,7 +259,6 @@ class DefaultArgillaClient(ArgillaClient):
         questions: Sequence[Question],
     ) -> str:
         try:
-            print(workspace_id)
             dataset_id: str = self._create_dataset(dataset_name, workspace_id)["id"]
             for field in fields:
                 self._create_field(field.name, field.title, dataset_id)
@@ -490,8 +489,6 @@ class DefaultArgillaClient(ArgillaClient):
     def _publish_dataset(self, dataset_id: str) -> None:
         url = self.api_url + f"api/v1/datasets/{dataset_id}/publish"
         response = self.session.put(url)
-        print(response)
-        print(response.content)
         response.raise_for_status()
 
     def _create_dataset(
@@ -505,7 +502,6 @@ class DefaultArgillaClient(ArgillaClient):
             "allow_extra_metadata": True,
         }
         response = self.session.post(url, json=data)
-        print(response.content)
         response.raise_for_status()
         return cast(Mapping[str, Any], response.json())
 

@@ -136,7 +136,7 @@ class ArgillaEvaluator(AsyncEvaluator[Input, Output, ExpectedOutput, Evaluation]
         dataset_name: Optional[str] = None,
         abort_on_error: bool = False,
     ) -> PartialEvaluationOverview:
-        argilla_dataset_id = self._client.ensure_dataset_exists(
+        argilla_dataset_id = self._client.create_dataset(
             self._workspace_id,
             dataset_name if dataset_name else str(uuid4()),
             fields=list(self._evaluation_logic.fields.values()),
