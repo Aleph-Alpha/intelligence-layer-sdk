@@ -91,7 +91,6 @@ class DummyArgillaClient(ArgillaClient):
         self._datasets: dict[str, list[RecordData]] = {}
         self._names: dict[str, str] = {}
         self._score = 3.0
-    
 
     def create_dataset(
         self,
@@ -389,8 +388,8 @@ def test_argilla_evaluator_has_distinct_names_for_datasets(
     )
 
     run_overview = string_argilla_runner.run_dataset(string_dataset_id)
-    _ = evaluator.submit(run_overview.id)
-    _ = evaluator.submit(run_overview.id)
+    evaluator.submit(run_overview.id)
+    evaluator.submit(run_overview.id)
 
     assert len(dummy_client._datasets) == 2
     assert dummy_client._datasets.keys() != dummy_client
@@ -415,8 +414,9 @@ def test_argilla_evaluator_can_take_name(
         workspace_id,
     )
 
+    dataset_name = str(uuid4())
     run_overview = string_argilla_runner.run_dataset(string_dataset_id)
-    dataset_id = evaluator.submit(run_overview.id, dataset_name="my-dataset").id
+    dataset_id = evaluator.submit(run_overview.id, dataset_name=dataset_name).id
 
     assert len(dummy_client._datasets) == 1
-    assert dummy_client._names[dataset_id] == "my-dataset"
+    assert dummy_client._names[dataset_id] == dataset_name

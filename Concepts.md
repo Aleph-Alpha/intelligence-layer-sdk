@@ -41,7 +41,7 @@ task:
 ```Python
 class Task(ABC, Generic[Input, Output]):
     @final
-    def run(self, input: Input, tracer: Tracer, trace_id: Optional[str] = None) -> Output:
+    def run(self, input: Input, tracer: Tracer) -> Output:
       ...
 ```
 

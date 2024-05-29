@@ -83,7 +83,7 @@ def test_client_can_create_a_dataset(
     argilla_client: DefaultArgillaClient,
     workspace_id: str,
 ) -> None:
-    id = argilla_client.create_dataset(
+    dataset_id = argilla_client.create_dataset(
         workspace_id,
         dataset_name="name",
         fields=[Field(name="a", title="b")],
@@ -93,7 +93,7 @@ def test_client_can_create_a_dataset(
     )
     datasets = argilla_client._list_datasets(workspace_id)
     assert len(argilla_client._list_datasets(workspace_id)) == 1
-    assert id == datasets["items"][0]["id"]
+    assert dataset_id == datasets["items"][0]["id"]
 
 
 @pytest.mark.docker
@@ -101,9 +101,10 @@ def test_client_cannot_create_two_datasets_with_the_same_name(
     argilla_client: DefaultArgillaClient,
     workspace_id: str,
 ) -> None:
+    dataset_name = str(uuid4())
     argilla_client.create_dataset(
         workspace_id,
-        dataset_name="name",
+        dataset_name=dataset_name,
         fields=[Field(name="a", title="b")],
         questions=[
             Question(name="a", title="b", description="c", options=list(range(1, 5)))
@@ -112,7 +113,7 @@ def test_client_cannot_create_two_datasets_with_the_same_name(
     with pytest.raises(ValueError):
         argilla_client.create_dataset(
             workspace_id,
-            dataset_name="name",
+            dataset_name=dataset_name,
             fields=[Field(name="a", title="b")],
             questions=[
                 Question(

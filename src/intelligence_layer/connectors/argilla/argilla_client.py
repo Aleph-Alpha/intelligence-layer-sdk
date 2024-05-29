@@ -125,7 +125,7 @@ class ArgillaClient(ABC):
             fields: all fields of this dataset.
             questions: all questions for this dataset.
         Returns:
-            The id of the dataset to be retrieved .
+            The id of the created dataset.
         """
         ...
 
@@ -152,7 +152,7 @@ class ArgillaClient(ABC):
 
     @abstractmethod
     def add_record(self, dataset_id: str, record: RecordData) -> None:
-        """Adds a new record to be evalated to the given dataset.
+        """Adds a new record to the given dataset.
 
         Args:
             dataset_id: id of the dataset the record is added to
@@ -161,7 +161,7 @@ class ArgillaClient(ABC):
         ...
 
     def add_records(self, dataset_id: str, records: Sequence[RecordData]) -> None:
-        """Adds new records to be evalated to the given dataset.
+        """Adds new records to the given dataset.
 
         Args:
             dataset_id: id of the dataset the record is added to
@@ -277,7 +277,8 @@ class DefaultArgillaClient(ArgillaClient):
         except HTTPError as e:
             if e.response.status_code == HTTPStatus.CONFLICT:
                 raise ValueError(
-                    f"Cannot create dataset with name '{dataset_name}', dataset already exists."
+                    f"Cannot create dataset with name '{dataset_name}', either the given dataset name, already exists"
+                    f"or field name or question name are duplicates."
                 )
             raise e
 
