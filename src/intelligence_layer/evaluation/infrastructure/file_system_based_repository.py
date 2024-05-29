@@ -36,7 +36,10 @@ class FileSystemBasedRepository(ABC):
     def mkdir(self, path: Path) -> None:
         if self.exists(path):
             return
-        self._file_system.makedir(self.path_to_str(path), create_parents=True)
+        try:
+            self._file_system.makedir(self.path_to_str(path), create_parents=True)
+        except FileExistsError:
+            return
 
     def file_names(self, path: Path, file_type: str = "json") -> Sequence[str]:
         files = [
