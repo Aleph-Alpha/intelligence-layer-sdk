@@ -2,7 +2,7 @@ from typing import Iterable
 
 import pytest
 
-from intelligence_layer.core import InMemoryTracer
+from intelligence_layer.core import InMemoryTaskSpan, InMemoryTracer
 from intelligence_layer.evaluation import (
     Example,
     InMemoryDatasetRepository,
@@ -83,3 +83,7 @@ def test_runner_runs_n_examples(
     assert overview.successful_example_count == 1
     assert overview_with_tracer.successful_example_count == 1
     assert overview_with_tracer.failed_example_count == 0
+
+    entries = tracer.entries
+    assert len(entries) == 1
+    assert all([isinstance(e, InMemoryTaskSpan) for e in entries])
