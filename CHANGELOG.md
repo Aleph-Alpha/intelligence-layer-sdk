@@ -30,6 +30,7 @@
  - The document index client now correctly URL-encodes document names in its queries.
  - The `ArgillaEvaluator` not properly supports `dataset_name`
  - Update broken README links to Read The Docs
+ - The `evaluation` tutorial contained a broken multi-label classify example. This was fixed.
 
 ### Deprecations
 ...

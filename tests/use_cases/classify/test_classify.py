@@ -19,6 +19,7 @@ from intelligence_layer.evaluation import (
     InMemoryEvaluationRepository,
     InMemoryRunRepository,
     Runner,
+    SuccessfulExampleOutput,
 )
 from intelligence_layer.examples import (
     AggregatedLabelInfo,
@@ -31,6 +32,7 @@ from intelligence_layer.examples import (
     MultiLabelClassifyEvaluation,
     MultiLabelClassifyEvaluationLogic,
     MultiLabelClassifyOutput,
+    Probability,
 )
 
 
@@ -214,6 +216,69 @@ def classify_runner(
         in_memory_run_repository,
         "multi-label-classify",
     )
+
+
+def test_multi_label_eval_logic_works_correctly() -> None:
+    threshold = 0.5
+    eval_logic = MultiLabelClassifyEvaluationLogic(threshold=threshold)
+    tp = "aaaa"
+    tn = "bbbb"
+    fp = "cccc"
+    fn = "dddd"
+    expected_output: Sequence[str] = [tp, fn]
+    input_example = Example(
+        input=ClassifyInput(chunk=TextChunk("..."), labels=frozenset([tp, tn, fp, fn])),
+        expected_output=expected_output,
+    )
+    input_output = SuccessfulExampleOutput(
+        run_id="",
+        example_id="",
+        output=MultiLabelClassifyOutput(
+            scores={
+                tp: Probability(threshold + 0.1),
+                tn: Probability(threshold - 0.1),
+                fp: Probability(threshold + 0.1),
+                fn: Probability(threshold - 0.1),
+            }
+        ),
+    )
+    res = eval_logic.do_evaluate(input_example, input_output)
+    assert tp in res.tp
+    assert tn in res.tn
+    assert fp in res.fp
+    assert fn in res.fn
+
+
+def test_multi_label_eval_logic_works_if_everything_is_over_threshold() -> None:
+    threshold = 0.5
+    eval_logic = MultiLabelClassifyEvaluationLogic(threshold=threshold)
+    tp = "aaaa"
+    tn = "bbbb"
+    fp = "cccc"
+    fn = "dddd"
+    expected_output: Sequence[str] = [tp, fn]
+
+    input_example = Example(
+        input=ClassifyInput(chunk=TextChunk("..."), labels=frozenset([tp, tn, fp, fn])),
+        expected_output=expected_output,
+    )
+    input_output = SuccessfulExampleOutput(
+        run_id="",
+        example_id="",
+        output=MultiLabelClassifyOutput(
+            scores={
+                tp: Probability(threshold + 0.1),
+                tn: Probability(threshold + 0.1),
+                fp: Probability(threshold + 0.1),
+                fn: Probability(threshold + 0.1),
+            }
+        ),
+    )
+    res = eval_logic.do_evaluate(input_example, input_output)
+    assert tp in res.tp
+    assert tn in res.fp
+    assert fp in res.fp
+    assert fn in res.tp
 
 
 def test_multi_label_classify_evaluator_single_example(
