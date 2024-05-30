@@ -1,4 +1,4 @@
-intelligence\_layer.evaluation package
+intelligence\_layer.evaluation
 ======================================
 
 
