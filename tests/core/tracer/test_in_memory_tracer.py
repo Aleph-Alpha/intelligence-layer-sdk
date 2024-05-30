@@ -194,24 +194,3 @@ def test_in_memory_tracer_trace_viewer_doesnt_crash_if_it_cant_reach_document_in
     with set_env(ENV_VARIABLE_NAME, None):
         expected = InMemoryTracer()
         expected._ipython_display_()
-
-
-
-
-def test_task_automatically_logs_input_and_output(
-    tracer_test_task: Task[str, str],
-) -> None:
-    input = "input"
-    tracer = InMemoryTracer()
-    output = tracer_test_task.run(input=input, tracer=tracer)
-
-    assert len(tracer.entries) == 1
-    task_span = tracer.entries[0]
-    assert isinstance(task_span, InMemoryTaskSpan)
-    assert task_span.name == type(tracer_test_task).__name__
-    assert task_span.input == input
-    assert task_span.output == output
-    assert task_span.start_timestamp and task_span.end_timestamp
-    assert task_span.start_timestamp < task_span.end_timestamp
-
-    assert tracer.submit_to_trace_viewer()

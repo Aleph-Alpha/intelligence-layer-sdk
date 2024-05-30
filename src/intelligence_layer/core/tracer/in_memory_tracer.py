@@ -152,7 +152,7 @@ class InMemorySpan(InMemoryTracer, Span):
 
         return tree
 
-    def _span_attributes(self) -> SpanAttributes:
+    def _span_attributes(self) -> SpanAttributes | TaskSpanAttributes:
         return SpanAttributes()
 
     def export_for_viewing(self) -> Sequence[ExportedSpan]:
@@ -228,7 +228,7 @@ class InMemoryTaskSpan(InMemorySpan, TaskSpan):
     def record_output(self, output: PydanticSerializable) -> None:
         self.output = output
 
-    def _span_attributes(self) -> SpanAttributes:
+    def _span_attributes(self) -> SpanAttributes | TaskSpanAttributes:
         return TaskSpanAttributes(input=self.input, output=self.output)
 
     def _rich_render_(self) -> Tree:
