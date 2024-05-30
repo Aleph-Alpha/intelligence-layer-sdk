@@ -1,3 +1,5 @@
+import time
+
 import pytest
 from pydantic import BaseModel
 from pytest import fixture
@@ -29,6 +31,10 @@ def composite_tracer(
 tracer_fixtures = ["in_memory_tracer", "file_tracer", "composite_tracer"]
 
 
+def delay() -> None:
+    time.sleep(0.001)
+
+
 @pytest.mark.parametrize(
     "tracer_fixture",
     tracer_fixtures,
@@ -40,7 +46,10 @@ def test_tracer_exports_spans_to_unified_format(
     tracer: Tracer = request.getfixturevalue(tracer_fixture)
     dummy_object = DummyObject(content="cool")
     with tracer.span("name") as temp_span:
+        delay()
         temp_span.log("test", dummy_object)
+        delay()
+    delay()
 
     unified_format = tracer.export_for_viewing()
 
@@ -71,7 +80,9 @@ def test_tracer_exports_task_spans_to_unified_format(
     tracer: Tracer = request.getfixturevalue(tracer_fixture)
 
     with tracer.task_span("name", "input") as task_span:
+        delay()
         task_span.record_output("output")
+    delay()
 
     unified_format = tracer.export_for_viewing()
 
@@ -100,9 +111,12 @@ def test_tracer_exports_error_correctly(
 
     try:
         with tracer.span("name"):
+            delay()
             raise SpecificTestException
     except SpecificTestException:
         pass
+    delay()
+
     unified_format = tracer.export_for_viewing()
 
     assert len(unified_format) == 1
@@ -125,8 +139,13 @@ def test_tracer_export_nests_correctly(
     tracer: Tracer = request.getfixturevalue(tracer_fixture)
 
     with tracer.span("name") as parent_span:
+        delay()
         with parent_span.span("name-2") as child_span:
+            delay()
             child_span.log("", value="")
+            delay()
+        delay()
+    delay()
 
     unified_format = tracer.export_for_viewing()
 

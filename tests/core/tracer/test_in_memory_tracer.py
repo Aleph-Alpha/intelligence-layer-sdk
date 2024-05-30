@@ -1,5 +1,6 @@
 import contextlib
 import os
+import time
 from typing import Iterator
 
 import pytest
@@ -150,9 +151,10 @@ def test_span_sets_end_timestamp() -> None:
     start = utc_now()
 
     span = tracer.span("span", start)
+    time.sleep(0.001)
     span.end()
 
-    assert span.end_timestamp and span.start_timestamp <= span.end_timestamp
+    assert span.end_timestamp and span.start_timestamp < span.end_timestamp
 
 
 def test_span_only_updates_end_timestamp_once() -> None:

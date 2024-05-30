@@ -1,3 +1,4 @@
+import time
 from pathlib import Path
 
 from pytest import fixture
@@ -14,10 +15,15 @@ class TracerTestTask(Task[str, str]):
     sub_task = TracerTestSubTask()
 
     def do_run(self, input: str, task_span: TaskSpan) -> str:
+        time.sleep(0.001)
         with task_span.span("span") as sub_span:
+            time.sleep(0.001)
             sub_span.log("message", "a value")
+            time.sleep(0.001)
             self.sub_task.run(None, sub_span)
+            time.sleep(0.001)
         self.sub_task.run(None, task_span)
+        time.sleep(0.001)
         return "output"
 
 

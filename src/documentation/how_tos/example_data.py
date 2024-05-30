@@ -4,7 +4,11 @@ from pydantic import BaseModel
 
 from intelligence_layer.core import Task, TaskSpan
 from intelligence_layer.evaluation import (
+    AggregationLogic,
+    ComparisonEvaluation,
     Dataset,
+    DatasetRepository,
+    EloEvaluationLogic,
     EvaluationLogic,
     EvaluationOverview,
     Evaluator,
@@ -12,16 +16,12 @@ from intelligence_layer.evaluation import (
     InMemoryDatasetRepository,
     InMemoryEvaluationRepository,
     InMemoryRunRepository,
-    Runner,
-    RunOverview,
-    SuccessfulExampleOutput,
-)
-from intelligence_layer.evaluation.aggregation.aggregator import AggregationLogic
-from intelligence_layer.evaluation.evaluation.evaluator.incremental_evaluator import (
-    ComparisonEvaluation,
-    EloEvaluationLogic,
     Matches,
     MatchOutcome,
+    Runner,
+    RunOverview,
+    RunRepository,
+    SuccessfulExampleOutput,
 )
 
 
@@ -143,4 +143,56 @@ def example_data() -> ExampleData:
     example_data.evaluation_overview_1 = evaluation_overview_1
     example_data.evaluation_overview_2 = evaluation_overview_2
 
+    return example_data
+
+
+class StoryTaskInput(BaseModel):  # Should already be implemented in your task
+    topic: str
+    targeted_word_count: int
+
+
+class StoryTaskOutput(BaseModel):  # Should already be implemented in your task
+    story: str
+
+
+class StoryTask(Task[StoryTaskInput, StoryTaskOutput]):
+    def do_run(self, input: StoryTaskInput, task_span: TaskSpan) -> StoryTaskOutput:
+        return StoryTaskOutput(
+            story=f"cool story about {input.topic} with {input.targeted_word_count} words"
+        )
+
+
+class ArgillaExampleData:
+    dataset_repository: DatasetRepository
+    run_repository: RunRepository
+    run_ids: list[str]
+
+
+def argilla_example_data() -> ArgillaExampleData:
+    dataset_repository = InMemoryDatasetRepository()
+    run_repository = InMemoryRunRepository()
+    examples = [
+        Example(
+            input=StoryTaskInput(topic="sports", targeted_word_count=10),
+            expected_output=None,
+        ),
+        Example(
+            input=StoryTaskInput(topic="sports", targeted_word_count=100),
+            expected_output=None,
+        ),
+    ]
+    dataset = dataset_repository.create_dataset(
+        examples=examples, dataset_name="StoryTasks"
+    )
+    run_overview_1 = Runner(
+        StoryTask(), dataset_repository, run_repository, "StoryTaskEval"
+    ).run_dataset(dataset.id)
+    run_overview_2 = Runner(
+        StoryTask(), dataset_repository, run_repository, "StoryTaskEval2"
+    ).run_dataset(dataset.id)
+
+    example_data = ArgillaExampleData()
+    example_data.dataset_repository = dataset_repository
+    example_data.run_repository = run_repository
+    example_data.run_ids = [run_overview_1.id, run_overview_2.id]
     return example_data
