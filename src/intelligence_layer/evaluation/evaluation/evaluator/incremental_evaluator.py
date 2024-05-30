@@ -169,10 +169,14 @@ class IncrementalEvaluator(Evaluator[Input, Output, ExpectedOutput, Evaluation])
         *run_ids: str,
         num_examples: Optional[int] = None,
         abort_on_error: bool = False,
+        skip_example_on_any_failure: bool = True,
     ) -> EvaluationOverview:
         self._evaluation_logic.set_previous_run_output_ids([])
         return super().evaluate_runs(
-            *run_ids, num_examples=num_examples, abort_on_error=abort_on_error
+            *run_ids,
+            num_examples=num_examples,
+            skip_example_on_any_failure=skip_example_on_any_failure,
+            abort_on_error=abort_on_error,
         )
 
 

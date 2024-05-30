@@ -15,6 +15,7 @@
     - `RougeGrader` now uses the `rouge_score`-package.
 
 ### New Features
+ - Add `skip_example_on_any_failure` flag to `evaluate_runs` (defaults to True). This allows to configure if you want to keep an example for evaluation, even if it failed for some run.
  - Add `how_to_implement_incremental_evaluation`.
  - Improve README.md
  - Add `export_for_viewing` to tracers to be able to export traces in a unified format similar to opentelemetry.

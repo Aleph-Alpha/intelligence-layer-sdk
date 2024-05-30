@@ -133,6 +133,7 @@ class ArgillaEvaluator(AsyncEvaluator[Input, Output, ExpectedOutput, Evaluation]
         *run_ids: str,
         num_examples: Optional[int] = None,
         abort_on_error: bool = False,
+        skip_example_on_any_failure: bool = True,
     ) -> PartialEvaluationOverview:
         argilla_dataset_id = self._client.ensure_dataset_exists(
             self._workspace_id,
@@ -144,7 +145,9 @@ class ArgillaEvaluator(AsyncEvaluator[Input, Output, ExpectedOutput, Evaluation]
         run_overviews = self._load_run_overviews(*run_ids)
         submit_count = 0
         for example, outputs in self._retrieve_eval_logic_input(
-            run_overviews, num_examples=num_examples
+            run_overviews,
+            skip_example_on_any_failure=skip_example_on_any_failure,
+            num_examples=num_examples,
         ):
             record_sequence = self._evaluation_logic.to_record(example, *outputs)
             for record in record_sequence.records:

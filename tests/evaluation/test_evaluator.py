@@ -67,6 +67,26 @@ class DummyEvaluationLogic(
         return DummyEvaluation(result="pass")
 
 
+class DummyPairwiseEvaluationLogic(
+    EvaluationLogic[
+        str,
+        str,
+        None,
+        DummyEvaluation,
+    ]
+):
+    def do_evaluate(
+        self,
+        example: Example[str, None],
+        *output: SuccessfulExampleOutput[str],
+    ) -> DummyEvaluation:
+        for out in output:
+            if out.output == FAIL_IN_EVAL_INPUT:
+                raise RuntimeError(output)
+
+        return DummyEvaluation(result="pass")
+
+
 class ComparisonEvaluation(BaseModel):
     is_equal: bool
 
@@ -135,8 +155,31 @@ def dummy_eval_logic() -> DummyEvaluationLogic:
 
 
 @fixture
+def dummy_pairwise_eval_logic() -> DummyPairwiseEvaluationLogic:
+    return DummyPairwiseEvaluationLogic()
+
+
+@fixture
 def dummy_aggregate_logic() -> DummyAggregationLogic:
     return DummyAggregationLogic()
+
+
+class SuccessfulDummyTask(Task[str, str]):
+    def do_run(self, input: str, tracer: Tracer) -> str:
+        return input
+
+
+@fixture
+def successful_dummy_runner(
+    in_memory_dataset_repository: InMemoryDatasetRepository,
+    in_memory_run_repository: InMemoryRunRepository,
+) -> Runner[str, str]:
+    return Runner(
+        SuccessfulDummyTask(),
+        in_memory_dataset_repository,
+        in_memory_run_repository,
+        "successful-dummy-runner",
+    )
 
 
 @fixture
@@ -152,6 +195,22 @@ def dummy_evaluator(
         in_memory_evaluation_repository,
         "dummy-evaluator",
         dummy_eval_logic,
+    )
+
+
+@fixture
+def dummy_pairwise_evaluator(
+    in_memory_dataset_repository: InMemoryDatasetRepository,
+    in_memory_run_repository: InMemoryRunRepository,
+    in_memory_evaluation_repository: InMemoryEvaluationRepository,
+    dummy_pairwise_eval_logic: DummyPairwiseEvaluationLogic,
+) -> Evaluator[str, str, None, DummyEvaluation]:
+    return Evaluator(
+        in_memory_dataset_repository,
+        in_memory_run_repository,
+        in_memory_evaluation_repository,
+        "dummy-evaluator",
+        dummy_pairwise_eval_logic,
     )
 
 
@@ -253,6 +312,34 @@ def test_eval_runs_returns_generic_statistics(
     evaluation_overview = dummy_evaluator.evaluate_runs(run_overview.id)
 
     assert evaluation_overview.successful_evaluation_count == 3
+    assert evaluation_overview.failed_evaluation_count == 1
+
+
+def test_eval_runs_keeps_example_for_eval_if_skip_flag_is_false(
+    dummy_pairwise_evaluator: Evaluator[str, str, None, DummyEvaluation],
+    dummy_runner: Runner[str, str],
+    successful_dummy_runner: Runner[str, str],
+    in_memory_dataset_repository: InMemoryDatasetRepository,
+) -> None:
+    examples = [
+        Example(input="success", expected_output=None, id="example-1"),
+        Example(input=FAIL_IN_TASK_INPUT, expected_output=None, id="example-2"),
+        Example(input=FAIL_IN_EVAL_INPUT, expected_output=None, id="example-3"),
+    ]
+    dataset_id = in_memory_dataset_repository.create_dataset(
+        examples=examples, dataset_name="test-dataset"
+    ).id
+
+    run_overview_with_failure = dummy_runner.run_dataset(dataset_id)
+    successful_run_overview = successful_dummy_runner.run_dataset(dataset_id)
+
+    evaluation_overview = dummy_pairwise_evaluator.evaluate_runs(
+        run_overview_with_failure.id,
+        successful_run_overview.id,
+        skip_example_on_any_failure=False,
+    )
+
+    assert evaluation_overview.successful_evaluation_count == 2
     assert evaluation_overview.failed_evaluation_count == 1
 
 
