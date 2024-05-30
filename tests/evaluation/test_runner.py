@@ -42,6 +42,41 @@ def test_runner_runs_dataset(
     assert failed_runs[0].example.id == examples[1].id
 
 
+def test_runner_works_without_description(
+    in_memory_dataset_repository: InMemoryDatasetRepository,
+    in_memory_run_repository: InMemoryRunRepository,
+    sequence_examples: Iterable[Example[str, None]],
+) -> None:
+    examples = list(sequence_examples)
+    task = DummyTask()
+    runner = Runner(task, in_memory_dataset_repository, in_memory_run_repository, "")
+
+    dataset_id = in_memory_dataset_repository.create_dataset(
+        examples=examples, dataset_name=""
+    ).id
+    overview = runner.run_dataset(dataset_id)
+    assert overview.description is runner.description
+
+
+def test_runner_has_correct_description(
+    in_memory_dataset_repository: InMemoryDatasetRepository,
+    in_memory_run_repository: InMemoryRunRepository,
+    sequence_examples: Iterable[Example[str, None]],
+) -> None:
+    examples = list(sequence_examples)
+    task = DummyTask()
+    runner = Runner(task, in_memory_dataset_repository, in_memory_run_repository, "foo")
+
+    dataset_id = in_memory_dataset_repository.create_dataset(
+        examples=examples, dataset_name=""
+    ).id
+    run_description = "bar"
+    overview = runner.run_dataset(dataset_id, description=run_description)
+
+    assert runner.description in overview.description
+    assert run_description in overview.description
+
+
 def test_runner_aborts_on_error(
     in_memory_dataset_repository: InMemoryDatasetRepository,
     in_memory_run_repository: InMemoryRunRepository,
