@@ -1,4 +1,4 @@
-intelligence\_layer.connectors package
+intelligence\_layer.connectors
 ======================================
 
 Module contents

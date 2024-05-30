@@ -1,4 +1,4 @@
-intelligence\_layer.use\_cases package
+intelligence\_layer.examples
 ======================================
 
 

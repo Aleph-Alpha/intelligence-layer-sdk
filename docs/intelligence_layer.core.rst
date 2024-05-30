@@ -1,4 +1,4 @@
-intelligence\_layer.core package
+intelligence\_layer.core
 ================================
 
 Module contents
