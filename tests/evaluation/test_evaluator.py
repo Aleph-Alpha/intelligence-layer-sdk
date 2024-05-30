@@ -4,15 +4,7 @@ import pytest
 from pydantic import BaseModel
 from pytest import fixture
 
-from intelligence_layer.core import (
-    InMemoryTaskSpan,
-    InMemoryTracer,
-    Input,
-    NoOpTracer,
-    Output,
-    Task,
-    Tracer,
-)
+from intelligence_layer.core import Input, Output, Task, Tracer
 from intelligence_layer.evaluation import (
     AggregatedEvaluation,
     AggregationLogic,
@@ -242,6 +234,14 @@ def dataset_id(
 
 
 @fixture
+def run_id(
+    dataset_id: str,
+    dummy_runner: Runner[str, str],
+) -> str:
+    return dummy_runner.run_dataset(dataset_id).id
+
+
+@fixture
 def good_dataset_id(
     sequence_good_examples: Iterable[Example[str, None]],
     in_memory_dataset_repository: InMemoryDatasetRepository,
@@ -315,6 +315,37 @@ def test_eval_runs_returns_generic_statistics(
     assert evaluation_overview.failed_evaluation_count == 1
 
 
+def test_eval_runs_works_without_description(
+    run_id: str,
+    in_memory_dataset_repository: InMemoryDatasetRepository,
+    in_memory_run_repository: InMemoryRunRepository,
+    in_memory_evaluation_repository: InMemoryEvaluationRepository,
+    dummy_eval_logic: DummyEvaluationLogic,
+) -> None:
+    evaluator = Evaluator(
+        in_memory_dataset_repository,
+        in_memory_run_repository,
+        in_memory_evaluation_repository,
+        "",
+        dummy_eval_logic,
+    )
+    evaluation_overview = evaluator.evaluate_runs(run_id)
+
+    assert evaluation_overview.description == evaluator.description
+
+
+def test_eval_runs_uses_correct_description(
+    dummy_evaluator: Evaluator[str, str, None, DummyEvaluation], run_id: str
+) -> None:
+    eval_description = "My evaluation description"
+    evaluation_overview = dummy_evaluator.evaluate_runs(
+        run_id, description=eval_description
+    )
+
+    assert dummy_evaluator.description in evaluation_overview.description
+    assert eval_description in evaluation_overview.description
+
+
 def test_eval_runs_keeps_example_for_eval_if_skip_flag_is_false(
     dummy_pairwise_evaluator: Evaluator[str, str, None, DummyEvaluation],
     dummy_runner: Runner[str, str],
@@ -345,50 +376,25 @@ def test_eval_runs_keeps_example_for_eval_if_skip_flag_is_false(
 
 def test_evaluator_aborts_on_error(
     dummy_evaluator: Evaluator[str, str, None, DummyEvaluation],
-    dummy_aggregator: Aggregator[
-        DummyEvaluation, DummyAggregatedEvaluationWithResultList
-    ],
-    dummy_runner: Runner[str, str],
-    dataset_id: str,
+    run_id: str,
 ) -> None:
-    run_overview = dummy_runner.run_dataset(dataset_id)
-
     with pytest.raises(RuntimeError):
-        dummy_evaluator.evaluate_runs(run_overview.id, abort_on_error=True)
-
-
-def test_eval_and_aggregate_runs_uses_passed_tracer(
-    dummy_evaluator: Evaluator[str, str, None, DummyEvaluation],
-    dummy_aggregator: Aggregator[
-        DummyEvaluation, DummyAggregatedEvaluationWithResultList
-    ],
-    dataset_id: str,
-    dummy_runner: Runner[str, str],
-) -> None:
-    in_memory_tracer = InMemoryTracer()
-    run_overview = dummy_runner.run_dataset(dataset_id, in_memory_tracer)
-    evaluation_overview = dummy_evaluator.evaluate_runs(run_overview.id)
-    dummy_aggregator.aggregate_evaluation(evaluation_overview.id)
-
-    entries = in_memory_tracer.entries
-    assert len(entries) == 3
-    assert all([isinstance(e, InMemoryTaskSpan) for e in entries])
+        dummy_evaluator.evaluate_runs(run_id, abort_on_error=True)
 
 
 def test_eval_and_aggregate_runs_stores_example_evaluations(
-    dummy_runner: Runner[str, str],
     dummy_evaluator: Evaluator[str, str, None, DummyEvaluation],
     dummy_aggregator: Aggregator[
         DummyEvaluation, DummyAggregatedEvaluationWithResultList
     ],
     dataset_id: str,
+    run_id: str,
 ) -> None:
     evaluation_repository = dummy_evaluator._evaluation_repository
     dataset_repository = dummy_evaluator._dataset_repository
     examples = list(dataset_repository.examples(dataset_id, str, type(None)))
 
-    run_overview = dummy_runner.run_dataset(dataset_id, NoOpTracer())
-    evaluation_overview = dummy_evaluator.evaluate_runs(run_overview.id)
+    evaluation_overview = dummy_evaluator.evaluate_runs(run_id)
     aggregation_overview = dummy_aggregator.aggregate_evaluation(evaluation_overview.id)
     assert next(iter(aggregation_overview.evaluation_overviews)) == evaluation_overview
 
@@ -416,13 +422,12 @@ def test_eval_and_aggregate_runs_stores_example_evaluations(
 
 
 def test_failed_evaluations_returns_only_failed_evaluations(
-    dummy_runner: Runner[str, str],
     dummy_evaluator: Evaluator[str, str, None, DummyEvaluation],
     dataset_id: str,
+    run_id: str,
     sequence_examples: Iterable[Example[str, None]],
 ) -> None:
-    run_overview = dummy_runner.run_dataset(dataset_id, NoOpTracer())
-    evaluation_overview = dummy_evaluator.evaluate_runs(run_overview.id)
+    evaluation_overview = dummy_evaluator.evaluate_runs(run_id)
     failed_evaluations = list(
         dummy_evaluator.failed_evaluations(evaluation_overview.id)
     )
@@ -475,13 +480,12 @@ def test_eval_and_aggregate_runs_stores_aggregated_results(
     dummy_aggregator: Aggregator[
         DummyEvaluation, DummyAggregatedEvaluationWithResultList
     ],
-    dummy_runner: Runner[str, str],
     dataset_id: str,
+    run_id: str,
 ) -> None:
     aggregation_repository = dummy_aggregator._aggregation_repository
 
-    run_overview = dummy_runner.run_dataset(dataset_id)
-    evaluation_overview = dummy_evaluator.evaluate_runs(run_overview.id)
+    evaluation_overview = dummy_evaluator.evaluate_runs(run_id)
     aggregation_overview = dummy_aggregator.aggregate_evaluation(evaluation_overview.id)
     loaded_evaluation_run_overview = aggregation_repository.aggregation_overview(
         aggregation_overview.id, DummyAggregatedEvaluationWithResultList

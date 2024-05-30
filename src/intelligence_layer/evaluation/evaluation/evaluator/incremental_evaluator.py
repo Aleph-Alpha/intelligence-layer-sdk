@@ -170,6 +170,7 @@ class IncrementalEvaluator(Evaluator[Input, Output, ExpectedOutput, Evaluation])
         num_examples: Optional[int] = None,
         abort_on_error: bool = False,
         skip_example_on_any_failure: bool = True,
+        description: Optional[str] = None,
     ) -> EvaluationOverview:
         self._evaluation_logic.set_previous_run_output_ids([])
         return super().evaluate_runs(
@@ -177,6 +178,7 @@ class IncrementalEvaluator(Evaluator[Input, Output, ExpectedOutput, Evaluation])
             num_examples=num_examples,
             skip_example_on_any_failure=skip_example_on_any_failure,
             abort_on_error=abort_on_error,
+            description=description,
         )
 
 

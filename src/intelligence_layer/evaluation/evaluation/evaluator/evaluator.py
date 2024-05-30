@@ -98,6 +98,7 @@ class Evaluator(EvaluatorBase[Input, Output, ExpectedOutput, Evaluation]):
         num_examples: Optional[int] = None,
         abort_on_error: bool = False,
         skip_example_on_any_failure: bool = True,
+        description: Optional[str] = None,
     ) -> EvaluationOverview:
         """Evaluates all generated outputs in the run.
 
@@ -116,6 +117,7 @@ class Evaluator(EvaluatorBase[Input, Output, ExpectedOutput, Evaluation]):
                 Always the first n runs stored in the evaluation repository. Defaults to None.
             abort_on_error: Flag to abort all evaluations when an error occurs. Defaults to False.
             skip_example_on_any_failure: Flag to skip evaluation on any example for which at least one run fails. Defaults to True.
+            description: Optional description of the evaluation. Defaults to None.
 
         Returns:
             EvaluationOverview: An overview of the evaluation. Individual :class:`Evaluation`s will not be
@@ -150,6 +152,9 @@ class Evaluator(EvaluatorBase[Input, Output, ExpectedOutput, Evaluation]):
         )
 
         successful_evaluation_count = len(example_evaluations) - failed_evaluation_count
+        full_description = (
+            self.description + " : " + description if description else self.description
+        )
         overview = EvaluationOverview(
             run_overviews=frozenset(run_overviews),
             id=eval_id,
@@ -157,7 +162,7 @@ class Evaluator(EvaluatorBase[Input, Output, ExpectedOutput, Evaluation]):
             end_date=utc_now(),
             successful_evaluation_count=successful_evaluation_count,
             failed_evaluation_count=failed_evaluation_count,
-            description=self.description,
+            description=full_description,
         )
         self._evaluation_repository.store_evaluation_overview(overview)
 

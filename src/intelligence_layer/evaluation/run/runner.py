@@ -77,6 +77,7 @@ class Runner(Generic[Input, Output]):
         num_examples: Optional[int] = None,
         abort_on_error: bool = False,
         max_workers: int = 10,
+        description: Optional[str] = None,
     ) -> RunOverview:
         """Generates all outputs for the provided dataset.
 
@@ -90,6 +91,7 @@ class Runner(Generic[Input, Output]):
                 Always the first n examples will be taken.
             abort_on_error: Flag to abort all run when an error occurs. Defaults to False.
             max_workers: Number of examples that can be evaluated concurrently. Defaults to 10.
+            description: An optional description of the run. Defaults to None.
 
         Returns:
             An overview of the run. Outputs will not be returned but instead stored in the
@@ -140,6 +142,9 @@ class Runner(Generic[Input, Output]):
                         run_id=run_id, example_id=example_id, output=output
                     ),
                 )
+        full_description = (
+            self.description + " : " + description if description else self.description
+        )
         run_overview = RunOverview(
             dataset_id=dataset_id,
             id=run_id,
@@ -147,7 +152,7 @@ class Runner(Generic[Input, Output]):
             end=utc_now(),
             failed_example_count=failed_count,
             successful_example_count=successful_count,
-            description=self.description,
+            description=full_description,
         )
         self._run_repository.store_run_overview(run_overview)
         return run_overview

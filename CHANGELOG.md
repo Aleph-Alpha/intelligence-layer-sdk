@@ -25,6 +25,7 @@
    - This is not supported for the `OpenTelemetryTracer` because of technical incompatibilities.
  - All exported spans now contain the status of the span.
  - We now support python 3.12
+ - Add `description` parameter to `Evaluator.evaluate_runs` and `Runner.run_dataset` to allow individual descriptions without the need to create a new `Evaluator` or `Runner`.
 
 ### Fixes
  - The document index client now correctly URL-encodes document names in its queries.
