@@ -152,6 +152,8 @@ class AlephAlphaModel:
         self._client = (
             limited_concurrency_client_from_env() if client is None else client
         )
+        if name not in [model["name"] for model in self._client.models()]:
+            raise ValueError(f"Invalid model name: {name}")
         self._complete: Task[CompleteInput, CompleteOutput] = _Complete(
             self._client, name
         )
@@ -191,6 +193,15 @@ class AlephAlphaModel:
 
 
 class ControlModel(ABC, AlephAlphaModel):
+    AllowedModel: Literal[""]
+
+    def __init__(
+        self, name: str, client: AlephAlphaClientProtocol | None = None
+    ) -> None:
+        if name not in self.AllowedModel.__args__ or name == "":  # type: ignore
+            raise ValueError(f"Invalid model name: {name}")
+        super().__init__(name, client)
+
     @abstractmethod
     def to_instruct_prompt(
         self,
@@ -219,19 +230,21 @@ class LuminousControlModel(ControlModel):
 ### Response:{{response_prefix}}"""
     )
 
+    AllowedModel = Literal[
+        "luminous-base-control-20230501",
+        "luminous-extended-control-20230501",
+        "luminous-supreme-control-20230501",
+        "luminous-base-control",
+        "luminous-extended-control",
+        "luminous-supreme-control",
+        "luminous-base-control-20240215",
+        "luminous-extended-control-20240215",
+        "luminous-supreme-control-20240215",
+    ]
+
     def __init__(
         self,
-        name: Literal[
-            "luminous-base-control-20230501",
-            "luminous-extended-control-20230501",
-            "luminous-supreme-control-20230501",
-            "luminous-base-control",
-            "luminous-extended-control",
-            "luminous-supreme-control",
-            "luminous-base-control-20240215",
-            "luminous-extended-control-20240215",
-            "luminous-supreme-control-20240215",
-        ] = "luminous-base-control",
+        name: AllowedModel = "luminous-base-control",
         client: Optional[AlephAlphaClientProtocol] = None,
     ) -> None:
         super().__init__(name, client)
@@ -267,13 +280,15 @@ class Llama2InstructModel(ControlModel):
 
 {{response_prefix}}{% endif %}""")
 
+    AllowedModel = Literal[
+        "llama-2-7b-chat",
+        "llama-2-13b-chat",
+        "llama-2-70b-chat",
+    ]
+
     def __init__(
         self,
-        name: Literal[
-            "llama-2-7b-chat",
-            "llama-2-13b-chat",
-            "llama-2-70b-chat",
-        ] = "llama-2-13b-chat",
+        name: AllowedModel = "llama-2-13b-chat",
         client: Optional[AlephAlphaClientProtocol] = None,
     ) -> None:
         super().__init__(name, client)
@@ -310,12 +325,14 @@ class Llama3InstructModel(ControlModel):
     )
     EOT_TOKEN = "<|eot_id|>"
 
+    AllowedModel = Literal[
+        "llama-3-8b-instruct",
+        "llama-3-70b-instruct",
+    ]
+
     def __init__(
         self,
-        name: Literal[
-            "llama-3-8b-instruct",
-            "llama-3-70b-instruct",
-        ] = "llama-3-8b-instruct",
+        name: AllowedModel = "llama-3-8b-instruct",
         client: Optional[AlephAlphaClientProtocol] = None,
     ) -> None:
         super().__init__(name, client)
