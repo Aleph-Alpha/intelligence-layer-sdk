@@ -3,6 +3,7 @@ from abc import ABC, abstractmethod
 from datetime import datetime
 from itertools import combinations
 from typing import Mapping, Optional, Sequence
+from uuid import uuid4
 
 from pydantic import BaseModel
 
@@ -132,12 +133,13 @@ class ArgillaEvaluator(AsyncEvaluator[Input, Output, ExpectedOutput, Evaluation]
         self,
         *run_ids: str,
         num_examples: Optional[int] = None,
+        dataset_name: Optional[str] = None,
         abort_on_error: bool = False,
         skip_example_on_any_failure: bool = True,
     ) -> PartialEvaluationOverview:
-        argilla_dataset_id = self._client.ensure_dataset_exists(
+        argilla_dataset_id = self._client.create_dataset(
             self._workspace_id,
-            dataset_name="name",
+            dataset_name if dataset_name else str(uuid4()),
             fields=list(self._evaluation_logic.fields.values()),
             questions=self._evaluation_logic.questions,
         )

@@ -13,6 +13,9 @@
  - We updated the graders to support python 3.12 and moved away from `nltk`-package:
     - `BleuGrader` now uses `sacrebleu`-package.
     - `RougeGrader` now uses the `rouge_score`-package.
+ - When using the `ArgillaEvaluator`, attempting to submit to a dataset, which already exists, will no longer work append to the dataset. This makes it more in-line with other evaluation concepts.
+   - Instead of appending to an active argilla dataset, you now need to create a new dataset, retrieve it and then finally combine both datasets in the aggregation step.
+   - The `ArgillaClient` now has methods `create_dataset` for less fault-ignoring dataset creation and `add_records` for performant uploads.
 
 ### New Features
  - Add `skip_example_on_any_failure` flag to `evaluate_runs` (defaults to True). This allows to configure if you want to keep an example for evaluation, even if it failed for some run.
@@ -24,7 +27,8 @@
  - We now support python 3.12
 
 ### Fixes
-- The document index client now correctly URL-encodes document names in its queries.
+ - The document index client now correctly URL-encodes document names in its queries.
+ - The `ArgillaEvaluator` not properly supports `dataset_name`
 
 ### Deprecations
 ...

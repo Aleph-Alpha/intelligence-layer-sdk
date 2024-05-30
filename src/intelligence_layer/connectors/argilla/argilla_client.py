@@ -3,7 +3,17 @@ import os
 from abc import ABC, abstractmethod
 from http import HTTPStatus
 from itertools import chain, count, islice
-from typing import Any, Callable, Iterable, Mapping, Optional, Sequence, Union, cast
+from typing import (
+    Any,
+    Callable,
+    Iterable,
+    Mapping,
+    Optional,
+    Sequence,
+    TypeVar,
+    Union,
+    cast,
+)
 from uuid import uuid4
 
 from pydantic import BaseModel
@@ -97,6 +107,29 @@ class ArgillaClient(ABC):
     """
 
     @abstractmethod
+    def create_dataset(
+        self,
+        workspace_id: str,
+        dataset_name: str,
+        fields: Sequence[Field],
+        questions: Sequence[Question],
+    ) -> str:
+        """Creates and publishes a new feedback dataset in Argilla.
+
+        Raises an error if the name exists already.
+
+        Args:
+            workspace_id: the id of the workspace the feedback-dataset should be created in.
+                The user executing this request must have corresponding permissions for this workspace.
+            dataset_name: the name of the feedback-dataset to be created.
+            fields: all fields of this dataset.
+            questions: all questions for this dataset.
+        Returns:
+            The id of the created dataset.
+        """
+        ...
+
+    @abstractmethod
     def ensure_dataset_exists(
         self,
         workspace_id: str,
@@ -119,13 +152,23 @@ class ArgillaClient(ABC):
 
     @abstractmethod
     def add_record(self, dataset_id: str, record: RecordData) -> None:
-        """Adds a new record to be evalated to the given dataset.
+        """Adds a new record to the given dataset.
 
         Args:
             dataset_id: id of the dataset the record is added to
-            record: contains the actual record data (i.e. content for the dataset's fields)
+            record: the actual record data (i.e. content for the dataset's fields)
         """
         ...
+
+    def add_records(self, dataset_id: str, records: Sequence[RecordData]) -> None:
+        """Adds new records to the given dataset.
+
+        Args:
+            dataset_id: id of the dataset the record is added to
+            records: list containing the record data (i.e. content for the dataset's fields)
+        """
+        for record in records:
+            return self.add_record(dataset_id, record)
 
     @abstractmethod
     def evaluations(self, dataset_id: str) -> Iterable[ArgillaEvaluation]:
@@ -147,6 +190,18 @@ class ArgillaClient(ABC):
             n_splits: the number of splits to create
         """
         ...
+
+
+T = TypeVar("T")
+
+
+def batch_iterator(iterable: Iterable[T], batch_size: int) -> Iterable[list[T]]:
+    iterator = iter(iterable)
+    while True:
+        batch = list(islice(iterator, batch_size))
+        if not batch:
+            break
+        yield batch
 
 
 class DefaultArgillaClient(ArgillaClient):
@@ -196,7 +251,7 @@ class DefaultArgillaClient(ArgillaClient):
                 )
             raise e
 
-    def ensure_dataset_exists(
+    def create_dataset(
         self,
         workspace_id: str,
         dataset_name: str,
@@ -205,6 +260,39 @@ class DefaultArgillaClient(ArgillaClient):
     ) -> str:
         try:
             dataset_id: str = self._create_dataset(dataset_name, workspace_id)["id"]
+            for field in fields:
+                self._create_field(field.name, field.title, dataset_id)
+
+            for question in questions:
+                self._create_question(
+                    question.name,
+                    question.title,
+                    question.description,
+                    question.options,
+                    dataset_id,
+                )
+            self._publish_dataset(dataset_id)
+            return dataset_id
+
+        except HTTPError as e:
+            if e.response.status_code == HTTPStatus.CONFLICT:
+                raise ValueError(
+                    f"Cannot create dataset with name '{dataset_name}', either the given dataset name, already exists"
+                    f"or field name or question name are duplicates."
+                )
+            raise e
+
+    def ensure_dataset_exists(
+        self,
+        workspace_id: str,
+        dataset_name: str,
+        fields: Sequence[Field],
+        questions: Sequence[Question],
+    ) -> str:
+        try:
+            dataset_id: str = self.create_dataset(
+                workspace_id, dataset_name, fields, questions
+            )
         except HTTPError as e:
             if e.response.status_code == HTTPStatus.CONFLICT:
                 datasets = self._list_datasets(workspace_id)
@@ -249,9 +337,10 @@ class DefaultArgillaClient(ArgillaClient):
                 raise e
 
     def add_record(self, dataset_id: str, record: RecordData) -> None:
-        self._create_record(
-            record.content, record.metadata, record.example_id, dataset_id
-        )
+        self._create_records([record], dataset_id)
+
+    def add_records(self, dataset_id: str, records: Sequence[RecordData]) -> None:
+        self._create_records(records, dataset_id)
 
     def evaluations(self, dataset_id: str) -> Iterable[ArgillaEvaluation]:
         def to_responses(
@@ -481,24 +570,27 @@ class DefaultArgillaClient(ArgillaClient):
                 record["example_id"] = example_id
             yield from cast(Sequence[Mapping[str, Any]], records)
 
-    def _create_record(
+    def _create_records(
         self,
-        content: Mapping[str, str],
-        metadata: Mapping[str, str],
-        example_id: str,
+        records: Sequence[RecordData],
         dataset_id: str,
     ) -> None:
         url = self.api_url + f"api/v1/datasets/{dataset_id}/records"
-        data = {
-            "items": [
-                {
-                    "fields": content,
-                    "metadata": {**metadata, "example_id": example_id},
-                }
-            ]
-        }
-        response = self.session.post(url, json=data)
-        response.raise_for_status()
+        for batch in batch_iterator(records, 200):
+            data = {
+                "items": [
+                    {
+                        "fields": record.content,
+                        "metadata": {
+                            **record.metadata,
+                            "example_id": record.example_id,
+                        },
+                    }
+                    for record in batch
+                ]
+            }
+            response = self.session.post(url, json=data)
+            response.raise_for_status()
 
     def delete_workspace(self, workspace_id: str) -> None:
         for dataset in self._list_datasets(workspace_id)["items"]:

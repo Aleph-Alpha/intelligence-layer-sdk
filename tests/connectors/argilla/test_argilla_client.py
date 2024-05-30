@@ -46,7 +46,7 @@ def retry(
 @fixture
 def argilla_client() -> DefaultArgillaClient:
     load_dotenv()
-    return DefaultArgillaClient(total_retries=8)
+    return DefaultArgillaClient(total_retries=1)
 
 
 @fixture
@@ -78,6 +78,51 @@ def qa_dataset_id(argilla_client: DefaultArgillaClient, workspace_id: str) -> st
     )
 
 
+@pytest.mark.docker
+def test_client_can_create_a_dataset(
+    argilla_client: DefaultArgillaClient,
+    workspace_id: str,
+) -> None:
+    dataset_id = argilla_client.create_dataset(
+        workspace_id,
+        dataset_name="name",
+        fields=[Field(name="a", title="b")],
+        questions=[
+            Question(name="a", title="b", description="c", options=list(range(1, 5)))
+        ],
+    )
+    datasets = argilla_client._list_datasets(workspace_id)
+    assert len(argilla_client._list_datasets(workspace_id)) == 1
+    assert dataset_id == datasets["items"][0]["id"]
+
+
+@pytest.mark.docker
+def test_client_cannot_create_two_datasets_with_the_same_name(
+    argilla_client: DefaultArgillaClient,
+    workspace_id: str,
+) -> None:
+    dataset_name = str(uuid4())
+    argilla_client.create_dataset(
+        workspace_id,
+        dataset_name=dataset_name,
+        fields=[Field(name="a", title="b")],
+        questions=[
+            Question(name="a", title="b", description="c", options=list(range(1, 5)))
+        ],
+    )
+    with pytest.raises(ValueError):
+        argilla_client.create_dataset(
+            workspace_id,
+            dataset_name=dataset_name,
+            fields=[Field(name="a", title="b")],
+            questions=[
+                Question(
+                    name="a", title="b", description="c", options=list(range(1, 5))
+                )
+            ],
+        )
+
+
 @fixture
 def qa_records(
     argilla_client: ArgillaClient, qa_dataset_id: str
@@ -90,8 +135,7 @@ def qa_records(
         )
         for i in range(60)
     ]
-    for record in records:
-        argilla_client.add_record(qa_dataset_id, record)
+    argilla_client.add_records(qa_dataset_id, records)
     return records
 
 
@@ -107,13 +151,12 @@ def long_qa_records(
         )
         for i in range(1024)
     ]
-    for record in records:
-        argilla_client.add_record(qa_dataset_id, record)
+    argilla_client.add_records(qa_dataset_id, records)
     return records
 
 
 @pytest.mark.docker
-def test_error_on_non_existent_dataset(
+def test_retrieving_records_on_non_existant_dataset_raises_errors(
     argilla_client: DefaultArgillaClient,
 ) -> None:
     with pytest.raises(HTTPError):
