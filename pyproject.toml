@@ -15,7 +15,7 @@ packages = [{ include = "intelligence_layer", from = "src" }]
 python = ">=3.10,<3.13"
 pydantic = "2.7.*"
 fastapi = "^0.111.0"
-uvicorn = "^0.29.0"
+uvicorn = "^0.30.0"
 aleph-alpha-client = ">=7.1.0"
 python-dotenv = "*"
 semantic-text-splitter = "^0.13.1"
@@ -24,7 +24,7 @@ rich = "^13.7.1"
 nbconvert = "^7.16.4"
 datasets = "^2.19.1"
 jupyter = "^1.0.0"
-requests = "^2.32.2"
+requests = "^2.32.3"
 langdetect = "^1.0.9"
 pycountry = "23.12.11"
 opentelemetry-api = "^1.22.0"
@@ -39,13 +39,13 @@ sacrebleu = "^2.4.2"
 # lint & format
 mypy = "^1.10.0"
 nbqa = "^1.8.5"
-ruff = "^0.4.5"
+ruff = "^0.4.6"
 pre-commit = "^3.7.1"
 
 # tests
 pytest = "^8.2"
 pytest-xdist = "^3.6.1"
-hypercorn = "^0.17.2"
+hypercorn = "^0.17.3"
 
 # typing
 httpx = "*"
