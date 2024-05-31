@@ -208,11 +208,8 @@ def dummy_pairwise_evaluator(
 
 @fixture
 def dummy_aggregator(
-    in_memory_dataset_repository: InMemoryDatasetRepository,
-    in_memory_run_repository: InMemoryRunRepository,
     in_memory_evaluation_repository: InMemoryEvaluationRepository,
     in_memory_aggregation_repository: InMemoryAggregationRepository,
-    dummy_eval_logic: DummyEvaluationLogic,
     dummy_aggregate_logic: DummyAggregationLogic,
 ) -> Aggregator[DummyEvaluation, DummyAggregatedEvaluationWithResultList]:
     return Aggregator(
