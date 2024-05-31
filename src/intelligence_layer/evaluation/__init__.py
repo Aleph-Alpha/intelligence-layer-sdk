@@ -109,6 +109,9 @@ from .infrastructure.repository_navigator import (
     RepositoryNavigator as RepositoryNavigator,
 )
 from .infrastructure.repository_navigator import (
+    aggregation_overviews_to_pandas as aggregation_overviews_to_pandas,
+)
+from .infrastructure.repository_navigator import (
     evaluation_lineages_to_pandas as evaluation_lineages_to_pandas,
 )
 from .infrastructure.repository_navigator import (
