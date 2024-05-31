@@ -1,18 +1,18 @@
+import pytest
 from aleph_alpha_client import Prompt, PromptGranularity, Text
 from pytest import fixture
 
-from intelligence_layer.connectors.limited_concurrency_client import (
-    AlephAlphaClientProtocol,
-)
+from intelligence_layer.connectors import AlephAlphaClientProtocol
 from intelligence_layer.core import (
     AlephAlphaModel,
     CompleteInput,
     ControlModel,
+    ExplainInput,
+    Llama2InstructModel,
     Llama3InstructModel,
     LuminousControlModel,
     NoOpTracer,
 )
-from intelligence_layer.core.model import ExplainInput
 
 
 @fixture
@@ -57,7 +57,7 @@ def test_explain(model: ControlModel, no_op_tracer: NoOpTracer) -> None:
 
 
 def test_llama_2_model_works(no_op_tracer: NoOpTracer) -> None:
-    llama_2_model = Llama3InstructModel()
+    llama_2_model = Llama2InstructModel()
 
     prompt = llama_2_model.to_instruct_prompt(
         "Who likes pizza?",
@@ -82,5 +82,32 @@ def test_llama_3_model_works(no_op_tracer: NoOpTracer) -> None:
     assert "Jessica" in output.completion
 
 
-def test_model_knows_its_context_size(model: AlephAlphaModel) -> None:
-    assert model.context_size == 2048
+def test_models_know_their_context_size(client: AlephAlphaClientProtocol) -> None:
+    assert (
+        LuminousControlModel(client=client, name="luminous-base-control").context_size
+        == 2048
+    )
+    assert AlephAlphaModel(client=client, name="luminous-base").context_size == 2048
+    assert (
+        Llama2InstructModel(client=client, name="llama-2-7b-chat").context_size == 2048
+    )
+    assert (
+        Llama3InstructModel(client=client, name="llama-3-8b-instruct").context_size
+        == 8192
+    )
+
+
+def test_models_are_strict_about_instantiation(
+    client: AlephAlphaClientProtocol,
+) -> None:
+    with pytest.raises(ValueError):
+        assert LuminousControlModel(client=client, name="llama-2-7b-chat")  # type: ignore
+
+    with pytest.raises(ValueError):
+        assert Llama2InstructModel(client=client, name="luminous-base")  # type: ignore
+
+    with pytest.raises(ValueError):
+        assert Llama3InstructModel(client=client, name="llama-2-7b-chat")  # type: ignore
+
+    with pytest.raises(ValueError):
+        assert AlephAlphaModel(client=client, name="No model")  # type: ignore
