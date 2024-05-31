@@ -39,7 +39,7 @@ sacrebleu = "^2.4.2"
 # lint & format
 mypy = "^1.10.0"
 nbqa = "^1.8.5"
-ruff = "^0.4.6"
+ruff = "^0.4.7"
 pre-commit = "^3.7.1"
 
 # tests
