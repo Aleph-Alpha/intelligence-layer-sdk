@@ -1,10 +1,11 @@
-from typing import Sequence
+from typing import Sequence, TypeVar
 
 import pytest
 from pydantic import BaseModel
 from pytest import fixture
 
 from intelligence_layer.core import Task, TaskSpan
+from intelligence_layer.core.tracer.tracer import utc_now
 from intelligence_layer.evaluation import (
     Dataset,
     DatasetRepository,
@@ -23,6 +24,10 @@ from intelligence_layer.evaluation import (
     SuccessfulExampleOutput,
     evaluation_lineages_to_pandas,
     run_lineages_to_pandas,
+)
+from intelligence_layer.evaluation.aggregation.domain import AggregationOverview
+from intelligence_layer.evaluation.infrastructure.repository_navigator import (
+    aggregation_overviews_to_pandas,
 )
 
 
@@ -401,3 +406,128 @@ def test_evaluation_lineages_to_pandas(
             count += 1
 
     assert count == len(df)
+
+
+class AggregationDummy(BaseModel):
+    score: float = 0.5
+    value: float = 0.3
+
+
+T = TypeVar("T", bound=BaseModel)
+
+
+def create_aggregation_overview(
+    statistics: T,
+) -> AggregationOverview[T]:
+    return AggregationOverview(
+        evaluation_overviews=frozenset(),
+        id="aggregation-id",
+        start=utc_now(),
+        end=utc_now(),
+        successful_evaluation_count=5,
+        crashed_during_evaluation_count=3,
+        description="dummy-evaluator",
+        statistics=statistics,
+    )
+
+
+@pytest.mark.parametrize("length", [1, 2])
+def test_aggregation_overviews_to_pandas(length: int) -> None:
+    # given
+    overview = create_aggregation_overview(AggregationDummy())
+    # when
+    df = aggregation_overviews_to_pandas([overview] * length, unwrap_statistics=False)
+    # then
+    assert len(df) == length
+    assert set(AggregationOverview.model_fields.keys()) == set(df.columns)
+
+
+def test_aggregation_overviews_to_pandas_unwrap_statistics() -> None:
+    overview = create_aggregation_overview(AggregationDummy())
+
+    df = aggregation_overviews_to_pandas([overview], unwrap_statistics=True)
+
+    assert "score" in df.columns
+    assert "value" in df.columns
+    assert "statistics" not in df.columns
+    assert all(df["score"] == 0.5)
+    assert all(df["value"] == 0.3)
+
+    class AggregationDummy2(BaseModel):
+        score_2: float = 0.5
+        value_2: float = 0.3
+
+    overview2 = create_aggregation_overview(AggregationDummy2())
+
+    df = aggregation_overviews_to_pandas([overview2], unwrap_statistics=True)
+    assert "score_2" in df.columns
+    assert "value_2" in df.columns
+    assert "statistics" not in df.columns
+
+
+def test_aggregation_overviews_to_pandas_works_with_eval_overviews() -> None:
+    # given
+    eval_overview = EvaluationOverview(
+        run_overviews=frozenset(),
+        id="id",
+        start_date=utc_now(),
+        end_date=utc_now(),
+        successful_evaluation_count=1,
+        failed_evaluation_count=1,
+        description="",
+    )
+    overview = AggregationOverview(
+        evaluation_overviews=frozenset([eval_overview]),
+        id="aggregation-id",
+        start=utc_now(),
+        end=utc_now(),
+        successful_evaluation_count=5,
+        crashed_during_evaluation_count=3,
+        description="dummy-evaluator",
+        statistics=AggregationDummy(),
+    )
+    # when
+    df = aggregation_overviews_to_pandas([overview], unwrap_statistics=False)
+    # then
+    assert len(df) == 1
+
+
+def test_aggregation_overviews_to_pandas_works_with_empty_input() -> None:
+    # when
+    df = aggregation_overviews_to_pandas([])
+    # then
+    assert len(df) == 0
+
+
+def test_aggregation_overviews_does_not_work_with_different_aggregations() -> None:
+    # given
+    overview = create_aggregation_overview(AggregationDummy())
+
+    class OtherVariableNames(BaseModel):
+        not_score: float = 0.5
+        not_value: float = 0.3
+
+    other_variable_names = create_aggregation_overview(OtherVariableNames())
+
+    class SameNameOtherClassAggregation(BaseModel):
+        not_score: float = 0.5
+        not_value: float = 0.3
+
+    same_variable_names_other_class = create_aggregation_overview(
+        SameNameOtherClassAggregation()
+    )
+
+    # when then
+    with pytest.raises(ValueError):
+        df = aggregation_overviews_to_pandas([overview, other_variable_names])
+    df = aggregation_overviews_to_pandas([overview, other_variable_names], strict=False)
+
+    with pytest.raises(ValueError):
+        df = aggregation_overviews_to_pandas(
+            [overview, same_variable_names_other_class]
+        )
+    df = aggregation_overviews_to_pandas(
+        [overview, same_variable_names_other_class], strict=False
+    )
+
+    assert len(df) == 2

@@ -27,6 +27,8 @@
  - We now support python 3.12
  - Add `description` parameter to `Evaluator.evaluate_runs` and `Runner.run_dataset` to allow individual descriptions without the need to create a new `Evaluator` or `Runner`.
  - All models raise an error during initialization if an incompatible `name` is passed, instead of only when they are used.
+ - Add `aggregation_overviews_to_pandas` function to allow for easier comparison of multiple aggregation overviews
+ - Add `parameter_optimization.ipynb` notebook to demonstrate the optimization of tasks by comparing different parameter combinations.
 
 ### Fixes
  - The document index client now correctly URL-encodes document names in its queries.

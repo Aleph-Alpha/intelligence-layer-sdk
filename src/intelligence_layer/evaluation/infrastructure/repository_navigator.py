@@ -7,6 +7,10 @@ from pydantic import BaseModel
 from rich.tree import Tree
 
 from intelligence_layer.core.task import Input, Output
+from intelligence_layer.evaluation.aggregation.domain import (
+    AggregatedEvaluation,
+    AggregationOverview,
+)
 from intelligence_layer.evaluation.dataset.dataset_repository import DatasetRepository
 from intelligence_layer.evaluation.dataset.domain import Example, ExpectedOutput
 from intelligence_layer.evaluation.evaluation.domain import (
@@ -105,6 +109,42 @@ def evaluation_lineages_to_pandas(
     )
     df = df.drop(columns="id")
     df = df.set_index(["example_id", "evaluation_id", "run_id"])
+    return df
+
+
+def aggregation_overviews_to_pandas(
+    aggregation_overviews: Sequence[AggregationOverview[AggregatedEvaluation]],
+    unwrap_statistics: bool = True,
+    strict: bool = True,
+) -> pd.DataFrame:
+    """Converts aggregation overviews to a pandas table for easier comparison.
+
+    Args:
+        aggregation_overviews: Overviews to convert.
+        unwrap_statistics: Unwrap the `statistics` field in the overviews into separate columns.
+            Defaults to True.
+        strict: Allow only overviews with exactly equal `statistics` types. Defaults to True.
+
+    Returns:
+        A pandas :class:`DataFrame` containing an overview per row with fields as columns.
+    """
+    overviews = list(aggregation_overviews)
+    if strict and len(overviews) > 1:
+        first_type = overviews[0].statistics.__class__
+        if any(
+            overview.statistics.__class__ != first_type for overview in overviews[1:]
+        ):
+            raise ValueError(
+                "Aggregation overviews contain different types, which is not allowed with strict=True"
+            )
+
+    df = pd.DataFrame(
+        [model.model_dump(mode="json") for model in aggregation_overviews]
+    )
+    if unwrap_statistics and "statistics" in df.columns:
+        df = df.join(pd.DataFrame(df["statistics"].to_list())).drop(
+            columns=["statistics"]
+        )
     return df
 
 
