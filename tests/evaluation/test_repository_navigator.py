@@ -408,7 +408,7 @@ def test_evaluation_lineages_to_pandas(
     assert count == len(df)
 
 
-class TestAggregate(BaseModel):
+class AggregationDummy(BaseModel):
     score: float = 0.5
     value: float = 0.3
 
@@ -434,7 +434,7 @@ def create_aggregation_overview(
 @pytest.mark.parametrize("length", [1, 2])
 def test_aggregation_overviews_to_pandas(length: int) -> None:
     # given
-    overview = create_aggregation_overview(TestAggregate())
+    overview = create_aggregation_overview(AggregationDummy())
     # when
     df = aggregation_overviews_to_pandas([overview] * length, unwrap_statistics=False)
     # then
@@ -443,7 +443,7 @@ def test_aggregation_overviews_to_pandas(length: int) -> None:
 
 
 def test_aggregation_overviews_to_pandas_unwrap_statistics() -> None:
-    overview = create_aggregation_overview(TestAggregate())
+    overview = create_aggregation_overview(AggregationDummy())
 
     df = aggregation_overviews_to_pandas([overview], unwrap_statistics=True)
 
@@ -453,11 +453,11 @@ def test_aggregation_overviews_to_pandas_unwrap_statistics() -> None:
     assert all(df["score"] == 0.5)
     assert all(df["value"] == 0.3)
 
-    class TestAggregate2(BaseModel):
+    class AggregationDummy2(BaseModel):
         score_2: float = 0.5
         value_2: float = 0.3
 
-    overview2 = create_aggregation_overview(TestAggregate2())
+    overview2 = create_aggregation_overview(AggregationDummy2())
 
     df = aggregation_overviews_to_pandas([overview2], unwrap_statistics=True)
     assert "score_2" in df.columns
@@ -484,7 +484,7 @@ def test_aggregation_overviews_to_pandas_works_with_eval_overviews() -> None:
         successful_evaluation_count=5,
         crashed_during_evaluation_count=3,
         description="dummy-evaluator",
-        statistics=TestAggregate(),
+        statistics=AggregationDummy(),
     )
     # when
     df = aggregation_overviews_to_pandas([overview], unwrap_statistics=False)
@@ -501,7 +501,7 @@ def test_aggregation_overviews_to_pandas_works_with_empty_input() -> None:
 
 def test_aggregation_overviews_does_not_work_with_different_aggregations() -> None:
     # given
-    overview = create_aggregation_overview(TestAggregate())
+    overview = create_aggregation_overview(AggregationDummy())
 
     class OtherVariableNames(BaseModel):
         not_score: float = 0.5

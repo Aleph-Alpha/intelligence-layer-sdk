@@ -1,3 +1,4 @@
+import pytest
 from pytest import fixture
 
 from intelligence_layer.connectors.document_index.document_index import DocumentPath
@@ -34,6 +35,7 @@ def retriever_based_qa_with_document_index(
     )
 
 
+@pytest.mark.filterwarnings("ignore::DeprecationWarning")
 def test_retriever_based_qa_using_in_memory_retriever(
     retriever_based_qa_with_in_memory_retriever: RetrieverBasedQa[int],
     no_op_tracer: NoOpTracer,
@@ -46,6 +48,7 @@ def test_retriever_based_qa_using_in_memory_retriever(
     assert output.subanswers[0].id == 3
 
 
+@pytest.mark.filterwarnings("ignore::DeprecationWarning")
 def test_retriever_based_qa_with_document_index(
     retriever_based_qa_with_document_index: RetrieverBasedQa[DocumentPath],
     no_op_tracer: NoOpTracer,
