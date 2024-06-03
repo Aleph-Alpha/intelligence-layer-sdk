@@ -184,7 +184,9 @@ class Tracer(ABC):
                     "Content-Type": "application/json",
                     "Accept": "application/json",
                 },
-                json=ExportedSpanList(self.export_for_viewing()).model_dump(mode="json"),
+                json=ExportedSpanList(self.export_for_viewing()).model_dump(
+                    mode="json"
+                ),
             )
             print(res)
             if res.status_code != 200:

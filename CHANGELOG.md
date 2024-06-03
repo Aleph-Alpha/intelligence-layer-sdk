@@ -29,6 +29,8 @@
  - All models raise an error during initialization if an incompatible `name` is passed, instead of only when they are used.
  - Add `aggregation_overviews_to_pandas` function to allow for easier comparison of multiple aggregation overviews
  - Add `parameter_optimization.ipynb` notebook to demonstrate the optimization of tasks by comparing different parameter combinations.
+ - Add `convert_file_for_viewing` in the `FileTracer` to convert the trace file format to the new (OpenTelemetry style) format and save as a new file.
+ - All tracers can now call `submit_to_trace_viewer` to send the trace to the Trace Viewer.
 
 ### Fixes
  - The document index client now correctly URL-encodes document names in its queries.
