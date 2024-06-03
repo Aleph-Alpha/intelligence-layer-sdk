@@ -4,7 +4,6 @@ from typing import Sequence, cast
 
 from aleph_alpha_client import Client, Image
 from dotenv import load_dotenv
-from pydantic import BaseModel
 from pytest import fixture
 
 from intelligence_layer.connectors import (
@@ -17,13 +16,7 @@ from intelligence_layer.connectors import (
     QdrantInMemoryRetriever,
     RetrieverType,
 )
-from intelligence_layer.core import (
-    LuminousControlModel,
-    NoOpTracer,
-    Task,
-    TaskSpan,
-    utc_now,
-)
+from intelligence_layer.core import LuminousControlModel, NoOpTracer, utc_now
 from intelligence_layer.evaluation import (
     AsyncInMemoryEvaluationRepository,
     EvaluationOverview,
@@ -115,28 +108,6 @@ def document_index_retriever(
 
 def to_document(document_chunk: DocumentChunk) -> Document:
     return Document(text=document_chunk.text, metadata=document_chunk.metadata)
-
-
-class DummyStringInput(BaseModel):
-    input: str = "dummy-input"
-
-
-class DummyStringOutput(BaseModel):
-    output: str = "dummy-output"
-
-
-class DummyStringEvaluation(BaseModel):
-    evaluation: str = "dummy-evaluation"
-
-
-class DummyStringTask(Task[DummyStringInput, DummyStringOutput]):
-    def do_run(self, input: DummyStringInput, task_span: TaskSpan) -> DummyStringOutput:
-        return DummyStringOutput()
-
-
-@fixture
-def dummy_string_task() -> DummyStringTask:
-    return DummyStringTask()
 
 
 @fixture

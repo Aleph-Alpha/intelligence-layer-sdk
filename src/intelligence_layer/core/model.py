@@ -153,7 +153,9 @@ class AlephAlphaModel:
             limited_concurrency_client_from_env() if client is None else client
         )
         if name not in [model["name"] for model in self._client.models()]:
-            raise ValueError(f"Invalid model name: {name}")
+            raise ValueError(
+                f"Could not find model: {name}. Either model name is invalid or model is currently down."
+            )
         self._complete: Task[CompleteInput, CompleteOutput] = _Complete(
             self._client, name
         )

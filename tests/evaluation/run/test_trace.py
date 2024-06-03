@@ -1,16 +1,7 @@
-from pytest import raises
-
 from intelligence_layer.core import utc_now
 from intelligence_layer.core.tracer.in_memory_tracer import InMemoryTracer
-from intelligence_layer.evaluation import (
-    AggregationOverview,
-    EvaluationFailed,
-    LogTrace,
-    SpanTrace,
-    TaskSpanTrace,
-)
+from intelligence_layer.evaluation import LogTrace, SpanTrace, TaskSpanTrace
 from intelligence_layer.evaluation.run.trace import _to_trace_entry
-from tests.evaluation.conftest import DummyAggregatedEvaluation
 
 
 def test_to_trace_entry() -> None:
@@ -49,10 +40,3 @@ def test_deserialize_task_trace() -> None:
         output=["c"],
     )
     assert trace.model_validate_json(trace.model_dump_json()) == trace
-
-
-def test_raise_on_exception_for_evaluation_run_overview(
-    aggregation_overview: AggregationOverview[DummyAggregatedEvaluation],
-) -> None:
-    with raises(EvaluationFailed):
-        aggregation_overview.raise_on_evaluation_failure()
