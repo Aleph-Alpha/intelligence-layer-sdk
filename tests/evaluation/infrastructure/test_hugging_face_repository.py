@@ -1,5 +1,3 @@
-from uuid import uuid4
-
 import huggingface_hub  # type: ignore
 
 from intelligence_layer.evaluation.infrastructure.hugging_face_repository import (
@@ -8,9 +6,9 @@ from intelligence_layer.evaluation.infrastructure.hugging_face_repository import
 
 
 def test_hugging_face_repository_can_create_and_delete_a_repository(
-    hugging_face_token: str,
+    hugging_face_token: str, hugging_face_test_repository_id: str
 ) -> None:
-    repository_id = f"Aleph-Alpha/test-{uuid4()}"
+    repository_id = hugging_face_test_repository_id
 
     assert not huggingface_hub.repo_exists(
         repo_id=repository_id,
