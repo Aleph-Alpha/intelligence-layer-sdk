@@ -14,6 +14,7 @@ from intelligence_layer.core import (
     Tracer,
     utc_now,
 )
+from intelligence_layer.core.task import Task
 from tests.core.tracer.conftest import SpecificTestException
 
 
@@ -207,22 +208,6 @@ def test_tracer_raises_if_open_span_is_exported(
             child_span.export_for_viewing()
 
 
-@pytest.mark.skip("Not yet implemented")
-@pytest.mark.parametrize(
-    "tracer_fixture",
-    tracer_fixtures,
-)
-def test_spans_cannot_be_closed_twice(
-    tracer_fixture: str,
-    request: pytest.FixtureRequest,
-) -> None:
-    tracer: Tracer = request.getfixturevalue(tracer_fixture)
-
-    span = tracer.span("name")
-    span.end()
-    span.end()
-
-
 @pytest.mark.parametrize(
     "tracer_fixture",
     tracer_fixtures,
@@ -239,6 +224,40 @@ def test_spans_cannot_be_used_as_context_twice(
     with pytest.raises(Exception):
         with span:
             pass
+
+
+@pytest.mark.skip("Not yet implemented")
+@pytest.mark.docker
+@pytest.mark.parametrize(
+    "tracer_fixture",
+    tracer_fixtures,
+)
+def test_tracer_can_be_submitted_to_trace_viewer(
+    tracer_fixture: str,
+    request: pytest.FixtureRequest,
+    tracer_test_task: Task[str, str],
+) -> None:
+    tracer: Tracer = request.getfixturevalue(tracer_fixture)
+
+    tracer_test_task.run(input="input", tracer=tracer)
+
+    assert tracer.submit_to_trace_viewer()
+
+
+@pytest.mark.skip("Not yet implemented")
+@pytest.mark.parametrize(
+    "tracer_fixture",
+    tracer_fixtures,
+)
+def test_spans_cannot_be_closed_twice(
+    tracer_fixture: str,
+    request: pytest.FixtureRequest,
+) -> None:
+    tracer: Tracer = request.getfixturevalue(tracer_fixture)
+
+    span = tracer.span("name")
+    span.end()
+    span.end()
 
 
 @pytest.mark.skip("Not yet implemented")

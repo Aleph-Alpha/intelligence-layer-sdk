@@ -13,7 +13,6 @@ services:
     environment:
       ARGILLA_ELASTICSEARCH: "http://argilla-elastic-search:9200"
       ARGILLA_ENABLE_TELEMETRY: 0
-
   open-telemetry-trace-service:
     container_name: jaeger_1_35
     environment:
@@ -23,3 +22,10 @@ services:
       - "4318:4318"
       - "16686:16686"
     image: jaegertracing/all-in-one:1.35
+  # TODO: Below code should be enabled once the secret has been added to the CI. After that, also check tests in test_tracer.py
+  # export GITHUB_TOKEN=...
+  # echo $GITHUB_TOKEN | docker login ghcr.io -u your_email@for_github --password-stdin
+  # trace_viewer:
+  #   image: ghcr.io/aleph-alpha/trace-viewer-trace-viewer:main
+  #   ports:
+  #    - 3000:3000
