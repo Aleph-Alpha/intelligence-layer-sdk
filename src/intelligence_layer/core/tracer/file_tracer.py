@@ -78,6 +78,14 @@ class FileTracer(PersistentTracer):
             )
             return self._parse_log(filtered_traces)
 
+    def convert_file_for_viewing(self, file_path: Path | str) -> None:
+        in_memory_tracer = self.traces()
+        traces = in_memory_tracer.export_for_viewing()
+        path_to_file = Path(file_path)
+        with path_to_file.open(mode="w", encoding="utf-8") as file:
+            for exportedSpan in traces:
+                file.write(exportedSpan.model_dump_json() + "\n")
+
 
 class FileSpan(PersistentSpan, FileTracer):
     """A `Span` created by `FileTracer.span`."""

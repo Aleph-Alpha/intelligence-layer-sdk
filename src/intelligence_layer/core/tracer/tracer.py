@@ -1,12 +1,15 @@
+import os
 import traceback
 from abc import ABC, abstractmethod
 from contextlib import AbstractContextManager
 from datetime import datetime, timezone
 from enum import Enum
 from types import TracebackType
-from typing import TYPE_CHECKING, Mapping, Optional, Sequence
+from typing import TYPE_CHECKING, Mapping, Optional, Sequence, Union
 from uuid import UUID, uuid4
 
+import requests
+import rich
 from pydantic import BaseModel, Field, RootModel, SerializeAsAny
 from typing_extensions import Self, TypeAliasType
 
@@ -65,7 +68,7 @@ class SpanAttributes(BaseModel):
     type: SpanType = SpanType.SPAN
 
 
-class TaskSpanAttributes(SpanAttributes):
+class TaskSpanAttributes(BaseModel):
     type: SpanType = SpanType.TASK_SPAN
     input: SerializeAsAny[PydanticSerializable]
     output: SerializeAsAny[PydanticSerializable]
@@ -87,7 +90,7 @@ class ExportedSpan(BaseModel):
     parent_id: UUID | None
     start_time: datetime
     end_time: datetime
-    attributes: SpanAttributes
+    attributes: Union[SpanAttributes, TaskSpanAttributes]
     events: Sequence[Event]
     status: SpanStatus
     # we ignore the links concept
@@ -169,6 +172,34 @@ class Tracer(ABC):
             A list of spans which includes the current span and all its child spans.
         """
         ...
+
+    def submit_to_trace_viewer(self) -> bool:
+        """Submits the trace to the UI for visualization"""
+        trace_viewer_url = os.getenv("TRACE_VIEWER_URL", "http://localhost:3000")
+        trace_viewer_trace_upload = f"{trace_viewer_url}/trace"
+        try:
+            res = requests.post(
+                trace_viewer_trace_upload,
+                headers={
+                    "Content-Type": "application/json",
+                    "Accept": "application/json",
+                },
+                json=ExportedSpanList(self.export_for_viewing()).model_dump(
+                    mode="json"
+                ),
+            )
+            print(res)
+            if res.status_code != 200:
+                raise requests.HTTPError(res.status_code)
+            rich.print(
+                f"Open the [link={trace_viewer_url}]Trace Viewer[/link] to view the trace."
+            )
+            return True
+        except requests.ConnectionError:
+            print(
+                f"Trace viewer not found under {trace_viewer_url}.\nConsider running it for a better viewing experience.\nIf it is, set `TRACE_VIEWER_URL` in the environment."
+            )
+            return False
 
 
 class ErrorValue(BaseModel):
