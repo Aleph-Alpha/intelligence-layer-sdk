@@ -1,22 +1,15 @@
 from pathlib import Path
-from typing import Iterable, Optional, Sequence, cast
+from typing import Iterable, Optional, Sequence
 
 from fsspec.implementations.local import LocalFileSystem  # type: ignore
 
-from intelligence_layer.core import (
-    FileTracer,
-    InMemoryTaskSpan,
-    InMemoryTracer,
-    JsonSerializer,
-    Output,
-    Tracer,
-)
+from intelligence_layer.core import FileTracer, InMemoryTracer, JsonSerializer, Output
+from intelligence_layer.core.tracer.tracer import Tracer
 from intelligence_layer.evaluation.infrastructure.file_system_based_repository import (
     FileSystemBasedRepository,
 )
 from intelligence_layer.evaluation.run.domain import ExampleOutput, RunOverview
 from intelligence_layer.evaluation.run.run_repository import RunRepository
-from intelligence_layer.evaluation.run.trace import ExampleTrace, TaskSpanTrace
 
 
 class FileSystemRunRepository(RunRepository, FileSystemBasedRepository):
@@ -62,17 +55,13 @@ class FileSystemRunRepository(RunRepository, FileSystemBasedRepository):
             json_data=content
         )
 
-    def example_trace(self, run_id: str, example_id: str) -> Optional[ExampleTrace]:
+    def example_tracer(self, run_id: str, example_id: str) -> Optional[Tracer]:
         file_path = self._example_trace_path(run_id, example_id)
         if not self.exists(file_path):
             return None
-        in_memory_tracer = self._parse_log(file_path)
-        trace = TaskSpanTrace.from_task_span(
-            cast(InMemoryTaskSpan, in_memory_tracer.entries[0])
-        )
-        return ExampleTrace(run_id=run_id, example_id=example_id, trace=trace)
+        return self._parse_log(file_path)
 
-    def example_tracer(self, run_id: str, example_id: str) -> Tracer:
+    def create_tracer_for_example(self, run_id: str, example_id: str) -> Tracer:
         file_path = self._example_trace_path(run_id, example_id)
         return FileTracer(file_path)
 

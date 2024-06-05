@@ -1,4 +1,3 @@
-from datetime import datetime
 from itertools import chain
 from typing import Iterable
 from uuid import uuid4
@@ -12,10 +11,8 @@ from intelligence_layer.evaluation import (
     EvaluationOverview,
     EvaluationRepository,
     ExampleEvaluation,
-    ExampleTrace,
     FailedExampleEvaluation,
     RunOverview,
-    TaskSpanTrace,
 )
 from tests.evaluation.conftest import DummyEvaluation
 
@@ -23,25 +20,6 @@ test_repository_fixtures = [
     "file_evaluation_repository",
     "in_memory_evaluation_repository",
 ]
-
-
-@fixture
-def task_span_trace() -> TaskSpanTrace:
-    now = datetime.now()
-    return TaskSpanTrace(
-        name="task name", traces=[], start=now, end=now, input="input", output="output"
-    )
-
-
-@fixture
-def example_trace(
-    task_span_trace: TaskSpanTrace,
-) -> ExampleTrace:
-    return ExampleTrace(
-        run_id="evaluation-id",
-        example_id="example-id",
-        trace=task_span_trace,
-    )
 
 
 @fixture
@@ -286,7 +264,7 @@ def test_example_evaluations_returns_all_example_evaluations(
 
     assert list(example_evaluations) == sorted(
         all_example_evaluations,
-        key=lambda example_evaluation: example_evaluation.example_id,
+        key=lambda evaluation: evaluation.example_id,
     )
 
 
@@ -316,7 +294,7 @@ def test_successful_example_evaluations_returns_all_successful_example_evaluatio
 
     assert list(example_evaluations) == sorted(
         successful_example_evaluations,
-        key=lambda example_evaluation: example_evaluation.example_id,
+        key=lambda evaluation: evaluation.example_id,
     )
 
 
@@ -342,7 +320,7 @@ def test_file_repository_can_fetch_failed_examples_from_evaluation_run(
 
     assert list(example_evaluations) == sorted(
         failed_example_evaluations,
-        key=lambda example_evaluation: example_evaluation.example_id,
+        key=lambda evaluation: evaluation.example_id,
     )
 
 
@@ -371,7 +349,7 @@ def test_store_evaluation_overview_stores_and_returns_given_evaluation_overview(
     "repository_fixture",
     test_repository_fixtures,
 )
-def test_can_retieve_examples_and_failed_examples_after_storing_an_overview(
+def test_can_retrieve_examples_and_failed_examples_after_storing_an_overview(
     repository_fixture: str,
     request: FixtureRequest,
     evaluation_overview: EvaluationOverview,

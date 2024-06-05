@@ -5,6 +5,10 @@ from pydantic import BaseModel
 from pytest import fixture
 
 from intelligence_layer.core import Input, Output, Task, Tracer
+from intelligence_layer.core.tracer.in_memory_tracer import (
+    InMemoryTaskSpan,
+    InMemoryTracer,
+)
 from intelligence_layer.evaluation import (
     AggregatedEvaluation,
     AggregationLogic,
@@ -454,22 +458,32 @@ def test_eval_and_aggregate_runs_stores_example_traces(
     aggregation_overview = dummy_aggregator.aggregate_evaluation(evaluation_overview.id)
 
     examples = list(dataset)
-    success_result = run_repository.example_trace(
+    success_result = run_repository.example_tracer(
         aggregation_overview.run_ids[0], examples[0].id
     )
-    failure_result_task = run_repository.example_trace(
+
+    failure_result_task = run_repository.example_tracer(
         aggregation_overview.run_ids[0], examples[1].id
     )
-    failure_result_eval = run_repository.example_trace(
+    failure_result_eval = run_repository.example_tracer(
         aggregation_overview.run_ids[0], examples[2].id
     )
 
     assert success_result
+    assert type(success_result) is InMemoryTracer
     assert failure_result_task
+    assert type(failure_result_task) is InMemoryTracer
     assert failure_result_eval
-    assert success_result.trace.input == "success"
-    assert failure_result_task.trace.input == FAIL_IN_TASK_INPUT
-    assert failure_result_eval.trace.input == FAIL_IN_EVAL_INPUT
+    assert type(failure_result_eval) is InMemoryTracer
+
+    assert type(success_result.entries[0]) is InMemoryTaskSpan
+    assert success_result.entries[0].input == "success"
+
+    assert type(failure_result_task.entries[0]) is InMemoryTaskSpan
+    assert failure_result_task.entries[0].input == FAIL_IN_TASK_INPUT
+
+    assert type(failure_result_eval.entries[0]) is InMemoryTaskSpan
+    assert failure_result_eval.entries[0].input == FAIL_IN_EVAL_INPUT
 
 
 def test_eval_and_aggregate_runs_stores_aggregated_results(

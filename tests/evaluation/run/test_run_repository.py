@@ -1,24 +1,13 @@
 from datetime import datetime
-from typing import Iterable, Sequence, cast
+from typing import Iterable, Sequence
 from uuid import uuid4
 
 import pytest
 from _pytest.fixtures import FixtureRequest
 from pytest import fixture, mark
 
-from intelligence_layer.core import (
-    CompositeTracer,
-    InMemoryTaskSpan,
-    InMemoryTracer,
-    utc_now,
-)
-from intelligence_layer.evaluation import (
-    ExampleOutput,
-    ExampleTrace,
-    RunOverview,
-    RunRepository,
-    TaskSpanTrace,
-)
+from intelligence_layer.core import CompositeTracer, InMemoryTracer, utc_now
+from intelligence_layer.evaluation import ExampleOutput, RunOverview, RunRepository
 from intelligence_layer.evaluation.run.domain import FailedExampleRun
 from tests.evaluation.conftest import DummyStringInput
 
@@ -123,20 +112,21 @@ def test_can_store_and_return_example_evaluation_tracer_and_trace(
     now = datetime.now()
     in_memory_tracer = InMemoryTracer()
 
-    tracer = run_repository.example_tracer(run_id, example_id)
-    CompositeTracer([tracer, in_memory_tracer]).task_span(
+    tracer = run_repository.create_tracer_for_example(run_id, example_id)
+    task_span = CompositeTracer([tracer, in_memory_tracer]).task_span(
         "task", DummyStringInput(input="input"), now
     )
-    example_trace = run_repository.example_trace(run_id, example_id)
+    task_span.end()
+    example_tracer = run_repository.example_tracer(run_id, example_id)
 
-    expected_trace = ExampleTrace(
-        run_id=run_id,
-        example_id=example_id,
-        trace=TaskSpanTrace.from_task_span(
-            cast(InMemoryTaskSpan, in_memory_tracer.entries[0])
-        ),
-    )
-    assert example_trace == expected_trace
+    assert tracer
+    assert example_tracer
+    assert tracer.context == example_tracer.context
+
+    tracer_export = tracer.export_for_viewing()
+    example_trace_export = example_tracer.export_for_viewing()
+
+    assert tracer_export == example_trace_export
 
 
 @mark.parametrize("repository_fixture", test_repository_fixtures)
