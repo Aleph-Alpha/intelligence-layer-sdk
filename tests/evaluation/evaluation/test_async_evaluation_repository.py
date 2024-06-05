@@ -41,6 +41,8 @@ def partial_evaluation_overviews(
                 run_overviews=frozenset([run_overview]),
                 submitted_evaluation_count=10,
                 description="test evaluation overview",
+                labels=set(),
+                metadata=dict(),
             )
         )
     return evaluation_overviews
@@ -56,6 +58,8 @@ def partial_evaluation_overview(
         run_overviews=frozenset([run_overview]),
         submitted_evaluation_count=10,
         description="test evaluation overview",
+        labels=set(),
+        metadata=dict(),
     )
 
 

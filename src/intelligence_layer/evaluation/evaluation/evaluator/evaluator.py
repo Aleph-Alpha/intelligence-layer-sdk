@@ -4,6 +4,7 @@ from typing import Optional, final
 
 from tqdm import tqdm
 
+from intelligence_layer.connectors.base.json_serializable import JsonSerializable
 from intelligence_layer.core import Input, Output, utc_now
 from intelligence_layer.evaluation.dataset.dataset_repository import DatasetRepository
 from intelligence_layer.evaluation.dataset.domain import Example, ExpectedOutput
@@ -99,6 +100,8 @@ class Evaluator(EvaluatorBase[Input, Output, ExpectedOutput, Evaluation]):
         abort_on_error: bool = False,
         skip_example_on_any_failure: bool = True,
         description: Optional[str] = None,
+        labels: set[str] = set(),
+        metadata: dict[str, JsonSerializable] = dict(),
     ) -> EvaluationOverview:
         """Evaluates all generated outputs in the run.
 
@@ -118,6 +121,8 @@ class Evaluator(EvaluatorBase[Input, Output, ExpectedOutput, Evaluation]):
             abort_on_error: Flag to abort all evaluations when an error occurs. Defaults to False.
             skip_example_on_any_failure: Flag to skip evaluation on any example for which at least one run fails. Defaults to True.
             description: Optional description of the evaluation. Defaults to None.
+            labels: A list of labels for filtering. Defaults to an empty list.
+            metadata: A dict for additional information about the evaluation overview. Default to an empty dict.
 
         Returns:
             EvaluationOverview: An overview of the evaluation. Individual :class:`Evaluation`s will not be
@@ -162,6 +167,8 @@ class Evaluator(EvaluatorBase[Input, Output, ExpectedOutput, Evaluation]):
             successful_evaluation_count=successful_evaluation_count,
             failed_evaluation_count=failed_evaluation_count,
             description=full_description,
+            labels=labels,
+            metadata=metadata,
         )
         self._evaluation_repository.store_evaluation_overview(overview)
 

@@ -5,6 +5,7 @@ import pytest
 from pydantic import BaseModel
 from pytest import fixture
 
+from intelligence_layer.connectors.base.json_serializable import JsonSerializable
 from intelligence_layer.core import Input, Output, Task, Tracer
 from intelligence_layer.core.tracer.in_memory_tracer import (
     InMemoryTaskSpan,
@@ -709,3 +710,53 @@ def test_eval_raises_error_if_examples_and_example_outputs_dont_match(
                 num_examples=None,
             )
         )
+def test_evaluator_evaluate_runs_sets_default_values(
+    dummy_evaluator: Evaluator[str, str, None, DummyEvaluation], run_id: str
+) -> None:
+    evaluation_overview = dummy_evaluator.evaluate_runs(run_id)
+    assert evaluation_overview.labels == set()
+    assert evaluation_overview.metadata == dict()
+
+
+def test_evaluator_evaluate_runs_specific_values_overwrite_defaults(
+    dummy_evaluator: Evaluator[str, str, None, DummyEvaluation], run_id: str
+) -> None:
+    expected_labels = set(["test_label"])
+    expected_metadata: dict[str, JsonSerializable] = dict({"test_key": "test-value"})
+    evaluation_overview = dummy_evaluator.evaluate_runs(
+        run_id, labels=expected_labels, metadata=expected_metadata
+    )
+    assert evaluation_overview.labels == expected_labels
+    assert evaluation_overview.metadata == expected_metadata
+
+
+def test_aggregate_evaluation_set_default_labels_metadata_values(
+    dummy_evaluator: Evaluator[str, str, None, DummyEvaluation],
+    dummy_aggregator: Aggregator[
+        DummyEvaluation, DummyAggregatedEvaluationWithResultList
+    ],
+    run_id: str,
+) -> None:
+    evaluation_overview = dummy_evaluator.evaluate_runs(run_id)
+    aggregation_overview = dummy_aggregator.aggregate_evaluation(evaluation_overview.id)
+
+    assert aggregation_overview.labels == set()
+    assert aggregation_overview.metadata == dict()
+
+
+def test_aggregate_evaluation_specific_values_overwrite_defaults(
+    dummy_evaluator: Evaluator[str, str, None, DummyEvaluation],
+    dummy_aggregator: Aggregator[
+        DummyEvaluation, DummyAggregatedEvaluationWithResultList
+    ],
+    run_id: str,
+) -> None:
+    expected_labels = set(["test_label"])
+    expected_metadata: dict[str, JsonSerializable] = dict({"test_key": "test-value"})
+    evaluation_overview = dummy_evaluator.evaluate_runs(run_id)
+    aggregation_overview = dummy_aggregator.aggregate_evaluation(
+        evaluation_overview.id, labels=expected_labels, metadata=expected_metadata
+    )
+
+    assert aggregation_overview.labels == expected_labels
+    assert aggregation_overview.metadata == expected_metadata

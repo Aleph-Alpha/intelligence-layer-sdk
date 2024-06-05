@@ -30,6 +30,8 @@ def run_overviews() -> Sequence[RunOverview]:
             failed_example_count=0,
             successful_example_count=1,
             description="test run overview",
+            labels=set(),
+            metadata=dict(),
         )
         run_overviews.append(run_overview)
     return run_overviews

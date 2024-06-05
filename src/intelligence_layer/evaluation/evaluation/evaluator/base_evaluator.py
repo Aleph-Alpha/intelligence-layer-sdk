@@ -202,6 +202,7 @@ class EvaluatorBase(Generic[Input, Output, ExpectedOutput, Evaluation], ABC):
             run_overview = self._run_repository.run_overview(run_id)
             if not run_overview:
                 raise ValueError(f"No RunOverview found for run-id: {run_id}")
+
             run_overviews.add(run_overview)
         return run_overviews
 

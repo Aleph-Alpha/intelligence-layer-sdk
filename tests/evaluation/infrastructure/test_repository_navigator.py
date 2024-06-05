@@ -476,6 +476,8 @@ def test_aggregation_overviews_to_pandas_works_with_eval_overviews() -> None:
         successful_evaluation_count=1,
         failed_evaluation_count=1,
         description="",
+        labels=set(),
+        metadata=dict(),
     )
     overview = AggregationOverview(
         evaluation_overviews=frozenset([eval_overview]),

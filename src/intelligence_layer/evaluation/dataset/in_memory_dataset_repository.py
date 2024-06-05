@@ -1,6 +1,7 @@
 from collections.abc import Iterable, Sequence
 from typing import Optional, cast
 
+from intelligence_layer.connectors.base.json_serializable import JsonSerializable
 from intelligence_layer.core import Input, PydanticSerializable
 from intelligence_layer.evaluation.dataset.dataset_repository import DatasetRepository
 from intelligence_layer.evaluation.dataset.domain import (
@@ -24,8 +25,10 @@ class InMemoryDatasetRepository(DatasetRepository):
         examples: Iterable[Example[Input, ExpectedOutput]],
         dataset_name: str,
         id: str | None = None,
+        labels: set[str] = set(),
+        metadata: dict[str, JsonSerializable] = dict(),
     ) -> Dataset:
-        dataset = Dataset(name=dataset_name)
+        dataset = Dataset(name=dataset_name, labels=labels, metadata=metadata)
         if id is not None:
             dataset.id = id
         if dataset.id in self._datasets_and_examples:

@@ -6,6 +6,7 @@ from typing import Optional
 
 from pydantic import BaseModel
 
+from intelligence_layer.connectors.base.json_serializable import JsonSerializable
 from intelligence_layer.core import Input, Output
 from intelligence_layer.evaluation.dataset.dataset_repository import DatasetRepository
 from intelligence_layer.evaluation.dataset.domain import Example, ExpectedOutput
@@ -123,6 +124,8 @@ class IncrementalEvaluator(Evaluator[Input, Output, ExpectedOutput, Evaluation])
         previous_evaluation_ids: Optional[list[str]] = None,
         num_examples: Optional[int] = None,
         abort_on_error: bool = False,
+        labels: set[str] = set(),
+        metadata: dict[str, JsonSerializable] = dict(),
     ) -> EvaluationOverview:
         """Evaluate all runs while considering which runs have already been evaluated according to `previous_evaluation_id`.
 
@@ -141,6 +144,8 @@ class IncrementalEvaluator(Evaluator[Input, Output, ExpectedOutput, Evaluation])
             num_examples: The number of examples which should be evaluated from the given runs.
                 Always the first n runs stored in the evaluation repository. Defaults to None.
             abort_on_error: Flag to abort all evaluations when an error occurs. Defaults to False.
+            labels: A list of labels for filtering. Defaults to an empty list.
+            metadata: A dict for additional information about the evaluation overview. Default to an empty dict.
 
         Returns:
             EvaluationOverview: An overview of the evaluation. Individual :class:`Evaluation`s will not be
@@ -160,7 +165,11 @@ class IncrementalEvaluator(Evaluator[Input, Output, ExpectedOutput, Evaluation])
 
         self._evaluation_logic.set_previous_run_output_ids(previous_run_ids)
         return super().evaluate_runs(
-            *run_ids, num_examples=num_examples, abort_on_error=abort_on_error
+            *run_ids,
+            num_examples=num_examples,
+            abort_on_error=abort_on_error,
+            labels=labels,
+            metadata=metadata,
         )
 
     def evaluate_runs(
@@ -170,6 +179,8 @@ class IncrementalEvaluator(Evaluator[Input, Output, ExpectedOutput, Evaluation])
         abort_on_error: bool = False,
         skip_example_on_any_failure: bool = True,
         description: Optional[str] = None,
+        labels: set[str] = set(),
+        metadata: dict[str, JsonSerializable] = dict(),
     ) -> EvaluationOverview:
         self._evaluation_logic.set_previous_run_output_ids([])
         return super().evaluate_runs(

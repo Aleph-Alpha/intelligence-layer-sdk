@@ -5,6 +5,7 @@ from datasets import Dataset as HFDataset  # type: ignore
 from datasets import DatasetDict, IterableDataset, IterableDatasetDict
 from pydantic import BaseModel
 
+from intelligence_layer.connectors.base.json_serializable import JsonSerializable
 from intelligence_layer.core.task import Input
 from intelligence_layer.evaluation.dataset.dataset_repository import DatasetRepository
 from intelligence_layer.evaluation.dataset.domain import (
@@ -33,6 +34,8 @@ class SingleHuggingfaceDatasetRepository(DatasetRepository):
         examples: Iterable[Example[Input, ExpectedOutput]],
         dataset_name: str,
         id: str | None = None,
+        labels: set[str] = set(),
+        metadata: dict[str, JsonSerializable] = dict(),
     ) -> Dataset:
         raise NotImplementedError
 

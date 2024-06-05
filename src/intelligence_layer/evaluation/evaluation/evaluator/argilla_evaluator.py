@@ -16,6 +16,7 @@ from intelligence_layer.connectors.argilla.argilla_client import (
     RatingQuestion,
     RecordData,
 )
+from intelligence_layer.connectors.base.json_serializable import JsonSerializable
 from intelligence_layer.core import CompleteOutput, Input, InstructInput, Output
 from intelligence_layer.evaluation.dataset.dataset_repository import DatasetRepository
 from intelligence_layer.evaluation.dataset.domain import Example, ExpectedOutput
@@ -138,6 +139,8 @@ class ArgillaEvaluator(AsyncEvaluator[Input, Output, ExpectedOutput, Evaluation]
         dataset_name: Optional[str] = None,
         abort_on_error: bool = False,
         skip_example_on_any_failure: bool = True,
+        labels: set[str] = set(),
+        metadata: dict[str, JsonSerializable] = dict(),
     ) -> PartialEvaluationOverview:
         argilla_dataset_id = self._client.create_dataset(
             self._workspace_id,
@@ -179,6 +182,8 @@ class ArgillaEvaluator(AsyncEvaluator[Input, Output, ExpectedOutput, Evaluation]
             start_date=datetime.now(),
             submitted_evaluation_count=submit_count,
             description=self.description,
+            labels=labels,
+            metadata=metadata,
         )
 
         self._evaluation_repository.store_partial_evaluation_overview(partial_overview)
@@ -227,6 +232,8 @@ class ArgillaEvaluator(AsyncEvaluator[Input, Output, ExpectedOutput, Evaluation]
             successful_evaluation_count=len(evaluations),
             failed_evaluation_count=num_not_yet_evaluated_evals
             + num_failed_evaluations,
+            labels=partial_overview.labels,
+            metadata=partial_overview.metadata,
         )
         self._evaluation_repository.store_evaluation_overview(overview)
         return overview

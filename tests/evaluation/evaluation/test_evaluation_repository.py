@@ -70,6 +70,8 @@ def evaluation_overviews(run_overview: RunOverview) -> Iterable[EvaluationOvervi
                 failed_evaluation_count=1,
                 run_overviews=frozenset([run_overview]),
                 description="test evaluation overview 1",
+                labels=set(),
+                metadata={},
             )
         )
     return evaluation_overviews

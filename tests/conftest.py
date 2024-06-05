@@ -146,6 +146,8 @@ def run_overview() -> RunOverview:
         failed_example_count=0,
         successful_example_count=3,
         description="test run overview 1",
+        labels=set(),
+        metadata=dict(),
     )
 
 
@@ -166,4 +168,6 @@ def evaluation_overview(
         failed_evaluation_count=1,
         run_overviews=frozenset([run_overview]),
         description="test evaluation overview 1",
+        labels=set(),
+        metadata=dict(),
     )

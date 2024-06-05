@@ -150,6 +150,8 @@ def qa_setup(
                 failed_example_count=0,
                 successful_example_count=len(qa_outputs),
                 description="runner",
+                labels=set(),
+                metadata=dict(),
             )
         )
     return run_ids

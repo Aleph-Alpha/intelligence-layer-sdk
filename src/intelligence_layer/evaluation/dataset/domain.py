@@ -4,7 +4,10 @@ from uuid import uuid4
 from pydantic import BaseModel, Field
 from rich.tree import Tree
 
-from intelligence_layer.connectors.base.json_serializable import SerializableDict
+from intelligence_layer.connectors.base.json_serializable import (
+    JsonSerializable,
+    SerializableDict,
+)
 from intelligence_layer.core.task import Input
 from intelligence_layer.core.tracer.tracer import PydanticSerializable
 
@@ -60,13 +63,22 @@ class Dataset(BaseModel):
     Attributes:
         id: Dataset ID.
         name: A short name of the dataset.
+        label: Labels for filtering datasets. Defaults to empty list.
+        metadata: Additional information about the dataset. Defaults to empty dict.
     """
 
     id: str = Field(default_factory=lambda: str(uuid4()))
     name: str
+    labels: set[str] = set()
+    metadata: dict[str, JsonSerializable] = dict()
 
     def __repr__(self) -> str:
         return self.__str__()
 
     def __str__(self) -> str:
-        return f"Dataset ID = {self.id}\nName = {self.name}\n"
+        return (
+            f"Dataset ID = {self.id}\n"
+            f"Name = {self.name}\n"
+            f"Labels = {self.labels}\n"
+            f"Metadata = {self.metadata}"
+        )
