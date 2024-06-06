@@ -1,11 +1,11 @@
 import itertools
-from typing import Generic, Iterable, Sequence
+from typing import Generic, Iterable, Optional, Sequence
 
 import pandas as pd
 import rich
-from pydantic import BaseModel
 from rich.tree import Tree
 
+from intelligence_layer.core import Tracer
 from intelligence_layer.core.task import Input, Output
 from intelligence_layer.evaluation.aggregation.domain import (
     AggregatedEvaluation,
@@ -24,9 +24,20 @@ from intelligence_layer.evaluation.run.domain import ExampleOutput
 from intelligence_layer.evaluation.run.run_repository import RunRepository
 
 
-class RunLineage(BaseModel, Generic[Input, ExpectedOutput, Output]):
+class RunLineage(Generic[Input, ExpectedOutput, Output]):
     example: Example[Input, ExpectedOutput]
     output: ExampleOutput[Output]
+    tracer: Optional[Tracer]
+
+    def __init__(
+        self,
+        example: Example[Input, ExpectedOutput],
+        output: ExampleOutput[Output],
+        tracer: Optional[Tracer] = None,
+    ) -> None:
+        self.example = example
+        self.output = output
+        self.tracer = tracer
 
     def _rich_render(self) -> Tree:
         tree = Tree("Run Lineage")
@@ -62,10 +73,23 @@ def run_lineages_to_pandas(
     return df
 
 
-class EvaluationLineage(BaseModel, Generic[Input, ExpectedOutput, Output, Evaluation]):
+class EvaluationLineage(Generic[Input, ExpectedOutput, Output, Evaluation]):
     example: Example[Input, ExpectedOutput]
     outputs: Sequence[ExampleOutput[Output]]
     evaluation: ExampleEvaluation[Evaluation]
+    tracers: Sequence[Optional[Tracer]]
+
+    def __init__(
+        self,
+        example: Example[Input, ExpectedOutput],
+        outputs: Sequence[ExampleOutput[Output]],
+        evaluation: ExampleEvaluation[Evaluation],
+        tracers: Sequence[Optional[Tracer]],
+    ) -> None:
+        self.example = example
+        self.outputs = outputs
+        self.evaluation = evaluation
+        self.tracers = tracers
 
     def _rich_render(self) -> Tree:
         tree = Tree("Run Lineage")
@@ -102,9 +126,10 @@ def evaluation_lineages_to_pandas(
             vars(lineage.example)
             | vars(output)
             | vars(lineage.evaluation)
+            | {"tracer": lineage.tracers[index]}
             | {"lineage": lineage}
             for lineage in evaluation_lineages
-            for output in lineage.outputs
+            for index, output in enumerate(lineage.outputs)
         ]
     )
     df = df.drop(columns="id")
@@ -198,7 +223,13 @@ class RepositoryNavigator:
         # join
         for example, example_output in itertools.product(examples, example_outputs):
             if example.id == example_output.example_id:
-                yield RunLineage(example=example, output=example_output)
+                yield RunLineage(
+                    example=example,
+                    output=example_output,
+                    tracer=self._run_repository.example_tracer(
+                        run_id=run_id, example_id=example.id
+                    ),
+                )
 
     def evaluation_lineages(
         self,
@@ -245,6 +276,7 @@ class RepositoryNavigator:
         for evaluation in evaluations:
             example = None
             outputs = []
+            tracers = []
             for run_lineage in run_lineages:
                 if run_lineage.example.id == evaluation.example_id:
                     if example is None:
@@ -252,10 +284,18 @@ class RepositoryNavigator:
                         # and all relevant run lineages contain the same example
                         example = run_lineage.example
                     outputs.append(run_lineage.output)
+                    tracers.append(
+                        self._run_repository.example_tracer(
+                            run_lineage.output.run_id, run_lineage.output.example_id
+                        )
+                    )
 
             if example is not None:
                 yield EvaluationLineage(
-                    example=example, outputs=outputs, evaluation=evaluation
+                    example=example,
+                    outputs=outputs,
+                    evaluation=evaluation,
+                    tracers=tracers,
                 )
 
     def run_lineage(
@@ -295,7 +335,11 @@ class RepositoryNavigator:
         if example_output is None:
             return None
 
-        return RunLineage(example=example, output=example_output)
+        return RunLineage(
+            example=example,
+            output=example_output,
+            tracer=self._run_repository.example_tracer(run_id, example_id),
+        )
 
     def evaluation_lineage(
         self,
@@ -352,4 +396,5 @@ class RepositoryNavigator:
             example=existing_run_lineages[0].example,
             outputs=[lineage.output for lineage in existing_run_lineages],
             evaluation=example_evaluation,
+            tracers=[lineage.tracer for lineage in existing_run_lineages],
         )

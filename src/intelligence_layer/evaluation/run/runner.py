@@ -10,6 +10,7 @@ from tqdm import tqdm
 from intelligence_layer.core import (
     CompositeTracer,
     Input,
+    NoOpTracer,
     Output,
     Task,
     Tracer,
@@ -78,6 +79,7 @@ class Runner(Generic[Input, Output]):
         abort_on_error: bool = False,
         max_workers: int = 10,
         description: Optional[str] = None,
+        trace_examples_individually: bool = True,
     ) -> RunOverview:
         """Generates all outputs for the provided dataset.
 
@@ -86,12 +88,14 @@ class Runner(Generic[Input, Output]):
         Args:
             dataset_id: The id of the dataset to generate output for. Consists of examples, each
                 with an :class:`Input` and an :class:`ExpectedOutput` (can be None).
-            tracer: An optional :class:`Tracer` to trace all the runs from each example
+            tracer: An optional :class:`Tracer` to trace all the runs from each example.
+                Use `trace_examples_individually` to trace each example with a dedicated tracer individually.
             num_examples: An optional int to specify how many examples from the dataset should be run.
                 Always the first n examples will be taken.
             abort_on_error: Flag to abort all run when an error occurs. Defaults to False.
             max_workers: Number of examples that can be evaluated concurrently. Defaults to 10.
             description: An optional description of the run. Defaults to None.
+            trace_examples_individually: Flag to create individual tracers for each example. Defaults to True.
 
         Returns:
             An overview of the run. Outputs will not be returned but instead stored in the
@@ -101,11 +105,18 @@ class Runner(Generic[Input, Output]):
         def run(
             example: Example[Input, ExpectedOutput],
         ) -> tuple[str, Output | FailedExampleRun]:
-            evaluate_tracer = self._run_repository.example_tracer(run_id, example.id)
-            if tracer:
-                evaluate_tracer = CompositeTracer([evaluate_tracer, tracer])
+            if trace_examples_individually:
+                example_tracer = self._run_repository.create_tracer_for_example(
+                    run_id, example.id
+                )
+                if tracer:
+                    example_tracer = CompositeTracer([example_tracer, tracer])
+            elif tracer:
+                example_tracer = tracer
+            else:
+                example_tracer = NoOpTracer()
             try:
-                return example.id, self._task.run(example.input, evaluate_tracer)
+                return example.id, self._task.run(example.input, example_tracer)
             except Exception as e:
                 if abort_on_error:
                     raise e
@@ -183,7 +194,7 @@ class Runner(Generic[Input, Output]):
         run_id: str,
         expected_output_type: type[ExpectedOutput],
     ) -> Iterable[RunLineage[Input, ExpectedOutput, Output]]:
-        """Wrapper for `RepositoryNagivator.run_lineages`.
+        """Wrapper for `RepositoryNavigator.run_lineages`.
 
         Args:
             run_id: The id of the run
@@ -206,7 +217,7 @@ class Runner(Generic[Input, Output]):
         example_id: str,
         expected_output_type: type[ExpectedOutput],
     ) -> RunLineage[Input, ExpectedOutput, Output] | None:
-        """Wrapper for `RepositoryNagivator.run_lineage`.
+        """Wrapper for `RepositoryNavigator.run_lineage`.
 
         Args:
             run_id: The id of the run

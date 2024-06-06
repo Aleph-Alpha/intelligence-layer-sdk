@@ -99,6 +99,41 @@ class ExportedSpan(BaseModel):
 ExportedSpanList = RootModel[Sequence[ExportedSpan]]
 
 
+def submit_to_trace_viewer(exported_spans: Sequence[ExportedSpan]) -> bool:
+    """Submits the trace to the UI for visualization
+
+    Args:
+        exported_spans: The exported spans to submit to the trace viewer.
+
+    Returns:
+        Boolean indicating whether the trace was submitted successfully.
+
+    """
+    trace_viewer_url = os.getenv("TRACE_VIEWER_URL", "http://localhost:3000")
+    trace_viewer_trace_upload = f"{trace_viewer_url}/trace"
+    try:
+        res = requests.post(
+            trace_viewer_trace_upload,
+            headers={
+                "Content-Type": "application/json",
+                "Accept": "application/json",
+            },
+            json=ExportedSpanList(exported_spans).model_dump(mode="json"),
+        )
+        print(res)
+        if res.status_code != 200:
+            raise requests.HTTPError(res.status_code)
+        rich.print(
+            f"Open the [link={trace_viewer_url}]Trace Viewer[/link] to view the trace."
+        )
+        return True
+    except requests.ConnectionError:
+        print(
+            f"Trace viewer not found under {trace_viewer_url}.\nConsider running it for a better viewing experience.\nIf it is, set `TRACE_VIEWER_URL` in the environment."
+        )
+        return False
+
+
 class Tracer(ABC):
     """Provides a consistent way to instrument a :class:`Task` with logging for each step of the
     workflow.
@@ -174,32 +209,7 @@ class Tracer(ABC):
         ...
 
     def submit_to_trace_viewer(self) -> bool:
-        """Submits the trace to the UI for visualization"""
-        trace_viewer_url = os.getenv("TRACE_VIEWER_URL", "http://localhost:3000")
-        trace_viewer_trace_upload = f"{trace_viewer_url}/trace"
-        try:
-            res = requests.post(
-                trace_viewer_trace_upload,
-                headers={
-                    "Content-Type": "application/json",
-                    "Accept": "application/json",
-                },
-                json=ExportedSpanList(self.export_for_viewing()).model_dump(
-                    mode="json"
-                ),
-            )
-            print(res)
-            if res.status_code != 200:
-                raise requests.HTTPError(res.status_code)
-            rich.print(
-                f"Open the [link={trace_viewer_url}]Trace Viewer[/link] to view the trace."
-            )
-            return True
-        except requests.ConnectionError:
-            print(
-                f"Trace viewer not found under {trace_viewer_url}.\nConsider running it for a better viewing experience.\nIf it is, set `TRACE_VIEWER_URL` in the environment."
-            )
-            return False
+        return submit_to_trace_viewer(self.export_for_viewing())
 
 
 class ErrorValue(BaseModel):

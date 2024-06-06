@@ -1,16 +1,10 @@
 from collections import defaultdict
 from typing import Iterable, Optional, Sequence, cast
 
-from intelligence_layer.core import (
-    InMemoryTaskSpan,
-    InMemoryTracer,
-    Output,
-    PydanticSerializable,
-    Tracer,
-)
+from intelligence_layer.core import InMemoryTracer, Output, PydanticSerializable
+from intelligence_layer.core.tracer.tracer import Tracer
 from intelligence_layer.evaluation.run.domain import ExampleOutput, RunOverview
 from intelligence_layer.evaluation.run.run_repository import RunRepository
-from intelligence_layer.evaluation.run.trace import ExampleTrace, TaskSpanTrace
 
 
 class InMemoryRunRepository(RunRepository):
@@ -18,7 +12,7 @@ class InMemoryRunRepository(RunRepository):
         self._example_outputs: dict[str, list[ExampleOutput[PydanticSerializable]]] = (
             defaultdict(list)
         )
-        self._example_traces: dict[str, InMemoryTracer] = dict()
+        self._example_traces: dict[str, Tracer] = dict()
         self._run_overviews: dict[str, RunOverview] = dict()
 
     def store_run_overview(self, overview: RunOverview) -> None:
@@ -51,20 +45,10 @@ class InMemoryRunRepository(RunRepository):
                 return cast(ExampleOutput[Output], example_output)
         return None
 
-    def example_trace(self, run_id: str, example_id: str) -> Optional[ExampleTrace]:
-        tracer = self._example_traces.get(f"{run_id}/{example_id}")
-        if tracer is None:
-            return None
-        assert tracer
-        return ExampleTrace(
-            run_id=run_id,
-            example_id=example_id,
-            trace=TaskSpanTrace.from_task_span(
-                cast(InMemoryTaskSpan, tracer.entries[0])
-            ),
-        )
+    def example_tracer(self, run_id: str, example_id: str) -> Optional[Tracer]:
+        return self._example_traces.get(f"{run_id}/{example_id}")
 
-    def example_tracer(self, run_id: str, example_id: str) -> Tracer:
+    def create_tracer_for_example(self, run_id: str, example_id: str) -> Tracer:
         tracer = InMemoryTracer()
         self._example_traces[f"{run_id}/{example_id}"] = tracer
         return tracer

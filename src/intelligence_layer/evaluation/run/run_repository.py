@@ -7,7 +7,6 @@ from intelligence_layer.evaluation.run.domain import (
     FailedExampleRun,
     RunOverview,
 )
-from intelligence_layer.evaluation.run.trace import ExampleTrace
 
 
 class RunRepository(ABC):
@@ -85,21 +84,21 @@ class RunRepository(ABC):
         ...
 
     @abstractmethod
-    def example_trace(self, run_id: str, example_id: str) -> Optional[ExampleTrace]:
-        """Returns an :class:`ExampleTrace` for the given run ID and example ID.
+    def example_tracer(self, run_id: str, example_id: str) -> Optional[Tracer]:
+        """Returns an :class:`Optional[Tracer]` for the given run ID and example ID.
 
         Args:
             run_id: The ID of the linked run overview.
-            example_id: ID of the example whose :class:`ExampleTrace` should be retrieved.
+            example_id: ID of the example whose :class:`Tracer` should be retrieved.
 
         Returns:
-            An :class:`ExampleTrace` if it was found, `None` otherwise.
+            A :class:`Tracer` if it was found, `None` otherwise.
         """
         ...
 
     @abstractmethod
-    def example_tracer(self, run_id: str, example_id: str) -> Tracer:
-        """Returns a :class:`Tracer` for the given run ID and example ID.
+    def create_tracer_for_example(self, run_id: str, example_id: str) -> Tracer:
+        """Creates and returns a :class:`Tracer` for the given run ID and example ID.
 
         Args:
             run_id: The ID of the linked run overview.

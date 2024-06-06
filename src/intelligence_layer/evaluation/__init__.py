@@ -124,9 +124,5 @@ from .run.file_run_repository import FileRunRepository as FileRunRepository
 from .run.in_memory_run_repository import InMemoryRunRepository as InMemoryRunRepository
 from .run.run_repository import RunRepository as RunRepository
 from .run.runner import Runner as Runner
-from .run.trace import ExampleTrace as ExampleTrace
-from .run.trace import LogTrace as LogTrace
-from .run.trace import SpanTrace as SpanTrace
-from .run.trace import TaskSpanTrace as TaskSpanTrace
 
 __all__ = [symbol for symbol in dir()]
