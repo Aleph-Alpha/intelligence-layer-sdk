@@ -13,7 +13,7 @@
  * `run_dataset` now has a flag `trace_examples_individually` to create `Tracer`s for each example. Defaults to True.
 
 ### Fixes
-...
+  - ControlModels throw warning instead of error in case a not recommended model is selected.
 ### Deprecations
 ...
 

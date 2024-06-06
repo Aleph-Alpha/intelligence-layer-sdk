@@ -97,17 +97,17 @@ def test_models_know_their_context_size(client: AlephAlphaClientProtocol) -> Non
     )
 
 
-def test_models_are_strict_about_instantiation(
+def test_models_warn_about_non_recommended_models(
     client: AlephAlphaClientProtocol,
 ) -> None:
-    with pytest.raises(ValueError):
+    with pytest.warns(UserWarning):
         assert LuminousControlModel(client=client, name="llama-2-7b-chat")  # type: ignore
 
-    with pytest.raises(ValueError):
+    with pytest.warns(UserWarning):
         assert Llama2InstructModel(client=client, name="luminous-base")  # type: ignore
 
-    with pytest.raises(ValueError):
+    with pytest.warns(UserWarning):
         assert Llama3InstructModel(client=client, name="llama-2-7b-chat")  # type: ignore
 
-    with pytest.raises(ValueError):
+    with pytest.warns(UserWarning):
         assert AlephAlphaModel(client=client, name="No model")  # type: ignore

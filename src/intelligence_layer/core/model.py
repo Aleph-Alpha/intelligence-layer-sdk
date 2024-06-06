@@ -1,6 +1,7 @@
+import warnings
 from abc import ABC, abstractmethod
 from functools import lru_cache
-from typing import Literal, Optional
+from typing import Optional
 
 from aleph_alpha_client import (
     CompletionRequest,
@@ -153,8 +154,9 @@ class AlephAlphaModel:
             limited_concurrency_client_from_env() if client is None else client
         )
         if name not in [model["name"] for model in self._client.models()]:
-            raise ValueError(
-                f"Could not find model: {name}. Either model name is invalid or model is currently down."
+            warnings.warn(
+                "The provided model is not a recommended model for this model class."
+                "Make sure that the model you have selected is suited to be use for the prompt template used in this model class."
             )
         self._complete: Task[CompleteInput, CompleteOutput] = _Complete(
             self._client, name
@@ -195,13 +197,16 @@ class AlephAlphaModel:
 
 
 class ControlModel(ABC, AlephAlphaModel):
-    AllowedModel: Literal[""]
+    RECOMMENDED_MODELS = [""]
 
     def __init__(
         self, name: str, client: AlephAlphaClientProtocol | None = None
     ) -> None:
-        if name not in self.AllowedModel.__args__ or name == "":  # type: ignore
-            raise ValueError(f"Invalid model name: {name}")
+        if name not in self.RECOMMENDED_MODELS or name == "":
+            warnings.warn(
+                "The provided model is not a recommended model for this model class."
+                "Make sure that the model you have selected is suited to be use for the prompt template used in this model class."
+            )
         super().__init__(name, client)
 
     @abstractmethod
@@ -232,7 +237,7 @@ class LuminousControlModel(ControlModel):
 ### Response:{{response_prefix}}"""
     )
 
-    AllowedModel = Literal[
+    RECOMMENDED_MODELS = [
         "luminous-base-control-20230501",
         "luminous-extended-control-20230501",
         "luminous-supreme-control-20230501",
@@ -246,7 +251,7 @@ class LuminousControlModel(ControlModel):
 
     def __init__(
         self,
-        name: AllowedModel = "luminous-base-control",
+        name: str = "luminous-base-control",
         client: Optional[AlephAlphaClientProtocol] = None,
     ) -> None:
         super().__init__(name, client)
@@ -282,7 +287,7 @@ class Llama2InstructModel(ControlModel):
 
 {{response_prefix}}{% endif %}""")
 
-    AllowedModel = Literal[
+    RECOMMENDED_MODELS = [
         "llama-2-7b-chat",
         "llama-2-13b-chat",
         "llama-2-70b-chat",
@@ -290,7 +295,7 @@ class Llama2InstructModel(ControlModel):
 
     def __init__(
         self,
-        name: AllowedModel = "llama-2-13b-chat",
+        name: str = "llama-2-13b-chat",
         client: Optional[AlephAlphaClientProtocol] = None,
     ) -> None:
         super().__init__(name, client)
@@ -327,14 +332,14 @@ class Llama3InstructModel(ControlModel):
     )
     EOT_TOKEN = "<|eot_id|>"
 
-    AllowedModel = Literal[
+    RECOMMENDED_MODELS = [
         "llama-3-8b-instruct",
         "llama-3-70b-instruct",
     ]
 
     def __init__(
         self,
-        name: AllowedModel = "llama-3-8b-instruct",
+        name: str = "llama-3-8b-instruct",
         client: Optional[AlephAlphaClientProtocol] = None,
     ) -> None:
         super().__init__(name, client)
