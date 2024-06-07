@@ -2,8 +2,7 @@ import math
 from dataclasses import dataclass
 from typing import List, Sequence, Tuple
 
-from langdetect import LangDetectException, detect_langs  # type: ignore
-from langdetect.language import Language as LangdetectLanguage  # type: ignore
+from lingua import LanguageDetectorBuilder
 from rouge_score import rouge_scorer  # type: ignore
 from sacrebleu import BLEU
 from semantic_text_splitter import TextSplitter
@@ -74,8 +73,11 @@ class LanguageMatchesGrader:
 
     _acceptance_threshold: float
 
-    def __init__(self, acceptance_threshold: float = 0.75) -> None:
+    def __init__(self, acceptance_threshold: float = 0.1) -> None:
         self._acceptance_threshold = acceptance_threshold
+        self._detector = (
+            LanguageDetectorBuilder.from_all_languages_with_latin_script().build()
+        )
 
     def languages_match(self, input: str, output: str) -> bool:
         """Calculates if the input and output text are of the same language.
@@ -102,15 +104,16 @@ class LanguageMatchesGrader:
     def _get_dominant_language(self, text: str) -> str | None:
         test_chunks: Sequence[str] = self._tokenize_text(text)
         probs_per_language = self._get_scores_per_language(test_chunks)
-        dominant_language = next(
-            (
-                langs
-                for langs, probs in probs_per_language.items()
-                if probs >= self._acceptance_threshold
-            ),
-            None,
-        )
-        return dominant_language
+        languages_above_threshold = [
+            langs
+            for langs, probs in probs_per_language.items()
+            if probs >= self._acceptance_threshold
+        ]
+
+        if len(languages_above_threshold) != 1:
+            return None
+
+        return languages_above_threshold[0]
 
     @staticmethod
     def _tokenize_text(
@@ -118,21 +121,18 @@ class LanguageMatchesGrader:
     ) -> Sequence[str]:
         return TextSplitter((lower_char_bound, upper_char_bound)).chunks(text)
 
-    @classmethod
-    def _get_scores_per_language(cls, text_chunks: Sequence[str]) -> dict[str, float]:
+    def _get_scores_per_language(self, text_chunks: Sequence[str]) -> dict[str, float]:
         scores_per_language: dict[str, float] = {}
         for text_chunk in text_chunks:
-            try:
-                languages_with_probs: Sequence[LangdetectLanguage] = detect_langs(
-                    text_chunk
-                )
-                for language in languages_with_probs:
-                    scores_per_language[language.lang] = scores_per_language.get(
-                        language.lang, 0
-                    ) + language.prob * len(text_chunk)
-            except LangDetectException:
-                continue  # skip text_chunk in case language cannot be determined
-        return cls._normalize_dict(scores_per_language)
+            languages_with_probs = self._detector.compute_language_confidence_values(
+                text_chunk
+            )
+            for lang in languages_with_probs:
+                scores_per_language[lang.language.name] = scores_per_language.get(
+                    lang.language.name, 0
+                ) + lang.value * len(text_chunk)
+
+        return self._normalize_dict(scores_per_language)
 
     @staticmethod
     def _normalize_dict(dictionary: dict[str, float]) -> dict[str, float]:

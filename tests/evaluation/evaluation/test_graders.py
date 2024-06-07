@@ -1,12 +1,4 @@
-import langdetect  # type: ignore
-from pytest import fixture
-
 from intelligence_layer.evaluation import HighlightCoverageGrader, LanguageMatchesGrader
-
-
-@fixture(scope="session", autouse=True)
-def set_deterministic_seed() -> None:
-    langdetect.DetectorFactory.seed = 0
 
 
 def test_language_matches_grader_correctly_detects_languages_match() -> None:
