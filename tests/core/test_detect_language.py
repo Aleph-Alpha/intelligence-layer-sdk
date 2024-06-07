@@ -1,4 +1,5 @@
 import pytest
+from lingua import Language as LinguaLanguage
 
 from intelligence_layer.core import (
     DetectLanguage,
@@ -47,7 +48,7 @@ def test_detect_language_returns_correct_language(
     assert output.best_fit == expected_language
 
 
-def test_detect_language_returns_non_if_no_language_can_be_detected() -> None:
+def test_detect_language_returns_none_if_no_language_can_be_detected() -> None:
     text = "Je m’appelle Jessica. Je suis une fille, je suis française et j’ai treize ans."  # codespell:ignore
     task = DetectLanguage()
     input = DetectLanguageInput(
@@ -58,3 +59,12 @@ def test_detect_language_returns_non_if_no_language_can_be_detected() -> None:
     output = task.run(input, tracer)
 
     assert output.best_fit is None
+
+
+def test_conversion_to_lingua_works() -> None:
+    language: Language = Language("de")
+    expected_language: LinguaLanguage = LinguaLanguage.GERMAN
+
+    converted_language = language.to_lingua_language()
+
+    assert converted_language == expected_language

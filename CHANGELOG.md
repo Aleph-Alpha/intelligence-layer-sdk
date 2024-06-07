@@ -3,14 +3,15 @@
 ## Unreleased
 
 ### Breaking Changes
- * Remove the `Trace` class, as it was no longer used.
- * Renamed `example_trace` to `example_tracer` and changed return type to `Optional[Tracer]`.
- * Renamed `example_tracer` to `create_tracer_for_example`.
+ - Remove the `Trace` class, as it was no longer used.
+ - Renamed `example_trace` to `example_tracer` and changed return type to `Optional[Tracer]`.
+ - Renamed `example_tracer` to `create_tracer_for_example`.
+ - Replaced langdetect with lingua as language detection tool. This mean that old thresholds for detection might need to be adapted.
 
 ### New Features
- * `Lineages` now contain `Tracer` for individual `Output`s.
- * `convert_to_pandas_data_frame` now also creates a column containing the `Tracer`s.
- * `run_dataset` now has a flag `trace_examples_individually` to create `Tracer`s for each example. Defaults to True.
+ - `Lineages` now contain `Tracer` for individual `Output`s.
+ - `convert_to_pandas_data_frame` now also creates a column containing the `Tracer`s.
+ - `run_dataset` now has a flag `trace_examples_individually` to create `Tracer`s for each example. Defaults to True.
 
 ### Fixes
   - ControlModels throw warning instead of error in case a not recommended model is selected.
