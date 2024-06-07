@@ -226,7 +226,6 @@ def test_spans_cannot_be_used_as_context_twice(
             pass
 
 
-@pytest.mark.skip("Not yet implemented")
 @pytest.mark.docker
 @pytest.mark.parametrize(
     "tracer_fixture",

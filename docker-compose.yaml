@@ -6,7 +6,16 @@ services:
       ES_JAVA_OPTS: "-Xms512m -Xmx512m"
       discovery.type: "single-node"
       xpack.security.enabled: "false"
+    command: ["elasticsearch", "-Elogger.level=ERROR"]
+    healthcheck:
+      test: ["CMD-SHELL", "curl --silent --fail localhost:9200/_cluster/health || exit 1"]
+      interval: 5s
+      timeout: 5s
+      retries: 3
   argilla:
+    depends_on:
+      argilla-elastic-search:
+        condition: service_healthy
     image: argilla/argilla-server:v1.26.1
     ports:
       - "6900:6900"
@@ -22,10 +31,10 @@ services:
       - "4318:4318"
       - "16686:16686"
     image: jaegertracing/all-in-one:1.35
-  # TODO: Below code should be enabled once the secret has been added to the CI. After that, also check tests in test_tracer.py
   # export GITHUB_TOKEN=...
   # echo $GITHUB_TOKEN | docker login ghcr.io -u your_email@for_github --password-stdin
-  # trace_viewer:
-  #   image: ghcr.io/aleph-alpha/trace-viewer-trace-viewer:main
-  #   ports:
-  #    - 3000:3000
+  # docker compose pull to update containers
+  trace_viewer:
+    image: ghcr.io/aleph-alpha/trace-viewer-trace-viewer:main
+    ports:
+     - 3000:3000
