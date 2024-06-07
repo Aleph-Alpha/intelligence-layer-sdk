@@ -25,7 +25,6 @@ nbconvert = "^7.16.4"
 datasets = "^2.19.2"
 jupyter = "^1.0.0"
 requests = "^2.32.3"
-langdetect = "^1.0.9"
 pycountry = "24.6.1"
 opentelemetry-api = "^1.22.0"
 opentelemetry-sdk = "^1.22.0"
@@ -34,6 +33,7 @@ opentelemetry-exporter-otlp-proto-http = "1.23.0"
 # summary grader
 rouge-score = "^0.1.2"
 sacrebleu = "^2.4.2"
+lingua-language-detector = "^2.0.2"
 
 [tool.poetry.group.dev.dependencies]
 # lint & format

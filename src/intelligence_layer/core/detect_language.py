@@ -1,7 +1,9 @@
 from dataclasses import dataclass
 from typing import Mapping, Optional, Sequence, TypeVar
 
-from langdetect import detect_langs  # type: ignore
+from lingua import ConfidenceValue, IsoCode639_1
+from lingua import Language as LinguaLanguage
+from lingua import LanguageDetectorBuilder
 from pycountry import languages
 from pydantic import BaseModel
 
@@ -33,6 +35,11 @@ class Language:
                 f"{self.iso_639_1} not in ({', '.join(lang.iso_639_1 for lang in configs.keys())})"
             )
         return config
+
+    def to_lingua_language(self) -> LinguaLanguage:
+        iso_code = getattr(IsoCode639_1, self.iso_639_1.upper())
+        language = LinguaLanguage.from_iso_code_639_1(iso_code)
+        return language
 
 
 class DetectLanguageInput(BaseModel):
@@ -90,27 +97,48 @@ class DetectLanguage(Task[DetectLanguageInput, DetectLanguageOutput]):
         >>> output = task.run(input, InMemoryTracer())
     """
 
+    AVAILABLE_LANGUAGES = [
+        LinguaLanguage.GERMAN,
+        LinguaLanguage.ENGLISH,
+        LinguaLanguage.ITALIAN,
+        LinguaLanguage.FRENCH,
+        LinguaLanguage.SPANISH,
+    ]
+
     def __init__(self, threshold: float = 0.5):
         super().__init__()
         self._threshold = threshold
+
+        self._detector = LanguageDetectorBuilder.from_languages(
+            *self.AVAILABLE_LANGUAGES
+        ).build()
 
     def do_run(
         self, input: DetectLanguageInput, task_span: TaskSpan
     ) -> DetectLanguageOutput:
         annotated_languages = self._detect_languages(input, task_span)
         best_fit = self._get_best_fit(annotated_languages, input.possible_languages)
-        return DetectLanguageOutput(best_fit=best_fit)
+
+        return DetectLanguageOutput(best_fit=best_fit if best_fit is not None else None)
 
     def _detect_languages(
         self, input: DetectLanguageInput, task_span: TaskSpan
     ) -> Sequence[AnnotatedLanguage]:
-        languages = detect_langs(input.text)
+        determined_languages = self._detector.compute_language_confidence_values(
+            input.text
+        )
+
         annotated_languages = [
-            AnnotatedLanguage(lang=Language(lang.lang), prob=lang.prob)
-            for lang in languages
+            AnnotatedLanguage(
+                lang=Language(iso_639_1=self._to_iso_639_1_code(lang)), prob=lang.value
+            )
+            for lang in determined_languages
         ]
         task_span.log("Raw language probabilities", annotated_languages)
         return annotated_languages
+
+    def _to_iso_639_1_code(self, lingua_with_confidence: ConfidenceValue) -> str:
+        return str(lingua_with_confidence.language.iso_code_639_1.name).lower()
 
     def _get_best_fit(
         self,
