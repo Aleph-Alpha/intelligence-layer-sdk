@@ -4,17 +4,13 @@ from typing import Optional, Sequence
 from pytest import fixture
 
 from intelligence_layer.connectors import (
+    BaseRetriever,
     Document,
     DocumentChunk,
-    QdrantInMemoryRetriever,
-)
-from intelligence_layer.connectors.document_index.document_index import DocumentPath
-from intelligence_layer.connectors.retrievers.base_retriever import (
-    BaseRetriever,
-    SearchResult,
-)
-from intelligence_layer.connectors.retrievers.document_index_retriever import (
     DocumentIndexRetriever,
+    DocumentPath,
+    QdrantInMemoryRetriever,
+    SearchResult,
 )
 from intelligence_layer.core import LuminousControlModel, NoOpTracer
 from intelligence_layer.examples import ExpandChunks, ExpandChunksInput
