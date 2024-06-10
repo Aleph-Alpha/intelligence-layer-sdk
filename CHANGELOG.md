@@ -14,9 +14,9 @@
  - `run_dataset` now has a flag `trace_examples_individually` to create `Tracer`s for each example. Defaults to True.
 
 ### Fixes
-  - ControlModels throw warning instead of error in case a not recommended model is selected.
-  - Cap `LimitedConcurrencyClient.max_concurrency` at 10 and set default to 10.
-
+  - ControlModels throw a warning instead of an error in case a not-recommended model is selected.
+  - The `LimitedConcurrencyClient.max_concurrency` is now capped at 10, which is its default, as the underlying `aleph_alpha_client` does not support more currently.
+  - ExpandChunk now works properly if the chunk of interest is not at the beginning of a very large document. As a consequence, `MultipleChunkRetrieverQa` now works better with larger documents and should return fewer `None` answers.
 ### Deprecations
 ...
 
