@@ -15,6 +15,8 @@
 
 ### Fixes
   - ControlModels throw warning instead of error in case a not recommended model is selected.
+  - Cap `LimitedConcurrencyClient.max_concurrency` at 10 and set default to 10.
+
 ### Deprecations
 ...
 

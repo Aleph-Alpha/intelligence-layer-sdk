@@ -37,4 +37,4 @@ services:
   trace_viewer:
     image: ghcr.io/aleph-alpha/trace-viewer-trace-viewer:main
     ports:
-     - 3000:3000
+     - 5173:3000

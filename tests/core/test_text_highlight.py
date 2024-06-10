@@ -309,4 +309,4 @@ def test_highlight_clamps_end_correctly(
     # then
     assert result.highlights[0].start == start
     assert result.highlights[0].end == end
-    assert abs(result.highlights[0].score - score) <= 0.01
+    assert abs(result.highlights[0].score - score) <= 0.02

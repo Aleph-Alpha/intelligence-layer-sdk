@@ -1,4 +1,5 @@
 import time
+import warnings
 from functools import lru_cache
 from os import getenv
 from threading import Semaphore
@@ -98,12 +99,12 @@ class LimitedConcurrencyClient:
     """An Aleph Alpha Client wrapper that limits the number of concurrent requests.
 
     This just delegates each call to the wrapped Aleph Alpha Client and ensures that
-    never more then a given number of concurrent calls are executed against the API.
+    never more than a given number of concurrent calls are executed against the API.
 
     Args:
         client: The wrapped `Client`.
         max_concurrency: the maximal number of requests that may run concurrently
-            against the API.
+            against the API. Defaults to 10, which is also the maximum.
         max_retry_time: the maximal time in seconds a complete is retried in case a `BusyError` is raised.
 
     """
@@ -111,11 +112,19 @@ class LimitedConcurrencyClient:
     def __init__(
         self,
         client: AlephAlphaClientProtocol,
-        max_concurrency: int = 20,
+        max_concurrency: int = 10,
         max_retry_time: int = 24 * 60 * 60,  # one day in seconds
     ) -> None:
         self._client = client
-        self._concurrency_limit_semaphore = Semaphore(max_concurrency)
+
+        limit_for_max_concurrency = 10
+        capped_max_concurrency = min(limit_for_max_concurrency, max_concurrency)
+        if max_concurrency > capped_max_concurrency:
+            warnings.warn(
+                f"Selected a value greater than the maximum allowed number. max_concurrency will be reduced to {limit_for_max_concurrency}."
+            )
+        self._concurrency_limit_semaphore = Semaphore(capped_max_concurrency)
+
         self._max_retry_time = max_retry_time
 
     @classmethod
