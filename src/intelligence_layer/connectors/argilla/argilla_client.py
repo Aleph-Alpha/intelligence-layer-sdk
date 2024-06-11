@@ -69,7 +69,7 @@ class RatingQuestion(Question):
 
     @computed_field  # type: ignore[misc]
     @property
-    def settings(self) -> Mapping[Any, Any]:
+    def settings(self) -> Mapping[str, Any]:
         return {
             "type": "rating",
             "options": [{"value": option} for option in self.options],
@@ -87,7 +87,7 @@ class TextQuestion(Question):
 
     @computed_field  # type: ignore[misc]
     @property
-    def settings(self) -> Mapping[Any, Any]:
+    def settings(self) -> Mapping[str, Any]:
         return {"type": "text", "use_markdown": self.use_markdown}
 
 
@@ -570,7 +570,7 @@ class DefaultArgillaClient(ArgillaClient):
         name: str,
         title: str,
         description: str,
-        settings: Mapping[Any, Any],
+        settings: Mapping[str, Any],
         dataset_id: str,
     ) -> None:
         url = self.api_url + f"api/v1/datasets/{dataset_id}/questions"

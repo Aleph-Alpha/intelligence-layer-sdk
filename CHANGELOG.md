@@ -7,12 +7,13 @@
   - Renamed `ArgillaEvaluation` to `ArgillaRatingEvaluation`
   - Changed logic of `ensure_dataset_exists` in `DefaultArgillaClient` -> Check first if dataset exists. If exists return dataset_id of existing dataset. If not create the dataset.
   - Changed api url in `_list_workspaces` in `DefaultArgillaClient` to api v1 url.
+  - Changed argilla image in `docker-compose.yml` from `argilla/argilla-server:v1.26.1` to `argilla/argilla-server:v1.29.0`
 
 ### New Features
   - Add `eot_token` property to `ControlModel` and derived classes (`LuminousControlModel`, `Llama2InstructModel` and `Llama3InstructModel`) and let `PromptBasedClassify` use this property instead of a hardcoded string.
   - Argilla type `TextQuestion` added for collecting natural language feedback or textual responses from labelers.
   - Argilla type `RatingQuestion` added for capturing numerical rating feedback
-  
+
 ### Fixes
   - Reinitializing different `AlephAlphaModel` instances and retrieving their tokenizer should now consume a lot less memory.
 
