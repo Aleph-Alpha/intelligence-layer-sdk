@@ -1,9 +1,10 @@
-from typing import Generic, TypeVar
+from typing import Generic, Optional, TypeVar
 from uuid import uuid4
 
 from pydantic import BaseModel, Field
 from rich.tree import Tree
 
+from intelligence_layer.connectors.base.json_serializable import SerializableDict
 from intelligence_layer.core.task import Input
 from intelligence_layer.core.tracer.tracer import PydanticSerializable
 
@@ -30,6 +31,7 @@ class Example(BaseModel, Generic[Input, ExpectedOutput]):
     input: Input
     expected_output: ExpectedOutput
     id: str = Field(default_factory=lambda: str(uuid4()))
+    metadata: Optional[SerializableDict] = None
 
     def __repr__(self) -> str:
         return self.__str__()
@@ -39,12 +41,15 @@ class Example(BaseModel, Generic[Input, ExpectedOutput]):
             f"Example ID = {self.id}\n"
             f"Input = {self.input}\n"
             f'Expected output = "{self.expected_output}"\n'
+            f"Metadata = {self.metadata}\n"
         )
 
     def _rich_render(self) -> Tree:
         example_tree = Tree(f"Example: {self.id}")
         example_tree.add("Input").add(str(self.input))
         example_tree.add("Expected Output").add(str(self.expected_output))
+        if self.metadata:
+            example_tree.add("Metadata").add(str(self.metadata))
         return example_tree
 
 

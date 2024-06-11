@@ -113,7 +113,11 @@ def file_run_repository(tmp_path: Path) -> FileRunRepository:
 
 @fixture
 def dummy_string_example() -> Example[DummyStringInput, DummyStringOutput]:
-    return Example(input=DummyStringInput(), expected_output=DummyStringOutput())
+    return Example(
+        input=DummyStringInput(),
+        expected_output=DummyStringOutput(),
+        metadata={"some_key": "some_value"},
+    )
 
 
 @fixture
