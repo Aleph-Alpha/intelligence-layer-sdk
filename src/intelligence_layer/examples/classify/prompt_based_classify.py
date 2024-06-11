@@ -122,7 +122,7 @@ Reply with only the class label."""
 
     def _prepare_label_for_echo_task(self, label: str) -> str:
         label = label if re.match(r"^\s+", label) else f" {label}"
-        return label + "<|endoftext|>"
+        return label + self._model.eot_token
 
     def _compute_scores(
         self,

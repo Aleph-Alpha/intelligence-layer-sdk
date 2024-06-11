@@ -209,6 +209,11 @@ class ControlModel(ABC, AlephAlphaModel):
             )
         super().__init__(name, client)
 
+    @property
+    @abstractmethod
+    def eot_token(self) -> str:
+        pass
+
     @abstractmethod
     def to_instruct_prompt(
         self,
@@ -256,6 +261,10 @@ class LuminousControlModel(ControlModel):
     ) -> None:
         super().__init__(name, client)
 
+    @property
+    def eot_token(self) -> str:
+        return "<|endoftext|>"
+
     def to_instruct_prompt(
         self,
         instruction: str,
@@ -300,6 +309,10 @@ class Llama2InstructModel(ControlModel):
     ) -> None:
         super().__init__(name, client)
 
+    @property
+    def eot_token(self) -> str:
+        return "<|endoftext|>"
+
     def to_instruct_prompt(
         self,
         instruction: str,
@@ -330,7 +343,6 @@ class Llama3InstructModel(ControlModel):
 
 {{response_prefix}}{% endif %}"""
     )
-    EOT_TOKEN = "<|eot_id|>"
 
     RECOMMENDED_MODELS = [
         "llama-3-8b-instruct",
@@ -344,14 +356,18 @@ class Llama3InstructModel(ControlModel):
     ) -> None:
         super().__init__(name, client)
 
+    @property
+    def eot_token(self) -> str:
+        return "<|eot_id|>"
+
     def _add_eot_token_to_stop_sequences(self, input: CompleteInput) -> CompleteInput:
         # remove this once the API supports the llama-3 EOT_TOKEN
         params = input.__dict__
         if isinstance(params["stop_sequences"], list):
-            if self.EOT_TOKEN not in params["stop_sequences"]:
-                params["stop_sequences"].append(self.EOT_TOKEN)
+            if self.eot_token not in params["stop_sequences"]:
+                params["stop_sequences"].append(self.eot_token)
         else:
-            params["stop_sequences"] = [self.EOT_TOKEN]
+            params["stop_sequences"] = [self.eot_token]
         return CompleteInput(**params)
 
     def complete(self, input: CompleteInput, tracer: Tracer) -> CompleteOutput:
