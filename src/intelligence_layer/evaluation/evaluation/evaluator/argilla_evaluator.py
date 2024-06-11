@@ -12,6 +12,7 @@ from intelligence_layer.connectors.argilla.argilla_client import (
     ArgillaRatingEvaluation,
     Field,
     Question,
+    RatingQuestion,
     RecordData,
 )
 from intelligence_layer.core import CompleteOutput, Input, InstructInput, Output
@@ -255,7 +256,7 @@ class InstructComparisonArgillaEvaluationLogic(
                 "KEY_RESPONSE_2": Field(name=self.KEY_RESPONSE_2, title="Response 2"),
             },
             questions=[
-                Question(
+                RatingQuestion(
                     name=self.KEY_QUESTION,
                     title="Which response is better?",
                     description="1: The first completion is better.\n2: The second completion is better.\n3: They are both equally good.",

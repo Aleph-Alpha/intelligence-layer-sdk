@@ -52,6 +52,11 @@ class Question(BaseModel):
     title: str
     description: str
 
+    @computed_field  # type: ignore[misc]
+    @property
+    def settings(self) -> Mapping[Any, Any]:
+        raise NotImplementedError("")
+
 
 class RatingQuestion(Question):
     """Definition of a rating evaluation-question for an Argilla feedback dataset.
@@ -64,7 +69,7 @@ class RatingQuestion(Question):
 
     @computed_field  # type: ignore[misc]
     @property
-    def settings(self) -> Mapping[str, str]:
+    def settings(self) -> Mapping[Any, Any]:
         return {
             "type": "rating",
             "options": [{"value": option} for option in self.options],
@@ -82,7 +87,7 @@ class TextQuestion(Question):
 
     @computed_field  # type: ignore[misc]
     @property
-    def settings(self) -> Mapping[str, str]:
+    def settings(self) -> Mapping[Any, Any]:
         return {"type": "text", "use_markdown": self.use_markdown}
 
 
@@ -323,12 +328,12 @@ class DefaultArgillaClient(ArgillaClient):
     ) -> str:
         try:
             datasets = self._list_datasets(workspace_id)
-            dataset_id = next(
+            existing_dataset_id: str = next(
                 cast(str, item["id"])
                 for item in datasets["items"]
                 if item["name"] == dataset_name
             )
-            return dataset_id
+            return existing_dataset_id
         except StopIteration:
             pass
         except HTTPError as e:
@@ -503,14 +508,14 @@ class DefaultArgillaClient(ArgillaClient):
         )
         response.raise_for_status()
 
-    def _list_workspaces(self) -> Sequence[Any]:
+    def _list_workspaces(self) -> Mapping[str, Any]:
         url = self.api_url + "api/v1/me/workspaces"
         response = self.session.get(url)
         response.raise_for_status()
-        return cast(Sequence[Any], response.json())
+        return cast(Mapping[str, Any], response.json())
 
     def _create_workspace(self, workspace_name: str) -> Mapping[str, Any]:
-        url = self.api_url + "api/v1/workspaces"
+        url = self.api_url + "api/workspaces"
         data = {
             "name": workspace_name,
         }
@@ -565,7 +570,7 @@ class DefaultArgillaClient(ArgillaClient):
         name: str,
         title: str,
         description: str,
-        settings: dict[str, str],
+        settings: Mapping[Any, Any],
         dataset_id: str,
     ) -> None:
         url = self.api_url + f"api/v1/datasets/{dataset_id}/questions"

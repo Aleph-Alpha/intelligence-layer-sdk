@@ -10,6 +10,7 @@ from intelligence_layer.connectors import (
     ArgillaRatingEvaluation,
     Field,
     Question,
+    RatingQuestion,
     RecordData,
 )
 from intelligence_layer.evaluation import (
@@ -38,7 +39,7 @@ from tests.evaluation.conftest import (
 class StubArgillaClient(ArgillaClient):
     _expected_workspace_id: str
     _expected_fields: Sequence[Field]
-    _expected_questions: Sequence[Question]
+    _expected_questions: Sequence[RatingQuestion]
     _datasets: dict[str, list[RecordData]] = {}
     _score = 3.0
 
@@ -110,7 +111,7 @@ class DummyStringTaskArgillaEvaluationLogic(
                 "input": Field(name="input", title="Input"),
             },
             questions=[
-                Question(
+                RatingQuestion(
                     name="name", title="title", description="description", options=[0]
                 )
             ],
@@ -250,9 +251,9 @@ def dummy_client() -> DummyArgillaClient:
 
 
 @fixture()
-def argilla_questions() -> Sequence[Question]:
+def argilla_questions() -> Sequence[RatingQuestion]:
     return [
-        Question(
+        RatingQuestion(
             name="question",
             title="title",
             description="description",
