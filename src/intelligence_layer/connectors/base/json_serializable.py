@@ -23,3 +23,5 @@ else:
         | Sequence["JsonSerializable"]
         | Mapping[str, "JsonSerializable"],
     )
+
+SerializableDict = dict[str, JsonSerializable]

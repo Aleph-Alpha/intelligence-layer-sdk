@@ -12,6 +12,7 @@
  - `Lineages` now contain `Tracer` for individual `Output`s.
  - `convert_to_pandas_data_frame` now also creates a column containing the `Tracer`s.
  - `run_dataset` now has a flag `trace_examples_individually` to create `Tracer`s for each example. Defaults to True.
+ - Added optional `metadata` field to `Example`.
 
 ### Fixes
   - ControlModels throw a warning instead of an error in case a not-recommended model is selected.
