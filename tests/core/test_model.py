@@ -1,3 +1,6 @@
+import random
+from typing import Any, Mapping, Sequence
+
 import pytest
 from aleph_alpha_client import Prompt, PromptGranularity, Text
 from pytest import fixture
@@ -13,6 +16,7 @@ from intelligence_layer.core import (
     LuminousControlModel,
     NoOpTracer,
 )
+from intelligence_layer.core.model import _cached_context_size, _cached_tokenizer
 
 
 @fixture
@@ -111,3 +115,44 @@ def test_models_warn_about_non_recommended_models(
 
     with pytest.warns(UserWarning):
         assert AlephAlphaModel(client=client, name="No model")  # type: ignore
+
+
+class DummyModelClient(AlephAlphaClientProtocol):
+    # we use random here to simulate different objects to check caching behavior
+    def tokenizer(self, model: str) -> float:
+        return random.random()
+
+    def models(self) -> Sequence[Mapping[str, Any]]:
+        return [{"name": "model", "max_context_size": random.random()}]
+
+
+def test_tokenizer_caching_works() -> None:
+    client = DummyModelClient()  # type: ignore
+    test = AlephAlphaModel("model", client=client)
+    tokenizer = test.get_tokenizer()
+    same_tokenizer = test.get_tokenizer()
+    assert tokenizer is same_tokenizer
+
+    another_model_instance = AlephAlphaModel("model", client=client)
+    yet_same_tokenizer = another_model_instance.get_tokenizer()
+    assert tokenizer is yet_same_tokenizer
+
+    _cached_tokenizer.cache_clear()
+    different_tokenizer = another_model_instance.get_tokenizer()
+    assert tokenizer is not different_tokenizer
+
+
+def test_context_size_caching_works() -> None:
+    client = DummyModelClient()  # type: ignore
+    test = AlephAlphaModel("model", client=client)
+    context_size = test.context_size
+    same_context_size = test.context_size
+    assert context_size is same_context_size
+
+    another_model_instance = AlephAlphaModel("model", client=client)
+    yet_same_result = another_model_instance.context_size
+    assert context_size is yet_same_result
+
+    _cached_context_size.cache_clear()
+    different_result = another_model_instance.context_size
+    assert context_size is not different_result

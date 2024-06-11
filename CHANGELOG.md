@@ -9,7 +9,7 @@
  - Add `eot_token` property to `ControlModel` and derived classes (`LuminousControlModel`, `Llama2InstructModel` and `Llama3InstructModel`) and let `PromptBasedClassify` use this property instead of a hardcoded string.
 
 ### Fixes
-...
+ - Reinitializing different `AlephAlphaModel` instances and retrieving their tokenizer should now consume a lot less memory.
 
 ### Deprecations
 ...

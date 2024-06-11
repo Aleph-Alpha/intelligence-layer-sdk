@@ -601,7 +601,7 @@ def test_evaluator_type_magic_works(
         "dummy",
         evaluation_logic=GreatGrandChildEvaluationLogic(),
     )
-    who_is_timmy = timmy._get_types()
+    who_is_timmy = timmy._get_types
 
     assert who_is_timmy == types
 
@@ -636,7 +636,7 @@ def test_aggregator_type_magic_works(
         "dummy",
         aggregation_logic=GrandChildAggregationLogic(),
     )
-    who_is_timmy = timmy._get_types()
+    who_is_timmy = timmy._get_types
 
     assert who_is_timmy == types
 

@@ -1,5 +1,5 @@
 from abc import ABC
-from functools import lru_cache
+from functools import cached_property
 from typing import (
     Generic,
     Iterable,
@@ -73,7 +73,7 @@ class EvaluatorBase(Generic[Input, Output, ExpectedOutput, Evaluation], ABC):
 
         self.description = description
 
-    @lru_cache(maxsize=1)
+    @cached_property
     def _get_types(self) -> Mapping[str, type]:
         """Type magic function that gets the actual types of the generic parameters.
 
@@ -137,7 +137,7 @@ class EvaluatorBase(Generic[Input, Output, ExpectedOutput, Evaluation], ABC):
             The type of the evaluated task's input.
         """
         try:
-            input_type = self._get_types()["Input"]
+            input_type = self._get_types["Input"]
         except KeyError:
             raise TypeError(f"Alternatively overwrite input_type() in {type(self)}")
         return cast(type[Input], input_type)
@@ -152,7 +152,7 @@ class EvaluatorBase(Generic[Input, Output, ExpectedOutput, Evaluation], ABC):
             The type of the evaluated task's output.
         """
         try:
-            output_type = self._get_types()["Output"]
+            output_type = self._get_types["Output"]
         except KeyError:
             raise TypeError(f"Alternatively overwrite output_type() in {type(self)}")
         return cast(type[Output], output_type)
@@ -167,7 +167,7 @@ class EvaluatorBase(Generic[Input, Output, ExpectedOutput, Evaluation], ABC):
             The type of the evaluated task's expected output.
         """
         try:
-            expected_output_type = self._get_types()["ExpectedOutput"]
+            expected_output_type = self._get_types["ExpectedOutput"]
         except KeyError:
             raise TypeError(
                 f"Alternatively overwrite expected_output_type() in {type(self)}"
@@ -184,7 +184,7 @@ class EvaluatorBase(Generic[Input, Output, ExpectedOutput, Evaluation], ABC):
             Returns the type of the evaluation result of an example.
         """
         try:
-            evaluation_type = self._get_types()["Evaluation"]
+            evaluation_type = self._get_types["Evaluation"]
         except KeyError:
             raise TypeError(
                 f"Alternatively overwrite evaluation_type() in {type(self)}"
