@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from functools import lru_cache
+from functools import cached_property
 from typing import (
     Callable,
     Generic,
@@ -108,7 +108,7 @@ class Aggregator(Generic[Evaluation, AggregatedEvaluation]):
         self._aggregation_logic = aggregation_logic
         self.description = description
 
-    @lru_cache(maxsize=1)
+    @cached_property
     def _get_types(self) -> Mapping[str, type]:
         """Type magic function that gets the actual types of the generic parameters.
 
@@ -173,7 +173,7 @@ class Aggregator(Generic[Evaluation, AggregatedEvaluation]):
             Returns the type of the evaluation result of an example.
         """
         try:
-            evaluation_type = self._get_types()["Evaluation"]
+            evaluation_type = self._get_types["Evaluation"]
         except KeyError:
             raise TypeError(
                 f"Alternatively overwrite evaluation_type() in {type(self)}"

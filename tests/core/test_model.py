@@ -1,3 +1,5 @@
+import time
+
 import pytest
 from aleph_alpha_client import Prompt, PromptGranularity, Text
 from pytest import fixture
@@ -111,3 +113,24 @@ def test_models_warn_about_non_recommended_models(
 
     with pytest.warns(UserWarning):
         assert AlephAlphaModel(client=client, name="No model")  # type: ignore
+
+
+def test_tokenizer_caching_works(
+    client: AlephAlphaClientProtocol,
+) -> None:
+    test = AlephAlphaModel("luminous-supreme-control")
+    start = time.time()
+    test.get_tokenizer()
+    end = time.time()
+    assert end - start > 0.1
+
+    start = time.time()
+    test.get_tokenizer()
+    end = time.time()
+    assert end - start < 0.001
+    # still fast even with new instance
+    test = AlephAlphaModel("luminous-supreme-control")
+    start = time.time()
+    test.get_tokenizer()
+    end = time.time()
+    assert end - start < 0.001
