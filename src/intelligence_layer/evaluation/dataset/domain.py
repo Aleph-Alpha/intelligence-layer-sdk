@@ -22,6 +22,7 @@ class Example(BaseModel, Generic[Input, ExpectedOutput]):
         expected_output: The expected output from a given example run.
             This will be used by the evaluator to compare the received output with.
         id: Identifier for the example, defaults to uuid.
+        metadata: Optional dictionary of custom key-value pairs.
 
     Generics:
         Input: Interface to be passed to the :class:`Task` that shall be evaluated.
