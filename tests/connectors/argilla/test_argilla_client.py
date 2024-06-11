@@ -10,10 +10,11 @@ from requests import HTTPError
 
 from intelligence_layer.connectors.argilla.argilla_client import (
     ArgillaClient,
-    ArgillaEvaluation,
+    ArgillaRatingEvaluation,
     DefaultArgillaClient,
     Field,
-    Question,
+    RatingQuestion,
+    TextQuestion,
     RecordData,
 )
 
@@ -66,7 +67,7 @@ def qa_dataset_id(argilla_client: DefaultArgillaClient, workspace_id: str) -> st
         Field(name="answer", title="Answer"),
     ]
     questions = [
-        Question(
+        RatingQuestion(
             name="rate-answer",
             title="Rate the answer",
             description="1 means bad, 3 means amazing.",
@@ -88,7 +89,7 @@ def test_client_can_create_a_dataset(
         dataset_name="name",
         fields=[Field(name="a", title="b")],
         questions=[
-            Question(name="a", title="b", description="c", options=list(range(1, 5)))
+            RatingQuestion(name="a", title="b", description="c", options=list(range(1, 5)))
         ],
     )
     datasets = argilla_client._list_datasets(workspace_id)
@@ -107,7 +108,7 @@ def test_client_cannot_create_two_datasets_with_the_same_name(
         dataset_name=dataset_name,
         fields=[Field(name="a", title="b")],
         questions=[
-            Question(name="a", title="b", description="c", options=list(range(1, 5)))
+            RatingQuestion(name="a", title="b", description="c", options=list(range(1, 5)))
         ],
     )
     with pytest.raises(ValueError):
@@ -116,9 +117,7 @@ def test_client_cannot_create_two_datasets_with_the_same_name(
             dataset_name=dataset_name,
             fields=[Field(name="a", title="b")],
             questions=[
-                Question(
-                    name="a", title="b", description="c", options=list(range(1, 5))
-                )
+                RatingQuestion(name="a", title="b", description="c", options=list(range(1, 5)))
             ],
         )
 
@@ -184,7 +183,7 @@ def test_evaluations_returns_evaluation_results(
     qa_records: Sequence[RecordData],
 ) -> None:
     evaluations = [
-        ArgillaEvaluation(
+        ArgillaRatingEvaluation(
             example_id=record.example_id,
             record_id=record.id,
             responses={"rate-answer": 1},
@@ -339,3 +338,64 @@ def test_split_dataset_can_split_long_dataset(
     for old_metadata, new_metadata in zip(record_metadata, new_metadata_list):
         del new_metadata["split"]  # type: ignore
         assert old_metadata == new_metadata
+
+
+@pytest.mark.docker
+def test_client_can_load_existing_workspace(
+    argilla_client: DefaultArgillaClient
+) -> None:
+    workspace_name = str(uuid4())
+
+    created_workspace_id = argilla_client.ensure_workspace_exists(
+        workspace_name
+    )
+
+    ensured_workspace_id = argilla_client.ensure_workspace_exists(
+        workspace_name
+    )
+
+    assert created_workspace_id == ensured_workspace_id
+
+@pytest.mark.docker
+def test_client_can_load_existing_dataset(
+    argilla_client: DefaultArgillaClient,
+    workspace_id: str
+) -> None:
+    dataset_name = str(uuid4())
+    
+    created_dataset_id = argilla_client.create_dataset(
+        workspace_id=workspace_id,
+        dataset_name=dataset_name,
+        fields=[Field(name="a", title="b")],
+        questions=[
+            RatingQuestion(name="a", title="b", description="c", options=list(range(1, 5)))
+        ],
+    )
+
+    ensured_dataset_id = argilla_client.ensure_dataset_exists(
+        workspace_id=workspace_id,
+        dataset_name=dataset_name,
+        fields=[Field(name="a", title="b")],
+        questions=[
+            RatingQuestion(name="a", title="b", description="c", options=list(range(1, 5)))
+        ],
+    )
+
+    assert created_dataset_id == ensured_dataset_id
+
+@pytest.mark.docker
+def test_client_can_create_a_dataset_with_text_question_records(
+    argilla_client: DefaultArgillaClient,
+    workspace_id: str
+) -> None:
+    dataset_id = argilla_client.create_dataset(
+        workspace_id,
+        dataset_name="name",
+        fields=[Field(name="a", title="b")],
+        questions=[
+            TextQuestion(name="a", title="b", description="c", use_markdown=False)
+        ],
+    )
+    datasets = argilla_client._list_datasets(workspace_id)
+    assert len(argilla_client._list_datasets(workspace_id)) == 1
+    assert dataset_id == datasets["items"][0]["id"]

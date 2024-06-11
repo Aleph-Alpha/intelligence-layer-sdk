@@ -7,7 +7,7 @@ from pytest import fixture
 
 from intelligence_layer.connectors import (
     ArgillaClient,
-    ArgillaEvaluation,
+    ArgillaRatingEvaluation,
     Field,
     Question,
     RecordData,
@@ -73,11 +73,11 @@ class StubArgillaClient(ArgillaClient):
             raise Exception("Add record: dataset not found")
         self._datasets[dataset_id].append(record)
 
-    def evaluations(self, dataset_id: str) -> Iterable[ArgillaEvaluation]:
+    def evaluations(self, dataset_id: str) -> Iterable[ArgillaRatingEvaluation]:
         dataset = self._datasets.get(dataset_id)
         assert dataset
         return [
-            ArgillaEvaluation(
+            ArgillaRatingEvaluation(
                 example_id=record.example_id,
                 record_id="ignored",
                 responses={"human-score": self._score},
@@ -136,7 +136,7 @@ class DummyStringTaskArgillaEvaluationLogic(
         )
 
     def from_record(
-        self, argilla_evaluation: ArgillaEvaluation
+        self, argilla_evaluation: ArgillaRatingEvaluation
     ) -> DummyStringEvaluation:
         return DummyStringEvaluation()
 
@@ -177,11 +177,11 @@ class DummyArgillaClient(ArgillaClient):
             raise Exception("Add record: dataset not found")
         self._datasets[dataset_id].append(record)
 
-    def evaluations(self, dataset_id: str) -> Iterable[ArgillaEvaluation]:
+    def evaluations(self, dataset_id: str) -> Iterable[ArgillaRatingEvaluation]:
         dataset = self._datasets.get(dataset_id)
         assert dataset
         return [
-            ArgillaEvaluation(
+            ArgillaRatingEvaluation(
                 example_id=record.example_id,
                 record_id="ignored",
                 responses={"human-score": self._score},
@@ -227,12 +227,12 @@ class FailedEvaluationDummyArgillaClient(ArgillaClient):
             raise CustomException("First upload fails")
         self._datasets[dataset_id].append(record)
 
-    def evaluations(self, dataset_id: str) -> Iterable[ArgillaEvaluation]:
+    def evaluations(self, dataset_id: str) -> Iterable[ArgillaRatingEvaluation]:
         dataset = self._datasets.get(dataset_id)
         assert dataset
         record = dataset[0]
         return [
-            ArgillaEvaluation(
+            ArgillaRatingEvaluation(
                 example_id=record.example_id,
                 record_id="ignored",
                 responses={"human-score": 0},

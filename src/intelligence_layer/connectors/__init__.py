@@ -1,8 +1,10 @@
 from .argilla.argilla_client import ArgillaClient as ArgillaClient
-from .argilla.argilla_client import ArgillaEvaluation as ArgillaEvaluation
+from .argilla.argilla_client import ArgillaRatingEvaluation as ArgillaRatingEvaluation
 from .argilla.argilla_client import DefaultArgillaClient as DefaultArgillaClient
 from .argilla.argilla_client import Field as Field
 from .argilla.argilla_client import Question as Question
+from .argilla.argilla_client import RatingQuestion as RatingQuestion
+from .argilla.argilla_client import TextQuestion as TextQuestion
 from .argilla.argilla_client import Record as Record
 from .argilla.argilla_client import RecordData as RecordData
 from .base.json_serializable import JsonSerializable as JsonSerializable

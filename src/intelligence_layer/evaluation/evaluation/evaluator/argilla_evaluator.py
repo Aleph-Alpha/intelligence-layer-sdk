@@ -9,7 +9,7 @@ from pydantic import BaseModel
 
 from intelligence_layer.connectors.argilla.argilla_client import (
     ArgillaClient,
-    ArgillaEvaluation,
+    ArgillaRatingEvaluation,
     Field,
     Question,
     RecordData,
@@ -71,7 +71,7 @@ class ArgillaEvaluationLogic(
         ...
 
     @abstractmethod
-    def from_record(self, argilla_evaluation: ArgillaEvaluation) -> Evaluation:
+    def from_record(self, argilla_evaluation: ArgillaRatingEvaluation) -> Evaluation:
         """This method takes the specific Argilla evaluation format and converts into a compatible :class:`Evaluation`.
 
         The format of argilla_evaluation.responses depends on the `questions` attribute.
@@ -305,7 +305,7 @@ class InstructComparisonArgillaEvaluationLogic(
         )
 
     def from_record(
-        self, argilla_evaluation: ArgillaEvaluation
+        self, argilla_evaluation: ArgillaRatingEvaluation
     ) -> ComparisonEvaluation:
         return ComparisonEvaluation(
             first_player=argilla_evaluation.metadata[
