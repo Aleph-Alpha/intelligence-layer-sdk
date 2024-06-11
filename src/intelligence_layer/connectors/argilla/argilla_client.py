@@ -39,7 +39,7 @@ class Field(BaseModel):
 
 
 class Question(BaseModel):
-    """ "Definition of an evaluation-question for an Argilla feedback dataset.
+    """Definition of an evaluation-question for an Argilla feedback dataset.
 
     Attributes:
         name: The name of the question. This is used to reference the questions in json-documents
@@ -52,8 +52,9 @@ class Question(BaseModel):
     title: str
     description: str
 
+
 class RatingQuestion(Question):
-    """ "Definition of a rating evaluation-question for an Argilla feedback dataset.
+    """Definition of a rating evaluation-question for an Argilla feedback dataset.
 
     Attributes:
         options: All integer options to answer this question
@@ -61,30 +62,28 @@ class RatingQuestion(Question):
 
     options: Sequence[int]  # range: 1-10
 
-    @computed_field
+    @computed_field  # type: ignore[misc]
     @property
     def settings(self) -> Mapping[str, str]:
         return {
-            'type': 'rating',
-            'options': [{"value": option} for option in self.options]
+            "type": "rating",
+            "options": [{"value": option} for option in self.options],
         }
 
+
 class TextQuestion(Question):
-    """ "Definition of a text evaluation-question for an Argilla feedback dataset.
-    
+    """Definition of a text evaluation-question for an Argilla feedback dataset.
+
     Attributes:
         use_markdown: Set this parameter to True if you want to use markdown
     """
 
     use_markdown: bool
 
-    @computed_field
+    @computed_field  # type: ignore[misc]
     @property
     def settings(self) -> Mapping[str, str]:
-        return {
-            'type': 'text',
-            'use_markdown': self.use_markdown
-        }
+        return {"type": "text", "use_markdown": self.use_markdown}
 
 
 class ArgillaRatingEvaluation(BaseModel):
@@ -279,7 +278,7 @@ class DefaultArgillaClient(ArgillaClient):
                 workspaces = self._list_workspaces()
                 return next(
                     cast(str, item["id"])
-                    for item in workspaces['items']
+                    for item in workspaces["items"]
                     if item["name"] == workspace_name
                 )
             raise e
@@ -330,11 +329,11 @@ class DefaultArgillaClient(ArgillaClient):
                 if item["name"] == dataset_name
             )
             return dataset_id
-        except StopIteration as e:
+        except StopIteration:
             pass
         except HTTPError as e:
             raise e
-        
+
         try:
             dataset_id: str = self.create_dataset(
                 workspace_id, dataset_name, fields, questions
@@ -566,7 +565,7 @@ class DefaultArgillaClient(ArgillaClient):
         name: str,
         title: str,
         description: str,
-        settings: dict,
+        settings: dict[str, str],
         dataset_id: str,
     ) -> None:
         url = self.api_url + f"api/v1/datasets/{dataset_id}/questions"
@@ -575,12 +574,10 @@ class DefaultArgillaClient(ArgillaClient):
             "title": title,
             "description": description,
             "required": True,
-            "settings": settings
+            "settings": settings,
         }
         response = self.session.post(url, json=data)
         response.raise_for_status()
-    
-
 
     def _list_records(
         self,

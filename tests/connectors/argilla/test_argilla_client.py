@@ -14,8 +14,8 @@ from intelligence_layer.connectors.argilla.argilla_client import (
     DefaultArgillaClient,
     Field,
     RatingQuestion,
-    TextQuestion,
     RecordData,
+    TextQuestion,
 )
 
 
@@ -36,6 +36,7 @@ ReturnValue = TypeVar("ReturnValue")
 def retry(
     f: Callable[[], ReturnValue], until: Callable[[ReturnValue], bool]
 ) -> ReturnValue:
+    i: int = 0
     for i in range(10):
         r = f()
         if until(r):
@@ -52,6 +53,7 @@ def argilla_client() -> DefaultArgillaClient:
 
 @fixture
 def workspace_id(argilla_client: DefaultArgillaClient) -> Iterable[str]:
+    workspace_id: str = ""
     try:
         workspace_id = argilla_client.ensure_workspace_exists(str(uuid4()))
         yield workspace_id
@@ -89,7 +91,9 @@ def test_client_can_create_a_dataset(
         dataset_name="name",
         fields=[Field(name="a", title="b")],
         questions=[
-            RatingQuestion(name="a", title="b", description="c", options=list(range(1, 5)))
+            RatingQuestion(
+                name="a", title="b", description="c", options=list(range(1, 5))
+            )
         ],
     )
     datasets = argilla_client._list_datasets(workspace_id)
@@ -108,7 +112,9 @@ def test_client_cannot_create_two_datasets_with_the_same_name(
         dataset_name=dataset_name,
         fields=[Field(name="a", title="b")],
         questions=[
-            RatingQuestion(name="a", title="b", description="c", options=list(range(1, 5)))
+            RatingQuestion(
+                name="a", title="b", description="c", options=list(range(1, 5))
+            )
         ],
     )
     with pytest.raises(ValueError):
@@ -117,7 +123,9 @@ def test_client_cannot_create_two_datasets_with_the_same_name(
             dataset_name=dataset_name,
             fields=[Field(name="a", title="b")],
             questions=[
-                RatingQuestion(name="a", title="b", description="c", options=list(range(1, 5)))
+                RatingQuestion(
+                    name="a", title="b", description="c", options=list(range(1, 5))
+                )
             ],
         )
 
@@ -342,33 +350,31 @@ def test_split_dataset_can_split_long_dataset(
 
 @pytest.mark.docker
 def test_client_can_load_existing_workspace(
-    argilla_client: DefaultArgillaClient
+    argilla_client: DefaultArgillaClient,
 ) -> None:
     workspace_name = str(uuid4())
 
-    created_workspace_id = argilla_client.ensure_workspace_exists(
-        workspace_name
-    )
+    created_workspace_id = argilla_client.ensure_workspace_exists(workspace_name)
 
-    ensured_workspace_id = argilla_client.ensure_workspace_exists(
-        workspace_name
-    )
+    ensured_workspace_id = argilla_client.ensure_workspace_exists(workspace_name)
 
     assert created_workspace_id == ensured_workspace_id
 
+
 @pytest.mark.docker
 def test_client_can_load_existing_dataset(
-    argilla_client: DefaultArgillaClient,
-    workspace_id: str
+    argilla_client: DefaultArgillaClient, workspace_id: str
 ) -> None:
     dataset_name = str(uuid4())
-    
+
     created_dataset_id = argilla_client.create_dataset(
         workspace_id=workspace_id,
         dataset_name=dataset_name,
         fields=[Field(name="a", title="b")],
         questions=[
-            RatingQuestion(name="a", title="b", description="c", options=list(range(1, 5)))
+            RatingQuestion(
+                name="a", title="b", description="c", options=list(range(1, 5))
+            )
         ],
     )
 
@@ -377,16 +383,18 @@ def test_client_can_load_existing_dataset(
         dataset_name=dataset_name,
         fields=[Field(name="a", title="b")],
         questions=[
-            RatingQuestion(name="a", title="b", description="c", options=list(range(1, 5)))
+            RatingQuestion(
+                name="a", title="b", description="c", options=list(range(1, 5))
+            )
         ],
     )
 
     assert created_dataset_id == ensured_dataset_id
 
+
 @pytest.mark.docker
 def test_client_can_create_a_dataset_with_text_question_records(
-    argilla_client: DefaultArgillaClient,
-    workspace_id: str
+    argilla_client: DefaultArgillaClient, workspace_id: str
 ) -> None:
     dataset_id = argilla_client.create_dataset(
         workspace_id,
