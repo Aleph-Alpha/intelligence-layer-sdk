@@ -167,8 +167,9 @@ class AlephAlphaModel:
     @property
     def context_size(self) -> int:
         # needed for proper caching without memory leaks
-        assert isinstance(self._client, typing.Hashable)
-        return _get_context_size(self._client, self.name)
+        if isinstance(self._client, typing.Hashable):
+            return _cached_context_size(self._client, self.name)
+        return _context_size(self._client, self.name)
 
     def complete_task(self) -> Task[CompleteInput, CompleteOutput]:
         return self._complete
@@ -181,20 +182,29 @@ class AlephAlphaModel:
 
     def get_tokenizer(self) -> Tokenizer:
         # needed for proper caching without memory leaks
-        assert isinstance(self._client, typing.Hashable)
-        return _get_tokenizer(self._client, self.name)
+        if isinstance(self._client, typing.Hashable):
+            return _cached_tokenizer(self._client, self.name)
+        return _tokenizer(self._client, self.name)
 
     def tokenize(self, text: str) -> Encoding:
         return self.get_tokenizer().encode(text)
 
 
 @lru_cache(maxsize=5)
-def _get_tokenizer(client: AlephAlphaClientProtocol, name: str) -> Tokenizer:
+def _cached_tokenizer(client: AlephAlphaClientProtocol, name: str) -> Tokenizer:
+    return _tokenizer(client, name)
+
+
+def _tokenizer(client: AlephAlphaClientProtocol, name: str) -> Tokenizer:
     return client.tokenizer(name)
 
 
 @lru_cache(maxsize=10)
-def _get_context_size(client: AlephAlphaClientProtocol, name: str) -> int:
+def _cached_context_size(client: AlephAlphaClientProtocol, name: str) -> int:
+    return _context_size(client, name)
+
+
+def _context_size(client: AlephAlphaClientProtocol, name: str) -> int:
     models_info = client.models()
     context_size: Optional[int] = next(
         (
