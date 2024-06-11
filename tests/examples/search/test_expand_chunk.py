@@ -1,16 +1,16 @@
 from datetime import datetime, timedelta
-from typing import Sequence
+from typing import Optional, Sequence
 
 from pytest import fixture
 
 from intelligence_layer.connectors import (
+    BaseRetriever,
     Document,
     DocumentChunk,
-    QdrantInMemoryRetriever,
-)
-from intelligence_layer.connectors.document_index.document_index import DocumentPath
-from intelligence_layer.connectors.retrievers.document_index_retriever import (
     DocumentIndexRetriever,
+    DocumentPath,
+    QdrantInMemoryRetriever,
+    SearchResult,
 )
 from intelligence_layer.core import LuminousControlModel, NoOpTracer
 from intelligence_layer.examples import ExpandChunks, ExpandChunksInput
@@ -203,3 +203,44 @@ def test_expand_chunk_is_fast_with_large_document(
 
     assert len(output.chunks) == 1
     assert elapsed < timedelta(seconds=10)
+
+
+class FakeRetriever(BaseRetriever[str]):
+    def __init__(self, result: str) -> None:
+        super().__init__()
+        self.result = result
+
+    def get_relevant_documents_with_scores(
+        self, query: str
+    ) -> Sequence[SearchResult[str]]:
+        return []
+
+    def get_full_document(self, id: str) -> Optional[Document]:
+        return Document(text=self.result)
+
+
+def test_expand_chunks_works_if_chunk_of_interest_is_outside_first_large_chunk(
+    luminous_control_model: LuminousControlModel,
+    no_op_tracer: NoOpTracer,
+) -> None:
+    # given
+    task_input = ExpandChunksInput(
+        document_id="id",
+        chunks_found=[
+            DocumentChunk(
+                text="",
+                start=1500,  # outside of first large chunk boundary, which is ~1200
+                end=1505,
+            )
+        ],
+    )
+    full_text = " ".join(str(i) for i in range(1000))
+    max_chunk_size = 10
+    expand_chunk_task = ExpandChunks(
+        FakeRetriever(result=full_text),
+        luminous_control_model,
+        max_chunk_size=max_chunk_size,
+    )
+    res = expand_chunk_task.run(task_input, no_op_tracer)
+    assert len(res.chunks) > 0
+    assert len(res.chunks[0].chunk.strip().split(" ")) == max_chunk_size

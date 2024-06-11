@@ -31,7 +31,7 @@ class ExpandChunks(Generic[ID], Task[ExpandChunksInput[ID], ExpandChunksOutput])
     Args:
         retriever: Used to access and return a set of texts.
         model: The model's tokenizer is relevant to calculate the correct size of the returned chunks.
-        max_chunk_size: The maximum chunk size of each returned chunk.
+        max_chunk_size: The maximum chunk size of each returned chunk in #tokens.
     """
 
     def __init__(
@@ -51,10 +51,12 @@ class ExpandChunks(Generic[ID], Task[ExpandChunksInput[ID], ExpandChunksOutput])
     ) -> ExpandChunksOutput:
         text = self._retrieve_text(input.document_id)
         large_chunks = self._expand_chunks(
-            text, input.chunks_found, self._large_chunker
+            text, 0, input.chunks_found, self._large_chunker
         )
         nested_expanded_chunks = [
-            self._expand_chunks(chunk.chunk, input.chunks_found, self._target_chunker)
+            self._expand_chunks(
+                chunk.chunk, chunk.start_index, input.chunks_found, self._target_chunker
+            )
             for chunk in large_chunks
         ]
         return ExpandChunksOutput(
@@ -77,13 +79,17 @@ class ExpandChunks(Generic[ID], Task[ExpandChunksInput[ID], ExpandChunksOutput])
     def _expand_chunks(
         self,
         text: str,
+        text_start: int,
         chunks_found: Sequence[DocumentChunk],
         chunker: ChunkWithIndices,
     ) -> Sequence[ChunkWithStartEndIndices]:
         chunked_text = self._chunk_text(text, chunker)
 
         overlapping_chunk_indices = self._overlapping_chunk_indices(
-            [(c.start_index, c.end_index) for c in chunked_text],
+            [
+                (c.start_index + text_start, c.end_index + text_start)
+                for c in chunked_text
+            ],
             [(chunk.start, chunk.end) for chunk in chunks_found],
         )
 
