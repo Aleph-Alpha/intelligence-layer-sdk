@@ -35,9 +35,12 @@ def cached_mocked_hugging_face_dataset_wrapper(
     temp_file_system: AbstractFileSystem,
 ) -> HuggingFaceDatasetRepository:
     class_to_patch = "intelligence_layer.evaluation.dataset.hugging_face_dataset_repository.HuggingFaceDatasetRepository"
-    with patch(f"{class_to_patch}.create_repository", autospec=True), patch(
-        f"{class_to_patch}.delete_repository",
-        autospec=True,
+    with (
+        patch(f"{class_to_patch}.create_repository", autospec=True),
+        patch(
+            f"{class_to_patch}.delete_repository",
+            autospec=True,
+        ),
     ):
         repo = HuggingFaceDatasetRepositoryTestWrapper(
             repository_id="doesn't-matter",

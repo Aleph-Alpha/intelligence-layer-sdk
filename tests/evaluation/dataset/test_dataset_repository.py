@@ -27,9 +27,12 @@ def mocked_hugging_face_dataset_repository(
     temp_file_system: MemoryFileSystem,
 ) -> HuggingFaceDatasetRepository:
     class_to_patch = "intelligence_layer.evaluation.dataset.hugging_face_dataset_repository.HuggingFaceDatasetRepository"
-    with patch(f"{class_to_patch}.create_repository", autospec=True), patch(
-        f"{class_to_patch}.delete_repository",
-        autospec=True,
+    with (
+        patch(f"{class_to_patch}.create_repository", autospec=True),
+        patch(
+            f"{class_to_patch}.delete_repository",
+            autospec=True,
+        ),
     ):
         repo = HuggingFaceDatasetRepository(
             repository_id="doesn't-matter",

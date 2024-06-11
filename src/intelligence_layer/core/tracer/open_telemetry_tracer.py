@@ -3,9 +3,8 @@ from typing import Optional, Sequence
 
 from opentelemetry.context import attach, detach
 from opentelemetry.trace import Span as OpenTSpan
-from opentelemetry.trace import StatusCode
+from opentelemetry.trace import StatusCode, set_span_in_context
 from opentelemetry.trace import Tracer as OpenTTracer
-from opentelemetry.trace import set_span_in_context
 from pydantic import BaseModel, SerializeAsAny
 
 from intelligence_layer.core.tracer.tracer import (

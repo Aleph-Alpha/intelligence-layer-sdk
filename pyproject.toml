@@ -70,17 +70,48 @@ strict = "True"
 [tool.pytest.ini_options]
 markers = [
     "internal: marks tests as internal (deselect with '-k \"not internal\"')",
-    "docker: the test depends on having a docker container running."
+    "docker: the test depends on having a docker container running.",
 ]
 addopts = "--capture=tee-sys"
 filterwarnings = [
     'ignore:.*\`general_plain_validator_function\` is deprecated.*',
-    'ignore::DeprecationWarning:.*importlib._bootstrap.*'
+    'ignore::DeprecationWarning:.*importlib._bootstrap.*',
 ]
 
-
 [tool.ruff]
+target-version = "py310"
 extend-include = ["*.ipynb"]
 
-[tool.isort]
-profile = "black"
+[tool.ruff.lint]
+# defaults: ["E4", "E7", "E9", "F"]
+# check https://docs.astral.sh/ruff/rules/ for more info
+select = [
+    "E",
+    "F",
+    "W",
+    # isort
+    "I",
+    # simplify
+    #"SIM",
+    # update to newer python versions
+    #"UP",
+    # pytest style
+    #"PT",
+    # pathlib, small but may be nice
+    #"PTH"
+    # bug bear
+    #"B"
+    # ruf dependent checks
+    # RUF
+] # "N", "SIM", "B",
+# things i tried that didn't seem so useful: PD, T20(not yet), C90(eventually)
+ignore = [
+    # Line too long
+    "E501",
+    # next() instead of [0]    "RUF015",
+    #"RUF001",
+]
+#select = ["E", "F"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["intelligence_layer", "documentation"]

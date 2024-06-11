@@ -29,9 +29,12 @@ def mocked_hugging_face_aggregation_repository(
     temp_file_system: MemoryFileSystem,
 ) -> Iterable[HuggingFaceAggregationRepository]:
     class_to_patch = "intelligence_layer.evaluation.aggregation.hugging_face_aggregation_repository.HuggingFaceAggregationRepository"
-    with patch(f"{class_to_patch}.create_repository", autospec=True), patch(
-        f"{class_to_patch}.delete_repository",
-        autospec=True,
+    with (
+        patch(f"{class_to_patch}.create_repository", autospec=True),
+        patch(
+            f"{class_to_patch}.delete_repository",
+            autospec=True,
+        ),
     ):
         repo = HuggingFaceAggregationRepository(
             repository_id="doesn't-matter",

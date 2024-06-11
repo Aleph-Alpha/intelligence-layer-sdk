@@ -1,9 +1,8 @@
 from dataclasses import dataclass
 from typing import Mapping, Optional, Sequence, TypeVar
 
-from lingua import ConfidenceValue, IsoCode639_1
+from lingua import ConfidenceValue, IsoCode639_1, LanguageDetectorBuilder
 from lingua import Language as LinguaLanguage
-from lingua import LanguageDetectorBuilder
 from pycountry import languages
 from pydantic import BaseModel
 
