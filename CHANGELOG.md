@@ -3,6 +3,20 @@
 ## Unreleased
 
 ### Breaking Changes
+...
+
+### New Features
+...
+
+### Fixes
+...
+
+### Deprecations
+...
+
+## 4.0.1
+
+### Breaking Changes
  - Remove the `Trace` class, as it was no longer used.
  - Renamed `example_trace` to `example_tracer` and changed return type to `Optional[Tracer]`.
  - Renamed `example_tracer` to `create_tracer_for_example`.
@@ -18,8 +32,7 @@
   - ControlModels throw a warning instead of an error in case a not-recommended model is selected.
   - The `LimitedConcurrencyClient.max_concurrency` is now capped at 10, which is its default, as the underlying `aleph_alpha_client` does not support more currently.
   - ExpandChunk now works properly if the chunk of interest is not at the beginning of a very large document. As a consequence, `MultipleChunkRetrieverQa` now works better with larger documents and should return fewer `None` answers.
-### Deprecations
-...
+
 
 ## 3.0.0
 
