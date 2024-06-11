@@ -13,3 +13,4 @@ set +a
 ./scripts/doctest.sh
 ./scripts/notebook_runner.sh
 ./scripts/test.sh
+python "$(dirname "$0")/clean_hf.py"
