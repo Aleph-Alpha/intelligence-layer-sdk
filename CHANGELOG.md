@@ -9,12 +9,12 @@
   - Changed api url in `_list_workspaces` in `DefaultArgillaClient` to api v1 url.
 
 ### New Features
- - Add `eot_token` property to `ControlModel` and derived classes (`LuminousControlModel`, `Llama2InstructModel` and `Llama3InstructModel`) and let `PromptBasedClassify` use this property instead of a hardcoded string.
+  - Add `eot_token` property to `ControlModel` and derived classes (`LuminousControlModel`, `Llama2InstructModel` and `Llama3InstructModel`) and let `PromptBasedClassify` use this property instead of a hardcoded string.
   - Argilla type `TextQuestion` added for collecting natural language feedback or textual responses from labelers.
   - Argilla type `RatingQuestion` added for capturing numerical rating feedback
-
+  
 ### Fixes
- - Reinitializing different `AlephAlphaModel` instances and retrieving their tokenizer should now consume a lot less memory.
+  - Reinitializing different `AlephAlphaModel` instances and retrieving their tokenizer should now consume a lot less memory.
 
 ### Deprecations
 ...
