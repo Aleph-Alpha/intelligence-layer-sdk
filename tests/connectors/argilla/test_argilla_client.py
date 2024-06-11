@@ -80,8 +80,11 @@ def qa_dataset_id(argilla_client: DefaultArgillaClient, workspace_id: str) -> st
         workspace_id, dataset_name, fields, questions
     )
 
+
 @fixture
-def qa_dataset_id_with_text_question(argilla_client: DefaultArgillaClient, workspace_id: str) -> str:
+def qa_dataset_id_with_text_question(
+    argilla_client: DefaultArgillaClient, workspace_id: str
+) -> str:
     dataset_name = "test-dataset-text-question"
     fields = [
         Field(name="question", title="Question"),
@@ -92,12 +95,13 @@ def qa_dataset_id_with_text_question(argilla_client: DefaultArgillaClient, works
             name="comment-answer",
             title="Comment the answer",
             description="Just put some text in.",
-            use_markdown=False
+            use_markdown=False,
         )
     ]
     return argilla_client.ensure_dataset_exists(
         workspace_id, dataset_name, fields, questions
     )
+
 
 @pytest.mark.docker
 def test_client_can_create_a_dataset(
@@ -425,6 +429,7 @@ def test_client_can_create_a_dataset_with_text_question_records(
     datasets = argilla_client._list_datasets(workspace_id)
     assert len(argilla_client._list_datasets(workspace_id)) == 1
     assert dataset_id == datasets["items"][0]["id"]
+
 
 @pytest.mark.docker
 def test_add_record_to_text_question_dataset(
