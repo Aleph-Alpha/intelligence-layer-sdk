@@ -239,7 +239,7 @@ class PromptTemplate:
             return ""
 
     def embed_prompt(self, prompt: Prompt) -> str:
-        """Embeds a prompt in a prompt template
+        r"""Embeds a prompt in a prompt template.
 
         Adds whitespace between text items if there is no whitespace between them.
         In case of non-text prompt items, this embeds them into the end result.
@@ -256,7 +256,7 @@ class PromptTemplate:
             ... Tokens.from_token_ids([1, 2, 3]),
             ... Text.from_text("cool"),
             ... ])
-            >>> template = PromptTemplate("Question: {{user_prompt}}\\n Answer: ")
+            >>> template = PromptTemplate("Question: {{user_prompt}}\n Answer: ")
             >>> prompt = template.to_rich_prompt(user_prompt=template.embed_prompt(user_prompt))
         """
         prompt_text = ""

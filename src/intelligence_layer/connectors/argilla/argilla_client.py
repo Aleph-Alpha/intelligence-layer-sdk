@@ -158,6 +158,7 @@ class ArgillaClient(ABC):
             dataset_name: the name of the feedback-dataset to be created.
             fields: all fields of this dataset.
             questions: all questions for this dataset.
+
         Returns:
             The id of the created dataset.
         """
@@ -179,6 +180,7 @@ class ArgillaClient(ABC):
             dataset_name: the name of the feedback-dataset to be created.
             fields: all fields of this dataset.
             questions: all questions for this dataset.
+
         Returns:
             The id of the dataset to be retrieved .
         """
@@ -210,6 +212,7 @@ class ArgillaClient(ABC):
 
         Args:
             dataset_id: the id of the dataset.
+
         Returns:
             An `Iterable` over all human-evaluated evaluations for the given dataset.
         """
@@ -266,10 +269,11 @@ class DefaultArgillaClient(ArgillaClient):
         self.session.mount("http://", adapter)
 
     def ensure_workspace_exists(self, workspace_name: str) -> str:
-        """Retrieves the id of an argilla workspace with specified name or creates a new workspace if necessary
+        """Retrieves the id of an argilla workspace with specified name or creates a new workspace if necessary.
 
         Args:
             workspace_name: the name of the workspace to be retrieved or created.
+
         Returns:
             The id of an argilla workspace with the given `workspace_name`.
         """

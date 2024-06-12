@@ -175,7 +175,7 @@ class SearchQuery(BaseModel):
 
 
 class DocumentFilterQueryParams(BaseModel):
-    """Query to filter documents by
+    """Query to filter documents by.
 
     Args:
         max_documents: Maximum number of documents to display.
@@ -348,7 +348,6 @@ class DocumentIndexClient:
         Returns:
             List of all available namespaces.
         """
-
         url = f"{self._base_document_index_url}/namespaces"
         response = requests.get(url, headers=self.headers)
         self._raise_for_status(response)
@@ -363,7 +362,6 @@ class DocumentIndexClient:
         Args:
             collection_path: Path to the collection of interest.
         """
-
         url = f"{self._base_document_index_url}/collections/{collection_path.namespace}/{collection_path.collection}"
         response = requests.put(url, headers=self.headers)
         self._raise_for_status(response)
@@ -374,7 +372,6 @@ class DocumentIndexClient:
         Args:
             collection_path: Path to the collection of interest.
         """
-
         url = f"{self._base_document_index_url}/collections/{collection_path.namespace}/{collection_path.collection}"
         response = requests.delete(url, headers=self.headers)
         self._raise_for_status(response)
@@ -389,7 +386,6 @@ class DocumentIndexClient:
         Returns:
             List of all `CollectionPath` instances in the given namespace.
         """
-
         url = f"{self._base_document_index_url}/collections/{namespace}"
         response = requests.get(url, headers=self.headers)
         self._raise_for_status(response)
@@ -407,7 +403,6 @@ class DocumentIndexClient:
             index_path: Path to the index.
             index_configuration: Configuration of the index to be created.
         """
-
         url = f"{self._base_document_index_url}/indexes/{index_path.namespace}/{index_path.index}"
 
         data = {
@@ -426,7 +421,6 @@ class DocumentIndexClient:
         Returns:
             Configuration of the index.
         """
-
         url = f"{self._base_document_index_url}/indexes/{index_path.namespace}/{index_path.index}"
         response = requests.get(url, headers=self.headers)
         self._raise_for_status(response)
@@ -445,7 +439,6 @@ class DocumentIndexClient:
             collection_path: Path to the collection of interest.
             index_name: Name of the index.
         """
-
         url = f"{self._base_document_index_url}/collections/{collection_path.namespace}/{collection_path.collection}/indexes/{index_name}"
         response = requests.put(url, headers=self.headers)
         self._raise_for_status(response)
@@ -459,7 +452,6 @@ class DocumentIndexClient:
             index_name: Name of the index.
             collection_path: Path to the collection of interest.
         """
-
         url = f"{self._base_document_index_url}/collections/{collection_path.namespace}/{collection_path.collection}/indexes/{index_name}"
         response = requests.delete(url, headers=self.headers)
         self._raise_for_status(response)
@@ -475,7 +467,6 @@ class DocumentIndexClient:
         Returns:
             List of all indexes that are assigned to the collection.
         """
-
         url = f"{self._base_document_index_url}/collections/{collection_path.namespace}/{collection_path.collection}/indexes"
         response = requests.get(url, headers=self.headers)
         self._raise_for_status(response)
@@ -496,7 +487,6 @@ class DocumentIndexClient:
             contents: Actual content of the document.
                 Currently only supports text.
         """
-
         url = f"{self._base_document_index_url}/collections/{document_path.collection_path.namespace}/{document_path.collection_path.collection}/docs/{document_path.encoded_document_name()}"
         response = requests.put(
             url, data=dumps(contents._to_modalities_json()), headers=self.headers
@@ -509,7 +499,6 @@ class DocumentIndexClient:
         Args:
             document_path: Consists of `collection_path` and name of document to be deleted.
         """
-
         url = f"{self._base_document_index_url}/collections/{document_path.collection_path.namespace}/{document_path.collection_path.collection}/docs/{document_path.encoded_document_name()}"
         response = requests.delete(url, headers=self.headers)
         self._raise_for_status(response)
@@ -523,7 +512,6 @@ class DocumentIndexClient:
         Returns:
             Content of the retrieved document.
         """
-
         url = f"{self._base_document_index_url}/collections/{document_path.collection_path.namespace}/{document_path.collection_path.collection}/docs/{document_path.encoded_document_name()}"
         response = requests.get(url, headers=self.headers)
         self._raise_for_status(response)
@@ -579,7 +567,6 @@ class DocumentIndexClient:
         Returns:
             Result of the search operation. Will be empty if nothing was retrieved.
         """
-
         url = f"{self._base_document_index_url}/collections/{collection_path.namespace}/{collection_path.collection}/indexes/{index_name}/search"
         data = {
             "query": [{"modality": "text", "text": search_query.query}],

@@ -124,7 +124,6 @@ class Evaluator(EvaluatorBase[Input, Output, ExpectedOutput, Evaluation]):
             returned but instead stored in the :class:`EvaluationRepository` provided in the
             __init__.
         """
-
         start = utc_now()
         run_overviews = self._load_run_overviews(*run_ids)
         eval_id = self._evaluation_repository.initialize_evaluation()

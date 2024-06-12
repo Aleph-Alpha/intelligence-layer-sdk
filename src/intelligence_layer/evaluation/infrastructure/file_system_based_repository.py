@@ -54,6 +54,7 @@ class FileSystemBasedRepository:
 
         Args:
             path: Given Path that should be converted.
+
         Returns:
             String representation of the given Path.
         """

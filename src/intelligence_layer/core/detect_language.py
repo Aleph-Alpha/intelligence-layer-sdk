@@ -12,7 +12,7 @@ from intelligence_layer.core.tracer.tracer import TaskSpan
 
 
 class LanguageNotSupportedError(ValueError):
-    """Raised in case language in the input is not compatible with the languages supported in the task"""
+    """Raised in case language in the input is not compatible with the languages supported in the task."""
 
 
 Config = TypeVar("Config")

@@ -13,7 +13,7 @@ class Accumulator(ABC, Generic[T, Output]):
 
     @abstractmethod
     def add(self, value: T) -> None:
-        """Responsible for accumulating values
+        """Responsible for accumulating values.
 
         Args:
             value: the value to add
@@ -24,7 +24,7 @@ class Accumulator(ABC, Generic[T, Output]):
 
     @abstractmethod
     def extract(self) -> Output:
-        """Accumulates the final result
+        """Accumulates the final result.
 
         Returns:
            float: 0.0 if no values were added before, else the mean
@@ -44,13 +44,14 @@ class MeanAccumulator(Accumulator[float, float]):
         self._squares_acc += value**2
 
     def extract(self) -> float:
-        """Accumulates the mean
+        """Accumulates the mean.
 
-        :return: 0.0 if no values were added before, else the mean"""
+        :return: 0.0 if no values were added before, else the mean
+        """
         return 0.0 if self._n == 0 else self._acc / self._n
 
     def standard_deviation(self) -> float:
-        """Calculates the standard deviation"""
+        """Calculates the standard deviation."""
         if self._n == 0:
             return 0.0
         mean = self.extract()
@@ -59,7 +60,7 @@ class MeanAccumulator(Accumulator[float, float]):
         return variance**0.5  # type: ignore
 
     def standard_error(self) -> float:
-        """Calculates the standard error of the mean"""
+        """Calculates the standard error of the mean."""
         if self._n <= 1:
             return 0.0
         # not recognized as float by VSCode or mypy

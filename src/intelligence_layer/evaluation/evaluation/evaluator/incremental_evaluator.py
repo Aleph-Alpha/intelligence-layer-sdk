@@ -55,7 +55,6 @@ class IncrementalEvaluationLogic(
         Returns:
             :class:`Evaluation`: The metrics that come from the evaluated :class:`Task`.
         """
-
         already_evaluated_outputs = []
         for run_output_ids in self._previous_run_output_ids:
             already_evaluated_outputs.append(
@@ -148,7 +147,6 @@ class IncrementalEvaluator(Evaluator[Input, Output, ExpectedOutput, Evaluation])
             returned but instead stored in the :class:`EvaluationRepository` provided in the
             __init__.
         """
-
         previous_run_ids = []
         previous_evaluation_ids = previous_evaluation_ids or []
 
@@ -275,6 +273,7 @@ class EloEvaluationLogic(
         example: Example[Input, ExpectedOutput],
     ) -> MatchOutcome:
         """Returns a :class: `MatchOutcome`for the provided two contestants on the given example.
+
         Defines the use case specific logic how to determine the winner of the two provided outputs.
 
 

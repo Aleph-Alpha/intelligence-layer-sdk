@@ -7,8 +7,6 @@ repos:
         files: .json
         args:
           - --autofix
-      - id: end-of-file-fixer
-      - id: trailing-whitespace
   - repo: https://github.com/astral-sh/ruff-pre-commit
     # Ruff version.
     rev: v0.3.5

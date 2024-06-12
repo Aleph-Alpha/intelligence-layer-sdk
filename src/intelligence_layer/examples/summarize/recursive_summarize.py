@@ -28,9 +28,10 @@ class RecursiveSummarizeInput(BaseModel):
 
 class RecursiveSummarize(Task[RecursiveSummarizeInput, SummarizeOutput]):
     """This task will summarize the input text recursively until the desired length is reached.
+
     It uses any long-context summarize task to go over text recursively and condense it even further.
 
-        Args:
+    Args:
             long_context_summarize_task: Any task that satifies the interface Input: LongContextSummarizeInput and Output: LongContextSummarizeOutput.
                 Defaults to :class:`SteerableLongContextSummarize`
     """

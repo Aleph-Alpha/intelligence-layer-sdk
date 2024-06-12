@@ -197,7 +197,7 @@ class DummyArgillaClient(ArgillaClient):
 
 
 class FailedEvaluationDummyArgillaClient(ArgillaClient):
-    """fails on first upload, only returns 1 evaluated evaluation"""
+    """fails on first upload, only returns 1 evaluated evaluation."""
 
     _upload_count = 0
     _datasets: ClassVar[dict[str, list[RecordData]]] = {}

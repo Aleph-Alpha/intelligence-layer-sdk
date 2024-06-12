@@ -25,7 +25,7 @@ class FailedExampleRun(BaseModel):
 
 
 class ExampleOutput(BaseModel, Generic[Output]):
-    """Output of a single evaluated :class:`Example`
+    """Output of a single evaluated :class:`Example`.
 
     Created to persist the output (including failures) of an individual example in the repository.
 
@@ -62,7 +62,7 @@ class ExampleOutput(BaseModel, Generic[Output]):
 
 
 class SuccessfulExampleOutput(BaseModel, Generic[Output]):
-    """Successful output of a single evaluated :class:`Example`
+    """Successful output of a single evaluated :class:`Example`.
 
     Attributes:
         run_id: Identifier of the run that created the output.

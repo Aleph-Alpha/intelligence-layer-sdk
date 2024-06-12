@@ -54,6 +54,7 @@ def run_lineages_to_pandas(
     run_lineages: Sequence[RunLineage[Input, ExpectedOutput, Output]],
 ) -> pd.DataFrame:
     """Converts a sequence of `RunLineage` objects to a pandas `DataFrame`.
+
     The `RunLineage` objects are stored in the column `"lineage"`.
     The `DataFrame` is indexed by `(example_id, run_id)`.
 
@@ -112,6 +113,7 @@ def evaluation_lineages_to_pandas(
     ],
 ) -> pd.DataFrame:
     """Converts a sequence of `EvaluationLineage` objects to a pandas `DataFrame`.
+
     The `EvaluationLineage` objects are stored in the column `"lineage"`.
     The `DataFrame` is indexed by `(example_id, evaluation_id, run_id)`.
     Each `output` of every lineage will contribute one row in the `DataFrame`.
@@ -319,7 +321,6 @@ class RepositoryNavigator:
         Returns:
             The :class:`RunLineage` for the given run id and example id, `None` if the example or an output for the example does not exist.
         """
-
         run_overview = self._run_repository.run_overview(run_id)
         if run_overview is None:
             raise ValueError(f"Run repository does not contain a run with id {run_id}.")
@@ -365,7 +366,6 @@ class RepositoryNavigator:
             The :class:`EvaluationLineage` for the given evaluation id and example id.
             Returns `None` if the lineage is not complete because either an example, a run, or an evaluation does not exist.
         """
-
         if self._eval_repository is None:
             raise ValueError("Evaluation Repository is not set, but required.")
 

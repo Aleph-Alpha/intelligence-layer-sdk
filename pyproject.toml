@@ -100,7 +100,9 @@ select = [
     # ruf dependent checks
     "RUF",
     # bug bear
-    "B"
+    "B",
+    "D"
+
 
 ]
 # things i tried that didn't seem so useful: PD, T20(not yet), C90(eventually), PT (too opinionated)
@@ -112,8 +114,14 @@ ignore = [
     # unusual unicodes, next() instead of [0]
     "RUF001", "RUF015",
     # warnings should be self explanatory
-    "B028"
+    "B028",
+    # we do not docstring everything
+    "D1",
 ]
+extend-safe-fixes = ["D415"]
 
 [tool.ruff.lint.isort]
 known-first-party = ["intelligence_layer", "documentation"]
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"

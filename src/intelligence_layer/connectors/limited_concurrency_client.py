@@ -133,7 +133,7 @@ class LimitedConcurrencyClient:
     def from_env(
         cls, token: Optional[str] = None, host: Optional[str] = None
     ) -> "LimitedConcurrencyClient":
-        """This is a helper method to construct your client with default settings from a token and host
+        """This is a helper method to construct your client with default settings from a token and host.
 
         Args:
             token: An Aleph Alpha token to instantiate the client. If no token is provided,

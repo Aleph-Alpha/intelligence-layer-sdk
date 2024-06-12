@@ -119,7 +119,8 @@ def test_echo_works_with_whitespaces_in_expected_completion(
 
 
 def test_overlapping_tokens_generate_correct_tokens(echo_task: Echo) -> None:
-    """This test checks if the echo task correctly tokenizes the expected completion separately
+    """This test checks if the echo task correctly tokenizes the expected completion separately.
+
     The two tokens when tokenized together will result in a combination of the end of the first token
     and the start of the second token. This is not the expected behaviour.
 

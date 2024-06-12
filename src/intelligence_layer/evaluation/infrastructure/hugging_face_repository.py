@@ -8,7 +8,7 @@ from intelligence_layer.evaluation.infrastructure.file_system_based_repository i
 
 
 class HuggingFaceRepository(FileSystemBasedRepository):
-    """HuggingFace base repository"""
+    """HuggingFace base repository."""
 
     _REPO_TYPE = "dataset"
     _ROOT_DIRECTORY_PREFIX_ = "datasets"  # HuggingFace API root directory

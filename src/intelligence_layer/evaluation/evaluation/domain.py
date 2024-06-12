@@ -28,7 +28,7 @@ class FailedExampleEvaluation(BaseModel):
 
 
 class ExampleEvaluation(BaseModel, Generic[Evaluation]):
-    """Evaluation of a single evaluated :class:`Example`
+    """Evaluation of a single evaluated :class:`Example`.
 
     Created to persist the evaluation result in the repository.
 
