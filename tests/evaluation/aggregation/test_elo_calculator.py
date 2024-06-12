@@ -1,5 +1,5 @@
+from collections.abc import Sequence
 from itertools import combinations
-from typing import Sequence
 
 from pydantic import BaseModel
 from pytest import fixture
@@ -49,7 +49,7 @@ def test_elo_calculator_works(
             elo_calculator.ratings.items(), key=lambda item: item[1], reverse=True
         )
     }
-    assert [int(i) for i in players] == [int(i) for i in sorted_scores.keys()]
+    assert [int(i) for i in players] == [int(i) for i in sorted_scores]
     assert (
         round(sum(score for score in sorted_scores.values()) / len(sorted_scores), 0)
         == 1500
@@ -65,7 +65,7 @@ def test_win_rate_calculator_works(
     sorted_scores = {
         k: v for k, v in sorted(scores.items(), key=lambda item: item[1], reverse=True)
     }
-    assert [int(i) for i in players] == [int(i) for i in sorted_scores.keys()]
+    assert [int(i) for i in players] == [int(i) for i in sorted_scores]
     assert (
         round(
             sum(score for score in sorted_scores.values()) / len(sorted_scores),

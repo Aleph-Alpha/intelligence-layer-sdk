@@ -1,8 +1,8 @@
+from collections.abc import Callable
 from concurrent.futures import ThreadPoolExecutor
 from functools import wraps
 from threading import Lock
 from time import sleep
-from typing import Callable
 
 from intelligence_layer.core import (
     MAX_CONCURRENCY,
@@ -46,7 +46,7 @@ class DeadlockDetector(Task[None, None]):
             )
             # wait a bit to ensure the future has finished
             # (even if the InnerTasks of all DeadlockDetector tasks are scheduled sequentially)
-            for i in range(20):
+            for _ in range(20):
                 if future.done():
                     break
                 sleep(0.1)

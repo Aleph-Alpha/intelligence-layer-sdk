@@ -37,8 +37,8 @@ def recursive_counting_client() -> RecursiveCountingClient:
 
 @fixture
 def very_long_text() -> str:
-    with open(
-        Path(__file__).parent / "very_long_text.txt", "r", encoding="utf-8"
+    with (Path(__file__).parent / "very_long_text.txt").open(
+        mode="r", encoding="utf-8"
     ) as file:
         return file.read()
 

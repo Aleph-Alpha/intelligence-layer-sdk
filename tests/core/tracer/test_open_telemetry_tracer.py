@@ -1,6 +1,7 @@
 import json
 import time
-from typing import Any, Sequence
+from collections.abc import Sequence
+from typing import Any
 from uuid import uuid4
 
 import pytest
@@ -102,7 +103,7 @@ def test_open_telemetry_tracer_sets_attributes_correctly(
 
     assert spans_sorted_by_start[1].attributes is not None
     assert spans_sorted_by_start[1].name == "span"
-    assert "input" not in spans_sorted_by_start[1].attributes.keys()
+    assert "input" not in spans_sorted_by_start[1].attributes
     assert spans_sorted_by_start[1].attributes["type"] == SpanType.SPAN.value
     assert spans_sorted_by_start[1].status.is_ok
 
@@ -135,9 +136,8 @@ def test_open_telemetry_tracer_logs_error_code_correctly(
     exporter: DummyExporter,
     tracer_test_task: Task[str, str],
 ) -> None:
-    with pytest.raises(ValueError):
-        with test_opentelemetry_tracer.span("failing task"):
-            raise ValueError("my bad, sorry")
+    with pytest.raises(ValueError), test_opentelemetry_tracer.span("failing task"):
+        raise ValueError("my bad, sorry")
 
     spans = exporter.spans
     assert len(spans) == 1

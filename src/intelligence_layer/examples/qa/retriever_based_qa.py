@@ -1,5 +1,6 @@
 import warnings
-from typing import Generic, Optional, Sequence
+from collections.abc import Sequence
+from typing import Generic, Optional
 
 from pydantic import BaseModel
 
@@ -130,7 +131,7 @@ class RetrieverBasedQa(
                 id=input.id,
             )
             for answer, input in zip(
-                multi_chunk_qa_output.subanswers, sorted_search_output
+                multi_chunk_qa_output.subanswers, sorted_search_output, strict=True
             )
         ]
         correctly_formatted_output = RetrieverBasedQaOutput(

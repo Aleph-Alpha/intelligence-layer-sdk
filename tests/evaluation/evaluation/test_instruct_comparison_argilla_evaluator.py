@@ -1,6 +1,6 @@
 from collections import defaultdict
+from collections.abc import Iterable, Sequence
 from itertools import combinations
-from typing import Iterable, Sequence
 from uuid import uuid4
 
 from aleph_alpha_client import CompletionResponse

@@ -1,5 +1,6 @@
+from collections.abc import Callable, Iterable, Sequence
 from time import sleep
-from typing import Callable, Iterable, Sequence, TypeVar
+from typing import TypeVar
 from uuid import uuid4
 
 import pytest
@@ -36,13 +37,13 @@ ReturnValue = TypeVar("ReturnValue")
 def retry(
     f: Callable[[], ReturnValue], until: Callable[[ReturnValue], bool]
 ) -> ReturnValue:
-    i: int = 0
-    for i in range(10):
+    total_tries = 10
+    for _ in range(total_tries):
         r = f()
         if until(r):
             return r
         sleep(0.1)
-    assert False, f"Condition not met after {i} retries"
+    raise AssertionError(f"Condition not met after {total_tries} retries")
 
 
 @fixture
@@ -254,7 +255,9 @@ def test_split_dataset_works(
         )
 
     new_metadata_list = [record.metadata for record in all_records]
-    for old_metadata, new_metadata in zip(record_metadata, new_metadata_list):
+    for old_metadata, new_metadata in zip(
+        record_metadata, new_metadata_list, strict=True
+    ):
         del new_metadata["split"]  # type: ignore
         assert old_metadata == new_metadata
 
@@ -341,7 +344,7 @@ def test_add_record_does_not_put_example_id_into_metadata(
     argilla_client.add_record(qa_dataset_id, second_data)
     records = list(argilla_client.records(qa_dataset_id))
     for record in records:
-        assert "example_id" not in record.metadata.keys()
+        assert "example_id" not in record.metadata
         assert record.example_id == "0"
 
 
@@ -365,7 +368,9 @@ def test_split_dataset_can_split_long_dataset(
         )
 
     new_metadata_list = [record.metadata for record in all_records]
-    for old_metadata, new_metadata in zip(record_metadata, new_metadata_list):
+    for old_metadata, new_metadata in zip(
+        record_metadata, new_metadata_list, strict=True
+    ):
         del new_metadata["split"]  # type: ignore
         assert old_metadata == new_metadata
 

@@ -24,7 +24,7 @@ def model() -> ControlModel:
 @app.post("/classify")
 async def classify(
     classify_input: ClassifyInput,
-    luminous_control_model: LuminousControlModel = Depends(model),
+    luminous_control_model: LuminousControlModel = Depends(model),  # noqa: B008
 ) -> SingleLabelClassifyOutput:
     classify = PromptBasedClassify(luminous_control_model)
     classify_output = classify.run(classify_input, NoOpTracer())

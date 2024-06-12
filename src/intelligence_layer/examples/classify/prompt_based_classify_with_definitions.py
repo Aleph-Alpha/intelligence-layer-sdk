@@ -1,5 +1,5 @@
+from collections.abc import Sequence
 from math import exp
-from typing import Sequence
 
 from aleph_alpha_client import Prompt
 from pydantic import BaseModel

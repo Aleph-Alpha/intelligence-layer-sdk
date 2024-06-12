@@ -1,5 +1,6 @@
+from collections.abc import Sequence
 from datetime import datetime
-from typing import Optional, Sequence, Union
+from typing import Optional, Union
 from uuid import UUID
 
 import rich
@@ -32,7 +33,7 @@ class InMemoryTracer(Tracer):
     """
 
     def __init__(self) -> None:
-        self.entries: list[Union[LogEntry, "InMemoryTaskSpan", "InMemorySpan"]] = []
+        self.entries: list[Union[LogEntry, InMemoryTaskSpan, InMemorySpan]] = []
 
     def span(
         self,
@@ -63,7 +64,7 @@ class InMemoryTracer(Tracer):
         return child
 
     def _rich_render_(self) -> Tree:
-        """Renders the trace via classes in the `rich` package"""
+        """Renders the trace via classes in the `rich` package."""
         tree = Tree(label="Trace")
 
         for log in self.entries:
@@ -72,8 +73,7 @@ class InMemoryTracer(Tracer):
         return tree
 
     def _ipython_display_(self) -> None:
-        """Default rendering for Jupyter notebooks"""
-
+        """Default rendering for Jupyter notebooks."""
         if not self.submit_to_trace_viewer():
             rich.print(self._rich_render_())
 
@@ -144,7 +144,7 @@ class InMemorySpan(InMemoryTracer, Span):
         super().end(timestamp)
 
     def _rich_render_(self) -> Tree:
-        """Renders the trace via classes in the `rich` package"""
+        """Renders the trace via classes in the `rich` package."""
         tree = Tree(label=self.name)
 
         for log in self.entries:
@@ -232,7 +232,7 @@ class InMemoryTaskSpan(InMemorySpan, TaskSpan):
         return TaskSpanAttributes(input=self.input, output=self.output)
 
     def _rich_render_(self) -> Tree:
-        """Renders the trace via classes in the `rich` package"""
+        """Renders the trace via classes in the `rich` package."""
         tree = Tree(label=self.name)
 
         tree.add(_render_log_value(self.input, "Input"))
@@ -246,8 +246,7 @@ class InMemoryTaskSpan(InMemorySpan, TaskSpan):
 
 
 class LogEntry(BaseModel):
-    """An individual log entry, currently used to represent individual logs by the
-    `InMemoryTracer`.
+    """An individual log entry, currently used to represent individual logs by the `InMemoryTracer`.
 
     Attributes:
         message: A description of the value you are logging, such as the step in the task this
@@ -264,11 +263,11 @@ class LogEntry(BaseModel):
     trace_id: UUID
 
     def _rich_render_(self) -> Panel:
-        """Renders the trace via classes in the `rich` package"""
+        """Renders the trace via classes in the `rich` package."""
         return _render_log_value(self.value, self.message)
 
     def _ipython_display_(self) -> None:
-        """Default rendering for Jupyter notebooks"""
+        """Default rendering for Jupyter notebooks."""
         from rich import print
 
         print(self._rich_render_())

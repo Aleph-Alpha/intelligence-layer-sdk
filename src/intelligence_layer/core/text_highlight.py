@@ -1,5 +1,6 @@
 import itertools
-from typing import Iterable, Mapping, Sequence, cast
+from collections.abc import Iterable, Mapping, Sequence
+from typing import cast
 
 from aleph_alpha_client import (
     Prompt,
@@ -68,7 +69,7 @@ class TextPromptRange(PromptRange):
 
 
 class TextHighlight(Task[TextHighlightInput, TextHighlightOutput]):
-    """Generates text highlights given a prompt and completion.
+    r"""Generates text highlights given a prompt and completion.
 
     For a given prompt and target (completion), extracts the parts of the prompt responsible for generation.
     The prompt can only contain text. A range can be provided via use of the liquid language (see the example).
@@ -94,7 +95,7 @@ class TextHighlight(Task[TextHighlightInput, TextHighlightOutput]):
         >>> model = AlephAlphaModel(name="luminous-base")
         >>> text_highlight = TextHighlight(model=model)
         >>> prompt_template_str = (
-        ...		"{% promptrange r1 %}Question: What is 2 + 2?{% endpromptrange %}\\nAnswer:"
+        ...		"{% promptrange r1 %}Question: What is 2 + 2?{% endpromptrange %}\nAnswer:"
         ...	)
         >>> template = PromptTemplate(prompt_template_str)
         >>> rich_prompt = template.to_rich_prompt()
@@ -145,8 +146,10 @@ class TextHighlight(Task[TextHighlightInput, TextHighlightOutput]):
         return TextHighlightOutput(highlights=highlights)
 
     def _raise_on_incompatible_prompt(self, input: TextHighlightInput) -> None:
-        """Currently, the text highlight logic does not correctly deal with
-        multi item texts. This is a result of returning indices instead of text.
+        """Raises an error if the prompt contains anything other than text.
+
+        Currently, the text highlight task does not properly deal with multimodal prompts.
+        This is a result of returning indices instead of text.
         Therefore, we disable running text highlighting on prompts with more than one index
         for the moment. This also means we only deal with text items.
 
@@ -261,7 +264,9 @@ class TextHighlight(Task[TextHighlightInput, TextHighlightOutput]):
         new_relevant_text_scores: list[TextScore] = []
         for highlight in relevant_highlights:
 
-            def _get_overlap(range: TextPromptRange) -> int:
+            def _get_overlap(
+                range: TextPromptRange, highlight: TextScore = highlight
+            ) -> int:
                 return min(
                     highlight.start + highlight.length, range.end.position
                 ) - max(highlight.start, range.start.position)

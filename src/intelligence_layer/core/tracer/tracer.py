@@ -1,11 +1,12 @@
 import os
 import traceback
 from abc import ABC, abstractmethod
+from collections.abc import Mapping, Sequence
 from contextlib import AbstractContextManager
 from datetime import datetime, timezone
 from enum import Enum
 from types import TracebackType
-from typing import TYPE_CHECKING, Mapping, Optional, Sequence, Union
+from typing import TYPE_CHECKING, Optional, Union
 from uuid import UUID, uuid4
 
 import requests
@@ -45,7 +46,7 @@ else:
 
 
 def utc_now() -> datetime:
-    """return datetime object with utc timezone.
+    """Return datetime object with utc timezone.
 
     datetime.utcnow() returns a datetime object without timezone, so this function is preferred.
     """
@@ -100,7 +101,7 @@ ExportedSpanList = RootModel[Sequence[ExportedSpan]]
 
 
 def submit_to_trace_viewer(exported_spans: Sequence[ExportedSpan]) -> bool:
-    """Submits the trace to the UI for visualization
+    """Submits the trace to the UI for visualization.
 
     Args:
         exported_spans: The exported spans to submit to the trace viewer.
@@ -120,7 +121,6 @@ def submit_to_trace_viewer(exported_spans: Sequence[ExportedSpan]) -> bool:
             },
             json=ExportedSpanList(exported_spans).model_dump(mode="json"),
         )
-        print(res)
         if res.status_code != 200:
             raise requests.HTTPError(res.status_code)
         rich.print(
@@ -135,8 +135,7 @@ def submit_to_trace_viewer(exported_spans: Sequence[ExportedSpan]) -> bool:
 
 
 class Tracer(ABC):
-    """Provides a consistent way to instrument a :class:`Task` with logging for each step of the
-    workflow.
+    """Provides a consistent way to instrument a :class:`Task` with logging for each step of the workflow.
 
     A tracer needs to provide a way to collect an individual log, which should be serializable, and
     a way to generate nested spans, so that sub-tasks can emit logs that are grouped together.
@@ -219,7 +218,7 @@ class ErrorValue(BaseModel):
 
 
 class Span(Tracer, AbstractContextManager["Span"]):
-    """Captures a logical step within the overall workflow
+    """Captures a logical step within the overall workflow.
 
     Logs and other spans can be nested underneath.
 
@@ -242,10 +241,7 @@ class Span(Tracer, AbstractContextManager["Span"]):
             context: Context of the parent. Defaults to None.
         """
         span_id = uuid4()
-        if context is None:
-            trace_id = span_id
-        else:
-            trace_id = context.trace_id
+        trace_id = span_id if context is None else context.trace_id
         self.context = Context(trace_id=trace_id, span_id=span_id)
         self.status_code = SpanStatus.OK
         self._closed = False
@@ -280,8 +276,9 @@ class Span(Tracer, AbstractContextManager["Span"]):
 
     @abstractmethod
     def end(self, timestamp: Optional[datetime] = None) -> None:
-        """Marks the Span as closed, with the end time of the span. The Span should be regarded
-        as complete, and no further logging should happen with it.
+        """Marks the Span as closed and sets the end time.
+
+        The Span should be regarded as complete, and no further logging should happen with it.
 
         Ending a closed span in undefined behavior.
 
@@ -319,8 +316,10 @@ class TaskSpan(Span):
 
     @abstractmethod
     def record_output(self, output: PydanticSerializable) -> None:
-        """Record :class:`Task` output. Since a Context Manager can't provide this in the `__exit__`
-        method, output should be captured once it is generated.
+        """Record :class:`Task` output.
+
+        Since a Context Manager can't capture output in the `__exit__` method,
+        output should be captured once it is generated.
 
         Args:
             output: The output of the task that is being logged.

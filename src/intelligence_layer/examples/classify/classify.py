@@ -1,6 +1,7 @@
 import warnings
 from collections import defaultdict
-from typing import Iterable, Mapping, NewType, Sequence
+from collections.abc import Iterable, Mapping, Sequence
+from typing import NewType
 
 from pydantic import BaseModel
 
@@ -154,10 +155,7 @@ class SingleLabelClassifyEvaluationLogic(
             warnings.warn(warn_message, RuntimeWarning)
 
         predicted = output.sorted_scores[0][0]
-        if predicted == example.expected_output:
-            correct = True
-        else:
-            correct = False
+        correct = predicted == example.expected_output
         return SingleLabelClassifyEvaluation(
             correct=correct,
             predicted=predicted,

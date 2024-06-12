@@ -20,12 +20,12 @@ class FailedExampleRun(BaseModel):
     @staticmethod
     def from_exception(exception: Exception) -> "FailedExampleRun":
         return FailedExampleRun(
-            error_message=f"{type(exception).__qualname__}: {str(exception)}\n{traceback.format_exc()}"
+            error_message=f"{type(exception).__qualname__}: {exception}\n{traceback.format_exc()}"
         )
 
 
 class ExampleOutput(BaseModel, Generic[Output]):
-    """Output of a single evaluated :class:`Example`
+    """Output of a single evaluated :class:`Example`.
 
     Created to persist the output (including failures) of an individual example in the repository.
 
@@ -62,7 +62,7 @@ class ExampleOutput(BaseModel, Generic[Output]):
 
 
 class SuccessfulExampleOutput(BaseModel, Generic[Output]):
-    """Successful output of a single evaluated :class:`Example`
+    """Successful output of a single evaluated :class:`Example`.
 
     Attributes:
         run_id: Identifier of the run that created the output.

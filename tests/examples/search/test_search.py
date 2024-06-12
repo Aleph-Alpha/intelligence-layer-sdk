@@ -1,5 +1,5 @@
+from collections.abc import Sequence
 from statistics import mean
-from typing import Sequence
 
 from pytest import fixture
 

@@ -1,4 +1,5 @@
-from typing import Iterable, Mapping, Optional, Sequence
+from collections.abc import Iterable, Mapping, Sequence
+from typing import Optional
 
 from pydantic import BaseModel
 
@@ -201,7 +202,7 @@ class MultipleChunkQa(Task[MultipleChunkQaInput, MultipleChunkQaOutput]):
                     chunk=chunk,
                     highlights=qa_output.highlights,
                 )
-                for qa_output, chunk in zip(qa_outputs, input.chunks)
+                for qa_output, chunk in zip(qa_outputs, input.chunks, strict=True)
                 if qa_output.answer
             ],
         )

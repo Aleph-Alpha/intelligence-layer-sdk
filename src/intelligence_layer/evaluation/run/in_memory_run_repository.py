@@ -1,5 +1,6 @@
 from collections import defaultdict
-from typing import Iterable, Optional, Sequence, cast
+from collections.abc import Iterable, Sequence
+from typing import Optional, cast
 
 from intelligence_layer.core import InMemoryTracer, Output, PydanticSerializable
 from intelligence_layer.core.tracer.tracer import Tracer
@@ -17,7 +18,7 @@ class InMemoryRunRepository(RunRepository):
 
     def store_run_overview(self, overview: RunOverview) -> None:
         self._run_overviews[overview.id] = overview
-        if overview.id not in self._example_outputs.keys():
+        if overview.id not in self._example_outputs:
             self._example_outputs[overview.id] = []
 
     def run_overview(self, run_id: str) -> Optional[RunOverview]:
@@ -34,10 +35,10 @@ class InMemoryRunRepository(RunRepository):
     def example_output(
         self, run_id: str, example_id: str, output_type: type[Output]
     ) -> Optional[ExampleOutput[Output]]:
-        if run_id not in self._example_outputs.keys():
+        if run_id not in self._example_outputs:
             raise ValueError(f"Repository does not contain a run with id: {run_id}")
 
-        if run_id not in self._example_outputs.keys():
+        if run_id not in self._example_outputs:
             return None
 
         for example_output in self._example_outputs[run_id]:
@@ -56,7 +57,7 @@ class InMemoryRunRepository(RunRepository):
     def example_outputs(
         self, run_id: str, output_type: type[Output]
     ) -> Iterable[ExampleOutput[Output]]:
-        if run_id not in self._run_overviews.keys():
+        if run_id not in self._run_overviews:
             raise ValueError(f"Repository does not contain a run with id: {run_id}")
 
         return (

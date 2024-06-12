@@ -1,8 +1,9 @@
 from argparse import ArgumentParser, Namespace
+from collections.abc import Sequence
 from importlib import import_module
 from pathlib import Path
 from sys import argv
-from typing import Any, Sequence
+from typing import Any
 
 from dotenv import load_dotenv
 

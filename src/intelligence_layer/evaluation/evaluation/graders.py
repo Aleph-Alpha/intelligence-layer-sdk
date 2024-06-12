@@ -1,6 +1,6 @@
 import math
+from collections.abc import Sequence
 from dataclasses import dataclass
-from typing import List, Sequence, Tuple
 
 from lingua import LanguageDetectorBuilder
 from rouge_score import rouge_scorer  # type: ignore
@@ -81,6 +81,7 @@ class LanguageMatchesGrader:
 
     def languages_match(self, input: str, output: str) -> bool:
         """Calculates if the input and output text are of the same language.
+
         The length of the texts and its sentences should be reasonably long in order for good performance.
 
         Args:
@@ -91,7 +92,6 @@ class LanguageMatchesGrader:
             bool: whether input and output language match
                   returns true if clear input language is not determinable
         """
-
         dominant_input_language = self._get_dominant_language(input)
 
         if dominant_input_language is None:
@@ -148,11 +148,11 @@ class IndexRange:
     stop: int
 
 
-_HighlightRange = List[IndexRange]
+_HighlightRange = list[IndexRange]
 
 
 class HighlightCoverageGrader:
-    """Evaluates how well the generated highlights match the expected highlights (via precision, recall and f1-score)
+    """Evaluates how well the generated highlights match the expected highlights (via precision, recall and f1-score).
 
     Args:
         beta_factor: factor to control weight of precision (0 <= beta < 1) vs. recall (beta > 1) when computing the f-score
@@ -165,10 +165,10 @@ class HighlightCoverageGrader:
 
     def compute_fscores(
         self,
-        generated_highlight_indices: Sequence[Tuple[int, int]],
-        expected_highlight_indices: Sequence[Tuple[int, int]],
+        generated_highlight_indices: Sequence[tuple[int, int]],
+        expected_highlight_indices: Sequence[tuple[int, int]],
     ) -> FScores:
-        """Calculates how well the generated highlight ranges match the expected ones
+        """Calculates how well the generated highlight ranges match the expected ones.
 
         Args:
             generated_highlight_indices: list of tuples(start, end) of the generated highlights
@@ -178,7 +178,6 @@ class HighlightCoverageGrader:
             FScores, which contains precision, recall and f-score metrics, all will be floats between 0 and 1,
             where 1 means perfect match and 0 no overlap
         """
-
         generated_highlight_ranges: _HighlightRange = [
             IndexRange(el[0], el[1]) for el in generated_highlight_indices
         ]
@@ -231,7 +230,7 @@ class HighlightCoverageGrader:
     @staticmethod
     def _identify_overlap_ranges(
         generated_highlights: _HighlightRange, expected_highlights: _HighlightRange
-    ) -> Tuple[_HighlightRange, _HighlightRange, _HighlightRange]:
+    ) -> tuple[_HighlightRange, _HighlightRange, _HighlightRange]:
         max_index: int = max(
             index_range.stop
             for index_range in generated_highlights + expected_highlights
@@ -255,7 +254,9 @@ class HighlightCoverageGrader:
         for index, (
             generated_highlight_present,
             expected_highlight_present,
-        ) in enumerate(zip(gen_highlight_present_array, exp_highlight_present_array)):
+        ) in enumerate(
+            zip(gen_highlight_present_array, exp_highlight_present_array, strict=True)
+        ):
             if generated_highlight_present and expected_highlight_present:
                 current_range = HighlightCoverageGrader._increase_current_range_by_one(
                     current_range, index

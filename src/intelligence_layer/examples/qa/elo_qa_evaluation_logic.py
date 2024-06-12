@@ -1,5 +1,6 @@
 import math
-from typing import Mapping, Sequence
+from collections.abc import Mapping, Sequence
+from typing import ClassVar
 
 from aleph_alpha_client import Prompt
 from liquid import Template
@@ -42,7 +43,7 @@ Answer B:{second_completion}
 Which answer is more correct given the Instruction and Evaluation Procedure, Answer A or Answer B?
 
 Response: Answer """
-    VALUES = [
+    VALUES: ClassVar[list[str]] = [
         " A",
         " B",
     ]  # The space before the A and B is important due to tokenization
@@ -50,11 +51,11 @@ Response: Answer """
     def __init__(
         self,
         model: ControlModel,
-        tracer: Tracer = NoOpTracer(),
+        tracer: Tracer | None = None,
     ):
         super().__init__()
         self._model = model
-        self.tracer = tracer
+        self.tracer = tracer if tracer else NoOpTracer()
 
     def grade(
         self,
@@ -132,7 +133,7 @@ Response: Answer """
         def categorize_value(value: float) -> MatchOutcome:
             if value > 0.7:
                 return MatchOutcome.A_WINS
-            elif 0.3 > value:
+            elif value < 0.3:
                 return MatchOutcome.B_WINS
             else:
                 return MatchOutcome.DRAW

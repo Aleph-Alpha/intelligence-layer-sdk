@@ -1,6 +1,7 @@
 import math
 import re
-from typing import Iterable, Mapping, Optional, Sequence
+from collections.abc import Iterable, Mapping, Sequence
+from typing import Optional
 
 from aleph_alpha_client import Tokens
 from pydantic import BaseModel
@@ -117,7 +118,7 @@ Reply with only the class label."""
         outputs = self._echo_task.run_concurrently(inputs, task_span)
         return {
             label: output.tokens_with_log_probs
-            for label, output in zip(labels, outputs)
+            for label, output in zip(labels, outputs, strict=True)
         }
 
     def _prepare_label_for_echo_task(self, label: str) -> str:
@@ -171,12 +172,13 @@ class TreeNode:
         return next((child for child in self.children if child.token == token), None)
 
     def insert_without_calculation(self, path: Sequence[TokenWithProb]) -> None:
-        """Inserts a path into the tree without changing the original probability
+        """Inserts a path into the tree without changing the original probability.
 
         Args:
             path: Path to insert
 
-        Temporarily here until we change this data structure to be more versatile"""
+        Temporarily here until we change this data structure to be more versatile
+        """
         if not path:
             return
         token_with_prob = path[0]

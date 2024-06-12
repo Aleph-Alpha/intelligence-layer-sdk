@@ -1,4 +1,5 @@
-from typing import Generic, Iterable, Optional, TypeVar
+from collections.abc import Iterable
+from typing import Generic, Optional, TypeVar
 
 import pytest
 from pydantic import BaseModel

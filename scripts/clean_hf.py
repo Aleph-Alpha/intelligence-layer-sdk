@@ -11,7 +11,7 @@ def clean_up_dangling_hf_repos(hugging_face_token: str) -> None:
         api.list_datasets(author="Aleph-Alpha", dataset_name="IL-temp-tests")
     )
     if len(datasets) > 0:
-        warnings.warn("dangling hf datasets found, attempting to delete")
+        warnings.warn("dangling hf datasets found, attempting to delete", stacklevel=2)
     for dataset in datasets:
         api.delete_repo(dataset.id, repo_type="dataset", missing_ok=True)
 

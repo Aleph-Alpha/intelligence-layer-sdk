@@ -1,5 +1,5 @@
+from collections.abc import Iterable
 from itertools import chain
-from typing import Iterable
 from uuid import uuid4
 
 import pytest

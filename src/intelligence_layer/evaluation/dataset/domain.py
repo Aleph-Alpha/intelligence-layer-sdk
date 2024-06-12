@@ -55,7 +55,7 @@ class Example(BaseModel, Generic[Input, ExpectedOutput]):
 
 
 class Dataset(BaseModel):
-    """Represents a dataset linked to multiple examples
+    """Represents a dataset linked to multiple examples.
 
     Attributes:
         id: Dataset ID.

@@ -1,5 +1,5 @@
+from collections.abc import Iterable, Sequence
 from pathlib import Path
-from typing import Iterable, List, Sequence
 from uuid import uuid4
 
 from pytest import fixture
@@ -78,7 +78,7 @@ def embedding_based_classify(
 
 
 @fixture
-def embedding_based_classify_example() -> List[Example[ClassifyInput, Sequence[str]]]:
+def embedding_based_classify_example() -> list[Example[ClassifyInput, Sequence[str]]]:
     return [
         Example(
             input=ClassifyInput(
@@ -92,9 +92,10 @@ def embedding_based_classify_example() -> List[Example[ClassifyInput, Sequence[s
 
 @fixture
 def embedding_based_classify_examples(
-    embedding_based_classify_example: List[Example[ClassifyInput, Sequence[str]]],
-) -> List[Example[ClassifyInput, Sequence[str]]]:
-    return embedding_based_classify_example + [
+    embedding_based_classify_example: list[Example[ClassifyInput, Sequence[str]]],
+) -> list[Example[ClassifyInput, Sequence[str]]]:
+    return [
+        *embedding_based_classify_example,
         Example(
             input=ClassifyInput(
                 chunk=TextChunk("My university banking class really sucks."),

@@ -1,9 +1,9 @@
+from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
-from typing import Mapping, Optional, Sequence, TypeVar
+from typing import ClassVar, Optional, TypeVar
 
-from lingua import ConfidenceValue, IsoCode639_1
+from lingua import ConfidenceValue, IsoCode639_1, LanguageDetectorBuilder
 from lingua import Language as LinguaLanguage
-from lingua import LanguageDetectorBuilder
 from pycountry import languages
 from pydantic import BaseModel
 
@@ -12,7 +12,7 @@ from intelligence_layer.core.tracer.tracer import TaskSpan
 
 
 class LanguageNotSupportedError(ValueError):
-    """Raised in case language in the input is not compatible with the languages supported in the task"""
+    """Raised in case language in the input is not compatible with the languages supported in the task."""
 
 
 Config = TypeVar("Config")
@@ -32,7 +32,7 @@ class Language:
         config = configs.get(self)
         if config is None:
             raise LanguageNotSupportedError(
-                f"{self.iso_639_1} not in ({', '.join(lang.iso_639_1 for lang in configs.keys())})"
+                f"{self.iso_639_1} not in ({', '.join(lang.iso_639_1 for lang in configs)})"
             )
         return config
 
@@ -97,7 +97,7 @@ class DetectLanguage(Task[DetectLanguageInput, DetectLanguageOutput]):
         >>> output = task.run(input, InMemoryTracer())
     """
 
-    AVAILABLE_LANGUAGES = [
+    AVAILABLE_LANGUAGES: ClassVar[list[LinguaLanguage]] = [
         LinguaLanguage.GERMAN,
         LinguaLanguage.ENGLISH,
         LinguaLanguage.ITALIAN,

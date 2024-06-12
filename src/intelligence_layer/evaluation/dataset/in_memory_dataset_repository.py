@@ -1,4 +1,5 @@
-from typing import Iterable, Optional, Sequence, Tuple, cast
+from collections.abc import Iterable, Sequence
+from typing import Optional, cast
 
 from intelligence_layer.core import Input, PydanticSerializable
 from intelligence_layer.evaluation.dataset.dataset_repository import DatasetRepository
@@ -13,7 +14,7 @@ class InMemoryDatasetRepository(DatasetRepository):
     def __init__(self) -> None:
         self._datasets_and_examples: dict[
             str,
-            Tuple[
+            tuple[
                 Dataset, Sequence[Example[PydanticSerializable, PydanticSerializable]]
             ],
         ] = {}
@@ -68,7 +69,7 @@ class InMemoryDatasetRepository(DatasetRepository):
         input_type: type[Input],
         expected_output_type: type[ExpectedOutput],
     ) -> Iterable[Example[Input, ExpectedOutput]]:
-        if dataset_id not in self._datasets_and_examples.keys():
+        if dataset_id not in self._datasets_and_examples:
             raise ValueError(
                 f"Repository does not contain a dataset with id: {dataset_id}"
             )

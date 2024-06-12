@@ -1,11 +1,11 @@
-from abc import ABC
+from collections.abc import Sequence
 from pathlib import Path
-from typing import Sequence, cast
+from typing import cast
 
 from fsspec import AbstractFileSystem  # type: ignore
 
 
-class FileSystemBasedRepository(ABC):
+class FileSystemBasedRepository:
     """An :class:`FileBasedRepository` that stores evaluation results in files.
 
     Args:
@@ -54,6 +54,7 @@ class FileSystemBasedRepository(ABC):
 
         Args:
             path: Given Path that should be converted.
+
         Returns:
             String representation of the given Path.
         """

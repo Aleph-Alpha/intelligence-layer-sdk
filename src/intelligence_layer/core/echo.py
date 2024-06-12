@@ -1,4 +1,5 @@
-from typing import NewType, Sequence
+from collections.abc import Sequence
+from typing import NewType
 
 from aleph_alpha_client import Prompt, Tokens
 from pydantic import BaseModel

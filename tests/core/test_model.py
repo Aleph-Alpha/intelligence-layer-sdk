@@ -1,5 +1,6 @@
 import random
-from typing import Any, Mapping, Sequence
+from collections.abc import Mapping, Sequence
+from typing import Any
 
 import pytest
 from aleph_alpha_client import Prompt, PromptGranularity, Text

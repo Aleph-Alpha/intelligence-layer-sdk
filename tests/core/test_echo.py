@@ -1,4 +1,5 @@
-from typing import Literal, Sequence
+from collections.abc import Sequence
+from typing import Literal
 
 import tokenizers  # type: ignore
 from aleph_alpha_client import CompletionResponse, Prompt, Text, Tokens
@@ -95,7 +96,7 @@ def test_can_run_echo_task(echo_task: Echo, echo_input: EchoInput) -> None:
     tokens = tokenize_completion(echo_input.expected_completion, echo_task._model)
     assert len(tokens) == len(result.tokens_with_log_probs)
     assert all([isinstance(t, TokenWithLogProb) for t in result.tokens_with_log_probs])
-    for token, result_token in zip(tokens, result.tokens_with_log_probs):
+    for token, result_token in zip(tokens, result.tokens_with_log_probs, strict=True):
         assert token == result_token.token
 
 
@@ -113,12 +114,13 @@ def test_echo_works_with_whitespaces_in_expected_completion(
 
     assert len(tokens) == len(result.tokens_with_log_probs)
     assert all([isinstance(t, TokenWithLogProb) for t in result.tokens_with_log_probs])
-    for token, result_token in zip(tokens, result.tokens_with_log_probs):
+    for token, result_token in zip(tokens, result.tokens_with_log_probs, strict=True):
         assert token == result_token.token
 
 
 def test_overlapping_tokens_generate_correct_tokens(echo_task: Echo) -> None:
-    """This test checks if the echo task correctly tokenizes the expected completion separately
+    """This test checks if the echo task correctly tokenizes the expected completion separately.
+
     The two tokens when tokenized together will result in a combination of the end of the first token
     and the start of the second token. This is not the expected behaviour.
 
@@ -141,7 +143,7 @@ def test_overlapping_tokens_generate_correct_tokens(echo_task: Echo) -> None:
     assert len(tokens) == len(result.tokens_with_log_probs)
 
     assert all([isinstance(t, TokenWithLogProb) for t in result.tokens_with_log_probs])
-    for token, result_token in zip(tokens, result.tokens_with_log_probs):
+    for token, result_token in zip(tokens, result.tokens_with_log_probs, strict=True):
         assert token == result_token.token
 
 

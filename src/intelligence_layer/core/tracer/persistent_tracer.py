@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
+from collections.abc import Iterable, Sequence
 from datetime import datetime
-from typing import Iterable, Optional, Sequence
+from typing import Optional
 from uuid import UUID, uuid4
 
 from pydantic import BaseModel, SerializeAsAny

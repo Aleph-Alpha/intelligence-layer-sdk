@@ -1,5 +1,6 @@
 from collections import defaultdict
-from typing import Optional, Sequence, cast
+from collections.abc import Sequence
+from typing import Optional, cast
 
 from pydantic import BaseModel
 
@@ -31,7 +32,7 @@ class InMemoryEvaluationRepository(EvaluationRepository):
 
     def store_evaluation_overview(self, overview: EvaluationOverview) -> None:
         self._evaluation_overviews[overview.id] = overview
-        if overview.id not in self._example_evaluations.keys():
+        if overview.id not in self._example_evaluations:
             self._example_evaluations[overview.id] = []
 
     def evaluation_overview(self, evaluation_id: str) -> Optional[EvaluationOverview]:
@@ -55,7 +56,7 @@ class InMemoryEvaluationRepository(EvaluationRepository):
     def example_evaluations(
         self, evaluation_id: str, evaluation_type: type[Evaluation]
     ) -> Sequence[ExampleEvaluation[Evaluation]]:
-        if evaluation_id not in self._example_evaluations.keys():
+        if evaluation_id not in self._example_evaluations:
             raise ValueError(
                 f"Repository does not contain an evaluation with id: {evaluation_id}"
             )
@@ -80,7 +81,7 @@ class AsyncInMemoryEvaluationRepository(
         self, overview: PartialEvaluationOverview
     ) -> None:
         self._partial_evaluation_overviews[overview.id] = overview
-        if overview.id not in self._example_evaluations.keys():
+        if overview.id not in self._example_evaluations:
             self._example_evaluations[overview.id] = []
 
     def partial_evaluation_overview(

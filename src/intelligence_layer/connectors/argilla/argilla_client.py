@@ -1,24 +1,20 @@
 import itertools
 import os
 from abc import ABC, abstractmethod
+from collections.abc import Callable, Iterable, Mapping, Sequence
 from http import HTTPStatus
 from itertools import chain, count, islice
 from typing import (
     Any,
-    Callable,
-    Iterable,
-    Mapping,
     Optional,
-    Sequence,
     TypeVar,
     Union,
     cast,
 )
 from uuid import uuid4
 
-from pydantic import BaseModel
+from pydantic import BaseModel, computed_field
 from pydantic import Field as PydanticField
-from pydantic import computed_field
 from requests import HTTPError, Session
 from requests.adapters import HTTPAdapter
 from requests.structures import CaseInsensitiveDict
@@ -161,6 +157,7 @@ class ArgillaClient(ABC):
             dataset_name: the name of the feedback-dataset to be created.
             fields: all fields of this dataset.
             questions: all questions for this dataset.
+
         Returns:
             The id of the created dataset.
         """
@@ -182,6 +179,7 @@ class ArgillaClient(ABC):
             dataset_name: the name of the feedback-dataset to be created.
             fields: all fields of this dataset.
             questions: all questions for this dataset.
+
         Returns:
             The id of the dataset to be retrieved .
         """
@@ -213,6 +211,7 @@ class ArgillaClient(ABC):
 
         Args:
             dataset_id: the id of the dataset.
+
         Returns:
             An `Iterable` over all human-evaluated evaluations for the given dataset.
         """
@@ -269,10 +268,11 @@ class DefaultArgillaClient(ArgillaClient):
         self.session.mount("http://", adapter)
 
     def ensure_workspace_exists(self, workspace_name: str) -> str:
-        """Retrieves the id of an argilla workspace with specified name or creates a new workspace if necessary
+        """Retrieves the id of an argilla workspace with specified name or creates a new workspace if necessary.
 
         Args:
             workspace_name: the name of the workspace to be retrieved or created.
+
         Returns:
             The id of an argilla workspace with the given `workspace_name`.
         """
@@ -316,7 +316,7 @@ class DefaultArgillaClient(ArgillaClient):
                 raise ValueError(
                     f"Cannot create dataset with name '{dataset_name}', either the given dataset name, already exists"
                     f"or field name or question name are duplicates."
-                )
+                ) from e
             raise e
 
     def ensure_dataset_exists(
@@ -349,13 +349,15 @@ class DefaultArgillaClient(ArgillaClient):
         for field in fields:
             self._ignore_failure_status(
                 frozenset([HTTPStatus.CONFLICT]),
-                lambda: self._create_field(field.name, field.title, dataset_id),
+                lambda field=field: self._create_field(
+                    field.name, field.title, dataset_id
+                ),
             )
 
         for question in questions:
             self._ignore_failure_status(
                 frozenset([HTTPStatus.CONFLICT]),
-                lambda: self._create_question(
+                lambda question=question: self._create_question(
                     question.name,
                     question.title,
                     question.description,
@@ -370,7 +372,7 @@ class DefaultArgillaClient(ArgillaClient):
         return dataset_id
 
     def _ignore_failure_status(
-        self, expected_failure: frozenset[HTTPStatus], f: Callable[[], None]
+        self, expected_failure: frozenset[HTTPStatus], f: Callable[..., None]
     ) -> None:
         try:
             f()
@@ -446,7 +448,7 @@ class DefaultArgillaClient(ArgillaClient):
     def _add_split_to_records(self, dataset_id: str, n_splits: int) -> None:
         records = self._list_records(dataset_id)
         splits = itertools.cycle(range(n_splits))
-        records_and_splits = zip(records, splits)
+        records_and_splits = zip(records, splits, strict=False)
 
         def chunks(
             iterator: Iterable[tuple[Mapping[str, Any], int]], size: int

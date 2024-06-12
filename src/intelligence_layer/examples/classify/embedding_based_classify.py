@@ -1,5 +1,5 @@
 import statistics
-from typing import Sequence
+from collections.abc import Sequence
 
 from pydantic import BaseModel
 from qdrant_client.http.models import models
@@ -188,7 +188,10 @@ class EmbeddingBasedClassify(Task[ClassifyInput, MultiLabelClassifyOutput]):
         ]
         scores = self._calculate_scores(results_per_label)
         return MultiLabelClassifyOutput(
-            scores={lang: Probability(s) for lang, s in zip(input.labels, scores)}
+            scores={
+                lang: Probability(s)
+                for lang, s in zip(input.labels, scores, strict=True)
+            }
         )
 
     def _labels_with_examples_to_documents(

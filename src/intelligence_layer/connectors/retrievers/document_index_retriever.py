@@ -1,4 +1,4 @@
-from typing import Sequence
+from collections.abc import Sequence
 
 from intelligence_layer.connectors.document_index.document_index import (
     CollectionPath,

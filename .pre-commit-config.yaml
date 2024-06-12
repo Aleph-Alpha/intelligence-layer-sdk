@@ -7,22 +7,6 @@ repos:
         files: .json
         args:
           - --autofix
-      - id: end-of-file-fixer
-      - id: trailing-whitespace
-  - repo: https://github.com/pycqa/isort
-    rev: 5.13.2
-    hooks:
-      - id: isort
-        name: isort (python)
-        args: ["--filter-files"]
-        verbose: true
-  - repo: https://github.com/nbQA-dev/nbQA
-    rev: 1.8.5
-    hooks:
-      - id: nbqa-isort
-        name: isort (nbs)
-        args: ["--filter-files"]
-        additional_dependencies: [isort]
   - repo: https://github.com/astral-sh/ruff-pre-commit
     # Ruff version.
     rev: v0.3.5

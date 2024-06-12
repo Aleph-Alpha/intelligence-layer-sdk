@@ -221,7 +221,7 @@ def test_spans_cannot_be_used_as_context_twice(
     span = tracer.span("name")
     with span:
         pass
-    with pytest.raises(Exception):
+    with pytest.raises(ValueError):  # noqa: SIM117
         with span:
             pass
 
@@ -275,7 +275,7 @@ def test_tracer_can_not_log_on_closed_span(
     span.log("test_message", "test_body")
     span.end()
     # not ok
-    with pytest.raises(Exception):
+    with pytest.raises(RuntimeError):
         span.log("test_message", "test_body")
 
     span = tracer.span("name")
@@ -283,5 +283,5 @@ def test_tracer_can_not_log_on_closed_span(
     with span:
         span.log("test_message", "test_body")
     # not ok
-    with pytest.raises(Exception):
+    with pytest.raises(RuntimeError):
         span.log("test_message", "test_body")

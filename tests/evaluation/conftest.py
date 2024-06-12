@@ -1,6 +1,6 @@
+from collections.abc import Iterable, Sequence
 from os import getenv
 from pathlib import Path
-from typing import Iterable, Sequence
 from uuid import uuid4
 
 from dotenv import load_dotenv
@@ -152,7 +152,7 @@ def temp_file_system() -> Iterable[MemoryFileSystem]:
 
 @fixture(scope="session")
 def hugging_face_test_repository_id() -> str:
-    return f"Aleph-Alpha/IL-temp-tests-{str(uuid4())}"
+    return f"Aleph-Alpha/IL-temp-tests-{uuid4()}"
 
 
 @fixture(scope="session")

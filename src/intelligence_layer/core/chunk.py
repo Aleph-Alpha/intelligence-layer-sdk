@@ -1,4 +1,5 @@
-from typing import NewType, Sequence
+from collections.abc import Sequence
+from typing import NewType
 
 from pydantic import BaseModel
 from semantic_text_splitter import TextSplitter

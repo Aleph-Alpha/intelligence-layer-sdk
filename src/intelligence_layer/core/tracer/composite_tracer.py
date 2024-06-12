@@ -1,5 +1,6 @@
+from collections.abc import Sequence
 from datetime import datetime
-from typing import Generic, Optional, Sequence, TypeVar
+from typing import Generic, Optional, TypeVar
 
 from intelligence_layer.core.tracer.tracer import (
     Context,

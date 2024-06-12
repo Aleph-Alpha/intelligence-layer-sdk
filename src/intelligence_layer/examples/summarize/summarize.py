@@ -1,4 +1,5 @@
-from typing import Iterable, Sequence, Union
+from collections.abc import Iterable, Sequence
+from typing import Union
 
 from pydantic import BaseModel
 
@@ -89,6 +90,7 @@ class SummarizeEvaluation(BaseModel):
 
 class AggregatedSummarizeEvaluation(BaseModel):
     """The aggregated evaluation of a summarization implementation against a dataset.
+
     Attributes:
         aggregate_bleu: average over BLEU-scores
         aggregate_rouge: average over ROUGE-scores

@@ -1,4 +1,5 @@
-from typing import Mapping, Optional, Sequence
+from collections.abc import Mapping, Sequence
+from typing import Optional
 
 from liquid import Template
 from pydantic import BaseModel

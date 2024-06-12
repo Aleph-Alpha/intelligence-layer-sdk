@@ -1,4 +1,5 @@
-from typing import Generic, Mapping, Optional, Sequence
+from collections.abc import Mapping, Sequence
+from typing import Generic, Optional
 
 from pydantic import BaseModel
 
@@ -142,7 +143,7 @@ class MultipleChunkRetrieverQa(
                     highlights=highlights,
                 )
                 for enriched_chunk, highlights in zip(
-                    chunks_to_insert, highlights_per_chunk
+                    chunks_to_insert, highlights_per_chunk, strict=True
                 )
             ],
             search_results=sorted_search_results,

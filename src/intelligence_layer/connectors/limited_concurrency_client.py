@@ -1,9 +1,10 @@
 import time
 import warnings
+from collections.abc import Callable, Mapping, Sequence
 from functools import lru_cache
 from os import getenv
 from threading import Semaphore
-from typing import Any, Callable, Mapping, Optional, Protocol, Sequence, TypeVar
+from typing import Any, Optional, Protocol, TypeVar
 
 from aleph_alpha_client import (
     BatchSemanticEmbeddingRequest,
@@ -121,7 +122,7 @@ class LimitedConcurrencyClient:
         capped_max_concurrency = min(limit_for_max_concurrency, max_concurrency)
         if max_concurrency > capped_max_concurrency:
             warnings.warn(
-                f"Selected a value greater than the maximum allowed number. max_concurrency will be reduced to {limit_for_max_concurrency}."
+                f"Selected a value greater than the maximum allowed number. max_concurrency will be reduced to {limit_for_max_concurrency}.",
             )
         self._concurrency_limit_semaphore = Semaphore(capped_max_concurrency)
 
@@ -132,7 +133,7 @@ class LimitedConcurrencyClient:
     def from_env(
         cls, token: Optional[str] = None, host: Optional[str] = None
     ) -> "LimitedConcurrencyClient":
-        """This is a helper method to construct your client with default settings from a token and host
+        """This is a helper method to construct your client with default settings from a token and host.
 
         Args:
             token: An Aleph Alpha token to instantiate the client. If no token is provided,

@@ -42,7 +42,7 @@ def test_file_tracer_handles_tracer_log_entry_failed_exception(
     try:
         file_tracer.task_span(task_name="mock_task_name", input="42", timestamp=None)
     except Exception as exception:
-        assert False, f"'Unexpected exception: {exception}"
+        raise AssertionError(f"'Unexpected exception: {exception}") from None
 
 
 def test_file_tracer_raises_non_log_entry_failed_exceptions(

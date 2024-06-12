@@ -1,5 +1,6 @@
+from collections.abc import Iterable, Sequence
 from datetime import datetime
-from typing import Generic, Iterable, Sequence, TypeVar
+from typing import Generic, TypeVar
 
 from pydantic import BaseModel, SerializeAsAny
 

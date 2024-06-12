@@ -23,12 +23,12 @@ class FailedExampleEvaluation(BaseModel):
     @staticmethod
     def from_exception(exception: Exception) -> "FailedExampleEvaluation":
         return FailedExampleEvaluation(
-            error_message=f"{type(exception)}: {str(exception)}\n{traceback.format_exc()}"
+            error_message=f"{type(exception)}: {exception}\n{traceback.format_exc()}"
         )
 
 
 class ExampleEvaluation(BaseModel, Generic[Evaluation]):
-    """Evaluation of a single evaluated :class:`Example`
+    """Evaluation of a single evaluated :class:`Example`.
 
     Created to persist the evaluation result in the repository.
 

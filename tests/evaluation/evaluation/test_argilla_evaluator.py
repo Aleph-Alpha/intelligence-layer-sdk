@@ -1,5 +1,6 @@
 import random
-from typing import Iterable, Sequence
+from collections.abc import Iterable, Sequence
+from typing import ClassVar
 from uuid import uuid4
 
 import pytest
@@ -40,7 +41,7 @@ class StubArgillaClient(ArgillaClient):
     _expected_workspace_id: str
     _expected_fields: Sequence[Field]
     _expected_questions: Sequence[RatingQuestion]
-    _datasets: dict[str, list[RecordData]] = {}
+    _datasets: ClassVar[dict[str, list[RecordData]]] = {}
     _score = 3.0
 
     def create_dataset(
@@ -174,7 +175,7 @@ class DummyArgillaClient(ArgillaClient):
         return dataset_id
 
     def add_record(self, dataset_id: str, record: RecordData) -> None:
-        if dataset_id not in self._datasets.keys():
+        if dataset_id not in self._datasets:
             raise Exception("Add record: dataset not found")
         self._datasets[dataset_id].append(record)
 
@@ -196,10 +197,10 @@ class DummyArgillaClient(ArgillaClient):
 
 
 class FailedEvaluationDummyArgillaClient(ArgillaClient):
-    """fails on first upload, only returns 1 evaluated evaluation"""
+    """fails on first upload, only returns 1 evaluated evaluation."""
 
     _upload_count = 0
-    _datasets: dict[str, list[RecordData]] = {}
+    _datasets: ClassVar[dict[str, list[RecordData]]] = {}
 
     def create_dataset(
         self,

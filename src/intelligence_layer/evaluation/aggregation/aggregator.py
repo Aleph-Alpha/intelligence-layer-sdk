@@ -1,11 +1,8 @@
 from abc import ABC, abstractmethod
+from collections.abc import Callable, Iterable, Iterator, Mapping
 from functools import cached_property
 from typing import (
-    Callable,
     Generic,
-    Iterable,
-    Iterator,
-    Mapping,
     TypeVar,
     cast,
     final,
@@ -128,13 +125,15 @@ class Aggregator(Generic[Evaluation, AggregatedEvaluation]):
             for current_index, current_type in enumerate(current_types):
                 if type(current_type) is not TypeVar:
                     type_var_count = num_types_set - 1
+                    final_index = -1
                     for element_index, element in enumerate(type_list):
+                        final_index = element_index
                         if type(element) is TypeVar:
                             type_var_count += 1
                         if type_var_count == current_index:
                             break
                     assert type_var_count == current_index
-                    type_list[element_index] = current_type
+                    type_list[final_index] = current_type
                     num_types_set += 1
 
         # mypy does not know __orig_bases__
@@ -158,7 +157,7 @@ class Aggregator(Generic[Evaluation, AggregatedEvaluation]):
         return {
             name: param_type
             for name, param_type in zip(
-                (a.__name__ for a in get_args(base_types)), type_list
+                (a.__name__ for a in get_args(base_types)), type_list, strict=False
             )
             if type(param_type) is not TypeVar
         }
@@ -177,7 +176,7 @@ class Aggregator(Generic[Evaluation, AggregatedEvaluation]):
         except KeyError:
             raise TypeError(
                 f"Alternatively overwrite evaluation_type() in {type(self)}"
-            )
+            ) from None
         return cast(type[Evaluation], evaluation_type)
 
     @final

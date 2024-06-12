@@ -70,17 +70,59 @@ strict = "True"
 [tool.pytest.ini_options]
 markers = [
     "internal: marks tests as internal (deselect with '-k \"not internal\"')",
-    "docker: the test depends on having a docker container running."
+    "docker: the test depends on having a docker container running.",
 ]
 addopts = "--capture=tee-sys"
 filterwarnings = [
     'ignore:.*\`general_plain_validator_function\` is deprecated.*',
-    'ignore::DeprecationWarning:.*importlib._bootstrap.*'
+    'ignore::DeprecationWarning:.*importlib._bootstrap.*',
 ]
 
-
 [tool.ruff]
+target-version = "py310"
 extend-include = ["*.ipynb"]
 
-[tool.isort]
-profile = "black"
+[tool.ruff.lint]
+# defaults: ["E4", "E7", "E9", "F"]
+# check https://docs.astral.sh/ruff/rules/ for more info
+select = [
+    "E4", "E7", "E9",
+    "F",
+    "W",
+    # isort
+    "I",
+    # simplify
+    "SIM",
+    # pathlib, small but may be nice
+    "PTH",
+    # update to newer python versions (mostly typing)
+    "UP",
+    # ruff dependent checks
+    "RUF",
+    # bugbear
+    "B",
+    # pydocstring
+    "D"
+
+
+]
+# Did not seem so useful: PD, T20(not yet), C90(eventually), PT (too opinionated)
+ignore = [
+    # Line too long
+    "E501",
+    # X | Y for hinting over optional
+    "UP007",
+    # unusual unicodes, next() instead of [0]
+    "RUF001", "RUF015",
+    # warnings should be self explanatory
+    "B028",
+    # we do not docstring everything
+    "D1",
+]
+extend-safe-fixes = ["D415"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["intelligence_layer", "documentation"]
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"

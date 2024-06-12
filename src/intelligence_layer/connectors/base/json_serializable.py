@@ -1,4 +1,5 @@
-from typing import TYPE_CHECKING, Mapping, Sequence
+from collections.abc import Mapping, Sequence
+from typing import TYPE_CHECKING
 
 from typing_extensions import TypeAliasType
 

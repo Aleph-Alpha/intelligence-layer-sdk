@@ -1,5 +1,7 @@
+import contextlib
+from collections.abc import Iterable
 from pathlib import Path
-from typing import Iterable, Optional
+from typing import Optional
 
 from fsspec.implementations.local import LocalFileSystem  # type: ignore
 
@@ -49,12 +51,10 @@ class FileSystemDatasetRepository(DatasetRepository, FileSystemBasedRepository):
         return dataset
 
     def delete_dataset(self, dataset_id: str) -> None:
-        try:
+        with contextlib.suppress(FileNotFoundError):
             self._file_system.rm(
                 self.path_to_str(self._dataset_directory(dataset_id)), recursive=True
             )
-        except FileNotFoundError:
-            pass
 
     def dataset(self, dataset_id: str) -> Optional[Dataset]:
         file_path = self.path_to_str(self._dataset_path(dataset_id))

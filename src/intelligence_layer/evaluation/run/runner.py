@@ -1,7 +1,8 @@
+from collections.abc import Iterable
 from concurrent.futures import ThreadPoolExecutor
 from inspect import get_annotations
 from itertools import islice
-from typing import Generic, Iterable, Optional, cast
+from typing import Generic, Optional, cast
 from uuid import uuid4
 
 from pydantic import JsonValue
@@ -58,7 +59,7 @@ class Runner(Generic[Input, Output]):
             raise TypeError(
                 f"Task of type {type(self._task)} must have a type-hint for the return value of do_run to detect the output_type. "
                 f"Alternatively overwrite output_type() in {type(self)}"
-            )
+            ) from None
         return cast(type[Output], output_type)
 
     def input_type(self) -> type[Input]:
@@ -68,7 +69,7 @@ class Runner(Generic[Input, Output]):
             raise TypeError(
                 f"Task of type {type(self._task)} must have a type-hint for the input value of do_run to detect the input_type. "
                 f"Alternatively overwrite input_type() in {type(self)}"
-            )
+            ) from None
         return cast(type[Input], input_type)
 
     def run_dataset(

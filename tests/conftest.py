@@ -1,6 +1,7 @@
+from collections.abc import Sequence
 from os import getenv
 from pathlib import Path
-from typing import Sequence, cast
+from typing import cast
 
 from aleph_alpha_client import Client, Image
 from dotenv import load_dotenv
