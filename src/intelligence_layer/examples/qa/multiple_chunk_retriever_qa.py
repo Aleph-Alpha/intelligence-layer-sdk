@@ -1,4 +1,5 @@
-from typing import Generic, Mapping, Optional, Sequence
+from collections.abc import Mapping, Sequence
+from typing import Generic, Optional
 
 from pydantic import BaseModel
 

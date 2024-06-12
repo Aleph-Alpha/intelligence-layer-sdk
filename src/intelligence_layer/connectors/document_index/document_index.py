@@ -1,7 +1,8 @@
+from collections.abc import Mapping, Sequence
 from datetime import datetime
 from http import HTTPStatus
 from json import dumps
-from typing import Annotated, Any, Literal, Mapping, Optional, Sequence
+from typing import Annotated, Any, Literal, Optional
 from urllib.parse import quote
 
 import requests

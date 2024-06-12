@@ -1,6 +1,7 @@
 from abc import ABC
+from collections.abc import Sequence
 from pathlib import Path
-from typing import Sequence, cast
+from typing import cast
 
 from fsspec import AbstractFileSystem  # type: ignore
 

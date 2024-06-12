@@ -1,6 +1,5 @@
 from pathlib import Path
 from textwrap import dedent
-from typing import List
 
 from aleph_alpha_client.prompt import Image, PromptItem, Text, Tokens
 from liquid.exceptions import LiquidSyntaxError, LiquidTypeError
@@ -196,14 +195,14 @@ def test_to_prompt_resets_template(prompt_image: Image) -> None:
 
 def test_to_prompt_data_returns_ranges(prompt_image: Image) -> None:
     embedded_text = "Embedded"
-    prefix_items: List[PromptItem] = [
+    prefix_items: list[PromptItem] = [
         Text.from_text("Prefix Text Item"),
         prompt_image,
     ]
     prefix_text = "Prefix text"
     prefix_merged = Text.from_text("Merged Prefix Item")
     embedded_merged = Text.from_text("Merged Embedded Item")
-    embedded_items: List[PromptItem] = [prompt_image]
+    embedded_items: list[PromptItem] = [prompt_image]
     template = PromptTemplate(
         "{{prefix_items}}{{prefix_text}}{% promptrange r1 %}{{embedded_text}}{{embedded_items}}{% endpromptrange %}",
     )

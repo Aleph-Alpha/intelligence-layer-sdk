@@ -1,5 +1,5 @@
+from collections.abc import Iterable, Sequence
 from pathlib import Path
-from typing import Iterable, Sequence, Tuple
 from unittest.mock import patch
 from uuid import uuid4
 
@@ -100,7 +100,7 @@ def hugging_face_dataset_repository(
 def hugging_face_repository_with_dataset_and_examples(
     hugging_face_dataset_repository: HuggingFaceDatasetRepository,
 ) -> Iterable[
-    Tuple[HuggingFaceDatasetRepository, Dataset, Sequence[Example[str, str]]]
+    tuple[HuggingFaceDatasetRepository, Dataset, Sequence[Example[str, str]]]
 ]:
     examples = [
         Example(input="hey", expected_output="hey hey"),
@@ -122,7 +122,7 @@ def hugging_face_repository_with_dataset_and_examples(
 
 
 def test_hugging_face_repository_supports_all_operations_for_created_dataset(
-    hugging_face_repository_with_dataset_and_examples: Tuple[
+    hugging_face_repository_with_dataset_and_examples: tuple[
         HuggingFaceDatasetRepository, Dataset, Sequence[Example[str, str]]
     ],
 ) -> None:

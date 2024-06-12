@@ -1,5 +1,5 @@
+from collections.abc import Iterable, Sequence
 from datetime import datetime
-from typing import Iterable, Sequence
 from uuid import uuid4
 
 import pytest

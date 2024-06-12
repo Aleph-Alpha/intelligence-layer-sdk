@@ -1,5 +1,6 @@
+from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
-from typing import Mapping, Optional, Sequence, TypeVar
+from typing import Optional, TypeVar
 
 from lingua import ConfidenceValue, IsoCode639_1, LanguageDetectorBuilder
 from lingua import Language as LinguaLanguage

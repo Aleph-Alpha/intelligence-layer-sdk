@@ -1,4 +1,5 @@
-from typing import Iterable, Sequence, Union
+from collections.abc import Iterable, Sequence
+from typing import Union
 
 from pydantic import BaseModel
 

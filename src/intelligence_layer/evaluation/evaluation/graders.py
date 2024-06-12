@@ -1,6 +1,6 @@
 import math
+from collections.abc import Sequence
 from dataclasses import dataclass
-from typing import List, Sequence, Tuple
 
 from lingua import LanguageDetectorBuilder
 from rouge_score import rouge_scorer  # type: ignore
@@ -148,7 +148,7 @@ class IndexRange:
     stop: int
 
 
-_HighlightRange = List[IndexRange]
+_HighlightRange = list[IndexRange]
 
 
 class HighlightCoverageGrader:
@@ -165,8 +165,8 @@ class HighlightCoverageGrader:
 
     def compute_fscores(
         self,
-        generated_highlight_indices: Sequence[Tuple[int, int]],
-        expected_highlight_indices: Sequence[Tuple[int, int]],
+        generated_highlight_indices: Sequence[tuple[int, int]],
+        expected_highlight_indices: Sequence[tuple[int, int]],
     ) -> FScores:
         """Calculates how well the generated highlight ranges match the expected ones
 
@@ -231,7 +231,7 @@ class HighlightCoverageGrader:
     @staticmethod
     def _identify_overlap_ranges(
         generated_highlights: _HighlightRange, expected_highlights: _HighlightRange
-    ) -> Tuple[_HighlightRange, _HighlightRange, _HighlightRange]:
+    ) -> tuple[_HighlightRange, _HighlightRange, _HighlightRange]:
         max_index: int = max(
             index_range.stop
             for index_range in generated_highlights + expected_highlights

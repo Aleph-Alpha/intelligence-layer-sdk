@@ -1,5 +1,5 @@
 import random
-from typing import Iterable, Sequence
+from collections.abc import Iterable, Sequence
 from uuid import uuid4
 
 import pytest

@@ -1,15 +1,12 @@
 import itertools
 import os
 from abc import ABC, abstractmethod
+from collections.abc import Callable, Iterable, Mapping, Sequence
 from http import HTTPStatus
 from itertools import chain, count, islice
 from typing import (
     Any,
-    Callable,
-    Iterable,
-    Mapping,
     Optional,
-    Sequence,
     TypeVar,
     Union,
     cast,

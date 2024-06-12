@@ -1,5 +1,5 @@
 import math
-from typing import Mapping, Sequence
+from collections.abc import Mapping, Sequence
 
 from aleph_alpha_client import Prompt
 from liquid import Template

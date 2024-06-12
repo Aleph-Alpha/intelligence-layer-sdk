@@ -1,4 +1,4 @@
-from typing import Iterable
+from collections.abc import Iterable
 from unittest.mock import patch
 from uuid import uuid4
 

@@ -1,12 +1,9 @@
 from abc import ABC
+from collections.abc import Iterable, Mapping, Sequence
 from functools import cached_property
 from typing import (
     Generic,
-    Iterable,
-    Mapping,
     Optional,
-    Sequence,
-    Tuple,
     TypeVar,
     cast,
     get_args,
@@ -249,7 +246,7 @@ class EvaluatorBase(Generic[Input, Output, ExpectedOutput, Evaluation], ABC):
         skip_example_on_any_failure: bool,
         num_examples: Optional[int],
     ) -> Iterable[
-        Tuple[
+        tuple[
             Example[Input, ExpectedOutput],
             Sequence[SuccessfulExampleOutput[Output]],
         ]
@@ -284,7 +281,7 @@ class EvaluatorBase(Generic[Input, Output, ExpectedOutput, Evaluation], ABC):
         skip_example_on_any_failure: bool,
         num_examples: Optional[int] = None,
     ) -> Iterable[
-        Tuple[
+        tuple[
             Example[Input, ExpectedOutput],
             Sequence[SuccessfulExampleOutput[Output]],
         ]

@@ -1,6 +1,7 @@
 import json
 import time
-from typing import Any, Sequence
+from collections.abc import Sequence
+from typing import Any
 from uuid import uuid4
 
 import pytest

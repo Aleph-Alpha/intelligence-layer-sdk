@@ -1,4 +1,5 @@
-from typing import Iterable, Optional, Sequence, Tuple, cast
+from collections.abc import Iterable, Sequence
+from typing import Optional, cast
 
 from intelligence_layer.core import Input, PydanticSerializable
 from intelligence_layer.evaluation.dataset.dataset_repository import DatasetRepository
@@ -13,7 +14,7 @@ class InMemoryDatasetRepository(DatasetRepository):
     def __init__(self) -> None:
         self._datasets_and_examples: dict[
             str,
-            Tuple[
+            tuple[
                 Dataset, Sequence[Example[PydanticSerializable, PydanticSerializable]]
             ],
         ] = {}

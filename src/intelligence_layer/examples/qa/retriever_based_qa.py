@@ -1,5 +1,6 @@
 import warnings
-from typing import Generic, Optional, Sequence
+from collections.abc import Sequence
+from typing import Generic, Optional
 
 from pydantic import BaseModel
 

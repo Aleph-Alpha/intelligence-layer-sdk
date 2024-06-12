@@ -1,5 +1,6 @@
 from collections import defaultdict
-from typing import Optional, Sequence, cast
+from collections.abc import Sequence
+from typing import Optional, cast
 
 from pydantic import BaseModel
 

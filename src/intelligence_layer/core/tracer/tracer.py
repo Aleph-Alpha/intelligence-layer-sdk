@@ -1,11 +1,12 @@
 import os
 import traceback
 from abc import ABC, abstractmethod
+from collections.abc import Mapping, Sequence
 from contextlib import AbstractContextManager
 from datetime import datetime, timezone
 from enum import Enum
 from types import TracebackType
-from typing import TYPE_CHECKING, Mapping, Optional, Sequence, Union
+from typing import TYPE_CHECKING, Optional, Union
 from uuid import UUID, uuid4
 
 import requests

@@ -1,19 +1,14 @@
 from collections import defaultdict
+from collections.abc import Iterable, Mapping, Sequence
 from dataclasses import dataclass, field, replace
 from itertools import chain
 from re import finditer
 from sys import intern
 from typing import (
     Any,
-    Dict,
-    Iterable,
-    List,
-    Mapping,
     NewType,
     Optional,
-    Sequence,
     TextIO,
-    Tuple,
     Union,
 )
 from uuid import UUID, uuid4
@@ -122,7 +117,7 @@ class PromptRangeContext(Context):
         self,
         env: Environment,
         globals: Optional[Namespace] = None,
-        disabled_tags: Optional[List[str]] = None,
+        disabled_tags: Optional[list[str]] = None,
         copy_depth: int = 0,
         parent_context: Optional[Context] = None,
         loop_iteration_carry: int = 1,
@@ -314,7 +309,7 @@ class PromptTemplate:
 
     def _compute_indices(
         self, placeholders: Iterable[Placeholder], template: str
-    ) -> Iterable[Tuple[int, int]]:
+    ) -> Iterable[tuple[int, int]]:
         pattern = "|".join(str(placeholder) for placeholder in placeholders)
         return (
             (
@@ -327,11 +322,11 @@ class PromptTemplate:
 
     def _compute_modalities_and_ranges(
         self,
-        placeholder_indices: Iterable[Tuple[int, int]],
+        placeholder_indices: Iterable[tuple[int, int]],
         placeholder_range_names: Mapping[Placeholder, str],
         template: str,
-    ) -> Tuple[Sequence[PromptItem], Mapping[str, Sequence[PromptRange]]]:
-        placeholder_ranges: Dict[Placeholder, List[PromptRange]] = defaultdict(list)
+    ) -> tuple[Sequence[PromptItem], Mapping[str, Sequence[PromptRange]]]:
+        placeholder_ranges: dict[Placeholder, list[PromptRange]] = defaultdict(list)
         modalities = list(
             self._modalities_from(placeholder_indices, placeholder_ranges, template)
         )
@@ -345,7 +340,7 @@ class PromptTemplate:
     @staticmethod
     def _replace_start_cursors_of_non_text_items(
         modalities: Sequence[PromptItem],
-        placeholder_ranges: Dict[Placeholder, List[PromptRange]],
+        placeholder_ranges: dict[Placeholder, list[PromptRange]],
     ) -> None:
         for prompt_ranges in placeholder_ranges.values():
             for index, range in enumerate(prompt_ranges):
@@ -356,14 +351,14 @@ class PromptTemplate:
 
     def _modalities_from(
         self,
-        placeholder_indices: Iterable[Tuple[int, int]],
-        placeholder_ranges: dict[Placeholder, List[PromptRange]],
+        placeholder_indices: Iterable[tuple[int, int]],
+        placeholder_ranges: dict[Placeholder, list[PromptRange]],
         template: str,
     ) -> Iterable[PromptItem]:
         last_to = 0
         accumulated_text = ""
         item_cnt = 0
-        range_starts: Dict[Placeholder, TextCursor] = {}
+        range_starts: dict[Placeholder, TextCursor] = {}
 
         def new_prompt_item(item: PromptItem) -> PromptItem:
             nonlocal item_cnt, accumulated_text

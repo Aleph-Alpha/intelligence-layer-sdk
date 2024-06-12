@@ -1,7 +1,8 @@
 from abc import abstractmethod
+from collections.abc import Sequence
 from enum import Enum
 from itertools import combinations
-from typing import Optional, Sequence
+from typing import Optional
 
 from pydantic import BaseModel
 

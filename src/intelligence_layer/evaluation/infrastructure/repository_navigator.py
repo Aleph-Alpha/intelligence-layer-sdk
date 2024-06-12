@@ -1,5 +1,6 @@
 import itertools
-from typing import Generic, Iterable, Optional, Sequence
+from collections.abc import Iterable, Sequence
+from typing import Generic, Optional
 
 import pandas as pd
 import rich

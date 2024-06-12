@@ -1,8 +1,8 @@
+from collections.abc import Callable
 from concurrent.futures import ThreadPoolExecutor
 from functools import wraps
 from threading import Lock
 from time import sleep
-from typing import Callable
 
 from intelligence_layer.core import (
     MAX_CONCURRENCY,

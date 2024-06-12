@@ -1,8 +1,9 @@
 import random
 from abc import ABC, abstractmethod
+from collections.abc import Mapping, Sequence
 from datetime import datetime
 from itertools import combinations
-from typing import Mapping, Optional, Sequence
+from typing import Optional
 from uuid import uuid4
 
 from pydantic import BaseModel

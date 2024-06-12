@@ -1,4 +1,4 @@
-from typing import Sequence
+from collections.abc import Sequence
 
 from intelligence_layer.core import NoOpTracer
 from intelligence_layer.core.chunk import TextChunk

@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
+from collections.abc import Iterable, Sequence
 from concurrent.futures import ThreadPoolExecutor
-from typing import Generic, Iterable, Sequence, TypeVar, final
+from typing import Generic, TypeVar, final
 
 from pydantic import BaseModel
 

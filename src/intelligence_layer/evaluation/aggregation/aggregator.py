@@ -1,11 +1,8 @@
 from abc import ABC, abstractmethod
+from collections.abc import Callable, Iterable, Iterator, Mapping
 from functools import cached_property
 from typing import (
-    Callable,
     Generic,
-    Iterable,
-    Iterator,
-    Mapping,
     TypeVar,
     cast,
     final,

@@ -1,9 +1,10 @@
 import time
 import warnings
+from collections.abc import Callable, Mapping, Sequence
 from functools import lru_cache
 from os import getenv
 from threading import Semaphore
-from typing import Any, Callable, Mapping, Optional, Protocol, Sequence, TypeVar
+from typing import Any, Optional, Protocol, TypeVar
 
 from aleph_alpha_client import (
     BatchSemanticEmbeddingRequest,

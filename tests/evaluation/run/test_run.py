@@ -1,5 +1,5 @@
+from collections.abc import Iterable, Sequence
 from pathlib import Path
-from typing import Iterable, Sequence
 
 from dotenv import load_dotenv
 from pydantic import BaseModel

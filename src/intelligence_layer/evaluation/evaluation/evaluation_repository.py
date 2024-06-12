@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
-from typing import Iterable, Optional, Sequence
+from collections.abc import Iterable, Sequence
+from typing import Optional
 from uuid import uuid4
 
 from pydantic import BaseModel

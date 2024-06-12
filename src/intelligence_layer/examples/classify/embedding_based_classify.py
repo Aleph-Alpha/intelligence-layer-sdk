@@ -1,5 +1,5 @@
 import statistics
-from typing import Sequence
+from collections.abc import Sequence
 
 from pydantic import BaseModel
 from qdrant_client.http.models import models

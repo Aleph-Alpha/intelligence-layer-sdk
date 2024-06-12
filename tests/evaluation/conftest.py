@@ -1,6 +1,6 @@
+from collections.abc import Iterable, Sequence
 from os import getenv
 from pathlib import Path
-from typing import Iterable, Sequence
 from uuid import uuid4
 
 from dotenv import load_dotenv

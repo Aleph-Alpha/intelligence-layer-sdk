@@ -1,5 +1,6 @@
+from collections.abc import Sequence
 from pathlib import Path
-from typing import Optional, Sequence
+from typing import Optional
 
 from fsspec.implementations.local import LocalFileSystem  # type: ignore
 

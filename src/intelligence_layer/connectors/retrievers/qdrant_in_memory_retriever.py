@@ -1,6 +1,7 @@
+from collections.abc import Sequence
 from concurrent.futures import ThreadPoolExecutor
 from enum import Enum
-from typing import Optional, Sequence
+from typing import Optional
 
 from aleph_alpha_client import Prompt, SemanticEmbeddingRequest, SemanticRepresentation
 from qdrant_client import QdrantClient

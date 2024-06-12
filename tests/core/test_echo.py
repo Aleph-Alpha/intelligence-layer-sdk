@@ -1,4 +1,5 @@
-from typing import Literal, Sequence
+from collections.abc import Sequence
+from typing import Literal
 
 import tokenizers  # type: ignore
 from aleph_alpha_client import CompletionResponse, Prompt, Text, Tokens

@@ -1,5 +1,6 @@
 from collections import defaultdict
-from typing import Iterable, Optional, Sequence, cast
+from collections.abc import Iterable, Sequence
+from typing import Optional, cast
 
 from intelligence_layer.core import InMemoryTracer, Output, PydanticSerializable
 from intelligence_layer.core.tracer.tracer import Tracer

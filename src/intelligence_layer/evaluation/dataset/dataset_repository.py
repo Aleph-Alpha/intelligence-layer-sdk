@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
-from typing import Iterable, Optional
+from collections.abc import Iterable
+from typing import Optional
 
 from intelligence_layer.core import Input
 from intelligence_layer.evaluation.dataset.domain import (

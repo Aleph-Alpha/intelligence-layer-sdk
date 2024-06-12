@@ -1,7 +1,8 @@
+from collections.abc import Iterable
 from concurrent.futures import ThreadPoolExecutor
 from inspect import get_annotations
 from itertools import islice
-from typing import Generic, Iterable, Optional, cast
+from typing import Generic, Optional, cast
 from uuid import uuid4
 
 from pydantic import JsonValue

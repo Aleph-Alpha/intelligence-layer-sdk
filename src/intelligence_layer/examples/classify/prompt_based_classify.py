@@ -1,6 +1,7 @@
 import math
 import re
-from typing import Iterable, Mapping, Optional, Sequence
+from collections.abc import Iterable, Mapping, Sequence
+from typing import Optional
 
 from aleph_alpha_client import Tokens
 from pydantic import BaseModel

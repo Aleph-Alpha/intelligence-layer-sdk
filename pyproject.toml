@@ -93,12 +93,12 @@ select = [
     "I",
     # simplify
     #"SIM",
-    # update to newer python versions
-    #"UP",
+    # pathlib, small but may be nice
+    "PTH",
+    # update to newer python versions (mostly typing)
+    "UP",
     # pytest style
     #"PT",
-    # pathlib, small but may be nice
-    "PTH"
     # bug bear
     #"B"
     # ruf dependent checks
@@ -108,6 +108,8 @@ select = [
 ignore = [
     # Line too long
     "E501",
+    # we don't only want to use X | Y for hinting
+    "UP007"
     # next() instead of [0]    "RUF015",
     #"RUF001",
 ]

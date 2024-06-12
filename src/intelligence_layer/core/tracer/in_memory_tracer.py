@@ -1,5 +1,6 @@
+from collections.abc import Sequence
 from datetime import datetime
-from typing import Optional, Sequence, Union
+from typing import Optional, Union
 from uuid import UUID
 
 import rich
@@ -32,7 +33,7 @@ class InMemoryTracer(Tracer):
     """
 
     def __init__(self) -> None:
-        self.entries: list[Union[LogEntry, "InMemoryTaskSpan", "InMemorySpan"]] = []
+        self.entries: list[Union[LogEntry, InMemoryTaskSpan, InMemorySpan]] = []
 
     def span(
         self,

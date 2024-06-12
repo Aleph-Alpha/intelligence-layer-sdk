@@ -1,6 +1,7 @@
 import warnings
 from collections import defaultdict
-from typing import Iterable, Mapping, NewType, Sequence
+from collections.abc import Iterable, Mapping, Sequence
+from typing import NewType
 
 from pydantic import BaseModel
 

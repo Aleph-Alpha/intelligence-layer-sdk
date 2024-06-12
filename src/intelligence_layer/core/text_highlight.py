@@ -1,5 +1,6 @@
 import itertools
-from typing import Iterable, Mapping, Sequence, cast
+from collections.abc import Iterable, Mapping, Sequence
+from typing import cast
 
 from aleph_alpha_client import (
     Prompt,

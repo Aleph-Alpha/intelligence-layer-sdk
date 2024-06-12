@@ -1,6 +1,6 @@
 import random
 from collections import Counter, defaultdict
-from typing import Iterable, Mapping, Sequence
+from collections.abc import Iterable, Mapping, Sequence
 
 import numpy as np
 from pydantic import BaseModel

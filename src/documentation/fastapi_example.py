@@ -1,7 +1,8 @@
 import http
 import os
+from collections.abc import Sequence
 from http import HTTPStatus
-from typing import Annotated, Sequence
+from typing import Annotated
 
 from aleph_alpha_client import Client
 from dotenv import load_dotenv

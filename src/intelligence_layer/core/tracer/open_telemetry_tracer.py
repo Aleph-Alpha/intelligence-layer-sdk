@@ -1,5 +1,6 @@
+from collections.abc import Sequence
 from datetime import datetime
-from typing import Optional, Sequence
+from typing import Optional
 
 from opentelemetry.context import attach, detach
 from opentelemetry.trace import Span as OpenTSpan

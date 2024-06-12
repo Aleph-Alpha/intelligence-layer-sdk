@@ -1,4 +1,5 @@
-from typing import Iterable, Sequence, cast
+from collections.abc import Iterable, Sequence
+from typing import cast
 
 from datasets import Dataset as HFDataset  # type: ignore
 from datasets import DatasetDict, IterableDataset, IterableDatasetDict

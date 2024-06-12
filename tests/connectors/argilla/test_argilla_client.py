@@ -1,5 +1,6 @@
+from collections.abc import Callable, Iterable, Sequence
 from time import sleep
-from typing import Callable, Iterable, Sequence, TypeVar
+from typing import TypeVar
 from uuid import uuid4
 
 import pytest
