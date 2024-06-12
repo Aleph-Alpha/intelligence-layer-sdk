@@ -98,7 +98,7 @@ select = [
     # pytest style
     #"PT",
     # pathlib, small but may be nice
-    #"PTH"
+    "PTH"
     # bug bear
     #"B"
     # ruf dependent checks
