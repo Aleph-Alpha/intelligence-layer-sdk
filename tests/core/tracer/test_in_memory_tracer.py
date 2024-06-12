@@ -80,9 +80,8 @@ def test_can_add_parent_and_child_entries() -> None:
 def test_task_logs_error_value() -> None:
     tracer = InMemoryTracer()
 
-    with pytest.raises(ValueError):
-        with tracer.span("failing task"):
-            raise ValueError("my bad, sorry")
+    with pytest.raises(ValueError), tracer.span("failing task"):
+        raise ValueError("my bad, sorry")
 
     assert isinstance(tracer.entries[0], InMemorySpan)
     assert isinstance(tracer.entries[0].entries[0], LogEntry)
@@ -96,9 +95,8 @@ def test_task_logs_error_value() -> None:
 def test_task_span_records_error_value() -> None:
     tracer = InMemoryTracer()
 
-    with pytest.raises(ValueError):
-        with tracer.task_span("failing task", None):
-            raise ValueError("my bad, sorry")
+    with pytest.raises(ValueError), tracer.task_span("failing task", None):
+        raise ValueError("my bad, sorry")
 
     assert isinstance(tracer.entries[0], InMemoryTaskSpan)
     error = tracer.entries[0].output

@@ -221,9 +221,8 @@ def test_spans_cannot_be_used_as_context_twice(
     span = tracer.span("name")
     with span:
         pass
-    with pytest.raises(Exception):
-        with span:
-            pass
+    with pytest.raises(Exception), span:
+        pass
 
 
 @pytest.mark.docker

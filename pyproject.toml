@@ -92,7 +92,7 @@ select = [
     # isort
     "I",
     # simplify
-    #"SIM",
+    "SIM",
     # pathlib, small but may be nice
     "PTH",
     # update to newer python versions (mostly typing)
@@ -108,9 +108,9 @@ select = [
 ignore = [
     # Line too long
     "E501",
-    # we don't only want to use X | Y for hinting
+    # X | Y for hinting over optional
     "UP007",
-    # next() instead of [0]    "RUF015",
+    # unusual unicodes, next() instead of [0]
     "RUF001", "RUF015",
 ]
 #select = ["E", "F"]

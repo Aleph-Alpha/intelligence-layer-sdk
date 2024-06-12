@@ -175,7 +175,7 @@ class DummyArgillaClient(ArgillaClient):
         return dataset_id
 
     def add_record(self, dataset_id: str, record: RecordData) -> None:
-        if dataset_id not in self._datasets.keys():
+        if dataset_id not in self._datasets:
             raise Exception("Add record: dataset not found")
         self._datasets[dataset_id].append(record)
 

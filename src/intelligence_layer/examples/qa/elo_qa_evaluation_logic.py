@@ -133,7 +133,7 @@ Response: Answer """
         def categorize_value(value: float) -> MatchOutcome:
             if value > 0.7:
                 return MatchOutcome.A_WINS
-            elif 0.3 > value:
+            elif value < 0.3:
                 return MatchOutcome.B_WINS
             else:
                 return MatchOutcome.DRAW

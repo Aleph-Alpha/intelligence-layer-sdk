@@ -101,8 +101,10 @@ class Task(ABC, Generic[Input, Output]):
             The order of Outputs corresponds to the order of the Inputs.
         """
 
-        with tracer.span(f"Concurrent {type(self).__name__} tasks") as span:
-            with ThreadPoolExecutor(
+        with (
+            tracer.span(f"Concurrent {type(self).__name__} tasks") as span,
+            ThreadPoolExecutor(
                 max_workers=min(concurrency_limit, MAX_CONCURRENCY)
-            ) as executor:
-                return list(executor.map(lambda input: self.run(input, span), inputs))
+            ) as executor,
+        ):
+            return list(executor.map(lambda input: self.run(input, span), inputs))

@@ -32,7 +32,7 @@ class Language:
         config = configs.get(self)
         if config is None:
             raise LanguageNotSupportedError(
-                f"{self.iso_639_1} not in ({', '.join(lang.iso_639_1 for lang in configs.keys())})"
+                f"{self.iso_639_1} not in ({', '.join(lang.iso_639_1 for lang in configs)})"
             )
         return config
 

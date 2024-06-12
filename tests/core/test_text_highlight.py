@@ -85,7 +85,7 @@ Answer:"""
     scores = [highlight.score for highlight in output.highlights]
     max_index = max((v, i) for i, v in enumerate(scores))[1]
     top_highlight = output.highlights[max_index]
-    assert "Berlin" == map_to_prompt(rich_prompt, top_highlight)
+    assert map_to_prompt(rich_prompt, top_highlight) == "Berlin"
 
 
 def test_text_highlight_with_range_without_highlight(
@@ -225,7 +225,7 @@ def test_text_ranges_do_not_overlap_into_question_when_clamping(
     result = text_highlight_with_clamp.run(input, NoOpTracer())
     for highlight in result.highlights:
         assert highlight.start >= len(instruct)
-        assert 0 < highlight.end
+        assert highlight.end > 0
 
 
 def test_highlight_does_not_clamp_when_prompt_ranges_overlap(

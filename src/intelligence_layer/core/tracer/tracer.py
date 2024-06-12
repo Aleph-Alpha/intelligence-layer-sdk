@@ -243,10 +243,7 @@ class Span(Tracer, AbstractContextManager["Span"]):
             context: Context of the parent. Defaults to None.
         """
         span_id = uuid4()
-        if context is None:
-            trace_id = span_id
-        else:
-            trace_id = context.trace_id
+        trace_id = span_id if context is None else context.trace_id
         self.context = Context(trace_id=trace_id, span_id=span_id)
         self.status_code = SpanStatus.OK
         self._closed = False

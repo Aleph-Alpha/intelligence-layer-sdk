@@ -158,7 +158,7 @@ class SearchAggregationLogic(
         }
 
         for evaluation in evaluations:
-            chunk_found = True if evaluation.rank else False
+            chunk_found = bool(evaluation.rank)
             chunk_found_accumulator.add(chunk_found)
             if chunk_found:
                 assert evaluation.similarity_score and evaluation.rank

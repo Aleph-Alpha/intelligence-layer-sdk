@@ -342,7 +342,7 @@ def test_add_record_does_not_put_example_id_into_metadata(
     argilla_client.add_record(qa_dataset_id, second_data)
     records = list(argilla_client.records(qa_dataset_id))
     for record in records:
-        assert "example_id" not in record.metadata.keys()
+        assert "example_id" not in record.metadata
         assert record.example_id == "0"
 
 

@@ -155,10 +155,7 @@ class SingleLabelClassifyEvaluationLogic(
             warnings.warn(warn_message, RuntimeWarning)
 
         predicted = output.sorted_scores[0][0]
-        if predicted == example.expected_output:
-            correct = True
-        else:
-            correct = False
+        correct = predicted == example.expected_output
         return SingleLabelClassifyEvaluation(
             correct=correct,
             predicted=predicted,
