@@ -13,9 +13,8 @@ from typing import (
 )
 from uuid import uuid4
 
-from pydantic import BaseModel
+from pydantic import BaseModel, computed_field
 from pydantic import Field as PydanticField
-from pydantic import computed_field
 from requests import HTTPError, Session
 from requests.adapters import HTTPAdapter
 from requests.structures import CaseInsensitiveDict
