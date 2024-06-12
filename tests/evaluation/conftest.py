@@ -152,7 +152,7 @@ def temp_file_system() -> Iterable[MemoryFileSystem]:
 
 @fixture(scope="session")
 def hugging_face_test_repository_id() -> str:
-    return f"Aleph-Alpha/IL-temp-tests-{str(uuid4())}"
+    return f"Aleph-Alpha/IL-temp-tests-{uuid4()}"
 
 
 @fixture(scope="session")

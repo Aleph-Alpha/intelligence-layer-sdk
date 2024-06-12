@@ -3,7 +3,7 @@ from abc import ABC, abstractmethod
 from collections.abc import Mapping, Sequence
 from datetime import datetime
 from itertools import combinations
-from typing import Optional
+from typing import ClassVar, Optional
 from uuid import uuid4
 
 from pydantic import BaseModel
@@ -240,7 +240,7 @@ class InstructComparisonArgillaEvaluationLogic(
     KEY_RESPONSE_1 = "first"
     KEY_RESPONSE_2 = "second"
     KEY_QUESTION = "winner"
-    OPTIONS = [1, 2, 3]
+    OPTIONS: ClassVar[list[int]] = [1, 2, 3]
 
     def __init__(
         self,

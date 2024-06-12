@@ -23,7 +23,7 @@ class FailedExampleEvaluation(BaseModel):
     @staticmethod
     def from_exception(exception: Exception) -> "FailedExampleEvaluation":
         return FailedExampleEvaluation(
-            error_message=f"{type(exception)}: {str(exception)}\n{traceback.format_exc()}"
+            error_message=f"{type(exception)}: {exception}\n{traceback.format_exc()}"
         )
 
 

@@ -94,7 +94,8 @@ def embedding_based_classify_example() -> list[Example[ClassifyInput, Sequence[s
 def embedding_based_classify_examples(
     embedding_based_classify_example: list[Example[ClassifyInput, Sequence[str]]],
 ) -> list[Example[ClassifyInput, Sequence[str]]]:
-    return embedding_based_classify_example + [
+    return [
+        *embedding_based_classify_example,
         Example(
             input=ClassifyInput(
                 chunk=TextChunk("My university banking class really sucks."),

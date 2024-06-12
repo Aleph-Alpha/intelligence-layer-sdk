@@ -2,7 +2,7 @@ import typing
 import warnings
 from abc import ABC, abstractmethod
 from functools import lru_cache
-from typing import Optional
+from typing import ClassVar, Optional
 
 from aleph_alpha_client import (
     CompletionRequest,
@@ -220,7 +220,7 @@ def _context_size(client: AlephAlphaClientProtocol, name: str) -> int:
 
 
 class ControlModel(ABC, AlephAlphaModel):
-    RECOMMENDED_MODELS = [""]
+    RECOMMENDED_MODELS: ClassVar[list[str]] = []
 
     def __init__(
         self, name: str, client: AlephAlphaClientProtocol | None = None
@@ -265,7 +265,7 @@ class LuminousControlModel(ControlModel):
 ### Response:{{response_prefix}}"""
     )
 
-    RECOMMENDED_MODELS = [
+    RECOMMENDED_MODELS: ClassVar[list[str]] = [
         "luminous-base-control-20230501",
         "luminous-extended-control-20230501",
         "luminous-supreme-control-20230501",
@@ -319,7 +319,7 @@ class Llama2InstructModel(ControlModel):
 
 {{response_prefix}}{% endif %}""")
 
-    RECOMMENDED_MODELS = [
+    RECOMMENDED_MODELS: ClassVar[list[str]] = [
         "llama-2-7b-chat",
         "llama-2-13b-chat",
         "llama-2-70b-chat",
@@ -367,7 +367,7 @@ class Llama3InstructModel(ControlModel):
 {{response_prefix}}{% endif %}"""
     )
 
-    RECOMMENDED_MODELS = [
+    RECOMMENDED_MODELS: ClassVar[list[str]] = [
         "llama-3-8b-instruct",
         "llama-3-70b-instruct",
     ]

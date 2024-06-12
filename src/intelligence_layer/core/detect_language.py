@@ -1,6 +1,6 @@
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
-from typing import Optional, TypeVar
+from typing import ClassVar, Optional, TypeVar
 
 from lingua import ConfidenceValue, IsoCode639_1, LanguageDetectorBuilder
 from lingua import Language as LinguaLanguage
@@ -97,7 +97,7 @@ class DetectLanguage(Task[DetectLanguageInput, DetectLanguageOutput]):
         >>> output = task.run(input, InMemoryTracer())
     """
 
-    AVAILABLE_LANGUAGES = [
+    AVAILABLE_LANGUAGES: ClassVar[list[LinguaLanguage]] = [
         LinguaLanguage.GERMAN,
         LinguaLanguage.ENGLISH,
         LinguaLanguage.ITALIAN,

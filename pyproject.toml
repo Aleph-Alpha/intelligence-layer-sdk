@@ -102,16 +102,16 @@ select = [
     # bug bear
     #"B"
     # ruf dependent checks
-    # RUF
+    "RUF"
 ] # "N", "SIM", "B",
 # things i tried that didn't seem so useful: PD, T20(not yet), C90(eventually)
 ignore = [
     # Line too long
     "E501",
     # we don't only want to use X | Y for hinting
-    "UP007"
+    "UP007",
     # next() instead of [0]    "RUF015",
-    #"RUF001",
+    "RUF001", "RUF015",
 ]
 #select = ["E", "F"]
 

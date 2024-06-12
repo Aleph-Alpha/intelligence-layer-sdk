@@ -1,5 +1,6 @@
 import math
 from collections.abc import Mapping, Sequence
+from typing import ClassVar
 
 from aleph_alpha_client import Prompt
 from liquid import Template
@@ -42,7 +43,7 @@ Answer B:{second_completion}
 Which answer is more correct given the Instruction and Evaluation Procedure, Answer A or Answer B?
 
 Response: Answer """
-    VALUES = [
+    VALUES: ClassVar[list[str]] = [
         " A",
         " B",
     ]  # The space before the A and B is important due to tokenization

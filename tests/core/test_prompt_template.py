@@ -208,11 +208,11 @@ def test_to_prompt_data_returns_ranges(prompt_image: Image) -> None:
     )
 
     prompt_data = template.to_rich_prompt(
-        prefix_items=template.embed_prompt(RichPrompt(prefix_items + [prefix_merged])),
+        prefix_items=template.embed_prompt(RichPrompt([*prefix_items, prefix_merged])),
         prefix_text=prefix_text,
         embedded_text=embedded_text,
         embedded_items=template.embed_prompt(
-            RichPrompt([embedded_merged] + embedded_items)
+            RichPrompt([embedded_merged, *embedded_items])
         ),
     )
 
