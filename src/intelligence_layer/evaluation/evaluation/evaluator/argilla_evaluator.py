@@ -9,9 +9,10 @@ from pydantic import BaseModel
 
 from intelligence_layer.connectors.argilla.argilla_client import (
     ArgillaClient,
-    ArgillaEvaluation,
+    ArgillaRatingEvaluation,
     Field,
     Question,
+    RatingQuestion,
     RecordData,
 )
 from intelligence_layer.core import CompleteOutput, Input, InstructInput, Output
@@ -71,7 +72,7 @@ class ArgillaEvaluationLogic(
         ...
 
     @abstractmethod
-    def from_record(self, argilla_evaluation: ArgillaEvaluation) -> Evaluation:
+    def from_record(self, argilla_evaluation: ArgillaRatingEvaluation) -> Evaluation:
         """This method takes the specific Argilla evaluation format and converts into a compatible :class:`Evaluation`.
 
         The format of argilla_evaluation.responses depends on the `questions` attribute.
@@ -255,7 +256,7 @@ class InstructComparisonArgillaEvaluationLogic(
                 "KEY_RESPONSE_2": Field(name=self.KEY_RESPONSE_2, title="Response 2"),
             },
             questions=[
-                Question(
+                RatingQuestion(
                     name=self.KEY_QUESTION,
                     title="Which response is better?",
                     description="1: The first completion is better.\n2: The second completion is better.\n3: They are both equally good.",
@@ -305,7 +306,7 @@ class InstructComparisonArgillaEvaluationLogic(
         )
 
     def from_record(
-        self, argilla_evaluation: ArgillaEvaluation
+        self, argilla_evaluation: ArgillaRatingEvaluation
     ) -> ComparisonEvaluation:
         return ComparisonEvaluation(
             first_player=argilla_evaluation.metadata[

@@ -9,7 +9,7 @@ from pytest import fixture
 
 from intelligence_layer.connectors.argilla.argilla_client import (
     ArgillaClient,
-    ArgillaEvaluation,
+    ArgillaRatingEvaluation,
     Field,
     Question,
     RecordData,
@@ -58,9 +58,9 @@ class ArgillaFake(ArgillaClient):
     def add_record(self, dataset_id: str, record: RecordData) -> None:
         self.records[dataset_id].append(record)
 
-    def evaluations(self, dataset_id: str) -> Iterable[ArgillaEvaluation]:
+    def evaluations(self, dataset_id: str) -> Iterable[ArgillaRatingEvaluation]:
         return [
-            ArgillaEvaluation(
+            ArgillaRatingEvaluation(
                 example_id=r.example_id,
                 record_id=str(uuid4()),
                 responses={

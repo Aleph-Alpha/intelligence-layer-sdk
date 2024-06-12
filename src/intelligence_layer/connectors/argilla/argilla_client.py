@@ -18,6 +18,7 @@ from uuid import uuid4
 
 from pydantic import BaseModel
 from pydantic import Field as PydanticField
+from pydantic import computed_field
 from requests import HTTPError, Session
 from requests.adapters import HTTPAdapter
 from requests.structures import CaseInsensitiveDict
@@ -38,24 +39,60 @@ class Field(BaseModel):
 
 
 class Question(BaseModel):
-    """ "Definition of an evaluation-question for an Argilla feedback dataset.
+    """Definition of an evaluation-question for an Argilla feedback dataset.
 
     Attributes:
         name: The name of the question. This is used to reference the questions in json-documents
         title: The title of the field. This is displayed in the Argilla UI to users that perform the manual evaluations.
         description: A more verbose description of the question.
             This is displayed in the Argilla UI to users that perform the manual evaluations.
-        options: All integer options to answer this question
     """
 
     name: str
     title: str
     description: str
+
+    @computed_field  # type: ignore[misc]
+    @property
+    def settings(self) -> Mapping[Any, Any]:
+        raise NotImplementedError("")
+
+
+class RatingQuestion(Question):
+    """Definition of a rating evaluation-question for an Argilla feedback dataset.
+
+    Attributes:
+        options: All integer options to answer this question
+    """
+
     options: Sequence[int]  # range: 1-10
 
+    @computed_field  # type: ignore[misc]
+    @property
+    def settings(self) -> Mapping[str, Any]:
+        return {
+            "type": "rating",
+            "options": [{"value": option} for option in self.options],
+        }
 
-class ArgillaEvaluation(BaseModel):
-    """The evaluation result for a single records in an Argilla feedback-dataset.
+
+class TextQuestion(Question):
+    """Definition of a text evaluation-question for an Argilla feedback dataset.
+
+    Attributes:
+        use_markdown: Set this parameter to True if you want to use markdown
+    """
+
+    use_markdown: bool
+
+    @computed_field  # type: ignore[misc]
+    @property
+    def settings(self) -> Mapping[str, Any]:
+        return {"type": "text", "use_markdown": self.use_markdown}
+
+
+class ArgillaRatingEvaluation(BaseModel):
+    """The evaluation result for a single rating record in an Argilla feedback-dataset.
 
     Attributes:
         example_id: the id of the example that was evaluated.
@@ -171,7 +208,7 @@ class ArgillaClient(ABC):
             return self.add_record(dataset_id, record)
 
     @abstractmethod
-    def evaluations(self, dataset_id: str) -> Iterable[ArgillaEvaluation]:
+    def evaluations(self, dataset_id: str) -> Iterable[ArgillaRatingEvaluation]:
         """Returns all human-evaluated evaluations for the given dataset.
 
         Args:
@@ -246,7 +283,7 @@ class DefaultArgillaClient(ArgillaClient):
                 workspaces = self._list_workspaces()
                 return next(
                     cast(str, item["id"])
-                    for item in workspaces
+                    for item in workspaces["items"]
                     if item["name"] == workspace_name
                 )
             raise e
@@ -268,7 +305,7 @@ class DefaultArgillaClient(ArgillaClient):
                     question.name,
                     question.title,
                     question.description,
-                    question.options,
+                    question.settings,
                     dataset_id,
                 )
             self._publish_dataset(dataset_id)
@@ -290,19 +327,24 @@ class DefaultArgillaClient(ArgillaClient):
         questions: Sequence[Question],
     ) -> str:
         try:
+            datasets = self._list_datasets(workspace_id)
+            existing_dataset_id: str = next(
+                cast(str, item["id"])
+                for item in datasets["items"]
+                if item["name"] == dataset_name
+            )
+            return existing_dataset_id
+        except StopIteration:
+            pass
+        except HTTPError as e:
+            raise e
+
+        try:
             dataset_id: str = self.create_dataset(
                 workspace_id, dataset_name, fields, questions
             )
         except HTTPError as e:
-            if e.response.status_code == HTTPStatus.CONFLICT:
-                datasets = self._list_datasets(workspace_id)
-                dataset_id = next(
-                    cast(str, item["id"])
-                    for item in datasets["items"]
-                    if item["name"] == dataset_name
-                )
-            else:
-                raise e
+            raise e
 
         for field in fields:
             self._ignore_failure_status(
@@ -317,7 +359,7 @@ class DefaultArgillaClient(ArgillaClient):
                     question.name,
                     question.title,
                     question.description,
-                    question.options,
+                    question.settings,
                     dataset_id,
                 ),
             )
@@ -342,7 +384,7 @@ class DefaultArgillaClient(ArgillaClient):
     def add_records(self, dataset_id: str, records: Sequence[RecordData]) -> None:
         self._create_records(records, dataset_id)
 
-    def evaluations(self, dataset_id: str) -> Iterable[ArgillaEvaluation]:
+    def evaluations(self, dataset_id: str) -> Iterable[ArgillaRatingEvaluation]:
         def to_responses(
             json_responses: Sequence[Mapping[str, Any]],
         ) -> Mapping[str, int | float | bool | str]:
@@ -353,7 +395,7 @@ class DefaultArgillaClient(ArgillaClient):
             }
 
         return (
-            ArgillaEvaluation(
+            ArgillaRatingEvaluation(
                 example_id=json_evaluation["example_id"],
                 record_id=json_evaluation["id"],
                 responses=to_responses(json_evaluation["responses"]),
@@ -453,7 +495,7 @@ class DefaultArgillaClient(ArgillaClient):
             for json_record in self._list_records(dataset_id)
         )
 
-    def create_evaluation(self, evaluation: ArgillaEvaluation) -> None:
+    def create_evaluation(self, evaluation: ArgillaRatingEvaluation) -> None:
         response = self.session.post(
             self.api_url + f"api/v1/records/{evaluation.record_id}/responses",
             json={
@@ -466,11 +508,11 @@ class DefaultArgillaClient(ArgillaClient):
         )
         response.raise_for_status()
 
-    def _list_workspaces(self) -> Sequence[Any]:
-        url = self.api_url + "api/workspaces"
+    def _list_workspaces(self) -> Mapping[str, Any]:
+        url = self.api_url + "api/v1/me/workspaces"
         response = self.session.get(url)
         response.raise_for_status()
-        return cast(Sequence[Any], response.json())
+        return cast(Mapping[str, Any], response.json())
 
     def _create_workspace(self, workspace_name: str) -> Mapping[str, Any]:
         url = self.api_url + "api/workspaces"
@@ -528,7 +570,7 @@ class DefaultArgillaClient(ArgillaClient):
         name: str,
         title: str,
         description: str,
-        options: Sequence[int],
+        settings: Mapping[str, Any],
         dataset_id: str,
     ) -> None:
         url = self.api_url + f"api/v1/datasets/{dataset_id}/questions"
@@ -537,10 +579,7 @@ class DefaultArgillaClient(ArgillaClient):
             "title": title,
             "description": description,
             "required": True,
-            "settings": {
-                "type": "rating",
-                "options": [{"value": option} for option in options],
-            },
+            "settings": settings,
         }
         response = self.session.post(url, json=data)
         response.raise_for_status()
