@@ -50,8 +50,8 @@ class PermissionChecker:
         try:
             if not auth_service.is_valid_token(token, self.permissions, request.url):
                 raise HTTPException(HTTPStatus.UNAUTHORIZED)
-        except RuntimeError:
-            raise HTTPException(HTTPStatus.INTERNAL_SERVER_ERROR)
+        except RuntimeError as e:
+            raise HTTPException(HTTPStatus.INTERNAL_SERVER_ERROR) from e
 
 
 permission_checker_for_user = PermissionChecker(["User"])

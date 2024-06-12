@@ -143,7 +143,7 @@ class MultipleChunkRetrieverQa(
                     highlights=highlights,
                 )
                 for enriched_chunk, highlights in zip(
-                    chunks_to_insert, highlights_per_chunk
+                    chunks_to_insert, highlights_per_chunk, strict=False
                 )
             ],
             search_results=sorted_search_results,

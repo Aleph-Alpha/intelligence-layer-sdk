@@ -86,7 +86,7 @@ extend-include = ["*.ipynb"]
 # defaults: ["E4", "E7", "E9", "F"]
 # check https://docs.astral.sh/ruff/rules/ for more info
 select = [
-    "E",
+    "E4", "E7", "E9",
     "F",
     "W",
     # isort
@@ -97,14 +97,13 @@ select = [
     "PTH",
     # update to newer python versions (mostly typing)
     "UP",
-    # pytest style
-    #"PT",
-    # bug bear
-    #"B"
     # ruf dependent checks
-    "RUF"
-] # "N", "SIM", "B",
-# things i tried that didn't seem so useful: PD, T20(not yet), C90(eventually)
+    "RUF",
+    # bug bear
+    "B"
+
+]
+# things i tried that didn't seem so useful: PD, T20(not yet), C90(eventually), PT (too opinionated)
 ignore = [
     # Line too long
     "E501",
@@ -112,8 +111,9 @@ ignore = [
     "UP007",
     # unusual unicodes, next() instead of [0]
     "RUF001", "RUF015",
+    # warnings should be self explanatory
+    "B028"
 ]
-#select = ["E", "F"]
 
 [tool.ruff.lint.isort]
 known-first-party = ["intelligence_layer", "documentation"]

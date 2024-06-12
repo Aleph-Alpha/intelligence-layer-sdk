@@ -255,7 +255,9 @@ class HighlightCoverageGrader:
         for index, (
             generated_highlight_present,
             expected_highlight_present,
-        ) in enumerate(zip(gen_highlight_present_array, exp_highlight_present_array)):
+        ) in enumerate(
+            zip(gen_highlight_present_array, exp_highlight_present_array, strict=False)
+        ):
             if generated_highlight_present and expected_highlight_present:
                 current_range = HighlightCoverageGrader._increase_current_range_by_one(
                     current_range, index

@@ -131,7 +131,7 @@ class RetrieverBasedQa(
                 id=input.id,
             )
             for answer, input in zip(
-                multi_chunk_qa_output.subanswers, sorted_search_output
+                multi_chunk_qa_output.subanswers, sorted_search_output, strict=False
             )
         ]
         correctly_formatted_output = RetrieverBasedQaOutput(

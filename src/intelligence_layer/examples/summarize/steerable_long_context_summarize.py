@@ -71,6 +71,8 @@ class SteerableLongContextSummarize(
                     chunk=chunk,
                     generated_tokens=summary_output.generated_tokens,
                 )
-                for summary_output, chunk in zip(summary_outputs, chunk_output.chunks)
+                for summary_output, chunk in zip(
+                    summary_outputs, chunk_output.chunks, strict=False
+                )
             ]
         )

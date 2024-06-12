@@ -37,13 +37,13 @@ ReturnValue = TypeVar("ReturnValue")
 def retry(
     f: Callable[[], ReturnValue], until: Callable[[ReturnValue], bool]
 ) -> ReturnValue:
-    i: int = 0
-    for i in range(10):
+    total_tries = 10
+    for _ in range(total_tries):
         r = f()
         if until(r):
             return r
         sleep(0.1)
-    assert False, f"Condition not met after {i} retries"
+    raise AssertionError(f"Condition not met after {total_tries} retries")
 
 
 @fixture
@@ -255,7 +255,9 @@ def test_split_dataset_works(
         )
 
     new_metadata_list = [record.metadata for record in all_records]
-    for old_metadata, new_metadata in zip(record_metadata, new_metadata_list):
+    for old_metadata, new_metadata in zip(
+        record_metadata, new_metadata_list, strict=False
+    ):
         del new_metadata["split"]  # type: ignore
         assert old_metadata == new_metadata
 
@@ -366,7 +368,9 @@ def test_split_dataset_can_split_long_dataset(
         )
 
     new_metadata_list = [record.metadata for record in all_records]
-    for old_metadata, new_metadata in zip(record_metadata, new_metadata_list):
+    for old_metadata, new_metadata in zip(
+        record_metadata, new_metadata_list, strict=False
+    ):
         del new_metadata["split"]  # type: ignore
         assert old_metadata == new_metadata
 

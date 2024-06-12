@@ -96,7 +96,7 @@ def test_can_run_echo_task(echo_task: Echo, echo_input: EchoInput) -> None:
     tokens = tokenize_completion(echo_input.expected_completion, echo_task._model)
     assert len(tokens) == len(result.tokens_with_log_probs)
     assert all([isinstance(t, TokenWithLogProb) for t in result.tokens_with_log_probs])
-    for token, result_token in zip(tokens, result.tokens_with_log_probs):
+    for token, result_token in zip(tokens, result.tokens_with_log_probs, strict=False):
         assert token == result_token.token
 
 
@@ -114,7 +114,7 @@ def test_echo_works_with_whitespaces_in_expected_completion(
 
     assert len(tokens) == len(result.tokens_with_log_probs)
     assert all([isinstance(t, TokenWithLogProb) for t in result.tokens_with_log_probs])
-    for token, result_token in zip(tokens, result.tokens_with_log_probs):
+    for token, result_token in zip(tokens, result.tokens_with_log_probs, strict=False):
         assert token == result_token.token
 
 
@@ -142,7 +142,7 @@ def test_overlapping_tokens_generate_correct_tokens(echo_task: Echo) -> None:
     assert len(tokens) == len(result.tokens_with_log_probs)
 
     assert all([isinstance(t, TokenWithLogProb) for t in result.tokens_with_log_probs])
-    for token, result_token in zip(tokens, result.tokens_with_log_probs):
+    for token, result_token in zip(tokens, result.tokens_with_log_probs, strict=False):
         assert token == result_token.token
 
 

@@ -262,7 +262,9 @@ class TextHighlight(Task[TextHighlightInput, TextHighlightOutput]):
         new_relevant_text_scores: list[TextScore] = []
         for highlight in relevant_highlights:
 
-            def _get_overlap(range: TextPromptRange) -> int:
+            def _get_overlap(
+                range: TextPromptRange, highlight: TextScore = highlight
+            ) -> int:
                 return min(
                     highlight.start + highlight.length, range.end.position
                 ) - max(highlight.start, range.start.position)

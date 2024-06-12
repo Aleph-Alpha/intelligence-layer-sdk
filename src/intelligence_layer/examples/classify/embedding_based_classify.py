@@ -188,7 +188,10 @@ class EmbeddingBasedClassify(Task[ClassifyInput, MultiLabelClassifyOutput]):
         ]
         scores = self._calculate_scores(results_per_label)
         return MultiLabelClassifyOutput(
-            scores={lang: Probability(s) for lang, s in zip(input.labels, scores)}
+            scores={
+                lang: Probability(s)
+                for lang, s in zip(input.labels, scores, strict=False)
+            }
         )
 
     def _labels_with_examples_to_documents(

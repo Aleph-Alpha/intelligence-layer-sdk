@@ -313,7 +313,7 @@ class DefaultArgillaClient(ArgillaClient):
                 raise ValueError(
                     f"Cannot create dataset with name '{dataset_name}', either the given dataset name, already exists"
                     f"or field name or question name are duplicates."
-                )
+                ) from e
             raise e
 
     def ensure_dataset_exists(
@@ -346,13 +346,15 @@ class DefaultArgillaClient(ArgillaClient):
         for field in fields:
             self._ignore_failure_status(
                 frozenset([HTTPStatus.CONFLICT]),
-                lambda: self._create_field(field.name, field.title, dataset_id),
+                lambda field=field: self._create_field(
+                    field.name, field.title, dataset_id
+                ),
             )
 
         for question in questions:
             self._ignore_failure_status(
                 frozenset([HTTPStatus.CONFLICT]),
-                lambda: self._create_question(
+                lambda question=question: self._create_question(
                     question.name,
                     question.title,
                     question.description,
@@ -367,7 +369,7 @@ class DefaultArgillaClient(ArgillaClient):
         return dataset_id
 
     def _ignore_failure_status(
-        self, expected_failure: frozenset[HTTPStatus], f: Callable[[], None]
+        self, expected_failure: frozenset[HTTPStatus], f: Callable[..., None]
     ) -> None:
         try:
             f()
@@ -443,7 +445,7 @@ class DefaultArgillaClient(ArgillaClient):
     def _add_split_to_records(self, dataset_id: str, n_splits: int) -> None:
         records = self._list_records(dataset_id)
         splits = itertools.cycle(range(n_splits))
-        records_and_splits = zip(records, splits)
+        records_and_splits = zip(records, splits, strict=False)
 
         def chunks(
             iterator: Iterable[tuple[Mapping[str, Any], int]], size: int

@@ -532,9 +532,7 @@ class DocumentIndexClient:
     def documents(
         self,
         collection_path: CollectionPath,
-        filter_query_params: DocumentFilterQueryParams = DocumentFilterQueryParams(
-            max_documents=None, starts_with=None
-        ),
+        filter_query_params: Optional[DocumentFilterQueryParams] = None,
     ) -> Sequence[DocumentInfo]:
         """List all documents within a collection.
 
@@ -548,6 +546,11 @@ class DocumentIndexClient:
         Returns:
             Overview of all documents within the collection.
         """
+        if filter_query_params is None:
+            filter_query_params = DocumentFilterQueryParams(
+                max_documents=None, starts_with=None
+            )
+
         url = f"{self._base_document_index_url}/collections/{collection_path.namespace}/{collection_path.collection}/docs"
 
         query_params = {}
@@ -591,8 +594,10 @@ class DocumentIndexClient:
     def _raise_for_status(self, response: requests.Response) -> None:
         try:
             response.raise_for_status()
-        except HTTPError:
+        except HTTPError as e:
             exception_factory = _status_code_to_exception.get(
                 HTTPStatus(response.status_code), InternalError
             )
-            raise exception_factory(response.text, HTTPStatus(response.status_code))
+            raise exception_factory(
+                response.text, HTTPStatus(response.status_code)
+            ) from e

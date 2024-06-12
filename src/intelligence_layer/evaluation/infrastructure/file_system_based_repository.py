@@ -1,4 +1,3 @@
-from abc import ABC
 from collections.abc import Sequence
 from pathlib import Path
 from typing import cast
@@ -6,7 +5,7 @@ from typing import cast
 from fsspec import AbstractFileSystem  # type: ignore
 
 
-class FileSystemBasedRepository(ABC):
+class FileSystemBasedRepository:
     """An :class:`FileBasedRepository` that stores evaluation results in files.
 
     Args:

@@ -37,12 +37,12 @@ class DummyEloQaEvalLogic(
     def __init__(
         self,
         model: ControlModel,
-        tracer: Tracer = NoOpTracer(),
+        tracer: Tracer | None = None,
     ):
         load_dotenv()
         super().__init__()
         self._model = model
-        self.tracer = tracer
+        self.tracer = tracer if tracer else NoOpTracer()
 
     def grade(
         self,

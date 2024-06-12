@@ -122,7 +122,7 @@ class LimitedConcurrencyClient:
         capped_max_concurrency = min(limit_for_max_concurrency, max_concurrency)
         if max_concurrency > capped_max_concurrency:
             warnings.warn(
-                f"Selected a value greater than the maximum allowed number. max_concurrency will be reduced to {limit_for_max_concurrency}."
+                f"Selected a value greater than the maximum allowed number. max_concurrency will be reduced to {limit_for_max_concurrency}.",
             )
         self._concurrency_limit_semaphore = Semaphore(capped_max_concurrency)
 

@@ -27,7 +27,7 @@ def test_composite_tracer_can_get_span_status(
     composite_tracer = CompositeTracer([tracer_1, tracer_2])
 
     with composite_tracer.span("test_name") as composite_span:
-        composite_span.status_code == SpanStatus.OK
+        assert composite_span.status_code == SpanStatus.OK
 
 
 def test_composite_tracer_raises_for_inconsistent_span_status(
@@ -48,4 +48,4 @@ def test_composite_tracer_raises_for_inconsistent_span_status(
             pass
 
         with pytest.raises(ValueError):
-            composite_span.status_code
+            composite_span.status_code  # noqa: B018

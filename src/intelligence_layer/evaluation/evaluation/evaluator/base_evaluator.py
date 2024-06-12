@@ -90,13 +90,15 @@ class EvaluatorBase(Generic[Input, Output, ExpectedOutput, Evaluation], ABC):
             for current_index, current_type in enumerate(current_types):
                 if type(current_type) is not TypeVar:
                     type_var_count = num_types_set - 1
+                    final_element_index = -1
                     for element_index, element in enumerate(type_list):
+                        final_element_index = element_index
                         if type(element) is TypeVar:
                             type_var_count += 1
                         if type_var_count == current_index:
                             break
                     assert type_var_count == current_index
-                    type_list[element_index] = current_type
+                    type_list[final_element_index] = current_type
                     num_types_set += 1
 
         # mypy does not know __orig_bases__
@@ -119,7 +121,7 @@ class EvaluatorBase(Generic[Input, Output, ExpectedOutput, Evaluation], ABC):
         return {
             name: param_type
             for name, param_type in zip(
-                (a.__name__ for a in get_args(base_types)), type_list
+                (a.__name__ for a in get_args(base_types)), type_list, strict=False
             )
             if type(param_type) is not TypeVar
         }
@@ -136,7 +138,9 @@ class EvaluatorBase(Generic[Input, Output, ExpectedOutput, Evaluation], ABC):
         try:
             input_type = self._get_types["Input"]
         except KeyError:
-            raise TypeError(f"Alternatively overwrite input_type() in {type(self)}")
+            raise TypeError(
+                f"Alternatively overwrite input_type() in {type(self)}"
+            ) from None
         return cast(type[Input], input_type)
 
     def output_type(self) -> type[Output]:
@@ -151,7 +155,9 @@ class EvaluatorBase(Generic[Input, Output, ExpectedOutput, Evaluation], ABC):
         try:
             output_type = self._get_types["Output"]
         except KeyError:
-            raise TypeError(f"Alternatively overwrite output_type() in {type(self)}")
+            raise TypeError(
+                f"Alternatively overwrite output_type() in {type(self)}"
+            ) from None
         return cast(type[Output], output_type)
 
     def expected_output_type(self) -> type[ExpectedOutput]:
@@ -168,7 +174,7 @@ class EvaluatorBase(Generic[Input, Output, ExpectedOutput, Evaluation], ABC):
         except KeyError:
             raise TypeError(
                 f"Alternatively overwrite expected_output_type() in {type(self)}"
-            )
+            ) from None
         return cast(type[ExpectedOutput], expected_output_type)
 
     def evaluation_type(self) -> type[Evaluation]:
@@ -185,7 +191,7 @@ class EvaluatorBase(Generic[Input, Output, ExpectedOutput, Evaluation], ABC):
         except KeyError:
             raise TypeError(
                 f"Alternatively overwrite evaluation_type() in {type(self)}"
-            )
+            ) from None
         return cast(type[Evaluation], evaluation_type)
 
     def _load_run_overviews(self, *run_ids: str) -> set[RunOverview]:
@@ -253,7 +259,9 @@ class EvaluatorBase(Generic[Input, Output, ExpectedOutput, Evaluation], ABC):
     ]:
         current_example = 0
 
-        for example, example_outputs in zip(examples, example_outputs_for_example):
+        for example, example_outputs in zip(
+            examples, example_outputs_for_example, strict=False
+        ):
             if skip_example_on_any_failure and any(
                 isinstance(output.output, FailedExampleRun)
                 for output in example_outputs
