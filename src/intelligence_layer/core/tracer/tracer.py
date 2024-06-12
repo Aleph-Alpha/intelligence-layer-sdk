@@ -121,7 +121,6 @@ def submit_to_trace_viewer(exported_spans: Sequence[ExportedSpan]) -> bool:
             },
             json=ExportedSpanList(exported_spans).model_dump(mode="json"),
         )
-        print(res)
         if res.status_code != 200:
             raise requests.HTTPError(res.status_code)
         rich.print(

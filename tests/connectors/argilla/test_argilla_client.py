@@ -256,7 +256,7 @@ def test_split_dataset_works(
 
     new_metadata_list = [record.metadata for record in all_records]
     for old_metadata, new_metadata in zip(
-        record_metadata, new_metadata_list, strict=False
+        record_metadata, new_metadata_list, strict=True
     ):
         del new_metadata["split"]  # type: ignore
         assert old_metadata == new_metadata
@@ -369,7 +369,7 @@ def test_split_dataset_can_split_long_dataset(
 
     new_metadata_list = [record.metadata for record in all_records]
     for old_metadata, new_metadata in zip(
-        record_metadata, new_metadata_list, strict=False
+        record_metadata, new_metadata_list, strict=True
     ):
         del new_metadata["split"]  # type: ignore
         assert old_metadata == new_metadata

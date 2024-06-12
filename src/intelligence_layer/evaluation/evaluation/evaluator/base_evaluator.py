@@ -121,7 +121,7 @@ class EvaluatorBase(Generic[Input, Output, ExpectedOutput, Evaluation], ABC):
         return {
             name: param_type
             for name, param_type in zip(
-                (a.__name__ for a in get_args(base_types)), type_list, strict=False
+                (a.__name__ for a in get_args(base_types)), type_list, strict=True
             )
             if type(param_type) is not TypeVar
         }
@@ -260,7 +260,7 @@ class EvaluatorBase(Generic[Input, Output, ExpectedOutput, Evaluation], ABC):
         current_example = 0
 
         for example, example_outputs in zip(
-            examples, example_outputs_for_example, strict=False
+            examples, example_outputs_for_example, strict=True
         ):
             if skip_example_on_any_failure and any(
                 isinstance(output.output, FailedExampleRun)

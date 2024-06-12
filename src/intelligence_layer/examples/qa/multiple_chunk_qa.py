@@ -202,7 +202,7 @@ class MultipleChunkQa(Task[MultipleChunkQaInput, MultipleChunkQaOutput]):
                     chunk=chunk,
                     highlights=qa_output.highlights,
                 )
-                for qa_output, chunk in zip(qa_outputs, input.chunks, strict=False)
+                for qa_output, chunk in zip(qa_outputs, input.chunks, strict=True)
                 if qa_output.answer
             ],
         )

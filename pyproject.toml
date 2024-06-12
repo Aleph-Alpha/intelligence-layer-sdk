@@ -97,15 +97,16 @@ select = [
     "PTH",
     # update to newer python versions (mostly typing)
     "UP",
-    # ruf dependent checks
+    # ruff dependent checks
     "RUF",
-    # bug bear
+    # bugbear
     "B",
+    # pydocstring
     "D"
 
 
 ]
-# things i tried that didn't seem so useful: PD, T20(not yet), C90(eventually), PT (too opinionated)
+# Did not seem so useful: PD, T20(not yet), C90(eventually), PT (too opinionated)
 ignore = [
     # Line too long
     "E501",

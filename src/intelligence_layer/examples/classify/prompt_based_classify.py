@@ -118,7 +118,7 @@ Reply with only the class label."""
         outputs = self._echo_task.run_concurrently(inputs, task_span)
         return {
             label: output.tokens_with_log_probs
-            for label, output in zip(labels, outputs, strict=False)
+            for label, output in zip(labels, outputs, strict=True)
         }
 
     def _prepare_label_for_echo_task(self, label: str) -> str:

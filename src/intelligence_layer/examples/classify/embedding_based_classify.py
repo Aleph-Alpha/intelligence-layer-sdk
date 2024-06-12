@@ -190,7 +190,7 @@ class EmbeddingBasedClassify(Task[ClassifyInput, MultiLabelClassifyOutput]):
         return MultiLabelClassifyOutput(
             scores={
                 lang: Probability(s)
-                for lang, s in zip(input.labels, scores, strict=False)
+                for lang, s in zip(input.labels, scores, strict=True)
             }
         )
 

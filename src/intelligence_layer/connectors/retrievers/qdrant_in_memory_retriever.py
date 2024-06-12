@@ -144,7 +144,7 @@ class QdrantInMemoryRetriever(BaseRetriever[int]):
                     ).model_dump(),
                 )
                 for idx, (text_embedding, document) in enumerate(
-                    zip(embeddings, documents, strict=False)
+                    zip(embeddings, documents, strict=True)
                 )
             ],
         )
