@@ -466,6 +466,48 @@ def test_aggregation_overviews_to_pandas_unwrap_statistics() -> None:
     assert "statistics" not in df.columns
 
 
+def test_aggregation_overviews_to_pandas_unwrap_metadata() -> None:
+    # given
+
+    overview = AggregationOverview(
+        evaluation_overviews=frozenset([]),
+        id="aggregation-id",
+        start=utc_now(),
+        end=utc_now(),
+        successful_evaluation_count=5,
+        crashed_during_evaluation_count=3,
+        description="dummy-evaluator",
+        statistics=AggregationDummy(),
+        labels=set(),
+        metadata=dict({"model": "model_a", "prompt": "prompt_a"}),
+    )
+    overview2 = AggregationOverview(
+        evaluation_overviews=frozenset([]),
+        id="aggregation-id2",
+        start=utc_now(),
+        end=utc_now(),
+        successful_evaluation_count=5,
+        crashed_during_evaluation_count=3,
+        description="dummy-evaluator",
+        statistics=AggregationDummy(),
+        labels=set(),
+        metadata=dict(
+            {"model": "model_a", "prompt": "prompt_a", "different_column": "value"}
+        ),
+    )
+
+    df = aggregation_overviews_to_pandas(
+        [overview, overview2], unwrap_metadata=True, strict=False
+    )
+
+    assert "model" in df.columns
+    assert "prompt" in df.columns
+    assert "different_column" in df.columns
+    assert "metadata" not in df.columns
+    assert all(df["model"] == "model_a")
+    assert all(df["prompt"] == "prompt_a")
+
+
 def test_aggregation_overviews_to_pandas_works_with_eval_overviews() -> None:
     # given
     eval_overview = EvaluationOverview(

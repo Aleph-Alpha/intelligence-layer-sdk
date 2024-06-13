@@ -144,6 +144,7 @@ def aggregation_overviews_to_pandas(
     aggregation_overviews: Sequence[AggregationOverview[AggregatedEvaluation]],
     unwrap_statistics: bool = True,
     strict: bool = True,
+    unwrap_metadata: bool = True,
 ) -> pd.DataFrame:
     """Converts aggregation overviews to a pandas table for easier comparison.
 
@@ -152,6 +153,8 @@ def aggregation_overviews_to_pandas(
         unwrap_statistics: Unwrap the `statistics` field in the overviews into separate columns.
             Defaults to True.
         strict: Allow only overviews with exactly equal `statistics` types. Defaults to True.
+        unwrap_metadata: Unwrap the `metadata` field in the overviews into separate columns.
+            Defaults to True.
 
     Returns:
         A pandas :class:`DataFrame` containing an overview per row with fields as columns.
@@ -173,6 +176,11 @@ def aggregation_overviews_to_pandas(
         df = df.join(pd.DataFrame(df["statistics"].to_list())).drop(
             columns=["statistics"]
         )
+    if unwrap_metadata and "metadata" in df.columns:
+        df = pd.concat([df, pd.json_normalize(df["metadata"])], axis=1).drop(  # type: ignore
+            columns=["metadata"]
+        )
+
     return df
 
 
