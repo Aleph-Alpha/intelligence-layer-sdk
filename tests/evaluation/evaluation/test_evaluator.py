@@ -18,6 +18,7 @@ from intelligence_layer.evaluation import (
     EvaluationLogic,
     Evaluator,
     Example,
+    ExampleOutput,
     ExpectedOutput,
     FailedExampleEvaluation,
     InMemoryAggregationRepository,
@@ -140,9 +141,9 @@ class DummyTaskWithoutTypeHints(Task[str, str]):
 @fixture
 def sequence_good_examples() -> Iterable[Example[str, None]]:
     return [
-        Example(input="success", expected_output=None),
-        Example(input="success", expected_output=None),
-        Example(input=FAIL_IN_EVAL_INPUT, expected_output=None),
+        Example(input="success", expected_output=None, id="0"),
+        Example(input="success", expected_output=None, id="1"),
+        Example(input=FAIL_IN_EVAL_INPUT, expected_output=None, id="2"),
     ]
 
 
@@ -669,3 +670,42 @@ def test_eval_and_aggregate_runs_only_runs_n_examples(
         + aggregation_overview_n.crashed_during_evaluation_count
         == 2
     )
+
+
+def test_eval_works_when_runs_are_not_complete(
+    dummy_evaluator: Evaluator[str, str, None, DummyEvaluation],
+    dummy_runner: Runner[str, str],
+    good_dataset_id: str,
+) -> None:
+    run_overview = dummy_runner.run_dataset(good_dataset_id, num_examples=2)
+    evaluation_overview = dummy_evaluator.evaluate_runs(run_overview.id)
+    assert evaluation_overview.successful_evaluation_count == 2
+
+
+def test_eval_raises_errors_when_runs_are_not_the_same_length(
+    dummy_evaluator: Evaluator[str, str, None, DummyEvaluation],
+    dummy_runner: Runner[str, str],
+    good_dataset_id: str,
+) -> None:
+    run_1 = dummy_runner.run_dataset(good_dataset_id, num_examples=2)
+    run_2 = dummy_runner.run_dataset(good_dataset_id, num_examples=1)
+    with pytest.raises(ValueError, match="number"):
+        dummy_evaluator.evaluate_runs(run_1.id, run_2.id)
+
+
+def test_eval_raises_error_if_examples_and_example_outputs_dont_match(
+    dummy_evaluator: Evaluator[str, str, None, DummyEvaluation],
+) -> None:
+    examples = [Example(input="", expected_output=None)]
+    not_matching_example_outputs = [
+        (ExampleOutput(run_id="id", example_id="not-matching-id", output="output"),)
+    ]
+    with pytest.raises(ValueError):
+        list(
+            dummy_evaluator._generate_evaluation_inputs(
+                examples,
+                not_matching_example_outputs,
+                skip_example_on_any_failure=False,
+                num_examples=None,
+            )
+        )

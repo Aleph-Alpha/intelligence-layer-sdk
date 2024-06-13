@@ -16,6 +16,8 @@
 
 ### Fixes
   - Reinitializing different `AlephAlphaModel` instances and retrieving their tokenizer should now consume a lot less memory.
+  - Evaluations now raise errors if ids of examples and outputs no longer match. If this happens, continuing the evaluation would only produce incorrect results.
+  - Performing evaluations on runs with a different number of outputs now raises errors. Continuing the evaluation in this case would only lead to an inconsistent state.
 
 ### Deprecations
 ...

@@ -208,12 +208,26 @@ class EvaluatorBase(Generic[Input, Output, ExpectedOutput, Evaluation], ABC):
     def _raise_if_overviews_have_different_dataset(
         self, run_overviews: set[RunOverview]
     ) -> None:
-        if not all(
-            next(iter(run_overviews)).dataset_id == run_overview.dataset_id
+        if any(
+            next(iter(run_overviews)).dataset_id != run_overview.dataset_id
             for run_overview in run_overviews
         ):
             raise ValueError(
-                f"All run-overviews must reference the same dataset: {run_overviews}"
+                f"All run overviews must reference the same dataset: {run_overviews}"
+            )
+
+    def _raise_if_overviews_have_different_number_of_runs(
+        self, run_overviews: set[RunOverview]
+    ) -> None:
+        run_overview_list = list(run_overviews)
+        if any(
+            run_overview_list[0].failed_example_count
+            + run_overview_list[0].successful_example_count
+            != run_overview.successful_example_count + run_overview.failed_example_count
+            for run_overview in run_overview_list
+        ):
+            raise ValueError(
+                f"All run overviews must contain the same number of items: {run_overviews}"
             )
 
     def _retrieve_example_outputs(
@@ -260,8 +274,16 @@ class EvaluatorBase(Generic[Input, Output, ExpectedOutput, Evaluation], ABC):
         current_example = 0
 
         for example, example_outputs in zip(
-            examples, example_outputs_for_example, strict=True
+            examples, example_outputs_for_example, strict=False
         ):
+            if any(
+                example.id != example_output.example_id
+                for example_output in example_outputs
+            ):
+                raise ValueError(
+                    "The ids of example and output do not match. Therefore, the evaluation cannot continue.\n"
+                    + f"example id: {example.id}, output id: {example_outputs}."
+                )
             if skip_example_on_any_failure and any(
                 isinstance(output.output, FailedExampleRun)
                 for output in example_outputs
@@ -308,6 +330,7 @@ class EvaluatorBase(Generic[Input, Output, ExpectedOutput, Evaluation], ABC):
             Iterable over pairs of :class:`Example` and all corresponding :class:`ExampleOutputs`.
         """
         self._raise_if_overviews_have_different_dataset(run_overviews)
+        self._raise_if_overviews_have_different_number_of_runs(run_overviews)
         example_outputs_for_example = self._retrieve_example_outputs(run_overviews)
         dataset_id = next(iter(run_overviews)).dataset_id
         examples = self._retrieve_examples(dataset_id)
