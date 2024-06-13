@@ -124,8 +124,8 @@ class IncrementalEvaluator(Evaluator[Input, Output, ExpectedOutput, Evaluation])
         previous_evaluation_ids: Optional[list[str]] = None,
         num_examples: Optional[int] = None,
         abort_on_error: bool = False,
-        labels: set[str] = set(),
-        metadata: dict[str, JsonSerializable] = dict(),
+        labels: Optional[set[str]] = None,
+        metadata: Optional[dict[str, JsonSerializable]] = None,
     ) -> EvaluationOverview:
         """Evaluate all runs while considering which runs have already been evaluated according to `previous_evaluation_id`.
 
@@ -152,6 +152,10 @@ class IncrementalEvaluator(Evaluator[Input, Output, ExpectedOutput, Evaluation])
             returned but instead stored in the :class:`EvaluationRepository` provided in the
             __init__.
         """
+        if metadata is None:
+            metadata = dict()
+        if labels is None:
+            labels = set()
         previous_run_ids = []
         previous_evaluation_ids = previous_evaluation_ids or []
 
@@ -179,9 +183,13 @@ class IncrementalEvaluator(Evaluator[Input, Output, ExpectedOutput, Evaluation])
         abort_on_error: bool = False,
         skip_example_on_any_failure: bool = True,
         description: Optional[str] = None,
-        labels: set[str] = set(),
-        metadata: dict[str, JsonSerializable] = dict(),
+        labels: set[str] | None = None,
+        metadata: dict[str, JsonSerializable] | None = None,
     ) -> EvaluationOverview:
+        if metadata is None:
+            metadata = dict()
+        if labels is None:
+            labels = set()
         self._evaluation_logic.set_previous_run_output_ids([])
         return super().evaluate_runs(
             *run_ids,

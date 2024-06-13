@@ -184,8 +184,8 @@ class Aggregator(Generic[Evaluation, AggregatedEvaluation]):
     def aggregate_evaluation(
         self,
         *eval_ids: str,
-        labels: set[str] = set(),
-        metadata: dict[str, JsonSerializable] = dict(),
+        labels: set[str] | None = None,
+        metadata: dict[str, JsonSerializable] | None = None,
     ) -> AggregationOverview[AggregatedEvaluation]:
         """Aggregates all evaluations into an overview that includes high-level statistics.
 
@@ -200,6 +200,10 @@ class Aggregator(Generic[Evaluation, AggregatedEvaluation]):
         Returns:
             An overview of the aggregated evaluation.
         """
+        if metadata is None:
+            metadata = dict()
+        if labels is None:
+            labels = set()
 
         def load_eval_overview(evaluation_id: str) -> EvaluationOverview:
             evaluation_overview = self._evaluation_repository.evaluation_overview(

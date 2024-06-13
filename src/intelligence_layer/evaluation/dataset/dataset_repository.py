@@ -23,8 +23,8 @@ class DatasetRepository(ABC):
         examples: Iterable[Example[Input, ExpectedOutput]],
         dataset_name: str,
         id: str | None = None,
-        labels: set[str] = set(),
-        metadata: dict[str, JsonSerializable] = dict(),
+        labels: set[str] | None = None,
+        metadata: dict[str, JsonSerializable] | None = None,
     ) -> Dataset:
         """Creates a dataset from given :class:`Example`s and returns the ID of that dataset.
 

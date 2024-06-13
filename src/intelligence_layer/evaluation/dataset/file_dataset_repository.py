@@ -32,9 +32,13 @@ class FileSystemDatasetRepository(DatasetRepository, FileSystemBasedRepository):
         examples: Iterable[Example[Input, ExpectedOutput]],
         dataset_name: str,
         id: str | None = None,
-        labels: set[str] = set(),
-        metadata: dict[str, JsonSerializable] = dict(),
+        labels: set[str] | None = None,
+        metadata: dict[str, JsonSerializable] | None = None,
     ) -> Dataset:
+        if metadata is None:
+            metadata = dict()
+        if labels is None:
+            labels = set()
         dataset = Dataset(name=dataset_name, labels=labels, metadata=metadata)
         if id is not None:
             dataset.id = id

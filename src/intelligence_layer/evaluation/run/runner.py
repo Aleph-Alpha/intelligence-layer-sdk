@@ -82,8 +82,8 @@ class Runner(Generic[Input, Output]):
         max_workers: int = 10,
         description: Optional[str] = None,
         trace_examples_individually: bool = True,
-        labels: set[str] = set(),
-        metadata: dict[str, JsonSerializable] = dict(),
+        labels: Optional[set[str]] = None,
+        metadata: Optional[dict[str, JsonSerializable]] = None,
     ) -> RunOverview:
         """Generates all outputs for the provided dataset.
 
@@ -107,6 +107,10 @@ class Runner(Generic[Input, Output]):
             An overview of the run. Outputs will not be returned but instead stored in the
             :class:`RunRepository` provided in the __init__.
         """
+        if labels is None:
+            labels = set()
+        if metadata is None:
+            metadata = dict()
 
         def run(
             example: Example[Input, ExpectedOutput],

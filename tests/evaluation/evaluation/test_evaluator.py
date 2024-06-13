@@ -710,6 +710,8 @@ def test_eval_raises_error_if_examples_and_example_outputs_dont_match(
                 num_examples=None,
             )
         )
+
+
 def test_evaluator_evaluate_runs_sets_default_values(
     dummy_evaluator: Evaluator[str, str, None, DummyEvaluation], run_id: str
 ) -> None:

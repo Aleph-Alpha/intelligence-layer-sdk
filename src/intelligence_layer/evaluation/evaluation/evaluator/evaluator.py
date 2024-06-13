@@ -100,8 +100,8 @@ class Evaluator(EvaluatorBase[Input, Output, ExpectedOutput, Evaluation]):
         abort_on_error: bool = False,
         skip_example_on_any_failure: bool = True,
         description: Optional[str] = None,
-        labels: set[str] = set(),
-        metadata: dict[str, JsonSerializable] = dict(),
+        labels: Optional[set[str]] = None,
+        metadata: Optional[dict[str, JsonSerializable]] = None,
     ) -> EvaluationOverview:
         """Evaluates all generated outputs in the run.
 
@@ -129,6 +129,10 @@ class Evaluator(EvaluatorBase[Input, Output, ExpectedOutput, Evaluation]):
             returned but instead stored in the :class:`EvaluationRepository` provided in the
             __init__.
         """
+        if metadata is None:
+            metadata = dict()
+        if labels is None:
+            labels = set()
         start = utc_now()
         run_overviews = self._load_run_overviews(*run_ids)
         eval_id = self._evaluation_repository.initialize_evaluation()

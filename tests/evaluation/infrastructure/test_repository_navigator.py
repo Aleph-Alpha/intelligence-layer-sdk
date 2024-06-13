@@ -437,7 +437,9 @@ def test_aggregation_overviews_to_pandas(length: int) -> None:
     # given
     overview = create_aggregation_overview(AggregationDummy())
     # when
-    df = aggregation_overviews_to_pandas([overview] * length, unwrap_statistics=False)
+    df = aggregation_overviews_to_pandas(
+        [overview] * length, unwrap_statistics=False, unwrap_metadata=False
+    )
     # then
     assert len(df) == length
     assert set(AggregationOverview.model_fields.keys()) == set(df.columns)

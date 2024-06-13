@@ -139,9 +139,13 @@ class ArgillaEvaluator(AsyncEvaluator[Input, Output, ExpectedOutput, Evaluation]
         dataset_name: Optional[str] = None,
         abort_on_error: bool = False,
         skip_example_on_any_failure: bool = True,
-        labels: set[str] = set(),
-        metadata: dict[str, JsonSerializable] = dict(),
+        labels: Optional[set[str]] = None,
+        metadata: Optional[dict[str, JsonSerializable]] = None,
     ) -> PartialEvaluationOverview:
+        if metadata is None:
+            metadata = dict()
+        if labels is None:
+            labels = set()
         argilla_dataset_id = self._client.create_dataset(
             self._workspace_id,
             dataset_name if dataset_name else str(uuid4()),
