@@ -12,12 +12,12 @@ from requests import HTTPError
 from intelligence_layer.connectors.argilla.argilla_client import (
     ArgillaClient,
     ArgillaRatingEvaluation,
-    DefaultArgillaClient,
     Field,
     RatingQuestion,
     RecordData,
     TextQuestion,
 )
+from intelligence_layer.connectors.argilla.default_client import DefaultArgillaClient
 
 
 class DummyInput(BaseModel):
