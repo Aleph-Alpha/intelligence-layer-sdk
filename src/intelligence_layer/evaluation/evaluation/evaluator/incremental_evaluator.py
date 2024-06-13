@@ -6,7 +6,9 @@ from typing import Optional
 
 from pydantic import BaseModel
 
-from intelligence_layer.connectors.base.json_serializable import JsonSerializable
+from intelligence_layer.connectors.base.json_serializable import (
+    SerializableDict,
+)
 from intelligence_layer.core import Input, Output
 from intelligence_layer.evaluation.dataset.dataset_repository import DatasetRepository
 from intelligence_layer.evaluation.dataset.domain import Example, ExpectedOutput
@@ -125,7 +127,7 @@ class IncrementalEvaluator(Evaluator[Input, Output, ExpectedOutput, Evaluation])
         num_examples: Optional[int] = None,
         abort_on_error: bool = False,
         labels: Optional[set[str]] = None,
-        metadata: Optional[dict[str, JsonSerializable]] = None,
+        metadata: Optional[SerializableDict] = None,
     ) -> EvaluationOverview:
         """Evaluate all runs while considering which runs have already been evaluated according to `previous_evaluation_id`.
 
@@ -184,7 +186,7 @@ class IncrementalEvaluator(Evaluator[Input, Output, ExpectedOutput, Evaluation])
         skip_example_on_any_failure: bool = True,
         description: Optional[str] = None,
         labels: set[str] | None = None,
-        metadata: dict[str, JsonSerializable] | None = None,
+        metadata: SerializableDict | None = None,
     ) -> EvaluationOverview:
         if metadata is None:
             metadata = dict()

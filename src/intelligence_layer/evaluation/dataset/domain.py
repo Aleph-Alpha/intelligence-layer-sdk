@@ -5,7 +5,6 @@ from pydantic import BaseModel, Field
 from rich.tree import Tree
 
 from intelligence_layer.connectors.base.json_serializable import (
-    JsonSerializable,
     SerializableDict,
 )
 from intelligence_layer.core.task import Input
@@ -70,7 +69,7 @@ class Dataset(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid4()))
     name: str
     labels: set[str] = set()
-    metadata: dict[str, JsonSerializable] = dict()
+    metadata: SerializableDict = dict()
 
     def __repr__(self) -> str:
         return self.__str__()

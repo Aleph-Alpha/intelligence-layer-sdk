@@ -5,7 +5,7 @@ from typing import Generic
 from pydantic import BaseModel
 from rich.tree import Tree
 
-from intelligence_layer.connectors import JsonSerializable
+from intelligence_layer.connectors.base.json_serializable import SerializableDict
 from intelligence_layer.core.task import Output
 
 
@@ -113,7 +113,7 @@ class RunOverview(BaseModel, frozen=True):
     successful_example_count: int
     description: str
     labels: set[str]
-    metadata: dict[str, JsonSerializable]
+    metadata: SerializableDict
 
     def __repr__(self) -> str:
         return self.__str__()

@@ -4,7 +4,9 @@ from typing import Optional, final
 
 from tqdm import tqdm
 
-from intelligence_layer.connectors.base.json_serializable import JsonSerializable
+from intelligence_layer.connectors.base.json_serializable import (
+    SerializableDict,
+)
 from intelligence_layer.core import Input, Output, utc_now
 from intelligence_layer.evaluation.dataset.dataset_repository import DatasetRepository
 from intelligence_layer.evaluation.dataset.domain import Example, ExpectedOutput
@@ -101,7 +103,7 @@ class Evaluator(EvaluatorBase[Input, Output, ExpectedOutput, Evaluation]):
         skip_example_on_any_failure: bool = True,
         description: Optional[str] = None,
         labels: Optional[set[str]] = None,
-        metadata: Optional[dict[str, JsonSerializable]] = None,
+        metadata: Optional[SerializableDict] = None,
     ) -> EvaluationOverview:
         """Evaluates all generated outputs in the run.
 

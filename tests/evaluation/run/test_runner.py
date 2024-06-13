@@ -2,7 +2,9 @@ from collections.abc import Iterable
 
 import pytest
 
-from intelligence_layer.connectors.base.json_serializable import JsonSerializable
+from intelligence_layer.connectors.base.json_serializable import (
+    SerializableDict,
+)
 from intelligence_layer.core import InMemoryTaskSpan, InMemoryTracer
 from intelligence_layer.evaluation import (
     Example,
@@ -149,8 +151,8 @@ def test_runner_run_overview_has_specified_metadata_and_labels(
     in_memory_run_repository: InMemoryRunRepository,
     sequence_examples: Iterable[Example[str, None]],
 ) -> None:
-    run_labels = set(["test-label"])
-    run_metadata: dict[str, JsonSerializable] = dict({"test_key": "test-value"})
+    run_labels = {"test-label"}
+    run_metadata: SerializableDict = dict({"test_key": "test-value"})
 
     examples = list(sequence_examples)
     task = DummyTask()

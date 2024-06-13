@@ -8,7 +8,9 @@ import pytest
 from fsspec.implementations.memory import MemoryFileSystem  # type: ignore
 from pytest import FixtureRequest, fixture, mark, raises
 
-from intelligence_layer.connectors.base.json_serializable import JsonSerializable
+from intelligence_layer.connectors.base.json_serializable import (
+    SerializableDict,
+)
 from intelligence_layer.evaluation import (
     DatasetRepository,
     Example,
@@ -105,8 +107,8 @@ def test_dataset_repository_create_dataset_explicit_values_overwrite_defaults(
 ) -> None:
     expected_id = str(uuid4())
     expected_name = "test_name"
-    expected_labels = set(["test_label"])
-    expected_metadata: dict[str, JsonSerializable] = dict({"test_key": "test_value"})
+    expected_labels = {"test_label"}
+    expected_metadata: SerializableDict = dict({"test_key": "test_value"})
 
     dataset_repository: DatasetRepository = request.getfixturevalue(repository_fixture)
 

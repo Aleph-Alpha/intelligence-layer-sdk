@@ -8,7 +8,9 @@ from uuid import uuid4
 from pydantic import JsonValue
 from tqdm import tqdm
 
-from intelligence_layer.connectors.base.json_serializable import JsonSerializable
+from intelligence_layer.connectors.base.json_serializable import (
+    SerializableDict,
+)
 from intelligence_layer.core import (
     CompositeTracer,
     Input,
@@ -83,7 +85,7 @@ class Runner(Generic[Input, Output]):
         description: Optional[str] = None,
         trace_examples_individually: bool = True,
         labels: Optional[set[str]] = None,
-        metadata: Optional[dict[str, JsonSerializable]] = None,
+        metadata: Optional[SerializableDict] = None,
     ) -> RunOverview:
         """Generates all outputs for the provided dataset.
 

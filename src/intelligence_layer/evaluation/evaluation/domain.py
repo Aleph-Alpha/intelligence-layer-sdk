@@ -5,7 +5,7 @@ from typing import Generic, TypeVar
 from pydantic import BaseModel, SerializeAsAny
 from rich.tree import Tree
 
-from intelligence_layer.connectors.base.json_serializable import JsonSerializable
+from intelligence_layer.connectors.base.json_serializable import SerializableDict
 from intelligence_layer.evaluation.run.domain import RunOverview
 
 Evaluation = TypeVar("Evaluation", bound=BaseModel, covariant=True)
@@ -83,7 +83,7 @@ class PartialEvaluationOverview(BaseModel, frozen=True):
     submitted_evaluation_count: int
     description: str
     labels: set[str]
-    metadata: dict[str, JsonSerializable]
+    metadata: SerializableDict
 
     def __repr__(self) -> str:
         return self.__str__()
@@ -133,7 +133,7 @@ class EvaluationOverview(BaseModel, frozen=True):
     failed_evaluation_count: int
     description: str
     labels: set[str]
-    metadata: dict[str, JsonSerializable]
+    metadata: SerializableDict
 
     def __repr__(self) -> str:
         return self.__str__()

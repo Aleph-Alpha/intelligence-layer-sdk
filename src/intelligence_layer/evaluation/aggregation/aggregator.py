@@ -11,7 +11,9 @@ from typing import (
 )
 from uuid import uuid4
 
-from intelligence_layer.connectors.base.json_serializable import JsonSerializable
+from intelligence_layer.connectors.base.json_serializable import (
+    SerializableDict,
+)
 from intelligence_layer.core import utc_now
 from intelligence_layer.evaluation.aggregation.aggregation_repository import (
     AggregationRepository,
@@ -185,7 +187,7 @@ class Aggregator(Generic[Evaluation, AggregatedEvaluation]):
         self,
         *eval_ids: str,
         labels: set[str] | None = None,
-        metadata: dict[str, JsonSerializable] | None = None,
+        metadata: SerializableDict | None = None,
     ) -> AggregationOverview[AggregatedEvaluation]:
         """Aggregates all evaluations into an overview that includes high-level statistics.
 

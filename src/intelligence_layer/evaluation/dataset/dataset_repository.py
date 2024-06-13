@@ -2,7 +2,9 @@ from abc import ABC, abstractmethod
 from collections.abc import Iterable
 from typing import Optional
 
-from intelligence_layer.connectors.base.json_serializable import JsonSerializable
+from intelligence_layer.connectors.base.json_serializable import (
+    SerializableDict,
+)
 from intelligence_layer.core import Input
 from intelligence_layer.evaluation.dataset.domain import (
     Dataset,
@@ -24,7 +26,7 @@ class DatasetRepository(ABC):
         dataset_name: str,
         id: str | None = None,
         labels: set[str] | None = None,
-        metadata: dict[str, JsonSerializable] | None = None,
+        metadata: SerializableDict | None = None,
     ) -> Dataset:
         """Creates a dataset from given :class:`Example`s and returns the ID of that dataset.
 

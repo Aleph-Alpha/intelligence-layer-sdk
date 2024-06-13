@@ -4,7 +4,9 @@ from typing import Generic, TypeVar
 
 from pydantic import BaseModel, SerializeAsAny
 
-from intelligence_layer.connectors.base.json_serializable import JsonSerializable
+from intelligence_layer.connectors.base.json_serializable import (
+    SerializableDict,
+)
 from intelligence_layer.evaluation.evaluation.domain import (
     EvaluationFailed,
     EvaluationOverview,
@@ -46,7 +48,7 @@ class AggregationOverview(BaseModel, Generic[AggregatedEvaluation], frozen=True)
     description: str
     statistics: SerializeAsAny[AggregatedEvaluation]
     labels: set[str] = set()
-    metadata: dict[str, JsonSerializable] = dict()
+    metadata: SerializableDict = dict()
 
     @property
     def run_ids(self) -> Sequence[str]:

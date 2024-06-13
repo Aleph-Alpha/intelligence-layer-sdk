@@ -5,7 +5,9 @@ import pytest
 from pydantic import BaseModel
 from pytest import fixture
 
-from intelligence_layer.connectors.base.json_serializable import JsonSerializable
+from intelligence_layer.connectors.base.json_serializable import (
+    SerializableDict,
+)
 from intelligence_layer.core import Input, Output, Task, Tracer
 from intelligence_layer.core.tracer.in_memory_tracer import (
     InMemoryTaskSpan,
@@ -723,8 +725,8 @@ def test_evaluator_evaluate_runs_sets_default_values(
 def test_evaluator_evaluate_runs_specific_values_overwrite_defaults(
     dummy_evaluator: Evaluator[str, str, None, DummyEvaluation], run_id: str
 ) -> None:
-    expected_labels = set(["test_label"])
-    expected_metadata: dict[str, JsonSerializable] = dict({"test_key": "test-value"})
+    expected_labels = {"test_label"}
+    expected_metadata: SerializableDict = dict({"test_key": "test-value"})
     evaluation_overview = dummy_evaluator.evaluate_runs(
         run_id, labels=expected_labels, metadata=expected_metadata
     )
@@ -753,8 +755,8 @@ def test_aggregate_evaluation_specific_values_overwrite_defaults(
     ],
     run_id: str,
 ) -> None:
-    expected_labels = set(["test_label"])
-    expected_metadata: dict[str, JsonSerializable] = dict({"test_key": "test-value"})
+    expected_labels = {"test_label"}
+    expected_metadata: SerializableDict = dict({"test_key": "test-value"})
     evaluation_overview = dummy_evaluator.evaluate_runs(run_id)
     aggregation_overview = dummy_aggregator.aggregate_evaluation(
         evaluation_overview.id, labels=expected_labels, metadata=expected_metadata

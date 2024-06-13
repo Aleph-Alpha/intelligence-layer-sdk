@@ -14,7 +14,9 @@ from intelligence_layer.connectors.argilla.argilla_client import (
     Question,
     RecordData,
 )
-from intelligence_layer.connectors.base.json_serializable import JsonSerializable
+from intelligence_layer.connectors.base.json_serializable import (
+    SerializableDict,
+)
 from intelligence_layer.core import CompleteOutput, InstructInput, utc_now
 from intelligence_layer.evaluation import (
     Aggregator,
@@ -163,7 +165,7 @@ def create_dummy_runs(
                 failed_example_count=0,
                 successful_example_count=1,
                 description="runner",
-                labels=set(["test-label"]),
+                labels={"test-label"},
                 metadata=dict(
                     {"test_key": "test_value"},
                 ),
@@ -299,8 +301,8 @@ def test_retrieve_argilla_evaluation_overview_has_submitted_partial_evaluation_o
         in_memory_run_repository, any_instruct_output, run_ids, dataset_id
     )
 
-    expected_labels = set(["test-label"])
-    expected_metadata: dict[str, JsonSerializable] = dict({"test_key": "test_value"})
+    expected_labels = {"test-label"}
+    expected_metadata: SerializableDict = dict({"test_key": "test_value"})
 
     partial_overview = evaluator.submit(
         *run_ids, labels=expected_labels, metadata=expected_metadata
