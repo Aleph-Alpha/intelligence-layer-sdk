@@ -2,6 +2,9 @@ from collections.abc import Iterable
 
 import pytest
 
+from intelligence_layer.connectors.base.json_serializable import (
+    SerializableDict,
+)
 from intelligence_layer.core import InMemoryTaskSpan, InMemoryTracer
 from intelligence_layer.evaluation import (
     Example,
@@ -122,3 +125,43 @@ def test_runner_runs_n_examples(
     entries = tracer.entries
     assert len(entries) == 1
     assert all([isinstance(e, InMemoryTaskSpan) for e in entries])
+
+
+def test_runner_run_overview_has_default_metadata_and_labels(
+    in_memory_dataset_repository: InMemoryDatasetRepository,
+    in_memory_run_repository: InMemoryRunRepository,
+    sequence_examples: Iterable[Example[str, None]],
+) -> None:
+    examples = list(sequence_examples)
+    task = DummyTask()
+    runner = Runner(task, in_memory_dataset_repository, in_memory_run_repository, "foo")
+
+    dataset_id = in_memory_dataset_repository.create_dataset(
+        examples=examples, dataset_name=""
+    ).id
+
+    overview = runner.run_dataset(dataset_id)
+
+    assert overview.metadata == dict()
+    assert overview.labels == set()
+
+
+def test_runner_run_overview_has_specified_metadata_and_labels(
+    in_memory_dataset_repository: InMemoryDatasetRepository,
+    in_memory_run_repository: InMemoryRunRepository,
+    sequence_examples: Iterable[Example[str, None]],
+) -> None:
+    run_labels = {"test-label"}
+    run_metadata: SerializableDict = dict({"test_key": "test-value"})
+
+    examples = list(sequence_examples)
+    task = DummyTask()
+    runner = Runner(task, in_memory_dataset_repository, in_memory_run_repository, "foo")
+
+    dataset_id = in_memory_dataset_repository.create_dataset(
+        examples=examples, dataset_name=""
+    ).id
+    overview = runner.run_dataset(dataset_id, labels=run_labels, metadata=run_metadata)
+
+    assert overview.metadata == run_metadata
+    assert overview.labels == run_labels

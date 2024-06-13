@@ -5,6 +5,7 @@ from typing import Optional
 
 from fsspec.implementations.local import LocalFileSystem  # type: ignore
 
+from intelligence_layer.connectors.base.json_serializable import SerializableDict
 from intelligence_layer.core import Input, JsonSerializer, PydanticSerializable
 from intelligence_layer.evaluation.dataset.dataset_repository import DatasetRepository
 from intelligence_layer.evaluation.dataset.domain import (
@@ -31,8 +32,14 @@ class FileSystemDatasetRepository(DatasetRepository, FileSystemBasedRepository):
         examples: Iterable[Example[Input, ExpectedOutput]],
         dataset_name: str,
         id: str | None = None,
+        labels: set[str] | None = None,
+        metadata: SerializableDict | None = None,
     ) -> Dataset:
-        dataset = Dataset(name=dataset_name)
+        if metadata is None:
+            metadata = dict()
+        if labels is None:
+            labels = set()
+        dataset = Dataset(name=dataset_name, labels=labels, metadata=metadata)
         if id is not None:
             dataset.id = id
 

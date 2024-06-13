@@ -14,6 +14,9 @@ from intelligence_layer.connectors.argilla.argilla_client import (
     Question,
     RecordData,
 )
+from intelligence_layer.connectors.base.json_serializable import (
+    SerializableDict,
+)
 from intelligence_layer.core import CompleteOutput, InstructInput, utc_now
 from intelligence_layer.evaluation import (
     Aggregator,
@@ -162,6 +165,10 @@ def create_dummy_runs(
                 failed_example_count=0,
                 successful_example_count=1,
                 description="runner",
+                labels={"test-label"},
+                metadata=dict(
+                    {"test_key": "test_value"},
+                ),
             )
         )
 
@@ -277,3 +284,30 @@ def test_elo_calculating_works_as_expected() -> None:
     elo.calculate(comeback_matches)
 
     assert elo.ratings[player2] > elo.ratings[player1]
+
+
+def test_retrieve_argilla_evaluation_overview_has_submitted_partial_evaluation_overview_labels_metadata(
+    evaluator: ArgillaEvaluator[
+        InstructInput, CompleteOutput, None, ComparisonEvaluation
+    ],
+    in_memory_dataset_repository: InMemoryDatasetRepository,
+    in_memory_run_repository: InMemoryRunRepository,
+    any_instruct_output: CompleteOutput,
+) -> None:
+    run_count = 10
+    run_ids = [f"{i}" for i in range(run_count)]
+    dataset_id = create_dummy_dataset(in_memory_dataset_repository)
+    create_dummy_runs(
+        in_memory_run_repository, any_instruct_output, run_ids, dataset_id
+    )
+
+    expected_labels = {"test-label"}
+    expected_metadata: SerializableDict = dict({"test_key": "test_value"})
+
+    partial_overview = evaluator.submit(
+        *run_ids, labels=expected_labels, metadata=expected_metadata
+    )
+    evaluation_overview = evaluator.retrieve(partial_overview.id)
+
+    assert partial_overview.labels == evaluation_overview.labels
+    assert partial_overview.metadata == evaluation_overview.metadata

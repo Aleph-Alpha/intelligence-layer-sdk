@@ -4,6 +4,9 @@ from typing import Generic, TypeVar
 
 from pydantic import BaseModel, SerializeAsAny
 
+from intelligence_layer.connectors.base.json_serializable import (
+    SerializableDict,
+)
 from intelligence_layer.evaluation.evaluation.domain import (
     EvaluationFailed,
     EvaluationOverview,
@@ -31,6 +34,9 @@ class AggregationOverview(BaseModel, Generic[AggregatedEvaluation], frozen=True)
         run_ids: IDs of all :class:`RunOverview`s from all linked :class:`EvaluationOverview`s.
         description: A short description.
         statistics: Aggregated statistics of the run. Whatever is returned by :meth:`Evaluator.aggregate`
+        labels: Labels for filtering aggregation. Defaults to empty list.
+        metadata: Additional information about the aggregation. Defaults to empty dict.
+
     """
 
     evaluation_overviews: frozenset[EvaluationOverview]
@@ -41,6 +47,8 @@ class AggregationOverview(BaseModel, Generic[AggregatedEvaluation], frozen=True)
     crashed_during_evaluation_count: int
     description: str
     statistics: SerializeAsAny[AggregatedEvaluation]
+    labels: set[str] = set()
+    metadata: SerializableDict = dict()
 
     @property
     def run_ids(self) -> Sequence[str]:
@@ -74,6 +82,8 @@ class AggregationOverview(BaseModel, Generic[AggregatedEvaluation], frozen=True)
             f"Successful example count = {self.successful_evaluation_count}\n"
             f"Count of examples crashed during evaluation = {self.failed_evaluation_count}\n"
             f'Description = "{self.description}"\n'
+            f"Labels = {self.labels}\n"
+            f"Metadata = {self.metadata}\n"
         )
 
         res += f"IDs of aggregated Evaluation Overviews = {[evaluation_overview.id for evaluation_overview in self.evaluation_overviews]}\n"
@@ -84,3 +94,6 @@ class AggregationOverview(BaseModel, Generic[AggregatedEvaluation], frozen=True)
         res += "}\n"
 
         return res
+
+    def __hash__(self) -> int:
+        return hash(self.id)

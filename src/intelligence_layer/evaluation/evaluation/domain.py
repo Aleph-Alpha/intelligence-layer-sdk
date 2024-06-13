@@ -5,6 +5,7 @@ from typing import Generic, TypeVar
 from pydantic import BaseModel, SerializeAsAny
 from rich.tree import Tree
 
+from intelligence_layer.connectors.base.json_serializable import SerializableDict
 from intelligence_layer.evaluation.run.domain import RunOverview
 
 Evaluation = TypeVar("Evaluation", bound=BaseModel, covariant=True)
@@ -81,6 +82,8 @@ class PartialEvaluationOverview(BaseModel, frozen=True):
     start_date: datetime
     submitted_evaluation_count: int
     description: str
+    labels: set[str]
+    metadata: SerializableDict
 
     def __repr__(self) -> str:
         return self.__str__()
@@ -100,6 +103,8 @@ class PartialEvaluationOverview(BaseModel, frozen=True):
             f"Start time = {self.start_date}\n"
             f"Submitted Evaluations = {self.submitted_evaluation_count}\n"
             f'Description = "{self.description}"\n'
+            f"Labels = {self.labels}\n"
+            f"Metadata = {self.metadata}\n"
             f"{run_overview_str}"
         )
 
@@ -116,6 +121,8 @@ class EvaluationOverview(BaseModel, frozen=True):
         failed_evaluation_count: Number of examples that produced an error during evaluation.
             Note: failed runs are skipped in the evaluation and therefore not counted as failures
         description: human-readable for the evaluator that created the evaluation.
+        labels: Labels for filtering evaluation. Defaults to empty list.
+        metadata: Additional information about the evaluation. Defaults to empty dict.
     """
 
     run_overviews: frozenset[RunOverview]
@@ -125,6 +132,8 @@ class EvaluationOverview(BaseModel, frozen=True):
     successful_evaluation_count: int
     failed_evaluation_count: int
     description: str
+    labels: set[str]
+    metadata: SerializableDict
 
     def __repr__(self) -> str:
         return self.__str__()
@@ -146,8 +155,13 @@ class EvaluationOverview(BaseModel, frozen=True):
             f"Successful examples = {self.successful_evaluation_count}\n"
             f"Failed examples = {self.failed_evaluation_count}\n"
             f'Description = "{self.description}"\n'
+            f"Labels = {self.labels}\n"
+            f"Metadata = {self.metadata}\n"
             f"{run_overview_str}"
         )
+
+    def __hash__(self) -> int:
+        return hash(self.id)
 
 
 class EvaluationFailed(Exception):

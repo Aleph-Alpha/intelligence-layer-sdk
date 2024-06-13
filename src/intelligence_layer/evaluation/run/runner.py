@@ -8,6 +8,9 @@ from uuid import uuid4
 from pydantic import JsonValue
 from tqdm import tqdm
 
+from intelligence_layer.connectors.base.json_serializable import (
+    SerializableDict,
+)
 from intelligence_layer.core import (
     CompositeTracer,
     Input,
@@ -81,6 +84,8 @@ class Runner(Generic[Input, Output]):
         max_workers: int = 10,
         description: Optional[str] = None,
         trace_examples_individually: bool = True,
+        labels: Optional[set[str]] = None,
+        metadata: Optional[SerializableDict] = None,
     ) -> RunOverview:
         """Generates all outputs for the provided dataset.
 
@@ -97,11 +102,17 @@ class Runner(Generic[Input, Output]):
             max_workers: Number of examples that can be evaluated concurrently. Defaults to 10.
             description: An optional description of the run. Defaults to None.
             trace_examples_individually: Flag to create individual tracers for each example. Defaults to True.
+            labels: A list of labels for filtering. Defaults to an empty list.
+            metadata: A dict for additional information about the run overview. Defaults to an empty dict.
 
         Returns:
             An overview of the run. Outputs will not be returned but instead stored in the
             :class:`RunRepository` provided in the __init__.
         """
+        if labels is None:
+            labels = set()
+        if metadata is None:
+            metadata = dict()
 
         def run(
             example: Example[Input, ExpectedOutput],
@@ -157,6 +168,7 @@ class Runner(Generic[Input, Output]):
         full_description = (
             self.description + " : " + description if description else self.description
         )
+
         run_overview = RunOverview(
             dataset_id=dataset_id,
             id=run_id,
@@ -165,6 +177,8 @@ class Runner(Generic[Input, Output]):
             failed_example_count=failed_count,
             successful_example_count=successful_count,
             description=full_description,
+            labels=labels,
+            metadata=metadata,
         )
         self._run_repository.store_run_overview(run_overview)
         return run_overview

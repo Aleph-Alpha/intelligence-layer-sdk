@@ -11,6 +11,9 @@ from typing import (
 )
 from uuid import uuid4
 
+from intelligence_layer.connectors.base.json_serializable import (
+    SerializableDict,
+)
 from intelligence_layer.core import utc_now
 from intelligence_layer.evaluation.aggregation.aggregation_repository import (
     AggregationRepository,
@@ -181,7 +184,10 @@ class Aggregator(Generic[Evaluation, AggregatedEvaluation]):
 
     @final
     def aggregate_evaluation(
-        self, *eval_ids: str
+        self,
+        *eval_ids: str,
+        labels: set[str] | None = None,
+        metadata: SerializableDict | None = None,
     ) -> AggregationOverview[AggregatedEvaluation]:
         """Aggregates all evaluations into an overview that includes high-level statistics.
 
@@ -190,10 +196,16 @@ class Aggregator(Generic[Evaluation, AggregatedEvaluation]):
         Args:
             eval_ids: An overview of the evaluation to be aggregated. Does not include
                 actual evaluations as these will be retrieved from the repository.
+            labels: A list of labels for filtering. Defaults to an empty list.
+            metadata: A dict for additional information about the aggregation overview. Defaults to an empty dict.
 
         Returns:
             An overview of the aggregated evaluation.
         """
+        if metadata is None:
+            metadata = dict()
+        if labels is None:
+            labels = set()
 
         def load_eval_overview(evaluation_id: str) -> EvaluationOverview:
             evaluation_overview = self._evaluation_repository.evaluation_overview(
@@ -237,6 +249,8 @@ class Aggregator(Generic[Evaluation, AggregatedEvaluation]):
             crashed_during_evaluation_count=successful_evaluations.excluded_count(),
             description=self.description,
             statistics=statistics,
+            labels=labels,
+            metadata=metadata,
         )
         self._aggregation_repository.store_aggregation_overview(aggregation_overview)
         return aggregation_overview

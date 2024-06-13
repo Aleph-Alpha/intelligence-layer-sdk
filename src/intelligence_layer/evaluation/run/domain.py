@@ -5,6 +5,7 @@ from typing import Generic
 from pydantic import BaseModel
 from rich.tree import Tree
 
+from intelligence_layer.connectors.base.json_serializable import SerializableDict
 from intelligence_layer.core.task import Output
 
 
@@ -100,6 +101,8 @@ class RunOverview(BaseModel, frozen=True):
         failed_example_count: The number of examples where an exception was raised when running the task.
         successful_example_count: The number of examples that where successfully run.
         description: Human-readable of the runner that run the task.
+        labels: Labels for filtering runs. Defaults to empty list.
+        metadata: Additional information about the run. Defaults to empty dict.
     """
 
     dataset_id: str
@@ -109,6 +112,8 @@ class RunOverview(BaseModel, frozen=True):
     failed_example_count: int
     successful_example_count: int
     description: str
+    labels: set[str]
+    metadata: SerializableDict
 
     def __repr__(self) -> str:
         return self.__str__()
@@ -122,4 +127,9 @@ class RunOverview(BaseModel, frozen=True):
             f"Failed example count = {self.failed_example_count}\n"
             f"Successful example count = {self.successful_example_count}\n"
             f'Description = "{self.description}"\n'
+            f'Labels = "{self.labels}"\n'
+            f'Metadata = "{self.metadata}"\n'
         )
+
+    def __hash__(self) -> int:
+        return hash(self.id)

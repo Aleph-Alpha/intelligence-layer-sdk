@@ -2,11 +2,15 @@ from collections.abc import Iterable
 from pathlib import Path
 from typing import Any
 from unittest.mock import patch
+from uuid import uuid4
 
 import pytest
 from fsspec.implementations.memory import MemoryFileSystem  # type: ignore
 from pytest import FixtureRequest, fixture, mark, raises
 
+from intelligence_layer.connectors.base.json_serializable import (
+    SerializableDict,
+)
 from intelligence_layer.evaluation import (
     DatasetRepository,
     Example,
@@ -69,6 +73,57 @@ def test_dataset_repository_with_custom_id(
     )
 
     assert dataset.id == "my-custom-dataset-id"
+
+
+@mark.parametrize(
+    "repository_fixture",
+    test_repository_fixtures,
+)
+def test_dataset_repository_create_dataset_sets_default_values(
+    repository_fixture: str,
+    request: FixtureRequest,
+    dummy_string_example: Example[DummyStringInput, DummyStringOutput],
+) -> None:
+    dataset_repository: DatasetRepository = request.getfixturevalue(repository_fixture)
+
+    dataset = dataset_repository.create_dataset(
+        examples=[dummy_string_example], dataset_name="test-dataset"
+    )
+
+    assert dataset.id is not None
+    assert dataset.name == "test-dataset"
+    assert dataset.labels == set()
+    assert dataset.metadata == dict()
+
+
+@mark.parametrize(
+    "repository_fixture",
+    test_repository_fixtures,
+)
+def test_dataset_repository_create_dataset_explicit_values_overwrite_defaults(
+    repository_fixture: str,
+    request: FixtureRequest,
+    dummy_string_example: Example[DummyStringInput, DummyStringOutput],
+) -> None:
+    expected_id = str(uuid4())
+    expected_name = "test_name"
+    expected_labels = {"test_label"}
+    expected_metadata: SerializableDict = dict({"test_key": "test_value"})
+
+    dataset_repository: DatasetRepository = request.getfixturevalue(repository_fixture)
+
+    dataset = dataset_repository.create_dataset(
+        examples=[dummy_string_example],
+        dataset_name=expected_name,
+        id=expected_id,
+        labels=expected_labels,
+        metadata=expected_metadata,
+    )
+
+    assert dataset.id == expected_id
+    assert dataset.name == expected_name
+    assert dataset.labels == expected_labels
+    assert dataset.metadata == expected_metadata
 
 
 @mark.parametrize(
