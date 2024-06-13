@@ -280,8 +280,10 @@ class EvaluatorBase(Generic[Input, Output, ExpectedOutput, Evaluation], ABC):
                 example.id != example_output.example_id
                 for example_output in example_outputs
             ):
-                raise ValueError("The ids of example and output do not match. Therefore, the evaluation cannot continue.\n"
-                                 +f"example id: {example.id}, output id: {example_outputs}.")
+                raise ValueError(
+                    "The ids of example and output do not match. Therefore, the evaluation cannot continue.\n"
+                    + f"example id: {example.id}, output id: {example_outputs}."
+                )
             if skip_example_on_any_failure and any(
                 isinstance(output.output, FailedExampleRun)
                 for output in example_outputs
