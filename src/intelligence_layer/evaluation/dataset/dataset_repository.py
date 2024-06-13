@@ -35,7 +35,7 @@ class DatasetRepository(ABC):
             dataset_name: A name for the dataset.
             id: The dataset ID. If `None`, an ID will be generated.
             labels: A list of labels for filtering. Defaults to an empty list.
-            metadata: A dict for additional information about the dataset. Default to an empty dict.
+            metadata: A dict for additional information about the dataset. Defaults to an empty dict.
 
         Returns:
             The created :class:`Dataset`.
