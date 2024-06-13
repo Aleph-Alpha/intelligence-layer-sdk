@@ -124,7 +124,7 @@ class Evaluator(EvaluatorBase[Input, Output, ExpectedOutput, Evaluation]):
             skip_example_on_any_failure: Flag to skip evaluation on any example for which at least one run fails. Defaults to True.
             description: Optional description of the evaluation. Defaults to None.
             labels: A list of labels for filtering. Defaults to an empty list.
-            metadata: A dict for additional information about the evaluation overview. Default to an empty dict.
+            metadata: A dict for additional information about the evaluation overview. Defaults to an empty dict.
 
         Returns:
             EvaluationOverview: An overview of the evaluation. Individual :class:`Evaluation`s will not be

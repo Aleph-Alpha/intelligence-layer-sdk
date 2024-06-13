@@ -147,7 +147,7 @@ class IncrementalEvaluator(Evaluator[Input, Output, ExpectedOutput, Evaluation])
                 Always the first n runs stored in the evaluation repository. Defaults to None.
             abort_on_error: Flag to abort all evaluations when an error occurs. Defaults to False.
             labels: A list of labels for filtering. Defaults to an empty list.
-            metadata: A dict for additional information about the evaluation overview. Default to an empty dict.
+            metadata: A dict for additional information about the evaluation overview. Defaults to an empty dict.
 
         Returns:
             EvaluationOverview: An overview of the evaluation. Individual :class:`Evaluation`s will not be

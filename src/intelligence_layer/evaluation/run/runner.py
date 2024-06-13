@@ -103,7 +103,7 @@ class Runner(Generic[Input, Output]):
             description: An optional description of the run. Defaults to None.
             trace_examples_individually: Flag to create individual tracers for each example. Defaults to True.
             labels: A list of labels for filtering. Defaults to an empty list.
-            metadata: A dict for additional information about the run overview. Default to an empty dict.
+            metadata: A dict for additional information about the run overview. Defaults to an empty dict.
 
         Returns:
             An overview of the run. Outputs will not be returned but instead stored in the

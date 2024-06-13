@@ -197,7 +197,7 @@ class Aggregator(Generic[Evaluation, AggregatedEvaluation]):
             eval_ids: An overview of the evaluation to be aggregated. Does not include
                 actual evaluations as these will be retrieved from the repository.
             labels: A list of labels for filtering. Defaults to an empty list.
-            metadata: A dict for additional information about the aggregation overview. Default to an empty dict.
+            metadata: A dict for additional information about the aggregation overview. Defaults to an empty dict.
 
         Returns:
             An overview of the aggregated evaluation.
