@@ -19,7 +19,7 @@ from intelligence_layer.connectors.argilla.argilla_client import (
 )
 
 
-class ArgillaClientWrapperClient(ArgillaClient):
+class ArgillaWrapperClient(ArgillaClient):
     def __init__(self, disable_warnings: bool = True) -> None:
         if disable_warnings:
             import warnings

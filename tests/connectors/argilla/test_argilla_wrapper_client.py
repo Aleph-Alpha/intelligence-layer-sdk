@@ -12,7 +12,7 @@ from pytest import fixture
 
 from intelligence_layer.connectors import (
     ArgillaClient,
-    ArgillaClientWrapperClient,
+    ArgillaWrapperClient,
     RecordData,
 )
 
@@ -44,13 +44,13 @@ def retry(
 
 
 @fixture
-def argilla_client() -> ArgillaClientWrapperClient:
+def argilla_client() -> ArgillaWrapperClient:
     load_dotenv()
-    return ArgillaClientWrapperClient()
+    return ArgillaWrapperClient()
 
 
 @fixture
-def workspace_name(argilla_client: ArgillaClientWrapperClient) -> Iterable[str]:
+def workspace_name(argilla_client: ArgillaWrapperClient) -> Iterable[str]:
     workspace_name = None
     try:
         workspace_name = argilla_client.ensure_workspace_exists(
@@ -68,9 +68,7 @@ def workspace_name(argilla_client: ArgillaClientWrapperClient) -> Iterable[str]:
 
 
 @fixture
-def qa_dataset_id(
-    argilla_client: ArgillaClientWrapperClient, workspace_name: str
-) -> str:
+def qa_dataset_id(argilla_client: ArgillaWrapperClient, workspace_name: str) -> str:
     dataset_name = "test-dataset"
     fields = [
         rg.TextField(name="question", title="Question"),
@@ -91,7 +89,7 @@ def qa_dataset_id(
 
 @fixture
 def qa_dataset_id_with_text_question(
-    argilla_client: ArgillaClientWrapperClient, workspace_name: str
+    argilla_client: ArgillaWrapperClient, workspace_name: str
 ) -> str:
     dataset_name = "test-dataset-text-question"
     fields = [
@@ -113,7 +111,7 @@ def qa_dataset_id_with_text_question(
 
 @pytest.mark.docker
 def test_can_create_a_dataset(
-    argilla_client: ArgillaClientWrapperClient,
+    argilla_client: ArgillaWrapperClient,
     workspace_name: str,
 ) -> None:
     dataset_id = argilla_client.create_dataset(
@@ -133,7 +131,7 @@ def test_can_create_a_dataset(
 
 @pytest.mark.docker
 def test_cannot_create_two_datasets_with_the_same_name(
-    argilla_client: ArgillaClientWrapperClient,
+    argilla_client: ArgillaWrapperClient,
     workspace_name: str,
 ) -> None:
     dataset_name = str(uuid4())
@@ -210,7 +208,7 @@ def long_qa_records(
 
 @pytest.mark.docker
 def test_retrieving_evaluations_on_non_existant_dataset_raises_errors(
-    argilla_client: ArgillaClientWrapperClient,
+    argilla_client: ArgillaWrapperClient,
 ) -> None:
     with pytest.raises(ValueError):
         list(argilla_client.evaluations("non_existent_dataset_id"))
@@ -218,7 +216,7 @@ def test_retrieving_evaluations_on_non_existant_dataset_raises_errors(
 
 @pytest.mark.docker
 def test_evaluations_returns_evaluation_results(
-    argilla_client: ArgillaClientWrapperClient,
+    argilla_client: ArgillaWrapperClient,
     qa_dataset_id: str,
     small_qa_records: Sequence[RecordData],
 ) -> None:
@@ -233,7 +231,7 @@ def test_evaluations_returns_evaluation_results(
 
 @pytest.mark.docker
 def test_split_dataset_works(
-    argilla_client: ArgillaClientWrapperClient,
+    argilla_client: ArgillaWrapperClient,
     qa_dataset_id: str,
     qa_records: Sequence[RecordData],
 ) -> None:
@@ -257,7 +255,7 @@ def test_split_dataset_works(
 
 @pytest.mark.docker
 def test_split_deleting_splits_works(
-    argilla_client: ArgillaClientWrapperClient,
+    argilla_client: ArgillaWrapperClient,
     qa_dataset_id: str,
     qa_records: Sequence[RecordData],
 ) -> None:
@@ -277,7 +275,7 @@ def test_split_deleting_splits_works(
 
 @pytest.mark.docker
 def test_split_dataset_works_with_uneven_splits(
-    argilla_client: ArgillaClientWrapperClient,
+    argilla_client: ArgillaWrapperClient,
     qa_dataset_id: str,
     qa_records: Sequence[RecordData],
 ) -> None:
@@ -295,7 +293,7 @@ def test_split_dataset_works_with_uneven_splits(
 
 @pytest.mark.docker
 def test_add_record_adds_multiple_records_with_same_content(
-    argilla_client: ArgillaClientWrapperClient,
+    argilla_client: ArgillaWrapperClient,
     qa_dataset_id: str,
 ) -> None:
     first_data = RecordData(
@@ -316,7 +314,7 @@ def test_add_record_adds_multiple_records_with_same_content(
 
 @pytest.mark.docker
 def test_add_record_does_not_put_example_id_into_metadata(
-    argilla_client: ArgillaClientWrapperClient,
+    argilla_client: ArgillaWrapperClient,
     qa_dataset_id: str,
 ) -> None:
     first_data = RecordData(
@@ -336,7 +334,7 @@ def test_add_record_does_not_put_example_id_into_metadata(
 
 @pytest.mark.docker
 def test_split_dataset_can_split_long_dataset(
-    argilla_client: ArgillaClientWrapperClient,
+    argilla_client: ArgillaWrapperClient,
     qa_dataset_id: str,
     long_qa_records: Sequence[RecordData],
 ) -> None:
@@ -360,7 +358,7 @@ def test_split_dataset_can_split_long_dataset(
 
 @pytest.mark.docker
 def test_client_can_load_existing_workspace(
-    argilla_client: ArgillaClientWrapperClient,
+    argilla_client: ArgillaWrapperClient,
 ) -> None:
     workspace_name = str(uuid4())
 
@@ -373,7 +371,7 @@ def test_client_can_load_existing_workspace(
 
 @pytest.mark.docker
 def test_client_can_load_existing_dataset(
-    argilla_client: ArgillaClientWrapperClient, workspace_name: str
+    argilla_client: ArgillaWrapperClient, workspace_name: str
 ) -> None:
     dataset_name = str(uuid4())
 
@@ -450,7 +448,7 @@ def test_client_can_load_existing_dataset(
     ],
 )
 def test_works_with_all_question_types(
-    argilla_client: ArgillaClientWrapperClient,
+    argilla_client: ArgillaWrapperClient,
     workspace_name: str,
     question: Any,
     eval_data: dict[str, Any],

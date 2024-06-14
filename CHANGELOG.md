@@ -7,6 +7,7 @@
 
 ### New Features
   - Add `eot_token` property to `ControlModel` and derived classes (`LuminousControlModel`, `Llama2InstructModel` and `Llama3InstructModel`) and let `PromptBasedClassify` use this property instead of a hardcoded string.
+  - Introduce a new argilla client `ArgillaWrapperClient`. This uses the `argilla` package as a connection to argilla and supports all question types that argilla supports in their `FeedbackDataset`. This includes text and yes/no questions. For more information about the questions, check [their official documentation](https://docs.argilla.io/en/latest/practical_guides/create_update_dataset/create_dataset.html#define-questions).
 
 ### Fixes
   - Reinitializing different `AlephAlphaModel` instances and retrieving their tokenizer should now consume a lot less memory.

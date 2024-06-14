@@ -84,7 +84,7 @@ class DefaultArgillaClient(ArgillaClient):
         total_retries: int = 5,
     ) -> None:
         warnings.warn(
-            "DefaultArgillaClient is deprecated. Use ArgillaClient instead.",
+            "DefaultArgillaClient is deprecated. Use the ArgillaWrapperClient instead.",
             DeprecationWarning,
         )
 

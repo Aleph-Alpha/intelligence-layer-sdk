@@ -2,8 +2,8 @@ from .argilla.argilla_client import ArgillaClient as ArgillaClient
 from .argilla.argilla_client import ArgillaEvaluation as ArgillaEvaluation
 from .argilla.argilla_client import Record as Record
 from .argilla.argilla_client import RecordData as RecordData
-from .argilla.client_wrapper_client import (
-    ArgillaClientWrapperClient as ArgillaClientWrapperClient,
+from .argilla.argilla_wrapper_client import (
+    ArgillaWrapperClient as ArgillaWrapperClient,
 )
 from .argilla.default_client import DefaultArgillaClient as DefaultArgillaClient
 from .argilla.default_client import Field as Field
