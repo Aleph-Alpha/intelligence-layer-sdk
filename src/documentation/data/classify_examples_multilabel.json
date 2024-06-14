@@ -1,0 +1,157 @@
+[
+  {
+    "label": [
+      "Finance",
+      "Sales"
+    ],
+    "message": "I just traveled to Paris for a conference, where can I get the train ride refunded?"
+  },
+  {
+    "label": [
+      "Sales",
+      "Communications",
+      "Customer"
+    ],
+    "message": "Hello, we would like to get in contact with your sales team, because we are interested in your solution."
+  },
+  {
+    "label": [
+      "Communications",
+      "Research"
+    ],
+    "message": "We are working on a documentation on AI and would like to film a piece about you. Would you be interested?"
+  },
+  {
+    "label": [
+      "Research"
+    ],
+    "message": "I am working with Stanford and was hoping to win you over for a research collaboration."
+  },
+  {
+    "label": [
+      "IT Support"
+    ],
+    "message": "My laptop is broken"
+  },
+  {
+    "label": [
+      "Communications"
+    ],
+    "message": "Can you send your models via email?"
+  },
+  {
+    "label": [
+      "Research"
+    ],
+    "message": "We should do a research collaboration."
+  },
+  {
+    "label": [
+      "Research",
+      "Sales"
+    ],
+    "message": "My company has been working on time series and signal processing for a long time. It would make sense to define a joint go to market and research strategy."
+  },
+  {
+    "label": [
+      "Human Resources"
+    ],
+    "message": "Full stack developer in your area available now."
+  },
+  {
+    "label": [
+      "Product",
+      "IT Support"
+    ],
+    "message": "Hi,\n\nI recently bought your offering. I am having trouble running your docker container in my environment. It fails to start. Can you help?"
+  },
+  {
+    "label": [
+      "Product"
+    ],
+    "message": "Hello,\n\nI am getting strange errors from your API. It is saying the queue is full, but I am only sending one task at a time. Why is this happening?"
+  },
+  {
+    "label": [
+      "Product",
+      "Sales",
+      "Customer"
+    ],
+    "message": "Can you show me a demo of different use cases your offering can solve?"
+  },
+  {
+    "label": [
+      "Human Resources",
+      "Communications"
+    ],
+    "message": "Hey, I did not get a t-shirt in the onboarding. Could I still get one?"
+  },
+  {
+    "label": [
+      "Customer"
+    ],
+    "message": "Hi, can you name me a couple of timeslots for a first call? Would be really interested in learning more about the product?"
+  },
+  {
+    "label": [
+      "Product"
+    ],
+    "message": "Hi Jan, is your product ISO 37301 compliant?"
+  },
+  {
+    "label": [
+      "IT Support"
+    ],
+    "message": "I can\u2019t login to Mattermost or Sharepoint, how can I gain access?"
+  },
+  {
+    "label": [
+      "Finance",
+      "Human Resources"
+    ],
+    "message": "I did not get paid last month, when do I get paid? What is going on?"
+  },
+  {
+    "label": [
+      "Security"
+    ],
+    "message": "Hi, I want to get a new badge, the photo of me looks ugly and I just got new glasses so it does not look like me. "
+  },
+  {
+    "label": [
+      "Marketing"
+    ],
+    "message": "I have a question concerning your marketing strategy, would you have time to hop on a call?"
+  },
+  {
+    "label": [
+      "CEO Office"
+    ],
+    "message": "Dear Jonas Andrulis,\n\nWe have met each other at the event in N\u00fcrnberg, can we meet for a follow up in your Office in Heidelberg?"
+  },
+  {
+    "label": [
+      "Security",
+      "IT Support"
+    ],
+    "message": "Your hTTPs Certificate is not valid on your www.aleph-alpha.de"
+  },
+  {
+    "label": [
+      "Human Resources"
+    ],
+    "message": "I want to take a week off immediately"
+  },
+  {
+    "label": [
+      "Human Resources"
+    ],
+    "message": "I want to take a sabbatical"
+  },
+  {
+    "label": [
+      "Human Resources"
+    ],
+    "message": "How can I work more, I want to work weekends, can I get paid overtime?"
+  }
+]
