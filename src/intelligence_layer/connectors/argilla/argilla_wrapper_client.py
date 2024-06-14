@@ -3,6 +3,7 @@ import os
 from collections.abc import Iterable, Sequence
 from typing import (
     Any,
+    Optional,
 )
 
 import argilla as rg  # type: ignore
@@ -20,14 +21,19 @@ from intelligence_layer.connectors.argilla.argilla_client import (
 
 
 class ArgillaWrapperClient(ArgillaClient):
-    def __init__(self, disable_warnings: bool = True) -> None:
+    def __init__(
+        self,
+        api_url: Optional[str] = None,
+        api_key: Optional[str] = None,
+        disable_warnings: bool = True,
+    ) -> None:
         if disable_warnings:
             import warnings
 
             warnings.filterwarnings("ignore", module="argilla.*")
         rg.init(
-            api_url=os.getenv("ARGILLA_API_URL"),
-            api_key=os.getenv("ARGILLA_API_KEY"),
+            api_url=api_url if api_url is not None else os.getenv("ARGILLA_API_URL"),
+            api_key=api_key if api_key is not None else os.getenv("ARGILLA_API_KEY"),
         )
 
     def create_dataset(
@@ -37,6 +43,17 @@ class ArgillaWrapperClient(ArgillaClient):
         fields: Sequence[AllowedFieldTypes],
         questions: Sequence[AllowedQuestionTypes],
     ) -> str:
+        """_summary_.
+
+        Args:
+            workspace_id: _description_
+            dataset_name: _description_
+            fields: _description_
+            questions: _description_
+
+        Returns:
+            _description_
+        """
         dataset = rg.FeedbackDataset(
             fields=fields, questions=questions, allow_extra_metadata=True
         )
@@ -172,3 +189,14 @@ class ArgillaWrapperClient(ArgillaClient):
                 },
             },
         )
+
+    def _delete_dataset(self, dataset_id: str) -> None:
+        remote_dataset = rg.FeedbackDataset.from_argilla(id=dataset_id)
+        remote_dataset.delete()
+
+    def _delete_workspace(self, workspace_name: str) -> None:
+        workspace = rg.Workspace.from_name(workspace_name)
+        datasets = rg.list_datasets(workspace=workspace.name)
+        for dataset in datasets:
+            dataset.delete()
+        workspace.delete()
