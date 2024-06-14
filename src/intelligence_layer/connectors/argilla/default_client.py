@@ -45,16 +45,22 @@ class Question(BaseModel):
         title: The title of the field. This is displayed in the Argilla UI to users that perform the manual evaluations.
         description: A more verbose description of the question.
             This is displayed in the Argilla UI to users that perform the manual evaluations.
+        options: All integer options to answer this question
+
     """
 
     name: str
     title: str
     description: str
+    options: Sequence[int]  # range: 1-10
 
     @computed_field  # type: ignore[misc]
     @property
-    def settings(self) -> Mapping[Any, Any]:
-        raise NotImplementedError("")
+    def settings(self) -> Mapping[str, Any]:
+        return {
+            "type": "rating",
+            "options": [{"value": option} for option in self.options],
+        }
 
 
 class Field(BaseModel):
@@ -482,36 +488,3 @@ class DefaultArgillaClient(ArgillaClient):
         url = self.api_url + f"api/v1/datasets/{dataset_id}"
         response = self.session.delete(url)
         response.raise_for_status()
-
-
-class TextQuestion(Question):
-    """Definition of a text evaluation-question for an Argilla feedback dataset.
-
-    Attributes:
-        use_markdown: Set this parameter to True if you want to use markdown
-    """
-
-    use_markdown: bool
-
-    @computed_field  # type: ignore[misc]
-    @property
-    def settings(self) -> Mapping[str, Any]:
-        return {"type": "text", "use_markdown": self.use_markdown}
-
-
-class RatingQuestion(Question):
-    """Definition of a rating evaluation-question for an Argilla feedback dataset.
-
-    Attributes:
-        options: All integer options to answer this question
-    """
-
-    options: Sequence[int]  # range: 1-10
-
-    @computed_field  # type: ignore[misc]
-    @property
-    def settings(self) -> Mapping[str, Any]:
-        return {
-            "type": "rating",
-            "options": [{"value": option} for option in self.options],
-        }

@@ -17,8 +17,7 @@ from intelligence_layer.connectors.argilla.argilla_client import (
 from intelligence_layer.connectors.argilla.default_client import (
     DefaultArgillaClient,
     Field,
-    RatingQuestion,
-    TextQuestion,
+    Question,
 )
 
 
@@ -72,33 +71,11 @@ def qa_dataset_id(argilla_client: DefaultArgillaClient, workspace_id: str) -> st
         Field(name="answer", title="Answer"),
     ]
     questions = [
-        RatingQuestion(
+        Question(
             name="rate-answer",
             title="Rate the answer",
             description="1 means bad, 3 means amazing.",
             options=list(range(1, 4)),
-        )
-    ]
-    return argilla_client.ensure_dataset_exists(
-        workspace_id, dataset_name, fields, questions
-    )
-
-
-@fixture
-def qa_dataset_id_with_text_question(
-    argilla_client: DefaultArgillaClient, workspace_id: str
-) -> str:
-    dataset_name = "test-dataset-text-question"
-    fields = [
-        Field(name="question", title="Question"),
-        Field(name="answer", title="Answer"),
-    ]
-    questions = [
-        TextQuestion(
-            name="comment-answer",
-            title="Comment the answer",
-            description="Just put some text in.",
-            use_markdown=False,
         )
     ]
     return argilla_client.ensure_dataset_exists(
@@ -116,9 +93,7 @@ def test_client_can_create_a_dataset(
         dataset_name="name",
         fields=[Field(name="a", title="b")],
         questions=[
-            RatingQuestion(
-                name="a", title="b", description="c", options=list(range(1, 5))
-            )
+            Question(name="a", title="b", description="c", options=list(range(1, 5)))
         ],
     )
     datasets = argilla_client._list_datasets(workspace_id)
@@ -137,9 +112,7 @@ def test_client_cannot_create_two_datasets_with_the_same_name(
         dataset_name=dataset_name,
         fields=[Field(name="a", title="b")],
         questions=[
-            RatingQuestion(
-                name="a", title="b", description="c", options=list(range(1, 5))
-            )
+            Question(name="a", title="b", description="c", options=list(range(1, 5)))
         ],
     )
     with pytest.raises(ValueError):
@@ -148,7 +121,7 @@ def test_client_cannot_create_two_datasets_with_the_same_name(
             dataset_name=dataset_name,
             fields=[Field(name="a", title="b")],
             questions=[
-                RatingQuestion(
+                Question(
                     name="a", title="b", description="c", options=list(range(1, 5))
                 )
             ],
@@ -220,7 +193,7 @@ def test_evaluations_returns_evaluation_results(
             example_id=record.example_id,
             record_id=record.id,
             responses={"rate-answer": 1},
-            metadata={k: str(v) for k, v in record.metadata.items()},
+            metadata=record.metadata,
         )
         for record in argilla_client.records(qa_dataset_id)
     ]
@@ -401,9 +374,7 @@ def test_client_can_load_existing_dataset(
         dataset_name=dataset_name,
         fields=[Field(name="a", title="b")],
         questions=[
-            RatingQuestion(
-                name="a", title="b", description="c", options=list(range(1, 5))
-            )
+            Question(name="a", title="b", description="c", options=list(range(1, 5)))
         ],
     )
 
@@ -412,48 +383,8 @@ def test_client_can_load_existing_dataset(
         dataset_name=dataset_name,
         fields=[Field(name="a", title="b")],
         questions=[
-            RatingQuestion(
-                name="a", title="b", description="c", options=list(range(1, 5))
-            )
+            Question(name="a", title="b", description="c", options=list(range(1, 5)))
         ],
     )
 
     assert created_dataset_id == ensured_dataset_id
-
-
-@pytest.mark.docker
-def test_client_can_create_a_dataset_with_text_question_records(
-    argilla_client: DefaultArgillaClient, workspace_id: str
-) -> None:
-    dataset_id = argilla_client.create_dataset(
-        workspace_id,
-        dataset_name="name",
-        fields=[Field(name="a", title="b")],
-        questions=[
-            TextQuestion(name="a", title="b", description="c", use_markdown=False)
-        ],
-    )
-    datasets = argilla_client._list_datasets(workspace_id)
-    assert len(argilla_client._list_datasets(workspace_id)) == 1
-    assert dataset_id == datasets["items"][0]["id"]
-
-
-@pytest.mark.docker
-def test_add_record_to_text_question_dataset(
-    argilla_client: DefaultArgillaClient,
-    qa_dataset_id_with_text_question: str,
-) -> None:
-    first_data = RecordData(
-        content={"question": "What is 1+1?", "answer": "1"},
-        example_id="0",
-        metadata={"first": "1", "second": "2"},
-    )
-    second_data = RecordData(
-        content={"question": "What is 1+1?", "answer": "2"},
-        example_id="0",
-        metadata={"first": "2", "second": "1"},
-    )
-
-    argilla_client.add_record(qa_dataset_id_with_text_question, first_data)
-    argilla_client.add_record(qa_dataset_id_with_text_question, second_data)
-    assert len(list(argilla_client.records(qa_dataset_id_with_text_question))) == 2

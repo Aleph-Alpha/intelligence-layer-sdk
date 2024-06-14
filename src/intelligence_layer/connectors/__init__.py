@@ -2,12 +2,12 @@ from .argilla.argilla_client import ArgillaClient as ArgillaClient
 from .argilla.argilla_client import ArgillaEvaluation as ArgillaEvaluation
 from .argilla.argilla_client import Record as Record
 from .argilla.argilla_client import RecordData as RecordData
-from .argilla.client_wrapper_client import ArgillaClientWrapperClient as ArgillaClientWrapperClient
+from .argilla.client_wrapper_client import (
+    ArgillaClientWrapperClient as ArgillaClientWrapperClient,
+)
 from .argilla.default_client import DefaultArgillaClient as DefaultArgillaClient
 from .argilla.default_client import Field as Field
 from .argilla.default_client import Question as Question
-from .argilla.default_client import RatingQuestion as RatingQuestion
-from .argilla.default_client import TextQuestion as TextQuestion
 from .base.json_serializable import JsonSerializable as JsonSerializable
 from .base.json_serializable import SerializableDict as SerializableDict
 from .document_index.document_index import CollectionPath as CollectionPath

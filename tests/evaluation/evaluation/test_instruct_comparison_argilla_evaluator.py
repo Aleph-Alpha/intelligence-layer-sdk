@@ -69,7 +69,7 @@ class ArgillaFake(ArgillaClient):
                         1 if int(r.metadata["first"]) < int(r.metadata["second"]) else 2
                     )
                 },
-                metadata={k: str(v) for k, v in r.metadata.items()},
+                metadata=r.metadata,
             )
             for r in self.records[dataset_id]
         ]

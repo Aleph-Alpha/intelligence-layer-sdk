@@ -1,7 +1,6 @@
 import itertools
 import os
 from collections.abc import Iterable, Sequence
-from datetime import datetime
 from typing import (
     Any,
 )
@@ -158,32 +157,6 @@ class ArgillaClientWrapperClient(ArgillaClient):
             )
             for record in remote_dataset.records
         )
-
-    def _create_evaluation(
-        self, dataset_id: str, example_id: str, data: dict[str, Any]
-    ) -> None:
-        # TODO this actually does not work, the patch request appears to simply not work correctly
-        remote_dataset = rg.FeedbackDataset.from_argilla(id=dataset_id)
-        filtered_dataset = remote_dataset.filter_by(
-            metadata_filters=rg.TermsMetadataFilter(
-                name="example_id", values=[example_id]
-            )
-        )
-        modified_records = []
-        for record in filtered_dataset.records:
-            record.responses = [
-                {
-                    "values": {
-                        question_name: {"value": response_value}
-                        for question_name, response_value in data.items()
-                    },
-                    "status": "submitted",
-                    "inserted_at": datetime.now(),
-                    "updated_at": datetime.now(),
-                }
-            ]
-            modified_records.append(record)
-        remote_dataset.update_records(modified_records, show_progress=False)
 
     def create_evaluation(self, record_id: str, data: dict[str, Any]) -> None:
         api_url = os.environ["ARGILLA_API_URL"]

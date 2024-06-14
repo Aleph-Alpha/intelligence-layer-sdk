@@ -21,7 +21,7 @@ class ArgillaEvaluation(BaseModel):
     example_id: str
     record_id: str
     responses: Mapping[str, Any]
-    metadata: Mapping[str, str]
+    metadata: Mapping[str, Any]
 
 
 class RecordData(BaseModel):

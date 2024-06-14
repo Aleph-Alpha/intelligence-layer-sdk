@@ -68,7 +68,9 @@ def workspace_name(argilla_client: ArgillaClientWrapperClient) -> Iterable[str]:
 
 
 @fixture
-def qa_dataset_id(argilla_client: ArgillaClientWrapperClient, workspace_name: str) -> str:
+def qa_dataset_id(
+    argilla_client: ArgillaClientWrapperClient, workspace_name: str
+) -> str:
     dataset_name = "test-dataset"
     fields = [
         rg.TextField(name="question", title="Question"),
