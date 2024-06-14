@@ -1,5 +1,6 @@
 import itertools
 import os
+import warnings
 from collections.abc import Callable, Iterable, Mapping, Sequence
 from http import HTTPStatus
 from itertools import chain, count, islice
@@ -11,6 +12,7 @@ from typing import (
 )
 from uuid import uuid4
 
+from pydantic import BaseModel, computed_field
 from requests import HTTPError, Session
 from requests.adapters import HTTPAdapter
 from requests.structures import CaseInsensitiveDict
@@ -18,9 +20,7 @@ from urllib3 import Retry
 
 from intelligence_layer.connectors.argilla.argilla_client import (
     ArgillaClient,
-    ArgillaRatingEvaluation,
-    Field,
-    Question,
+    ArgillaEvaluation,
     Record,
     RecordData,
 )
@@ -37,6 +37,39 @@ def batch_iterator(iterable: Iterable[T], batch_size: int) -> Iterable[list[T]]:
         yield batch
 
 
+class Question(BaseModel):
+    """Definition of an evaluation-question for an Argilla feedback dataset.
+
+    Attributes:
+        name: The name of the question. This is used to reference the questions in json-documents
+        title: The title of the field. This is displayed in the Argilla UI to users that perform the manual evaluations.
+        description: A more verbose description of the question.
+            This is displayed in the Argilla UI to users that perform the manual evaluations.
+    """
+
+    name: str
+    title: str
+    description: str
+
+    @computed_field  # type: ignore[misc]
+    @property
+    def settings(self) -> Mapping[Any, Any]:
+        raise NotImplementedError("")
+
+
+class Field(BaseModel):
+    """Definition of an Argilla feedback-dataset field.
+
+    Attributes:
+        name: The name of the field. This is used to reference the field in json-documents
+        title: The title of the field. This is displayed in the Argilla UI to users that perform the manual evaluations.
+
+    """
+
+    name: str
+    title: str
+
+
 class DefaultArgillaClient(ArgillaClient):
     def __init__(
         self,
@@ -44,6 +77,11 @@ class DefaultArgillaClient(ArgillaClient):
         api_key: Optional[str] = None,
         total_retries: int = 5,
     ) -> None:
+        warnings.warn(
+            "DefaultArgillaClient is deprecated. Use ArgillaClient instead.",
+            DeprecationWarning,
+        )
+
         url = api_url or os.environ.get("ARGILLA_API_URL")
         key = api_key or os.environ.get("ARGILLA_API_KEY")
         if not (key and url):
@@ -183,7 +221,7 @@ class DefaultArgillaClient(ArgillaClient):
     def add_records(self, dataset_id: str, records: Sequence[RecordData]) -> None:
         self._create_records(records, dataset_id)
 
-    def evaluations(self, dataset_id: str) -> Iterable[ArgillaRatingEvaluation]:
+    def evaluations(self, dataset_id: str) -> Iterable[ArgillaEvaluation]:
         def to_responses(
             json_responses: Sequence[Mapping[str, Any]],
         ) -> Mapping[str, int | float | bool | str]:
@@ -194,7 +232,7 @@ class DefaultArgillaClient(ArgillaClient):
             }
 
         return (
-            ArgillaRatingEvaluation(
+            ArgillaEvaluation(
                 example_id=json_evaluation["example_id"],
                 record_id=json_evaluation["id"],
                 responses=to_responses(json_evaluation["responses"]),
@@ -294,7 +332,7 @@ class DefaultArgillaClient(ArgillaClient):
             for json_record in self._list_records(dataset_id)
         )
 
-    def create_evaluation(self, evaluation: ArgillaRatingEvaluation) -> None:
+    def create_evaluation(self, evaluation: ArgillaEvaluation) -> None:
         response = self.session.post(
             self.api_url + f"api/v1/records/{evaluation.record_id}/responses",
             json={
@@ -444,3 +482,36 @@ class DefaultArgillaClient(ArgillaClient):
         url = self.api_url + f"api/v1/datasets/{dataset_id}"
         response = self.session.delete(url)
         response.raise_for_status()
+
+
+class TextQuestion(Question):
+    """Definition of a text evaluation-question for an Argilla feedback dataset.
+
+    Attributes:
+        use_markdown: Set this parameter to True if you want to use markdown
+    """
+
+    use_markdown: bool
+
+    @computed_field  # type: ignore[misc]
+    @property
+    def settings(self) -> Mapping[str, Any]:
+        return {"type": "text", "use_markdown": self.use_markdown}
+
+
+class RatingQuestion(Question):
+    """Definition of a rating evaluation-question for an Argilla feedback dataset.
+
+    Attributes:
+        options: All integer options to answer this question
+    """
+
+    options: Sequence[int]  # range: 1-10
+
+    @computed_field  # type: ignore[misc]
+    @property
+    def settings(self) -> Mapping[str, Any]:
+        return {
+            "type": "rating",
+            "options": [{"value": option} for option in self.options],
+        }

@@ -7,14 +7,12 @@ from aleph_alpha_client import CompletionResponse
 from aleph_alpha_client.completion import CompletionResult
 from pytest import fixture
 
-from intelligence_layer.connectors.argilla.argilla_client import (
+from intelligence_layer.connectors import (
     ArgillaClient,
-    ArgillaRatingEvaluation,
+    ArgillaEvaluation,
     Field,
     Question,
     RecordData,
-)
-from intelligence_layer.connectors.base.json_serializable import (
     SerializableDict,
 )
 from intelligence_layer.core import CompleteOutput, InstructInput, utc_now
@@ -61,9 +59,9 @@ class ArgillaFake(ArgillaClient):
     def add_record(self, dataset_id: str, record: RecordData) -> None:
         self.records[dataset_id].append(record)
 
-    def evaluations(self, dataset_id: str) -> Iterable[ArgillaRatingEvaluation]:
+    def evaluations(self, dataset_id: str) -> Iterable[ArgillaEvaluation]:
         return [
-            ArgillaRatingEvaluation(
+            ArgillaEvaluation(
                 example_id=r.example_id,
                 record_id=str(uuid4()),
                 responses={
@@ -71,7 +69,7 @@ class ArgillaFake(ArgillaClient):
                         1 if int(r.metadata["first"]) < int(r.metadata["second"]) else 2
                     )
                 },
-                metadata=r.metadata,
+                metadata={k: str(v) for k, v in r.metadata.items()},
             )
             for r in self.records[dataset_id]
         ]

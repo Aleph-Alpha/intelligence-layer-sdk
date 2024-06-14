@@ -2,80 +2,13 @@ from abc import ABC, abstractmethod
 from collections.abc import Iterable, Mapping, Sequence
 from typing import (
     Any,
-    Union,
 )
 
-from pydantic import BaseModel, computed_field
+from pydantic import BaseModel
 from pydantic import Field as PydanticField
 
 
-class Field(BaseModel):
-    """Definition of an Argilla feedback-dataset field.
-
-    Attributes:
-        name: The name of the field. This is used to reference the field in json-documents
-        title: The title of the field. This is displayed in the Argilla UI to users that perform the manual evaluations.
-
-    """
-
-    name: str
-    title: str
-
-
-class Question(BaseModel):
-    """Definition of an evaluation-question for an Argilla feedback dataset.
-
-    Attributes:
-        name: The name of the question. This is used to reference the questions in json-documents
-        title: The title of the field. This is displayed in the Argilla UI to users that perform the manual evaluations.
-        description: A more verbose description of the question.
-            This is displayed in the Argilla UI to users that perform the manual evaluations.
-    """
-
-    name: str
-    title: str
-    description: str
-
-    @computed_field  # type: ignore[misc]
-    @property
-    def settings(self) -> Mapping[Any, Any]:
-        raise NotImplementedError("")
-
-
-class RatingQuestion(Question):
-    """Definition of a rating evaluation-question for an Argilla feedback dataset.
-
-    Attributes:
-        options: All integer options to answer this question
-    """
-
-    options: Sequence[int]  # range: 1-10
-
-    @computed_field  # type: ignore[misc]
-    @property
-    def settings(self) -> Mapping[str, Any]:
-        return {
-            "type": "rating",
-            "options": [{"value": option} for option in self.options],
-        }
-
-
-class TextQuestion(Question):
-    """Definition of a text evaluation-question for an Argilla feedback dataset.
-
-    Attributes:
-        use_markdown: Set this parameter to True if you want to use markdown
-    """
-
-    use_markdown: bool
-
-    @computed_field  # type: ignore[misc]
-    @property
-    def settings(self) -> Mapping[str, Any]:
-        return {"type": "text", "use_markdown": self.use_markdown}
-
-
-class ArgillaRatingEvaluation(BaseModel):
+class ArgillaEvaluation(BaseModel):
     """The evaluation result for a single rating record in an Argilla feedback-dataset.
 
     Attributes:
@@ -87,7 +20,7 @@ class ArgillaRatingEvaluation(BaseModel):
 
     example_id: str
     record_id: str
-    responses: Mapping[str, Union[str, int, float, bool]]
+    responses: Mapping[str, Any]
     metadata: Mapping[str, str]
 
 
@@ -132,8 +65,8 @@ class ArgillaClient(ABC):
         self,
         workspace_id: str,
         dataset_name: str,
-        fields: Sequence[Field],
-        questions: Sequence[Question],
+        fields: Sequence[Any],
+        questions: Sequence[Any],
     ) -> str:
         """Creates and publishes a new feedback dataset in Argilla.
 
@@ -156,8 +89,8 @@ class ArgillaClient(ABC):
         self,
         workspace_id: str,
         dataset_name: str,
-        fields: Sequence[Field],
-        questions: Sequence[Question],
+        fields: Sequence[Any],
+        questions: Sequence[Any],
     ) -> str:
         """Retrieves an existing dataset or creates and publishes a new feedback dataset in Argilla.
 
@@ -194,7 +127,7 @@ class ArgillaClient(ABC):
             return self.add_record(dataset_id, record)
 
     @abstractmethod
-    def evaluations(self, dataset_id: str) -> Iterable[ArgillaRatingEvaluation]:
+    def evaluations(self, dataset_id: str) -> Iterable[ArgillaEvaluation]:
         """Returns all human-evaluated evaluations for the given dataset.
 
         Args:

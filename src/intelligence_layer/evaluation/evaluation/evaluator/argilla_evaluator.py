@@ -8,13 +8,15 @@ from uuid import uuid4
 
 from pydantic import BaseModel
 
-from intelligence_layer.connectors.argilla.argilla_client import (
+from intelligence_layer.connectors import (
     ArgillaClient,
-    ArgillaRatingEvaluation,
+    ArgillaEvaluation,
+    RecordData,
+)
+from intelligence_layer.connectors.argilla.default_client import (
     Field,
     Question,
     RatingQuestion,
-    RecordData,
 )
 from intelligence_layer.connectors.base.json_serializable import (
     SerializableDict,
@@ -76,7 +78,7 @@ class ArgillaEvaluationLogic(
         ...
 
     @abstractmethod
-    def from_record(self, argilla_evaluation: ArgillaRatingEvaluation) -> Evaluation:
+    def from_record(self, argilla_evaluation: ArgillaEvaluation) -> Evaluation:
         """This method takes the specific Argilla evaluation format and converts into a compatible :class:`Evaluation`.
 
         The format of argilla_evaluation.responses depends on the `questions` attribute.
@@ -320,7 +322,7 @@ class InstructComparisonArgillaEvaluationLogic(
         )
 
     def from_record(
-        self, argilla_evaluation: ArgillaRatingEvaluation
+        self, argilla_evaluation: ArgillaEvaluation
     ) -> ComparisonEvaluation:
         return ComparisonEvaluation(
             first_player=argilla_evaluation.metadata[

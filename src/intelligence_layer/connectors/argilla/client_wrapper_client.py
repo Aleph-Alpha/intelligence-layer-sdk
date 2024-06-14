@@ -6,20 +6,26 @@ from typing import (
     Any,
 )
 
-import argilla as rg
+import argilla as rg  # type: ignore
+from argilla.client.feedback.schemas.types import (  # type: ignore
+    AllowedFieldTypes,
+    AllowedQuestionTypes,
+)
 
 from intelligence_layer.connectors.argilla.argilla_client import (
     ArgillaClient,
-    ArgillaRatingEvaluation,
-    Field,
-    Question,
+    ArgillaEvaluation,
     Record,
     RecordData,
 )
 
 
-class VanillaArgillaClient(ArgillaClient):
-    def __init__(self) -> None:
+class ArgillaClientWrapperClient(ArgillaClient):
+    def __init__(self, disable_warnings: bool = True) -> None:
+        if disable_warnings:
+            import warnings
+
+            warnings.filterwarnings("ignore", module="argilla.*")
         rg.init(
             api_url=os.getenv("ARGILLA_API_URL"),
             api_key=os.getenv("ARGILLA_API_KEY"),
@@ -29,8 +35,8 @@ class VanillaArgillaClient(ArgillaClient):
         self,
         workspace_id: str,
         dataset_name: str,
-        fields: Sequence[Field],
-        questions: Sequence[Question],
+        fields: Sequence[AllowedFieldTypes],
+        questions: Sequence[AllowedQuestionTypes],
     ) -> str:
         dataset = rg.FeedbackDataset(
             fields=fields, questions=questions, allow_extra_metadata=True
@@ -46,8 +52,8 @@ class VanillaArgillaClient(ArgillaClient):
         self,
         workspace_id: str,
         dataset_name: str,
-        fields: Sequence[Field],
-        questions: Sequence[Question],
+        fields: Sequence[AllowedFieldTypes],
+        questions: Sequence[AllowedQuestionTypes],
     ) -> str:
         try:
             return str(
@@ -76,7 +82,7 @@ class VanillaArgillaClient(ArgillaClient):
         ]
         remote_dataset.add_records(argilla_records, show_progress=False)
 
-    def evaluations(self, dataset_id: str) -> Iterable[ArgillaRatingEvaluation]:
+    def evaluations(self, dataset_id: str) -> Iterable[ArgillaEvaluation]:
         remote_dataset = rg.FeedbackDataset.from_argilla(id=dataset_id)
         filtered_dataset = remote_dataset.filter_by(response_status="submitted")
 
@@ -85,7 +91,7 @@ class VanillaArgillaClient(ArgillaClient):
             if submitted_response is not None:
                 metadata = record.metadata
                 example_id = metadata.pop("example_id")
-                yield ArgillaRatingEvaluation(
+                yield ArgillaEvaluation(
                     example_id=example_id,
                     record_id="ignored",
                     responses={
@@ -153,7 +159,7 @@ class VanillaArgillaClient(ArgillaClient):
             for record in remote_dataset.records
         )
 
-    def create_evaluation(
+    def _create_evaluation(
         self, dataset_id: str, example_id: str, data: dict[str, Any]
     ) -> None:
         # TODO this actually does not work, the patch request appears to simply not work correctly
@@ -178,3 +184,18 @@ class VanillaArgillaClient(ArgillaClient):
             ]
             modified_records.append(record)
         remote_dataset.update_records(modified_records, show_progress=False)
+
+    def create_evaluation(self, record_id: str, data: dict[str, Any]) -> None:
+        api_url = os.environ["ARGILLA_API_URL"]
+        if not api_url.endswith("/"):
+            api_url = api_url + "/"
+        rg.active_client().http_client.post(
+            f"{api_url}api/v1/records/{record_id}/responses",
+            json={
+                "status": "submitted",
+                "values": {
+                    question_name: {"value": response_value}
+                    for question_name, response_value in data.items()
+                },
+            },
+        )

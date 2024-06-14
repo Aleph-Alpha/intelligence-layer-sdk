@@ -11,13 +11,15 @@ from requests import HTTPError
 
 from intelligence_layer.connectors.argilla.argilla_client import (
     ArgillaClient,
-    ArgillaRatingEvaluation,
+    ArgillaEvaluation,
+    RecordData,
+)
+from intelligence_layer.connectors.argilla.default_client import (
+    DefaultArgillaClient,
     Field,
     RatingQuestion,
-    RecordData,
     TextQuestion,
 )
-from intelligence_layer.connectors.argilla.default_client import DefaultArgillaClient
 
 
 class DummyInput(BaseModel):
@@ -214,11 +216,11 @@ def test_evaluations_returns_evaluation_results(
     qa_records: Sequence[RecordData],
 ) -> None:
     evaluations = [
-        ArgillaRatingEvaluation(
+        ArgillaEvaluation(
             example_id=record.example_id,
             record_id=record.id,
             responses={"rate-answer": 1},
-            metadata=record.metadata,
+            metadata={k: str(v) for k, v in record.metadata.items()},
         )
         for record in argilla_client.records(qa_dataset_id)
     ]
