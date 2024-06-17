@@ -1,4 +1,5 @@
 import itertools
+import logging
 import os
 from collections.abc import Iterable, Sequence
 from typing import (
@@ -31,6 +32,11 @@ class ArgillaWrapperClient(ArgillaClient):
             import warnings
 
             warnings.filterwarnings("ignore", module="argilla.*")
+            # this logger is set on info for some reason
+            logging.getLogger("argilla.client.feedback.dataset.local.mixins").setLevel(
+                logging.WARNING
+            )
+
         rg.init(
             api_url=api_url if api_url is not None else os.getenv("ARGILLA_API_URL"),
             api_key=api_key if api_key is not None else os.getenv("ARGILLA_API_KEY"),
