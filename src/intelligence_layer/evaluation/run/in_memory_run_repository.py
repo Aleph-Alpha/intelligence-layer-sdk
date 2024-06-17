@@ -21,6 +21,28 @@ class InMemoryRunRepository(RunRepository):
         if overview.id not in self._example_outputs:
             self._example_outputs[overview.id] = []
 
+
+
+
+    @abstractmethod
+    def create_temporary_run_data(self, run_id: str) -> None:
+        ...
+
+    @abstractmethod
+    def delete_temporary_run_data(self, run_id: str) -> None:
+        ...
+
+    @abstractmethod
+    def temp_store_finished_example(self, run_id: str, example_id: str) -> None:
+        ...
+
+    @abstractmethod
+    def unfinished_examples(self) -> dict[str, Sequence[str]]:
+        ...
+
+
+
+
     def run_overview(self, run_id: str) -> Optional[RunOverview]:
         return self._run_overviews.get(run_id, None)
 

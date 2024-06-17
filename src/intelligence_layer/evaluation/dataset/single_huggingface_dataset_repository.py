@@ -86,3 +86,9 @@ class SingleHuggingfaceDatasetRepository(DatasetRepository):
                 expected_output=cast(ExpectedOutput, answers[sample["answer"]]),
                 id=str(index),
             )
+
+    def example_ids(
+        self,
+        dataset_id: str,
+    ) -> Iterable[str]:
+        return [str(i) for i in range(self._huggingface_dataset["test"])]

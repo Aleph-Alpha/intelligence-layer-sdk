@@ -89,3 +89,13 @@ class InMemoryDatasetRepository(DatasetRepository):
                 key=lambda example: example.id,
             ),
         )
+    
+    def example_ids(
+        self,
+        dataset_id: str,
+    ) -> Iterable[str]:
+        if dataset_id not in self._datasets_and_examples:
+            raise ValueError(
+                f"Repository does not contain a dataset with id: {dataset_id}"
+            )
+        return sorted([example.id for example in self._datasets_and_examples[dataset_id][1]])

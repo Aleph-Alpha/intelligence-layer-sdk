@@ -28,6 +28,22 @@ class RunRepository(ABC):
         ...
 
     @abstractmethod
+    def create_temporary_run_data(self, run_id: str) -> None:
+        ...
+
+    @abstractmethod
+    def delete_temporary_run_data(self, run_id: str) -> None:
+        ...
+
+    @abstractmethod
+    def temp_store_finished_example(self, run_id: str, example_id: str) -> None:
+        ...
+
+    @abstractmethod
+    def unfinished_examples(self) -> dict[str, Sequence[str]]:
+        ...
+
+    @abstractmethod
     def run_overview(self, run_id: str) -> Optional[RunOverview]:
         """Returns a :class:`RunOverview` for the given ID.
 

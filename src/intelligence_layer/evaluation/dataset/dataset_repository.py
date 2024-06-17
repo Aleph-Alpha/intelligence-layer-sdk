@@ -122,3 +122,18 @@ class DatasetRepository(ABC):
             :class:`Iterable` of :class`Example`s.
         """
         pass
+
+    @abstractmethod
+    def example_ids(
+        self,
+        dataset_id: str
+    ) -> list[str]:
+        """Returns the sorted ids of all :class:`Example`s for a given dataset ID.
+
+        Args:
+            dataset_id: Dataset ID to retrieve the example IDs from.
+
+        Returns:
+            list of example IDs.
+        """
+        pass

@@ -126,6 +126,26 @@ class FileSystemDatasetRepository(DatasetRepository, FileSystemBasedRepository):
             ]
 
         return sorted(examples, key=lambda example: example.id)
+    
+    
+    def example_ids(
+        self,
+        dataset_id: str
+    ) -> list[str]:
+        example_path = self.path_to_str(self._dataset_examples_path(dataset_id))
+        if not self._file_system.exists(example_path):
+            raise ValueError(
+                f"Repository does not contain a dataset with id: {dataset_id}"
+            )
+
+        with self._file_system.open(
+            example_path, "r", encoding="utf-8"
+        ) as examples_file:
+            # Mypy does not accept dynamic types
+            ids = [example.id for example in examples_file]
+
+        return sorted(ids)
+        
 
     def _dataset_root_directory(self) -> Path:
         return self._root_directory / "datasets"
