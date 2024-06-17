@@ -1,4 +1,5 @@
 import contextlib
+import os
 
 from pydantic import BaseModel
 
@@ -51,3 +52,19 @@ def test_example_run_does_not_create_a_folder(
     with contextlib.suppress(ValueError):
         file_run_repository.example_output("Non-existent", "Non-existent", DummyType)
     assert not file_run_repository._run_root_directory().exists()
+
+
+
+def test_temporary_file(
+        file_run_repository: FileRunRepository,
+) -> None:
+    run_id = "abc123"
+    file_run_repository.create_temporary_run_data(run_id)
+    assert file_run_repository._tmp_file_path(run_id).exists()
+
+    example_id = "9876lkjh"
+    file_run_repository.temp_store_finished_example(run_id=run_id, example_id=example_id)
+    with file_run_repository._tmp_file_path(run_id).open() as f:
+        lines = f.read().splitlines()
+        assert len(lines) == 1
+        assert lines[0] == example_id

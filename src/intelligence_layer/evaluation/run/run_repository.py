@@ -1,5 +1,7 @@
 from abc import ABC, abstractmethod
 from collections.abc import Iterable, Sequence
+from multiprocessing import Lock as lock
+from multiprocessing.synchronize import Lock
 from typing import Optional
 
 from intelligence_layer.core import Output, Tracer
@@ -18,6 +20,9 @@ class RunRepository(ABC):
     representing results of a dataset.
     """
 
+    def __init__(self) -> None:
+        self.locks: dict[str, Lock] = {}
+
     @abstractmethod
     def store_run_overview(self, overview: RunOverview) -> None:
         """Stores a :class:`RunOverview`.
@@ -25,19 +30,35 @@ class RunRepository(ABC):
         Args:
             overview: The overview to be persisted.
         """
-        ...
+        pass
 
     @abstractmethod
-    def create_temporary_run_data(self, run_id: str) -> None: ...
+    def _create_temporary_run_data(self, run_id: str) -> None:
+        pass
 
     @abstractmethod
-    def delete_temporary_run_data(self, run_id: str) -> None: ...
+    def _delete_temporary_run_data(self, run_id: str) -> None:
+        pass
 
     @abstractmethod
-    def temp_store_finished_example(self, run_id: str, example_id: str) -> None: ...
+    def _temp_store_finished_example(self, run_id: str, example_id: str) -> None:
+        pass
 
     @abstractmethod
-    def unfinished_examples(self) -> dict[str, Sequence[str]]: ...
+    def unfinished_examples(self) -> dict[str, Sequence[str]]:
+        pass
+
+    def create_temporary_run_data(self, run_id: str) -> None:
+        self.locks[run_id] = lock()
+        self._create_temporary_run_data(run_id)
+
+    def delete_temporary_run_data(self, run_id: str) -> None:
+        del self.locks[run_id]
+        self._delete_temporary_run_data(run_id)
+
+    def temp_store_finished_example(self, run_id: str, example_id: str) -> None:
+        with self.locks[run_id]:
+            self._temp_store_finished_example(run_id, example_id)
 
     @abstractmethod
     def run_overview(self, run_id: str) -> Optional[RunOverview]:

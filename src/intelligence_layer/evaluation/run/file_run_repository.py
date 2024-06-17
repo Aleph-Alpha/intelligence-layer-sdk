@@ -2,6 +2,7 @@ from collections.abc import Iterable, Sequence
 from pathlib import Path
 from typing import Optional
 
+from fsspec import AbstractFileSystem  # type: ignore
 from fsspec.implementations.local import LocalFileSystem  # type: ignore
 
 from intelligence_layer.core import FileTracer, InMemoryTracer, JsonSerializer, Output
@@ -14,6 +15,13 @@ from intelligence_layer.evaluation.run.run_repository import RunRepository
 
 
 class FileSystemRunRepository(RunRepository, FileSystemBasedRepository):
+
+    TMP_FILE_TYPE : str = "tmp"
+
+    def __init__(self, file_system: AbstractFileSystem, root_directory: Path) -> None:
+        FileSystemBasedRepository.__init__(self, file_system, root_directory)
+        RunRepository.__init__(self)
+
     def store_run_overview(self, overview: RunOverview) -> None:
         self.write_utf8(
             self._run_overview_path(overview.id),
@@ -23,13 +31,31 @@ class FileSystemRunRepository(RunRepository, FileSystemBasedRepository):
         # create empty folder just in case no examples are ever saved
         self.mkdir(self._run_directory(overview.id))
 
-    def create_temporary_run_data(self, run_id: str) -> None: ...
+    def _tmp_file_path(self, run_id: str) -> Path:
+        return self._run_directory(run_id + "." + self.TMP_FILE_TYPE)
 
-    def delete_temporary_run_data(self, run_id: str) -> None: ...
+    def _create_temporary_run_data(self, run_id: str) -> None:
+        self.write_utf8(
+            self._tmp_file_path(run_id),
+            "",
+            create_parents=True,
+        )
 
-    def temp_store_finished_example(self, run_id: str, example_id: str) -> None: ...
+    def _delete_temporary_run_data(self, run_id: str) -> None:
+        self.remove_file(self._tmp_file_path(run_id))
 
-    def unfinished_examples(self) -> dict[str, Sequence[str]]: ...
+    def _temp_store_finished_example(self, run_id: str, example_id: str) -> None:
+        with self._file_system.open(self._tmp_file_path(run_id), mode="a") as f:
+            f.write(example_id + "\n")
+
+    def unfinished_examples(self) -> dict[str, Sequence[str]]:
+        res = {}
+        path = self._tmp_file_path("").parent
+        file_names = self.file_names(path, file_type=self.TMP_FILE_TYPE)
+        for run_id in file_names:
+            text = self.read_utf8(path / f"{run_id}.{self.TMP_FILE_TYPE}")
+            res[run_id] = text.splitlines()
+        return res
 
     def run_overview(self, run_id: str) -> Optional[RunOverview]:
         file_path = self._run_overview_path(run_id)
