@@ -63,7 +63,6 @@ class ArgillaWrapperClient(ArgillaClient):
         Returns:
             The id of the created dataset.
         """
-        ...
         dataset = rg.FeedbackDataset(
             fields=fields, questions=questions, allow_extra_metadata=True
         )
@@ -150,31 +149,42 @@ class ArgillaWrapperClient(ArgillaClient):
         remote_dataset = self._dataset_from_id(dataset_id=dataset_id)
         name = "split"
         metadata_config = remote_dataset.metadata_property_by_name(name)
-        if metadata_config is None:
-            if n_splits == 1:
+
+        if n_splits == 1:
+            if metadata_config is None:
                 return
+            remote_dataset.delete_metadata_properties(name)
+            self._delete_metadata_from_records(remote_dataset, name)
+            return
+
+        if metadata_config is None:
             config = rg.IntegerMetadataProperty(
                 name=name, visible_for_annotators=True, min=1, max=n_splits
             )
             remote_dataset.add_metadata_property(config)
         else:
-            if n_splits == 1:
-                remote_dataset.delete_metadata_properties(name)
-                modified_records = []
-                for record in remote_dataset.records:
-                    del record.metadata[name]
-                    modified_records.append(record)
-                remote_dataset.update_records(modified_records, show_progress=False)
-                return
-            else:
-                metadata_config.max = n_splits
-                remote_dataset.update_metadata_properties(metadata_config)
+            metadata_config.max = n_splits
+            remote_dataset.update_metadata_properties(metadata_config)
 
+        self._update_record_metadata(n_splits, remote_dataset, name)
+
+    def _update_record_metadata(
+        self, n_splits: int, remote_dataset: rg.FeedbackDataset, metadata_name: str
+    ) -> None:
         modified_records = []
         for record, split in zip(
             remote_dataset.records, itertools.cycle(range(1, n_splits + 1))
         ):
-            record.metadata[name] = split
+            record.metadata[metadata_name] = split
+            modified_records.append(record)
+        remote_dataset.update_records(modified_records, show_progress=False)
+
+    def _delete_metadata_from_records(
+        self, remote_dataset: rg.FeedbackDataset, metadata_name: str
+    ) -> None:
+        modified_records = []
+        for record in remote_dataset.records:
+            del record.metadata[metadata_name]
             modified_records.append(record)
         remote_dataset.update_records(modified_records, show_progress=False)
 
