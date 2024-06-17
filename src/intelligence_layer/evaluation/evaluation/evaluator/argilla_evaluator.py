@@ -3,17 +3,15 @@ from abc import ABC, abstractmethod
 from collections.abc import Mapping, Sequence
 from datetime import datetime
 from itertools import combinations
-from typing import ClassVar, Optional
+from typing import Any, ClassVar, Optional
 from uuid import uuid4
 
+import argilla as rg  # type: ignore
 from pydantic import BaseModel
 
-from intelligence_layer.connectors.argilla.argilla_client import (
+from intelligence_layer.connectors import (
     ArgillaClient,
-    ArgillaRatingEvaluation,
-    Field,
-    Question,
-    RatingQuestion,
+    ArgillaEvaluation,
     RecordData,
 )
 from intelligence_layer.connectors.base.json_serializable import (
@@ -51,7 +49,7 @@ class RecordDataSequence(BaseModel):
 class ArgillaEvaluationLogic(
     EvaluationLogicBase[Input, Output, ExpectedOutput, Evaluation], ABC
 ):
-    def __init__(self, fields: Mapping[str, Field], questions: Sequence[Question]):
+    def __init__(self, fields: Mapping[str, Any], questions: Sequence[Any]):
         self.fields = fields
         self.questions = questions
 
@@ -76,7 +74,7 @@ class ArgillaEvaluationLogic(
         ...
 
     @abstractmethod
-    def from_record(self, argilla_evaluation: ArgillaRatingEvaluation) -> Evaluation:
+    def from_record(self, argilla_evaluation: ArgillaEvaluation) -> Evaluation:
         """This method takes the specific Argilla evaluation format and converts into a compatible :class:`Evaluation`.
 
         The format of argilla_evaluation.responses depends on the `questions` attribute.
@@ -262,19 +260,23 @@ class InstructComparisonArgillaEvaluationLogic(
         self._high_priority_runs = high_priority_runs
         super().__init__(
             fields={
-                "KEY_INSTRUCTION": Field(
+                "KEY_INSTRUCTION": rg.TextField(
                     name=self.KEY_INSTRUCTION, title="Instruction"
                 ),
-                "KEY_INPUT": Field(name=self.KEY_INPUT, title="Input"),
-                "KEY_RESPONSE_1": Field(name=self.KEY_RESPONSE_1, title="Response 1"),
-                "KEY_RESPONSE_2": Field(name=self.KEY_RESPONSE_2, title="Response 2"),
+                "KEY_INPUT": rg.TextField(name=self.KEY_INPUT, title="Input"),
+                "KEY_RESPONSE_1": rg.TextField(
+                    name=self.KEY_RESPONSE_1, title="Response 1"
+                ),
+                "KEY_RESPONSE_2": rg.TextField(
+                    name=self.KEY_RESPONSE_2, title="Response 2"
+                ),
             },
             questions=[
-                RatingQuestion(
+                rg.RatingQuestion(
                     name=self.KEY_QUESTION,
                     title="Which response is better?",
                     description="1: The first completion is better.\n2: The second completion is better.\n3: They are both equally good.",
-                    options=self.OPTIONS,
+                    values=self.OPTIONS,
                 )
             ],
         )
@@ -320,7 +322,7 @@ class InstructComparisonArgillaEvaluationLogic(
         )
 
     def from_record(
-        self, argilla_evaluation: ArgillaRatingEvaluation
+        self, argilla_evaluation: ArgillaEvaluation
     ) -> ComparisonEvaluation:
         return ComparisonEvaluation(
             first_player=argilla_evaluation.metadata[

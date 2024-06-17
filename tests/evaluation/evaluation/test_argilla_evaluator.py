@@ -8,11 +8,12 @@ from pytest import fixture
 
 from intelligence_layer.connectors import (
     ArgillaClient,
-    ArgillaRatingEvaluation,
+    ArgillaEvaluation,
+    RecordData,
+)
+from intelligence_layer.connectors.argilla.default_client import (
     Field,
     Question,
-    RatingQuestion,
-    RecordData,
 )
 from intelligence_layer.evaluation import (
     ArgillaEvaluationLogic,
@@ -40,7 +41,7 @@ from tests.evaluation.conftest import (
 class StubArgillaClient(ArgillaClient):
     _expected_workspace_id: str
     _expected_fields: Sequence[Field]
-    _expected_questions: Sequence[RatingQuestion]
+    _expected_questions: Sequence[Question]
     _datasets: ClassVar[dict[str, list[RecordData]]] = {}
     _score = 3.0
 
@@ -75,11 +76,11 @@ class StubArgillaClient(ArgillaClient):
             raise Exception("Add record: dataset not found")
         self._datasets[dataset_id].append(record)
 
-    def evaluations(self, dataset_id: str) -> Iterable[ArgillaRatingEvaluation]:
+    def evaluations(self, dataset_id: str) -> Iterable[ArgillaEvaluation]:
         dataset = self._datasets.get(dataset_id)
         assert dataset
         return [
-            ArgillaRatingEvaluation(
+            ArgillaEvaluation(
                 example_id=record.example_id,
                 record_id="ignored",
                 responses={"human-score": self._score},
@@ -112,7 +113,7 @@ class DummyStringTaskArgillaEvaluationLogic(
                 "input": Field(name="input", title="Input"),
             },
             questions=[
-                RatingQuestion(
+                Question(
                     name="name", title="title", description="description", options=[0]
                 )
             ],
@@ -138,7 +139,7 @@ class DummyStringTaskArgillaEvaluationLogic(
         )
 
     def from_record(
-        self, argilla_evaluation: ArgillaRatingEvaluation
+        self, argilla_evaluation: ArgillaEvaluation
     ) -> DummyStringEvaluation:
         return DummyStringEvaluation()
 
@@ -179,11 +180,11 @@ class DummyArgillaClient(ArgillaClient):
             raise Exception("Add record: dataset not found")
         self._datasets[dataset_id].append(record)
 
-    def evaluations(self, dataset_id: str) -> Iterable[ArgillaRatingEvaluation]:
+    def evaluations(self, dataset_id: str) -> Iterable[ArgillaEvaluation]:
         dataset = self._datasets.get(dataset_id)
         assert dataset
         return [
-            ArgillaRatingEvaluation(
+            ArgillaEvaluation(
                 example_id=record.example_id,
                 record_id="ignored",
                 responses={"human-score": self._score},
@@ -229,12 +230,12 @@ class FailedEvaluationDummyArgillaClient(ArgillaClient):
             raise CustomException("First upload fails")
         self._datasets[dataset_id].append(record)
 
-    def evaluations(self, dataset_id: str) -> Iterable[ArgillaRatingEvaluation]:
+    def evaluations(self, dataset_id: str) -> Iterable[ArgillaEvaluation]:
         dataset = self._datasets.get(dataset_id)
         assert dataset
         record = dataset[0]
         return [
-            ArgillaRatingEvaluation(
+            ArgillaEvaluation(
                 example_id=record.example_id,
                 record_id="ignored",
                 responses={"human-score": 0},
@@ -252,9 +253,9 @@ def dummy_client() -> DummyArgillaClient:
 
 
 @fixture()
-def argilla_questions() -> Sequence[RatingQuestion]:
+def argilla_questions() -> Sequence[Question]:
     return [
-        RatingQuestion(
+        Question(
             name="question",
             title="title",
             description="description",
