@@ -352,6 +352,37 @@ def test_eval_runs_uses_correct_description(
     assert eval_description in evaluation_overview.description
 
 
+def test_aggregation_runs_works_without_description(
+    dummy_evaluator: Evaluator[str, str, None, DummyEvaluation],
+    dummy_aggregator: Aggregator[
+        DummyEvaluation, DummyAggregatedEvaluationWithResultList
+    ],
+    run_id: str,
+) -> None:
+    evaluation_overview = dummy_evaluator.evaluate_runs(run_id)
+    aggregation_overview = dummy_aggregator.aggregate_evaluation(evaluation_overview.id)
+
+    assert aggregation_overview.description == dummy_aggregator.description
+
+
+def test_aggregation_runs_uses_correct_description(
+    dummy_evaluator: Evaluator[str, str, None, DummyEvaluation],
+    dummy_aggregator: Aggregator[
+        DummyEvaluation, DummyAggregatedEvaluationWithResultList
+    ],
+    run_id: str,
+) -> None:
+    aggregation_description = "My aggregation description"
+    evaluation_overview = dummy_evaluator.evaluate_runs(run_id)
+
+    aggregation_overview = dummy_aggregator.aggregate_evaluation(
+        evaluation_overview.id, description=aggregation_description
+    )
+
+    assert dummy_aggregator.description in aggregation_overview.description
+    assert aggregation_description in aggregation_overview.description
+
+
 def test_eval_runs_keeps_example_for_eval_if_skip_flag_is_false(
     dummy_pairwise_evaluator: Evaluator[str, str, None, DummyEvaluation],
     dummy_runner: Runner[str, str],

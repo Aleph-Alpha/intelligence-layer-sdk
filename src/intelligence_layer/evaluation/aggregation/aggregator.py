@@ -3,6 +3,7 @@ from collections.abc import Callable, Iterable, Iterator, Mapping
 from functools import cached_property
 from typing import (
     Generic,
+    Optional,
     TypeVar,
     cast,
     final,
@@ -186,6 +187,7 @@ class Aggregator(Generic[Evaluation, AggregatedEvaluation]):
     def aggregate_evaluation(
         self,
         *eval_ids: str,
+        description: Optional[str] = None,
         labels: set[str] | None = None,
         metadata: SerializableDict | None = None,
     ) -> AggregationOverview[AggregatedEvaluation]:
@@ -196,6 +198,7 @@ class Aggregator(Generic[Evaluation, AggregatedEvaluation]):
         Args:
             eval_ids: An overview of the evaluation to be aggregated. Does not include
                 actual evaluations as these will be retrieved from the repository.
+            description: Optional description of the aggregation. Defaults to None.
             labels: A list of labels for filtering. Defaults to an empty list.
             metadata: A dict for additional information about the aggregation overview. Defaults to an empty dict.
 
@@ -240,6 +243,9 @@ class Aggregator(Generic[Evaluation, AggregatedEvaluation]):
             cast(Iterable[Evaluation], successful_evaluations)
         )
 
+        full_description = (
+            self.description + " : " + description if description else self.description
+        )
         aggregation_overview = AggregationOverview(
             evaluation_overviews=frozenset(evaluation_overviews),
             id=str(uuid4()),
@@ -247,7 +253,7 @@ class Aggregator(Generic[Evaluation, AggregatedEvaluation]):
             end=utc_now(),
             successful_evaluation_count=successful_evaluations.included_count(),
             crashed_during_evaluation_count=successful_evaluations.excluded_count(),
-            description=self.description,
+            description=full_description,
             statistics=statistics,
             labels=labels,
             metadata=metadata,
