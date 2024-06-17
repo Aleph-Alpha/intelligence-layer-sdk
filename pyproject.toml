@@ -4,7 +4,7 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.poetry]
 name = "intelligence-layer"
-version = "4.0.1"
+version = "4.1.0"
 description = ""
 authors = ["Aleph Alpha Engineering <engineering@aleph-alpha.com>"]
 readme = "README.md"

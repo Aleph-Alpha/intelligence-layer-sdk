@@ -5,6 +5,17 @@
 ### Breaking Changes
 ...
 
+### Features
+...
+
+### Fixes
+...
+
+### Deprecations 
+...
+
+## 4.1.0
+
 ### New Features
   - Add `eot_token` property to `ControlModel` and derived classes (`LuminousControlModel`, `Llama2InstructModel` and `Llama3InstructModel`) and let `PromptBasedClassify` use this property instead of a hardcoded string.
   - Introduce a new argilla client `ArgillaWrapperClient`. This uses the `argilla` package as a connection to argilla and supports all question types that argilla supports in their `FeedbackDataset`. This includes text and yes/no questions. For more information about the questions, check [their official documentation](https://docs.argilla.io/en/latest/practical_guides/create_update_dataset/create_dataset.html#define-questions).
@@ -13,15 +24,15 @@
       - `Question` -> `argilla.RatingQuestion`, `options` -> `values` and it takes only a list
       - `Field` -> `argilla.TextField`
   - Add `description` parameter to `Aggregator.aggregate_evaluation` to allow individual descriptions without the need to create a new `Aggregator`. This was missing from the previous release.
-
+  - Add optional field `metadata` to `Dataset`, `RunOverview`, `EvaluationOverview` and `AggregationOverview`
+    - Update `parameter_optimization.ipynb` to demonstrate usage of metadata****
+  - Add optional field `label` to `Dataset`, `RunOverview`, `EvaluationOverview` and `AggregationOverview`
+  - Add `unwrap_metadata` flag to `aggregation_overviews_to_pandas` to enable inclusion of metadata in pandas export. Defaults to True.
 
 ### Fixes
   - Reinitializing different `AlephAlphaModel` instances and retrieving their tokenizer should now consume a lot less memory.
   - Evaluations now raise errors if ids of examples and outputs no longer match. If this happens, continuing the evaluation would only produce incorrect results.
   - Performing evaluations on runs with a different number of outputs now raises errors. Continuing the evaluation in this case would only lead to an inconsistent state.
-
-### Deprecations
-...
 
 ## 4.0.1
 
