@@ -1,16 +1,28 @@
 import pytest
-from aleph_alpha_client import Image, Text
+from aleph_alpha_client import (
+    Explanation,
+    ExplanationResponse,
+    Image,
+    TargetPromptItemExplanation,
+    Text,
+    TextPromptItemExplanation,
+    TextScore,
+)
 from pytest import fixture, raises
 
 from intelligence_layer.core import (
     AlephAlphaModel,
     ControlModel,
+    ExplainInput,
+    ExplainOutput,
+    LuminousControlModel,
     NoOpTracer,
     PromptTemplate,
     RichPrompt,
     ScoredTextHighlight,
     TextHighlight,
     TextHighlightInput,
+    Tracer,
 )
 
 
@@ -272,28 +284,49 @@ def test_highlight_clamps_to_the_correct_range_at(
     assert result.highlights[0].end == 4
 
 
+class FakeHighlightModel(LuminousControlModel):
+    def __init__(self, model: AlephAlphaModel) -> None:
+        self.model = model
+
+    def explain(self, input: ExplainInput, tracer: Tracer) -> ExplainOutput:
+        items = [
+            TextPromptItemExplanation(scores=[TextScore(start=0, length=4, score=0.5)]),
+            TargetPromptItemExplanation(scores=[]),
+        ]
+        explanations = [Explanation(target=input.target, items=items)]  # type: ignore
+        return ExplainOutput.from_explanation_response(
+            ExplanationResponse(model_version="dummy", explanations=explanations)
+        )
+
+
+@fixture
+def fake_highlight_model(luminous_control_model: ControlModel) -> ControlModel:
+    return FakeHighlightModel(luminous_control_model)
+
+
 @pytest.mark.parametrize(
     "prompt, start, end, score",
     [  # scores taken from test
-        ("""t{% promptrange short %}e{% endpromptrange%}st""", 1, 2, 0.44712114 / 4),
-        ("""{% promptrange short %}te{% endpromptrange%}st""", 0, 2, 0.44712114 / 2),
-        ("""te{% promptrange short %}st{% endpromptrange%}""", 2, 4, 0.44712114 / 2),
+        ("""t{% promptrange short %}e{% endpromptrange%}st""", 1, 2, 0.5 * 1 / 4),
+        ("""{% promptrange short %}te{% endpromptrange%}st""", 0, 2, 0.5 * 2 / 4),
+        ("""te{% promptrange short %}st{% endpromptrange%}""", 2, 4, 0.5 * 2 / 4),
         (
-            """te{% promptrange short %}st .....{% endpromptrange%}""",
-            2,
+            """t{% promptrange short %}est .....{% endpromptrange%}""",
+            1,
             4,
-            0.5348406757698838,
+            0.5 * 3 / 4,
         ),
     ],
 )
 def test_highlight_clamps_end_correctly(
-    text_highlight_with_clamp: TextHighlight,
+    fake_highlight_model: ControlModel,
     prompt: str,
     start: int,
     end: int,
     score: int,
 ) -> None:
     # given
+    text_highlight_with_clamp = TextHighlight(model=fake_highlight_model, clamp=True)
     template = PromptTemplate(prompt)
     rich_prompt = template.to_rich_prompt()
     answer = "Test?"
