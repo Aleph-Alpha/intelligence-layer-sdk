@@ -1,5 +1,5 @@
 from collections.abc import Iterable, Sequence
-from typing import cast
+from typing import Optional, cast
 
 from datasets import Dataset as HFDataset  # type: ignore
 from datasets import DatasetDict, IterableDataset, IterableDatasetDict
@@ -71,24 +71,21 @@ class SingleHuggingfaceDatasetRepository(DatasetRepository):
         dataset_id: str,
         input_type: type[Input],
         expected_output_type: type[ExpectedOutput],
+        examples_to_skip: Optional[frozenset[str]] = None,
     ) -> Iterable[Example[Input, ExpectedOutput]]:
+        examples_to_skip = examples_to_skip or frozenset()
         answers = "ABCD"
         assert input_type == MultipleChoiceInput
         assert expected_output_type == str
         for index, sample in enumerate(self._huggingface_dataset["test"]):
-            yield Example(
-                input=cast(
-                    Input,
-                    MultipleChoiceInput(
-                        question=sample["question"], choices=sample["choices"]
+            if str(index) not in examples_to_skip:
+                yield Example(
+                    input=cast(
+                        Input,
+                        MultipleChoiceInput(
+                            question=sample["question"], choices=sample["choices"]
+                        ),
                     ),
-                ),
-                expected_output=cast(ExpectedOutput, answers[sample["answer"]]),
-                id=str(index),
-            )
-
-    def example_ids(
-        self,
-        dataset_id: str,
-    ) -> Iterable[str]:
-        return [str(i) for i in range(self._huggingface_dataset["test"])]
+                    expected_output=cast(ExpectedOutput, answers[sample["answer"]]),
+                    id=str(index),
+                )

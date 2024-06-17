@@ -107,7 +107,9 @@ class FileSystemDatasetRepository(DatasetRepository, FileSystemBasedRepository):
         dataset_id: str,
         input_type: type[Input],
         expected_output_type: type[ExpectedOutput],
+        examples_to_skip: Optional[frozenset[str]] = None,
     ) -> Iterable[Example[Input, ExpectedOutput]]:
+        examples_to_skip = examples_to_skip or frozenset()
         example_path = self.path_to_str(self._dataset_examples_path(dataset_id))
         if not self._file_system.exists(example_path):
             raise ValueError(
@@ -118,34 +120,15 @@ class FileSystemDatasetRepository(DatasetRepository, FileSystemBasedRepository):
             example_path, "r", encoding="utf-8"
         ) as examples_file:
             # Mypy does not accept dynamic types
-            examples = [
-                Example[input_type, expected_output_type].model_validate_json(  # type: ignore
-                    json_data=example
-                )
-                for example in examples_file
-            ]
+            examples = []
+            for example in examples_file:
+                current_example = Example[
+                    input_type, expected_output_type  # type: ignore
+                ].model_validate_json(json_data=example)
+                if current_example.id not in examples_to_skip:
+                    examples.append(current_example)
 
         return sorted(examples, key=lambda example: example.id)
-    
-    
-    def example_ids(
-        self,
-        dataset_id: str
-    ) -> list[str]:
-        example_path = self.path_to_str(self._dataset_examples_path(dataset_id))
-        if not self._file_system.exists(example_path):
-            raise ValueError(
-                f"Repository does not contain a dataset with id: {dataset_id}"
-            )
-
-        with self._file_system.open(
-            example_path, "r", encoding="utf-8"
-        ) as examples_file:
-            # Mypy does not accept dynamic types
-            ids = [example.id for example in examples_file]
-
-        return sorted(ids)
-        
 
     def _dataset_root_directory(self) -> Path:
         return self._root_directory / "datasets"

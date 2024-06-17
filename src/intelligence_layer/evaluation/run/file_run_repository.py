@@ -23,6 +23,14 @@ class FileSystemRunRepository(RunRepository, FileSystemBasedRepository):
         # create empty folder just in case no examples are ever saved
         self.mkdir(self._run_directory(overview.id))
 
+    def create_temporary_run_data(self, run_id: str) -> None: ...
+
+    def delete_temporary_run_data(self, run_id: str) -> None: ...
+
+    def temp_store_finished_example(self, run_id: str, example_id: str) -> None: ...
+
+    def unfinished_examples(self) -> dict[str, Sequence[str]]: ...
+
     def run_overview(self, run_id: str) -> Optional[RunOverview]:
         file_path = self._run_overview_path(run_id)
         if not self.exists(file_path):

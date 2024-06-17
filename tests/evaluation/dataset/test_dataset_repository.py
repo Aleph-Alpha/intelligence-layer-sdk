@@ -322,6 +322,37 @@ def test_examples_returns_all_examples_sorted_by_their_id(
     "repository_fixture",
     test_repository_fixtures,
 )
+def test_examples_skips_blacklisted_examples(
+    repository_fixture: str,
+    request: FixtureRequest,
+) -> None:
+    dataset_repository: DatasetRepository = request.getfixturevalue(repository_fixture)
+    examples = [
+        Example(
+            input=DummyStringInput(),
+            expected_output=DummyStringOutput(),
+        )
+        for _ in range(0, 10)
+    ]
+    examples_to_skip = frozenset(example.id for example in examples[2:5])
+    dataset = dataset_repository.create_dataset(
+        examples=examples, dataset_name="test-dataset"
+    )
+
+    retrieved_examples = list(
+        dataset_repository.examples(
+            dataset.id, DummyStringInput, DummyStringOutput, examples_to_skip
+        )
+    )
+
+    assert len(retrieved_examples) == len(examples) - len(examples_to_skip)
+    assert all(example.id not in examples_to_skip for example in retrieved_examples)
+
+
+@mark.parametrize(
+    "repository_fixture",
+    test_repository_fixtures,
+)
 def test_examples_raises_value_error_for_not_existing_dataset_id(
     repository_fixture: str, request: FixtureRequest
 ) -> None:

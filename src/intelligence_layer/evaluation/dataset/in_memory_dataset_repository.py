@@ -77,7 +77,9 @@ class InMemoryDatasetRepository(DatasetRepository):
         dataset_id: str,
         input_type: type[Input],
         expected_output_type: type[ExpectedOutput],
+        examples_to_skip: Optional[frozenset[str]] = None,
     ) -> Iterable[Example[Input, ExpectedOutput]]:
+        examples_to_skip = examples_to_skip or frozenset()
         if dataset_id not in self._datasets_and_examples:
             raise ValueError(
                 f"Repository does not contain a dataset with id: {dataset_id}"
@@ -85,17 +87,11 @@ class InMemoryDatasetRepository(DatasetRepository):
         return cast(
             Iterable[Example[Input, ExpectedOutput]],
             sorted(
-                self._datasets_and_examples[dataset_id][1],
+                [
+                    example
+                    for example in self._datasets_and_examples[dataset_id][1]
+                    if example.id not in examples_to_skip
+                ],
                 key=lambda example: example.id,
             ),
         )
-    
-    def example_ids(
-        self,
-        dataset_id: str,
-    ) -> Iterable[str]:
-        if dataset_id not in self._datasets_and_examples:
-            raise ValueError(
-                f"Repository does not contain a dataset with id: {dataset_id}"
-            )
-        return sorted([example.id for example in self._datasets_and_examples[dataset_id][1]])
