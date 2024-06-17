@@ -12,6 +12,8 @@
       - `DefaultArgillaClient` -> `ArgillaWrapperClient`
       - `Question` -> `argilla.RatingQuestion`, `options` -> `values` and it takes only a list
       - `Field` -> `argilla.TextField`
+  - Add `description` parameter to `Aggregator.aggregate_evaluation` to allow individual descriptions without the need to create a new `Aggregator`. This was missing from the previous release.
+
 
 ### Fixes
   - Reinitializing different `AlephAlphaModel` instances and retrieving their tokenizer should now consume a lot less memory.
