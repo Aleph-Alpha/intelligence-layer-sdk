@@ -74,10 +74,10 @@ markers = [
     "docker: the test depends on having a docker container running.",
 ]
 addopts = "--capture=tee-sys"
-filterwarnings = [ #ignore: message : warning : location
+filterwarnings = [ #ignore: message : warning : location ?
     'ignore:.*\`general_plain_validator_function\` is deprecated.*',
     'ignore::DeprecationWarning:.*importlib._bootstrap.*',
-    'ignore::DeprecationWarning:'
+    'ignore:.*DefaultArgillaClient.*:DeprecationWarning:'
 ]
 
 [tool.ruff]
