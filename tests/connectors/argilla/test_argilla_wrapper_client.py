@@ -1,13 +1,11 @@
-from collections.abc import Callable, Iterable, Sequence
-from time import sleep
-from typing import Any, TypeVar
+from collections.abc import Iterable, Sequence
+from typing import Any
 from uuid import uuid4
 
 import argilla as rg  # type: ignore
 import pytest
 from argilla.client.feedback.schemas import SpanValueSchema  # type: ignore
 from dotenv import load_dotenv
-from pydantic import BaseModel
 from pytest import fixture
 
 from intelligence_layer.connectors import (
@@ -15,32 +13,6 @@ from intelligence_layer.connectors import (
     ArgillaWrapperClient,
     RecordData,
 )
-
-
-class DummyInput(BaseModel):
-    query: str
-
-
-class DummyOutput(BaseModel):
-    answer: str
-
-
-ExpectedOutput = str
-
-
-ReturnValue = TypeVar("ReturnValue")
-
-
-def retry(
-    f: Callable[[], ReturnValue], until: Callable[[ReturnValue], bool]
-) -> ReturnValue:
-    total_tries = 10
-    for _ in range(total_tries):
-        r = f()
-        if until(r):
-            return r
-        sleep(0.1)
-    raise AssertionError(f"Condition not met after {total_tries} retries")
 
 
 @fixture
@@ -60,11 +32,7 @@ def workspace_name(argilla_client: ArgillaWrapperClient) -> Iterable[str]:
         yield workspace_name
     finally:
         if workspace_name is not None:
-            workspace = rg.Workspace.from_name(workspace_name)
-            datasets = rg.list_datasets(workspace=workspace.name)
-            for dataset in datasets:
-                dataset.delete()
-            workspace.delete()
+            argilla_client._delete_workspace(workspace_name)
 
 
 @fixture
@@ -168,7 +136,7 @@ def qa_records(
             example_id=str(i),
             metadata={"model_1": "luminous-base"},
         )
-        for i in range(60)
+        for i in range(10)
     ]
     argilla_client.add_records(qa_dataset_id, records)
     return records
@@ -222,7 +190,7 @@ def test_evaluations_returns_evaluation_results(
 ) -> None:
     records = list(argilla_client.records(qa_dataset_id))
     for record in records:
-        argilla_client.create_evaluation(record.id, {"rate-answer": 1})
+        argilla_client._create_evaluation(record.id, {"rate-answer": 1})
 
     res = list(argilla_client.evaluations(qa_dataset_id))
     assert len(res) == len(records)
@@ -243,7 +211,7 @@ def test_split_dataset_works(
 
     all_records = list(argilla_client.records(qa_dataset_id))
     for split in range(1, n_splits + 1):
-        assert sum([record.metadata["split"] == split for record in all_records]) == 12
+        assert sum([record.metadata["split"] == split for record in all_records]) == 2
 
     new_metadata_list = [record.metadata for record in all_records]
     for old_metadata, new_metadata in zip(
@@ -267,7 +235,7 @@ def test_split_deleting_splits_works(
 
     all_records = list(argilla_client.records(qa_dataset_id))
 
-    assert sum(["split" not in record.metadata for record in all_records]) == 60
+    assert sum(["split" not in record.metadata for record in all_records]) == 10
 
     remote_dataset = rg.FeedbackDataset.from_argilla(id=qa_dataset_id)
     assert len(remote_dataset.metadata_properties) == 0
@@ -288,7 +256,7 @@ def test_split_dataset_works_with_uneven_splits(
         n_records_per_split.append(
             sum([record.metadata["split"] == split for record in all_records])
         )
-    assert n_records_per_split == [9, 9, 9, 9, 8, 8, 8]
+    assert n_records_per_split == [2, 2, 2, 1, 1, 1, 1]
 
 
 @pytest.mark.docker
@@ -326,7 +294,7 @@ def test_add_record_does_not_put_example_id_into_metadata(
     argilla_client.add_record(qa_dataset_id, first_data)
     record = next(iter(argilla_client.records(qa_dataset_id)))
 
-    argilla_client.create_evaluation(record_id=record.id, data={"rate-answer": 1})
+    argilla_client._create_evaluation(record_id=record.id, data={"rate-answer": 1})
     evals = list(argilla_client.evaluations(qa_dataset_id))
     assert len(evals) > 0
     assert "exampe_id" not in evals[0].metadata
@@ -453,6 +421,7 @@ def test_works_with_all_question_types(
     question: Any,
     eval_data: dict[str, Any],
 ) -> None:
+    # given
     fields = [
         rg.TextField(name="field"),
     ]
@@ -463,12 +432,14 @@ def test_works_with_all_question_types(
         questions=[question],
     )
     example_id = "id"
+    # when
     argilla_client.add_record(
         dataset_id,
         RecordData(content={"field": "Test content."}, example_id=example_id),
     )
     record = next(iter(argilla_client.records(dataset_id)))
-    argilla_client.create_evaluation(record_id=record.id, data=eval_data)
+    argilla_client._create_evaluation(record_id=record.id, data=eval_data)
     results = list(argilla_client.evaluations(dataset_id=dataset_id))
+    # then
+
     assert len(results) == 1
-    print(results)

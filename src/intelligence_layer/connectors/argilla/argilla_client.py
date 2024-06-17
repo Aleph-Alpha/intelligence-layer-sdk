@@ -73,7 +73,7 @@ class ArgillaClient(ABC):
         Raises an error if the name exists already.
 
         Args:
-            workspace_id: the id of the workspace the feedback-dataset should be created in.
+            workspace_id: the id of the workspace the feedback dataset should be created in.
                 The user executing this request must have corresponding permissions for this workspace.
             dataset_name: the name of the feedback-dataset to be created.
             fields: all fields of this dataset.
@@ -95,7 +95,7 @@ class ArgillaClient(ABC):
         """Retrieves an existing dataset or creates and publishes a new feedback dataset in Argilla.
 
         Args:
-            workspace_id: the id of the workspace the feedback-dataset should be created in.
+            workspace_id: the id of the workspace the feedback dataset should be created in.
                 The user executing this request must have corresponding permissions for this workspace.
             dataset_name: the name of the feedback-dataset to be created.
             fields: all fields of this dataset.

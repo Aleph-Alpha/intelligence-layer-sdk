@@ -5,7 +5,6 @@ from uuid import uuid4
 
 import pytest
 from dotenv import load_dotenv
-from pydantic import BaseModel
 from pytest import fixture
 from requests import HTTPError
 
@@ -19,18 +18,6 @@ from intelligence_layer.connectors.argilla.default_client import (
     Field,
     Question,
 )
-
-
-class DummyInput(BaseModel):
-    query: str
-
-
-class DummyOutput(BaseModel):
-    answer: str
-
-
-ExpectedOutput = str
-
 
 ReturnValue = TypeVar("ReturnValue")
 

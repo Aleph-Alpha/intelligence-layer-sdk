@@ -43,17 +43,21 @@ class ArgillaWrapperClient(ArgillaClient):
         fields: Sequence[AllowedFieldTypes],
         questions: Sequence[AllowedQuestionTypes],
     ) -> str:
-        """_summary_.
+        """Creates and publishes a new feedback dataset in Argilla.
+
+        Raises an error if the name exists already.
 
         Args:
-            workspace_id: _description_
-            dataset_name: _description_
-            fields: _description_
-            questions: _description_
+            workspace_id: the name of the workspace the feedback dataset should be created in.
+                The user executing this request must have corresponding permissions for this workspace.
+            dataset_name: the name of the feedback-dataset to be created.
+            fields: all fields of this dataset.
+            questions: all questions for this dataset.
 
         Returns:
-            _description_
+            The id of the created dataset.
         """
+        ...
         dataset = rg.FeedbackDataset(
             fields=fields, questions=questions, allow_extra_metadata=True
         )
@@ -71,6 +75,18 @@ class ArgillaWrapperClient(ArgillaClient):
         fields: Sequence[AllowedFieldTypes],
         questions: Sequence[AllowedQuestionTypes],
     ) -> str:
+        """Retrieves an existing dataset or creates and publishes a new feedback dataset in Argilla.
+
+        Args:
+            workspace_id: the name of the workspace the feedback dataset should be created in.
+                The user executing this request must have corresponding permissions for this workspace.
+            dataset_name: the name of the feedback-dataset to be created.
+            fields: all fields of this dataset.
+            questions: all questions for this dataset.
+
+        Returns:
+            The id of the dataset to be retrieved .
+        """
         try:
             return str(
                 rg.FeedbackDataset.from_argilla(
@@ -85,7 +101,7 @@ class ArgillaWrapperClient(ArgillaClient):
         self.add_records(dataset_id=dataset_id, records=[record])
 
     def add_records(self, dataset_id: str, records: Sequence[RecordData]) -> None:
-        remote_dataset = rg.FeedbackDataset.from_argilla(id=dataset_id)
+        remote_dataset = self._dataset_from_id(dataset_id=dataset_id)
         argilla_records = [
             rg.FeedbackRecord(
                 fields=record.content,
@@ -99,7 +115,7 @@ class ArgillaWrapperClient(ArgillaClient):
         remote_dataset.add_records(argilla_records, show_progress=False)
 
     def evaluations(self, dataset_id: str) -> Iterable[ArgillaEvaluation]:
-        remote_dataset = rg.FeedbackDataset.from_argilla(id=dataset_id)
+        remote_dataset = self._dataset_from_id(dataset_id=dataset_id)
         filtered_dataset = remote_dataset.filter_by(response_status="submitted")
 
         for record in filtered_dataset.records:
@@ -117,7 +133,15 @@ class ArgillaWrapperClient(ArgillaClient):
                 )
 
     def split_dataset(self, dataset_id: str, n_splits: int) -> None:
-        remote_dataset = rg.FeedbackDataset.from_argilla(id=dataset_id)
+        """Adds a new metadata property to the dataset and assigns a split to each record.
+
+        Deletes the property if n_splits is equal to one.
+
+        Args:
+            dataset_id: the id of the dataset
+            n_splits: the number of splits to create
+        """
+        remote_dataset = self._dataset_from_id(dataset_id=dataset_id)
         name = "split"
         metadata_config = remote_dataset.metadata_property_by_name(name)
         if metadata_config is None:
@@ -149,13 +173,13 @@ class ArgillaWrapperClient(ArgillaClient):
         remote_dataset.update_records(modified_records, show_progress=False)
 
     def ensure_workspace_exists(self, workspace_name: str) -> str:
-        """Retrieves the id of an argilla workspace with specified name or creates a new workspace if necessary.
+        """Retrieves the name of an argilla workspace with specified name or creates a new workspace if necessary.
 
         Args:
             workspace_name: the name of the workspace to be retrieved or created.
 
         Returns:
-            The id of an argilla workspace with the given `workspace_name`.
+            The name of an argilla workspace with the given `workspace_name`.
         """
         try:
             workspace = rg.Workspace.from_name(workspace_name)
@@ -164,7 +188,7 @@ class ArgillaWrapperClient(ArgillaClient):
             return str(rg.Workspace.create(name=workspace_name).name)
 
     def records(self, dataset_id: str) -> Iterable[Record]:
-        remote_dataset = rg.FeedbackDataset.from_argilla(id=dataset_id)
+        remote_dataset = self._dataset_from_id(dataset_id=dataset_id)
         return (
             Record(
                 id=str(record.id),
@@ -175,7 +199,7 @@ class ArgillaWrapperClient(ArgillaClient):
             for record in remote_dataset.records
         )
 
-    def create_evaluation(self, record_id: str, data: dict[str, Any]) -> None:
+    def _create_evaluation(self, record_id: str, data: dict[str, Any]) -> None:
         api_url = os.environ["ARGILLA_API_URL"]
         if not api_url.endswith("/"):
             api_url = api_url + "/"
@@ -191,7 +215,7 @@ class ArgillaWrapperClient(ArgillaClient):
         )
 
     def _delete_dataset(self, dataset_id: str) -> None:
-        remote_dataset = rg.FeedbackDataset.from_argilla(id=dataset_id)
+        remote_dataset = self._dataset_from_id(dataset_id=dataset_id)
         remote_dataset.delete()
 
     def _delete_workspace(self, workspace_name: str) -> None:
@@ -200,3 +224,6 @@ class ArgillaWrapperClient(ArgillaClient):
         for dataset in datasets:
             dataset.delete()
         workspace.delete()
+
+    def _dataset_from_id(self, dataset_id: str) -> rg.FeedbackDataset:
+        return rg.FeedbackDataset.from_argilla(id=dataset_id)
