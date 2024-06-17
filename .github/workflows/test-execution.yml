@@ -1,6 +1,9 @@
 name: Intelligence Layer SDK Tests
 
 on:
+  push:
+    branches:
+      - main
   # By default, a workflow only runs when a pull_request event's activity type is opened, synchronize, or reopened
   pull_request:
   # manual trigger
