@@ -45,7 +45,7 @@ class RunRepository(ABC):
         pass
 
     @abstractmethod
-    def unfinished_examples(self) -> dict[str, Sequence[str]]:
+    def finished_examples(self) -> dict[str, Sequence[str]]:
         pass
 
     def create_temporary_run_data(self, run_id: str) -> None:

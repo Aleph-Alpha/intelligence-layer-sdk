@@ -15,8 +15,7 @@ from intelligence_layer.evaluation.run.run_repository import RunRepository
 
 
 class FileSystemRunRepository(RunRepository, FileSystemBasedRepository):
-
-    TMP_FILE_TYPE : str = "tmp"
+    TMP_FILE_TYPE: str = "tmp"
 
     def __init__(self, file_system: AbstractFileSystem, root_directory: Path) -> None:
         FileSystemBasedRepository.__init__(self, file_system, root_directory)
@@ -45,11 +44,13 @@ class FileSystemRunRepository(RunRepository, FileSystemBasedRepository):
         self.remove_file(self._tmp_file_path(run_id))
 
     def _temp_store_finished_example(self, run_id: str, example_id: str) -> None:
-        with self._file_system.open(self._tmp_file_path(run_id), mode="a") as f:
+        with self._file_system.open(
+            self.path_to_str(self._tmp_file_path(run_id)), mode="a"
+        ) as f:
             f.write(example_id + "\n")
 
-    def unfinished_examples(self) -> dict[str, Sequence[str]]:
-        res = {}
+    def finished_examples(self) -> dict[str, Sequence[str]]:
+        res: dict[str, Sequence[str]] = {}
         path = self._tmp_file_path("").parent
         file_names = self.file_names(path, file_type=self.TMP_FILE_TYPE)
         for run_id in file_names:

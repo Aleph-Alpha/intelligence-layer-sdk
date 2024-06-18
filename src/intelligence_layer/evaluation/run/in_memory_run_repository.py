@@ -10,6 +10,7 @@ from intelligence_layer.evaluation.run.run_repository import RunRepository
 
 class InMemoryRunRepository(RunRepository):
     def __init__(self) -> None:
+        super().__init__()
         self._example_outputs: dict[str, list[ExampleOutput[PydanticSerializable]]] = (
             defaultdict(list)
         )
@@ -21,13 +22,17 @@ class InMemoryRunRepository(RunRepository):
         if overview.id not in self._example_outputs:
             self._example_outputs[overview.id] = []
 
-    def create_temporary_run_data(self, run_id: str) -> None: ...
+    def _create_temporary_run_data(self, run_id: str) -> None:
+        pass
 
-    def delete_temporary_run_data(self, run_id: str) -> None: ...
+    def _delete_temporary_run_data(self, run_id: str) -> None:
+        pass
 
-    def temp_store_finished_example(self, run_id: str, example_id: str) -> None: ...
+    def _temp_store_finished_example(self, run_id: str, example_id: str) -> None:
+        pass
 
-    def unfinished_examples(self) -> dict[str, Sequence[str]]: ...
+    def finished_examples(self) -> dict[str, Sequence[str]]:
+        return dict()
 
     def run_overview(self, run_id: str) -> Optional[RunOverview]:
         return self._run_overviews.get(run_id, None)
