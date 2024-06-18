@@ -12,6 +12,8 @@ from intelligence_layer.evaluation import (
     InMemoryRunRepository,
     Runner,
 )
+from intelligence_layer.evaluation.run.file_run_repository import FileRunRepository
+from intelligence_layer.evaluation.run.run_repository import RecoveryData
 from tests.evaluation.conftest import FAIL_IN_TASK_INPUT, DummyTask
 
 
@@ -95,6 +97,47 @@ def test_runner_aborts_on_error(
     ).id
     with pytest.raises(RuntimeError):
         runner.run_dataset(dataset_id, abort_on_error=True)
+
+
+def test_runner_resumes_after_error_in_task(
+    in_memory_dataset_repository: InMemoryDatasetRepository,
+    file_run_repository: FileRunRepository,
+    sequence_examples: Iterable[Example[str, None]],
+) -> None:
+    task = DummyTask()
+    runner = Runner(
+        task, in_memory_dataset_repository, file_run_repository, "dummy-runner"
+    )
+
+    dataset_id = in_memory_dataset_repository.create_dataset(
+        examples=sequence_examples, dataset_name="test-dataset"
+    ).id
+
+    fail_example_id = ""
+    for example in sequence_examples:
+        if example.input != FAIL_IN_TASK_INPUT: 
+            continue 
+        fail_example_id = example.id
+    assert fail_example_id != ""
+
+    run_description = "my_run"
+    tmp_hash = runner._run_hash(dataset_id, run_description)
+
+    with pytest.raises(RuntimeError):
+        runner.run_dataset(dataset_id, abort_on_error=True, description=run_description)
+
+    recovery_data = file_run_repository.finished_examples(tmp_hash)
+    assert fail_example_id not in recovery_data.finished_examples
+
+    examples = in_memory_dataset_repository._datasets_and_examples[dataset_id][1]
+    for example in examples:
+        if example.input == FAIL_IN_TASK_INPUT:
+            example.input = "do_not_fail_me"
+
+    runner.run_dataset(dataset_id, abort_on_error=True, description=run_description, resume_from_recovery_data=True)
+    assert file_run_repository.finished_examples(tmp_hash) is None
+
+    # TODO : we are not yet correctly tracking the number of failed and successful example counts
 
 
 def test_runner_runs_n_examples(
