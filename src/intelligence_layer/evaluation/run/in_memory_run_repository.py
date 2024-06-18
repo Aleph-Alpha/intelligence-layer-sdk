@@ -5,7 +5,7 @@ from typing import Optional, cast
 from intelligence_layer.core import InMemoryTracer, Output, PydanticSerializable
 from intelligence_layer.core.tracer.tracer import Tracer
 from intelligence_layer.evaluation.run.domain import ExampleOutput, RunOverview
-from intelligence_layer.evaluation.run.run_repository import RunRepository
+from intelligence_layer.evaluation.run.run_repository import RecoveryData, RunRepository
 
 
 class InMemoryRunRepository(RunRepository):
@@ -22,17 +22,17 @@ class InMemoryRunRepository(RunRepository):
         if overview.id not in self._example_outputs:
             self._example_outputs[overview.id] = []
 
-    def _create_temporary_run_data(self, tmp_hash: str) -> None:
+    def _create_temporary_run_data(self, tmp_hash: str, run_id: str) -> None:
         pass
 
     def _delete_temporary_run_data(self, tmp_hash: str) -> None:
         pass
 
-    def _temp_store_finished_example(self, run_id: str, example_id: str) -> None:
+    def _temp_store_finished_example(self, tmp_hash: str, example_id: str) -> None:
         pass
 
-    def finished_examples(self) -> dict[str, Sequence[str]]:
-        return dict()
+    def finished_examples(self, tmp_hash: str) -> Optional[RecoveryData]:
+        return None
 
     def run_overview(self, run_id: str) -> Optional[RunOverview]:
         return self._run_overviews.get(run_id, None)

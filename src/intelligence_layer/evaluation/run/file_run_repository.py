@@ -1,4 +1,3 @@
-import json
 from collections.abc import Iterable, Sequence
 from pathlib import Path
 from typing import Optional
@@ -6,14 +5,13 @@ from typing import Optional
 from fsspec import AbstractFileSystem  # type: ignore
 from fsspec.implementations.local import LocalFileSystem  # type: ignore
 
-from intelligence_layer.connectors.base.json_serializable import SerializableDict
 from intelligence_layer.core import FileTracer, InMemoryTracer, JsonSerializer, Output
 from intelligence_layer.core.tracer.tracer import Tracer
 from intelligence_layer.evaluation.infrastructure.file_system_based_repository import (
     FileSystemBasedRepository,
 )
 from intelligence_layer.evaluation.run.domain import ExampleOutput, RunOverview
-from intelligence_layer.evaluation.run.run_repository import RunRepository
+from intelligence_layer.evaluation.run.run_repository import RecoveryData, RunRepository
 
 
 class FileSystemRunRepository(RunRepository, FileSystemBasedRepository):
@@ -38,7 +36,7 @@ class FileSystemRunRepository(RunRepository, FileSystemBasedRepository):
     def _create_temporary_run_data(self, tmp_hash: str, run_id: str) -> None:
         self.write_utf8(
             self._tmp_file_path(tmp_hash),
-            f"{{\"run_id\": \"{run_id}\", \"finished_examples\": []}}",
+            RecoveryData(run_id=run_id).model_dump_json(),
             create_parents=True,
         )
 
@@ -46,20 +44,23 @@ class FileSystemRunRepository(RunRepository, FileSystemBasedRepository):
         self.remove_file(self._tmp_file_path(tmp_hash))
 
     def _temp_store_finished_example(self, tmp_hash: str, example_id: str) -> None:
-        data: SerializableDict = json.loads(self.read_utf8(self._tmp_file_path(tmp_hash)))
-        data["finished_examples"].append(example_id)
+        data = RecoveryData.model_validate_json(
+            self.read_utf8(self._tmp_file_path(tmp_hash))
+        )
+        data.finished_examples.append(example_id)
         self.write_utf8(
             self._tmp_file_path(tmp_hash),
-            json.dumps(data),
+            data.model_dump_json(),
             create_parents=True,
         )
 
-    def finished_examples(self, tmp_hash: str) -> dict[str, Sequence[str]]:
-        path = self._tmp_file_path("").parent
+    def finished_examples(self, tmp_hash: str) -> Optional[RecoveryData]:
         try:
-            return json.loads(self.read_utf8(path / f"{tmp_hash}.{self.TMP_FILE_TYPE}"))
+            return RecoveryData.model_validate_json(
+                self.read_utf8(self._tmp_file_path(tmp_hash))
+            )
         except FileNotFoundError:
-            return {}
+            return None
 
     def run_overview(self, run_id: str) -> Optional[RunOverview]:
         file_path = self._run_overview_path(run_id)

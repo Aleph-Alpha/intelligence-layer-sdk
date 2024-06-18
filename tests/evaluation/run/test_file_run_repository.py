@@ -4,6 +4,7 @@ from uuid import uuid4
 from pydantic import BaseModel
 
 from intelligence_layer.evaluation.run.file_run_repository import FileRunRepository
+from intelligence_layer.evaluation.run.run_repository import RecoveryData
 
 """Contains specific test for the FileRunRepository. For more generic
 tests, check the test_run_repository file."""
@@ -57,25 +58,26 @@ def test_example_run_does_not_create_a_folder(
 def test_temporary_file(
     file_run_repository: FileRunRepository,
 ) -> None:
-
     test_hash = str(uuid4())
     run_id = str(uuid4())
 
-    expected_run_dictionary = {"run_id": run_id, "finished_examples": [str(uuid4()), str(uuid4())]}
+    expected_recovery_data = RecoveryData(
+        run_id=run_id, finished_examples=[str(uuid4()), str(uuid4())]
+    )
 
     # Create
     file_run_repository.create_temporary_run_data(test_hash, run_id)
 
     # Write
-    for example_id in expected_run_dictionary["finished_examples"]:
+    for example_id in expected_recovery_data.finished_examples:
         file_run_repository.temp_store_finished_example(
             tmp_hash=test_hash, example_id=example_id
         )
 
     # Read
     finished_examples = file_run_repository.finished_examples(test_hash)
-    assert finished_examples == expected_run_dictionary
+    assert finished_examples == expected_recovery_data
 
     # Delete
     file_run_repository.delete_temporary_run_data(test_hash)
-    assert file_run_repository.finished_examples(test_hash) == {}
+    assert file_run_repository.finished_examples(test_hash) is None

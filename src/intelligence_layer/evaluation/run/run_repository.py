@@ -4,12 +4,19 @@ from multiprocessing import Lock as lock
 from multiprocessing.synchronize import Lock
 from typing import Optional, final
 
+from pydantic import BaseModel
+
 from intelligence_layer.core import Output, Tracer
 from intelligence_layer.evaluation.run.domain import (
     ExampleOutput,
     FailedExampleRun,
     RunOverview,
 )
+
+
+class RecoveryData(BaseModel):
+    run_id: str
+    finished_examples: list[str] = []
 
 
 class RunRepository(ABC):
@@ -45,7 +52,7 @@ class RunRepository(ABC):
         pass
 
     @abstractmethod
-    def finished_examples(self, tmp_hash: str) -> dict[str, Sequence[str]]:
+    def finished_examples(self, tmp_hash: str) -> Optional[RecoveryData]:
         pass
 
     @final
