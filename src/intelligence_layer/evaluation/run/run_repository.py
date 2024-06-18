@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 from collections.abc import Iterable, Sequence
 from multiprocessing import Lock as lock
 from multiprocessing.synchronize import Lock
-from typing import Optional
+from typing import Optional, final
 
 from intelligence_layer.core import Output, Tracer
 from intelligence_layer.evaluation.run.domain import (
@@ -33,32 +33,35 @@ class RunRepository(ABC):
         pass
 
     @abstractmethod
-    def _create_temporary_run_data(self, run_id: str) -> None:
+    def _create_temporary_run_data(self, tmp_hash: str, run_id: str) -> None:
         pass
 
     @abstractmethod
-    def _delete_temporary_run_data(self, run_id: str) -> None:
+    def _delete_temporary_run_data(self, tmp_hash: str) -> None:
         pass
 
     @abstractmethod
-    def _temp_store_finished_example(self, run_id: str, example_id: str) -> None:
+    def _temp_store_finished_example(self, tmp_hash: str, example_id: str) -> None:
         pass
 
     @abstractmethod
-    def finished_examples(self) -> dict[str, Sequence[str]]:
+    def finished_examples(self, tmp_hash: str) -> dict[str, Sequence[str]]:
         pass
 
-    def create_temporary_run_data(self, run_id: str) -> None:
-        self.locks[run_id] = lock()
-        self._create_temporary_run_data(run_id)
+    @final
+    def create_temporary_run_data(self, tmp_hash: str, run_id: str) -> None:
+        self.locks[tmp_hash] = lock()
+        self._create_temporary_run_data(tmp_hash, run_id)
 
-    def delete_temporary_run_data(self, run_id: str) -> None:
-        del self.locks[run_id]
-        self._delete_temporary_run_data(run_id)
+    @final
+    def delete_temporary_run_data(self, tmp_hash: str) -> None:
+        del self.locks[tmp_hash]
+        self._delete_temporary_run_data(tmp_hash)
 
-    def temp_store_finished_example(self, run_id: str, example_id: str) -> None:
-        with self.locks[run_id]:
-            self._temp_store_finished_example(run_id, example_id)
+    @final
+    def temp_store_finished_example(self, tmp_hash: str, example_id: str) -> None:
+        with self.locks[tmp_hash]:
+            self._temp_store_finished_example(tmp_hash, example_id)
 
     @abstractmethod
     def run_overview(self, run_id: str) -> Optional[RunOverview]:

@@ -57,27 +57,25 @@ def test_example_run_does_not_create_a_folder(
 def test_temporary_file(
     file_run_repository: FileRunRepository,
 ) -> None:
-    expected_run_dictionary = {
-        str(uuid4()): [str(uuid4()), str(uuid4())] for _ in range(2)
-    }
+
+    test_hash = str(uuid4())
+    run_id = str(uuid4())
+
+    expected_run_dictionary = {"run_id": run_id, "finished_examples": [str(uuid4()), str(uuid4())]}
+
     # Create
-    for run_id in expected_run_dictionary:
-        file_run_repository.create_temporary_run_data(run_id)
+    file_run_repository.create_temporary_run_data(test_hash, run_id)
 
     # Write
-    for run_id, example_ids in expected_run_dictionary.items():
-        for example_id in example_ids:
-            file_run_repository.temp_store_finished_example(
-                run_id=run_id, example_id=example_id
-            )
+    for example_id in expected_run_dictionary["finished_examples"]:
+        file_run_repository.temp_store_finished_example(
+            tmp_hash=test_hash, example_id=example_id
+        )
 
     # Read
-    finished_examples = file_run_repository.finished_examples()
+    finished_examples = file_run_repository.finished_examples(test_hash)
     assert finished_examples == expected_run_dictionary
 
     # Delete
-    run_ids = list(expected_run_dictionary.keys())
-    for run_id in run_ids:
-        file_run_repository.delete_temporary_run_data(run_id)
-        del expected_run_dictionary[run_id]
-        assert file_run_repository.finished_examples() == expected_run_dictionary
+    file_run_repository.delete_temporary_run_data(test_hash)
+    assert file_run_repository.finished_examples(test_hash) == {}

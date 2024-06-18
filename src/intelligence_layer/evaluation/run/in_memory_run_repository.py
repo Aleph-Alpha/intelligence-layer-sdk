@@ -22,10 +22,10 @@ class InMemoryRunRepository(RunRepository):
         if overview.id not in self._example_outputs:
             self._example_outputs[overview.id] = []
 
-    def _create_temporary_run_data(self, run_id: str) -> None:
+    def _create_temporary_run_data(self, tmp_hash: str) -> None:
         pass
 
-    def _delete_temporary_run_data(self, run_id: str) -> None:
+    def _delete_temporary_run_data(self, tmp_hash: str) -> None:
         pass
 
     def _temp_store_finished_example(self, run_id: str, example_id: str) -> None:

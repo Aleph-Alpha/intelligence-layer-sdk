@@ -1,3 +1,4 @@
+import json
 from collections.abc import Iterable, Sequence
 from pathlib import Path
 from typing import Optional
@@ -5,6 +6,7 @@ from typing import Optional
 from fsspec import AbstractFileSystem  # type: ignore
 from fsspec.implementations.local import LocalFileSystem  # type: ignore
 
+from intelligence_layer.connectors.base.json_serializable import SerializableDict
 from intelligence_layer.core import FileTracer, InMemoryTracer, JsonSerializer, Output
 from intelligence_layer.core.tracer.tracer import Tracer
 from intelligence_layer.evaluation.infrastructure.file_system_based_repository import (
@@ -30,33 +32,34 @@ class FileSystemRunRepository(RunRepository, FileSystemBasedRepository):
         # create empty folder just in case no examples are ever saved
         self.mkdir(self._run_directory(overview.id))
 
-    def _tmp_file_path(self, run_id: str) -> Path:
-        return self._run_directory(run_id + "." + self.TMP_FILE_TYPE)
+    def _tmp_file_path(self, tmp_hash: str) -> Path:
+        return self._run_directory(tmp_hash + "." + self.TMP_FILE_TYPE)
 
-    def _create_temporary_run_data(self, run_id: str) -> None:
+    def _create_temporary_run_data(self, tmp_hash: str, run_id: str) -> None:
         self.write_utf8(
-            self._tmp_file_path(run_id),
-            "",
+            self._tmp_file_path(tmp_hash),
+            f"{{\"run_id\": \"{run_id}\", \"finished_examples\": []}}",
             create_parents=True,
         )
 
-    def _delete_temporary_run_data(self, run_id: str) -> None:
-        self.remove_file(self._tmp_file_path(run_id))
+    def _delete_temporary_run_data(self, tmp_hash: str) -> None:
+        self.remove_file(self._tmp_file_path(tmp_hash))
 
-    def _temp_store_finished_example(self, run_id: str, example_id: str) -> None:
-        with self._file_system.open(
-            self.path_to_str(self._tmp_file_path(run_id)), mode="a"
-        ) as f:
-            f.write(example_id + "\n")
+    def _temp_store_finished_example(self, tmp_hash: str, example_id: str) -> None:
+        data: SerializableDict = json.loads(self.read_utf8(self._tmp_file_path(tmp_hash)))
+        data["finished_examples"].append(example_id)
+        self.write_utf8(
+            self._tmp_file_path(tmp_hash),
+            json.dumps(data),
+            create_parents=True,
+        )
 
-    def finished_examples(self) -> dict[str, Sequence[str]]:
-        res: dict[str, Sequence[str]] = {}
+    def finished_examples(self, tmp_hash: str) -> dict[str, Sequence[str]]:
         path = self._tmp_file_path("").parent
-        file_names = self.file_names(path, file_type=self.TMP_FILE_TYPE)
-        for run_id in file_names:
-            text = self.read_utf8(path / f"{run_id}.{self.TMP_FILE_TYPE}")
-            res[run_id] = text.splitlines()
-        return res
+        try:
+            return json.loads(self.read_utf8(path / f"{tmp_hash}.{self.TMP_FILE_TYPE}"))
+        except FileNotFoundError:
+            return {}
 
     def run_overview(self, run_id: str) -> Optional[RunOverview]:
         file_path = self._run_overview_path(run_id)
