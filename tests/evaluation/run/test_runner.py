@@ -1,4 +1,4 @@
-from collections.abc import Iterable
+from collections.abc import Iterable, Sequence
 
 import pytest
 
@@ -13,7 +13,6 @@ from intelligence_layer.evaluation import (
     Runner,
 )
 from intelligence_layer.evaluation.run.file_run_repository import FileRunRepository
-from intelligence_layer.evaluation.run.run_repository import RecoveryData
 from tests.evaluation.conftest import FAIL_IN_TASK_INPUT, DummyTask
 
 
@@ -115,8 +114,8 @@ def test_runner_resumes_after_error_in_task(
 
     fail_example_id = ""
     for example in sequence_examples:
-        if example.input != FAIL_IN_TASK_INPUT: 
-            continue 
+        if example.input != FAIL_IN_TASK_INPUT:
+            continue
         fail_example_id = example.id
     assert fail_example_id != ""
 
@@ -127,14 +126,22 @@ def test_runner_resumes_after_error_in_task(
         runner.run_dataset(dataset_id, abort_on_error=True, description=run_description)
 
     recovery_data = file_run_repository.finished_examples(tmp_hash)
+    assert recovery_data
     assert fail_example_id not in recovery_data.finished_examples
 
-    examples = in_memory_dataset_repository._datasets_and_examples[dataset_id][1]
+    examples: Sequence[Example[str, None]] = (
+        in_memory_dataset_repository._datasets_and_examples[dataset_id][1]  # type: ignore
+    )
     for example in examples:
         if example.input == FAIL_IN_TASK_INPUT:
             example.input = "do_not_fail_me"
 
-    runner.run_dataset(dataset_id, abort_on_error=True, description=run_description, resume_from_recovery_data=True)
+    runner.run_dataset(
+        dataset_id,
+        abort_on_error=True,
+        description=run_description,
+        resume_from_recovery_data=True,
+    )
     assert file_run_repository.finished_examples(tmp_hash) is None
 
     # TODO : we are not yet correctly tracking the number of failed and successful example counts

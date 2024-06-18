@@ -111,6 +111,13 @@ class RunRepository(ABC):
         """
         ...
 
+    @final
+    def store_example_output_parallel(
+        self, tmp_hash: str, example_output: ExampleOutput[Output]
+    ) -> None:
+        with self.locks[tmp_hash]:
+            self.store_example_output(example_output)
+
     @abstractmethod
     def example_output(
         self, run_id: str, example_id: str, output_type: type[Output]

@@ -6,7 +6,6 @@ from typing import Generic, Optional, cast
 from uuid import uuid4
 
 from pydantic import JsonValue
-from tqdm import tqdm
 
 from intelligence_layer.connectors.base.json_serializable import (
     SerializableDict,
@@ -143,7 +142,7 @@ class Runner(Generic[Input, Output]):
 
         def run(
             example: Example[Input, ExpectedOutput],
-        ) -> tuple[str, Output | FailedExampleRun]:
+        ) -> None:
             if trace_examples_individually:
                 example_tracer = self._run_repository.create_tracer_for_example(
                     run_id, example.id
@@ -154,52 +153,71 @@ class Runner(Generic[Input, Output]):
                 example_tracer = tracer
             else:
                 example_tracer = NoOpTracer()
+
+            output: Output | FailedExampleRun
             try:
                 output = self._task.run(example.input, example_tracer)
-                self._run_repository.temp_store_finished_example(tmp_hash, example.id)
-                return example.id, output
             except Exception as e:
                 if abort_on_error:
                     raise e
                 print(
                     f'FAILED RUN: example "{example.id}", {type(e).__qualname__}: "{e}"'
                 )
-                self._run_repository.temp_store_finished_example(tmp_hash, example.id)
-                return example.id, FailedExampleRun.from_exception(e)
+                output = FailedExampleRun.from_exception(e)
+
+            self._run_repository.store_example_output_parallel(
+                tmp_hash,
+                ExampleOutput[Output](
+                    run_id=run_id, example_id=example.id, output=output
+                ),
+            )
+            self._run_repository.temp_store_finished_example(tmp_hash, example.id)
 
         start = utc_now()
-        with ThreadPoolExecutor(max_workers=max_workers) as executor:
-            ids_and_outputs = tqdm(executor.map(run, examples), desc="Running")
 
-            failed_count = 0
-            successful_count = 0
-            for example_id, output in ids_and_outputs:
-                if isinstance(output, FailedExampleRun):
-                    failed_count += 1
-                else:
-                    successful_count += 1
-                self._run_repository.store_example_output(
-                    ExampleOutput[Output](
-                        run_id=run_id, example_id=example_id, output=output
-                    ),
-                )
+        with ThreadPoolExecutor(max_workers=max_workers) as executor:
+            for _ in executor.map(run, examples):
+                pass  # the result of the map must be retrieved for the exceptions to be raised.
         self._run_repository.delete_temporary_run_data(tmp_hash)
 
         full_description = (
             self.description + " : " + description if description else self.description
         )
+        run_overview = RunOverview(
+            dataset_id=dataset_id,
+            id=run_id,
+            start=start,
+            end=utc_now(),
+            failed_example_count=0,
+            successful_example_count=0,
+            description=full_description,
+            labels=labels,
+            metadata=metadata,
+        )
+        self._run_repository.store_run_overview(run_overview)
+
+        successful = 0
+        failed = 0
+        for example_output in self._run_repository.example_outputs(
+            run_id, self.output_type()
+        ):
+            if isinstance(example_output.output, FailedExampleRun):
+                failed += 1
+            else:
+                successful += 1
 
         run_overview = RunOverview(
             dataset_id=dataset_id,
             id=run_id,
             start=start,
             end=utc_now(),
-            failed_example_count=failed_count,
-            successful_example_count=successful_count,
+            failed_example_count=failed,
+            successful_example_count=successful,
             description=full_description,
             labels=labels,
             metadata=metadata,
         )
+
         self._run_repository.store_run_overview(run_overview)
         return run_overview
 
