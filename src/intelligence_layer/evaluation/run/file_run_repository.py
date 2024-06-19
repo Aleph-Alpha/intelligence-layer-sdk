@@ -1,3 +1,4 @@
+import warnings
 from collections.abc import Iterable, Sequence
 from pathlib import Path
 from typing import Optional
@@ -110,7 +111,8 @@ class FileSystemRunRepository(RunRepository, FileSystemBasedRepository):
     ) -> Iterable[ExampleOutput[Output]]:
         path = self._run_output_directory(run_id)
         if not self.exists(path):
-            raise ValueError(f"Repository does not contain a run with id: {run_id}")
+            warnings.warn(f"Repository does not contain a run with id: {run_id}")
+            return []
 
         example_outputs = []
         for file_name in self.file_names(path):

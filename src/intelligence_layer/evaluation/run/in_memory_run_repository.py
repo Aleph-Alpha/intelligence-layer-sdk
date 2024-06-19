@@ -1,3 +1,4 @@
+import warnings
 from collections import defaultdict
 from collections.abc import Iterable, Sequence
 from typing import Optional, cast
@@ -70,8 +71,9 @@ class InMemoryRunRepository(RunRepository):
     def example_outputs(
         self, run_id: str, output_type: type[Output]
     ) -> Iterable[ExampleOutput[Output]]:
-        if run_id not in self._run_overviews:
-            raise ValueError(f"Repository does not contain a run with id: {run_id}")
+        if run_id not in self._example_outputs and run_id not in self._run_overviews:
+            warnings.warn(f"Repository does not contain a run with id: {run_id}")
+            return []
 
         return (
             cast(ExampleOutput[Output], example_output)

@@ -1,3 +1,4 @@
+import concurrent.futures
 from collections.abc import Iterable
 from concurrent.futures import ThreadPoolExecutor
 from inspect import get_annotations
@@ -176,25 +177,15 @@ class Runner(Generic[Input, Output]):
         start = utc_now()
 
         with ThreadPoolExecutor(max_workers=max_workers) as executor:
-            for _ in executor.map(run, examples):
-                pass  # the result of the map must be retrieved for the exceptions to be raised.
+            futures = [executor.submit(run, example) for example in examples]
+            concurrent.futures.wait(futures)
+            for future in futures:
+                future.result()  # result of the futures must be  retrieved for exceptions to be raised
         self._run_repository.delete_temporary_run_data(tmp_hash)
 
         full_description = (
             self.description + " : " + description if description else self.description
         )
-        run_overview = RunOverview(
-            dataset_id=dataset_id,
-            id=run_id,
-            start=start,
-            end=utc_now(),
-            failed_example_count=0,
-            successful_example_count=0,
-            description=full_description,
-            labels=labels,
-            metadata=metadata,
-        )
-        self._run_repository.store_run_overview(run_overview)
 
         successful = 0
         failed = 0
