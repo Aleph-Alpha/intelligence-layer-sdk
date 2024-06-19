@@ -11,6 +11,7 @@
    - For `InMemoryRunRepository` based `Runner`s this is limited to runs that failed with an exception that did not crash the whole process/kernel.
    - For `FileRunRepository` based `Runners` even runs that crashed the whole process can be resumed.
    - `DatasetRepository.examples` now accepts an optional parameter `examples_to_skip` to enable skipping of `Example`s with the provided IDs.
+   - Add `how_to_resume_a_run_after_a_crash` notebook.
 
 ### Fixes
 ...
