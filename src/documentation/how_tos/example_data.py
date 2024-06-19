@@ -34,6 +34,21 @@ class DummyTask(Task[str, str]):
         return f"{input} -> output"
 
 
+EXAMPLE_1_INPUT = "input1"
+
+
+class DummyTaskCanFail(Task[str, str]):
+    def __init__(self) -> None:
+        super().__init__()
+        self._raise_exception = True
+
+    def do_run(self, input: str, task_span: TaskSpan) -> str:
+        if input == EXAMPLE_1_INPUT and self._raise_exception:
+            self._raise_exception = False
+            raise Exception("Some random failure in the system.")
+        return f"{input} -> output"
+
+
 class DummyEvaluation(BaseModel):
     eval: str
 
@@ -102,7 +117,9 @@ class ExampleData:
 def example_data() -> ExampleData:
     examples = [
         DummyExample(input="input0", expected_output="expected_output0", data="data0"),
-        DummyExample(input="input1", expected_output="expected_output1", data="data1"),
+        DummyExample(
+            input=EXAMPLE_1_INPUT, expected_output="expected_output1", data="data1"
+        ),
     ]
 
     dataset_repository = InMemoryDatasetRepository()
