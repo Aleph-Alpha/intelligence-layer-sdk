@@ -10,6 +10,7 @@
  -  `Runner.run_dataset` can now be resumed after failure by setting the `resume_from_recovery_data` flag to `True` and calling `Runner.run_dataset` again.
    - For `InMemoryRunRepository` based `Runner`s this is limited to runs that failed with an exception that did not crash the whole process/kernel.
    - For `FileRunRepository` based `Runners` even runs that crashed the whole process can be resumed.
+   - `DatasetRepository.examples` now accepts an optional parameter `examples_to_skip` to enable skipping of `Example`s with the provided IDs.
 
 ### Fixes
 ...
