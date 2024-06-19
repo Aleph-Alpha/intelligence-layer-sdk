@@ -1,10 +1,9 @@
 import contextlib
-from uuid import uuid4
 
+import pytest
 from pydantic import BaseModel
 
 from intelligence_layer.evaluation.run.file_run_repository import FileRunRepository
-from intelligence_layer.evaluation.run.run_repository import RecoveryData
 
 """Contains specific test for the FileRunRepository. For more generic
 tests, check the test_run_repository file."""
@@ -33,6 +32,7 @@ def test_run_overview_does_not_create_a_folder(
     assert not file_run_repository._run_root_directory().exists()
 
 
+@pytest.mark.filterwarnings("ignore::UserWarning")
 def test_example_runs_does_not_create_a_folder(
     file_run_repository: FileRunRepository,
 ) -> None:
@@ -44,6 +44,7 @@ def test_example_runs_does_not_create_a_folder(
     assert not file_run_repository._run_root_directory().exists()
 
 
+@pytest.mark.filterwarnings("ignore::UserWarning")
 def test_example_run_does_not_create_a_folder(
     file_run_repository: FileRunRepository,
 ) -> None:
@@ -53,31 +54,3 @@ def test_example_run_does_not_create_a_folder(
     with contextlib.suppress(ValueError):
         file_run_repository.example_output("Non-existent", "Non-existent", DummyType)
     assert not file_run_repository._run_root_directory().exists()
-
-
-def test_temporary_file(
-    file_run_repository: FileRunRepository,
-) -> None:
-    test_hash = str(uuid4())
-    run_id = str(uuid4())
-
-    expected_recovery_data = RecoveryData(
-        run_id=run_id, finished_examples=[str(uuid4()), str(uuid4())]
-    )
-
-    # Create
-    file_run_repository.create_temporary_run_data(test_hash, run_id)
-
-    # Write
-    for example_id in expected_recovery_data.finished_examples:
-        file_run_repository.temp_store_finished_example(
-            tmp_hash=test_hash, example_id=example_id
-        )
-
-    # Read
-    finished_examples = file_run_repository.finished_examples(test_hash)
-    assert finished_examples == expected_recovery_data
-
-    # Delete
-    file_run_repository.delete_temporary_run_data(test_hash)
-    assert file_run_repository.finished_examples(test_hash) is None

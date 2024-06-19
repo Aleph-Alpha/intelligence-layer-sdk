@@ -3,10 +3,13 @@
 ## Unreleased
 
 ### Breaking Changes
- - `RunRepository.example_outputs()` now returns and empty list and a warning when there is no associated record for the given `run_id` instead of raising a `ValueError`.
+- `RunRepository.example_output`  now returns `None` and prints a warning when there is no associated record for the given `run_id` instead of raising a `ValueError`.
+- `RunRepository.example_outputs` now returns an empty list and prints a warning when there is no associated record for the given `run_id` instead of raising a `ValueError`.
 
 ### Features
- - `Runner`s using the `FileRunRepository` can now be resumed after a crash or on exceptions by setting the `resume_from_recovery_data` flag of the `Runner.run_dataset` method to `True`.
+ -  `Runner.run_dataset` can now be resumed after failure by setting the `resume_from_recovery_data` flag to `True` and calling `Runner.run_dataset` again.
+   - For `InMemoryRunRepository` based `Runner`s this is limited to runs that failed with an exception that did not crash the whole process/kernel.
+   - For `FileRunRepository` based `Runners` even runs that crashed the whole process can be resumed.
 
 ### Fixes
 ...

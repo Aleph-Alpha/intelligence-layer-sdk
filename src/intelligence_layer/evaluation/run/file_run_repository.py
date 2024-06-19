@@ -86,9 +86,10 @@ class FileSystemRunRepository(RunRepository, FileSystemBasedRepository):
         self, run_id: str, example_id: str, output_type: type[Output]
     ) -> Optional[ExampleOutput[Output]]:
         file_path = self._example_output_path(run_id, example_id)
-        if not self.exists(file_path.parent):
-            raise ValueError(f"Repository does not contain a run with id: {run_id}")
         if not self.exists(file_path):
+            warnings.warn(
+                f'Repository does not contain a run with id: "{run_id}"', UserWarning
+            )
             return None
         content = self.read_utf8(file_path)
         # mypy does not accept dynamic types
@@ -96,22 +97,14 @@ class FileSystemRunRepository(RunRepository, FileSystemBasedRepository):
             json_data=content
         )
 
-    def example_tracer(self, run_id: str, example_id: str) -> Optional[Tracer]:
-        file_path = self._example_trace_path(run_id, example_id)
-        if not self.exists(file_path):
-            return None
-        return self._parse_log(file_path)
-
-    def create_tracer_for_example(self, run_id: str, example_id: str) -> Tracer:
-        file_path = self._example_trace_path(run_id, example_id)
-        return FileTracer(file_path)
-
     def example_outputs(
         self, run_id: str, output_type: type[Output]
     ) -> Iterable[ExampleOutput[Output]]:
         path = self._run_output_directory(run_id)
         if not self.exists(path):
-            warnings.warn(f"Repository does not contain a run with id: {run_id}")
+            warnings.warn(
+                f'Repository does not contain a run with id: "{run_id}"', UserWarning
+            )
             return []
 
         example_outputs = []
@@ -142,6 +135,16 @@ class FileSystemRunRepository(RunRepository, FileSystemBasedRepository):
 
     def _run_overview_path(self, run_id: str) -> Path:
         return self._run_directory(run_id).with_suffix(".json")
+
+    def example_tracer(self, run_id: str, example_id: str) -> Optional[Tracer]:
+        file_path = self._example_trace_path(run_id, example_id)
+        if not self.exists(file_path):
+            return None
+        return self._parse_log(file_path)
+
+    def create_tracer_for_example(self, run_id: str, example_id: str) -> Tracer:
+        file_path = self._example_trace_path(run_id, example_id)
+        return FileTracer(file_path)
 
     def _trace_directory(self, run_id: str) -> Path:
         path = self._run_directory(run_id) / "trace"

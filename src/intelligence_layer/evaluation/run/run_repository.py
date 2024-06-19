@@ -135,32 +135,6 @@ class RunRepository(ABC):
         ...
 
     @abstractmethod
-    def example_tracer(self, run_id: str, example_id: str) -> Optional[Tracer]:
-        """Returns an :class:`Optional[Tracer]` for the given run ID and example ID.
-
-        Args:
-            run_id: The ID of the linked run overview.
-            example_id: ID of the example whose :class:`Tracer` should be retrieved.
-
-        Returns:
-            A :class:`Tracer` if it was found, `None` otherwise.
-        """
-        ...
-
-    @abstractmethod
-    def create_tracer_for_example(self, run_id: str, example_id: str) -> Tracer:
-        """Creates and returns a :class:`Tracer` for the given run ID and example ID.
-
-        Args:
-            run_id: The ID of the linked run overview.
-            example_id: ID of the example whose :class:`Tracer` should be retrieved.
-
-        Returns:
-            A :.class:`Tracer`.
-        """
-        ...
-
-    @abstractmethod
     def example_outputs(
         self, run_id: str, output_type: type[Output]
     ) -> Iterable[ExampleOutput[Output]]:
@@ -216,3 +190,29 @@ class RunRepository(ABC):
         """
         results = self.example_outputs(run_id, output_type)
         return (r for r in results if isinstance(r.output, FailedExampleRun))
+
+    @abstractmethod
+    def example_tracer(self, run_id: str, example_id: str) -> Optional[Tracer]:
+        """Returns an :class:`Optional[Tracer]` for the given run ID and example ID.
+
+        Args:
+            run_id: The ID of the linked run overview.
+            example_id: ID of the example whose :class:`Tracer` should be retrieved.
+
+        Returns:
+            A :class:`Tracer` if it was found, `None` otherwise.
+        """
+        ...
+
+    @abstractmethod
+    def create_tracer_for_example(self, run_id: str, example_id: str) -> Tracer:
+        """Creates and returns a :class:`Tracer` for the given run ID and example ID.
+
+        Args:
+            run_id: The ID of the linked run overview.
+            example_id: ID of the example whose :class:`Tracer` should be retrieved.
+
+        Returns:
+            A :.class:`Tracer`.
+        """
+        ...

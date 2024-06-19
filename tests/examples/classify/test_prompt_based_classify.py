@@ -288,6 +288,7 @@ def test_can_aggregate_evaluations(
     assert aggregation_overview.statistics.percentage_correct == 0.5
 
 
+@pytest.mark.filterwarnings("ignore::UserWarning")
 def test_aggregating_evaluations_works_with_empty_list(
     classify_evaluator: Evaluator[
         ClassifyInput,

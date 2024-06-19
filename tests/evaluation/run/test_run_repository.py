@@ -9,6 +9,7 @@ from pytest import fixture, mark
 from intelligence_layer.core import CompositeTracer, InMemoryTracer, utc_now
 from intelligence_layer.evaluation import ExampleOutput, RunOverview, RunRepository
 from intelligence_layer.evaluation.run.domain import FailedExampleRun
+from intelligence_layer.evaluation.run.run_repository import RecoveryData
 from tests.evaluation.conftest import DummyStringInput
 
 test_repository_fixtures = [
@@ -62,6 +63,7 @@ def test_run_repository_stores_and_returns_example_output(
     "repository_fixture",
     test_repository_fixtures,
 )
+@pytest.mark.filterwarnings("ignore::UserWarning")
 def test_example_output_returns_none_for_not_existing_example_id(
     repository_fixture: str,
     request: FixtureRequest,
@@ -82,6 +84,7 @@ def test_example_output_returns_none_for_not_existing_example_id(
     "repository_fixture",
     test_repository_fixtures,
 )
+@pytest.mark.filterwarnings("ignore::UserWarning")
 def test_example_output_returns_none_for_not_existing_run_id(
     repository_fixture: str,
     request: FixtureRequest,
@@ -92,12 +95,16 @@ def test_example_output_returns_none_for_not_existing_run_id(
     example_output = ExampleOutput(run_id=run_id, example_id=example_id, output=None)
     run_repository.store_example_output(example_output)
 
-    with pytest.raises(ValueError):
+    assert (
         run_repository.example_output("not-existing-run-id", example_id, type(None))
-    with pytest.raises(ValueError):
+        is None
+    )
+    assert (
         run_repository.example_output(
             "not-existing-run-id", "not-existing-example-id", type(None)
         )
+        is None
+    )
 
 
 @mark.parametrize(
@@ -304,3 +311,37 @@ def test_successful_example_outputs_returns_only_successful_examples(
 
     assert len(successful_outputs) == 1
     assert successful_outputs[0].example_id == "2"
+
+
+@mark.parametrize(
+    "repository_fixture",
+    test_repository_fixtures,
+)
+def test_recovery_from_crash(
+    repository_fixture: str,
+    request: FixtureRequest,
+) -> None:
+    run_repository: RunRepository = request.getfixturevalue(repository_fixture)
+    test_hash = str(uuid4())
+    run_id = str(uuid4())
+
+    expected_recovery_data = RecoveryData(
+        run_id=run_id, finished_examples=[str(uuid4()), str(uuid4())]
+    )
+
+    # Create
+    run_repository.create_temporary_run_data(test_hash, run_id)
+
+    # Write
+    for example_id in expected_recovery_data.finished_examples:
+        run_repository.temp_store_finished_example(
+            tmp_hash=test_hash, example_id=example_id
+        )
+
+    # Read
+    finished_examples = run_repository.finished_examples(test_hash)
+    assert finished_examples == expected_recovery_data
+
+    # Delete
+    run_repository.delete_temporary_run_data(test_hash)
+    assert run_repository.finished_examples(test_hash) is None
