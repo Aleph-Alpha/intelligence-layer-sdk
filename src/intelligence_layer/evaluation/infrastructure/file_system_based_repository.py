@@ -30,6 +30,9 @@ class FileSystemBasedRepository:
             str, self._file_system.read_text(self.path_to_str(path), encoding="utf-8")
         )
 
+    def remove_file(self, path: Path) -> None:
+        self._file_system.rm_file(path)
+
     def exists(self, path: Path) -> bool:
         return cast(bool, self._file_system.exists(self.path_to_str(path)))
 

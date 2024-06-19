@@ -1,5 +1,6 @@
 import contextlib
 
+import pytest
 from pydantic import BaseModel
 
 from intelligence_layer.evaluation.run.file_run_repository import FileRunRepository
@@ -31,6 +32,7 @@ def test_run_overview_does_not_create_a_folder(
     assert not file_run_repository._run_root_directory().exists()
 
 
+@pytest.mark.filterwarnings("ignore::UserWarning")
 def test_example_runs_does_not_create_a_folder(
     file_run_repository: FileRunRepository,
 ) -> None:
@@ -42,6 +44,7 @@ def test_example_runs_does_not_create_a_folder(
     assert not file_run_repository._run_root_directory().exists()
 
 
+@pytest.mark.filterwarnings("ignore::UserWarning")
 def test_example_run_does_not_create_a_folder(
     file_run_repository: FileRunRepository,
 ) -> None:

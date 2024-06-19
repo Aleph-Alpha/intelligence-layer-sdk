@@ -1,6 +1,10 @@
 from abc import ABC, abstractmethod
 from collections.abc import Iterable, Sequence
-from typing import Optional
+from multiprocessing import Lock as lock
+from multiprocessing.synchronize import Lock
+from typing import Optional, final
+
+from pydantic import BaseModel
 
 from intelligence_layer.core import Output, Tracer
 from intelligence_layer.evaluation.run.domain import (
@@ -8,6 +12,11 @@ from intelligence_layer.evaluation.run.domain import (
     FailedExampleRun,
     RunOverview,
 )
+
+
+class RecoveryData(BaseModel):
+    run_id: str
+    finished_examples: list[str] = []
 
 
 class RunRepository(ABC):
@@ -18,6 +27,9 @@ class RunRepository(ABC):
     representing results of a dataset.
     """
 
+    def __init__(self) -> None:
+        self.locks: dict[str, Lock] = {}
+
     @abstractmethod
     def store_run_overview(self, overview: RunOverview) -> None:
         """Stores a :class:`RunOverview`.
@@ -25,7 +37,38 @@ class RunRepository(ABC):
         Args:
             overview: The overview to be persisted.
         """
-        ...
+        pass
+
+    @abstractmethod
+    def _create_temporary_run_data(self, tmp_hash: str, run_id: str) -> None:
+        pass
+
+    @abstractmethod
+    def _delete_temporary_run_data(self, tmp_hash: str) -> None:
+        pass
+
+    @abstractmethod
+    def _temp_store_finished_example(self, tmp_hash: str, example_id: str) -> None:
+        pass
+
+    @abstractmethod
+    def finished_examples(self, tmp_hash: str) -> Optional[RecoveryData]:
+        pass
+
+    @final
+    def create_temporary_run_data(self, tmp_hash: str, run_id: str) -> None:
+        self.locks[tmp_hash] = lock()
+        self._create_temporary_run_data(tmp_hash, run_id)
+
+    @final
+    def delete_temporary_run_data(self, tmp_hash: str) -> None:
+        del self.locks[tmp_hash]
+        self._delete_temporary_run_data(tmp_hash)
+
+    @final
+    def temp_store_finished_example(self, tmp_hash: str, example_id: str) -> None:
+        with self.locks[tmp_hash]:
+            self._temp_store_finished_example(tmp_hash, example_id)
 
     @abstractmethod
     def run_overview(self, run_id: str) -> Optional[RunOverview]:
@@ -68,6 +111,13 @@ class RunRepository(ABC):
         """
         ...
 
+    @final
+    def store_example_output_parallel(
+        self, tmp_hash: str, example_output: ExampleOutput[Output]
+    ) -> None:
+        with self.locks[tmp_hash]:
+            self.store_example_output(example_output)
+
     @abstractmethod
     def example_output(
         self, run_id: str, example_id: str, output_type: type[Output]
@@ -81,32 +131,6 @@ class RunRepository(ABC):
 
         Returns:
             class:`ExampleOutput` if it was found, `None` otherwise.
-        """
-        ...
-
-    @abstractmethod
-    def example_tracer(self, run_id: str, example_id: str) -> Optional[Tracer]:
-        """Returns an :class:`Optional[Tracer]` for the given run ID and example ID.
-
-        Args:
-            run_id: The ID of the linked run overview.
-            example_id: ID of the example whose :class:`Tracer` should be retrieved.
-
-        Returns:
-            A :class:`Tracer` if it was found, `None` otherwise.
-        """
-        ...
-
-    @abstractmethod
-    def create_tracer_for_example(self, run_id: str, example_id: str) -> Tracer:
-        """Creates and returns a :class:`Tracer` for the given run ID and example ID.
-
-        Args:
-            run_id: The ID of the linked run overview.
-            example_id: ID of the example whose :class:`Tracer` should be retrieved.
-
-        Returns:
-            A :.class:`Tracer`.
         """
         ...
 
@@ -166,3 +190,29 @@ class RunRepository(ABC):
         """
         results = self.example_outputs(run_id, output_type)
         return (r for r in results if isinstance(r.output, FailedExampleRun))
+
+    @abstractmethod
+    def example_tracer(self, run_id: str, example_id: str) -> Optional[Tracer]:
+        """Returns an :class:`Optional[Tracer]` for the given run ID and example ID.
+
+        Args:
+            run_id: The ID of the linked run overview.
+            example_id: ID of the example whose :class:`Tracer` should be retrieved.
+
+        Returns:
+            A :class:`Tracer` if it was found, `None` otherwise.
+        """
+        ...
+
+    @abstractmethod
+    def create_tracer_for_example(self, run_id: str, example_id: str) -> Tracer:
+        """Creates and returns a :class:`Tracer` for the given run ID and example ID.
+
+        Args:
+            run_id: The ID of the linked run overview.
+            example_id: ID of the example whose :class:`Tracer` should be retrieved.
+
+        Returns:
+            A :.class:`Tracer`.
+        """
+        ...

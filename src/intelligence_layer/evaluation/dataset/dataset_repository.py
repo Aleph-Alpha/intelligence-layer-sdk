@@ -110,6 +110,7 @@ class DatasetRepository(ABC):
         dataset_id: str,
         input_type: type[Input],
         expected_output_type: type[ExpectedOutput],
+        examples_to_skip: Optional[frozenset[str]] = None,
     ) -> Iterable[Example[Input, ExpectedOutput]]:
         """Returns all :class:`Example`s for the given dataset ID sorted by their ID.
 
@@ -117,6 +118,7 @@ class DatasetRepository(ABC):
             dataset_id: Dataset ID whose examples should be retrieved.
             input_type: Input type of the example.
             expected_output_type: Expected output type of the example.
+            examples_to_skip: Optional list of example IDs. Those examples will be excluded from the output.
 
         Returns:
             :class:`Iterable` of :class`Example`s.
