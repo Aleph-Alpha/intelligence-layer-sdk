@@ -19,7 +19,7 @@ uvicorn = "^0.30.1"
 aleph-alpha-client = ">=7.1.0"
 python-dotenv = "*"
 semantic-text-splitter = "^0.13.3"
-qdrant-client = "^1.9.1"
+qdrant-client = "^1.9.2"
 rich = "^13.7.1"
 nbconvert = "^7.16.4"
 datasets = "^2.20.0"
@@ -40,7 +40,7 @@ argilla = "^1.29.0"
 # lint & format
 mypy = "^1.10.0"
 nbqa = "^1.8.5"
-ruff = "^0.4.9"
+ruff = "^0.4.10"
 pre-commit = "^3.7.1"
 
 # tests
