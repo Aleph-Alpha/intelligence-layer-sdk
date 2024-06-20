@@ -82,8 +82,8 @@ class PartialEvaluationOverview(BaseModel, frozen=True):
     start_date: datetime
     submitted_evaluation_count: int
     description: str
-    labels: set[str]
-    metadata: SerializableDict
+    labels: set[str] = set()
+    metadata: SerializableDict = dict()
 
     def __repr__(self) -> str:
         return self.__str__()
