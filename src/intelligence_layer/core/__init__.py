@@ -58,11 +58,16 @@ from .tracer.persistent_tracer import PlainEntry as PlainEntry
 from .tracer.persistent_tracer import StartSpan as StartSpan
 from .tracer.persistent_tracer import StartTask as StartTask
 from .tracer.persistent_tracer import TracerLogEntryFailed as TracerLogEntryFailed
+from .tracer.tracer import Context as Context
 from .tracer.tracer import ErrorValue as ErrorValue
+from .tracer.tracer import Event as Event
+from .tracer.tracer import ExportedSpan as ExportedSpan
+from .tracer.tracer import ExportedSpanList as ExportedSpanList
 from .tracer.tracer import JsonSerializer as JsonSerializer
 from .tracer.tracer import NoOpTracer as NoOpTracer
 from .tracer.tracer import PydanticSerializable as PydanticSerializable
 from .tracer.tracer import Span as Span
+from .tracer.tracer import SpanAttributes as SpanAttributes
 from .tracer.tracer import SpanStatus as SpanStatus
 from .tracer.tracer import SpanType as SpanType
 from .tracer.tracer import TaskSpan as TaskSpan
