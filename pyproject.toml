@@ -14,16 +14,12 @@ packages = [{ include = "intelligence_layer", from = "src" }]
 [tool.poetry.dependencies]
 python = ">=3.10,<3.13"
 pydantic = "2.7.*"
-fastapi = "^0.110.3"
-uvicorn = "^0.30.1"
 aleph-alpha-client = ">=7.1.0"
 python-dotenv = "*"
 semantic-text-splitter = "^0.13.3"
 qdrant-client = "^1.9.2"
 rich = "^13.7.1"
-nbconvert = "^7.16.4"
 datasets = "^2.20.0"
-jupyter = "^1.0.0"
 requests = "^2.32.3"
 pycountry = "24.6.1"
 opentelemetry-api = "^1.22.0"
@@ -46,7 +42,7 @@ pre-commit = "^3.7.1"
 # tests
 pytest = "^8.2"
 pytest-xdist = "^3.6.1"
-hypercorn = "^0.17.3"
+nbconvert = "^7.16.4"
 
 # typing
 httpx = "*"
@@ -63,6 +59,18 @@ pandas-stubs = "^2.2.2.240603"
 sphinx-rtd-theme = "^2.0.0"
 sphinx = "^7.3.7"
 matplotlib = "^3.9.0"
+
+[tool.poetry.group.docs.dependencies]
+fastapi = "^0.110.3"
+uvicorn = "^0.30.1"
+hypercorn = "^0.17.3"
+jupyter = "^1.0.0"
+
+# [tool.poetry.extras]
+# argilla = ["argilla"]
+# grader = ["rouge-score", "sacrebleu"]
+# language-detection = ["lingua-language-detector", "pycountry"]
+
 
 [tool.mypy]
 files = "src,tests"

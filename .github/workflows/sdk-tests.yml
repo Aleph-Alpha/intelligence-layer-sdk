@@ -155,7 +155,7 @@ jobs:
         if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
         run: |
           poetry config installer.max-workers 10
-          poetry install --no-interaction
+          poetry install --no-interaction --without docs
 
       - name: Run pytest
         env:
