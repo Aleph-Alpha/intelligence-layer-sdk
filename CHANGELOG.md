@@ -14,7 +14,7 @@
    - Add `how_to_resume_a_run_after_a_crash` notebook.
 
 ### Fixes
-...
+ - Remove unnecessary dependencies from IL
 
 ### Deprecations 
 ...
