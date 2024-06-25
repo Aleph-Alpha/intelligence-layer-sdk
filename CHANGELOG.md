@@ -1,6 +1,21 @@
 # Changelog
 
 ## Unreleased
+...
+### Breaking Changes
+...
+
+
+### Features
+...
+
+### Fixes
+...
+
+### Deprecations 
+...
+
+## 5.0.0
 
 ### Breaking Changes
 - `RunRepository.example_output`  now returns `None` and prints a warning when there is no associated record for the given `run_id` instead of raising a `ValueError`.
@@ -15,9 +30,8 @@
 
 ### Fixes
  - Remove unnecessary dependencies from IL
+ - Added default values for `labels` and `metadata` for `PartialEvaluationOverview`
 
-### Deprecations 
-...
 
 ## 4.1.0
 
