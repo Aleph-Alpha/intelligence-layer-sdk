@@ -16,7 +16,7 @@ python = ">=3.10,<3.13"
 pydantic = "2.7.*"
 aleph-alpha-client = ">=7.1.0"
 python-dotenv = "*"
-semantic-text-splitter = "^0.13.3"
+semantic-text-splitter = "^0.14.0"
 qdrant-client = "^1.9.2"
 rich = "^13.7.1"
 datasets = "^2.20.0"
@@ -34,7 +34,7 @@ argilla = "^1.29.0"
 
 [tool.poetry.group.dev.dependencies]
 # lint & format
-mypy = "^1.10.0"
+mypy = "^1.10.1"
 nbqa = "^1.8.5"
 ruff = "^0.4.10"
 pre-commit = "^3.7.1"
