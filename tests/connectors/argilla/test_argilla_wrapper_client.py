@@ -369,6 +369,7 @@ def test_client_can_load_existing_dataset(
 
 
 # eval data from https://docs.argilla.io/en/latest/practical_guides/create_update_dataset/suggestions_and_responses.html#format-responses
+@pytest.mark.docker
 @pytest.mark.parametrize(
     ("question", "eval_data"),
     [
