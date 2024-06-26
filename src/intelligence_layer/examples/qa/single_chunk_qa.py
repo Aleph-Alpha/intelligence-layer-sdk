@@ -93,7 +93,7 @@ class SingleChunkQa(Task[SingleChunkQaInput, SingleChunkQaOutput]):
         model: The model used throughout the task for model related API calls.
         text_highlight: The task that is used for highlighting that parts of the input that are
             relevant for the answer. Defaults to :class:`TextHighlight` .
-        instruction_config: defines instructions for different langaugaes.
+        instruction_config: defines instructions for different languages.
         maximum_token: the maximal number of tokens to be generated for an answer.
 
     Attributes:
@@ -176,6 +176,8 @@ class SingleChunkQa(Task[SingleChunkQaInput, SingleChunkQaOutput]):
         self, prompt: RichPrompt, raw_highlights: Sequence[ScoredTextHighlight]
     ) -> Sequence[ScoredTextHighlight]:
         # This only works with models that have an 'input' range, e.g. control models.
+        if "input" not in prompt.ranges or len(prompt.ranges["input"]) == 0:
+            return raw_highlights
         input_cursor = prompt.ranges["input"][0].start
         assert isinstance(input_cursor, TextCursor)
         input_offset = input_cursor.position

@@ -119,3 +119,16 @@ In den USA wird der Hotdog meist auf einem Roller Grill gegart. So bekommt die W
     for highlight in output.highlights:
         assert highlight.start >= 0
         assert 0 < highlight.end <= len(input_text)
+
+
+def test_qa_single_chunk_does_not_crash_when_input_is_empty(
+    single_chunk_qa: SingleChunkQa,
+) -> None:
+    input_text = ""
+    input = SingleChunkQaInput(
+        chunk=TextChunk(input_text),
+        question="something",
+        language=Language("de"),
+    )
+    res = single_chunk_qa.run(input, NoOpTracer())
+    assert res.answer is None

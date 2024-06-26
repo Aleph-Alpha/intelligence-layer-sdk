@@ -193,7 +193,7 @@ def test_to_prompt_resets_template(prompt_image: Image) -> None:
     assert prompt_with_reset_template != prompt
 
 
-def test_to_prompt_data_returns_ranges(prompt_image: Image) -> None:
+def test_to_rich_prompt_returns_ranges(prompt_image: Image) -> None:
     embedded_text = "Embedded"
     prefix_items: list[PromptItem] = [
         Text.from_text("Prefix Text Item"),
@@ -229,7 +229,7 @@ def test_to_prompt_data_returns_ranges(prompt_image: Image) -> None:
     ]
 
 
-def test_to_prompt_data_returns_ranges_for_image_only_prompt(
+def test_to_rich_prompt_returns_ranges_for_image_only_prompt(
     prompt_image: Image,
 ) -> None:
     template = PromptTemplate(
@@ -250,13 +250,18 @@ def test_to_prompt_data_returns_ranges_for_image_only_prompt(
     assert r1 == prompt_data.ranges.get("r2")
 
 
-def test_to_prompt_data_returns_no_range_with_empty_template() -> None:
+def test_to_rich_prompt_returns_no_range_with_empty_template() -> None:
     template = PromptTemplate("{% promptrange r1 %}{% endpromptrange %}")
 
     assert template.to_rich_prompt().ranges.get("r1") == []
 
 
-def test_to_prompt_data_returns_no_empty_ranges(prompt_image: Image) -> None:
+def test_to_rich_prompt_returns_no_range_with_range_with_other_ranges() -> None:
+    template = PromptTemplate("""text{% promptrange r1 %}{% endpromptrange %}""")
+    assert template.to_rich_prompt().ranges.get("r1") == []
+
+
+def test_to_rich_prompt_returns_no_empty_ranges(prompt_image: Image) -> None:
     template = PromptTemplate(
         "{{image}}{% promptrange r1 %}{% endpromptrange %} Some Text"
     )
@@ -276,7 +281,7 @@ def test_prompt_template_raises_liquid_error_on_illeagal_range() -> None:
         )
 
 
-def test_to_prompt_data_returns_multiple_text_ranges_in_for_loop() -> None:
+def test_to_rich_prompt_returns_multiple_text_ranges_in_for_loop() -> None:
     embedded = "Some Content"
     template = PromptTemplate(
         "{% for i in (1..4) %}{% promptrange r1 %}{{embedded}}{% endpromptrange %}{% endfor %}"
@@ -293,7 +298,7 @@ def test_to_prompt_data_returns_multiple_text_ranges_in_for_loop() -> None:
     ]
 
 
-def test_to_prompt_data_returns_multiple_imgae_ranges_in_for_loop(
+def test_to_rich_prompt_returns_multiple_image_ranges_in_for_loop(
     prompt_image: Image,
 ) -> None:
     template = PromptTemplate(
