@@ -11,6 +11,8 @@
 
 ### Fixes
 - Serialization and Deserialization of `Union[SpanAttributes, TaskSpanAttributes]` is working now.
+- `PromptTemplate.to_rich_prompt` now always returns an empty list for prompt ranges that are empty.
+- `SingleChunkQa` no longer crashes if given an empty input and a specific prompt template.
 
 ### Deprecations 
 ...

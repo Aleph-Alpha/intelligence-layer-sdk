@@ -394,9 +394,19 @@ class PromptTemplate:
                 yield new_prompt_item(placeholder_prompt_item)
             else:
                 if range_starts.get(placeholder):
-                    placeholder_ranges[placeholder].extend(
-                        valid_range_for(placeholder, end_cursor())
-                    )
+                    test_range = list(valid_range_for(placeholder, end_cursor()))
+                    # the test_range is empty if there was never any text and the range is empty
+                    # However, if there has been text previously, an empty text range will have
+                    # a range consisting of start==end. This check is there to filter these as well.
+                    if len(test_range) == 0 or (
+                        test_range[0].start.item == test_range[0].end.item
+                        and isinstance(test_range[0].end, TextCursor)
+                        and isinstance(test_range[0].start, TextCursor)
+                        and test_range[0].end.position == test_range[0].start.position
+                    ):
+                        placeholder_ranges[placeholder].extend([])
+                    else:
+                        placeholder_ranges[placeholder].extend(test_range)
                 else:
                     range_starts[placeholder] = initial_start_text_cursor()
             last_to = placeholder_to
