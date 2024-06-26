@@ -6,7 +6,7 @@ from contextlib import AbstractContextManager
 from datetime import datetime, timezone
 from enum import Enum
 from types import TracebackType
-from typing import TYPE_CHECKING, Optional, Union
+from typing import TYPE_CHECKING, Literal, Optional, Union
 from uuid import UUID, uuid4
 
 import requests
@@ -60,17 +60,17 @@ class Event(BaseModel):
     timestamp: datetime = Field(default_factory=utc_now)
 
 
-class SpanType(Enum):
+class SpanType(str, Enum):
     SPAN = "SPAN"
     TASK_SPAN = "TASK_SPAN"
 
 
 class SpanAttributes(BaseModel):
-    type: SpanType = SpanType.SPAN
+    type: Literal[SpanType.SPAN] = SpanType.SPAN
 
 
 class TaskSpanAttributes(BaseModel):
-    type: SpanType = SpanType.TASK_SPAN
+    type: Literal[SpanType.TASK_SPAN] = SpanType.TASK_SPAN
     input: SerializeAsAny[PydanticSerializable]
     output: SerializeAsAny[PydanticSerializable]
 
@@ -91,7 +91,7 @@ class ExportedSpan(BaseModel):
     parent_id: UUID | None
     start_time: datetime
     end_time: datetime
-    attributes: Union[SpanAttributes, TaskSpanAttributes]
+    attributes: Union[SpanAttributes, TaskSpanAttributes] = Field(discriminator="type")
     events: Sequence[Event]
     status: SpanStatus
     # we ignore the links concept
