@@ -13,6 +13,7 @@
 - Serialization and deserialization of `ExportedSpan` and its `attributes` now works as expected.
 - `PromptTemplate.to_rich_prompt` now always returns an empty list for prompt ranges that are empty.
 - `SingleChunkQa` no longer crashes if given an empty input and a specific prompt template. This did not affect users who used models provided in `core`.
+- Added default values for `labels` and `metadata` for `EvaluationOverview` and `RunOverview`
 
 ### Deprecations 
 ...
