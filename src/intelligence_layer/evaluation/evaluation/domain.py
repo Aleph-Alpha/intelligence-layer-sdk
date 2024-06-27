@@ -132,8 +132,8 @@ class EvaluationOverview(BaseModel, frozen=True):
     successful_evaluation_count: int
     failed_evaluation_count: int
     description: str
-    labels: set[str]
-    metadata: SerializableDict
+    labels: set[str] = set()
+    metadata: SerializableDict = dict()
 
     def __repr__(self) -> str:
         return self.__str__()
