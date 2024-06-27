@@ -112,8 +112,8 @@ class RunOverview(BaseModel, frozen=True):
     failed_example_count: int
     successful_example_count: int
     description: str
-    labels: set[str]
-    metadata: SerializableDict
+    labels: set[str] = set()
+    metadata: SerializableDict = dict()
 
     def __repr__(self) -> str:
         return self.__str__()
