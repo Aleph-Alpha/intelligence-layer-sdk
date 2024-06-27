@@ -61,7 +61,7 @@ sphinx = "^7.3.7"
 matplotlib = "^3.9.0"
 
 [tool.poetry.group.docs.dependencies]
-fastapi = "^0.110.3"
+fastapi = "*"
 uvicorn = "^0.30.1"
 hypercorn = "^0.17.3"
 jupyter = "^1.0.0"
