@@ -38,3 +38,12 @@ services:
     image: ghcr.io/aleph-alpha/trace-viewer-trace-viewer:main
     ports:
      - 3000:3000
+  postgres:
+    image: postgres:15
+    ports:
+      - "5433:5432"
+    environment:
+      POSTGRES_DB: il_sdk
+      POSTGRES_USER: il_sdk
+      POSTGRES_PASSWORD: test
+
