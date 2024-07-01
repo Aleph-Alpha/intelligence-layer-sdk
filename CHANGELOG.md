@@ -10,14 +10,20 @@
 ...
 
 ### Fixes
+...
+
+### Deprecations 
+...
+
+## 5.0.1
+
+### Fixes
 - Serialization and deserialization of `ExportedSpan` and its `attributes` now works as expected.
 - `PromptTemplate.to_rich_prompt` now always returns an empty list for prompt ranges that are empty.
 - `SingleChunkQa` no longer crashes if given an empty input and a specific prompt template. This did not affect users who used models provided in `core`.
 - Added default values for `labels` and `metadata` for `EvaluationOverview` and `RunOverview`
 - In the `MultipleChunkRetrieverQa`, text-highlight start and end points are now restricted to within the text length of the respective chunk.
 
-### Deprecations 
-...
 
 ## 5.0.0
 
