@@ -33,6 +33,7 @@ lingua-language-detector = "^2.0.2"
 argilla = "^1.29.0"
 sqlalchemy = "^2.0.31"
 sqlmodel = "^0.0.19"
+psycopg2-binary = "^2.9.9"
 
 [tool.poetry.group.dev.dependencies]
 # lint & format

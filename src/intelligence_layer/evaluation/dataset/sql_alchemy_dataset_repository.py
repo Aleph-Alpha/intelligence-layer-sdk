@@ -1,11 +1,14 @@
-
 from collections.abc import Iterable
 from typing import Optional
+from uuid import uuid4
 
-from sqlalchemy import create_engine
+from sqlalchemy import Column, create_engine
+from sqlalchemy.dialects.postgresql import JSONB
+from sqlalchemy.orm import DeclarativeBase, sessionmaker
 
 from intelligence_layer.connectors.base.json_serializable import SerializableDict
 from intelligence_layer.core.task import Input
+from intelligence_layer.core.tracer.tracer import JsonSerializer
 from intelligence_layer.evaluation.dataset.dataset_repository import DatasetRepository
 from intelligence_layer.evaluation.dataset.domain import (
     Dataset,
@@ -14,10 +17,37 @@ from intelligence_layer.evaluation.dataset.domain import (
 )
 
 
+class Base(DeclarativeBase):
+    pass
+
+
+# Json is supported by SQLAlchemy. But mutability is difficult to handle. See:
+# https://amercader.net/blog/beware-of-json-fields-in-sqlalchemy/
+
+
+class SQLDataset(Base):
+    __tablename__ = "datasets"
+    name = Column(str)
+    labels = Column(list[str])
+    metadata = Column(JSONB)
+    example_ids = Column(list[str])
+    id = Column(str, primary_key=True)
+
+
+class SQLExample(Base):
+    __tablename__ = "examples"
+    input = Column(JSONB)
+    expected_output = Column(JSONB)
+    metadata = Column(JSONB)
+    id = Column(str, primary_key=True)
+
+
 class SQLAlchemyDatasetRepository(DatasetRepository):
     def __init__(self, url: str) -> None:
         super().__init__()
         self.engine = create_engine(url=url)
+        Base.metadata.create_all(self.engine)
+        self.session = sessionmaker(bind=self.engine)
 
     def create_dataset(
         self,
@@ -27,19 +57,26 @@ class SQLAlchemyDatasetRepository(DatasetRepository):
         labels: set[str] | None = None,
         metadata: SerializableDict | None = None,
     ) -> Dataset:
-        """Creates a dataset from given :class:`Example`s and returns the ID of that dataset.
-
-        Args:
-            examples: An :class:`Iterable` of :class:`Example`s to be saved in the same dataset.
-            dataset_name: A name for the dataset.
-            id: The dataset ID. If `None`, an ID will be generated.
-            labels: A list of labels for filtering. Defaults to an empty list.
-            metadata: A dict for additional information about the dataset. Defaults to an empty dict.
-
-        Returns:
-            The created :class:`Dataset`.
-        """
-        pass
+        with self.session() as session:
+            for example in examples:
+                sql_example = SQLExample(
+                    input=JsonSerializer(root=example.input).model_dump(),
+                    expected_output=JsonSerializer(
+                        root=example.expected_output
+                    ).model_dump(),
+                    metadata=JsonSerializer(root=example.metadata).model_dump(),
+                    id=example.id,
+                )
+                session.add(sql_example)
+            sql_dataset = SQLDataset(
+                id=id or str(uuid4()),
+                name=dataset_name,
+                labels=labels,
+                metadata=JsonSerializer(root=metadata).model_dump(),
+                example_ids=[example.id for example in examples],
+            )
+            session.add(sql_dataset)
+            session.commit()
 
     def delete_dataset(self, dataset_id: str) -> None:
         """Deletes a dataset identified by the given dataset ID.
@@ -107,4 +144,3 @@ class SQLAlchemyDatasetRepository(DatasetRepository):
             :class:`Iterable` of :class`Example`s.
         """
         pass
-
