@@ -30,7 +30,7 @@ class SQLDataset(Base):
     __tablename__ = "datasets"
     name: Mapped[str]
     labels: Mapped[list[str]] = mapped_column(ARRAY(String))
-    dataset_metadata: Mapped[str] = mapped_column(JSONB)
+    dataset_metadata: Mapped[Optional[str]] = mapped_column(JSONB)
     example_ids: Mapped[list[str]] = mapped_column(ARRAY(String))
     id: Mapped[str] = mapped_column(String, primary_key=True)
 
@@ -39,7 +39,7 @@ class SQLExample(Base):
     __tablename__ = "examples"
     input: Mapped[str] = mapped_column(JSONB)
     expected_output: Mapped[str] = mapped_column(JSONB)
-    example_metadata: Mapped[str] = mapped_column(JSONB)
+    example_metadata: Mapped[Optional[str]] = mapped_column(JSONB)
     id: Mapped[str] = mapped_column(String, primary_key=True)
 
 
@@ -65,7 +65,7 @@ class SQLAlchemyDatasetRepository(DatasetRepository):
                     expected_output=JsonSerializer(
                         root=example.expected_output
                     ).model_dump(),
-                    metadata=JsonSerializer(root=example.metadata).model_dump(),
+                    example_metadata=JsonSerializer(root=example.metadata).model_dump(),
                     id=example.id,
                 )
                 session.add(sql_example)
@@ -74,7 +74,7 @@ class SQLAlchemyDatasetRepository(DatasetRepository):
                 id=id or str(uuid4()),
                 name=dataset_name,
                 labels=list(labels) if labels else list(),
-                metadata=JsonSerializer(root=metadata).model_dump(),
+                dataset_metadata=JsonSerializer(root=metadata).model_dump(),
                 example_ids=[example.id for example in examples],
             )
             session.add(sql_dataset)
