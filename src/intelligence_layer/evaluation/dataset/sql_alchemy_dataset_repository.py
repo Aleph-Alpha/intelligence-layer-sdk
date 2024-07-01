@@ -1,5 +1,5 @@
 from collections.abc import Iterable
-from typing import Optional
+from typing import Generic, Optional
 from uuid import uuid4
 
 from sqlalchemy import String, create_engine
@@ -35,11 +35,11 @@ class SQLDataset(Base):
     id: Mapped[str] = mapped_column(String, primary_key=True)
 
 
-class SQLExample(Base):
+class SQLExample(Base, Generic[Input, ExpectedOutput]):
     __tablename__ = "examples"
-    input: Mapped[str] = mapped_column(JSONB)
-    expected_output: Mapped[str] = mapped_column(JSONB)
-    example_metadata: Mapped[Optional[str]] = mapped_column(JSONB)
+    input: Mapped[Input] = mapped_column(JSONB)
+    expected_output: Mapped[ExpectedOutput] = mapped_column(JSONB)
+    example_metadata: Mapped[Optional[SerializableDict]] = mapped_column(JSONB)
     id: Mapped[str] = mapped_column(String, primary_key=True)
 
 
