@@ -2,9 +2,10 @@ from collections.abc import Iterable
 from typing import Optional
 from uuid import uuid4
 
-from sqlalchemy import Column, create_engine
+from sqlalchemy import String, create_engine
 from sqlalchemy.dialects.postgresql import JSONB
-from sqlalchemy.orm import DeclarativeBase, sessionmaker
+from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, sessionmaker
+from sqlalchemy.types import ARRAY
 
 from intelligence_layer.connectors.base.json_serializable import SerializableDict
 from intelligence_layer.core.task import Input
@@ -27,19 +28,19 @@ class Base(DeclarativeBase):
 
 class SQLDataset(Base):
     __tablename__ = "datasets"
-    name = Column(str)
-    labels = Column(list[str])
-    metadata = Column(JSONB)
-    example_ids = Column(list[str])
-    id = Column(str, primary_key=True)
+    name: Mapped[str]
+    labels: Mapped[list[str]] = mapped_column(ARRAY(String))
+    dataset_metadata: Mapped[str] = mapped_column(JSONB)
+    example_ids: Mapped[list[str]] = mapped_column(ARRAY(String))
+    id: Mapped[str] = mapped_column(String, primary_key=True)
 
 
 class SQLExample(Base):
     __tablename__ = "examples"
-    input = Column(JSONB)
-    expected_output = Column(JSONB)
-    metadata = Column(JSONB)
-    id = Column(str, primary_key=True)
+    input: Mapped[str] = mapped_column(JSONB)
+    expected_output: Mapped[str] = mapped_column(JSONB)
+    example_metadata: Mapped[str] = mapped_column(JSONB)
+    id: Mapped[str] = mapped_column(String, primary_key=True)
 
 
 class SQLAlchemyDatasetRepository(DatasetRepository):
@@ -68,10 +69,11 @@ class SQLAlchemyDatasetRepository(DatasetRepository):
                     id=example.id,
                 )
                 session.add(sql_example)
+
             sql_dataset = SQLDataset(
                 id=id or str(uuid4()),
                 name=dataset_name,
-                labels=labels,
+                labels=list(labels) if labels else list(),
                 metadata=JsonSerializer(root=metadata).model_dump(),
                 example_ids=[example.id for example in examples],
             )
