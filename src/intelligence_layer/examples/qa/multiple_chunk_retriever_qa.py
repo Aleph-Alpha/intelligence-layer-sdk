@@ -156,15 +156,10 @@ class MultipleChunkRetrieverQa(
         start_indices: list[int] = []
         combined_text = ""
         for i, chunk in enumerate(chunks):
+            combined_text += source_appendix.format(i=i + 1)
             start_indices.append(len(combined_text))
-
-            c = source_appendix.format(i=i + 1)
-            c += chunk + "\n\n"
-            c = c.strip()
-            if i != 0:
-                c = " " + c
-            combined_text += c
-        return (TextChunk(combined_text), start_indices)
+            combined_text += chunk + "\n\n"
+        return (TextChunk(combined_text.strip()), start_indices)
 
     @staticmethod
     def _get_highlights_per_chunk(
