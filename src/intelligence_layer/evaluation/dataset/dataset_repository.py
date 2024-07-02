@@ -56,10 +56,10 @@ class DatasetRepository(ABC):
         """Returns a dataset identified by the given dataset ID.
 
         Args:
-            dataset_id: Dataset ID of the dataset to delete.
+            dataset_id: Dataset ID of the dataset to return.
 
         Returns:
-            :class:`Dataset` if it was not, `None` otherwise.
+            :class:`Dataset` if it exists, `None` otherwise.
         """
         pass
 

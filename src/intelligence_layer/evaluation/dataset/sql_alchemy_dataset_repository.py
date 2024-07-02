@@ -4,10 +4,13 @@ from uuid import uuid4
 
 from sqlalchemy import String, create_engine
 from sqlalchemy.dialects.postgresql import JSONB
-from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, sessionmaker
+from sqlalchemy.orm import DeclarativeBase, Mapped, Session, mapped_column
 from sqlalchemy.types import ARRAY
 
-from intelligence_layer.connectors.base.json_serializable import SerializableDict
+from intelligence_layer.connectors.base.json_serializable import (
+    JsonSerializable,
+    SerializableDict,
+)
 from intelligence_layer.core.task import Input
 from intelligence_layer.core.tracer.tracer import JsonSerializer
 from intelligence_layer.evaluation.dataset.dataset_repository import DatasetRepository
@@ -34,6 +37,20 @@ class SQLDataset(Base):
     example_ids: Mapped[list[str]] = mapped_column(ARRAY(String))
     id: Mapped[str] = mapped_column(String, primary_key=True)
 
+    @classmethod
+    def to_dataset(self) -> Dataset:
+        if self.metadata:
+            metadata: dict[str, JsonSerializable] = dict(self.dataset_metadata)
+        else:
+            metadata: dict[str, JsonSerializable] = dict()
+
+        return Dataset(
+            id=self.id,
+            name=self.name,
+            labels=set(self.labels),
+            metadata=metadata,
+        )
+
 
 class SQLExample(Base, Generic[Input, ExpectedOutput]):
     __tablename__ = "examples"
@@ -48,7 +65,6 @@ class SQLAlchemyDatasetRepository(DatasetRepository):
         super().__init__()
         self.engine = create_engine(url=url)
         Base.metadata.create_all(self.engine)
-        self.session = sessionmaker(bind=self.engine)
 
     def create_dataset(
         self,
@@ -58,7 +74,7 @@ class SQLAlchemyDatasetRepository(DatasetRepository):
         labels: set[str] | None = None,
         metadata: SerializableDict | None = None,
     ) -> Dataset:
-        with self.session() as session:
+        with Session(self.engine) as session:
             for example in examples:
                 sql_example = SQLExample(
                     input=JsonSerializer(root=example.input).model_dump(),
@@ -89,23 +105,19 @@ class SQLAlchemyDatasetRepository(DatasetRepository):
         pass
 
     def dataset(self, dataset_id: str) -> Optional[Dataset]:
-        """Returns a dataset identified by the given dataset ID.
+        with Session(self.engine) as session:
+            sql_datasets = session.query(SQLDataset).order_by(SQLDataset.id.asc()).all()
 
-        Args:
-            dataset_id: Dataset ID of the dataset to delete.
-
-        Returns:
-            :class:`Dataset` if it was not, `None` otherwise.
-        """
-        pass
+        for sql_dataset in sql_datasets:
+            if sql_dataset.id == dataset_id:
+                return sql_dataset.to_dataset()
 
     def dataset_ids(self) -> Iterable[str]:
-        """Returns all sorted dataset IDs.
+        with Session(self.engine) as session:
+            datasets = session.query(SQLDataset).order_by(SQLDataset.id.asc()).all()
 
-        Returns:
-            :class:`Iterable` of dataset IDs.
-        """
-        pass
+        for dataset in datasets:
+            yield dataset.id
 
     def example(
         self,
