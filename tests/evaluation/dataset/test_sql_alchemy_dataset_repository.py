@@ -4,7 +4,7 @@ from pytest import fixture
 from sqlalchemy.orm import Session
 
 from intelligence_layer.core.tracer.tracer import JsonSerializer
-from intelligence_layer.evaluation.dataset.domain import Example
+from intelligence_layer.evaluation.dataset.domain import Dataset, Example
 from intelligence_layer.evaluation.dataset.sql_alchemy_dataset_repository import (
     Base,
     SQLAlchemyDatasetRepository,
@@ -120,3 +120,13 @@ def test_convert_sql_dataset_to_dataset() -> None:
     assert dataset.metadata["key2"] == "value2"
     assert dataset.labels == labels
 
+
+def test_(sql_alchemy_dataset_repo: SQLAlchemyDatasetRepository,) -> None:
+    dataset = Dataset(
+                id="123",
+                name="dataset_name",
+                labels={"label_a", "label_b"},
+                dataset_metadata= {"key": "value"},
+            )
+    with Session(sql_alchemy_dataset_repo.engine) as session:
+      sql_dataset = SQLDataset.from_dataset(dataset, examples=[])

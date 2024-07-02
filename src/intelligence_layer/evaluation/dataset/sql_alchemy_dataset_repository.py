@@ -1,5 +1,5 @@
 from collections.abc import Iterable
-from typing import Generic, Optional
+from typing import Generic, Optional, Sequence
 from uuid import uuid4
 
 from sqlalchemy import String, create_engine
@@ -37,7 +37,7 @@ class SQLDataset(Base):
     example_ids: Mapped[list[str]] = mapped_column(ARRAY(String))
     id: Mapped[str] = mapped_column(String, primary_key=True)
 
-    @classmethod
+   
     def to_dataset(self) -> Dataset:
         if self.metadata:
             metadata: dict[str, JsonSerializable] = dict(self.dataset_metadata)
@@ -50,7 +50,16 @@ class SQLDataset(Base):
             labels=set(self.labels),
             metadata=metadata,
         )
-
+    
+    @classmethod
+    def from_dataset(cls, dataset: Dataset, examples: Sequence[Example]) -> 'SQLDataset':       
+        return SQLDataset(
+             id=id or str(uuid4()),
+                name=dataset.dataset_name,
+                labels=list(dataset.labels) if dataset.labels else list(),
+                dataset_metadata=JsonSerializer(root=dataset.metadata).model_dump(),
+                example_ids=[example.id for example in examples],
+            ) 
 
 class SQLExample(Base, Generic[Input, ExpectedOutput]):
     __tablename__ = "examples"
@@ -74,6 +83,15 @@ class SQLAlchemyDatasetRepository(DatasetRepository):
         labels: set[str] | None = None,
         metadata: SerializableDict | None = None,
     ) -> Dataset:
+        if metadata is None:
+            metadata = dict()
+        if labels is None:
+            labels = set()
+        dataset_to_persist = Dataset(name=dataset_name, labels=labels, metadata=metadata)
+        if id is not None:
+            dataset_to_persist.id = id
+    
+    
         with Session(self.engine) as session:
             for example in examples:
                 sql_example = SQLExample(
@@ -86,15 +104,12 @@ class SQLAlchemyDatasetRepository(DatasetRepository):
                 )
                 session.add(sql_example)
 
-            sql_dataset = SQLDataset(
-                id=id or str(uuid4()),
-                name=dataset_name,
-                labels=list(labels) if labels else list(),
-                dataset_metadata=JsonSerializer(root=metadata).model_dump(),
-                example_ids=[example.id for example in examples],
-            )
+            sql_dataset = SQLDataset.from_dataset(dataset_to_persist, examples=list(examples))
             session.add(sql_dataset)
             session.commit()
+
+        return dataset_to_persist
+
 
     def delete_dataset(self, dataset_id: str) -> None:
         """Deletes a dataset identified by the given dataset ID.
