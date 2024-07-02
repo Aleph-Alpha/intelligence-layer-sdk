@@ -1,3 +1,4 @@
+import json
 from collections.abc import Iterable
 
 from pytest import fixture
@@ -23,7 +24,17 @@ def sql_alchemy_dataset_repo() -> SQLAlchemyDatasetRepository:
     return repo
 
 
-def test_save_examples(
+@fixture
+def sql_dataset_id(
+    sql_alchemy_dataset_repo: SQLAlchemyDatasetRepository,
+    sequence_examples: Iterable[Example[str, None]],
+) -> SQLDataset:
+    return sql_alchemy_dataset_repo.create_dataset(
+        examples=sequence_examples, dataset_name="my"
+    ).id
+
+
+def test_create_and_save_examples(
     sql_alchemy_dataset_repo: SQLAlchemyDatasetRepository,
     sequence_examples: Iterable[Example[str, None]],
 ) -> None:
@@ -36,11 +47,11 @@ def test_save_examples(
     sql_alchemy_dataset_repo.create_dataset(sequence_examples, "test_dataset")
 
     with Session(sql_alchemy_dataset_repo.engine) as session:
-        examples = session.query(SQLExample).all()
+        sql_examples = session.query(SQLExample).all()
 
     # then
-    for example in examples:
-        assert example.id in expected_ids
+    for sql_example in sql_examples:
+        assert sql_example.id in expected_ids
 
 
 def test_dataset_ids_are_sorted_ascending(
@@ -66,6 +77,7 @@ def test_dataset_ids_are_sorted_ascending(
 
 
 def test_dataset_exists(sql_alchemy_dataset_repo: SQLAlchemyDatasetRepository) -> None:
+    # given
     test_id = "test_id"
     with Session(sql_alchemy_dataset_repo.engine) as session:
         sql_dataset = SQLDataset(
@@ -78,7 +90,10 @@ def test_dataset_exists(sql_alchemy_dataset_repo: SQLAlchemyDatasetRepository) -
         session.add(sql_dataset)
         session.commit()
 
+    # when
     dataset = sql_alchemy_dataset_repo.dataset(test_id)
+
+    # then
     assert dataset
     assert dataset.id == test_id
 
@@ -102,17 +117,26 @@ def test_dataset_does_not_exist(
     dataset = sql_alchemy_dataset_repo.dataset(non_existing_id)
     assert dataset is None
 
+
+def test_fetching_from_empty_table(
+    sql_alchemy_dataset_repo: SQLAlchemyDatasetRepository,
+) -> None:
+    fetched_data = sql_alchemy_dataset_repo.dataset(dataset_id="123")
+
+    assert fetched_data is None
+
+
 def test_convert_sql_dataset_to_dataset() -> None:
     labels = {"first_label", "second_label"}
-    metadata={"key1": "value1", "key2": "value2"}
+    metadata = {"key1": "value1", "key2": "value2"}
     id = "test_id"
     sql_dataset = SQLDataset(
-                id=id,
-                name="dataset_name",
-                labels=list(labels) if labels else list(),
-                dataset_metadata=JsonSerializer(root=metadata).model_dump(),
-                example_ids=[],
-            )
+        id=id,
+        name="dataset_name",
+        labels=list(labels) if labels else list(),
+        dataset_metadata=JsonSerializer(root=metadata).model_dump(),
+        example_ids=[],
+    )
 
     dataset = sql_dataset.to_dataset()
     assert dataset.id == id
@@ -121,12 +145,44 @@ def test_convert_sql_dataset_to_dataset() -> None:
     assert dataset.labels == labels
 
 
-def test_(sql_alchemy_dataset_repo: SQLAlchemyDatasetRepository,) -> None:
+def test_from_dataset_maps_sql_dataset_correctly(
+    sequence_examples: Iterable[Example[str, None]],
+) -> None:
+    # given
+    expected_ids = []
+    for example in sequence_examples:
+        expected_ids.append(example.id)
     dataset = Dataset(
-                id="123",
-                name="dataset_name",
-                labels={"label_a", "label_b"},
-                dataset_metadata= {"key": "value"},
-            )
-    with Session(sql_alchemy_dataset_repo.engine) as session:
-      sql_dataset = SQLDataset.from_dataset(dataset, examples=[])
+        id="123",
+        name="dataset_name",
+        labels={"label_a", "label_b"},
+        metadata={"key": "value"},
+    )
+
+    # when
+    mapped_sql_dataset = SQLDataset.from_dataset(
+        dataset=dataset, example_ids=expected_ids
+    )
+
+    # then
+    assert mapped_sql_dataset.id == dataset.id
+    assert mapped_sql_dataset.name == dataset.name
+    assert mapped_sql_dataset.labels == list(dataset.labels)
+    assert mapped_sql_dataset.dataset_metadata is not None
+    assert json.loads(mapped_sql_dataset.dataset_metadata) == {"key": "value"}
+    assert mapped_sql_dataset.example_ids == expected_ids
+
+
+def test_examples_returns_all_examples_for_dataset(
+    sql_alchemy_dataset_repo: SQLAlchemyDatasetRepository, sql_dataset_id: str
+) -> None:
+    # given
+
+    # when
+
+    returned_examples = sql_alchemy_dataset_repo.examples(
+        dataset_id=sql_dataset_id, input_type=str, expected_output_type=None
+    )
+
+    # then
+    assert len(list(returned_examples)) == 3
