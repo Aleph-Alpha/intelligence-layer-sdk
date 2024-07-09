@@ -15,6 +15,13 @@
 ### Deprecations 
 ...
 
+
+## 5.0.2
+
+### Fixes
+- Reverted a bug introduced in `MultipleChunkRetrieverQa` text highlighting.
+
+
 ## 5.0.1
 
 ### Fixes
