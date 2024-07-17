@@ -10,7 +10,7 @@
 ...
 
 ### Fixes
-- Reverted a bug introduced in `MultipleChunkRetrieverQa` text highlighting.
+- Update docstrings for 'calculate_bleu' in 'BleuGrader' to now correctly reflect float range from 0 to 100 for the return value.
 
 ### Deprecations 
 ...
