@@ -24,7 +24,7 @@ requests = "^2.32.3"
 pycountry = "24.6.1"
 opentelemetry-api = "^1.22.0"
 opentelemetry-sdk = "^1.22.0"
-huggingface-hub = "^0.23.4"
+huggingface-hub = "^0.23.5"
 opentelemetry-exporter-otlp-proto-http = "1.23.0"
 # summary grader
 rouge-score = "^0.1.2"
@@ -57,7 +57,7 @@ pandas-stubs = "^2.2.2.240603"
 
 # docs
 sphinx-rtd-theme = "^2.0.0"
-sphinx = "^7.4.4"
+sphinx = "^7.4.5"
 matplotlib = "^3.9.1"
 
 [tool.poetry.group.docs.dependencies]
