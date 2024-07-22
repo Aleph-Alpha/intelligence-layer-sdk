@@ -22,7 +22,7 @@ class BleuGrader:
             reference: The baseline for the evaluation.
 
         Returns:
-            BLEU-score, float between 0 and 1. Where 1 means perfect match and 0 no overlap.
+            BLEU-score, float between 0 and 100. Where 100 means perfect match and 0 no overlap.
         """
         bleu_score = self.bleu.corpus_score(
             hypotheses=[hypothesis], references=[[reference]]
