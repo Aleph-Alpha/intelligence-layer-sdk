@@ -5,16 +5,19 @@
 ### Breaking Changes
 ...
 
-
 ### Features
 ...
 
 ### Fixes
-- Update docstrings for 'calculate_bleu' in 'BleuGrader' to now correctly reflect float range from 0 to 100 for the return value.
+...
 
 ### Deprecations 
 ...
 
+## 5.0.3
+
+### Fixes
+- Update docstrings for 'calculate_bleu' in 'BleuGrader' to now correctly reflect float range from 0 to 100 for the return value.
 
 ## 5.0.2
 
