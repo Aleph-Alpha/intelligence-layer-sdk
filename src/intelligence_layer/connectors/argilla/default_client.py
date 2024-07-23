@@ -54,7 +54,7 @@ class Question(BaseModel):
     description: str
     options: Sequence[int]  # range: 1-10
 
-    @computed_field  # type: ignore[misc]
+    @computed_field  # type: ignore[prop-decorator]
     @property
     def settings(self) -> Mapping[str, Any]:
         return {
