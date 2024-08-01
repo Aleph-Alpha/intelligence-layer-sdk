@@ -591,7 +591,7 @@ class DocumentIndexClient:
         self._raise_for_status(response)
         return [str(filter_index_name) for filter_index_name in response.json()]
 
-    def list_filter_indexes_in_namespace(self, namespace) -> Sequence[str]:
+    def list_filter_indexes_in_namespace(self, namespace: str) -> Sequence[str]:
         """List all filter indexes in a namespace.
 
         Args:
@@ -702,7 +702,7 @@ class DocumentIndexClient:
         """
         url = f"{self._base_document_index_url}/collections/{collection_path.namespace}/{collection_path.collection}/indexes/{index_name}/search"
 
-        filters = [{"with": [{"modality": "text"}]}]
+        filters: list[dict[str, Any]] = [{"with": [{"modality": "text"}]}]
         if search_query.filters:
             for metadata_filter in search_query.filters:
                 filters.append(

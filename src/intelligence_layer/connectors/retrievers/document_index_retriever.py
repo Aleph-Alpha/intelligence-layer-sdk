@@ -71,7 +71,7 @@ class DocumentIndexRetriever(BaseRetriever[DocumentPath]):
         return {"start": start, "end": end}
 
     def get_relevant_documents_with_scores(
-        self, query: str, filters: Optional[Filters] = None
+        self, query: str, filters: Optional[list[Filters]] = None
     ) -> Sequence[SearchResult[DocumentPath]]:
         search_query = SearchQuery(
             query=query, max_results=self._k, min_score=self._threshold, filters=filters
