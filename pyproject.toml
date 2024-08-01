@@ -62,7 +62,7 @@ matplotlib = "^3.9.1"
 
 [tool.poetry.group.docs.dependencies]
 fastapi = "^0.110.3"
-uvicorn = "^0.30.3"
+uvicorn = "^0.30.4"
 hypercorn = "^0.17.3"
 jupyter = "^1.0.0"
 
