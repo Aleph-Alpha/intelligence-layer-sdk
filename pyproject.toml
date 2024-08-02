@@ -36,7 +36,7 @@ argilla = "^1.29.1"
 # lint & format
 mypy = "^1.11.1"
 nbqa = "^1.8.5"
-ruff = "^0.5.5"
+ruff = "^0.5.6"
 pre-commit = "^3.8.0"
 
 # tests
@@ -61,8 +61,8 @@ sphinx = "^7.4.7"
 matplotlib = "^3.9.1"
 
 [tool.poetry.group.docs.dependencies]
-fastapi = "^0.110.3"
-uvicorn = "^0.30.4"
+fastapi = "^0.112.0"
+uvicorn = "^0.30.5"
 hypercorn = "^0.17.3"
 jupyter = "^1.0.0"
 
