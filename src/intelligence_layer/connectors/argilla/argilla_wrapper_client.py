@@ -8,10 +8,11 @@ from typing import (
 )
 
 import argilla as rg  # type: ignore
-from argilla.client.feedback.schemas.types import (  # type: ignore
-    AllowedFieldTypes,
-    AllowedQuestionTypes,
-)
+
+#from argilla.client.feedback.schemas.types import (  # type: ignore
+#    AllowedFieldTypes,
+#    AllowedQuestionTypes,
+#)
 
 from intelligence_layer.connectors.argilla.argilla_client import (
     ArgillaClient,
@@ -46,8 +47,8 @@ class ArgillaWrapperClient(ArgillaClient):
         self,
         workspace_id: str,
         dataset_name: str,
-        fields: Sequence[AllowedFieldTypes],
-        questions: Sequence[AllowedQuestionTypes],
+        fields: Sequence[Any],
+        questions: Sequence[Any],
     ) -> str:
         """Creates and publishes a new feedback dataset in Argilla.
 
@@ -77,8 +78,8 @@ class ArgillaWrapperClient(ArgillaClient):
         self,
         workspace_id: str,
         dataset_name: str,
-        fields: Sequence[AllowedFieldTypes],
-        questions: Sequence[AllowedQuestionTypes],
+        fields: Sequence[Any],
+        questions: Sequence[Any],
     ) -> str:
         """Retrieves an existing dataset or creates and publishes a new feedback dataset in Argilla.
 
