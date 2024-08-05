@@ -112,6 +112,17 @@ class StudioClient:
             return None
 
     def create_project(self, project: str, description: Optional[str] = None) -> int:
+        """Creates a project in PhariaStudio.
+
+        Projects are uniquely identified by the user provided name.
+
+        Args:
+            project: User provided name of the project.
+            description: Description explaining the usage of the project. Defaults to None.
+
+        Returns:
+            The ID of the newly created project.
+        """
         url = urljoin(self.url, "/api/projects")
         data = StudioProject(name=project, description=description)
         response = requests.post(
@@ -127,11 +138,30 @@ class StudioClient:
         return int(response.text)
 
     def submit_trace(self, data: Sequence[ExportedSpan]) -> str:
+        """Sends the provided spans to Studio as a singular trace.
+
+        The method fails if the span list is empty, has already been created or if
+        spans belong to multiple traces.
+
+        Args:
+            data: Spans to create the trace from. Created by exporting from a `Tracer`.
+
+        Returns:
+            The ID of the created trace.
+        """
         if len(data) == 0:
             raise ValueError("Tried to upload an empty trace")
         return self._upload_trace(ExportedSpanList(data))
 
     def submit_from_tracer(self, tracer: Tracer) -> list[str]:
+        """Sends all trace data from the Tracer to Studio.
+
+        Args:
+            tracer: Tracer to extract data from.
+
+        Returns:
+            List of created trace IDs.
+        """
         traces = defaultdict(list)
         for span in tracer.export_for_viewing():
             traces[span.context.trace_id].append(span)
