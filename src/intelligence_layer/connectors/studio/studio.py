@@ -1,4 +1,5 @@
 import os
+from collections import defaultdict
 from collections.abc import Sequence
 from typing import Optional
 from urllib.parse import urljoin
@@ -7,7 +8,7 @@ import requests
 from pydantic import BaseModel
 from requests.exceptions import ConnectionError, MissingSchema
 
-from intelligence_layer.core.tracer.tracer import ExportedSpan, ExportedSpanList
+from intelligence_layer.core.tracer.tracer import ExportedSpan, ExportedSpanList, Tracer
 
 
 class StudioProject(BaseModel):
@@ -16,12 +17,29 @@ class StudioProject(BaseModel):
 
 
 class StudioClient:
+    """Client for communicating with PhariaStudio.
+
+    Attributes:
+      project_id: The unique identifier of the project currently in use.
+      url: The url of your current PhariaStudio instance.
+    """
+
     def __init__(
         self,
         project: str,
         studio_url: Optional[str] = None,
         auth_token: Optional[str] = None,
     ) -> None:
+        """Initializes the client.
+
+        Runs a health check to check for a valid url of the Studio connection.
+        It does not check for a valid authentication token, which happens later.
+
+        Args:
+            project: The human readable identifier provided by the user.
+            studio_url: The url of your current PhariaStudio instance.
+            auth_token: The authorization bearer token of the user. This corresponds to the user's Aleph Alpha token.
+        """
         self._token = auth_token if auth_token is not None else os.getenv("AA_TOKEN")
         if self._token is None:
             raise ValueError(
@@ -112,6 +130,13 @@ class StudioClient:
         if len(data) == 0:
             raise ValueError("Tried to upload an empty trace")
         return self._upload_trace(ExportedSpanList(data))
+
+    def submit_from_tracer(self, tracer: Tracer) -> list[str]:
+        traces = defaultdict(list)
+        for span in tracer.export_for_viewing():
+            traces[span.context.trace_id].append(span)
+
+        return [self.submit_trace(value) for value in traces.values()]
 
     def _upload_trace(self, trace: ExportedSpanList) -> str:
         url = urljoin(self.url, f"/api/projects/{self.project_id}/traces")

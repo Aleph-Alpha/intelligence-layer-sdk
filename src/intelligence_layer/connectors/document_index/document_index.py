@@ -295,7 +295,7 @@ class DocumentIndexClient:
     Document Index is a tool for managing collections of documents, enabling operations such as creation, deletion, listing, and searching.
     Documents can be stored either in the cloud or in a local deployment.
 
-    Args:
+    Attributes:
         token: A valid token for the document index API.
         base_document_index_url: The url of the document index' API.
 

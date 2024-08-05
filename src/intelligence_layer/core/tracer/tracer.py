@@ -1,5 +1,6 @@
 import os
 import traceback
+import warnings
 from abc import ABC, abstractmethod
 from collections.abc import Mapping, Sequence
 from contextlib import AbstractContextManager
@@ -208,6 +209,10 @@ class Tracer(ABC):
         ...
 
     def submit_to_trace_viewer(self) -> bool:
+        warnings.warn(
+            "TraceViewer will be removed soon. Use the Studio Trace functionality instead.",
+            DeprecationWarning,
+        )
         return submit_to_trace_viewer(self.export_for_viewing())
 
 

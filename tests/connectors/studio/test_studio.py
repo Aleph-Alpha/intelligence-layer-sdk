@@ -91,7 +91,9 @@ def test_cannot_upload_same_trace_twice(
         studio_client.submit_trace(test_trace)
 
 
-def test_cannot_upload_lists_with_multiple_traces(studio_client: StudioClient) -> None:
+def test_submit_trace_cannot_upload_lists_with_multiple_traces(
+    studio_client: StudioClient,
+) -> None:
     tracer = InMemoryTracer()
     with tracer.span("test"):
         pass
@@ -124,3 +126,28 @@ def test_handles_no_auth_configured() -> None:
     with patch("os.getenv", side_effect=mock_return) as _:  # noqa: SIM117
         with pytest.raises(ValueError, match="auth_token"):
             StudioClient(str(uuid4))
+
+
+def test_submit_from_tracer_can_upload_lists_with_multiple_traces(
+    studio_client: StudioClient,
+) -> None:
+    tracer = InMemoryTracer()
+    task = TracerTestTask()
+    task.run("my input", tracer)
+    task.run("my second input", tracer)
+
+    id_list = set(str(span.context.trace_id) for span in tracer.export_for_viewing())
+
+    trace_id_list = set(studio_client.submit_from_tracer(tracer))
+
+    assert trace_id_list == id_list
+
+
+def test_submit_from_tracer_works_with_empty_tracer(
+    studio_client: StudioClient,
+) -> None:
+    tracer = InMemoryTracer()
+
+    empty_trace_id_list = studio_client.submit_from_tracer(tracer)
+
+    assert len(empty_trace_id_list) == 0
