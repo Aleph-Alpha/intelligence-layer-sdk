@@ -131,4 +131,4 @@ class StudioClient:
                 )
             case _:
                 response.raise_for_status()
-        return response.text
+        return str(response.json())
