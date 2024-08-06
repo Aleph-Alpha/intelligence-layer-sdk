@@ -222,7 +222,7 @@ jobs:
         ports:
           - "8000:8000"
         env:
-          DATABASE_URL: "localhost:5432"
+          DATABASE_URL: "postgres:5432"
           POSTGRES_DB: "il_sdk"
           POSTGRES_USER: "il_sdk"
           POSTGRES_PASSWORD: "test"
