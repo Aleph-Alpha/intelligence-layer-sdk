@@ -38,6 +38,26 @@ services:
     image: ghcr.io/aleph-alpha/trace-viewer-trace-viewer:main
     ports:
      - 3000:3000
+
+  # export GITLAB_TOKEN=...
+  # (optional) export GITLAB_TOKEN=$(op item get YOUR_TOKEN --format json --fields password | jq .value | tr -d '"')
+  # echo $GITLAB_TOKEN | docker login registry.gitlab.aleph-alpha.de -u your_email@for_gitlab --password-stdin
+  # docker compose pull to update containers
+  studio-backend:
+    image: registry.gitlab.aleph-alpha.de/product/studio/backend:latest
+    ports:
+     - 8000:8000
+    depends_on:
+      postgres:
+        condition: service_started
+        restart: true
+    environment:
+      DATABASE_URL: postgres:5432 
+      POSTGRES_DB: il_sdk
+      POSTGRES_USER: il_sdk
+      POSTGRES_PASSWORD: test
+
+      AUTHORIZATION_SERVICE_URL: "none"
   postgres:
     image: postgres:15
     ports:

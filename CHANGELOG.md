@@ -6,13 +6,13 @@
 ...
 
 ### Features
-...
+- Add `StudioClient` as connector to PhariaStudio for submitting traces.
 
 ### Fixes
 ...
 
 ### Deprecations 
-...
+ - Deprecate old Trace Viewer as the new `StudioClient` replaces it. This affects `Tracer.submit_to_trace_viewer`.
 
 ## 5.0.3
 
