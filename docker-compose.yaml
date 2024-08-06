@@ -40,8 +40,7 @@ services:
      - 3000:3000
 
   # export GITLAB_TOKEN=...
-  # (optional) export GITLAB_TOKEN=$(op item get YOUR_GITLAB_TOKEN_ENTRY --format json --fields password | jq .value)
-  # echo $GITLAB_TOKEN | docker login ghcr.io -u your_email@for_gitlab --password-stdin
+  # (optional) export GITLAB_TOKEN=$(op item get YOUR_TOKEN --format json --fields password | jq .value | tr -d '"')
   # echo $GITLAB_TOKEN | docker login registry.gitlab.aleph-alpha.de -u your_email@for_gitlab --password-stdin
   # docker compose pull to update containers
   studio-backend:
@@ -59,7 +58,7 @@ services:
       POSTGRES_PASSWORD: test
 
       AUTHORIZATION_SERVICE_URL: "none" # This overrides the env file
-    
+  
   postgres:
     image: postgres:15
     ports:
