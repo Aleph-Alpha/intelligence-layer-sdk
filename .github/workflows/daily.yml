@@ -3,9 +3,7 @@ name: "os-support-tests"
 on:
   workflow_dispatch:
   # Scheduled workflows will only run on the default branch.
-  schedule:
-    - cron: '0 0 * * *' # runs once a day at midnight in the timezone of your GitHub repository
-
+  
 defaults:
   run:
     shell: bash
