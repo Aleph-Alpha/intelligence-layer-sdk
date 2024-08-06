@@ -8,7 +8,11 @@ import requests
 from pydantic import BaseModel
 from requests.exceptions import ConnectionError, MissingSchema
 
-from intelligence_layer.core.tracer.tracer import ExportedSpan, ExportedSpanList, Tracer
+from intelligence_layer.core.tracer.tracer import (  # Import to be fixed with PHS-731
+    ExportedSpan,
+    ExportedSpanList,
+    Tracer,
+)
 
 
 class StudioProject(BaseModel):

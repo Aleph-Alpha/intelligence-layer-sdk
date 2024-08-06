@@ -187,7 +187,6 @@ jobs:
           CLIENT_URL: "https://api.aleph-alpha.com"
           STUDIO_URL: "http://localhost:8000/"
         run: |
-          docker logs "${{ job.services.studio-backend.id }}"
           ./scripts/test.sh
   run-notebooks:
     defaults:

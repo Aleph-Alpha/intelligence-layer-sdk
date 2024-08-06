@@ -52,13 +52,12 @@ services:
         condition: service_started
         restart: true
     environment:
-      DATABASE_URL: postgres:5432 # This overrides the env file
+      DATABASE_URL: postgres:5432 
       POSTGRES_DB: il_sdk
       POSTGRES_USER: il_sdk
       POSTGRES_PASSWORD: test
 
-      AUTHORIZATION_SERVICE_URL: "none" # This overrides the env file
-  
+      AUTHORIZATION_SERVICE_URL: "none"
   postgres:
     image: postgres:15
     ports:
