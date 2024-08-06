@@ -129,6 +129,27 @@ jobs:
           password: ${{ secrets.GH_PAT }}
         ports:
           - "3000:3000"
+      postgres:
+        image: postgres:15
+        ports:
+          - "5433:5432"
+        env:
+          POSTGRES_DB: "il_sdk"
+          POSTGRES_USER: "il_sdk"
+          POSTGRES_PASSWORD: "test"
+      studio-backend:
+        image: registry.gitlab.aleph-alpha.de/product/studio/backend:latest
+        ports:
+          - "8000:8000"
+        env:
+          DATABASE_URL: "postgres:5432"
+          POSTGRES_DB: "il_sdk"
+          POSTGRES_USER: "il_sdk"
+          POSTGRES_PASSWORD: "test"
+          AUTHORIZATION_SERVICE_URL: "none"
+        credentials:
+          username: "unused"
+          password: ${{ secrets.GL_Studio_Container_Token }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -186,6 +207,27 @@ jobs:
         env:
           ARGILLA_ELASTICSEARCH: "http://argilla-elastic-search:9200"
           ARGILLA_ENABLE_TELEMETRY: 0
+      postgres:
+        image: postgres:15
+        ports:
+          - "5433:5432"
+        env:
+          POSTGRES_DB: "il_sdk"
+          POSTGRES_USER: "il_sdk"
+          POSTGRES_PASSWORD: "test"    
+      studio-backend:
+        image: registry.gitlab.aleph-alpha.de/product/studio/backend:latest
+        ports:
+          - "8000:8000"
+        env:
+          DATABASE_URL: "postgres:5432"
+          POSTGRES_DB: "il_sdk"
+          POSTGRES_USER: "il_sdk"
+          POSTGRES_PASSWORD: "test"
+          AUTHORIZATION_SERVICE_URL: "none"
+        credentials:
+          username: "unused"
+          password: ${{ secrets.GL_Studio_Container_Token }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
