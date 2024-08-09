@@ -467,12 +467,12 @@ class DocumentIndexClient:
         response = requests.delete(url, headers=self.headers)
         self._raise_for_status(response)
 
-    def progress(
-        self, collection_path: CollectionPath
-    ) -> int:
+    def progress(self, collection_path: CollectionPath) -> int:
         """Get the number of unembedded documents in a collection.
+
         Args:
             collection_path: Path to the collection of interest.
+
         Returns:
             The number of unembedded documents in a collection.
         """
