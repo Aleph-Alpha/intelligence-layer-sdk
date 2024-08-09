@@ -198,7 +198,7 @@ def test_document_list_all_documents(
 ) -> None:
     filter_result = document_index.documents(collection_path)
 
-    assert len(filter_result) == 3
+    assert len(filter_result) == 5
 
 
 def test_document_list_max_n_documents(
