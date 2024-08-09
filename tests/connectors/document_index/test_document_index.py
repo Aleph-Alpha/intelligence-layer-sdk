@@ -2,6 +2,7 @@ from datetime import datetime, timezone
 from http import HTTPStatus
 
 import pytest
+from pydantic import ValidationError
 from pytest import fixture, raises
 
 from intelligence_layer.connectors.document_index.document_index import (
@@ -13,6 +14,7 @@ from intelligence_layer.connectors.document_index.document_index import (
     FilterField,
     FilterOps,
     Filters,
+    IndexConfiguration,
     IndexPath,
     InvalidInput,
     ResourceNotFound,
@@ -307,6 +309,17 @@ def test_document_path_is_immutable() -> None:
     assert dictionary[path] == 1
 
 
+def test_index_configuration_rejects_invalid_chunk_overlap() -> None:
+    try:
+        IndexConfiguration(
+            chunk_size=128, chunk_overlap=128, embedding_type="asymmetric"
+        )
+    except ValidationError as e:
+        assert "chunk_overlap must be less than chunk_size" in str(e)
+    else:
+        raise AssertionError("ValidationError was not raised")
+
+
 def test_document_indexes_are_returned(
     document_index: DocumentIndexClient, collection_path: CollectionPath
 ) -> None:
@@ -317,6 +330,7 @@ def test_document_indexes_are_returned(
     )
 
     assert index_configuration.embedding_type == "asymmetric"
+    assert index_configuration.chunk_overlap == 0
     assert index_configuration.chunk_size == 512
 
 

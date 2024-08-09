@@ -8,9 +8,10 @@ from typing import Annotated, Any, Literal, Optional, Union
 from urllib.parse import quote
 
 import requests
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field, field_validator, model_validator
 from pydantic.types import StringConstraints
 from requests import HTTPError
+from typing_extensions import Self
 
 from intelligence_layer.connectors.base.json_serializable import JsonSerializable
 
@@ -32,11 +33,20 @@ class IndexConfiguration(BaseModel):
 
     Args:
         embedding_type: "symmetric" or "asymmetric" embedding type.
+        chunk_overlap: The maximum number of tokens of overlap between consecutive chunks. Must be
+            less than `chunk_size`.
         chunk_size: The maximum size of the chunks in tokens to be used for the index.
     """
 
     embedding_type: Literal["symmetric", "asymmetric"]
-    chunk_size: int
+    chunk_overlap: int = Field(default=0, ge=0)
+    chunk_size: int = Field(..., gt=0, le=2046)
+
+    @model_validator(mode="after")
+    def validate_chunk_overlap(self) -> Self:
+        if not self.chunk_overlap < self.chunk_size:
+            raise ValueError("chunk_overlap must be less than chunk_size")
+        return self
 
 
 class DocumentContents(BaseModel):
@@ -369,7 +379,7 @@ class DocumentIndexClient:
     Document Index is a tool for managing collections of documents, enabling operations such as creation, deletion, listing, and searching.
     Documents can be stored either in the cloud or in a local deployment.
 
-    Args:
+    Attributes:
         token: A valid token for the document index API.
         base_document_index_url: The url of the document index' API.
 
@@ -531,6 +541,7 @@ class DocumentIndexClient:
         response_json: Mapping[str, Any] = response.json()
         return IndexConfiguration(
             embedding_type=response_json["embedding_type"],
+            chunk_overlap=response_json["chunk_overlap"],
             chunk_size=response_json["chunk_size"],
         )
 

@@ -47,5 +47,6 @@ from .retrievers.qdrant_in_memory_retriever import (
     QdrantInMemoryRetriever as QdrantInMemoryRetriever,
 )
 from .retrievers.qdrant_in_memory_retriever import RetrieverType as RetrieverType
+from .studio.studio import StudioClient as StudioClient
 
 __all__ = [symbol for symbol in dir() if symbol and symbol[0].isupper()]

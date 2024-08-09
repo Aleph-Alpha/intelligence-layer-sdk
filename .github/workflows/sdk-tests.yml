@@ -129,6 +129,27 @@ jobs:
           password: ${{ secrets.GH_PAT }}
         ports:
           - "3000:3000"
+      postgres:
+        image: postgres:15
+        ports:
+          - "5433:5432"
+        env:
+          POSTGRES_DB: "il_sdk"
+          POSTGRES_USER: "il_sdk"
+          POSTGRES_PASSWORD: "test"
+      studio-backend:
+        image: registry.gitlab.aleph-alpha.de/product/studio/backend:latest
+        ports:
+          - "8000:8000"
+        env:
+          DATABASE_URL: "postgres:5432"
+          POSTGRES_DB: "il_sdk"
+          POSTGRES_USER: "il_sdk"
+          POSTGRES_PASSWORD: "test"
+          AUTHORIZATION_SERVICE_URL: "none"
+        credentials:
+          username: "unused"
+          password: ${{ secrets.GL_STUDIO_CONTAINER_TOKEN }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -164,6 +185,7 @@ jobs:
           ARGILLA_API_URL: "http://localhost:6900/"
           ARGILLA_API_KEY: "argilla.apikey"
           CLIENT_URL: "https://api.aleph-alpha.com"
+          STUDIO_URL: "http://localhost:8000/"
         run: |
           ./scripts/test.sh
   run-notebooks:
@@ -186,6 +208,27 @@ jobs:
         env:
           ARGILLA_ELASTICSEARCH: "http://argilla-elastic-search:9200"
           ARGILLA_ENABLE_TELEMETRY: 0
+      postgres:
+        image: postgres:15
+        ports:
+          - "5433:5432"
+        env:
+          POSTGRES_DB: "il_sdk"
+          POSTGRES_USER: "il_sdk"
+          POSTGRES_PASSWORD: "test"    
+      studio-backend:
+        image: registry.gitlab.aleph-alpha.de/product/studio/backend:latest
+        ports:
+          - "8000:8000"
+        env:
+          DATABASE_URL: "postgres:5432"
+          POSTGRES_DB: "il_sdk"
+          POSTGRES_USER: "il_sdk"
+          POSTGRES_PASSWORD: "test"
+          AUTHORIZATION_SERVICE_URL: "none"
+        credentials:
+          username: "unused"
+          password: ${{ secrets.GL_STUDIO_CONTAINER_TOKEN }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -217,5 +260,6 @@ jobs:
           ARGILLA_API_URL: "http://localhost:6900/"
           ARGILLA_API_KEY: "argilla.apikey"
           CLIENT_URL: "https://api.aleph-alpha.com"
+          STUDIO_URL: "http://localhost:8000"
         run: |
           ./scripts/notebook_runner.sh

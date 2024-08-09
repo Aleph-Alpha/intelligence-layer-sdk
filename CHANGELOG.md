@@ -6,13 +6,14 @@
 ...
 
 ### Features
-...
+- Add `StudioClient` as connector to PhariaStudio for submitting traces.
+- You can now specify a `chunk_overlap` when creating an index in the Document Index.
 
 ### Fixes
 ...
 
 ### Deprecations 
-...
+ - Deprecate old Trace Viewer as the new `StudioClient` replaces it. This affects `Tracer.submit_to_trace_viewer`.
 
 ## 5.0.3
 
