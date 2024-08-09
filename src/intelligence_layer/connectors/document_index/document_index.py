@@ -558,6 +558,19 @@ class DocumentIndexClient:
         response = requests.delete(url, headers=self.headers)
         self._raise_for_status(response)
 
+    def delete_filter_index_from_namespace(
+        self, namespace: str, filter_index_name: str
+    ) -> None:
+        """Delete a filter index from a namespace.
+
+        Args:
+            namespace: The namespace to delete the filter index from.
+            filter_index_name: The name of the filter index to delete.
+        """
+        url = f"{self._base_document_index_url}/filter_indexes/{namespace}/{filter_index_name}"
+        response = requests.delete(url, headers=self.headers)
+        self._raise_for_status(response)
+
     def list_assigned_index_names(
         self, collection_path: CollectionPath
     ) -> Sequence[str]:
