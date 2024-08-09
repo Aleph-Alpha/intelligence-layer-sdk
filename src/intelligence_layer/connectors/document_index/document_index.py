@@ -1,6 +1,6 @@
 import re
 from collections.abc import Mapping, Sequence
-from datetime import datetime
+from datetime import datetime, timezone
 from enum import Enum
 from http import HTTPStatus
 from json import dumps
@@ -8,7 +8,7 @@ from typing import Annotated, Any, Literal, Optional, Union
 from urllib.parse import quote
 
 import requests
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 from pydantic.types import StringConstraints
 from requests import HTTPError
 
@@ -188,6 +188,36 @@ class FilterField(BaseModel):
         ..., description="The value to filter on in the DocumentIndex metadata."
     )
     criteria: FilterOps = Field(..., description="The criteria to apply for filtering.")
+
+    @field_validator("field_value", mode="before")
+    def validate_and_convert_datetime(cls, v) -> Union[str, int, float, bool]:
+        """Validate field_value and convert datetime to RFC3339 format with Z suffix.
+
+        Args:
+            cls (type): The class that this method is bound to.
+            v (Union[str, int, float, bool]): The value to be validated and converted.  # noqa: DAR102: + cls
+
+        Returns:
+            Union[str, int, float, bool]: The validated and converted value.
+        """
+        if isinstance(v, datetime):
+            if v.tzinfo is None or v.tzinfo.utcoffset(v) is None:
+                raise ValueError("datetime must have timezone info")
+            if v.tzinfo != timezone.utc:
+                v = v.astimezone(timezone.utc)
+
+            # Convert to rfc3339 and add the Z
+            iso_format = v.isoformat(timespec="seconds").replace("+00:00", "Z")
+
+            # Validate the format
+            rfc3339_pattern = re.compile(r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$")
+            if not rfc3339_pattern.match(iso_format):
+                raise ValueError(
+                    "datetime must be in RFC3339 format with Z suffix, e.g., 2023-01-01T12:00:00Z"
+                )
+
+            return iso_format
+        return v
 
 
 class Filters(BaseModel):
