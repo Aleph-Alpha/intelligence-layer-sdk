@@ -14,6 +14,7 @@ from intelligence_layer.connectors.document_index.document_index import (
     FilterOps,
     Filters,
     IndexPath,
+    InvalidInput,
     ResourceNotFound,
     SearchQuery,
 )
@@ -81,6 +82,7 @@ Pemberton's life story is a testament to the spirit of innovation and resilience
 def document_contents_with_metadata() -> list[DocumentContents]:
     text_1 = """John Stith Pemberton, the inventor of the world-renowned beverage Coca-Cola, was a figure whose life was marked by creativity, entrepreneurial spirit, and the turbulent backdrop of 19th-century America. Born on January 8, 1831, in Knoxville, Georgia, Pemberton grew up in an era of profound transformation and change."""
     text_2 = """Pemberton began his professional journey by studying medicine and pharmacy. After earning a degree in pharmacy, he started his career as a druggist in Columbus, Georgia. He was known for his keen interest in creating medicinal concoctions and was well-respected in his community. His early creations included various medicines and tonics, which were typical of the times when pharmacists often concocted their own remedies."""
+    text_3 = """Pemberton's life took a significant turn during the American Civil War. He served as a lieutenant colonel in the Confederate Army, and it was during this period that he sustained a wound that led him to become dependent on morphine. This personal struggle with addiction likely influenced his later work in seeking out alternatives and remedies for pain relief."""
 
     metadata_1 = {
         "string-field": "example_string_1",
@@ -102,9 +104,20 @@ def document_contents_with_metadata() -> list[DocumentContents]:
         .replace("+00:00", "Z"),
     }
 
+    metadata_3 = {
+        "string-field": "example_string_3",
+        "integer-field": 789,
+        "float-field": 101112.13,
+        "boolean-field": True,
+        "date-field": datetime(2024, 1, 1, tzinfo=timezone.utc)
+        .isoformat(timespec="seconds")
+        .replace("+00:00", "Z"),
+    }
+
     return [
         DocumentContents(contents=[text_1], metadata=metadata_1),
         DocumentContents(contents=[text_2], metadata=metadata_2),
+        DocumentContents(contents=[text_3], metadata=metadata_3),
     ]
 
 
@@ -257,7 +270,7 @@ def test_document_list_all_documents(
 ) -> None:
     filter_result = document_index.documents(collection_path)
 
-    assert len(filter_result) == 5
+    assert len(filter_result) == 6
 
 
 def test_document_list_max_n_documents(
@@ -465,8 +478,9 @@ def test_search_with_float_filter(
         ],
     )
     results = document_index.search(collection_path, "asymmetric", search_query)
-    assert len(results) == 1
+    assert len(results) == 2
     assert results[0].document_path.document_name == "document-metadata-1"
+    assert results[1].document_path.document_name == "document-metadata-2"
 
 
 def test_search_with_boolean_filter(
@@ -509,9 +523,7 @@ def test_search_with_datetime_filter(
                 fields=[
                     FilterField(
                         field_name="date-field",
-                        field_value=datetime(2023, 1, 1, tzinfo=timezone.utc)
-                        .isoformat(timespec="seconds")
-                        .replace("+00:00", "Z"),
+                        field_value=datetime(2023, 1, 1, tzinfo=timezone.utc),
                         criteria=FilterOps.BEFORE,
                     )
                 ],
@@ -521,3 +533,158 @@ def test_search_with_datetime_filter(
     results = document_index.search(collection_path, "asymmetric", search_query)
     assert len(results) == 1
     assert results[0].document_path.document_name == "document-metadata-0"
+
+
+def test_search_with_invalid_datetime_filter(
+    document_index: DocumentIndexClient,
+    collection_path: CollectionPath,
+) -> None:
+    search_query = SearchQuery(
+        query="Coca-Cola",
+        max_results=10,
+        min_score=0.1,
+        filters=[
+            Filters(
+                filter_type="with",
+                fields=[
+                    FilterField(
+                        field_name="date-field",
+                        field_value="2023-01-01T12:00:00",
+                        criteria=FilterOps.BEFORE,
+                    )
+                ],
+            )
+        ],
+    )
+    with raises(InvalidInput):
+        document_index.search(collection_path, "asymmetric", search_query)
+
+
+def test_search_with_multiple_filters(
+    document_index: DocumentIndexClient,
+    collection_path: CollectionPath,
+) -> None:
+    search_query = SearchQuery(
+        query="Coca-Cola",
+        max_results=10,
+        min_score=0.1,
+        filters=[
+            Filters(
+                filter_type="with",
+                fields=[
+                    FilterField(
+                        field_name="integer-field",
+                        field_value=123,
+                        criteria=FilterOps.EQUAL_TO,
+                    ),
+                    FilterField(
+                        field_name="boolean-field",
+                        field_value=True,
+                        criteria=FilterOps.EQUAL_TO,
+                    ),
+                ],
+            )
+        ],
+    )
+    results = document_index.search(collection_path, "asymmetric", search_query)
+    assert len(results) == 1
+    assert results[0].document_path.document_name == "document-metadata-0"
+
+
+def test_search_with_filter_type_without(
+    document_index: DocumentIndexClient,
+    collection_path: CollectionPath,
+) -> None:
+    search_query = SearchQuery(
+        query="Coca-Cola",
+        max_results=10,
+        min_score=0.1,
+        filters=[
+            Filters(
+                filter_type="without",
+                fields=[
+                    FilterField(
+                        field_name="integer-field",
+                        field_value=456,
+                        criteria=FilterOps.EQUAL_TO,
+                    )
+                ],
+            )
+        ],
+    )
+    results = document_index.search(collection_path, "asymmetric", search_query)
+    assert len(results) == 7
+
+
+def test_search_with_filter_type_without_and_with(
+    document_index: DocumentIndexClient,
+    collection_path: CollectionPath,
+) -> None:
+    search_query = SearchQuery(
+        query="Coca-Cola",
+        max_results=10,
+        min_score=0.1,
+        filters=[
+            Filters(
+                filter_type="without",
+                fields=[
+                    FilterField(
+                        field_name="integer-field",
+                        field_value=456,
+                        criteria=FilterOps.EQUAL_TO,
+                    )
+                ],
+            ),
+            Filters(
+                filter_type="with",
+                fields=[
+                    FilterField(
+                        field_name="boolean-field",
+                        field_value=True,
+                        criteria=FilterOps.EQUAL_TO,
+                    )
+                ],
+            ),
+        ],
+    )
+    results = document_index.search(collection_path, "asymmetric", search_query)
+    assert len(results) == 2
+    assert results[0].document_path.document_name == "document-metadata-0"
+    assert results[1].document_path.document_name == "document-metadata-2"
+
+
+def test_search_with_filter_type_with_one_of(
+    document_index: DocumentIndexClient,
+    collection_path: CollectionPath,
+) -> None:
+    search_query = SearchQuery(
+        query="Coca-Cola",
+        max_results=10,
+        min_score=0.1,
+        filters=[
+            Filters(
+                filter_type="with_one_of",
+                fields=[
+                    FilterField(
+                        field_name="integer-field",
+                        field_value=456,
+                        criteria=FilterOps.EQUAL_TO,
+                    )
+                ],
+            ),
+            Filters(
+                filter_type="with_one_of",
+                fields=[
+                    FilterField(
+                        field_name="integer-field",
+                        field_value=789,
+                        criteria=FilterOps.EQUAL_TO,
+                    )
+                ],
+            ),
+        ],
+    )
+    results = document_index.search(collection_path, "asymmetric", search_query)
+    assert len(results) == 2
+    assert results[0].document_path.document_name == "document-metadata-1"
+    assert results[1].document_path.document_name == "document-metadata-2"
