@@ -198,7 +198,7 @@ def test_document_list_all_documents(
 ) -> None:
     filter_result = document_index.documents(collection_path)
 
-    assert len(filter_result) == 3
+    assert len(filter_result) == 5
 
 
 def test_document_list_max_n_documents(
@@ -258,3 +258,10 @@ def test_document_indexes_are_returned(
     assert index_configuration.embedding_type == "asymmetric"
     assert index_configuration.chunk_overlap == 0
     assert index_configuration.chunk_size == 512
+
+
+def test_document_indexes_zero_progress_is_returned(
+    document_index: DocumentIndexClient, collection_path: CollectionPath
+) -> None:
+    progress = document_index.progress(collection_path)
+    assert progress == 0
