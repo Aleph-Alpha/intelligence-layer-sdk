@@ -5,6 +5,7 @@ import pytest
 from pydantic import ValidationError
 from pytest import fixture, raises
 
+from intelligence_layer.connectors.base.json_serializable import JsonSerializable
 from intelligence_layer.connectors.document_index.document_index import (
     CollectionPath,
     DocumentContents,
@@ -86,7 +87,7 @@ def document_contents_with_metadata() -> list[DocumentContents]:
     text_2 = """Pemberton began his professional journey by studying medicine and pharmacy. After earning a degree in pharmacy, he started his career as a druggist in Columbus, Georgia. He was known for his keen interest in creating medicinal concoctions and was well-respected in his community. His early creations included various medicines and tonics, which were typical of the times when pharmacists often concocted their own remedies."""
     text_3 = """Pemberton's life took a significant turn during the American Civil War. He served as a lieutenant colonel in the Confederate Army, and it was during this period that he sustained a wound that led him to become dependent on morphine. This personal struggle with addiction likely influenced his later work in seeking out alternatives and remedies for pain relief."""
 
-    metadata_1 = {
+    metadata_1: JsonSerializable = {
         "string-field": "example_string_1",
         "integer-field": 123,
         "float-field": 123.45,
@@ -96,7 +97,7 @@ def document_contents_with_metadata() -> list[DocumentContents]:
         .replace("+00:00", "Z"),
     }
 
-    metadata_2 = {
+    metadata_2: JsonSerializable = {
         "string-field": "example_string_2",
         "integer-field": 456,
         "float-field": 678.90,
@@ -106,7 +107,7 @@ def document_contents_with_metadata() -> list[DocumentContents]:
         .replace("+00:00", "Z"),
     }
 
-    metadata_3 = {
+    metadata_3: JsonSerializable = {
         "string-field": "example_string_3",
         "integer-field": 789,
         "float-field": 101112.13,
@@ -344,7 +345,7 @@ def test_create_filter_indexes_in_namespace(
             namespace=aleph_alpha_namespace,
             filter_index_name=index_name,
             field_name=index_config["field-name"],
-            field_type=index_config["field-type"],
+            field_type=index_config["field-type"],  # type:ignore[arg-type]
         )
 
     assert all(

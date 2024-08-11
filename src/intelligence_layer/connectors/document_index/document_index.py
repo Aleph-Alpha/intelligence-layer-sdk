@@ -200,11 +200,13 @@ class FilterField(BaseModel):
     criteria: FilterOps = Field(..., description="The criteria to apply for filtering.")
 
     @field_validator("field_value", mode="before")
-    def validate_and_convert_datetime(cls, v) -> Union[str, int, float, bool]:
+    def validate_and_convert_datetime(
+        cls: BaseModel, v: Union[str, int, float, bool, datetime]
+    ) -> Union[str, int, float, bool]:
         """Validate field_value and convert datetime to RFC3339 format with Z suffix.
 
         Args:
-            cls (type): The class that this method is bound to.
+            cls (BaseModel): The class that this method is bound to.
             v (Union[str, int, float, bool]): The value to be validated and converted.  # noqa: DAR102: + cls
 
         Returns:
