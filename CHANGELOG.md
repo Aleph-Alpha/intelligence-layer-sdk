@@ -6,6 +6,8 @@
 ...
 
 ### Features
+- Updated `DocumentIndexClient` with support for metadata filters.
+    - Add documentation for filtering to `document_index.ipynb`.
 - Add `StudioClient` as connector to PhariaStudio for submitting traces.
 - You can now specify a `chunk_overlap` when creating an index in the Document Index.
 
