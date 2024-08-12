@@ -1,18 +1,27 @@
-from typing import Any, Iterator
+from collections.abc import Iterator
+from typing import Any
+from unittest.mock import Mock
+
 import pytest
 from requests import Session
 from requests.exceptions import RequestException
 from requests.models import Response
-from unittest.mock import Mock
-from intelligence_layer.connectors.data import DataClient, DataRepositoryCreate, DatasetCreate, DataRepository, Dataset, DataInternalError, ResourceNotFound
-import pytest
-from requests.exceptions import RequestException
-from requests.models import Response
-from unittest.mock import Mock
+
+from intelligence_layer.connectors.data import (
+    DataClient,
+    DataInternalError,
+    DataRepository,
+    DataRepositoryCreate,
+    Dataset,
+    DatasetCreate,
+    ResourceNotFound,
+)
+
 
 @pytest.fixture
 def mock_session() -> Mock:
     return Mock(spec=Session)
+
 
 @pytest.fixture
 def data_client(mock_session: Mock) -> DataClient:
@@ -20,7 +29,6 @@ def data_client(mock_session: Mock) -> DataClient:
 
 
 def test_list_repositories(data_client: DataClient, mock_session: Mock) -> None:
-
     def return_json_override() -> dict[Any, Any]:
         return {
             "repositories": [
@@ -77,7 +85,10 @@ def test_list_repositories(data_client: DataClient, mock_session: Mock) -> None:
         },
     )
 
-def test_list_repositories_handles_request_exception(data_client: DataClient, mock_session: Mock) -> None:
+
+def test_list_repositories_handles_request_exception(
+    data_client: DataClient, mock_session: Mock
+) -> None:
     # Mock the request exception
     mock_session.request.side_effect = RequestException("Request failed")
 
@@ -87,6 +98,7 @@ def test_list_repositories_handles_request_exception(data_client: DataClient, mo
 
     # Verify the request was made
     mock_session.request.assert_called_once()
+
 
 def test_create_repository(data_client: DataClient, mock_session: Mock) -> None:
     # Mock the response
@@ -108,7 +120,11 @@ def test_create_repository(data_client: DataClient, mock_session: Mock) -> None:
     mock_session.request.return_value = mock_response
 
     # Call the method
-    repository = data_client.create_repository(DataRepositoryCreate(name="Repository 3", mediaType="application/json", modality="text"))
+    repository = data_client.create_repository(
+        DataRepositoryCreate(
+            name="Repository 3", mediaType="application/json", modality="text"
+        )
+    )
 
     # Assertions
     assert isinstance(repository, DataRepository)
@@ -132,19 +148,26 @@ def test_create_repository(data_client: DataClient, mock_session: Mock) -> None:
         },
     )
 
-def test_create_repository_handles_request_exception(data_client: DataClient, mock_session: Mock) -> None:
-        # Mock the request exception
-        mock_session.request.side_effect = RequestException("Request failed")
 
-        # Call the method
-        with pytest.raises(DataInternalError):
-            data_client.create_repository(DataRepositoryCreate(name="Repository 3", mediaType="application/json", modality="image"))
+def test_create_repository_handles_request_exception(
+    data_client: DataClient, mock_session: Mock
+) -> None:
+    # Mock the request exception
+    mock_session.request.side_effect = RequestException("Request failed")
 
-        # Verify the request was made
-        mock_session.request.assert_called_once()
+    # Call the method
+    with pytest.raises(DataInternalError):
+        data_client.create_repository(
+            DataRepositoryCreate(
+                name="Repository 3", mediaType="application/json", modality="image"
+            )
+        )
+
+    # Verify the request was made
+    mock_session.request.assert_called_once()
+
 
 def test_get_repository(data_client: DataClient, mock_session: Mock) -> None:
-    
     def return_json_override() -> dict[Any, Any]:
         return {
             "repository_id": "repo3",
@@ -181,28 +204,31 @@ def test_get_repository(data_client: DataClient, mock_session: Mock) -> None:
         },
     )
 
-def test_get_repository_handles_request_exception(data_client: DataClient, mock_session: Mock) -> None:
-        # Mock the request exception
-        mock_session.request.side_effect = RequestException("Request failed")
 
-        # Call the method
-        with pytest.raises(DataInternalError):
-            data_client.get_repository(repository_id="repo3")
+def test_get_repository_handles_request_exception(
+    data_client: DataClient, mock_session: Mock
+) -> None:
+    # Mock the request exception
+    mock_session.request.side_effect = RequestException("Request failed")
 
-        # Verify the request was made
-        mock_session.request.assert_called_once()
+    # Call the method
+    with pytest.raises(DataInternalError):
+        data_client.get_repository(repository_id="repo3")
+
+    # Verify the request was made
+    mock_session.request.assert_called_once()
+
 
 def test_create_dataset(data_client: DataClient, mock_session: Mock) -> None:
-    
     def return_json_override() -> dict[Any, Any]:
         return {
-        "repository_id": "repo3",
-        "dataset_id": "dataset1",
-        "labels": ["label1", "label2"],
-        "total_units": 100,
-        "created_at": "2022-01-01T00:00:00Z",
-        "updated_at": "2022-01-01T00:00:00Z",
-    }
+            "repository_id": "repo3",
+            "dataset_id": "dataset1",
+            "labels": ["label1", "label2"],
+            "total_units": 100,
+            "created_at": "2022-01-01T00:00:00Z",
+            "updated_at": "2022-01-01T00:00:00Z",
+        }
 
     mock_response = Mock(spec=Response)
     mock_response.status_code = 201
@@ -210,7 +236,12 @@ def test_create_dataset(data_client: DataClient, mock_session: Mock) -> None:
     mock_session.request.return_value = mock_response
 
     # Call the method
-    dataset = data_client.create_dataset(repository_id="repo3", dataset=DatasetCreate(source_data=b"source_data", labels=["label1", "label2"], total_units=100))
+    dataset = data_client.create_dataset(
+        repository_id="repo3",
+        dataset=DatasetCreate(
+            source_data=b"source_data", labels=["label1", "label2"], total_units=100
+        ),
+    )
 
     # Assertions
     assert isinstance(dataset, Dataset)
@@ -226,22 +257,34 @@ def test_create_dataset(data_client: DataClient, mock_session: Mock) -> None:
         headers={
             "Authorization": "Bearer some-token",
         },
-        files={"source_data": b"source_data","labels": "label1,label2", "total_units": 100},
+        files={
+            "source_data": b"source_data",
+            "labels": "label1,label2",
+            "total_units": 100,
+        },
     )
 
-def test_create_dataset_handles_request_exception(data_client: DataClient, mock_session: Mock) -> None:
+
+def test_create_dataset_handles_request_exception(
+    data_client: DataClient, mock_session: Mock
+) -> None:
     # Mock the request exception
     mock_session.request.side_effect = RequestException("Request failed")
 
     # Call the method
     with pytest.raises(DataInternalError):
-        data_client.create_dataset(repository_id="repo3", dataset=DatasetCreate(source_data=b"source_data", labels=["label1", "label2"], total_units=100))
+        data_client.create_dataset(
+            repository_id="repo3",
+            dataset=DatasetCreate(
+                source_data=b"source_data", labels=["label1", "label2"], total_units=100
+            ),
+        )
 
     # Verify the request was made
     mock_session.request.assert_called_once()
 
+
 def test_list_datasets(data_client: DataClient, mock_session: Mock) -> None:
-    
     def return_json_override() -> dict[Any, Any]:
         return {
             "datasets": [
@@ -294,7 +337,10 @@ def test_list_datasets(data_client: DataClient, mock_session: Mock) -> None:
         },
     )
 
-def test_list_datasets_handles_request_exception(data_client: DataClient, mock_session: Mock) -> None:
+
+def test_list_datasets_handles_request_exception(
+    data_client: DataClient, mock_session: Mock
+) -> None:
     # Mock the request exception
     mock_session.request.side_effect = RequestException("Request failed")
 
@@ -305,17 +351,17 @@ def test_list_datasets_handles_request_exception(data_client: DataClient, mock_s
     # Verify the request was made
     mock_session.request.assert_called_once()
 
+
 def test_get_dataset(data_client: DataClient, mock_session: Mock) -> None:
-    
     def return_json_override() -> dict[Any, Any]:
         return {
-        "repository_id": "repo3",
-        "dataset_id": "dataset1",
-        "labels": ["label1", "label2"],
-        "total_units": 100,
-        "created_at": "2022-01-01T00:00:00Z",
-        "updated_at": "2022-01-01T00:00:00Z",
-    }
+            "repository_id": "repo3",
+            "dataset_id": "dataset1",
+            "labels": ["label1", "label2"],
+            "total_units": 100,
+            "created_at": "2022-01-01T00:00:00Z",
+            "updated_at": "2022-01-01T00:00:00Z",
+        }
 
     mock_response = Mock(spec=Response)
     mock_response.status_code = 200
@@ -341,7 +387,10 @@ def test_get_dataset(data_client: DataClient, mock_session: Mock) -> None:
         },
     )
 
-def test_get_dataset_handles_request_exception(data_client: DataClient, mock_session: Mock) -> None:
+
+def test_get_dataset_handles_request_exception(
+    data_client: DataClient, mock_session: Mock
+) -> None:
     # Mock the request exception
     mock_session.request.side_effect = RequestException("Request failed")
 
@@ -351,6 +400,7 @@ def test_get_dataset_handles_request_exception(data_client: DataClient, mock_ses
 
     # Verify the request was made
     mock_session.request.assert_called_once()
+
 
 def test_delete_dataset(data_client: DataClient, mock_session: Mock) -> None:
     # Call the method
@@ -365,12 +415,12 @@ def test_delete_dataset(data_client: DataClient, mock_session: Mock) -> None:
         },
     )
 
-def test_stream_dataset(data_client: DataClient, mock_session: Mock) -> None:
 
+def test_stream_dataset(data_client: DataClient, mock_session: Mock) -> None:
     expected_data = [b"data1", b"data2"]
+
     def mock_stream(*args: Any, **kwargs: Any) -> Iterator[Any]:
-        for line in [b"data1", b"data2"]:
-            yield line
+        yield from [b"data1", b"data2"]
 
     mock_response = Mock(spec=Response)
     mock_response.status_code = 200
@@ -381,7 +431,7 @@ def test_stream_dataset(data_client: DataClient, mock_session: Mock) -> None:
     stream = data_client.stream_dataset(repository_id="repo3", dataset_id="dataset1")
 
     # Assertions
-    for expected, current in zip(expected_data, stream):
+    for expected, current in zip(expected_data, stream, strict=False):
         assert expected == current
 
     # Verify the request was made with the correct parameters
@@ -393,6 +443,7 @@ def test_stream_dataset(data_client: DataClient, mock_session: Mock) -> None:
         },
         stream=True,
     )
+
 
 def test_do_request(data_client: DataClient, mock_session: Mock) -> None:
     # Mock the response
@@ -415,7 +466,10 @@ def test_do_request(data_client: DataClient, mock_session: Mock) -> None:
         },
     )
 
-def test_do_request_handles_request_exception(data_client: DataClient, mock_session: Mock) -> None:
+
+def test_do_request_handles_request_exception(
+    data_client: DataClient, mock_session: Mock
+) -> None:
     # Mock the request exception
     mock_session.request.side_effect = RequestException("Request failed")
 
@@ -426,7 +480,10 @@ def test_do_request_handles_request_exception(data_client: DataClient, mock_sess
     # Verify the request was made
     mock_session.request.assert_called_once()
 
-def test_do_request_handles_status_code_exception(data_client: DataClient, mock_session: Mock) -> None:
+
+def test_do_request_handles_status_code_exception(
+    data_client: DataClient, mock_session: Mock
+) -> None:
     # Mock the response
     mock_response = Response()
     mock_response.status_code = 404
