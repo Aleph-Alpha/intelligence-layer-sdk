@@ -10,7 +10,7 @@
 - You can now specify a `chunk_overlap` when creating an index in the Document Index.
 
 ### Fixes
-...
+ - TaskSpan now properly sets its status to `Error` on crash.
 
 ### Deprecations 
  - Deprecate old Trace Viewer as the new `StudioClient` replaces it. This affects `Tracer.submit_to_trace_viewer`.
