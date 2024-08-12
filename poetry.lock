@@ -4179,13 +4179,13 @@ cffi = {version = "*", markers = "implementation_name == \"pypy\""}
 
 [[package]]
 name = "qdrant-client"
-version = "1.10.1"
+version = "1.11.0"
 description = "Client library for the Qdrant vector search engine"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "qdrant_client-1.10.1-py3-none-any.whl", hash = "sha256:b9fb8fe50dd168d92b2998be7c6135d5a229b3a3258ad158cc69c8adf9ff1810"},
-    {file = "qdrant_client-1.10.1.tar.gz", hash = "sha256:2284c8c5bb1defb0d9dbacb07d16f344972f395f4f2ed062318476a7951fd84c"},
+    {file = "qdrant_client-1.11.0-py3-none-any.whl", hash = "sha256:1f574ccebb91c0bc8a620c9a41a5a010084fbc4d8c6f1cd0ab7b2eeb97336fc0"},
+    {file = "qdrant_client-1.11.0.tar.gz", hash = "sha256:7c1d4d7a96cfd1ee0cde2a21c607e9df86bcca795ad8d1fd274d295ab64b8458"},
 ]
 
 [package.dependencies]
@@ -4201,8 +4201,8 @@ pydantic = ">=1.10.8"
 urllib3 = ">=1.26.14,<3"
 
 [package.extras]
-fastembed = ["fastembed (==0.2.7)"]
-fastembed-gpu = ["fastembed-gpu (==0.2.7)"]
+fastembed = ["fastembed (==0.3.4)"]
+fastembed-gpu = ["fastembed-gpu (==0.3.4)"]
 
 [[package]]
 name = "qtconsole"
@@ -4589,22 +4589,22 @@ ko = ["mecab-ko (>=1.0.0,<=1.0.1)", "mecab-ko-dic (>=1.0,<2.0)"]
 
 [[package]]
 name = "semantic-text-splitter"
-version = "0.14.1"
+version = "0.15.0"
 description = "Split text into semantic chunks, up to a desired chunk size. Supports calculating length by characters and tokens, and is callable from Rust and Python."
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "semantic_text_splitter-0.14.1-cp38-abi3-macosx_10_12_x86_64.whl", hash = "sha256:ef253f486cff350758de9ba7b4646371ecaccd303ed4093771635247188182b2"},
-    {file = "semantic_text_splitter-0.14.1-cp38-abi3-macosx_11_0_arm64.whl", hash = "sha256:4079592c4dfa1fd7cc758ef0c339a643cdfcb7de046c47d8dc3984c6d9537855"},
-    {file = "semantic_text_splitter-0.14.1-cp38-abi3-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:4a4cace20b54394c563c5225fe114a0232c262d97d771d1e69ddc3bc9139e7c9"},
-    {file = "semantic_text_splitter-0.14.1-cp38-abi3-manylinux_2_17_armv7l.manylinux2014_armv7l.whl", hash = "sha256:5133fd73ec2ef03cfda5058aa865bf518acbf8b4650f14ceb52e0b1249ecb32e"},
-    {file = "semantic_text_splitter-0.14.1-cp38-abi3-manylinux_2_17_i686.manylinux2014_i686.whl", hash = "sha256:5be385bc0f3e21ed16f164ac81f55f5e5e8c3f2c742ab37da75fe9417d80c2f8"},
-    {file = "semantic_text_splitter-0.14.1-cp38-abi3-manylinux_2_17_ppc64le.manylinux2014_ppc64le.whl", hash = "sha256:8ebe0287ffa2f2acdd14760a3617c6eacd65c2de8d67a0cef827b3ce7dbd9a8c"},
-    {file = "semantic_text_splitter-0.14.1-cp38-abi3-manylinux_2_17_s390x.manylinux2014_s390x.whl", hash = "sha256:c5e8dd844eda8893ee9ed09fbd6dcfebeff93d39858c65dda1c6ee81f3e827bb"},
-    {file = "semantic_text_splitter-0.14.1-cp38-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:ad4145ba1b1af3332fc32518356fc4e667486d8325c5fbb220403701556ab929"},
-    {file = "semantic_text_splitter-0.14.1-cp38-abi3-win32.whl", hash = "sha256:3b008cb1f85686e1382201476e8bd4b78f3e5e1b6f2d76f4b6055eff896e4f73"},
-    {file = "semantic_text_splitter-0.14.1-cp38-abi3-win_amd64.whl", hash = "sha256:180cd0808893d8a16dd0750c17caf61f3d0af3a963938bd3604f5f30a3d194ff"},
-    {file = "semantic_text_splitter-0.14.1.tar.gz", hash = "sha256:f9bd23932a0f112df11d668588bd32f3e78580593cb7f453981aef529b2d6991"},
+    {file = "semantic_text_splitter-0.15.0-cp38-abi3-macosx_10_12_x86_64.whl", hash = "sha256:7452466f9af0e13e6c2bc6ec855c014642f4c2f8c12bab9e77e4ccc0ca41113d"},
+    {file = "semantic_text_splitter-0.15.0-cp38-abi3-macosx_11_0_arm64.whl", hash = "sha256:a84cbd6569f7116755e52240960e30ef65b53685d44effaf59631ca27d1e56b1"},
+    {file = "semantic_text_splitter-0.15.0-cp38-abi3-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:ff6ac81cca131f7c1a964686e79826713f9eccef36716b59e5af3c256ac24da4"},
+    {file = "semantic_text_splitter-0.15.0-cp38-abi3-manylinux_2_17_armv7l.manylinux2014_armv7l.whl", hash = "sha256:6f03e4cc57ff85f8ccb850abf9d45a1fd59dd50beedfbf906f435dcc3f1eaebd"},
+    {file = "semantic_text_splitter-0.15.0-cp38-abi3-manylinux_2_17_i686.manylinux2014_i686.whl", hash = "sha256:0c0f2faa6c018d776ebe51f3658d72008b41b6c0eb7c916f07f8a2b72db51b24"},
+    {file = "semantic_text_splitter-0.15.0-cp38-abi3-manylinux_2_17_ppc64le.manylinux2014_ppc64le.whl", hash = "sha256:5611301a2b6bf371ae14fbadbea787038f8d93ae1b9d9312493bad6cd3c528b7"},
+    {file = "semantic_text_splitter-0.15.0-cp38-abi3-manylinux_2_17_s390x.manylinux2014_s390x.whl", hash = "sha256:909ced413862542c5b9d99596b3f23208dd28727438d853cb2008b8e4041bfc9"},
+    {file = "semantic_text_splitter-0.15.0-cp38-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:45f940ba81bfeefd549c82d70a6078630b709e31417a22b02df06c4b37a42192"},
+    {file = "semantic_text_splitter-0.15.0-cp38-abi3-win32.whl", hash = "sha256:0034f0b15aa93b2b06f94f64b5703708462081a9e3e04efbe1c3a76c96de5309"},
+    {file = "semantic_text_splitter-0.15.0-cp38-abi3-win_amd64.whl", hash = "sha256:40427d51f620d1a565e644bb63bbd9e3076c6a6a107522b1207db71f13dac22b"},
+    {file = "semantic_text_splitter-0.15.0.tar.gz", hash = "sha256:b3026d35a82ee56614b24b5632fcadb826a5f8748067881e322841121896a77d"},
 ]
 
 [package.extras]
@@ -5763,4 +5763,4 @@ test = ["big-O", "jaraco.functools", "jaraco.itertools", "jaraco.test", "more-it
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.10,<3.13"
-content-hash = "b03803138a939684f18e25b8a29e387569579fbdc90e2b65f81c1e720131c6d6"
+content-hash = "45a116e74eae6981107d850b6123e46530fc6ae465568dbe55280958c7d2cdd0"
