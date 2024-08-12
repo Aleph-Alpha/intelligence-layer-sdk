@@ -156,6 +156,7 @@ def test_tracer_exports_error_correctly_on_taskspan(
     assert span.start_time < span.end_time < utc_now()
     assert span.attributes.type == SpanType.TASK_SPAN
     assert span.status == SpanStatus.ERROR
+    assert span.attributes.output is None
 
 
 @pytest.mark.parametrize(
