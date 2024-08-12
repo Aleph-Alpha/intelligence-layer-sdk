@@ -376,6 +376,14 @@ class NoOpTracer(TaskSpan):
     def export_for_viewing(self) -> Sequence[ExportedSpan]:
         return []
 
+    def __exit__(
+        self,
+        exc_type: Optional[type[BaseException]],
+        exc_value: Optional[BaseException],
+        _traceback: Optional[TracebackType],
+    ) -> None:
+        pass
+
 
 class JsonSerializer(RootModel[PydanticSerializable]):
     root: SerializeAsAny[PydanticSerializable]

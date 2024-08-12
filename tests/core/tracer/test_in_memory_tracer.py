@@ -99,7 +99,10 @@ def test_task_span_records_error_value() -> None:
         raise ValueError("my bad, sorry")
 
     assert isinstance(tracer.entries[0], InMemoryTaskSpan)
-    error = tracer.entries[0].output
+    error_log = tracer.entries[0].entries[0]
+    assert isinstance(error_log, LogEntry)
+
+    error = error_log.value
     assert isinstance(error, ErrorValue)
     assert error.message == "my bad, sorry"
     assert error.error_type == "ValueError"
