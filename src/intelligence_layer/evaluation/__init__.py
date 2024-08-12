@@ -42,6 +42,7 @@ from .dataset.single_huggingface_dataset_repository import (
 from .dataset.single_huggingface_dataset_repository import (
     SingleHuggingfaceDatasetRepository as SingleHuggingfaceDatasetRepository,
 )
+from .dataset.studio_data_repository import StudioDataRepository as StudioDataRepository
 from .evaluation.domain import Evaluation as Evaluation
 from .evaluation.domain import EvaluationFailed as EvaluationFailed
 from .evaluation.domain import EvaluationOverview as EvaluationOverview
