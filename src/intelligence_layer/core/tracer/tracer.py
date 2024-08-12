@@ -8,6 +8,7 @@ from datetime import datetime, timezone
 from enum import Enum
 from types import TracebackType
 from typing import TYPE_CHECKING, Literal, Optional, Union
+from urllib.parse import urljoin
 from uuid import UUID, uuid4
 
 import requests
@@ -112,7 +113,7 @@ def submit_to_trace_viewer(exported_spans: Sequence[ExportedSpan]) -> bool:
 
     """
     trace_viewer_url = os.getenv("TRACE_VIEWER_URL", "http://localhost:3000")
-    trace_viewer_trace_upload = f"{trace_viewer_url}/trace"
+    trace_viewer_trace_upload = urljoin(trace_viewer_url, "/trace")
     try:
         res = requests.post(
             trace_viewer_trace_upload,
