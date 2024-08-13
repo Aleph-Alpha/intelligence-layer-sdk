@@ -70,7 +70,7 @@ class DatasetCreate(BaseModel):
     labels: List of labels of the dataset
     """
 
-    source_data: io.BufferedReader | bytes | io.BytesIO
+    source_data: io.BufferedReader | bytes
     labels: list[str]
     total_units: int
 
