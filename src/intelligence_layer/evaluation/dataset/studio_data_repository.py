@@ -1,4 +1,3 @@
-import io
 import json
 from collections.abc import Iterable
 from typing import Optional
@@ -53,7 +52,7 @@ class StudioDataRepository(DatasetRepository):
         remote_dataset = self.data_client.create_dataset(
             repository_id=self.repository_id,
             dataset=DatasetCreate(
-                source_data=io.BytesIO("\n".join(source_data_list).encode()),
+                source_data="\n".join(source_data_list).encode(),
                 labels=[label for label in labels] if labels is not None else [],
                 total_units=len(source_data_list),
             ),
