@@ -1,10 +1,12 @@
 from collections.abc import Sequence
+from typing import Optional
 
 from intelligence_layer.connectors.document_index.document_index import (
     CollectionPath,
     DocumentIndexClient,
     DocumentPath,
     DocumentTextPosition,
+    Filters,
     SearchQuery,
 )
 from intelligence_layer.connectors.retrievers.base_retriever import (
@@ -69,10 +71,10 @@ class DocumentIndexRetriever(BaseRetriever[DocumentPath]):
         return {"start": start, "end": end}
 
     def get_relevant_documents_with_scores(
-        self, query: str
+        self, query: str, filters: Optional[list[Filters]] = None
     ) -> Sequence[SearchResult[DocumentPath]]:
         search_query = SearchQuery(
-            query=query, max_results=self._k, min_score=self._threshold
+            query=query, max_results=self._k, min_score=self._threshold, filters=filters
         )
         response = self._document_index.search(
             self._collection_path, self._index_name, search_query
