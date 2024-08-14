@@ -88,7 +88,8 @@ def test_qa_with_logit_bias_for_no_answer(
         " ".join([first_token] * max_tokens),
         first_token * max_tokens,
     ]
-    assert any(output.answer == a for a in acceptable_answers)
+    answer = output.answer
+    assert answer == acceptable_answers[0] or answer == acceptable_answers[1]
 
 
 def test_qa_highlights_will_not_become_out_of_bounds(
