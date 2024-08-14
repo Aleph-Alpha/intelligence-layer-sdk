@@ -104,7 +104,7 @@ def test_tracer_exports_task_spans_to_unified_format(
     "tracer_fixture",
     tracer_fixtures,
 )
-def test_tracer_exports_error_correctly(
+def test_tracer_exports_error_correctly_on_span(
     tracer_fixture: str,
     request: pytest.FixtureRequest,
 ) -> None:
@@ -127,6 +127,36 @@ def test_tracer_exports_error_correctly(
     assert span.start_time < span.end_time < utc_now()
     assert span.attributes.type == SpanType.SPAN
     assert span.status == SpanStatus.ERROR
+
+
+@pytest.mark.parametrize(
+    "tracer_fixture",
+    tracer_fixtures,
+)
+def test_tracer_exports_error_correctly_on_taskspan(
+    tracer_fixture: str,
+    request: pytest.FixtureRequest,
+) -> None:
+    tracer: Tracer = request.getfixturevalue(tracer_fixture)
+
+    try:
+        with tracer.task_span("name", input="input"):
+            delay()
+            raise SpecificTestException
+    except SpecificTestException:
+        pass
+    delay()
+
+    unified_format = tracer.export_for_viewing()
+
+    assert len(unified_format) == 1
+    span = unified_format[0]
+    assert span.name == "name"
+    assert span.parent_id is None
+    assert span.start_time < span.end_time < utc_now()
+    assert span.attributes.type == SpanType.TASK_SPAN
+    assert span.status == SpanStatus.ERROR
+    assert span.attributes.output is None
 
 
 @pytest.mark.parametrize(

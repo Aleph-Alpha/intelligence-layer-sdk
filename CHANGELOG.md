@@ -6,12 +6,14 @@
 ...
 
 ### Features
-- Add `StudioClient` as connector to PhariaStudio for submitting traces.
+- Updated `DocumentIndexClient` with support for metadata filters.
+    - Add documentation for filtering to `document_index.ipynb`.
+- Add `StudioClient` as a connector for submitting traces.
 - You can now specify a `chunk_overlap` when creating an index in the Document Index.
 - Add support for monitoring progress in the document index connector when embedding documents.
 
 ### Fixes
-...
+ - TaskSpan now properly sets its status to `Error` on crash.
 
 ### Deprecations 
  - Deprecate old Trace Viewer as the new `StudioClient` replaces it. This affects `Tracer.submit_to_trace_viewer`.

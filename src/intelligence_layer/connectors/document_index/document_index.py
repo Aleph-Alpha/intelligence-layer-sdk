@@ -1,12 +1,15 @@
+import re
 from collections.abc import Mapping, Sequence
-from datetime import datetime
+from datetime import datetime, timezone
+from enum import Enum
 from http import HTTPStatus
 from json import dumps
-from typing import Annotated, Any, Literal, Optional
-from urllib.parse import quote
+from typing import Annotated, Any, Literal, Optional, Union
+from urllib.parse import quote, urljoin
 
 import requests
-from pydantic import BaseModel, Field, model_validator
+from pydantic import BaseModel, Field, field_validator, model_validator
+from pydantic.types import StringConstraints
 from requests import HTTPError
 from typing_extensions import Self
 
@@ -168,6 +171,78 @@ class DocumentInfo(BaseModel):
         )
 
 
+class FilterOps(Enum):
+    """Enumeration of possible filter operations."""
+
+    GREATER_THAN = "greater_than"
+    GREATER_THAN_OR_EQUAL_TO = "greater_than_or_equal_to"
+    LESS_THAN = "less_than"
+    LESS_THAN_OR_EQUAL_TO = "less_than_or_equal_to"
+    AFTER = "after"
+    AT_OR_AFTER = "at_or_after"
+    BEFORE = "before"
+    AT_OR_BEFORE = "at_or_before"
+    EQUAL_TO = "equal_to"
+
+
+class FilterField(BaseModel):
+    """Represents a field to filter on in the DocumentIndex metadata."""
+
+    field_name: Annotated[
+        str, StringConstraints(max_length=1000, pattern=r"^[\w-]+(\.\d{0,5})?[\w-]*$")
+    ] = Field(
+        ...,
+        description="The name of the field present in DocumentIndex collection metadata.",
+    )
+    field_value: Union[str, int, float, bool, datetime] = Field(
+        ..., description="The value to filter on in the DocumentIndex metadata."
+    )
+    criteria: FilterOps = Field(..., description="The criteria to apply for filtering.")
+
+    @field_validator("field_value", mode="before")
+    def validate_and_convert_datetime(
+        cls: BaseModel, v: Union[str, int, float, bool, datetime]
+    ) -> Union[str, int, float, bool]:
+        """Validate field_value and convert datetime to RFC3339 format with Z suffix.
+
+        Args:
+            cls (BaseModel): The class that this method is bound to.
+            v (Union[str, int, float, bool]): The value to be validated and converted.  # noqa: DAR102: + cls
+
+        Returns:
+            Union[str, int, float, bool]: The validated and converted value.
+        """
+        if isinstance(v, datetime):
+            if v.tzinfo is None or v.tzinfo.utcoffset(v) is None:
+                raise ValueError("datetime must have timezone info")
+            if v.tzinfo != timezone.utc:
+                v = v.astimezone(timezone.utc)
+
+            # Convert to rfc3339 and add the Z
+            iso_format = v.isoformat(timespec="seconds").replace("+00:00", "Z")
+
+            # Validate the format
+            rfc3339_pattern = re.compile(r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$")
+            if not rfc3339_pattern.match(iso_format):
+                raise ValueError(
+                    "datetime must be in RFC3339 format with Z suffix, e.g., 2023-01-01T12:00:00Z"
+                )
+
+            return iso_format
+        return v
+
+
+class Filters(BaseModel):
+    """Represents a set of filters to apply to a search query."""
+
+    filter_type: Literal["with", "without", "with_one_of"] = Field(
+        ..., description="The type of filter to apply."
+    )
+    fields: list[FilterField] = Field(
+        ..., description="The list of fields to filter on."
+    )
+
+
 class SearchQuery(BaseModel):
     """Query to search through a collection with.
 
@@ -182,6 +257,7 @@ class SearchQuery(BaseModel):
     query: str
     max_results: int = Field(..., ge=0)
     min_score: float = Field(..., ge=0.0, le=1.0)
+    filters: Optional[list[Filters]] = None
 
 
 class DocumentFilterQueryParams(BaseModel):
@@ -358,7 +434,7 @@ class DocumentIndexClient:
         Returns:
             List of all available namespaces.
         """
-        url = f"{self._base_document_index_url}/namespaces"
+        url = urljoin(self._base_document_index_url, "namespaces")
         response = requests.get(url, headers=self.headers)
         self._raise_for_status(response)
         return [str(namespace) for namespace in response.json()]
@@ -372,7 +448,10 @@ class DocumentIndexClient:
         Args:
             collection_path: Path to the collection of interest.
         """
-        url = f"{self._base_document_index_url}/collections/{collection_path.namespace}/{collection_path.collection}"
+        url_suffix = (
+            f"/collections/{collection_path.namespace}/{collection_path.collection}"
+        )
+        url = urljoin(self._base_document_index_url, url_suffix)
         response = requests.put(url, headers=self.headers)
         self._raise_for_status(response)
 
@@ -382,7 +461,10 @@ class DocumentIndexClient:
         Args:
             collection_path: Path to the collection of interest.
         """
-        url = f"{self._base_document_index_url}/collections/{collection_path.namespace}/{collection_path.collection}"
+        url_suffix = (
+            f"collections/{collection_path.namespace}/{collection_path.collection}"
+        )
+        url = urljoin(self._base_document_index_url, url_suffix)
         response = requests.delete(url, headers=self.headers)
         self._raise_for_status(response)
 
@@ -396,7 +478,8 @@ class DocumentIndexClient:
         Returns:
             List of all `CollectionPath` instances in the given namespace.
         """
-        url = f"{self._base_document_index_url}/collections/{namespace}"
+        url_suffix = f"collections/{namespace}"
+        url = urljoin(self._base_document_index_url, url_suffix)
         response = requests.get(url, headers=self.headers)
         self._raise_for_status(response)
         return [
@@ -413,12 +496,43 @@ class DocumentIndexClient:
             index_path: Path to the index.
             index_configuration: Configuration of the index to be created.
         """
-        url = f"{self._base_document_index_url}/indexes/{index_path.namespace}/{index_path.index}"
+        url_suffix = f"indexes/{index_path.namespace}/{index_path.index}"
+        url = urljoin(self._base_document_index_url, url_suffix)
 
         data = {
             "chunk_size": index_configuration.chunk_size,
             "embedding_type": index_configuration.embedding_type,
         }
+        response = requests.put(url, data=dumps(data), headers=self.headers)
+        self._raise_for_status(response)
+
+    def create_filter_index_in_namespace(
+        self,
+        namespace: str,
+        filter_index_name: str,
+        field_name: str,
+        field_type: Literal["string", "integer", "float", "boolean", "datetime"],
+    ) -> None:
+        """Create a filter index in a specified namespace.
+
+        Args:
+            namespace (str): The namespace in which to create the filter index.
+            filter_index_name (str): The name of the filter index to create.
+            field_name (str): The name of the field to index.
+            field_type (Literal["string", "integer", "float", "boolean", "datetime"]): The type of the field to index.
+
+        Returns:
+            None
+        """
+        if not re.match(r"^[a-zA-Z0-9\-.]+$", filter_index_name):
+            raise ValueError(
+                "Filter index name can only contain alphanumeric characters (a-z, A-Z, -, . and 0-9)."
+            )
+        if len(filter_index_name) > 50:
+            raise ValueError("Filter index name cannot be longer than 50 characters.")
+
+        url = f"{self._base_document_index_url}/filter_indexes/{namespace}/{filter_index_name}"
+        data = {"field_name": field_name, "field_type": field_type}
         response = requests.put(url, data=dumps(data), headers=self.headers)
         self._raise_for_status(response)
 
@@ -431,7 +545,9 @@ class DocumentIndexClient:
         Returns:
             Configuration of the index.
         """
-        url = f"{self._base_document_index_url}/indexes/{index_path.namespace}/{index_path.index}"
+        url_suffix = f"indexes/{index_path.namespace}/{index_path.index}"
+        url = urljoin(self._base_document_index_url, url_suffix)
+
         response = requests.get(url, headers=self.headers)
         self._raise_for_status(response)
         response_json: Mapping[str, Any] = response.json()
@@ -450,8 +566,38 @@ class DocumentIndexClient:
             collection_path: Path to the collection of interest.
             index_name: Name of the index.
         """
-        url = f"{self._base_document_index_url}/collections/{collection_path.namespace}/{collection_path.collection}/indexes/{index_name}"
+        url_suffix = f"collections/{collection_path.namespace}/{collection_path.collection}/indexes/{index_name}"
+        url = urljoin(self._base_document_index_url, url_suffix)
+
         response = requests.put(url, headers=self.headers)
+        self._raise_for_status(response)
+
+    def assign_filter_index_to_search_index(
+        self, collection_path: CollectionPath, index_name: str, filter_index_name: str
+    ) -> None:
+        """Assign an existing filter index to an assigned search index.
+
+        Args:
+            collection_path: Path to the collection of interest.
+            index_name: Name of the index to assign the filter index to.
+            filter_index_name: Name of the filter index.
+        """
+        url = f"{self._base_document_index_url}/collections/{collection_path.namespace}/{collection_path.collection}/indexes/{index_name}/filter_indexes/{filter_index_name}"
+        response = requests.put(url, headers=self.headers)
+        self._raise_for_status(response)
+
+    def unassign_filter_index_from_search_index(
+        self, collection_path: CollectionPath, index_name: str, filter_index_name: str
+    ) -> None:
+        """Unassign a filter index from an assigned search index.
+
+        Args:
+            collection_path: Path to the collection of interest.
+            index_name: Name of the index to unassign the filter index from.
+            filter_index_name: Name of the filter index.
+        """
+        url = f"{self._base_document_index_url}/collections/{collection_path.namespace}/{collection_path.collection}/indexes/{index_name}/filter_indexes/{filter_index_name}"
+        response = requests.delete(url, headers=self.headers)
         self._raise_for_status(response)
 
     def delete_index_from_collection(
@@ -463,7 +609,22 @@ class DocumentIndexClient:
             index_name: Name of the index.
             collection_path: Path to the collection of interest.
         """
-        url = f"{self._base_document_index_url}/collections/{collection_path.namespace}/{collection_path.collection}/indexes/{index_name}"
+        url_suffix = f"collections/{collection_path.namespace}/{collection_path.collection}/indexes/{index_name}"
+        url = urljoin(self._base_document_index_url, url_suffix)
+
+        response = requests.delete(url, headers=self.headers)
+        self._raise_for_status(response)
+
+    def delete_filter_index_from_namespace(
+        self, namespace: str, filter_index_name: str
+    ) -> None:
+        """Delete a filter index from a namespace.
+
+        Args:
+            namespace: The namespace to delete the filter index from.
+            filter_index_name: The name of the filter index to delete.
+        """
+        url = f"{self._base_document_index_url}/filter_indexes/{namespace}/{filter_index_name}"
         response = requests.delete(url, headers=self.headers)
         self._raise_for_status(response)
 
@@ -492,10 +653,43 @@ class DocumentIndexClient:
         Returns:
             List of all indexes that are assigned to the collection.
         """
-        url = f"{self._base_document_index_url}/collections/{collection_path.namespace}/{collection_path.collection}/indexes"
+        url_suffix = f"collections/{collection_path.namespace}/{collection_path.collection}/indexes"
+        url = urljoin(self._base_document_index_url, url_suffix)
+
         response = requests.get(url, headers=self.headers)
         self._raise_for_status(response)
         return [str(index_name) for index_name in response.json()]
+
+    def list_assigned_filter_index_names(
+        self, collection_path: CollectionPath, index_name: str
+    ) -> Sequence[str]:
+        """List all filter-indexes assigned to a search index in a collection.
+
+        Args:
+            collection_path: Path to the collection of interest.
+            index_name: Search index to check.
+
+        Returns:
+            List of all filter-indexes that are assigned to the collection.
+        """
+        url = f"{self._base_document_index_url}/collections/{collection_path.namespace}/{collection_path.collection}/indexes/{index_name}/filter_indexes"
+        response = requests.get(url, headers=self.headers)
+        self._raise_for_status(response)
+        return [str(filter_index_name) for filter_index_name in response.json()]
+
+    def list_filter_indexes_in_namespace(self, namespace: str) -> Sequence[str]:
+        """List all filter indexes in a namespace.
+
+        Args:
+            namespace: The namespace to list filter indexes in.
+
+        Returns:
+            List of all filter indexes in the namespace.
+        """
+        url = f"{self._base_document_index_url}/filter_indexes/{namespace}"
+        response = requests.get(url, headers=self.headers)
+        self._raise_for_status(response)
+        return [str(filter_index_name) for filter_index_name in response.json()]
 
     def add_document(
         self,
@@ -512,7 +706,9 @@ class DocumentIndexClient:
             contents: Actual content of the document.
                 Currently only supports text.
         """
-        url = f"{self._base_document_index_url}/collections/{document_path.collection_path.namespace}/{document_path.collection_path.collection}/docs/{document_path.encoded_document_name()}"
+        url_suffix = f"collections/{document_path.collection_path.namespace}/{document_path.collection_path.collection}/docs/{document_path.encoded_document_name()}"
+        url = urljoin(self._base_document_index_url, url_suffix)
+
         response = requests.put(
             url, data=dumps(contents._to_modalities_json()), headers=self.headers
         )
@@ -524,7 +720,9 @@ class DocumentIndexClient:
         Args:
             document_path: Consists of `collection_path` and name of document to be deleted.
         """
-        url = f"{self._base_document_index_url}/collections/{document_path.collection_path.namespace}/{document_path.collection_path.collection}/docs/{document_path.encoded_document_name()}"
+        url_suffix = f"/collections/{document_path.collection_path.namespace}/{document_path.collection_path.collection}/docs/{document_path.encoded_document_name()}"
+        url = urljoin(self._base_document_index_url, url_suffix)
+
         response = requests.delete(url, headers=self.headers)
         self._raise_for_status(response)
 
@@ -537,7 +735,9 @@ class DocumentIndexClient:
         Returns:
             Content of the retrieved document.
         """
-        url = f"{self._base_document_index_url}/collections/{document_path.collection_path.namespace}/{document_path.collection_path.collection}/docs/{document_path.encoded_document_name()}"
+        url_suffix = f"collections/{document_path.collection_path.namespace}/{document_path.collection_path.collection}/docs/{document_path.encoded_document_name()}"
+        url = urljoin(self._base_document_index_url, url_suffix)
+
         response = requests.get(url, headers=self.headers)
         self._raise_for_status(response)
         return DocumentContents._from_modalities_json(response.json())
@@ -564,7 +764,10 @@ class DocumentIndexClient:
                 max_documents=None, starts_with=None
             )
 
-        url = f"{self._base_document_index_url}/collections/{collection_path.namespace}/{collection_path.collection}/docs"
+        url_suffix = (
+            f"collections/{collection_path.namespace}/{collection_path.collection}/docs"
+        )
+        url = urljoin(self._base_document_index_url, url_suffix)
 
         query_params = {}
         if filter_query_params.max_documents:
@@ -592,13 +795,33 @@ class DocumentIndexClient:
         Returns:
             Result of the search operation. Will be empty if nothing was retrieved.
         """
-        url = f"{self._base_document_index_url}/collections/{collection_path.namespace}/{collection_path.collection}/indexes/{index_name}/search"
+        url_suffix = f"collections/{collection_path.namespace}/{collection_path.collection}/indexes/{index_name}/search"
+        url = urljoin(self._base_document_index_url, url_suffix)
+
+        filters: list[dict[str, Any]] = [{"with": [{"modality": "text"}]}]
+        if search_query.filters:
+            for metadata_filter in search_query.filters:
+                filters.append(
+                    {
+                        f"{metadata_filter.filter_type}": [
+                            {
+                                "metadata": {
+                                    "field": filter_field.field_name,
+                                    f"{filter_field.criteria.value}": filter_field.field_value,
+                                }
+                            }
+                            for filter_field in metadata_filter.fields
+                        ]
+                    }
+                )
+
         data = {
             "query": [{"modality": "text", "text": search_query.query}],
             "max_results": search_query.max_results,
             "min_score": search_query.min_score,
-            "filter": [{"with": [{"modality": "text"}]}],
+            "filters": filters,
         }
+
         response = requests.post(url, data=dumps(data), headers=self.headers)
         self._raise_for_status(response)
         return [DocumentSearchResult._from_search_response(r) for r in response.json()]
