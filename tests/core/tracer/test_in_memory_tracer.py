@@ -185,7 +185,7 @@ def set_env(name: str, value: str | None) -> Iterator[None]:
         os.environ.update(old_environ)
 
 
-def test_in_memory_tracer_trace_viewer_doesnt_crash_if_it_cant_reach_document_index() -> (
+def test_in_memory_tracer_submit_to_trace_viewer_doesnt_crash_if_it_cant_reach_the_trace_viewer() -> (
     None
 ):
     # note that this test sets the environment variable, which might

@@ -10,6 +10,7 @@ from typing import (
     TypeVar,
     cast,
 )
+from urllib.parse import urljoin
 from uuid import uuid4
 
 from pydantic import BaseModel, computed_field
@@ -259,7 +260,9 @@ class DefaultArgillaClient(ArgillaClient):
 
     def _create_metadata_property(self, dataset_id: str, n_splits: int) -> None:
         response = self.session.get(
-            f"{self.api_url}api/v1/me/datasets/{dataset_id}/metadata-properties"
+            urljoin(
+                self.api_url, f"api/v1/me/datasets/{dataset_id}/metadata-properties"
+            )
         )
         response.raise_for_status()
         existing_split_id = [
@@ -269,7 +272,9 @@ class DefaultArgillaClient(ArgillaClient):
         ]
         if len(existing_split_id) > 0:
             self.session.delete(
-                f"{self.api_url}api/v1/metadata-properties/{existing_split_id[0]}"
+                urljoin(
+                    self.api_url, f"api/v1/metadata-properties/{existing_split_id[0]}"
+                )
             )
 
         data = {
@@ -281,7 +286,7 @@ class DefaultArgillaClient(ArgillaClient):
         }
 
         response = self.session.post(
-            f"{self.api_url}api/v1/datasets/{dataset_id}/metadata-properties",
+            urljoin(self.api_url, f"api/v1/datasets/{dataset_id}/metadata-properties"),
             json=data,
         )
         response.raise_for_status()
@@ -314,14 +319,14 @@ class DefaultArgillaClient(ArgillaClient):
                 ]
             }
             response = self.session.patch(
-                f"{self.api_url}api/v1/datasets/{dataset_id}/records",
+                urljoin(self.api_url, f"api/v1/datasets/{dataset_id}/records"),
                 json=data,
             )
             response.raise_for_status()
 
     def _evaluations(self, dataset_id: str) -> Mapping[str, Any]:
         response = self.session.get(
-            self.api_url + f"api/v1/datasets/{dataset_id}/records",
+            urljoin(self.api_url, f"api/v1/datasets/{dataset_id}/records"),
             params={"response_status": "submitted", "include": "responses"},
         )
         response.raise_for_status()
@@ -340,7 +345,7 @@ class DefaultArgillaClient(ArgillaClient):
 
     def create_evaluation(self, evaluation: ArgillaEvaluation) -> None:
         response = self.session.post(
-            self.api_url + f"api/v1/records/{evaluation.record_id}/responses",
+            urljoin(self.api_url, f"api/v1/records/{evaluation.record_id}/responses"),
             json={
                 "status": "submitted",
                 "values": {
@@ -352,13 +357,13 @@ class DefaultArgillaClient(ArgillaClient):
         response.raise_for_status()
 
     def _list_workspaces(self) -> Mapping[str, Any]:
-        url = self.api_url + "api/v1/me/workspaces"
+        url = urljoin(self.api_url, "api/v1/me/workspaces")
         response = self.session.get(url)
         response.raise_for_status()
         return cast(Mapping[str, Any], response.json())
 
     def _create_workspace(self, workspace_name: str) -> Mapping[str, Any]:
-        url = self.api_url + "api/workspaces"
+        url = urljoin(self.api_url, "api/workspaces")
         data = {
             "name": workspace_name,
         }
@@ -367,20 +372,20 @@ class DefaultArgillaClient(ArgillaClient):
         return cast(Mapping[str, Any], response.json())
 
     def _list_datasets(self, workspace_id: str) -> Mapping[str, Any]:
-        url = self.api_url + f"api/v1/me/datasets?workspace_id={workspace_id}"
+        url = urljoin(self.api_url, f"api/v1/me/datasets?workspace_id={workspace_id}")
         response = self.session.get(url)
         response.raise_for_status()
         return cast(Mapping[str, Any], response.json())
 
     def _publish_dataset(self, dataset_id: str) -> None:
-        url = self.api_url + f"api/v1/datasets/{dataset_id}/publish"
+        url = urljoin(self.api_url, f"api/v1/datasets/{dataset_id}/publish")
         response = self.session.put(url)
         response.raise_for_status()
 
     def _create_dataset(
         self, name: str, workspace_id: str, guidelines: str = "No guidelines."
     ) -> Mapping[str, Any]:
-        url = self.api_url + "api/v1/datasets"
+        url = urljoin(self.api_url, "api/v1/datasets")
         data = {
             "name": name,
             "guidelines": guidelines,
@@ -392,13 +397,13 @@ class DefaultArgillaClient(ArgillaClient):
         return cast(Mapping[str, Any], response.json())
 
     def _list_fields(self, dataset_id: str) -> Sequence[Any]:
-        url = self.api_url + f"api/v1/datasets/{dataset_id}/fields"
+        url = urljoin(self.api_url, f"api/v1/datasets/{dataset_id}/fields")
         response = self.session.get(url)
         response.raise_for_status()
         return cast(Sequence[Any], response.json())
 
     def _create_field(self, name: str, title: str, dataset_id: str) -> None:
-        url = self.api_url + f"api/v1/datasets/{dataset_id}/fields"
+        url = urljoin(self.api_url, f"api/v1/datasets/{dataset_id}/fields")
         data = {
             "name": name,
             "title": title,
@@ -416,7 +421,7 @@ class DefaultArgillaClient(ArgillaClient):
         settings: Mapping[str, Any],
         dataset_id: str,
     ) -> None:
-        url = self.api_url + f"api/v1/datasets/{dataset_id}/questions"
+        url = urljoin(self.api_url, f"api/v1/datasets/{dataset_id}/questions")
         data = {
             "name": name,
             "title": title,
@@ -433,7 +438,7 @@ class DefaultArgillaClient(ArgillaClient):
         optional_params: Optional[Mapping[str, str]] = None,
         page_size: int = 50,
     ) -> Iterable[Mapping[str, Any]]:
-        url = self.api_url + f"api/v1/datasets/{dataset_id}/records"
+        url = urljoin(self.api_url, f"api/v1/datasets/{dataset_id}/records")
         for offset in count(0, page_size):
             params: Mapping[str, str | int] = {
                 **(optional_params or {}),
@@ -457,7 +462,7 @@ class DefaultArgillaClient(ArgillaClient):
         records: Sequence[RecordData],
         dataset_id: str,
     ) -> None:
-        url = self.api_url + f"api/v1/datasets/{dataset_id}/records"
+        url = urljoin(self.api_url, f"api/v1/datasets/{dataset_id}/records")
         for batch in batch_iterator(records, 200):
             data = {
                 "items": [
@@ -480,11 +485,11 @@ class DefaultArgillaClient(ArgillaClient):
         self._delete_workspace(workspace_id)
 
     def _delete_workspace(self, workspace_id: str) -> None:
-        url = self.api_url + f"api/v1/workspaces/{workspace_id}"
+        url = urljoin(self.api_url, f"api/v1/workspaces/{workspace_id}")
         response = self.session.delete(url)
         response.raise_for_status()
 
     def _delete_dataset(self, dataset_id: str) -> None:
-        url = self.api_url + f"api/v1/datasets/{dataset_id}"
+        url = urljoin(self.api_url, f"api/v1/datasets/{dataset_id}")
         response = self.session.delete(url)
         response.raise_for_status()

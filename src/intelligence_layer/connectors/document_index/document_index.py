@@ -5,7 +5,7 @@ from enum import Enum
 from http import HTTPStatus
 from json import dumps
 from typing import Annotated, Any, Literal, Optional, Union
-from urllib.parse import quote
+from urllib.parse import quote, urljoin
 
 import requests
 from pydantic import BaseModel, Field, field_validator, model_validator
@@ -434,7 +434,7 @@ class DocumentIndexClient:
         Returns:
             List of all available namespaces.
         """
-        url = f"{self._base_document_index_url}/namespaces"
+        url = urljoin(self._base_document_index_url, "namespaces")
         response = requests.get(url, headers=self.headers)
         self._raise_for_status(response)
         return [str(namespace) for namespace in response.json()]
@@ -448,7 +448,10 @@ class DocumentIndexClient:
         Args:
             collection_path: Path to the collection of interest.
         """
-        url = f"{self._base_document_index_url}/collections/{collection_path.namespace}/{collection_path.collection}"
+        url_suffix = (
+            f"/collections/{collection_path.namespace}/{collection_path.collection}"
+        )
+        url = urljoin(self._base_document_index_url, url_suffix)
         response = requests.put(url, headers=self.headers)
         self._raise_for_status(response)
 
@@ -458,7 +461,10 @@ class DocumentIndexClient:
         Args:
             collection_path: Path to the collection of interest.
         """
-        url = f"{self._base_document_index_url}/collections/{collection_path.namespace}/{collection_path.collection}"
+        url_suffix = (
+            f"collections/{collection_path.namespace}/{collection_path.collection}"
+        )
+        url = urljoin(self._base_document_index_url, url_suffix)
         response = requests.delete(url, headers=self.headers)
         self._raise_for_status(response)
 
@@ -472,7 +478,8 @@ class DocumentIndexClient:
         Returns:
             List of all `CollectionPath` instances in the given namespace.
         """
-        url = f"{self._base_document_index_url}/collections/{namespace}"
+        url_suffix = f"collections/{namespace}"
+        url = urljoin(self._base_document_index_url, url_suffix)
         response = requests.get(url, headers=self.headers)
         self._raise_for_status(response)
         return [
@@ -489,7 +496,8 @@ class DocumentIndexClient:
             index_path: Path to the index.
             index_configuration: Configuration of the index to be created.
         """
-        url = f"{self._base_document_index_url}/indexes/{index_path.namespace}/{index_path.index}"
+        url_suffix = f"indexes/{index_path.namespace}/{index_path.index}"
+        url = urljoin(self._base_document_index_url, url_suffix)
 
         data = {
             "chunk_size": index_configuration.chunk_size,
@@ -537,7 +545,9 @@ class DocumentIndexClient:
         Returns:
             Configuration of the index.
         """
-        url = f"{self._base_document_index_url}/indexes/{index_path.namespace}/{index_path.index}"
+        url_suffix = f"indexes/{index_path.namespace}/{index_path.index}"
+        url = urljoin(self._base_document_index_url, url_suffix)
+
         response = requests.get(url, headers=self.headers)
         self._raise_for_status(response)
         response_json: Mapping[str, Any] = response.json()
@@ -556,7 +566,9 @@ class DocumentIndexClient:
             collection_path: Path to the collection of interest.
             index_name: Name of the index.
         """
-        url = f"{self._base_document_index_url}/collections/{collection_path.namespace}/{collection_path.collection}/indexes/{index_name}"
+        url_suffix = f"collections/{collection_path.namespace}/{collection_path.collection}/indexes/{index_name}"
+        url = urljoin(self._base_document_index_url, url_suffix)
+
         response = requests.put(url, headers=self.headers)
         self._raise_for_status(response)
 
@@ -597,7 +609,9 @@ class DocumentIndexClient:
             index_name: Name of the index.
             collection_path: Path to the collection of interest.
         """
-        url = f"{self._base_document_index_url}/collections/{collection_path.namespace}/{collection_path.collection}/indexes/{index_name}"
+        url_suffix = f"collections/{collection_path.namespace}/{collection_path.collection}/indexes/{index_name}"
+        url = urljoin(self._base_document_index_url, url_suffix)
+
         response = requests.delete(url, headers=self.headers)
         self._raise_for_status(response)
 
@@ -625,7 +639,9 @@ class DocumentIndexClient:
         Returns:
             List of all indexes that are assigned to the collection.
         """
-        url = f"{self._base_document_index_url}/collections/{collection_path.namespace}/{collection_path.collection}/indexes"
+        url_suffix = f"collections/{collection_path.namespace}/{collection_path.collection}/indexes"
+        url = urljoin(self._base_document_index_url, url_suffix)
+
         response = requests.get(url, headers=self.headers)
         self._raise_for_status(response)
         return [str(index_name) for index_name in response.json()]
@@ -676,7 +692,9 @@ class DocumentIndexClient:
             contents: Actual content of the document.
                 Currently only supports text.
         """
-        url = f"{self._base_document_index_url}/collections/{document_path.collection_path.namespace}/{document_path.collection_path.collection}/docs/{document_path.encoded_document_name()}"
+        url_suffix = f"collections/{document_path.collection_path.namespace}/{document_path.collection_path.collection}/docs/{document_path.encoded_document_name()}"
+        url = urljoin(self._base_document_index_url, url_suffix)
+
         response = requests.put(
             url, data=dumps(contents._to_modalities_json()), headers=self.headers
         )
@@ -688,7 +706,9 @@ class DocumentIndexClient:
         Args:
             document_path: Consists of `collection_path` and name of document to be deleted.
         """
-        url = f"{self._base_document_index_url}/collections/{document_path.collection_path.namespace}/{document_path.collection_path.collection}/docs/{document_path.encoded_document_name()}"
+        url_suffix = f"/collections/{document_path.collection_path.namespace}/{document_path.collection_path.collection}/docs/{document_path.encoded_document_name()}"
+        url = urljoin(self._base_document_index_url, url_suffix)
+
         response = requests.delete(url, headers=self.headers)
         self._raise_for_status(response)
 
@@ -701,7 +721,9 @@ class DocumentIndexClient:
         Returns:
             Content of the retrieved document.
         """
-        url = f"{self._base_document_index_url}/collections/{document_path.collection_path.namespace}/{document_path.collection_path.collection}/docs/{document_path.encoded_document_name()}"
+        url_suffix = f"collections/{document_path.collection_path.namespace}/{document_path.collection_path.collection}/docs/{document_path.encoded_document_name()}"
+        url = urljoin(self._base_document_index_url, url_suffix)
+
         response = requests.get(url, headers=self.headers)
         self._raise_for_status(response)
         return DocumentContents._from_modalities_json(response.json())
@@ -728,7 +750,10 @@ class DocumentIndexClient:
                 max_documents=None, starts_with=None
             )
 
-        url = f"{self._base_document_index_url}/collections/{collection_path.namespace}/{collection_path.collection}/docs"
+        url_suffix = (
+            f"collections/{collection_path.namespace}/{collection_path.collection}/docs"
+        )
+        url = urljoin(self._base_document_index_url, url_suffix)
 
         query_params = {}
         if filter_query_params.max_documents:
@@ -756,7 +781,8 @@ class DocumentIndexClient:
         Returns:
             Result of the search operation. Will be empty if nothing was retrieved.
         """
-        url = f"{self._base_document_index_url}/collections/{collection_path.namespace}/{collection_path.collection}/indexes/{index_name}/search"
+        url_suffix = f"collections/{collection_path.namespace}/{collection_path.collection}/indexes/{index_name}/search"
+        url = urljoin(self._base_document_index_url, url_suffix)
 
         filters: list[dict[str, Any]] = [{"with": [{"modality": "text"}]}]
         if search_query.filters:
