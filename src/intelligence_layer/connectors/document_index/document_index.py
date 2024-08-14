@@ -628,6 +628,20 @@ class DocumentIndexClient:
         response = requests.delete(url, headers=self.headers)
         self._raise_for_status(response)
 
+    def progress(self, collection_path: CollectionPath) -> int:
+        """Get the number of unembedded documents in a collection.
+
+        Args:
+            collection_path: Path to the collection of interest.
+
+        Returns:
+            The number of unembedded documents in a collection.
+        """
+        url = f"{self._base_document_index_url}/collections/{collection_path.namespace}/{collection_path.collection}/progress"
+        response = requests.get(url, headers=self.headers)
+        self._raise_for_status(response)
+        return int(response.text)
+
     def list_assigned_index_names(
         self, collection_path: CollectionPath
     ) -> Sequence[str]:
