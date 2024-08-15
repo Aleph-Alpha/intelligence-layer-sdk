@@ -1,10 +1,17 @@
 import io
 from datetime import datetime
+from typing import Any, Optional
 
 from pydantic import BaseModel
+from pydantic.alias_generators import to_camel, to_snake
 
 
-class DataRepository(BaseModel):
+class BaseDataModel(BaseModel):
+    class Config:
+        alias_generator = to_camel
+
+
+class DataRepository(BaseDataModel):
     """Data Repository model.
 
     Attributes:
@@ -20,13 +27,13 @@ class DataRepository(BaseModel):
     repository_id: str
     name: str
     mutable: bool
-    mediaType: str
+    media_type: str
     modality: str
-    createdAt: datetime
-    updatedAt: datetime
+    created_at: datetime
+    updated_at: datetime
 
 
-class DataRepositoryCreate(BaseModel):
+class DataRepositoryCreate(BaseDataModel):
     """Data Repository creation model.
 
     Attributes:
@@ -36,11 +43,11 @@ class DataRepositoryCreate(BaseModel):
     """
 
     name: str
-    mediaType: str
+    media_type: str
     modality: str
 
 
-class Dataset(BaseModel):
+class DataDataset(BaseDataModel):
     """Dataset model.
 
     Attributes:
@@ -48,20 +55,22 @@ class Dataset(BaseModel):
     labels: List of labels of the dataset
     repository_id: Repository ID that identifies the repository(group of datasets)
     mutable: Indicates if the dataset is mutable or not
-    total_units: Total number of units in the dataset
+    total_datapoints: Total number of units in the dataset
     createdAt: Datetime when the dataset was created
     updatedAt: Datetime when the dataset was updated
     """
 
     repository_id: str
     dataset_id: str
+    name: Optional[str] = None
     labels: list[str]
-    total_units: int
-    created_at: str
-    updated_at: str
+    total_datapoints: int
+    metadata: Optional[dict[str, Any]] = None
+    created_at: datetime
+    updated_at: datetime
 
 
-class DatasetCreate(BaseModel):
+class DatasetCreate(BaseDataModel):
     """Dataset creation model.
 
     Attributes:
@@ -71,8 +80,11 @@ class DatasetCreate(BaseModel):
     """
 
     source_data: io.BufferedReader | bytes
+    name: Optional[str] = None
     labels: list[str]
-    total_units: int
+    total_datapoints: int
+    metadata: Optional[dict[str, Any]] = None
 
     class Config:
+        alias_generator = to_snake
         arbitrary_types_allowed = True

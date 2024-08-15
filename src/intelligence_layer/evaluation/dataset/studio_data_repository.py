@@ -53,15 +53,17 @@ class StudioDataRepository(DatasetRepository):
             repository_id=self.repository_id,
             dataset=DatasetCreate(
                 source_data="\n".join(source_data_list).encode(),
+                name=dataset_name,
                 labels=[label for label in labels] if labels is not None else [],
-                total_units=len(source_data_list),
+                total_datapoints=len(source_data_list),
+                metadata=metadata,
             ),
         )
         return Dataset(
             id=remote_dataset.dataset_id,
-            name=dataset_name,  # Not implemented in data platform
+            name=remote_dataset.name or "",
             labels=set(remote_dataset.labels) if labels is not None else set(),
-            metadata=metadata if metadata is not None else dict(),
+            metadata=remote_dataset.metadata or dict(),
         )
 
     def delete_dataset(self, dataset_id: str) -> None:
@@ -88,9 +90,9 @@ class StudioDataRepository(DatasetRepository):
         )
         return Dataset(
             id=remote_dataset.dataset_id,
-            name="",  # Not implemented in data platform
+            name=remote_dataset.name or "",
             labels=set(remote_dataset.labels),
-            metadata={},  # Not implemented in data platform
+            metadata=remote_dataset.metadata or dict(),
         )
 
     def datasets(self) -> Iterable[Dataset]:
@@ -104,9 +106,9 @@ class StudioDataRepository(DatasetRepository):
         ):
             yield Dataset(
                 id=remote_dataset.dataset_id,
-                name="",  # Not implemented in data platform
+                name=remote_dataset.name or "",
                 labels=set(remote_dataset.labels),
-                metadata={},  # Not implemented in data platform
+                metadata=remote_dataset.metadata or dict(),
             )
 
     def dataset_ids(self) -> Iterable[str]:

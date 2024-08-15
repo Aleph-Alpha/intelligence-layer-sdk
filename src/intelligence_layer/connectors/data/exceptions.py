@@ -12,19 +12,19 @@ class DataInternalError(DataError):
     DEFAULT_MESSAGE = "Internal error: An unexpected error occurred. "
 
 
-class ResourceNotFound(DataError):
+class DataResourceNotFound(DataError):
     """Exception raised when a resource is not found."""
 
     DEFAULT_MESSAGE = "Resource not found: The requested resource was not found. "
 
 
-class InvalidInput(DataError):
+class DataInvalidInput(DataError):
     """Exception raised when the input is invalid."""
 
     DEFAULT_MESSAGE = "Invalid input: The input provided is invalid. "
 
 
-class ExternalServiceUnavailable(DataError):
+class DataExternalServiceUnavailable(DataError):
     """Exception raised when an external service is unavailable."""
 
     DEFAULT_MESSAGE = (
@@ -32,7 +32,7 @@ class ExternalServiceUnavailable(DataError):
     )
 
 
-class ForbiddenError(DataError):
+class DataForbiddenError(DataError):
     """Exception raised when a forbidden error occurs."""
 
     DEFAULT_MESSAGE = (

@@ -1,22 +1,22 @@
 from .data import DataClient
 from .exceptions import (
+    DataExternalServiceUnavailable,
+    DataForbiddenError,
     DataInternalError,
-    ExternalServiceUnavailable,
-    ForbiddenError,
-    InvalidInput,
-    ResourceNotFound,
+    DataInvalidInput,
+    DataResourceNotFound,
 )
-from .models import DataRepository, DataRepositoryCreate, Dataset, DatasetCreate
+from .models import DataDataset, DataRepository, DataRepositoryCreate, DatasetCreate
 
 __all__ = [
     "DataClient",
     "DataInternalError",
-    "ExternalServiceUnavailable",
-    "ForbiddenError",
-    "InvalidInput",
-    "ResourceNotFound",
+    "DataExternalServiceUnavailable",
+    "DataForbiddenError",
+    "DataInvalidInput",
+    "DataResourceNotFound",
     "DataRepository",
     "DataRepositoryCreate",
-    "Dataset",
+    "DataDataset",
     "DatasetCreate",
 ]
