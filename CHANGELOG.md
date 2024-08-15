@@ -2,8 +2,23 @@
 
 ## Unreleased
 ...
+
 ### Breaking Changes
 ...
+
+### Features
+...
+
+### Fixes
+...
+
+### Deprecations 
+...
+
+### Breaking Changes
+...
+
+## 5.1.0
 
 ### Features
 - Updated `DocumentIndexClient` with support for metadata filters.
