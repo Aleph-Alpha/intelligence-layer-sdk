@@ -13,11 +13,16 @@ from intelligence_layer.core import (
     ControlModel,
     ExplainInput,
     Llama2InstructModel,
+    Llama3ChatModel,
     Llama3InstructModel,
     LuminousControlModel,
+    Message,
     NoOpTracer,
 )
-from intelligence_layer.core.model import _cached_context_size, _cached_tokenizer
+from intelligence_layer.core.model import (
+    _cached_context_size,
+    _cached_tokenizer,
+)
 
 
 @fixture
@@ -157,3 +162,30 @@ def test_context_size_caching_works() -> None:
     _cached_context_size.cache_clear()
     different_result = another_model_instance.context_size
     assert context_size is not different_result
+
+
+def test_chat_model_can_produce_chat_prompt() -> None:
+    client = DummyModelClient()  # type: ignore
+    model = Llama3ChatModel("llama-3.1-8b-instruct", client)
+    messages = [
+        Message(role="system", content="You are a nice assistant."),
+        Message(role="user", content="What's 2+2?"),
+    ]
+    response_prefix = "The answer is"
+
+    prompt = model.to_chat_prompt(messages=messages, response_prefix=response_prefix)
+
+    assert isinstance(prompt.items[0], Text)
+
+    text_in_prompt = prompt.items[0].text
+
+    assert (
+        text_in_prompt
+        == """<|begin_of_text|><|start_header_id|>system<|end_header_id|>
+
+You are a nice assistant.<|eot_id|><|start_header_id|>user<|end_header_id|>
+
+What's 2+2?<|eot_id|><|start_header_id|>assistant<|end_header_id|>
+
+The answer is"""
+    )

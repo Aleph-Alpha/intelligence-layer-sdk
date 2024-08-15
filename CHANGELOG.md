@@ -7,7 +7,8 @@
 ...
 
 ### Features
-...
+- Add new abstract `ChatModel` class. Can be used for completions by sending a number of messages
+- Introduced `Pharia1ChatModel` and `Llama3ChatModel` to allow users to query these models with the correct prompt format
 
 ### Fixes
 ...

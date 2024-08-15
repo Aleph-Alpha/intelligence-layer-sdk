@@ -2,7 +2,7 @@ import typing
 import warnings
 from abc import ABC, abstractmethod
 from functools import lru_cache
-from typing import ClassVar, Optional
+from typing import ClassVar, Literal, Optional
 
 from aleph_alpha_client import (
     CompletionRequest,
@@ -370,6 +370,8 @@ class Llama3InstructModel(ControlModel):
     RECOMMENDED_MODELS: ClassVar[list[str]] = [
         "llama-3-8b-instruct",
         "llama-3-70b-instruct",
+        "llama-3.1-8b-instruct",
+        "llama-3.1-70b-instruct",
     ]
 
     def __init__(
@@ -405,4 +407,136 @@ class Llama3InstructModel(ControlModel):
     ) -> RichPrompt:
         return self.INSTRUCTION_PROMPT_TEMPLATE.to_rich_prompt(
             instruction=instruction, input=input, response_prefix=response_prefix
+        )
+
+
+class Message(BaseModel):
+    role: Literal["system", "user", "assistant"]
+    content: str
+
+
+class ChatModel(ABC, AlephAlphaModel):
+    RECOMMENDED_MODELS: ClassVar[list[str]] = []
+
+    def __init__(
+        self, name: str, client: AlephAlphaClientProtocol | None = None
+    ) -> None:
+        if name not in self.RECOMMENDED_MODELS or name == "":
+            warnings.warn(
+                "The provided model is not a recommended model for this model class."
+                "Make sure that the model you have selected is suited to be use for the prompt template used in this model class."
+            )
+        super().__init__(name, client)
+
+    @property
+    @abstractmethod
+    def eot_token(self) -> str:
+        pass
+
+    @abstractmethod
+    def to_chat_prompt(
+        self,
+        messages: list[Message],
+        response_prefix: Optional[str] = None,
+    ) -> RichPrompt:
+        pass
+
+
+class Pharia1ChatModel(ChatModel):
+    """Instruction model to be used for all `Pharia-1-LLM-*` models.
+
+    Args:
+        name: The name of a valid llama-3 model.
+            Defaults to `llama-3-8b-instruct`
+        client: Aleph Alpha client instance for running model related API calls.
+            Defaults to :class:`LimitedConcurrencyClient`
+    """
+
+    CHAT_PROMPT_TEMPLATE = PromptTemplate(
+        """<|begin_of_text|>{% for message in messages %}<|start_header_id|>{{message.role}}<|end_header_id|>
+
+{% promptrange instruction %}{{message.content}}{% endpromptrange %}<|eot_id|>{% endfor %}<|start_header_id|>assistant<|end_header_id|>
+
+{% if response_prefix %}{{response_prefix}}{% endif %}"""
+    )
+
+    RECOMMENDED_MODELS: ClassVar[list[str]] = [
+        "Pharia-1-LLM-7b-control",
+        "Pharia-1-LLM-66b-control",
+    ]
+
+    def __init__(
+        self,
+        name: str = "Pharia-1-LLM-7b-control",
+        client: Optional[AlephAlphaClientProtocol] = None,
+    ) -> None:
+        super().__init__(name, client)
+
+    @property
+    def eot_token(self) -> str:
+        return "<|endoftext|>"
+
+    def to_chat_prompt(
+        self, messages: list[Message], response_prefix: str | None = None
+    ) -> RichPrompt:
+        return self.CHAT_PROMPT_TEMPLATE.to_rich_prompt(
+            messages=[m.model_dump() for m in messages], response_prefix=response_prefix
+        )
+
+
+class Llama3ChatModel(ChatModel):
+    """Instruction model to be used for `llama-3-*` and `llama-3.1-*` models.
+
+    Args:
+        name: The name of a valid llama-3 model.
+            Defaults to `llama-3-8b-instruct`
+        client: Aleph Alpha client instance for running model related API calls.
+            Defaults to :class:`LimitedConcurrencyClient`
+    """
+
+    CHAT_PROMPT_TEMPLATE = PromptTemplate(
+        """<|begin_of_text|>{% for message in messages %}<|start_header_id|>{{message.role}}<|end_header_id|>
+
+{% promptrange instruction %}{{message.content}}{% endpromptrange %}<|eot_id|>{% endfor %}<|start_header_id|>assistant<|end_header_id|>
+
+{% if response_prefix %}{{response_prefix}}{% endif %}"""
+    )
+
+    RECOMMENDED_MODELS: ClassVar[list[str]] = [
+        "llama-3-8b-instruct",
+        "llama-3-70b-instruct",
+        "llama-3.1-8b-instruct",
+        "llama-3.1-70b-instruct",
+    ]
+
+    def __init__(
+        self,
+        name: str = "llama-3.1-8b-instruct",
+        client: Optional[AlephAlphaClientProtocol] = None,
+    ) -> None:
+        super().__init__(name, client)
+
+    @property
+    def eot_token(self) -> str:
+        return "<|eot_id|>"
+
+    def _add_eot_token_to_stop_sequences(self, input: CompleteInput) -> CompleteInput:
+        # remove this once the API supports the llama-3 EOT_TOKEN
+        params = input.__dict__
+        if isinstance(params["stop_sequences"], list):
+            if self.eot_token not in params["stop_sequences"]:
+                params["stop_sequences"].append(self.eot_token)
+        else:
+            params["stop_sequences"] = [self.eot_token]
+        return CompleteInput(**params)
+
+    def complete(self, input: CompleteInput, tracer: Tracer) -> CompleteOutput:
+        input_with_eot = self._add_eot_token_to_stop_sequences(input)
+        return super().complete(input_with_eot, tracer)
+
+    def to_chat_prompt(
+        self, messages: list[Message], response_prefix: str | None = None
+    ) -> RichPrompt:
+        return self.CHAT_PROMPT_TEMPLATE.to_rich_prompt(
+            messages=[m.model_dump() for m in messages], response_prefix=response_prefix
         )
