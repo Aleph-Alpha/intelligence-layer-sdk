@@ -3,8 +3,7 @@ from unittest.mock import Mock
 import pytest
 from pydantic import BaseModel
 
-from intelligence_layer.connectors.data import DataClient
-from intelligence_layer.connectors.data.models import DatasetCreate
+from intelligence_layer.connectors import DataClient, DataDataset, DatasetCreate
 from intelligence_layer.evaluation.dataset.domain import (
     Dataset,
     Example,
@@ -36,9 +35,12 @@ def test_create_dataset(
     studio_data_repository: StudioDataRepository, mock_data_client: Mock
 ) -> None:
     # Mock the data client's create_dataset method
-    mock_data_client.create_dataset.return_value = Mock(
-        dataset_id="dataset1", labels=["label"], metadata={}
-    )
+    return_dataset_mock = Mock(spec=DataDataset)
+    return_dataset_mock.dataset_id = "dataset1"
+    return_dataset_mock.labels = ["label"]
+    return_dataset_mock.metadata = {}
+    return_dataset_mock.name = "Dataset 1"
+    mock_data_client.create_dataset.return_value = return_dataset_mock
 
     # Create some example data
 
@@ -70,11 +72,13 @@ def test_create_dataset(
     # Verify that the data client's create_dataset method was called with the correct parameters
     mock_data_client.create_dataset.assert_called_once_with(
         repository_id="repo1",
-        dataset=DatasetCreate.parse_obj(
+        dataset=DatasetCreate.model_validate(
             {
                 "source_data": b'{"input":{"data":"input1"},"expected_output":{"data":"output1"},"id":"example1","metadata":null}\n{"input":{"data":"input2"},"expected_output":{"data":"output2"},"id":"example2","metadata":null}',
                 "labels": ["label"],
-                "total_units": 2,
+                "name": "Dataset 1",
+                "total_datapoints": 2,
+                "metadata": {},
             }
         ),
     )
@@ -96,17 +100,19 @@ def test_dataset(
     studio_data_repository: StudioDataRepository, mock_data_client: Mock
 ) -> None:
     # Mock the data client's get_dataset method
-    mock_data_client.get_dataset.return_value = Mock(
-        dataset_id="dataset1", labels=set(), metadata={}
-    )
-
+    return_dataset_mock = Mock(spec=DataDataset)
+    return_dataset_mock.dataset_id = "dataset1"
+    return_dataset_mock.labels = []
+    return_dataset_mock.metadata = {}
+    return_dataset_mock.name = "Dataset 1"
+    mock_data_client.get_dataset.return_value = return_dataset_mock
     # Call the method
     dataset = studio_data_repository.dataset(dataset_id="dataset1")
 
     # Assertions
     assert isinstance(dataset, Dataset)
     assert dataset.id == "dataset1"
-    assert dataset.name == ""
+    assert dataset.name == "Dataset 1"
     assert dataset.labels == set()
     assert dataset.metadata == {}
 
@@ -120,9 +126,21 @@ def test_datasets(
     studio_data_repository: StudioDataRepository, mock_data_client: Mock
 ) -> None:
     # Mock the data client's list_datasets method
+    return_dataset_mock = Mock(spec=DataDataset)
+    return_dataset_mock.dataset_id = "dataset1"
+    return_dataset_mock.labels = []
+    return_dataset_mock.metadata = {}
+    return_dataset_mock.name = "Dataset 1"
+
+    return_dataset_mock_2 = Mock(spec=DataDataset)
+    return_dataset_mock_2.dataset_id = "dataset2"
+    return_dataset_mock_2.labels = []
+    return_dataset_mock_2.metadata = {}
+    return_dataset_mock_2.name = "Dataset 2"
+
     mock_data_client.list_datasets.return_value = [
-        Mock(dataset_id="dataset1", labels=set(), metadata={}),
-        Mock(dataset_id="dataset2", labels=set(), metadata={}),
+        return_dataset_mock,
+        return_dataset_mock_2,
     ]
 
     # Call the method
@@ -132,12 +150,12 @@ def test_datasets(
     assert len(datasets) == 2
     assert isinstance(datasets[0], Dataset)
     assert datasets[0].id == "dataset1"
-    assert datasets[0].name == ""
+    assert datasets[0].name == "Dataset 1"
     assert datasets[0].labels == set()
     assert datasets[0].metadata == {}
     assert isinstance(datasets[1], Dataset)
     assert datasets[1].id == "dataset2"
-    assert datasets[1].name == ""
+    assert datasets[1].name == "Dataset 2"
     assert datasets[1].labels == set()
     assert datasets[1].metadata == {}
 
@@ -149,9 +167,21 @@ def test_dataset_ids(
     studio_data_repository: StudioDataRepository, mock_data_client: Mock
 ) -> None:
     # Mock the data client's list_datasets method
+    return_dataset_mock = Mock(spec=DataDataset)
+    return_dataset_mock.dataset_id = "dataset1"
+    return_dataset_mock.labels = ["label"]
+    return_dataset_mock.metadata = {}
+    return_dataset_mock.name = "Dataset 1"
+
+    return_dataset_mock_2 = Mock(spec=DataDataset)
+    return_dataset_mock_2.dataset_id = "dataset2"
+    return_dataset_mock_2.labels = ["label"]
+    return_dataset_mock_2.metadata = {}
+    return_dataset_mock_2.name = "Dataset 2"
+
     mock_data_client.list_datasets.return_value = [
-        Mock(dataset_id="dataset1", labels=set(), metadata={}),
-        Mock(dataset_id="dataset2", labels=set(), metadata={}),
+        return_dataset_mock,
+        return_dataset_mock_2,
     ]
 
     # Call the method

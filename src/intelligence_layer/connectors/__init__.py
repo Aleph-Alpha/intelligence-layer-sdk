@@ -10,6 +10,34 @@ from .argilla.default_client import Field as Field
 from .argilla.default_client import Question as Question
 from .base.json_serializable import JsonSerializable as JsonSerializable
 from .base.json_serializable import SerializableDict as SerializableDict
+from .data.data import DataClient as DataClient
+from .data.exceptions import (
+    DataExternalServiceUnavailable as DataExternalServiceUnavailable,
+)
+from .data.exceptions import (
+    DataForbiddenError as DataForbiddenError,
+)
+from .data.exceptions import (
+    DataInternalError as DataInternalError,
+)
+from .data.exceptions import (
+    DataInvalidInput as DataInvalidInput,
+)
+from .data.exceptions import (
+    DataResourceNotFound as DataResourceNotFound,
+)
+from .data.models import (
+    DataDataset as DataDataset,
+)
+from .data.models import (
+    DataRepository as DataRepository,
+)
+from .data.models import (
+    DataRepositoryCreate as DataRepositoryCreate,
+)
+from .data.models import (
+    DatasetCreate as DatasetCreate,
+)
 from .document_index.document_index import CollectionPath as CollectionPath
 from .document_index.document_index import ConstraintViolation as ConstraintViolation
 from .document_index.document_index import DocumentContents as DocumentContents
