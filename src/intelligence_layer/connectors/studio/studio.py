@@ -21,11 +21,11 @@ class StudioProject(BaseModel):
 
 
 class StudioClient:
-    """Client for communicating with PhariaStudio.
+    """Client for communicating with Studio.
 
     Attributes:
       project_id: The unique identifier of the project currently in use.
-      url: The url of your current PhariaStudio instance.
+      url: The url of your current Studio instance.
     """
 
     def __init__(
@@ -41,7 +41,7 @@ class StudioClient:
 
         Args:
             project: The human readable identifier provided by the user.
-            studio_url: The url of your current PhariaStudio instance.
+            studio_url: The url of your current Studio instance.
             auth_token: The authorization bearer token of the user. This corresponds to the user's Aleph Alpha token.
         """
         self._token = auth_token if auth_token is not None else os.getenv("AA_TOKEN")
@@ -116,7 +116,7 @@ class StudioClient:
             return None
 
     def create_project(self, project: str, description: Optional[str] = None) -> int:
-        """Creates a project in PhariaStudio.
+        """Creates a project in Studio.
 
         Projects are uniquely identified by the user provided name.
 

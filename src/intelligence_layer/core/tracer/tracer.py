@@ -8,6 +8,7 @@ from datetime import datetime, timezone
 from enum import Enum
 from types import TracebackType
 from typing import TYPE_CHECKING, Literal, Optional, Union
+from urllib.parse import urljoin
 from uuid import UUID, uuid4
 
 import requests
@@ -112,7 +113,7 @@ def submit_to_trace_viewer(exported_spans: Sequence[ExportedSpan]) -> bool:
 
     """
     trace_viewer_url = os.getenv("TRACE_VIEWER_URL", "http://localhost:3000")
-    trace_viewer_trace_upload = f"{trace_viewer_url}/trace"
+    trace_viewer_trace_upload = urljoin(trace_viewer_url, "/trace")
     try:
         res = requests.post(
             trace_viewer_trace_upload,
@@ -331,21 +332,6 @@ class TaskSpan(Span):
         """
         ...
 
-    def __exit__(
-        self,
-        exc_type: Optional[type[BaseException]],
-        exc_value: Optional[BaseException],
-        _traceback: Optional[TracebackType],
-    ) -> None:
-        if exc_type is not None and exc_value is not None and _traceback is not None:
-            error_value = ErrorValue(
-                error_type=str(exc_type.__qualname__),
-                message=str(exc_value),
-                stack_trace=str(traceback.format_exc()),
-            )
-            self.record_output(error_value)
-        self.end()
-
 
 class NoOpTracer(TaskSpan):
     """A no-op tracer.
@@ -390,6 +376,14 @@ class NoOpTracer(TaskSpan):
 
     def export_for_viewing(self) -> Sequence[ExportedSpan]:
         return []
+
+    def __exit__(
+        self,
+        exc_type: Optional[type[BaseException]],
+        exc_value: Optional[BaseException],
+        _traceback: Optional[TracebackType],
+    ) -> None:
+        pass
 
 
 class JsonSerializer(RootModel[PydanticSerializable]):
