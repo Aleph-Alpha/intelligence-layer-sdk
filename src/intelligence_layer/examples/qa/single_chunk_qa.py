@@ -193,7 +193,7 @@ class SingleChunkQa(Task[SingleChunkQaInput, SingleChunkQaOutput]):
     def _get_no_answer_logit_bias(
         self, no_answer_str: str, no_answer_logit_bias: float
     ) -> dict[int, float]:
-        return {self._model.tokenize(no_answer_str).ids[0]: no_answer_logit_bias}
+        return {self._model.tokenize(no_answer_str, True).ids[0]: no_answer_logit_bias}
 
     def _generate_answer(
         self,

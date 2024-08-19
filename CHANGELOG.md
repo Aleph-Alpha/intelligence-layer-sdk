@@ -1,7 +1,9 @@
 # Changelog
 
 ## Unreleased
-...
+- Abstract `LanguageModel` class to integrate with LLMs from any API
+- Abstract `ChatModel` class to integrate with chat models from any API
+- Every `LanguageModel` supports echo to retrieve log probs for an expected completion given a prompt
 
 ### Breaking Changes
 ...
