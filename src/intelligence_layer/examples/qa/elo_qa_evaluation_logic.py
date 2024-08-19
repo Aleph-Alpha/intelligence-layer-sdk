@@ -105,7 +105,7 @@ Response: Answer """
         complete_input = CompleteInput(
             prompt=Prompt.from_text(text),
             maximum_tokens=1,
-            log_probs=3,
+            log_probs=30,  # we use a high number to make sure that at least one of the Values is in the list of log_probs
             disable_optimizations=True,
         )
         complete_output = self._model.complete_task().run(complete_input, task_span)
