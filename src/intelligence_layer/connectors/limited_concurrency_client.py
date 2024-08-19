@@ -1,5 +1,4 @@
 import time
-import warnings
 from collections.abc import Callable, Mapping, Sequence
 from functools import lru_cache
 from os import getenv
@@ -105,7 +104,7 @@ class LimitedConcurrencyClient:
     Args:
         client: The wrapped `Client`.
         max_concurrency: the maximal number of requests that may run concurrently
-            against the API. Defaults to 10, which is also the maximum.
+            against the API. Defaults to 10.
         max_retry_time: the maximal time in seconds a complete is retried in case a `BusyError` is raised.
 
     """
@@ -117,15 +116,7 @@ class LimitedConcurrencyClient:
         max_retry_time: int = 24 * 60 * 60,  # one day in seconds
     ) -> None:
         self._client = client
-
-        limit_for_max_concurrency = 10
-        capped_max_concurrency = min(limit_for_max_concurrency, max_concurrency)
-        if max_concurrency > capped_max_concurrency:
-            warnings.warn(
-                f"Selected a value greater than the maximum allowed number. max_concurrency will be reduced to {limit_for_max_concurrency}.",
-            )
-        self._concurrency_limit_semaphore = Semaphore(capped_max_concurrency)
-
+        self._concurrency_limit_semaphore = Semaphore(max_concurrency)
         self._max_retry_time = max_retry_time
 
     @classmethod
@@ -139,7 +130,7 @@ class LimitedConcurrencyClient:
             token: An Aleph Alpha token to instantiate the client. If no token is provided,
                 this method tries to fetch it from the environment under the name of "AA_TOKEN".
             host: The host that is used for requests. If no token is provided,
-                this method tries to fetch it from the environment under the naem of "CLIENT_URL".
+                this method tries to fetch it from the environment under the name of "CLIENT_URL".
                 If this is not present, it defaults to the Aleph Alpha Api.
                 If you have an on premise setup, change this to your host URL.
         """
