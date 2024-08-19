@@ -1484,13 +1484,13 @@ socks = ["socksio (==1.*)"]
 
 [[package]]
 name = "huggingface-hub"
-version = "0.24.5"
+version = "0.24.6"
 description = "Client library to download and publish models, datasets and other repos on the huggingface.co hub"
 optional = false
 python-versions = ">=3.8.0"
 files = [
-    {file = "huggingface_hub-0.24.5-py3-none-any.whl", hash = "sha256:d93fb63b1f1a919a22ce91a14518974e81fc4610bf344dfe7572343ce8d3aced"},
-    {file = "huggingface_hub-0.24.5.tar.gz", hash = "sha256:7b45d6744dd53ce9cbf9880957de00e9d10a9ae837f1c9b7255fc8fa4e8264f3"},
+    {file = "huggingface_hub-0.24.6-py3-none-any.whl", hash = "sha256:a990f3232aa985fe749bc9474060cbad75e8b2f115f6665a9fda5b9c97818970"},
+    {file = "huggingface_hub-0.24.6.tar.gz", hash = "sha256:cc2579e761d070713eaa9c323e3debe39d5b464ae3a7261c39a9195b27bb8000"},
 ]
 
 [package.dependencies]
@@ -4627,12 +4627,13 @@ files = [
 
 [[package]]
 name = "sacrebleu"
-version = "2.4.2"
+version = "2.4.3"
 description = "Hassle-free computation of shareable, comparable, and reproducible BLEU, chrF, and TER scores"
 optional = false
-python-versions = ">=3.6"
+python-versions = ">=3.8"
 files = [
-    {file = "sacrebleu-2.4.2-py3-none-any.whl", hash = "sha256:611a581d205828912f0b05f806b110180087184d3be2dc650fda7a729d6ecb89"},
+    {file = "sacrebleu-2.4.3-py3-none-any.whl", hash = "sha256:a976fd6998d8ced267a722120ec7fc47083c8e9745d8808ccee6424464a0aa31"},
+    {file = "sacrebleu-2.4.3.tar.gz", hash = "sha256:e734b1e0baeaea6ade0fefc9d23bac3df50bf15775d8b78edc108db63654192a"},
 ]
 
 [package.dependencies]
@@ -4644,8 +4645,8 @@ regex = "*"
 tabulate = ">=0.8.9"
 
 [package.extras]
-dev = ["lxml-stubs", "mypy", "pytest", "types-tabulate", "wheel"]
-ja = ["ipadic (>=1.0,<2.0)", "mecab-python3 (>=1.0.5,<=1.0.6)"]
+dev = ["lxml-stubs", "mypy", "pytest", "setuptools", "types-tabulate", "wheel"]
+ja = ["ipadic (>=1.0,<2.0)", "mecab-python3 (>=1.0.9,<2.0.0)"]
 ko = ["mecab-ko (>=1.0.0,<=1.0.1)", "mecab-ko-dic (>=1.0,<2.0)"]
 
 [[package]]
@@ -5825,4 +5826,4 @@ test = ["big-O", "importlib-resources", "jaraco.functools", "jaraco.itertools", 
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.10,<3.13"
-content-hash = "fd8dc6ba570ad9819ffc1ce29a7f10e80345e4d53e2cb9493e8b29ead29e6782"
+content-hash = "7112afdecf2fe5bf661c9cc9d85d3b33ae8ce03af3222565e8abcd8762a34359"
