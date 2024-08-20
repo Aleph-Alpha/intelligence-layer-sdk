@@ -10,7 +10,7 @@
  - Remove cap for `max_concurrency` in `LimitedConcurrencyClient`.
 
 ### Fixes
-...
+- increase number of returned `log_probs` in `EloQaEvaluationLogic` to avoid missing a valid answer
 
 ### Deprecations 
 ...
