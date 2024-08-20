@@ -30,7 +30,7 @@ opentelemetry-exporter-otlp-proto-http = "1.23.0"
 rouge-score = "^0.1.2"
 sacrebleu = "^2.4.3"
 lingua-language-detector = "^2.0.2"
-argilla = "^1.29.1"
+argilla = "^2.0.1"
 
 [tool.poetry.group.dev.dependencies]
 # lint & format

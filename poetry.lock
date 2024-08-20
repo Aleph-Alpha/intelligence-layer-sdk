@@ -248,35 +248,22 @@ files = [
 
 [[package]]
 name = "argilla"
-version = "1.29.1"
-description = "Open-source tool for exploring, labeling, and monitoring data for NLP projects."
+version = "2.0.1"
+description = "The Argilla python server SDK"
 optional = false
-python-versions = "<3.13,>=3.8"
+python-versions = "<3.13,>=3.9"
 files = [
-    {file = "argilla-1.29.1-py3-none-any.whl", hash = "sha256:4c44ca0f5c477b34beb2593d3a0ae8d7e6deb3c1ecb84a052b1aff308336bbee"},
-    {file = "argilla-1.29.1.tar.gz", hash = "sha256:e49175aa01647fc53cd13a56adfad69165e12a270860b2e5647349e7327ed156"},
+    {file = "argilla-2.0.1-py3-none-any.whl", hash = "sha256:44a430629b1c9fc97798e7e760ec37ca3b4fe4b9231d9f77ef5168e9b71fd0e2"},
+    {file = "argilla-2.0.1.tar.gz", hash = "sha256:fe33fa0bad19245918ce221b9412d173b226ffb797ab942bd83fa7a4d58db238"},
 ]
 
 [package.dependencies]
-backoff = "*"
-deprecated = ">=1.2.0,<1.3.0"
-httpx = ">=0.15,<=0.26"
-monotonic = "*"
-numpy = "<1.27.0"
-packaging = ">=20.0"
-pandas = ">=1.0.0"
-pydantic = ">=1.10.7"
-rich = "!=13.1.0"
-tqdm = ">=4.27.0"
-typer = ">=0.6.0,<0.10.0"
-wrapt = ">=1.14,<1.15"
-
-[package.extras]
-integrations = ["PyYAML (>=5.4.1,<6.1.0)", "datasets (>1.17.0,!=2.3.2)", "evaluate", "faiss-cpu", "flair (>=0.12.2)", "flyingsquid", "huggingface-hub (>=0.5.0)", "ipynbname", "openai (>=0.27.10,<1.0.0)", "peft", "pgmpy", "plotly (>=4.1.0)", "sentence-transformers", "sentence-transformers (>=2.0.0,<3.0.0)", "seqeval", "setfit (>=1.0.0)", "snorkel (>=0.9.7)", "spacy (>=3.5.0,<3.7.0)", "spacy-huggingface-hub (>=0.0.10)", "spacy-transformers (>=1.2.5)", "span-marker", "textdescriptives (>=2.7.0,<3.0.0)", "transformers[torch] (>=4.30.0)", "trl (>=0.5.0)"]
-listeners = ["schedule (>=1.1.0,<1.2.0)"]
-server = ["argilla-server (>=1.29.0,<1.30.0)"]
-server-postgresql = ["argilla-server[postgresql] (>=1.29.0,<1.30.0)"]
-tests = ["factory-boy (>=3.2.1,<3.3.0)", "pytest", "pytest-asyncio", "pytest-cov", "pytest-env", "pytest-mock"]
+datasets = ">=2.0.0"
+httpx = ">=0.26.0"
+huggingface_hub = ">=0.22.0"
+pydantic = ">=2.6.0,<3.0.0"
+rich = ">=10.0.0"
+tqdm = ">=4.60.0"
 
 [[package]]
 name = "argon2-cffi"
@@ -444,17 +431,6 @@ files = [
 
 [package.extras]
 dev = ["freezegun (>=1.0,<2.0)", "pytest (>=6.0)", "pytest-cov"]
-
-[[package]]
-name = "backoff"
-version = "2.2.1"
-description = "Function decoration for backoff and retry"
-optional = false
-python-versions = ">=3.7,<4.0"
-files = [
-    {file = "backoff-2.2.1-py3-none-any.whl", hash = "sha256:63579f9a0628e06278f7e47b7d7d5b6ce20dc65c5e96a6f3ca99a6adca0396e8"},
-    {file = "backoff-2.2.1.tar.gz", hash = "sha256:03f829f5bb1923180821643f8753b0502c3b682293992485b0eef2807afa5cba"},
-]
 
 [[package]]
 name = "beautifulsoup4"
@@ -2657,17 +2633,6 @@ python-versions = ">=3.7"
 files = [
     {file = "mistune-3.0.2-py3-none-any.whl", hash = "sha256:71481854c30fdbc938963d3605b72501f5c10a9320ecd412c121c163a1c7d205"},
     {file = "mistune-3.0.2.tar.gz", hash = "sha256:fc7f93ded930c92394ef2cb6f04a8aabab4117a91449e72dcc8dfa646a508be8"},
-]
-
-[[package]]
-name = "monotonic"
-version = "1.6"
-description = "An implementation of time.monotonic() for Python 2 & < 3.3"
-optional = false
-python-versions = "*"
-files = [
-    {file = "monotonic-1.6-py2.py3-none-any.whl", hash = "sha256:68687e19a14f11f26d140dd5c86f3dba4bf5df58003000ed467e0e2a69bca96c"},
-    {file = "monotonic-1.6.tar.gz", hash = "sha256:3a55207bcfed53ddd5c5bae174524062935efed17792e9de2ad0205ce9ad63f7"},
 ]
 
 [[package]]
@@ -5209,27 +5174,6 @@ docs = ["myst-parser", "pydata-sphinx-theme", "sphinx"]
 test = ["argcomplete (>=3.0.3)", "mypy (>=1.7.0)", "pre-commit", "pytest (>=7.0,<8.2)", "pytest-mock", "pytest-mypy-testing"]
 
 [[package]]
-name = "typer"
-version = "0.9.4"
-description = "Typer, build great CLIs. Easy to code. Based on Python type hints."
-optional = false
-python-versions = ">=3.6"
-files = [
-    {file = "typer-0.9.4-py3-none-any.whl", hash = "sha256:aa6c4a4e2329d868b80ecbaf16f807f2b54e192209d7ac9dd42691d63f7a54eb"},
-    {file = "typer-0.9.4.tar.gz", hash = "sha256:f714c2d90afae3a7929fcd72a3abb08df305e1ff61719381384211c4070af57f"},
-]
-
-[package.dependencies]
-click = ">=7.1.1,<9.0.0"
-typing-extensions = ">=3.7.4.3"
-
-[package.extras]
-all = ["colorama (>=0.4.3,<0.5.0)", "rich (>=10.11.0,<14.0.0)", "shellingham (>=1.3.0,<2.0.0)"]
-dev = ["autoflake (>=1.3.1,<2.0.0)", "flake8 (>=3.8.3,<4.0.0)", "pre-commit (>=2.17.0,<3.0.0)"]
-doc = ["cairosvg (>=2.5.2,<3.0.0)", "mdx-include (>=1.4.1,<2.0.0)", "mkdocs (>=1.1.2,<2.0.0)", "mkdocs-material (>=8.1.4,<9.0.0)", "pillow (>=9.3.0,<10.0.0)"]
-test = ["black (>=22.3.0,<23.0.0)", "coverage (>=6.2,<7.0)", "isort (>=5.0.6,<6.0.0)", "mypy (==0.971)", "pytest (>=4.4.0,<8.0.0)", "pytest-cov (>=2.10.0,<5.0.0)", "pytest-sugar (>=0.9.4,<0.10.0)", "pytest-xdist (>=1.32.0,<4.0.0)", "rich (>=10.11.0,<14.0.0)", "shellingham (>=1.3.0,<2.0.0)"]
-
-[[package]]
 name = "types-colorama"
 version = "0.4.15.20240311"
 description = "Typing stubs for colorama"
@@ -5826,4 +5770,4 @@ test = ["big-O", "importlib-resources", "jaraco.functools", "jaraco.itertools", 
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.10,<3.13"
-content-hash = "ca75989fa0dc66292d848539239055f43e98f4f6fe5804adcf50b03ae1c8ce9a"
+content-hash = "7112afdecf2fe5bf661c9cc9d85d3b33ae8ce03af3222565e8abcd8762a34359"

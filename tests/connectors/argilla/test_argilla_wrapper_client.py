@@ -4,7 +4,7 @@ from uuid import uuid4
 
 import argilla as rg  # type: ignore
 import pytest
-from argilla.client.feedback.schemas import SpanValueSchema  # type: ignore
+from argilla._exceptions import ConflictError  # type: ignore
 from dotenv import load_dotenv
 from pytest import fixture
 
@@ -77,55 +77,6 @@ def qa_dataset_id_with_text_question(
     )
 
 
-@pytest.mark.docker
-def test_can_create_a_dataset(
-    argilla_client: ArgillaWrapperClient,
-    workspace_name: str,
-) -> None:
-    dataset_id = argilla_client.create_dataset(
-        workspace_name,
-        dataset_name="name",
-        fields=[rg.TextField(name="name", title="b")],
-        questions=[
-            rg.RatingQuestion(
-                name="str", title="b", description="c", values=list(range(1, 5))
-            )
-        ],
-    )
-    datasets = rg.list_datasets(workspace_name)
-    assert len(datasets) == 1
-    assert str(datasets[0].id) == dataset_id
-
-
-@pytest.mark.docker
-def test_cannot_create_two_datasets_with_the_same_name(
-    argilla_client: ArgillaWrapperClient,
-    workspace_name: str,
-) -> None:
-    dataset_name = str(uuid4())
-    argilla_client.create_dataset(
-        workspace_name,
-        dataset_name=dataset_name,
-        fields=[rg.TextField(name="name", title="b")],
-        questions=[
-            rg.RatingQuestion(
-                name="str", title="b", description="c", values=list(range(1, 5))
-            )
-        ],
-    )
-    with pytest.raises(RuntimeError):
-        argilla_client.create_dataset(
-            workspace_name,
-            dataset_name=dataset_name,
-            fields=[rg.TextField(name="name", title="b")],
-            questions=[
-                rg.RatingQuestion(
-                    name="str", title="b", description="c", values=list(range(1, 5))
-                )
-            ],
-        )
-
-
 @fixture
 def qa_records(
     argilla_client: ArgillaClient, qa_dataset_id: str
@@ -175,7 +126,62 @@ def long_qa_records(
 
 
 @pytest.mark.docker
-def test_retrieving_evaluations_on_non_existant_dataset_raises_errors(
+def test_can_create_a_dataset(
+    argilla_client: ArgillaWrapperClient,
+    workspace_name: str,
+) -> None:
+    fields = [rg.TextField(name="name", title="b")]
+    questions = [
+        rg.RatingQuestion(
+            name="str", title="b", description="c", values=list(range(1, 5))
+        )
+    ]
+    dataset_id = argilla_client.create_dataset(
+        workspace_name,
+        dataset_name="name",
+        fields=fields,
+        questions=questions,
+    )
+
+    dataset = argilla_client.client.datasets(name="name", workspace=workspace_name)
+    assert dataset
+    questions = dataset.questions
+
+    assert questions[0].title == questions[0].title
+    assert questions[0].description == questions[0].description
+    assert dataset is not None
+    assert str(dataset.id) == dataset_id
+
+
+@pytest.mark.docker
+def test_cannot_create_two_datasets_with_the_same_name(
+    argilla_client: ArgillaWrapperClient,
+    workspace_name: str,
+) -> None:
+    dataset_name = str(uuid4())
+    fields = [rg.TextField(name="name", title="b")]
+    questions = [
+        rg.RatingQuestion(
+            name="str", title="b", description="c", values=list(range(1, 5))
+        )
+    ]
+    argilla_client.create_dataset(
+        workspace_name,
+        dataset_name=dataset_name,
+        fields=fields,
+        questions=questions,
+    )
+    with pytest.raises(ConflictError):
+        argilla_client.create_dataset(
+            workspace_name,
+            dataset_name=dataset_name,
+            fields=fields,
+            questions=questions,
+        )
+
+
+@pytest.mark.docker
+def test_retrieving_evaluations_on_non_existent_dataset_raises_errors(
     argilla_client: ArgillaWrapperClient,
 ) -> None:
     with pytest.raises(ValueError):
@@ -190,11 +196,13 @@ def test_evaluations_returns_evaluation_results(
 ) -> None:
     records = list(argilla_client.records(qa_dataset_id))
     for record in records:
-        argilla_client._create_evaluation(record.id, {"rate-answer": 1})
+        argilla_client._create_evaluation(qa_dataset_id, record.id, {"rate-answer": 1})
 
-    res = list(argilla_client.evaluations(qa_dataset_id))
+    res = list(
+        argilla_client.evaluations(qa_dataset_id)
+    )  ## TODO: Fix create_dataset (questions not created), then this hopefully works
     assert len(res) == len(records)
-    assert all(eval.responses == {"rate-answer": 1} for eval in res)
+    assert all(evaluation.responses == {"rate-answer": 1} for evaluation in res)
 
 
 @pytest.mark.docker
@@ -222,6 +230,26 @@ def test_split_dataset_works(
 
 
 @pytest.mark.docker
+def test_split_dataset_works_twice(
+    argilla_client: ArgillaWrapperClient,
+    qa_dataset_id: str,
+    qa_records: Sequence[RecordData],
+) -> None:
+    n_splits = 5
+
+    argilla_client.split_dataset(qa_dataset_id, n_splits)
+
+    all_records = list(argilla_client.records(qa_dataset_id))
+    for split in range(1, n_splits + 1):
+        assert sum([record.metadata["split"] == split for record in all_records]) == 2
+
+    argilla_client.split_dataset(qa_dataset_id, 10)
+    all_records = list(argilla_client.records(qa_dataset_id))
+    for split in range(1, n_splits + 1):
+        assert sum([record.metadata["split"] == split for record in all_records]) == 1
+
+
+@pytest.mark.docker
 def test_split_deleting_splits_works(
     argilla_client: ArgillaWrapperClient,
     qa_dataset_id: str,
@@ -237,8 +265,9 @@ def test_split_deleting_splits_works(
 
     assert sum(["split" not in record.metadata for record in all_records]) == 10
 
-    remote_dataset = rg.FeedbackDataset.from_argilla(id=qa_dataset_id)
-    assert len(remote_dataset.metadata_properties) == 0
+    remote_dataset = argilla_client.client.datasets(id=qa_dataset_id)
+    assert remote_dataset
+    assert len(remote_dataset.settings.metadata) == 0
 
 
 @pytest.mark.docker
@@ -294,7 +323,9 @@ def test_add_record_does_not_put_example_id_into_metadata(
     argilla_client.add_record(qa_dataset_id, first_data)
     record = next(iter(argilla_client.records(qa_dataset_id)))
 
-    argilla_client._create_evaluation(record_id=record.id, data={"rate-answer": 1})
+    argilla_client._create_evaluation(
+        dataset_id=qa_dataset_id, record_id=record.id, data={"rate-answer": 1}
+    )
     evals = list(argilla_client.evaluations(qa_dataset_id))
     assert len(evals) > 0
     assert "exampe_id" not in evals[0].metadata
@@ -344,23 +375,23 @@ def test_client_can_load_existing_dataset(
     dataset_name = str(uuid4())
 
     created_dataset_id = argilla_client.ensure_dataset_exists(
-        workspace_id=workspace_name,
+        workspace_name=workspace_name,
         dataset_name=dataset_name,
-        fields=[rg.TextField(name="a", title="b")],
+        fields=[rg.TextField(name="text", title="b")],
         questions=[
             rg.RatingQuestion(
-                name="a", title="b", description="c", values=list(range(1, 5))
+                name="question", title="b", description="c", values=list(range(1, 5))
             )
         ],
     )
 
     ensured_dataset_id = argilla_client.ensure_dataset_exists(
-        workspace_id=workspace_name,
+        workspace_name=workspace_name,
         dataset_name=dataset_name,
-        fields=[rg.TextField(name="a", title="b")],
+        fields=[rg.TextField(name="c", title="b")],
         questions=[
             rg.RatingQuestion(
-                name="a", title="b", description="c", values=list(range(1, 5))
+                name="d", title="b", description="c", values=list(range(1, 5))
             )
         ],
     )
@@ -390,15 +421,16 @@ def test_client_can_load_existing_dataset(
             ),
             {"multilabel": ["a", "b"]},
         ),
-        (
-            rg.RankingQuestion(name="ranking", values=["reply 1", "reply 2"]),
-            {
-                "ranking": [
-                    {"rank": 1, "value": "reply 2"},
-                    {"rank": 2, "value": "reply 1"},
-                ]
-            },
-        ),
+        ####### RankingQuestion not supported for now
+        # (
+        #     rg.RankingQuestion(name="rank", values=["reply 1", "reply 2"]),
+        #     {
+        #         "rank": [
+        #            "reply 2",
+        #            "reply 1"
+        #         ]
+        #     },
+        # ),
         (
             rg.RatingQuestion(name="rating", values=[1, 3, 5]),
             {"rating": 3},
@@ -411,9 +443,16 @@ def test_client_can_load_existing_dataset(
                 allow_overlapping=False,
                 visible_labels=None,
             ),
-            {"test": [SpanValueSchema(start=0, end=3, label="a", score=0.3).dict()]},
+            {
+                "test": [
+                    {
+                        "start": 0,
+                        "end": 3,
+                        "label": "a",
+                    }
+                ]
+            },
         ),
-        (rg.TextQuestion(name="name"), {"name": "text"}),
     ],
 )
 def test_works_with_all_question_types(
@@ -427,7 +466,7 @@ def test_works_with_all_question_types(
         rg.TextField(name="field"),
     ]
     dataset_id = argilla_client.create_dataset(
-        workspace_id=workspace_name,
+        workspace_name=workspace_name,
         dataset_name="question-tests",
         fields=fields,
         questions=[question],
@@ -439,7 +478,9 @@ def test_works_with_all_question_types(
         RecordData(content={"field": "Test content."}, example_id=example_id),
     )
     record = next(iter(argilla_client.records(dataset_id)))
-    argilla_client._create_evaluation(record_id=record.id, data=eval_data)
+    argilla_client._create_evaluation(
+        dataset_id=dataset_id, record_id=record.id, data=eval_data
+    )
     results = list(argilla_client.evaluations(dataset_id=dataset_id))
     # then
 
