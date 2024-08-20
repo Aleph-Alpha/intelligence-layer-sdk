@@ -77,9 +77,7 @@ class FakeCompleteTaskModel(LuminousControlModel):
 def tokenize_completion(
     expected_output: str, aleph_alpha_model: AlephAlphaModel
 ) -> Sequence[Token]:
-    tokenizer = aleph_alpha_model.get_tokenizer()
-    assert tokenizer.pre_tokenizer
-    tokenizer.pre_tokenizer.add_prefix_space = False
+    tokenizer = aleph_alpha_model.get_tokenizer_no_whitespace_prefix()
     encoding: tokenizers.Encoding = tokenizer.encode(expected_output)
     return [
         Token(

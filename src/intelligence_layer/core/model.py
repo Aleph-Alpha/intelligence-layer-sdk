@@ -1,14 +1,19 @@
 import typing
 import warnings
 from abc import ABC, abstractmethod
+from collections.abc import Sequence
+from copy import deepcopy
 from functools import lru_cache
-from typing import ClassVar, Optional
+from typing import Any, ClassVar, Literal, Optional
 
 from aleph_alpha_client import (
     CompletionRequest,
     CompletionResponse,
     ExplanationRequest,
     ExplanationResponse,
+    Prompt,
+    Text,
+    Tokens,
 )
 from pydantic import BaseModel, ConfigDict
 from tokenizers import Encoding, Tokenizer  # type: ignore
@@ -18,7 +23,7 @@ from intelligence_layer.connectors.limited_concurrency_client import (
     LimitedConcurrencyClient,
 )
 from intelligence_layer.core.prompt_template import PromptTemplate, RichPrompt
-from intelligence_layer.core.task import Task
+from intelligence_layer.core.task import Task, Token
 from intelligence_layer.core.tracer.tracer import TaskSpan, Tracer
 
 
@@ -130,8 +135,69 @@ def limited_concurrency_client_from_env() -> LimitedConcurrencyClient:
     return LimitedConcurrencyClient.from_env()
 
 
-class AlephAlphaModel:
-    """Abstract base class for the implementation of any model that uses the Aleph Alpha client.
+class LanguageModel(ABC):
+    """Abstract base class to implement any LLM."""
+
+    def __init__(self, name: str) -> None:
+        self.name = name
+
+    @abstractmethod
+    def generate(self, prompt: str, tracer: Tracer) -> str:
+        """A completion function that takes a prompt and generates a completion.
+
+        Args:
+            prompt: The prompt to generate a completion for
+            tracer: Valid instance of a tracer
+
+        Returns:
+            An LLM completion
+        """
+        ...
+
+    @abstractmethod
+    def echo(
+        self, prompt: str, expected_completion: str, tracer: Tracer
+    ) -> Sequence[tuple[Any, Optional[float]]]:
+        """Echos the log probs for each token of an expected completion given a prompt.
+
+        Args:
+            prompt: The prompt to echo
+            expected_completion: The expected completion to get log probs for
+            tracer: Valid instance of a tracer
+
+        Returns:
+            A list of tuples with token identifier and log probability
+        """
+        ...
+
+
+class Message(BaseModel):
+    role: Literal["system", "user", "assistant"]
+    content: str
+
+
+class ChatModel(LanguageModel):
+    """Abstract base class to implement any model that supports chat.
+
+    Args:
+        messages: A number of messages to use as prompt for the model
+        response prefix: Optional argument to append a string to the beginning of the
+            final agent message to steer the generation
+        tracer: Valid instance of a tracer
+
+    Returns:
+        A list of tuples with token identifier and log probability
+    """
+
+    @abstractmethod
+    def generate_chat(
+        self, messages: list[Message], response_prefix: str | None, tracer: Tracer
+    ) -> str:
+        pass
+
+
+class AlephAlphaModel(LanguageModel):
+    """Model-class for any model that uses the Aleph Alpha client.
 
     Any class of Aleph Alpha model is implemented on top of this base class. Exposes methods that
     are available to all models, such as `complete` and `tokenize`. It is the central place for
@@ -146,11 +212,9 @@ class AlephAlphaModel:
     """
 
     def __init__(
-        self,
-        name: str,
-        client: Optional[AlephAlphaClientProtocol] = None,
+        self, name: str, client: Optional[AlephAlphaClientProtocol] = None
     ) -> None:
-        self.name = name
+        super().__init__(name)
         self._client = (
             limited_concurrency_client_from_env() if client is None else client
         )
@@ -163,6 +227,55 @@ class AlephAlphaModel:
             self._client, name
         )
         self._explain = _Explain(self._client, name)
+
+    def generate(self, prompt: str, tracer: Tracer) -> str:
+        complete_input = CompleteInput(prompt=Prompt.from_text(prompt))
+        return self._complete.run(complete_input, tracer).completion
+
+    def echo(
+        self, prompt: str, expected_completion: str, tracer: Tracer
+    ) -> Sequence[tuple[Token, Optional[float]]]:
+        expected_completion_encoding: Encoding = self.tokenize(
+            expected_completion, whitespace_prefix=False
+        )
+        expected_completion_tokens = [
+            Token(
+                token=self.get_tokenizer_no_whitespace_prefix().decode(
+                    [token_id], skip_special_tokens=False
+                ),
+                token_id=token_id,
+            )
+            for token_id in expected_completion_encoding.ids
+        ]
+
+        aa_prompt = Prompt(
+            items=[Text(prompt, []), Tokens(expected_completion_encoding.ids, [])]
+        )
+
+        logprob_index = 0
+        output = self._complete.run(
+            CompleteInput(
+                prompt=aa_prompt,
+                maximum_tokens=0,
+                log_probs=logprob_index,
+                tokens=True,
+                echo=True,
+            ),
+            tracer,
+        )
+        assert output.completions[0].log_probs
+
+        return [
+            (
+                token,
+                list(log_prob_dict.values())[logprob_index] or 0.0,
+            )
+            for token, log_prob_dict in zip(
+                expected_completion_tokens,
+                output.completions[0].log_probs[-len(expected_completion_tokens) :],
+                strict=False,
+            )
+        ]
 
     @property
     def context_size(self) -> int:
@@ -186,8 +299,19 @@ class AlephAlphaModel:
             return _cached_tokenizer(self._client, self.name)
         return _tokenizer(self._client, self.name)
 
-    def tokenize(self, text: str) -> Encoding:
-        return self.get_tokenizer().encode(text)
+    def get_tokenizer_no_whitespace_prefix(self) -> Tokenizer:
+        # needed for proper caching without memory leaks
+        if isinstance(self._client, typing.Hashable):
+            return _cached_tokenizer_no_whitespace_prefix(self._client, self.name)
+        return _tokenizer_no_whitespace_prefix(self._client, self.name)
+
+    def tokenize(self, text: str, whitespace_prefix: bool = True) -> Encoding:
+        tokenizer = (
+            self.get_tokenizer()
+            if whitespace_prefix
+            else self.get_tokenizer_no_whitespace_prefix()
+        )
+        return tokenizer.encode(text)
 
 
 @lru_cache(maxsize=5)
@@ -197,6 +321,27 @@ def _cached_tokenizer(client: AlephAlphaClientProtocol, name: str) -> Tokenizer:
 
 def _tokenizer(client: AlephAlphaClientProtocol, name: str) -> Tokenizer:
     return client.tokenizer(name)
+
+
+@lru_cache(maxsize=5)
+def _cached_tokenizer_no_whitespace_prefix(
+    client: AlephAlphaClientProtocol, name: str
+) -> Tokenizer:
+    return _tokenizer_no_whitespace_prefix(client, name)
+
+
+def _tokenizer_no_whitespace_prefix(
+    client: AlephAlphaClientProtocol, name: str
+) -> Tokenizer:
+    tokenizer = client.tokenizer(name)
+    if tokenizer.pre_tokenizer:
+        copied_tokenizer = deepcopy(tokenizer)
+        copied_tokenizer.pre_tokenizer.add_prefix_space = False
+        return copied_tokenizer
+
+    raise ValueError(
+        "Tokenizer does not support `.pre_tokenizer` and thus `.add_prefix_space` option."
+    )
 
 
 @lru_cache(maxsize=10)
@@ -219,7 +364,7 @@ def _context_size(client: AlephAlphaClientProtocol, name: str) -> int:
     return context_size
 
 
-class ControlModel(ABC, AlephAlphaModel):
+class ControlModel(AlephAlphaModel, ABC):
     RECOMMENDED_MODELS: ClassVar[list[str]] = []
 
     def __init__(
@@ -234,8 +379,7 @@ class ControlModel(ABC, AlephAlphaModel):
 
     @property
     @abstractmethod
-    def eot_token(self) -> str:
-        pass
+    def eot_token(self) -> str: ...
 
     @abstractmethod
     def to_instruct_prompt(
@@ -244,7 +388,17 @@ class ControlModel(ABC, AlephAlphaModel):
         input: Optional[str] = None,
         response_prefix: Optional[str] = None,
     ) -> RichPrompt:
-        pass
+        """Method to create an instruct-`RichPrompt` object to use with any `AlephAlphaModel`.
+
+        Allows the implementation of a custom prompt format for the specific model in use.
+
+        Args:
+            instruction: The task the model should fulfill, for example summarization
+            input: Any context necessary to solve the task, such as the text to be summarize
+            response_prefix: Optional argument to append a string to the beginning of the
+                final agent message to steer the generation
+        """
+        ...
 
 
 class LuminousControlModel(ControlModel):
@@ -370,6 +524,8 @@ class Llama3InstructModel(ControlModel):
     RECOMMENDED_MODELS: ClassVar[list[str]] = [
         "llama-3-8b-instruct",
         "llama-3-70b-instruct",
+        "llama-3.1-8b-instruct",
+        "llama-3.1-70b-instruct",
     ]
 
     def __init__(
@@ -383,20 +539,6 @@ class Llama3InstructModel(ControlModel):
     def eot_token(self) -> str:
         return "<|eot_id|>"
 
-    def _add_eot_token_to_stop_sequences(self, input: CompleteInput) -> CompleteInput:
-        # remove this once the API supports the llama-3 EOT_TOKEN
-        params = input.__dict__
-        if isinstance(params["stop_sequences"], list):
-            if self.eot_token not in params["stop_sequences"]:
-                params["stop_sequences"].append(self.eot_token)
-        else:
-            params["stop_sequences"] = [self.eot_token]
-        return CompleteInput(**params)
-
-    def complete(self, input: CompleteInput, tracer: Tracer) -> CompleteOutput:
-        input_with_eot = self._add_eot_token_to_stop_sequences(input)
-        return super().complete(input_with_eot, tracer)
-
     def to_instruct_prompt(
         self,
         instruction: str,
@@ -405,4 +547,84 @@ class Llama3InstructModel(ControlModel):
     ) -> RichPrompt:
         return self.INSTRUCTION_PROMPT_TEMPLATE.to_rich_prompt(
             instruction=instruction, input=input, response_prefix=response_prefix
+        )
+
+
+class AlephAlphaChatModel(ChatModel, AlephAlphaModel):
+    """Abstract base class for any model that supports chat and runs via the Aleph Alpha API."""
+
+    @abstractmethod
+    def to_chat_prompt(
+        self, messages: list[Message], response_prefix: str | None
+    ) -> RichPrompt:
+        """Method to create a chat-`RichPrompt` object to use with any `AlephAlphaModel`.
+
+        Allows the implementation of a custom prompt format for the specific model in use.
+
+        Args:
+            messages: A number of messages to use as prompt for the model
+            response_prefix: Optional argument to append a string to the beginning of the
+                final agent message to steer the generation
+        """
+        ...
+
+    def generate_chat(
+        self, messages: list[Message], response_prefix: str | None, tracer: Tracer
+    ) -> str:
+        """Generate a raw completion to messages for any `AlephAlphaChatModel`.
+
+        Args:
+            messages: A number of messages to use as prompt for the model
+            response_prefix: Optional argument to append a string to the beginning of the
+                final agent message to steer the generation
+            tracer: Valid instance of a tracer
+        """
+        prompt = self.to_chat_prompt(messages, response_prefix)
+        prompt_item = prompt.items[0]
+        assert isinstance(prompt_item, Text)
+
+        return self.generate(prompt_item.text, tracer)
+
+
+class Llama3ChatModel(AlephAlphaChatModel):
+    """Chat model to be used for `llama-3-*` and `llama-3.1-*` models.
+
+    Args:
+        name: The name of a valid llama-3 model.
+            Defaults to `llama-3-8b-instruct`
+        client: Aleph Alpha client instance for running model related API calls.
+            Defaults to :class:`LimitedConcurrencyClient`
+    """
+
+    CHAT_PROMPT_TEMPLATE = PromptTemplate(
+        """<|begin_of_text|>{% for message in messages %}<|start_header_id|>{{message.role}}<|end_header_id|>
+
+{% promptrange instruction %}{{message.content}}{% endpromptrange %}<|eot_id|>{% endfor %}<|start_header_id|>assistant<|end_header_id|>
+
+{% if response_prefix %}{{response_prefix}}{% endif %}"""
+    )
+
+    RECOMMENDED_MODELS: ClassVar[list[str]] = [
+        "llama-3-8b-instruct",
+        "llama-3-70b-instruct",
+        "llama-3.1-8b-instruct",
+        "llama-3.1-70b-instruct",
+    ]
+
+    def __init__(
+        self,
+        name: str = "llama-3.1-8b-instruct",
+        client: Optional[AlephAlphaClientProtocol] = None,
+    ) -> None:
+        super().__init__(name, client)
+
+    @property
+    def eot_token(self) -> str:
+        return "<|eot_id|>"
+
+    def to_chat_prompt(
+        self, messages: list[Message], response_prefix: str | None = None
+    ) -> RichPrompt:
+        return self.CHAT_PROMPT_TEMPLATE.to_rich_prompt(
+            messages=[m.model_dump() for m in messages], response_prefix=response_prefix
         )

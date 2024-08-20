@@ -7,7 +7,10 @@
 ...
 
 ### Features
- - Remove cap for `max_concurrency` in `LimitedConcurrencyClient`.
+- Remove cap for `max_concurrency` in `LimitedConcurrencyClient`.
+- Abstract `LanguageModel` class to integrate with LLMs from any API
+- Abstract `ChatModel` class to integrate with chat models from any API
+- Every `LanguageModel` supports echo to retrieve log probs for an expected completion given a prompt
 
 ### Fixes
 - increase number of returned `log_probs` in `EloQaEvaluationLogic` to avoid missing a valid answer
