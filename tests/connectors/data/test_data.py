@@ -266,9 +266,9 @@ def test_create_dataset(data_client: DataClient, mock_session: Mock) -> None:
             "Authorization": "Bearer some-token",
         },
         files={
-            "source_data": b"source_data",
+            "sourceData": b"source_data",
             "labels": "label1,label2",
-            "total_datapoints": 100,
+            "totalDatapoints": 100,
         },
     )
 
