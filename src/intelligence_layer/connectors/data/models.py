@@ -63,7 +63,7 @@ class DataDataset(BaseDataModel):
     repository_id: str
     dataset_id: str
     name: Optional[str] = None
-    labels: list[str]
+    labels: Optional[list[str]] = None
     total_datapoints: int
     metadata: Optional[dict[str, Any]] = None
     created_at: datetime

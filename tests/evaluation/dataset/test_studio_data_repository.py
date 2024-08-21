@@ -8,8 +8,8 @@ from intelligence_layer.evaluation.dataset.domain import (
     Dataset,
     Example,
 )
-from intelligence_layer.evaluation.dataset.studio_data_repository import (
-    StudioDataRepository,
+from intelligence_layer.evaluation.dataset.studio_dataset_repository import (
+    StudioDatasetRepository,
 )
 
 
@@ -19,8 +19,8 @@ def mock_data_client() -> Mock:
 
 
 @pytest.fixture
-def studio_data_repository(mock_data_client: Mock) -> StudioDataRepository:
-    return StudioDataRepository(repository_id="repo1", data_client=mock_data_client)
+def studio_dataset_repository(mock_data_client: Mock) -> StudioDatasetRepository:
+    return StudioDatasetRepository(repository_id="repo1", data_client=mock_data_client)
 
 
 class InputExample(BaseModel):
@@ -32,7 +32,7 @@ class ExpectedOutputExample(BaseModel):
 
 
 def test_create_dataset(
-    studio_data_repository: StudioDataRepository, mock_data_client: Mock
+    studio_dataset_repository: StudioDatasetRepository, mock_data_client: Mock
 ) -> None:
     # Mock the data client's create_dataset method
     return_dataset_mock = Mock(spec=DataDataset)
@@ -58,7 +58,7 @@ def test_create_dataset(
     ]
 
     # Call the method
-    dataset = studio_data_repository.create_dataset(
+    dataset = studio_dataset_repository.create_dataset(
         examples=examples, dataset_name="Dataset 1", labels={"label"}, metadata={}
     )
 
@@ -85,10 +85,10 @@ def test_create_dataset(
 
 
 def test_delete_dataset(
-    studio_data_repository: StudioDataRepository, mock_data_client: Mock
+    studio_dataset_repository: StudioDatasetRepository, mock_data_client: Mock
 ) -> None:
     # Call the method
-    studio_data_repository.delete_dataset(dataset_id="dataset1")
+    studio_dataset_repository.delete_dataset(dataset_id="dataset1")
 
     # Verify that the data client's delete_dataset method was called with the correct parameters
     mock_data_client.delete_dataset.assert_called_once_with(
@@ -97,7 +97,7 @@ def test_delete_dataset(
 
 
 def test_dataset(
-    studio_data_repository: StudioDataRepository, mock_data_client: Mock
+    studio_dataset_repository: StudioDatasetRepository, mock_data_client: Mock
 ) -> None:
     # Mock the data client's get_dataset method
     return_dataset_mock = Mock(spec=DataDataset)
@@ -107,7 +107,7 @@ def test_dataset(
     return_dataset_mock.name = "Dataset 1"
     mock_data_client.get_dataset.return_value = return_dataset_mock
     # Call the method
-    dataset = studio_data_repository.dataset(dataset_id="dataset1")
+    dataset = studio_dataset_repository.dataset(dataset_id="dataset1")
 
     # Assertions
     assert isinstance(dataset, Dataset)
@@ -123,7 +123,7 @@ def test_dataset(
 
 
 def test_datasets(
-    studio_data_repository: StudioDataRepository, mock_data_client: Mock
+    studio_dataset_repository: StudioDatasetRepository, mock_data_client: Mock
 ) -> None:
     # Mock the data client's list_datasets method
     return_dataset_mock = Mock(spec=DataDataset)
@@ -144,7 +144,7 @@ def test_datasets(
     ]
 
     # Call the method
-    datasets = list(studio_data_repository.datasets())
+    datasets = list(studio_dataset_repository.datasets())
 
     # Assertions
     assert len(datasets) == 2
@@ -164,7 +164,7 @@ def test_datasets(
 
 
 def test_dataset_ids(
-    studio_data_repository: StudioDataRepository, mock_data_client: Mock
+    studio_dataset_repository: StudioDatasetRepository, mock_data_client: Mock
 ) -> None:
     # Mock the data client's list_datasets method
     return_dataset_mock = Mock(spec=DataDataset)
@@ -185,7 +185,7 @@ def test_dataset_ids(
     ]
 
     # Call the method
-    dataset_ids = list(studio_data_repository.dataset_ids())
+    dataset_ids = list(studio_dataset_repository.dataset_ids())
 
     # Assertions
     assert len(dataset_ids) == 2
@@ -197,7 +197,7 @@ def test_dataset_ids(
 
 
 def test_example(
-    studio_data_repository: StudioDataRepository, mock_data_client: Mock
+    studio_dataset_repository: StudioDatasetRepository, mock_data_client: Mock
 ) -> None:
     # Mock the data client's stream_dataset method
     mock_data_client.stream_dataset.return_value = [
@@ -206,7 +206,7 @@ def test_example(
     ]
 
     # Call the method
-    example = studio_data_repository.example(
+    example = studio_dataset_repository.example(
         dataset_id="dataset1",
         example_id="example1",
         input_type=InputExample,
@@ -226,7 +226,7 @@ def test_example(
 
 
 def test_examples(
-    studio_data_repository: StudioDataRepository, mock_data_client: Mock
+    studio_dataset_repository: StudioDatasetRepository, mock_data_client: Mock
 ) -> None:
     # Mock the data client's stream_dataset method
     mock_data_client.stream_dataset.return_value = [
@@ -236,7 +236,7 @@ def test_examples(
 
     # Call the method
     examples = list(
-        studio_data_repository.examples(
+        studio_dataset_repository.examples(
             dataset_id="dataset1",
             input_type=InputExample,
             expected_output_type=ExpectedOutputExample,
