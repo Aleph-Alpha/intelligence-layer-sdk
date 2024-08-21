@@ -1,11 +1,10 @@
 import json
 from collections.abc import Iterable
-from typing import Any, Optional
+from typing import Optional
 
 from pydantic import BaseModel
 
 from intelligence_layer.connectors.base.json_serializable import (
-    JsonSerializable,
     SerializableDict,
 )
 from intelligence_layer.connectors.data import DataClient
