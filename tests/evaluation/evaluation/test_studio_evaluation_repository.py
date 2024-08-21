@@ -1,22 +1,24 @@
 from datetime import datetime
-import os
-from unittest.mock import Mock, patch
 from pathlib import Path
 from typing import Any
-from urllib.parse import urljoin
-import pytest
-from fsspec import AbstractFileSystem # type: ignore
-from pydantic import BaseModel
-from intelligence_layer.connectors.data.data import DataClient
-from intelligence_layer.evaluation.dataset.studio_dataset_repository import StudioDatasetRepository
-from intelligence_layer.evaluation.evaluation.domain import EvaluationOverview
-from intelligence_layer.evaluation.evaluation.studio_evaluation_repository import StudioEvaluationRepository
-from intelligence_layer.evaluation.run.domain import RunOverview
-from intelligence_layer.evaluation.run.file_run_repository import FileSystemRunRepository
-from intelligence_layer.evaluation.run.studio_runner_repository import StudioRunnerRepository
-from intelligence_layer.core import Output
+from unittest.mock import Mock
 
-class MockFileSystem(AbstractFileSystem): # type: ignore
+import pytest
+from fsspec import AbstractFileSystem  # type: ignore
+from pydantic import BaseModel
+
+from intelligence_layer.connectors.data.data import DataClient
+from intelligence_layer.evaluation.dataset.studio_dataset_repository import (
+    StudioDatasetRepository,
+)
+from intelligence_layer.evaluation.evaluation.domain import EvaluationOverview
+from intelligence_layer.evaluation.evaluation.studio_evaluation_repository import (
+    StudioEvaluationRepository,
+)
+from intelligence_layer.evaluation.run.domain import RunOverview
+
+
+class MockFileSystem(AbstractFileSystem):  # type: ignore
     pass
 
 
@@ -25,8 +27,10 @@ class MockEvaluationOutput(BaseModel):
     example_id: str
     result: Any
 
+
 class MockExampleOutput(BaseModel):
     output: Any
+
 
 @pytest.fixture
 def mock_data_client() -> Mock:
@@ -38,16 +42,17 @@ def mock_studio_dataset_repository(mock_data_client: Mock) -> StudioDatasetRepos
     return StudioDatasetRepository(repository_id="repo1", data_client=mock_data_client)
 
 
-def test_upload_evaluation_to_studio(mock_studio_dataset_repository: StudioDatasetRepository, mock_data_client: Mock)-> None:
-
-    mock_studio_dataset_repository.create_dataset = Mock() # type: ignore
+def test_upload_evaluation_to_studio(
+    mock_studio_dataset_repository: StudioDatasetRepository, mock_data_client: Mock
+) -> None:
+    mock_studio_dataset_repository.create_dataset = Mock()  # type: ignore
     mock_studio_dataset_repository.create_dataset.return_value = Mock(
         id="dataset_id",
         labels={"label1", "label2"},
         metadata={},
         name="Dataset 1",
     )
-    
+
     # Create a mock overview
     run_overview = RunOverview(
         id="run1",
@@ -81,10 +86,18 @@ def test_upload_evaluation_to_studio(mock_studio_dataset_repository: StudioDatas
         studio_dataset_repository=mock_studio_dataset_repository,
     )
 
-    studio_evaluation_repository.example_evaluations = Mock() # type: ignore
+    studio_evaluation_repository.example_evaluations = Mock()  # type: ignore
     studio_evaluation_repository.example_evaluations.return_value = [
-        MockEvaluationOutput(example_id="example1", evaluation_id="evaluation1", result=MockExampleOutput(output="output1")),
-        MockEvaluationOutput(example_id="example2", evaluation_id="evaluation1", result=MockExampleOutput(output="output2")),
+        MockEvaluationOutput(
+            example_id="example1",
+            evaluation_id="evaluation1",
+            result=MockExampleOutput(output="output1"),
+        ),
+        MockEvaluationOutput(
+            example_id="example2",
+            evaluation_id="evaluation1",
+            result=MockExampleOutput(output="output2"),
+        ),
     ]
 
     # Call the store_run_overview method
@@ -95,6 +108,5 @@ def test_upload_evaluation_to_studio(mock_studio_dataset_repository: StudioDatas
         examples=studio_evaluation_repository.example_evaluations.return_value,
         dataset_name=evaluation_overview.id,
         labels=evaluation_overview.labels.union(set([evaluation_overview.id])),
-        metadata=evaluation_overview.model_dump(mode='json'),
+        metadata=evaluation_overview.model_dump(mode="json"),
     )
-    
