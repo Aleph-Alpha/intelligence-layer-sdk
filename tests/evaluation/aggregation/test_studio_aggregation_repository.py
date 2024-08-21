@@ -1,24 +1,25 @@
 from datetime import datetime
-import os
-from unittest.mock import Mock, patch
 from pathlib import Path
 from typing import Any
-from urllib.parse import urljoin
+from unittest.mock import Mock
+
 import pytest
-from fsspec import AbstractFileSystem # type: ignore
+from fsspec import AbstractFileSystem  # type: ignore
 from pydantic import BaseModel
+
 from intelligence_layer.connectors.data.data import DataClient
 from intelligence_layer.evaluation.aggregation.domain import AggregationOverview
-from intelligence_layer.evaluation.aggregation.studio_aggregation_repository import StudioAggregationRepository
-from intelligence_layer.evaluation.dataset.studio_dataset_repository import StudioDatasetRepository
+from intelligence_layer.evaluation.aggregation.studio_aggregation_repository import (
+    StudioAggregationRepository,
+)
+from intelligence_layer.evaluation.dataset.studio_dataset_repository import (
+    StudioDatasetRepository,
+)
 from intelligence_layer.evaluation.evaluation.domain import EvaluationOverview
-from intelligence_layer.evaluation.evaluation.studio_evaluation_repository import StudioEvaluationRepository
 from intelligence_layer.evaluation.run.domain import RunOverview
-from intelligence_layer.evaluation.run.file_run_repository import FileSystemRunRepository
-from intelligence_layer.evaluation.run.studio_runner_repository import StudioRunnerRepository
-from intelligence_layer.core import Output
 
-class MockFileSystem(AbstractFileSystem): # type: ignore
+
+class MockFileSystem(AbstractFileSystem):  # type: ignore
     pass
 
 
@@ -27,8 +28,10 @@ class MockEvaluationOutput(BaseModel):
     example_id: str
     result: Any
 
+
 class MockExampleOutput(BaseModel):
     output: Any
+
 
 @pytest.fixture
 def mock_data_client() -> Mock:
@@ -40,16 +43,17 @@ def mock_studio_dataset_repository(mock_data_client: Mock) -> StudioDatasetRepos
     return StudioDatasetRepository(repository_id="repo1", data_client=mock_data_client)
 
 
-def test_upload_aggregation_overview_to_studio_repository(mock_studio_dataset_repository: StudioDatasetRepository, mock_data_client: Mock)-> None:
-
-    mock_studio_dataset_repository.create_dataset = Mock() # type: ignore
+def test_upload_aggregation_overview_to_studio_repository(
+    mock_studio_dataset_repository: StudioDatasetRepository, mock_data_client: Mock
+) -> None:
+    mock_studio_dataset_repository.create_dataset = Mock()  # type: ignore
     mock_studio_dataset_repository.create_dataset.return_value = Mock(
         id="dataset_id",
         labels={"label1", "label2"},
         metadata={},
         name="Dataset 1",
     )
-    
+
     # Create a mock overview
     run_overview = RunOverview(
         id="run1",
@@ -87,17 +91,18 @@ def test_upload_aggregation_overview_to_studio_repository(mock_studio_dataset_re
         end=datetime.now(),
         crashed_during_evaluation_count=0,
         successful_evaluation_count=1,
-        statistics=Evaluation(evaluation_id="evaluation1", example_id="example1", result="result1"),
+        statistics=Evaluation(
+            evaluation_id="evaluation1", example_id="example1", result="result1"
+        ),
         description="description",
         metadata={"metadata1": "value1", "metadata2": "value2"},
         labels={"label1", "label2"},
     )
 
-
     # Create an instance of the StudioRunnerRepository
     studio_evaluation_repository = StudioAggregationRepository(
         file_system=MockFileSystem(),
-        root_directory=Path("/aggregation"),    
+        root_directory=Path("/aggregation"),
         studio_dataset_repository=mock_studio_dataset_repository,
     )
     # Call the store_run_overview method
@@ -110,4 +115,3 @@ def test_upload_aggregation_overview_to_studio_repository(mock_studio_dataset_re
         labels=aggregation_overview.labels.union(set([aggregation_overview.id])),
         metadata={"aggregation_id": aggregation_overview.id},
     )
-    
