@@ -1,7 +1,10 @@
 # Changelog
 
 ## Unreleased
-- Add `DataClient` and `StudioDataRepository` as connectors to Studio for submitting data.
+- Add `DataClient` and `StudioDatasetRepository` as connectors to Studio for submitting data.
+- Add `StudioRunnerRepository` as a connector to Studio for submitting runs.
+- Add `StudioEvaluationRepository` as a connector to Studio for submitting evaluations.
+- Add `StudioAggregationRepository` as a connector to Studio for submitting aggregations.
 ### Breaking Changes
 ...
 

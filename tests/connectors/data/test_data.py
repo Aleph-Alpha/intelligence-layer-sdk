@@ -121,8 +121,11 @@ def test_create_repository(data_client: DataClient, mock_session: Mock) -> None:
 
     # Call the method
     repository = data_client.create_repository(
+        # Ignore because mypy does not support the dynamic transformation of pydantic.alias camelCase -> snake_case
         DataRepositoryCreate(
-            name="Repository 3", media_type="application/json", modality="text"
+            name="Repository 3",
+            mediaType="application/json",
+            modality="text",  # type: ignore
         )
     )
 
@@ -158,8 +161,11 @@ def test_create_repository_handles_request_exception(
     # Call the method
     with pytest.raises(DataInternalError):
         data_client.create_repository(
+            # Ignore because mypy does not support the dynamic transformation of pydantic.alias camelCase -> snake_case
             DataRepositoryCreate(
-                name="Repository 3", media_type="application/json", modality="image"
+                name="Repository 3",
+                mediaType="application/json",
+                modality="image",  # type: ignore
             )
         )
 
@@ -262,9 +268,7 @@ def test_create_dataset(data_client: DataClient, mock_session: Mock) -> None:
         files={
             "source_data": b"source_data",
             "labels": "label1,label2",
-            "name": None,
             "total_datapoints": 100,
-            "metadata": None,
         },
     )
 
