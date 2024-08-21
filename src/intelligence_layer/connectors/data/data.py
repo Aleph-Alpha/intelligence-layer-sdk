@@ -151,16 +151,17 @@ class DataClient:
         url = urljoin(
             self.base_data_platform_url, f"api/v1/repositories/{repository_id}/datasets"
         )
+        body = {
+            "sourceData": dataset.source_data,
+            "labels": ",".join(dataset.labels),
+            "name": dataset.name,
+            "totalDatapoints": dataset.total_datapoints,
+            "metadata": json.dumps(dataset.metadata) if dataset.metadata else None,
+        }
         response = self._do_request(
             "POST",
             url,
-            files={
-                "source_data": dataset.source_data,
-                "labels": ",".join(dataset.labels),
-                "name": dataset.name,
-                "total_datapoints": dataset.total_datapoints,
-                "metadata": json.dumps(dataset.metadata) if dataset.metadata else None,
-            },
+            files={k: v for k, v in body.items() if v not in [None, ""]},
         )
         return DataDataset(**response.json())
 

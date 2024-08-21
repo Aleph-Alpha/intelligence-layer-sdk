@@ -1,8 +1,11 @@
 import json
 from collections.abc import Iterable
-from typing import Optional
+from typing import Any, Optional
+
+from pydantic import BaseModel
 
 from intelligence_layer.connectors.base.json_serializable import (
+    JsonSerializable,
     SerializableDict,
 )
 from intelligence_layer.connectors.data import DataClient
@@ -16,7 +19,7 @@ from intelligence_layer.evaluation.dataset.domain import (
 )
 
 
-class StudioDataRepository(DatasetRepository):
+class StudioDatasetRepository(DatasetRepository):
     """Dataset repository interface with Data Platform."""
 
     def __init__(self, repository_id: str, data_client: DataClient) -> None:
@@ -25,7 +28,7 @@ class StudioDataRepository(DatasetRepository):
 
     def create_dataset(
         self,
-        examples: Iterable[Example[Input, ExpectedOutput]],
+        examples: Iterable[BaseModel],
         dataset_name: str,
         id: str | None = None,
         labels: set[str] | None = None,
@@ -47,7 +50,6 @@ class StudioDataRepository(DatasetRepository):
             raise NotImplementedError(
                 "Custom dataset IDs are not supported by the Data Platform"
             )
-
         source_data_list = [example.model_dump_json() for example in examples]
         remote_dataset = self.data_client.create_dataset(
             repository_id=self.repository_id,
@@ -62,7 +64,9 @@ class StudioDataRepository(DatasetRepository):
         return Dataset(
             id=remote_dataset.dataset_id,
             name=remote_dataset.name or "",
-            labels=set(remote_dataset.labels) if labels is not None else set(),
+            labels=set(remote_dataset.labels)
+            if remote_dataset.labels is not None
+            else set(),
             metadata=remote_dataset.metadata or dict(),
         )
 
@@ -91,7 +95,9 @@ class StudioDataRepository(DatasetRepository):
         return Dataset(
             id=remote_dataset.dataset_id,
             name=remote_dataset.name or "",
-            labels=set(remote_dataset.labels),
+            labels=set(remote_dataset.labels)
+            if remote_dataset.labels is not None
+            else set(),
             metadata=remote_dataset.metadata or dict(),
         )
 
@@ -107,7 +113,9 @@ class StudioDataRepository(DatasetRepository):
             yield Dataset(
                 id=remote_dataset.dataset_id,
                 name=remote_dataset.name or "",
-                labels=set(remote_dataset.labels),
+                labels=set(remote_dataset.labels)
+                if remote_dataset.labels is not None
+                else set(),
                 metadata=remote_dataset.metadata or dict(),
             )
 
