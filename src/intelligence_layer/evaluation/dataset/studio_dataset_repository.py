@@ -2,8 +2,6 @@ import json
 from collections.abc import Iterable
 from typing import Optional
 
-from pydantic import BaseModel
-
 from intelligence_layer.connectors.base.json_serializable import (
     SerializableDict,
 )
@@ -27,7 +25,7 @@ class StudioDatasetRepository(DatasetRepository):
 
     def create_dataset(
         self,
-        examples: Iterable[BaseModel],
+        examples: Iterable[Example[Input, ExpectedOutput]],
         dataset_name: str,
         id: str | None = None,
         labels: set[str] | None = None,
@@ -47,7 +45,7 @@ class StudioDatasetRepository(DatasetRepository):
         """
         if id is not None:
             raise NotImplementedError(
-                "Custom dataset IDs are not supported by the Data Platform"
+                "Custom dataset IDs are not supported by the StudioDataRepository"
             )
         source_data_list = [example.model_dump_json() for example in examples]
         remote_dataset = self.data_client.create_dataset(
@@ -55,7 +53,7 @@ class StudioDatasetRepository(DatasetRepository):
             dataset=DatasetCreate(
                 source_data="\n".join(source_data_list).encode(),
                 name=dataset_name,
-                labels=[label for label in labels] if labels is not None else [],
+                labels=list(labels) if labels is not None else [],
                 total_datapoints=len(source_data_list),
                 metadata=metadata,
             ),
@@ -151,9 +149,7 @@ class StudioDatasetRepository(DatasetRepository):
         for item in stream:
             data = json.loads(item.decode())
             if data["id"] == example_id:
-                return Example[input_type, expected_output_type].model_validate_json(  # type: ignore
-                    json_data=item
-                )
+                return Example[input_type, expected_output_type].model_validate(data)  # type: ignore
         return None
 
     def examples(
@@ -181,6 +177,4 @@ class StudioDatasetRepository(DatasetRepository):
             data = json.loads(item.decode())
             if examples_to_skip is not None and data["id"] in examples_to_skip:
                 continue
-            yield Example[input_type, expected_output_type].model_validate_json(  # type: ignore
-                json_data=item
-            )
+            yield Example[input_type, expected_output_type].model_validate(data)  # type: ignore

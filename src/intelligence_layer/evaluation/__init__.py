@@ -105,9 +105,6 @@ from .evaluation.in_memory_evaluation_repository import (
 from .evaluation.in_memory_evaluation_repository import (
     InMemoryEvaluationRepository as InMemoryEvaluationRepository,
 )
-from .evaluation.studio_evaluation_repository import (
-    StudioEvaluationRepository as StudioEvaluationRepository,
-)
 from .infrastructure.hugging_face_repository import (
     HuggingFaceRepository as HuggingFaceRepository,
 )
@@ -130,8 +127,5 @@ from .run.file_run_repository import FileRunRepository as FileRunRepository
 from .run.in_memory_run_repository import InMemoryRunRepository as InMemoryRunRepository
 from .run.run_repository import RunRepository as RunRepository
 from .run.runner import Runner as Runner
-from .run.studio_runner_repository import (
-    StudioRunnerRepository as StudioRunnerRepository,
-)
 
 __all__ = [symbol for symbol in dir()]

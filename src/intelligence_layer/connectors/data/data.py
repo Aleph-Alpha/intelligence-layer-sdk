@@ -77,11 +77,11 @@ class DataClient:
             total=3,  # Total number of retries
             backoff_factor=0.5,  # Exponential backoff factor
             status_forcelist=[
-                429,
-                500,
-                502,
-                503,
-                504,
+                HTTPStatus.TOO_MANY_REQUESTS,  # 429,
+                HTTPStatus.INTERNAL_SERVER_ERROR,  # 500,
+                HTTPStatus.BAD_GATEWAY,  # 502,
+                HTTPStatus.SERVICE_UNAVAILABLE,  # 503,
+                HTTPStatus.GATEWAY_TIMEOUT,  # 504,
             ],  # Retry on these HTTP status codes
         )
 
