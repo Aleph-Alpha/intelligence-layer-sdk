@@ -3,6 +3,7 @@ from collections.abc import Iterable, Sequence
 from itertools import combinations
 from uuid import uuid4
 
+import argilla as rg  # type: ignore
 from aleph_alpha_client import CompletionResponse
 from aleph_alpha_client.completion import CompletionResult
 from pytest import fixture
@@ -10,8 +11,6 @@ from pytest import fixture
 from intelligence_layer.connectors import (
     ArgillaClient,
     ArgillaEvaluation,
-    Field,
-    Question,
     RecordData,
     SerializableDict,
 )
@@ -42,8 +41,8 @@ class ArgillaFake(ArgillaClient):
         self,
         workspace_id: str,
         dataset_name: str,
-        fields: Sequence[Field],
-        questions: Sequence[Question],
+        fields: Sequence[rg.TextField],
+        questions: Sequence[rg.QuestionType],
     ) -> str:
         return self.ensure_dataset_exists(workspace_id, dataset_name, fields, questions)
 
@@ -51,8 +50,8 @@ class ArgillaFake(ArgillaClient):
         self,
         workspace_id: str,
         dataset_name: str,
-        fields: Sequence[Field],
-        questions: Sequence[Question],
+        fields: Sequence[rg.TextField],
+        questions: Sequence[rg.QuestionType],
     ) -> str:
         return str(uuid4())
 

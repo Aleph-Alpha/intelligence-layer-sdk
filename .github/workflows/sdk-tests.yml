@@ -108,7 +108,7 @@ jobs:
           discovery.type: "single-node"
           xpack.security.enabled: "false"
       argilla:
-        image: argilla/argilla-server:v1.26.1
+        image: argilla/argilla-server:v1.29.1
         ports:
           - "6900:6900"
         env:
@@ -202,7 +202,7 @@ jobs:
           discovery.type: "single-node"
           xpack.security.enabled: "false"
       argilla:
-        image: argilla/argilla-server:v1.26.1
+        image: argilla/argilla-server:v1.29.1
         ports:
           - "6900:6900"
         env:

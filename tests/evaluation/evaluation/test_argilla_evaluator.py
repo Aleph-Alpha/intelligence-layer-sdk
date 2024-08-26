@@ -3,6 +3,7 @@ from collections.abc import Iterable, Sequence
 from typing import ClassVar
 from uuid import uuid4
 
+import argilla as rg  # type: ignore
 import pytest
 from pytest import fixture
 
@@ -10,10 +11,6 @@ from intelligence_layer.connectors import (
     ArgillaClient,
     ArgillaEvaluation,
     RecordData,
-)
-from intelligence_layer.connectors.argilla.default_client import (
-    Field,
-    Question,
 )
 from intelligence_layer.evaluation import (
     ArgillaEvaluationLogic,
@@ -40,8 +37,8 @@ from tests.evaluation.conftest import (
 
 class StubArgillaClient(ArgillaClient):
     _expected_workspace_id: str
-    _expected_fields: Sequence[Field]
-    _expected_questions: Sequence[Question]
+    _expected_fields: Sequence[rg.TextField]
+    _expected_questions: Sequence[rg.QuestionType]
     _datasets: ClassVar[dict[str, list[RecordData]]] = {}
     _score = 3.0
 
@@ -49,8 +46,8 @@ class StubArgillaClient(ArgillaClient):
         self,
         workspace_id: str,
         dataset_name: str,
-        fields: Sequence[Field],
-        questions: Sequence[Question],
+        fields: Sequence[rg.TextField],
+        questions: Sequence[rg.QuestionType],
     ) -> str:
         return self.ensure_dataset_exists(workspace_id, dataset_name, fields, questions)
 
@@ -58,8 +55,8 @@ class StubArgillaClient(ArgillaClient):
         self,
         workspace_id: str,
         dataset_name: str,
-        fields: Sequence[Field],
-        questions: Sequence[Question],
+        fields: Sequence[rg.TextField],
+        questions: Sequence[rg.QuestionType],
     ) -> str:
         if workspace_id != self._expected_workspace_id:
             raise Exception("Incorrect workspace id")
@@ -109,12 +106,12 @@ class DummyStringTaskArgillaEvaluationLogic(
     def __init__(self) -> None:
         super().__init__(
             fields={
-                "output": Field(name="output", title="Output"),
-                "input": Field(name="input", title="Input"),
+                "output": rg.TextField(name="output", title="Output"),
+                "input": rg.TextField(name="input", title="Input"),
             },
             questions=[
-                Question(
-                    name="name", title="title", description="description", options=[0]
+                rg.RatingQuestion(
+                    name="name", title="title", description="description", values=[0]
                 )
             ],
         )
@@ -158,8 +155,8 @@ class DummyArgillaClient(ArgillaClient):
         self,
         workspace_id: str,
         dataset_name: str,
-        fields: Sequence[Field],
-        questions: Sequence[Question],
+        fields: Sequence[rg.TextField],
+        questions: Sequence[rg.QuestionType],
     ) -> str:
         return self.ensure_dataset_exists(workspace_id, dataset_name, fields, questions)
 
@@ -167,8 +164,8 @@ class DummyArgillaClient(ArgillaClient):
         self,
         workspace_id: str,
         dataset_name: str,
-        fields: Sequence[Field],
-        questions: Sequence[Question],
+        fields: Sequence[rg.TextField],
+        questions: Sequence[rg.QuestionType],
     ) -> str:
         dataset_id = str(uuid4())
         self._datasets[dataset_id] = []
@@ -207,8 +204,8 @@ class FailedEvaluationDummyArgillaClient(ArgillaClient):
         self,
         workspace_id: str,
         dataset_name: str,
-        fields: Sequence[Field],
-        questions: Sequence[Question],
+        fields: Sequence[rg.TextField],
+        questions: Sequence[rg.QuestionType],
     ) -> str:
         return self.ensure_dataset_exists(workspace_id, dataset_name, fields, questions)
 
@@ -216,8 +213,8 @@ class FailedEvaluationDummyArgillaClient(ArgillaClient):
         self,
         workspace_id: str,
         dataset_name: str,
-        fields: Sequence[Field],
-        questions: Sequence[Question],
+        fields: Sequence[rg.TextField],
+        questions: Sequence[rg.QuestionType],
     ) -> str:
         dataset_id = str(uuid4())
         self._datasets[dataset_id] = []
@@ -253,22 +250,22 @@ def dummy_client() -> DummyArgillaClient:
 
 
 @fixture()
-def argilla_questions() -> Sequence[Question]:
+def argilla_questions() -> Sequence[rg.QuestionType]:
     return [
-        Question(
+        rg.RatingQuestion(
             name="question",
             title="title",
             description="description",
-            options=[1],
+            values=[1],
         )
     ]
 
 
 @fixture()
-def argilla_fields() -> Sequence[Field]:
+def argilla_fields() -> Sequence[rg.TextField]:
     return [
-        Field(name="output", title="Output"),
-        Field(name="input", title="Input"),
+        rg.TextField(name="output", title="Output"),
+        rg.TextField(name="input", title="Input"),
     ]
 
 

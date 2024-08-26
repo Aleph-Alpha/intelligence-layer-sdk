@@ -65,13 +65,6 @@ class ArgillaWrapperClient(ArgillaClient):
             allow_extra_metadata=True,
         )
 
-        # workspace = self.client.workspaces(workspace_name)
-        # if not workspace:
-        #     workspace = rg.Workspace(name=workspace_name, client=self.client)
-        #     workspace.create()
-
-        # workspace = workspace.id
-
         workspace = self.ensure_workspace_exists(workspace_name)
 
         dataset = rg.Dataset(
@@ -135,8 +128,6 @@ class ArgillaWrapperClient(ArgillaClient):
         query = rg.Query(filter=status_filter)
 
         for record in remote_dataset.records(query=query):
-            # submitted_response = next((response for response in record.responses), None)
-            # if submitted_response is not None:
             metadata = record.metadata
             example_id = metadata.pop("example_id")
             yield ArgillaEvaluation(
@@ -246,12 +237,9 @@ class ArgillaWrapperClient(ArgillaClient):
         if user_id is None:
             raise ValueError("user_id is not a UUID")
 
+        # argilla currently does not allow to retrieve a record by id
         for record in records:
             if record.id == record_id:
-                # values_json = [{
-                #         question_name: {"value": response_value, "status": "submitted"}
-                #         for question_name, response_value in data.items()
-                # }]
                 for question_name, response_value in data.items():
                     response = rg.Response(
                         question_name=question_name,
@@ -260,7 +248,6 @@ class ArgillaWrapperClient(ArgillaClient):
                         user_id=user_id,
                     )
                     record.responses.add(response)
-                print(record.to_dict())
                 dataset.records.log([record])
                 return
 
@@ -270,6 +257,8 @@ class ArgillaWrapperClient(ArgillaClient):
 
     def _delete_workspace(self, workspace_name: str) -> None:
         workspace = self.client.workspaces(name=workspace_name)
+        if workspace is None:
+            raise ValueError("workspace does not exist.")
         for dataset in workspace.datasets:
             dataset.delete()
         workspace.delete()

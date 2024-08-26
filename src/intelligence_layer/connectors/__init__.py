@@ -5,9 +5,6 @@ from .argilla.argilla_client import RecordData as RecordData
 from .argilla.argilla_wrapper_client import (
     ArgillaWrapperClient as ArgillaWrapperClient,
 )
-from .argilla.default_client import DefaultArgillaClient as DefaultArgillaClient
-from .argilla.default_client import Field as Field
-from .argilla.default_client import Question as Question
 from .base.json_serializable import JsonSerializable as JsonSerializable
 from .base.json_serializable import SerializableDict as SerializableDict
 from .document_index.document_index import CollectionPath as CollectionPath

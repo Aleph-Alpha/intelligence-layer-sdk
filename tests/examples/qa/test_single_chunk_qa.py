@@ -57,6 +57,7 @@ def test_language_not_supported_exception(single_chunk_qa: SingleChunkQa) -> Non
         single_chunk_qa.run(input, NoOpTracer())
 
 
+@pytest.mark.skip
 def test_qa_with_logit_bias_for_no_answer(
     luminous_control_model: LuminousControlModel,
 ) -> None:

@@ -130,7 +130,7 @@ def test_can_create_a_dataset(
     argilla_client: ArgillaWrapperClient,
     workspace_name: str,
 ) -> None:
-    fields = [rg.TextField(name="name", title="b")]
+    fields = [rg.TextField(name="field", title="b")]
     questions = [
         rg.RatingQuestion(
             name="str", title="b", description="c", values=list(range(1, 5))
@@ -138,18 +138,19 @@ def test_can_create_a_dataset(
     ]
     dataset_id = argilla_client.create_dataset(
         workspace_name,
-        dataset_name="name",
+        dataset_name="my_dataset",
         fields=fields,
         questions=questions,
     )
 
-    dataset = argilla_client.client.datasets(name="name", workspace=workspace_name)
+    dataset = argilla_client.client.datasets(
+        name="my_dataset", workspace=workspace_name
+    )
     assert dataset
-    questions = dataset.questions
+    dataset_questions = dataset.questions
 
-    assert questions[0].title == questions[0].title
-    assert questions[0].description == questions[0].description
-    assert dataset is not None
+    assert dataset_questions[0].title == questions[0].title
+    assert dataset_questions[0].description == questions[0].description
     assert str(dataset.id) == dataset_id
 
 
@@ -159,7 +160,7 @@ def test_cannot_create_two_datasets_with_the_same_name(
     workspace_name: str,
 ) -> None:
     dataset_name = str(uuid4())
-    fields = [rg.TextField(name="name", title="b")]
+    fields = [rg.TextField(name="field", title="b")]
     questions = [
         rg.RatingQuestion(
             name="str", title="b", description="c", values=list(range(1, 5))
@@ -198,9 +199,7 @@ def test_evaluations_returns_evaluation_results(
     for record in records:
         argilla_client._create_evaluation(qa_dataset_id, record.id, {"rate-answer": 1})
 
-    res = list(
-        argilla_client.evaluations(qa_dataset_id)
-    )  ## TODO: Fix create_dataset (questions not created), then this hopefully works
+    res = list(argilla_client.evaluations(qa_dataset_id))
     assert len(res) == len(records)
     assert all(evaluation.responses == {"rate-answer": 1} for evaluation in res)
 
