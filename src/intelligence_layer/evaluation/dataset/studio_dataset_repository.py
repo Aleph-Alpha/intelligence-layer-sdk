@@ -20,6 +20,12 @@ class StudioDatasetRepository(DatasetRepository):
     """Dataset repository interface with Data Platform."""
 
     def __init__(self, repository_id: str, data_client: DataClient) -> None:
+        """Initializes the StudioDatasetRepository.
+
+        Args:
+            data_client: Data client to interact with the Data Platform API.
+            repository_id: Repository ID that identifies the repository(group of datasets).
+        """
         self.data_client = data_client
         self.repository_id = repository_id
 
@@ -42,6 +48,7 @@ class StudioDatasetRepository(DatasetRepository):
 
         Returns:
            :class:`Dataset`
+           :exception: Raises DataInternalError exception when the client fails.
         """
         if id is not None:
             raise NotImplementedError(
@@ -72,6 +79,9 @@ class StudioDatasetRepository(DatasetRepository):
 
         Args:
             dataset_id: Dataset ID of the dataset to delete.
+
+        Returns:
+            :exception: Raises DataInternalError exception when the client fails.
         """
         self.data_client.delete_dataset(
             repository_id=self.repository_id, dataset_id=dataset_id
@@ -85,6 +95,7 @@ class StudioDatasetRepository(DatasetRepository):
 
         Returns:
             :class:`Dataset` if it was not, `None` otherwise.
+            :exception: Raises DataInternalError exception when the client fails.
         """
         remote_dataset = self.data_client.get_dataset(
             repository_id=self.repository_id, dataset_id=dataset_id
@@ -103,6 +114,7 @@ class StudioDatasetRepository(DatasetRepository):
 
         Returns:
             :class:`Sequence` of :class:`Dataset`s.
+            :exception: Raises DataInternalError exception when the client fails.
         """
         for remote_dataset in self.data_client.list_datasets(
             repository_id=self.repository_id
@@ -121,6 +133,7 @@ class StudioDatasetRepository(DatasetRepository):
 
         Returns:
             :class:`Iterable` of dataset IDs.
+            :exception: Raises DataInternalError exception when the client fails.
         """
         datasets = self.data_client.list_datasets(repository_id=self.repository_id)
         return (dataset.dataset_id for dataset in datasets)
@@ -142,6 +155,7 @@ class StudioDatasetRepository(DatasetRepository):
 
         Returns:
             :class:`Example` if it was found, `None` otherwise.
+            :exception: Raises DataInternalError exception when the client fails.
         """
         stream = self.data_client.stream_dataset(
             repository_id=self.repository_id, dataset_id=dataset_id
@@ -169,6 +183,7 @@ class StudioDatasetRepository(DatasetRepository):
 
         Returns:
             :class:`Iterable` of :class`Example`s.
+            :exception: Raises DataInternalError exception when the client fails.
         """
         stream = self.data_client.stream_dataset(
             repository_id=self.repository_id, dataset_id=dataset_id

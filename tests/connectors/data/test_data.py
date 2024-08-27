@@ -58,10 +58,8 @@ def test_list_repositories(data_client: DataClient, mock_session: Mock) -> None:
     mock_response.json.return_value = return_json_override()
     mock_session.request.return_value = mock_response
 
-    # Call the method
     repositories = data_client.list_repositories()
 
-    # Assertions
     assert len(repositories) == 2
     assert isinstance(repositories[0], DataRepository)
     assert repositories[0].repository_id == "repo1"
@@ -76,7 +74,6 @@ def test_list_repositories(data_client: DataClient, mock_session: Mock) -> None:
     assert repositories[1].media_type == "application/csv"
     assert repositories[1].modality == "text"
 
-    # Verify the request was made with the correct parameters
     mock_session.request.assert_called_once_with(
         "GET",
         "http://localhost:8000/api/v1/repositories?page=0&size=20",
@@ -89,20 +86,15 @@ def test_list_repositories(data_client: DataClient, mock_session: Mock) -> None:
 def test_list_repositories_handles_request_exception(
     data_client: DataClient, mock_session: Mock
 ) -> None:
-    # Mock the request exception
     mock_session.request.side_effect = RequestException("Request failed")
 
-    # Call the method
     with pytest.raises(DataInternalError):
         data_client.list_repositories()
 
-    # Verify the request was made
     mock_session.request.assert_called_once()
 
 
 def test_create_repository(data_client: DataClient, mock_session: Mock) -> None:
-    # Mock the response
-
     def return_json_override() -> dict[Any, Any]:
         return {
             "repositoryId": "repo3",
@@ -119,17 +111,14 @@ def test_create_repository(data_client: DataClient, mock_session: Mock) -> None:
     mock_response.json.return_value = return_json_override()
     mock_session.request.return_value = mock_response
 
-    # Call the method
     repository = data_client.create_repository(
-        # Ignore because mypy does not support the dynamic transformation of pydantic.alias camelCase -> snake_case
         DataRepositoryCreate(
             name="Repository 3",
-            mediaType="application/json",
-            modality="text",  # type: ignore
+            mediaType="application/json",  # type: ignore
+            modality="text",
         )
     )
 
-    # Assertions
     assert isinstance(repository, DataRepository)
     assert repository.repository_id == "repo3"
     assert repository.name == "Repository 3"
@@ -137,7 +126,6 @@ def test_create_repository(data_client: DataClient, mock_session: Mock) -> None:
     assert repository.media_type == "application/json"
     assert repository.modality == "text"
 
-    # Verify the request was made with the correct parameters
     mock_session.request.assert_called_once_with(
         "POST",
         "http://localhost:8000/api/v1/repositories",
@@ -155,21 +143,17 @@ def test_create_repository(data_client: DataClient, mock_session: Mock) -> None:
 def test_create_repository_handles_request_exception(
     data_client: DataClient, mock_session: Mock
 ) -> None:
-    # Mock the request exception
     mock_session.request.side_effect = RequestException("Request failed")
 
-    # Call the method
     with pytest.raises(DataInternalError):
         data_client.create_repository(
-            # Ignore because mypy does not support the dynamic transformation of pydantic.alias camelCase -> snake_case
             DataRepositoryCreate(
                 name="Repository 3",
-                mediaType="application/json",
-                modality="image",  # type: ignore
+                mediaType="application/json",  # type: ignore
+                modality="image",
             )
         )
 
-    # Verify the request was made
     mock_session.request.assert_called_once()
 
 
@@ -190,10 +174,8 @@ def test_get_repository(data_client: DataClient, mock_session: Mock) -> None:
     mock_response.json.return_value = return_json_override()
     mock_session.request.return_value = mock_response
 
-    # Call the method
     repository = data_client.get_repository(repository_id="repo3")
 
-    # Assertions
     assert isinstance(repository, DataRepository)
     assert repository.repository_id == "repo3"
     assert repository.name == "Repository 3"
@@ -201,7 +183,6 @@ def test_get_repository(data_client: DataClient, mock_session: Mock) -> None:
     assert repository.media_type == "application/json"
     assert repository.modality == "image"
 
-    # Verify the request was made with the correct parameters
     mock_session.request.assert_called_once_with(
         "GET",
         "http://localhost:8000/api/v1/repositories/repo3",
@@ -214,14 +195,11 @@ def test_get_repository(data_client: DataClient, mock_session: Mock) -> None:
 def test_get_repository_handles_request_exception(
     data_client: DataClient, mock_session: Mock
 ) -> None:
-    # Mock the request exception
     mock_session.request.side_effect = RequestException("Request failed")
 
-    # Call the method
     with pytest.raises(DataInternalError):
         data_client.get_repository(repository_id="repo3")
 
-    # Verify the request was made
     mock_session.request.assert_called_once()
 
 
@@ -241,7 +219,6 @@ def test_create_dataset(data_client: DataClient, mock_session: Mock) -> None:
     mock_response.json.return_value = return_json_override()
     mock_session.request.return_value = mock_response
 
-    # Call the method
     dataset = data_client.create_dataset(
         repository_id="repo3",
         dataset=DatasetCreate(
@@ -251,14 +228,12 @@ def test_create_dataset(data_client: DataClient, mock_session: Mock) -> None:
         ),
     )
 
-    # Assertions
     assert isinstance(dataset, DataDataset)
     assert dataset.repository_id == "repo3"
     assert dataset.dataset_id == "dataset1"
     assert dataset.labels == ["label1", "label2"]
     assert dataset.total_datapoints == 100
 
-    # Verify the request was made with the correct parameters
     mock_session.request.assert_called_once_with(
         "POST",
         "http://localhost:8000/api/v1/repositories/repo3/datasets",
@@ -276,10 +251,8 @@ def test_create_dataset(data_client: DataClient, mock_session: Mock) -> None:
 def test_create_dataset_handles_request_exception(
     data_client: DataClient, mock_session: Mock
 ) -> None:
-    # Mock the request exception
     mock_session.request.side_effect = RequestException("Request failed")
 
-    # Call the method
     with pytest.raises(DataInternalError):
         data_client.create_dataset(
             repository_id="repo3",
@@ -290,7 +263,6 @@ def test_create_dataset_handles_request_exception(
             ),
         )
 
-    # Verify the request was made
     mock_session.request.assert_called_once()
 
 
@@ -322,10 +294,8 @@ def test_list_datasets(data_client: DataClient, mock_session: Mock) -> None:
     mock_response.json.return_value = return_json_override()
     mock_session.request.return_value = mock_response
 
-    # Call the method
     datasets = data_client.list_datasets(repository_id="repo3")
 
-    # Assertions
     assert len(datasets) == 2
     assert isinstance(datasets[0], DataDataset)
     assert datasets[0].repository_id == "repo3"
@@ -338,7 +308,6 @@ def test_list_datasets(data_client: DataClient, mock_session: Mock) -> None:
     assert datasets[1].labels == ["label3", "label4"]
     assert datasets[1].total_datapoints == 200
 
-    # Verify the request was made with the correct parameters
     mock_session.request.assert_called_once_with(
         "GET",
         "http://localhost:8000/api/v1/repositories/repo3/datasets?page=0&size=20",
@@ -351,14 +320,11 @@ def test_list_datasets(data_client: DataClient, mock_session: Mock) -> None:
 def test_list_datasets_handles_request_exception(
     data_client: DataClient, mock_session: Mock
 ) -> None:
-    # Mock the request exception
     mock_session.request.side_effect = RequestException("Request failed")
 
-    # Call the method
     with pytest.raises(DataInternalError):
         data_client.list_datasets(repository_id="repo3")
 
-    # Verify the request was made
     mock_session.request.assert_called_once()
 
 
@@ -378,17 +344,14 @@ def test_get_dataset(data_client: DataClient, mock_session: Mock) -> None:
     mock_response.json.return_value = return_json_override()
     mock_session.request.return_value = mock_response
 
-    # Call the method
     dataset = data_client.get_dataset(repository_id="repo3", dataset_id="dataset1")
 
-    # Assertions
     assert isinstance(dataset, DataDataset)
     assert dataset.repository_id == "repo3"
     assert dataset.dataset_id == "dataset1"
     assert dataset.labels == ["label1", "label2"]
     assert dataset.total_datapoints == 100
 
-    # Verify the request was made with the correct parameters
     mock_session.request.assert_called_once_with(
         "GET",
         "http://localhost:8000/api/v1/repositories/repo3/datasets/dataset1",
@@ -401,22 +364,17 @@ def test_get_dataset(data_client: DataClient, mock_session: Mock) -> None:
 def test_get_dataset_handles_request_exception(
     data_client: DataClient, mock_session: Mock
 ) -> None:
-    # Mock the request exception
     mock_session.request.side_effect = RequestException("Request failed")
 
-    # Call the method
     with pytest.raises(DataInternalError):
         data_client.get_dataset(repository_id="repo3", dataset_id="dataset1")
 
-    # Verify the request was made
     mock_session.request.assert_called_once()
 
 
 def test_delete_dataset(data_client: DataClient, mock_session: Mock) -> None:
-    # Call the method
     data_client.delete_dataset(repository_id="repo3", dataset_id="dataset1")
 
-    # Verify the request was made with the correct parameters
     mock_session.request.assert_called_once_with(
         "DELETE",
         "http://localhost:8000/api/v1/repositories/repo3/datasets/dataset1",
@@ -437,14 +395,11 @@ def test_stream_dataset(data_client: DataClient, mock_session: Mock) -> None:
     mock_response.iter_lines.return_value = mock_stream()
     mock_session.request.return_value = mock_response
 
-    # Call the method
     stream = data_client.stream_dataset(repository_id="repo3", dataset_id="dataset1")
 
-    # Assertions
     for expected, current in zip(expected_data, stream, strict=False):
         assert expected == current
 
-    # Verify the request was made with the correct parameters
     mock_session.request.assert_called_once_with(
         "GET",
         "http://localhost:8000/api/v1/repositories/repo3/datasets/dataset1/datapoints",
@@ -456,18 +411,14 @@ def test_stream_dataset(data_client: DataClient, mock_session: Mock) -> None:
 
 
 def test_do_request(data_client: DataClient, mock_session: Mock) -> None:
-    # Mock the response
     mock_response = Response()
     mock_response.status_code = 200
     mock_session.request.return_value = mock_response
 
-    # Call the method
     response = data_client._do_request("GET", "https://example.com")
 
-    # Assertions
     assert response == mock_response
 
-    # Verify the request was made with the correct parameters
     mock_session.request.assert_called_once_with(
         "GET",
         "https://example.com",
@@ -480,28 +431,22 @@ def test_do_request(data_client: DataClient, mock_session: Mock) -> None:
 def test_do_request_handles_request_exception(
     data_client: DataClient, mock_session: Mock
 ) -> None:
-    # Mock the request exception
     mock_session.request.side_effect = RequestException("Request failed")
 
-    # Call the method
     with pytest.raises(DataInternalError):
         data_client._do_request("GET", "https://example.com")
 
-    # Verify the request was made
     mock_session.request.assert_called_once()
 
 
 def test_do_request_handles_status_code_exception(
     data_client: DataClient, mock_session: Mock
 ) -> None:
-    # Mock the response
     mock_response = Response()
     mock_response.status_code = 404
     mock_session.request.return_value = mock_response
 
-    # Call the method
     with pytest.raises(DataResourceNotFound):
         data_client._do_request("GET", "https://example.com")
 
-    # Verify the request was made
     mock_session.request.assert_called_once()

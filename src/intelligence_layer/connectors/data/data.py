@@ -1,4 +1,5 @@
 import json
+import warnings
 from collections.abc import Iterator
 from http import HTTPStatus
 from typing import Any, ClassVar
@@ -10,6 +11,7 @@ from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
 
 from intelligence_layer.connectors.data.exceptions import (
+    DataError,
     DataExternalServiceUnavailable,
     DataForbiddenError,
     DataInternalError,
@@ -28,34 +30,10 @@ class DataClient:
     """Data Client class to interact with the Data Platform API.
 
     Attributes:
-    token: Token to authenticate with the Data Platform API
-    base_data_platform_url: Base URL of the Data Platform API
-    session: Session object to make requests to the Data Platform API
-
-
-    Methods:
-    list_repositories: List all the repositories
-    create_repository: Create a new repository
-    get_repository: Get a repository by ID
-    create_dataset: Create a new dataset in a repository
-    list_datasets: List all the datasets in a repository
-    get_dataset: Get a dataset by ID
-    delete_dataset: Delete a dataset by ID
-    stream_dataset: Stream the data points of a dataset
-    download_dataset: Download the data points of a dataset
-
-    Examples:
-    >>> client = DataClient(token="token")
-    >>> repositories = client.list_repositories()
-    >>> repository = client.create_repository(DataRepositoryCreate(name="name", mediaType="application/json", modality="text"))
-    >>> dataset = client.create_dataset(repository_id=repository.repository_id, DatasetCreate(source_data=b"data", labels=["label"]))
-    >>> datasets = client.list_datasets(repository_id=repository.repository_id)
-    >>> dataset = client.get_dataset(repository_id=repository.repository_id, dataset_id=dataset.dataset_id)
-    >>> client.delete_dataset(repository_id=repository.repository_id, dataset_id=dataset.dataset_id)
-    >>> stream = client.stream_dataset(repository_id=repository.repository_id, dataset_id=dataset.dataset_id)
+        headers: headers used in the request session
     """
 
-    _status_code_to_exception: ClassVar = {
+    _status_code_to_exception: ClassVar[dict[int, type[DataError]]] = {
         HTTPStatus.SERVICE_UNAVAILABLE: DataExternalServiceUnavailable,
         HTTPStatus.NOT_FOUND: DataResourceNotFound,
         HTTPStatus.UNPROCESSABLE_ENTITY: DataInvalidInput,
@@ -68,11 +46,19 @@ class DataClient:
         base_data_platform_url: str = "http://localhost:8000",
         session: requests.Session | None = None,
     ) -> None:
-        self.base_data_platform_url = base_data_platform_url
+        """Initialize the Data Client.
+
+        Args:
+            token: Access token
+            base_data_platform_url: Base URL of the Data Platform API
+            session: Requests session.
+        """
+        self._base_data_platform_url = base_data_platform_url
         self.headers = {
             **({"Authorization": f"Bearer {token}"} if token is not None else {}),
         }
-        self.session = session or requests.Session()
+
+        self._session = session or requests.Session()
         retry_strategy = Retry(
             total=3,  # Total number of retries
             backoff_factor=0.5,  # Exponential backoff factor
@@ -87,8 +73,10 @@ class DataClient:
 
         # Mount the retry strategy to the session
         adapter = HTTPAdapter(max_retries=retry_strategy)
-        self.session.mount("http://", adapter)
-        self.session.mount("https://", adapter)
+        self._session.mount("http://", adapter)
+        self._session.mount("https://", adapter)
+
+        warnings.warn("DataClient still in beta version and subject to change")
 
     def list_repositories(self, page: int = 0, size: int = 20) -> list[DataRepository]:
         """List all the repositories.
@@ -100,7 +88,7 @@ class DataClient:
         Returns:
             List of DataRepository objects
         """
-        url = urljoin(self.base_data_platform_url, "api/v1/repositories")
+        url = urljoin(self._base_data_platform_url, "api/v1/repositories")
         query = urlencode({"page": page, "size": size})
         response = self._do_request("GET", f"{url}?{query}")
         repositories = response.json()
@@ -115,9 +103,9 @@ class DataClient:
             repository: DataRepositoryCreate object
 
         Returns:
-        DataRepository new object
+            DataRepository new object
         """
-        url = urljoin(self.base_data_platform_url, "api/v1/repositories")
+        url = urljoin(self._base_data_platform_url, "api/v1/repositories")
         response = self._do_request(
             "POST", url, json=repository.model_dump(by_alias=True)
         )
@@ -130,10 +118,10 @@ class DataClient:
             repository_id: Repository ID
 
         Returns:
-        DataRepository object
+            DataRepository object
         """
         url = urljoin(
-            self.base_data_platform_url, f"api/v1/repositories/{repository_id}"
+            self._base_data_platform_url, f"api/v1/repositories/{repository_id}"
         )
         response = self._do_request("GET", url)
         return DataRepository(**response.json())
@@ -149,7 +137,8 @@ class DataClient:
             DataDataset new object
         """
         url = urljoin(
-            self.base_data_platform_url, f"api/v1/repositories/{repository_id}/datasets"
+            self._base_data_platform_url,
+            f"api/v1/repositories/{repository_id}/datasets",
         )
         body = {
             "sourceData": dataset.source_data,
@@ -176,10 +165,11 @@ class DataClient:
             size: Number of items per page
 
         Returns:
-        List of DataDataset from a given repository
+            List of DataDataset from a given repository
         """
         url = urljoin(
-            self.base_data_platform_url, f"api/v1/repositories/{repository_id}/datasets"
+            self._base_data_platform_url,
+            f"api/v1/repositories/{repository_id}/datasets",
         )
         query = urlencode({"page": page, "size": size})
         response = self._do_request("GET", f"{url}?{query}")
@@ -194,10 +184,10 @@ class DataClient:
             dataset_id: DataDataset ID
 
         Returns:
-        DataDataset new entity
+            DataDataset new entity
         """
         url = urljoin(
-            self.base_data_platform_url,
+            self._base_data_platform_url,
             f"api/v1/repositories/{repository_id}/datasets/{dataset_id}",
         )
         response = self._do_request("GET", url)
@@ -209,12 +199,9 @@ class DataClient:
         Args:
             repository_id: Repository ID
             dataset_id: DataDataset ID
-
-        Returns:
-        None
         """
         url = urljoin(
-            self.base_data_platform_url,
+            self._base_data_platform_url,
             f"api/v1/repositories/{repository_id}/datasets/{dataset_id}",
         )
         self._do_request("DELETE", url)
@@ -227,10 +214,10 @@ class DataClient:
             dataset_id: DataDataset ID
 
         Returns:
-        Iterator of data points
+            Iterator of datapoints(str)
         """
         url = urljoin(
-            self.base_data_platform_url,
+            self._base_data_platform_url,
             f"api/v1/repositories/{repository_id}/datasets/{dataset_id}/datapoints",
         )
         response = self._do_request("GET", url, stream=True)
@@ -238,7 +225,9 @@ class DataClient:
 
     def _do_request(self, method: str, url: str, **kwargs: Any) -> requests.Response:
         try:
-            response = self.session.request(method, url, headers=self.headers, **kwargs)
+            response = self._session.request(
+                method, url, headers=self.headers, **kwargs
+            )
             self._raise_for_status(response)
             return response
         except requests.RequestException as e:
