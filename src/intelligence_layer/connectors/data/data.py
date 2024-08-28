@@ -27,7 +27,7 @@ from intelligence_layer.connectors.data.models import (
 
 
 class DataClient:
-    """Data Client class to interact with the Data Platform API.
+    """Client to interact with the Data Platform API.
 
     Attributes:
         headers: headers used in the request session
