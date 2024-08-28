@@ -1450,13 +1450,13 @@ trio = ["trio (>=0.22.0,<0.26.0)"]
 
 [[package]]
 name = "httpx"
-version = "0.27.0"
+version = "0.27.2"
 description = "The next generation HTTP client."
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "httpx-0.27.0-py3-none-any.whl", hash = "sha256:71d5465162c13681bff01ad59b2cc68dd838ea1f10e51574bac27103f00c91a5"},
-    {file = "httpx-0.27.0.tar.gz", hash = "sha256:a0cb88a46f32dc874e04ee956e4c2764aba2aa228f650b06788ba6bda2962ab5"},
+    {file = "httpx-0.27.2-py3-none-any.whl", hash = "sha256:7bb2708e112d8fdd7829cd4243970f0c223274051cb35ee80c03301ee29a3df0"},
+    {file = "httpx-0.27.2.tar.gz", hash = "sha256:f7c2be1d2f3c3c3160d441802406b206c2b76f5947b11115e6df10c6c65e66c2"},
 ]
 
 [package.dependencies]
@@ -1472,6 +1472,7 @@ brotli = ["brotli", "brotlicffi"]
 cli = ["click (==8.*)", "pygments (==2.*)", "rich (>=10,<14)"]
 http2 = ["h2 (>=3,<5)"]
 socks = ["socksio (==1.*)"]
+zstd = ["zstandard (>=0.18.0)"]
 
 [[package]]
 name = "huggingface-hub"
@@ -2917,13 +2918,13 @@ test = ["pep440", "pre-commit", "pytest", "testpath"]
 
 [[package]]
 name = "nbqa"
-version = "1.8.7"
+version = "1.9.0"
 description = "Run any standard Python code quality tool on a Jupyter Notebook"
 optional = false
 python-versions = ">=3.8.0"
 files = [
-    {file = "nbqa-1.8.7-py3-none-any.whl", hash = "sha256:36c6f8fced65031ae3d90f5e0d56708cc4e8ee2b5cdddd9a96a1d3b8afe6d21b"},
-    {file = "nbqa-1.8.7.tar.gz", hash = "sha256:8122e2cb83df724dcfa788785b3b5336ae3c28535b62f87fb4961011a72423dc"},
+    {file = "nbqa-1.9.0-py3-none-any.whl", hash = "sha256:89da6b55ce0b47b5e8be45c5b94404e1d861e45df36959dd34a5d15cf45141ea"},
+    {file = "nbqa-1.9.0.tar.gz", hash = "sha256:48c0acd83675bd6d086efba3885e1137d9475c0da328c74f46b9acbc664fe36f"},
 ]
 
 [package.dependencies]
@@ -4454,13 +4455,13 @@ files = [
 
 [[package]]
 name = "rich"
-version = "13.7.1"
+version = "13.8.0"
 description = "Render rich text, tables, progress bars, syntax highlighting, markdown and more to the terminal"
 optional = false
 python-versions = ">=3.7.0"
 files = [
-    {file = "rich-13.7.1-py3-none-any.whl", hash = "sha256:4edbae314f59eb482f54e9e30bf00d33350aaa94f4bfcd4e9e3110e64d0d7222"},
-    {file = "rich-13.7.1.tar.gz", hash = "sha256:9be308cb1fe2f1f57d67ce99e95af38a1e2bc71ad9813b0e247cf7ffbcc3a432"},
+    {file = "rich-13.8.0-py3-none-any.whl", hash = "sha256:2e85306a063b9492dffc86278197a60cbece75bcb766022f3436f567cae11bdc"},
+    {file = "rich-13.8.0.tar.gz", hash = "sha256:a5ac1f1cd448ade0d59cc3356f7db7a7ccda2c8cbae9c7a90c28ff463d3e91f4"},
 ]
 
 [package.dependencies]
@@ -5816,4 +5817,4 @@ test = ["big-O", "importlib-resources", "jaraco.functools", "jaraco.itertools", 
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.10,<3.13"
-content-hash = "9d67e893b8cc52c327ea4dbf0dbc4f203d027d20b74b08a191483ec18c64b1f7"
+content-hash = "dc28f8dd69dd8f2d5c2e89c45c8cd3d13cd3fa0ed166fdb4163ade7abb0ce166"
