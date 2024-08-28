@@ -50,8 +50,8 @@ class DataClient:
 
         Args:
             token: Access token
-            base_data_platform_url: Base URL of the Data Platform API
-            session: Requests session.
+            base_data_platform_url: Base URL of the Studio Data API. Defaults to "http://localhost:8000".
+            session: a already created requests session. Defaults to None.
         """
         self._base_data_platform_url = base_data_platform_url
         self.headers = {
@@ -82,11 +82,11 @@ class DataClient:
         """List all the repositories.
 
         Args:
-            page: Page number
-            size: Number of items per page
+            page: Page number. Defaults to 0
+            size: Number of items per page. Defaults to 20
 
         Returns:
-            List of DataRepository objects
+            List of :class:`DataRepository` objects
         """
         url = urljoin(self._base_data_platform_url, "api/v1/repositories")
         query = urlencode({"page": page, "size": size})
@@ -103,7 +103,7 @@ class DataClient:
             repository: DataRepositoryCreate object
 
         Returns:
-            DataRepository new object
+            :class:`DataRepository` new object
         """
         url = urljoin(self._base_data_platform_url, "api/v1/repositories")
         response = self._do_request(
@@ -118,7 +118,7 @@ class DataClient:
             repository_id: Repository ID
 
         Returns:
-            DataRepository object
+            :class:`DataRepository` object
         """
         url = urljoin(
             self._base_data_platform_url, f"api/v1/repositories/{repository_id}"
@@ -131,10 +131,10 @@ class DataClient:
 
         Args:
             repository_id: Repository ID
-            dataset: DatasetCreate object
+            dataset: :DatasetCreate object
 
         Returns:
-            A new `DataDataset`
+            :class:`DataDataset` new object
         """
         url = urljoin(
             self._base_data_platform_url,
@@ -161,11 +161,11 @@ class DataClient:
 
         Args:
             repository_id: Repository ID
-            page: Page number
-            size: Number of items per page
+            page: Page number. Defaults to 0
+            size: Number of items per page. Defaults to 20
 
         Returns:
-            List of DataDataset from a given repository
+            List of :class:`DataDataset` from a given repository
         """
         url = urljoin(
             self._base_data_platform_url,
@@ -184,7 +184,7 @@ class DataClient:
             dataset_id: DataDataset ID
 
         Returns:
-            DataDataset new entity
+            :class:`DataDataset` object
         """
         url = urljoin(
             self._base_data_platform_url,
@@ -214,7 +214,7 @@ class DataClient:
             dataset_id: DataDataset ID
 
         Returns:
-            Iterator of datapoints(str)
+            :class Iterator[Any] of datapoints
         """
         url = urljoin(
             self._base_data_platform_url,

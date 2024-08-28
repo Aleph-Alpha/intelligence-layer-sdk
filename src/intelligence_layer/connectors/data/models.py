@@ -7,7 +7,7 @@ from pydantic.alias_generators import to_camel, to_snake
 
 
 class BaseDataModel(BaseModel):
-    model_config = ConfigDict(alias_generator=to_camel)
+    model_config = ConfigDict(alias_generator=to_camel, arbitrary_types_allowed=True)
 
 
 class DataRepository(BaseDataModel):
@@ -78,12 +78,10 @@ class DatasetCreate(BaseDataModel):
     labels: List of labels of the dataset
     """
 
+    model_config = ConfigDict(alias_generator=to_snake, arbitrary_types_allowed=True)
+
     source_data: io.BufferedReader | bytes
     name: Optional[str] = None
     labels: list[str]
     total_datapoints: int
     metadata: Optional[dict[str, Any]] = None
-
-    class Config:
-        alias_generator = to_snake
-        arbitrary_types_allowed = True
