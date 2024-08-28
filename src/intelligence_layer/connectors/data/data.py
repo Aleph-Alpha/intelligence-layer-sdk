@@ -134,7 +134,7 @@ class DataClient:
             dataset: DatasetCreate object
 
         Returns:
-            DataDataset new object
+            A new `DataDataset`
         """
         url = urljoin(
             self._base_data_platform_url,
