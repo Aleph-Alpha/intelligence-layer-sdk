@@ -214,7 +214,7 @@ class DataClient:
             dataset_id: DataDataset ID
 
         Returns:
-            :class Iterator[Any] of datapoints
+            :class Iterator of datapoints(Any)
         """
         url = urljoin(
             self._base_data_platform_url,

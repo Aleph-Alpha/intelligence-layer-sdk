@@ -1,9 +1,12 @@
 # Changelog
 
 ## Unreleased
-- Add `DataClient` and `StudioDatasetRepository` as connectors to Studio for submitting data.
+
 ### Breaking Changes
 ...
+
+### Beta Features
+- Add `DataClient` and `StudioDatasetRepository` as connectors to Studio for submitting data.
 
 ### Features
 ...

@@ -7,7 +7,7 @@ rm -rf src/documentation/.ipynb_checkpoints
 rm -rf src/documentation/how_tos/.ipynb_checkpoints
 
 find src/documentation -name "*.nbconvert.ipynb" -type f -delete
-find src/documentation -name "*.ipynb" ! -name "performance_tips.ipynb" ! -name "*studio*.ipynb" | xargs --max-args 1 --max-procs 6 poetry run jupyter nbconvert --to notebook --execute
+find src/documentation -name "*.ipynb" ! -name "performance_tips.ipynb" | xargs --max-args 1 --max-procs 6 poetry run jupyter nbconvert --to notebook --execute
 find src/documentation -name "*.nbconvert.ipynb" -type f -delete
 
 poetry run ./scripts/fastapi_example_test.sh
