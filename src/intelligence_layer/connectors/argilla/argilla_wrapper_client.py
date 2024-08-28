@@ -210,7 +210,10 @@ class ArgillaWrapperClient(ArgillaClient):
 
         workspace = rg.Workspace(name=workspace_name, client=self.client)
         workspace.create()
-        assert workspace.name
+        if not workspace:
+            raise ValueError(
+                f"Workspace with name {workspace_name} could not be created."
+            )
         return str(workspace.name)
 
     def records(self, dataset_id: str) -> Iterable[Record]:
@@ -230,7 +233,7 @@ class ArgillaWrapperClient(ArgillaClient):
     ) -> None:
         dataset = self._dataset_from_id(dataset_id=dataset_id)
         if dataset is None:
-            raise ValueError("dataset does not exst")
+            raise ValueError(f"Dataset with id {dataset_id} does not exist.")
         records = dataset.records
 
         user_id = self.client.me.id
@@ -238,6 +241,8 @@ class ArgillaWrapperClient(ArgillaClient):
             raise ValueError("user_id is not a UUID")
 
         # argilla currently does not allow to retrieve a record by id
+        # This could be optimized (in a scenario for creating multiple evaluations) by passing a dict of record_ids to the function
+        # and update all the records for the given record id list.
         for record in records:
             if record.id == record_id:
                 for question_name, response_value in data.items():

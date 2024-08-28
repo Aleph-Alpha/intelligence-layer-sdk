@@ -420,7 +420,6 @@ def test_client_can_load_existing_dataset(
             ),
             {"multilabel": ["a", "b"]},
         ),
-        ####### RankingQuestion not supported for now
         # (
         #     rg.RankingQuestion(name="rank", values=["reply 1", "reply 2"]),
         #     {

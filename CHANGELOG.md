@@ -12,7 +12,6 @@
 - Abstract `ChatModel` class to integrate with chat models from any API
 - Every `LanguageModel` supports echo to retrieve log probs for an expected completion given a prompt
 - Upgrade `ArgillaWrapperClient` to use Argilla v2.0.1
-  - upgrade argilla-server image version from  `argilla-server:v1.26.0`to `argilla-server:v1.29.0`
 
 ### Fixes
 - increase number of returned `log_probs` in `EloQaEvaluationLogic` to avoid missing a valid answer
@@ -21,6 +20,7 @@
 - Removed `DefaultArgillaClient`
 
 ### Breaking Changes
+- Upgrade argilla-server image version from  `argilla-server:v1.26.0`to `argilla-server:v1.29.0`
 ...
 
 ## 5.1.0
