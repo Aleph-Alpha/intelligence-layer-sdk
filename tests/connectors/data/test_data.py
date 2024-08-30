@@ -36,8 +36,8 @@ def test_list_repositories(data_client: DataClient, mock_session: Mock) -> None:
                     "repositoryId": "repo1",
                     "name": "Repository 1",
                     "mutable": True,
-                    "mediaType": "application/json",
-                    "modality": "image",
+                    "mediaType": "application/jsonlines",
+                    "modality": "text",
                     "createdAt": "2022-01-01T00:00:00Z",
                     "updatedAt": "2022-01-01T00:00:00Z",
                 },
@@ -45,7 +45,7 @@ def test_list_repositories(data_client: DataClient, mock_session: Mock) -> None:
                     "repositoryId": "repo2",
                     "name": "Repository 2",
                     "mutable": False,
-                    "mediaType": "application/csv",
+                    "mediaType": "application/jsonlines",
                     "modality": "text",
                     "createdAt": "2022-01-01T00:00:00Z",
                     "updatedAt": "2022-01-01T00:00:00Z",
@@ -65,13 +65,13 @@ def test_list_repositories(data_client: DataClient, mock_session: Mock) -> None:
     assert repositories[0].repository_id == "repo1"
     assert repositories[0].name == "Repository 1"
     assert repositories[0].mutable is True
-    assert repositories[0].media_type == "application/json"
-    assert repositories[0].modality == "image"
+    assert repositories[0].media_type == "application/jsonlines"
+    assert repositories[0].modality == "text"
     assert isinstance(repositories[1], DataRepository)
     assert repositories[1].repository_id == "repo2"
     assert repositories[1].name == "Repository 2"
     assert repositories[1].mutable is False
-    assert repositories[1].media_type == "application/csv"
+    assert repositories[1].media_type == "application/jsonlines"
     assert repositories[1].modality == "text"
 
     mock_session.request.assert_called_once_with(
@@ -100,7 +100,7 @@ def test_create_repository(data_client: DataClient, mock_session: Mock) -> None:
             "repositoryId": "repo3",
             "name": "Repository 3",
             "mutable": True,
-            "mediaType": "application/json",
+            "mediaType": "application/jsonlines",
             "modality": "text",
             "createdAt": "2022-01-01T00:00:00Z",
             "updatedAt": "2022-01-01T00:00:00Z",
@@ -114,8 +114,8 @@ def test_create_repository(data_client: DataClient, mock_session: Mock) -> None:
     repository = data_client.create_repository(
         DataRepositoryCreate(
             name="Repository 3",
-            mediaType="application/json",  # type: ignore
-            modality="text",
+            mediaType="application/jsonlines",  # type: ignore
+            modality="text",  # type: ignore
         )
     )
 
@@ -123,7 +123,7 @@ def test_create_repository(data_client: DataClient, mock_session: Mock) -> None:
     assert repository.repository_id == "repo3"
     assert repository.name == "Repository 3"
     assert repository.mutable is True
-    assert repository.media_type == "application/json"
+    assert repository.media_type == "application/jsonlines"
     assert repository.modality == "text"
 
     mock_session.request.assert_called_once_with(
@@ -134,7 +134,7 @@ def test_create_repository(data_client: DataClient, mock_session: Mock) -> None:
         },
         json={
             "name": "Repository 3",
-            "mediaType": "application/json",
+            "mediaType": "application/jsonlines",
             "modality": "text",
         },
     )
@@ -149,8 +149,8 @@ def test_create_repository_handles_request_exception(
         data_client.create_repository(
             DataRepositoryCreate(
                 name="Repository 3",
-                mediaType="application/json",  # type: ignore
-                modality="image",
+                mediaType="application/jsonlines",  # type: ignore
+                modality="text",  # type: ignore
             )
         )
 
@@ -163,8 +163,8 @@ def test_get_repository(data_client: DataClient, mock_session: Mock) -> None:
             "repositoryId": "repo3",
             "name": "Repository 3",
             "mutable": True,
-            "mediaType": "application/json",
-            "modality": "image",
+            "mediaType": "application/jsonlines",
+            "modality": "text",
             "createdAt": "2022-01-01T00:00:00Z",
             "updatedAt": "2022-01-01T00:00:00Z",
         }
@@ -180,8 +180,8 @@ def test_get_repository(data_client: DataClient, mock_session: Mock) -> None:
     assert repository.repository_id == "repo3"
     assert repository.name == "Repository 3"
     assert repository.mutable is True
-    assert repository.media_type == "application/json"
-    assert repository.modality == "image"
+    assert repository.media_type == "application/jsonlines"
+    assert repository.modality == "text"
 
     mock_session.request.assert_called_once_with(
         "GET",

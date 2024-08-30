@@ -1,5 +1,6 @@
 import io
 from datetime import datetime
+from enum import Enum
 from typing import Any, Optional
 
 from pydantic import BaseModel, ConfigDict
@@ -10,6 +11,15 @@ class BaseDataModel(BaseModel):
     model_config = ConfigDict(alias_generator=to_camel, arbitrary_types_allowed=True)
 
 
+class MediaTypes(str, Enum):
+    jsonlines = "application/x-ndjson"
+    jsonlines_ = "application/jsonlines"
+
+
+class Modality(str, Enum):
+    text = "text"
+
+
 class DataRepository(BaseDataModel):
     """Data Repository model.
 
@@ -17,17 +27,17 @@ class DataRepository(BaseDataModel):
     repository_id: Repository ID that identifies the repository(group of datasets)
     name: Name of the repository
     mutable: Indicates if the datasets in the repository are mutable or not
-    mediaType: Media type of the data: application/json, application/csv, etc.
+    media_type: Media type of the data: application/json, application/csv, etc.
     modality: Modality of the data: image, text, etc.
-    createdAt: Datetime when the repository was created
-    updatedAt: Datetime when the repository was updated
+    created_at: Datetime when the repository was created
+    updated_at: Datetime when the repository was updated
     """
 
     repository_id: str
     name: str
     mutable: bool
-    media_type: str
-    modality: str
+    media_type: MediaTypes
+    modality: Modality
     created_at: datetime
     updated_at: datetime
 
@@ -37,26 +47,27 @@ class DataRepositoryCreate(BaseDataModel):
 
     Attributes:
     name: Name of the repository
-    mediaType: Media type of the data: application/json, application/csv, etc.
+    media_type: Media type of the data: application/json, application/csv, etc.
     modality: Modality of the data: image, text, etc.
     """
 
     name: str
-    media_type: str
-    modality: str
+    media_type: MediaTypes
+    modality: Modality
 
 
 class DataDataset(BaseDataModel):
     """Dataset model.
 
     Attributes:
-    dataset_id: Dataset ID that identifies the dataset
-    labels: List of labels of the dataset
     repository_id: Repository ID that identifies the repository(group of datasets)
-    mutable: Indicates if the dataset is mutable or not
+    dataset_id: Dataset ID that identifies the dataset
+    name: Name of the dataset
+    labels: List of labels of the dataset
     total_datapoints: Total number of units in the dataset
-    createdAt: Datetime when the dataset was created
-    updatedAt: Datetime when the dataset was updated
+    metadata: Metadata of the dataset
+    created_at: Datetime when the dataset was created
+    updated_at: Datetime when the dataset was updated
     """
 
     repository_id: str
@@ -76,6 +87,8 @@ class DatasetCreate(BaseDataModel):
     source_data: Source data of the dataset in bytes(file like object)
     name: Name of the dataset
     labels: List of labels of the dataset
+    total_datapoints: Total number of units in the dataset
+    metadata: Metadata of the dataset
     """
 
     model_config = ConfigDict(alias_generator=to_snake, arbitrary_types_allowed=True)
