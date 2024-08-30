@@ -1,4 +1,3 @@
-version: "3"
 services:
   argilla-elastic-search:
     image: docker.elastic.co/elasticsearch/elasticsearch:8.5.3
@@ -51,7 +50,7 @@ services:
       postgres:
         condition: service_started
         restart: true
-    env_file: "backend/.env" # mainly for AA-TOKEN
+    env_file: ".env" # mainly for AA-TOKEN
     environment:
       DATABASE_URL: postgres:5432 
       POSTGRES_DB: il_sdk
