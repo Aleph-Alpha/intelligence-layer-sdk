@@ -1,13 +1,27 @@
 services:
+  # taken from https://docs.argilla.io/latest/getting_started/how-to-deploy-argilla-with-docker/
   argilla-elastic-search:
-    image: docker.elastic.co/elasticsearch/elasticsearch:8.5.3
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.12.2
     environment:
-      ES_JAVA_OPTS: "-Xms512m -Xmx512m"
-      discovery.type: "single-node"
-      xpack.security.enabled: "false"
-    command: ["elasticsearch", "-Elogger.level=ERROR"]
+      - node.name=elasticsearch
+      - cluster.name=es-argilla-local
+      - discovery.type=single-node
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+      - cluster.routing.allocation.disk.threshold_enabled=false
+      - xpack.security.enabled=false
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    ports:
+      - "9200:9200"
+      - "9300:9300"
     healthcheck:
-      test: ["CMD-SHELL", "curl --silent --fail localhost:9200/_cluster/health || exit 1"]
+      test:
+        [
+          "CMD-SHELL",
+          "curl --silent --fail localhost:9200/_cluster/health || exit 1",
+        ]
       interval: 5s
       timeout: 5s
       retries: 3
@@ -15,12 +29,16 @@ services:
     depends_on:
       argilla-elastic-search:
         condition: service_healthy
-    image: argilla/argilla-server:v1.29.0
+    image: argilla/argilla-server:v1.29.1
     ports:
       - "6900:6900"
     environment:
       ARGILLA_ELASTICSEARCH: "http://argilla-elastic-search:9200"
       ARGILLA_ENABLE_TELEMETRY: 0
+
+      USERNAME: argilla
+      PASSWORD: 12345678
+      API_KEY: argilla.apikey
   open-telemetry-trace-service:
     container_name: jaeger_1_35
     environment:
@@ -36,7 +54,7 @@ services:
   trace_viewer:
     image: ghcr.io/aleph-alpha/trace-viewer-trace-viewer:main
     ports:
-     - 3000:3000
+      - 3000:3000
 
   # export GITLAB_TOKEN=...
   # (optional) export GITLAB_TOKEN=$(op item get YOUR_TOKEN --format json --fields password | jq .value | tr -d '"')
@@ -45,14 +63,14 @@ services:
   studio-backend:
     image: registry.gitlab.aleph-alpha.de/product/studio/backend:latest
     ports:
-     - 8000:8000
+      - 8000:8000
     depends_on:
       postgres:
         condition: service_started
         restart: true
     env_file: ".env" # mainly for AA-TOKEN
     environment:
-      DATABASE_URL: postgres:5432 
+      DATABASE_URL: postgres:5432
       POSTGRES_DB: il_sdk
       POSTGRES_USER: il_sdk
       POSTGRES_PASSWORD: test
