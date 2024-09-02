@@ -120,7 +120,7 @@ class MultipleChunkQa(Task[MultipleChunkQaInput, MultipleChunkQaOutput]):
 
     Uses Aleph Alpha models to generate a natural language answer based on multiple text chunks.
     Best for longer texts that are already split into smaller units (chunks).
-    Relies on SingleChunkQa to generate answers for each chunk and then merges the answers into a single final answer.
+    Relies on SingleChunkQa to generate answers for each chunk and then merges the answers into a single final answer. If you  need the explainability feature use an instance of SingleChunkQa(explainability_enabled=True) to enable it.
     Includes logic to return 'answer = None' if the language model determines that the question cannot be
     reliably answered on the basis of the chunks.
 
@@ -130,6 +130,7 @@ class MultipleChunkQa(Task[MultipleChunkQaInput, MultipleChunkQaOutput]):
     Args:
         single_chunk_qa: The task that is used to generate an answer based on a single chunk.
             Defaults to :class:`SingleChunkQa` .
+            Use this to control whether the explainability feature is active by providing a specific instance of :class:`SingleChunkQa` - e.g. SingleChunkQa(explainability_enabled=True) to enable it.
         model: The model used throughout the task for model related API calls.
             Defaults to luminous-supreme-control.
         merge_answers_instruct_configs: Mapping language used to prompt parameters.
