@@ -9,15 +9,20 @@
 - Add `DataClient` and `StudioDatasetRepository` as connectors to Studio for submitting data.
 
 ### Features
-...
+- Remove cap for `max_concurrency` in `LimitedConcurrencyClient`.
+- Abstract `LanguageModel` class to integrate with LLMs from any API
+- Abstract `ChatModel` class to integrate with chat models from any API
+- Every `LanguageModel` supports echo to retrieve log probs for an expected completion given a prompt
+- Upgrade `ArgillaWrapperClient` to use Argilla v2.0.1
 
 ### Fixes
-...
+- increase number of returned `log_probs` in `EloQaEvaluationLogic` to avoid missing a valid answer
 
 ### Deprecations 
-...
+- Removed `DefaultArgillaClient`
 
 ### Breaking Changes
+- Upgrade argilla-server image version from  `argilla-server:v1.26.0`to `argilla-server:v1.29.0`
 ...
 
 ## 5.1.0

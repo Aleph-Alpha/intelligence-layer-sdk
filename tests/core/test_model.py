@@ -13,8 +13,10 @@ from intelligence_layer.core import (
     ControlModel,
     ExplainInput,
     Llama2InstructModel,
+    Llama3ChatModel,
     Llama3InstructModel,
     LuminousControlModel,
+    Message,
     NoOpTracer,
 )
 from intelligence_layer.core.model import _cached_context_size, _cached_tokenizer
@@ -157,3 +159,46 @@ def test_context_size_caching_works() -> None:
     _cached_context_size.cache_clear()
     different_result = another_model_instance.context_size
     assert context_size is not different_result
+
+
+def test_chat_model_can_produce_chat_prompt() -> None:
+    client = DummyModelClient()  # type: ignore
+    model = Llama3ChatModel("llama-3.1-8b-instruct", client)
+    messages = [
+        Message(role="system", content="You are a nice assistant."),
+        Message(role="user", content="What's 2+2?"),
+    ]
+    response_prefix = "The answer is"
+
+    prompt = model.to_chat_prompt(messages=messages, response_prefix=response_prefix)
+
+    assert isinstance(prompt.items[0], Text)
+
+    text_in_prompt = prompt.items[0].text
+
+    assert (
+        text_in_prompt
+        == """<|begin_of_text|><|start_header_id|>system<|end_header_id|>
+
+You are a nice assistant.<|eot_id|><|start_header_id|>user<|end_header_id|>
+
+What's 2+2?<|eot_id|><|start_header_id|>assistant<|end_header_id|>
+
+The answer is"""
+    )
+
+
+def test_aleph_alpha_model_can_echo(
+    model: ControlModel, no_op_tracer: NoOpTracer
+) -> None:
+    prompt = "2 + 2 is"
+    expected_completion = " 4"
+
+    echo_output = model.echo(prompt, expected_completion, no_op_tracer)
+
+    assert len(echo_output) == 1
+    assert echo_output[0][0].token == expected_completion
+
+    log_probability = echo_output[0][1]
+    assert log_probability
+    assert 0 > log_probability > -5

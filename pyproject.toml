@@ -24,19 +24,19 @@ requests = "^2.32.3"
 pycountry = "24.6.1"
 opentelemetry-api = "^1.22.0"
 opentelemetry-sdk = "^1.22.0"
-huggingface-hub = "^0.24.5"
+huggingface-hub = "^0.24.6"
 opentelemetry-exporter-otlp-proto-http = "1.23.0"
 # summary grader
 rouge-score = "^0.1.2"
-sacrebleu = "^2.4.2"
+sacrebleu = "^2.4.3"
 lingua-language-detector = "^2.0.2"
-argilla = "^1.29.1"
+argilla = "^2.0.1"
 
 [tool.poetry.group.dev.dependencies]
 # lint & format
 mypy = "^1.11.1"
 nbqa = "^1.8.7"
-ruff = "^0.6.0"
+ruff = "^0.6.2"
 pre-commit = "^3.8.0"
 
 # tests
@@ -61,7 +61,7 @@ sphinx = "^7.4.7"
 matplotlib = "^3.9.2"
 
 [tool.poetry.group.docs.dependencies]
-fastapi = "^0.112.0"
+fastapi = "^0.112.1"
 uvicorn = "^0.30.6"
 hypercorn = "^0.17.3"
 jupyter = "^1.0.0"
@@ -85,7 +85,6 @@ addopts = "--capture=tee-sys"
 filterwarnings = [ #ignore: message : warning : location ?
     'ignore:.*\`general_plain_validator_function\` is deprecated.*',
     'ignore::DeprecationWarning:.*importlib._bootstrap.*',
-    'ignore:.*DefaultArgillaClient.*:DeprecationWarning:'
 ]
 
 [tool.ruff]
