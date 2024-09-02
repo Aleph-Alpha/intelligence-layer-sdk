@@ -70,6 +70,7 @@ class SingleChunkQaInput(BaseModel):
     language: Language = Language("en")
     explainability_enabled: bool = False
 
+
 class SingleChunkQaOutput(BaseModel):
     """The output of a `SingleChunkQa` task.
 

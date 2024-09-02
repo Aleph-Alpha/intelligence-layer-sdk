@@ -186,7 +186,10 @@ class MultipleChunkQa(Task[MultipleChunkQaInput, MultipleChunkQaOutput]):
         qa_outputs = self._single_chunk_qa.run_concurrently(
             (
                 SingleChunkQaInput(
-                    question=input.question, chunk=chunk, language=input.language, explainability_enabled=input.explainability_enabled
+                    question=input.question,
+                    chunk=chunk,
+                    language=input.language,
+                    explainability_enabled=input.explainability_enabled,
                 )
                 for chunk in input.chunks
             ),
