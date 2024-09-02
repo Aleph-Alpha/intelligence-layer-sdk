@@ -22,10 +22,12 @@ class RetrieverBasedQaInput(BaseModel):
         question: The question to be answered based on the documents accessed
             by the retriever.
         language: The desired language of the answer. ISO 619 str with language e.g. en, fr, etc.
+        explainability_enabled: Whether to generate highlights (using the explainability feature) for the answer; default False for performance reasons.
     """
 
     question: str
     language: Language = Language("en")
+    explainability_enabled: bool = False
 
 
 class EnrichedSubanswer(Subanswer, Generic[ID]):
@@ -117,6 +119,7 @@ class RetrieverBasedQa(
             ],
             question=input.question,
             language=input.language,
+            explainability_enabled=input.explainability_enabled,
         )
 
         multi_chunk_qa_output = self._multi_chunk_qa.run(
