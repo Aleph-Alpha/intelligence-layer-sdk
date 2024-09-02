@@ -125,6 +125,7 @@ class MultipleChunkRetrieverQa(
             chunk=chunk_for_prompt,
             question=input.question,
             language=input.language,
+            explainability_enabled=input.explainability_enabled,
         )
 
         single_chunk_qa_output = self._single_chunk_qa.run(
