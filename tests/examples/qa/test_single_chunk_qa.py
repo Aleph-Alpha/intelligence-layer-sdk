@@ -21,6 +21,7 @@ def test_qa_with_answer(single_chunk_qa: SingleChunkQa) -> None:
         chunk=TextChunk(input_text),
         question="What is the name of Paul Nicolas' brother?",
         language=Language("en"),
+        explainability_enabled=True
     )
     output = single_chunk_qa.run(input, NoOpTracer())
 
