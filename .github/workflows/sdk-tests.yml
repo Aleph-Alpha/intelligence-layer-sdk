@@ -91,7 +91,7 @@ jobs:
         env:
           AA_TOKEN: ${{ secrets.AA_TOKEN }}
           HUGGING_FACE_TOKEN: ${{ secrets.HUGGING_FACE_TOKEN }}
-          CLIENT_URL: "https://api.aleph-alpha.com"
+          CLIENT_URL: ${{ secrets.CLIENT_URL }}
         run: ./scripts/doctest.sh
 
   test:
@@ -147,6 +147,8 @@ jobs:
           POSTGRES_USER: "il_sdk"
           POSTGRES_PASSWORD: "test"
           AUTHORIZATION_SERVICE_URL: "none"
+          AA_TOKEN: ${{ secrets.AA_TOKEN }}
+          API_SCHEDULER_URL: "https://api.aleph-alpha.com"
         credentials:
           username: "unused"
           password: ${{ secrets.GL_STUDIO_CONTAINER_TOKEN }}
@@ -184,7 +186,7 @@ jobs:
           HUGGING_FACE_TOKEN: ${{ secrets.HUGGING_FACE_TOKEN }}
           ARGILLA_API_URL: "http://localhost:6900/"
           ARGILLA_API_KEY: "argilla.apikey"
-          CLIENT_URL: "https://api.aleph-alpha.com"
+          CLIENT_URL: ${{ secrets.CLIENT_URL }}
           STUDIO_URL: "http://localhost:8000/"
         run: |
           ./scripts/test.sh
@@ -226,6 +228,8 @@ jobs:
           POSTGRES_USER: "il_sdk"
           POSTGRES_PASSWORD: "test"
           AUTHORIZATION_SERVICE_URL: "none"
+          AA_TOKEN: ${{ secrets.AA_TOKEN }}
+          API_SCHEDULER_URL: "https://api.aleph-alpha.com"
         credentials:
           username: "unused"
           password: ${{ secrets.GL_STUDIO_CONTAINER_TOKEN }}
@@ -259,7 +263,7 @@ jobs:
           HUGGING_FACE_TOKEN: ${{ secrets.HUGGING_FACE_TOKEN }}
           ARGILLA_API_URL: "http://localhost:6900/"
           ARGILLA_API_KEY: "argilla.apikey"
-          CLIENT_URL: "https://api.aleph-alpha.com"
+          CLIENT_URL: ${{ secrets.CLIENT_URL }}
           STUDIO_URL: "http://localhost:8000"
         run: |
           ./scripts/notebook_runner.sh

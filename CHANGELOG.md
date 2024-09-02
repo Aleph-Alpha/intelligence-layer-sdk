@@ -1,10 +1,12 @@
 # Changelog
 
 ## Unreleased
-...
 
 ### Breaking Changes
 ...
+
+### Beta Features
+- Add `DataClient` and `StudioDatasetRepository` as connectors to Studio for submitting data.
 
 ### Features
 - Remove cap for `max_concurrency` in `LimitedConcurrencyClient`.
