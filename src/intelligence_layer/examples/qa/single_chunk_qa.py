@@ -156,9 +156,6 @@ class SingleChunkQa(Task[SingleChunkQaInput, SingleChunkQaOutput]):
         answer = self._no_answer_to_none(
             output.completion.strip(), qa_setup.no_answer_str
         )
-        print("!!!!!!!!!!!!!!!!")
-        print(input.explainability_enabled)
-        print("!!!!!!!!!!!!!!!!")
         if input.explainability_enabled:
             raw_highlights = (
                 self._get_highlights(
