@@ -31,7 +31,9 @@ def test_multiple_chunk_qa_with_mulitple_chunks(
         RELATED_CHUNK_WITHOUT_ANSWER,
     ]
 
-    input = MultipleChunkQaInput(chunks=chunks, question=RELATED_QUESTION, explainability_enabled=True)
+    input = MultipleChunkQaInput(
+        chunks=chunks, question=RELATED_QUESTION, explainability_enabled=True
+    )
     output = multiple_chunk_qa.run(input, NoOpTracer())
 
     assert output.answer
