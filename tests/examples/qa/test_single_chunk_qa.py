@@ -33,6 +33,21 @@ def test_qa_with_answer(single_chunk_qa: SingleChunkQa) -> None:
     )
 
 
+def test_qa_with_answer_explainability_disabled(single_chunk_qa: SingleChunkQa) -> None:
+    input_text = "Paul Nicolas lost his mother at the age of 3, and then his father in 1914.[3] He was raised by his mother-in-law together with his brother Henri. He began his football career with Saint-Mandé Club in 1916. Initially, he played as a defender, but he quickly realized that his destiny laid at the forefront since he scored many goals.[3] In addition to his goal-scoring instinct, Nicolas also stood out for his strong character on the pitch, and these two qualities combined eventually drew the attention of Mr. Fort, the then president of the Gallia Club, who signed him as a centre-forward in 1916."
+    input = SingleChunkQaInput(
+        chunk=TextChunk(input_text),
+        question="What is the name of Paul Nicolas' brother?",
+        language=Language("en"),
+        explainability_enabled=False,
+    )
+    output = single_chunk_qa.run(input, NoOpTracer())
+
+    assert output.answer
+    assert "Henri" in output.answer
+    assert all(highlight == [] for highlight in output.highlights)
+
+
 def test_qa_with_no_answer(single_chunk_qa: SingleChunkQa) -> None:
     input = SingleChunkQaInput(
         chunk=TextChunk(

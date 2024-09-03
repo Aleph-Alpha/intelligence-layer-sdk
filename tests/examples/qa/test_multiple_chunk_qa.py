@@ -47,6 +47,26 @@ def test_multiple_chunk_qa_with_mulitple_chunks(
     )
 
 
+def test_multiple_chunk_qa_with_mulitple_chunks_explainability_disabled(
+    multiple_chunk_qa: MultipleChunkQa,
+) -> None:
+    chunks: Sequence[TextChunk] = [
+        CHUNK_CONTAINING_ANSWER,
+        RELATED_CHUNK_WITHOUT_ANSWER,
+    ]
+
+    input = MultipleChunkQaInput(
+        chunks=chunks, question=RELATED_QUESTION, explainability_enabled=False
+    )
+    output = multiple_chunk_qa.run(input, NoOpTracer())
+
+    assert output.answer
+    assert IMPORTANT_PART_OF_CORRECT_ANSWER in output.answer
+    assert len(output.subanswers) == 1
+    assert output.subanswers[0].chunk == chunks[0]
+    assert all(highlight == [] for highlight in output.subanswers[0].highlights)
+
+
 def test_multiple_chunk_qa_without_answer(multiple_chunk_qa: MultipleChunkQa) -> None:
     chunks: Sequence[TextChunk] = [CHUNK_CONTAINING_ANSWER]
 
