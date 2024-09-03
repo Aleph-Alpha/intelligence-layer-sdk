@@ -64,7 +64,7 @@ def test_multiple_chunk_qa_with_mulitple_chunks_explainability_disabled(
     assert IMPORTANT_PART_OF_CORRECT_ANSWER in output.answer
     assert len(output.subanswers) == 1
     assert output.subanswers[0].chunk == chunks[0]
-    assert all(len(highlight) == 0 for highlight in output.highlights)
+    assert all(not subanswer.highlights for subanswer in output.subanswers)
 
 
 def test_multiple_chunk_qa_without_answer(multiple_chunk_qa: MultipleChunkQa) -> None:
