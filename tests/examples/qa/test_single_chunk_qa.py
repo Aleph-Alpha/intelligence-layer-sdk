@@ -45,7 +45,7 @@ def test_qa_with_answer_explainability_disabled(single_chunk_qa: SingleChunkQa) 
 
     assert output.answer
     assert "Henri" in output.answer
-    assert all(highlight == [] for highlight in output.highlights)
+    assert all(len(highlight) == 0 for highlight in output.highlights)
 
 
 def test_qa_with_no_answer(single_chunk_qa: SingleChunkQa) -> None:
