@@ -12,12 +12,12 @@ from intelligence_layer.core import (
     CompleteInput,
     ControlModel,
     ExplainInput,
-    Llama2InstructModel,
     Llama3ChatModel,
     Llama3InstructModel,
     LuminousControlModel,
     Message,
     NoOpTracer,
+    Pharia1ChatModel,
 )
 from intelligence_layer.core.model import _cached_context_size, _cached_tokenizer
 
@@ -63,20 +63,7 @@ def test_explain(model: ControlModel, no_op_tracer: NoOpTracer) -> None:
     assert output.explanations[0].items[0].scores[5].score > 1
 
 
-def test_llama_2_model_works(no_op_tracer: NoOpTracer) -> None:
-    llama_2_model = Llama2InstructModel()
-
-    prompt = llama_2_model.to_instruct_prompt(
-        "Who likes pizza?",
-        "Marc and Jessica had pizza together. However, Marc hated it. He only agreed to the date because Jessica likes pizza so much.",
-    )
-
-    explain_input = CompleteInput(prompt=prompt)
-    output = llama_2_model.complete(explain_input, no_op_tracer)
-    assert "Jessica" in output.completion
-
-
-def test_llama_3_model_works(no_op_tracer: NoOpTracer) -> None:
+def test_llama_3_instruct_model_works(no_op_tracer: NoOpTracer) -> None:
     llama_3_model = Llama3InstructModel()
 
     prompt = llama_3_model.to_instruct_prompt(
@@ -89,15 +76,34 @@ def test_llama_3_model_works(no_op_tracer: NoOpTracer) -> None:
     assert "Jessica" in output.completion
 
 
+def test_pharia_1_chat_model_works(no_op_tracer: NoOpTracer) -> None:
+    pharia_1_chat_model = Pharia1ChatModel()
+
+    messages = [Message(role="user", content="What is 2+2?")]
+
+    completion = pharia_1_chat_model.generate_chat(
+        messages, response_prefix=None, tracer=no_op_tracer
+    )
+    assert "4" in completion
+
+
+def test_llama_3_chat_model_works(no_op_tracer: NoOpTracer) -> None:
+    llama_3_chat_model = Llama3ChatModel()
+
+    messages = [Message(role="user", content="What is 2+2?")]
+
+    completion = llama_3_chat_model.generate_chat(
+        messages, response_prefix=None, tracer=no_op_tracer
+    )
+    assert "4" in completion
+
+
 def test_models_know_their_context_size(client: AlephAlphaClientProtocol) -> None:
     assert (
         LuminousControlModel(client=client, name="luminous-base-control").context_size
         == 2048
     )
     assert AlephAlphaModel(client=client, name="luminous-base").context_size == 2048
-    assert (
-        Llama2InstructModel(client=client, name="llama-2-7b-chat").context_size == 2048
-    )
     assert (
         Llama3InstructModel(client=client, name="llama-3-8b-instruct").context_size
         == 8192
@@ -108,13 +114,7 @@ def test_models_warn_about_non_recommended_models(
     client: AlephAlphaClientProtocol,
 ) -> None:
     with pytest.warns(UserWarning):
-        assert LuminousControlModel(client=client, name="llama-2-7b-chat")  # type: ignore
-
-    with pytest.warns(UserWarning):
-        assert Llama2InstructModel(client=client, name="luminous-base")  # type: ignore
-
-    with pytest.warns(UserWarning):
-        assert Llama3InstructModel(client=client, name="llama-2-7b-chat")  # type: ignore
+        assert Llama3InstructModel(client=client, name="luminous-base")  # type: ignore
 
     with pytest.warns(UserWarning):
         assert AlephAlphaModel(client=client, name="No model")  # type: ignore

@@ -177,22 +177,22 @@ class Message(BaseModel):
 
 
 class ChatModel(LanguageModel):
-    """Abstract base class to implement any model that supports chat.
-
-    Args:
-        messages: A number of messages to use as prompt for the model
-        response prefix: Optional argument to append a string to the beginning of the
-            final agent message to steer the generation
-        tracer: Valid instance of a tracer
-
-    Returns:
-        A list of tuples with token identifier and log probability
-    """
+    """Abstract base class to implement any model that supports chat."""
 
     @abstractmethod
     def generate_chat(
         self, messages: list[Message], response_prefix: str | None, tracer: Tracer
     ) -> str:
+        pass
+
+    @abstractmethod
+    def echo_chat(
+        self,
+        messages: list[Message],
+        response_prefix: str | None,
+        expected_completion: str,
+        tracer: Tracer,
+    ) -> Sequence[tuple[Any, Optional[float]]]:
         pass
 
 
@@ -365,6 +365,7 @@ def _context_size(client: AlephAlphaClientProtocol, name: str) -> int:
 
 
 class ControlModel(AlephAlphaModel, ABC):
+    INSTRUCTION_PROMPT_TEMPLATE: PromptTemplate
     RECOMMENDED_MODELS: ClassVar[list[str]] = []
 
     def __init__(
@@ -381,14 +382,13 @@ class ControlModel(AlephAlphaModel, ABC):
     @abstractmethod
     def eot_token(self) -> str: ...
 
-    @abstractmethod
     def to_instruct_prompt(
         self,
         instruction: str,
         input: Optional[str] = None,
         response_prefix: Optional[str] = None,
     ) -> RichPrompt:
-        """Method to create an instruct-`RichPrompt` object to use with any `AlephAlphaModel`.
+        """Method to create an instruct-`RichPrompt` object to use with any `ControlModel`.
 
         Allows the implementation of a custom prompt format for the specific model in use.
 
@@ -398,7 +398,9 @@ class ControlModel(AlephAlphaModel, ABC):
             response_prefix: Optional argument to append a string to the beginning of the
                 final agent message to steer the generation
         """
-        ...
+        return self.INSTRUCTION_PROMPT_TEMPLATE.to_rich_prompt(
+            instruction=instruction, input=input, response_prefix=response_prefix
+        )
 
 
 class LuminousControlModel(ControlModel):
@@ -442,16 +444,6 @@ class LuminousControlModel(ControlModel):
     def eot_token(self) -> str:
         return "<|endoftext|>"
 
-    def to_instruct_prompt(
-        self,
-        instruction: str,
-        input: Optional[str] = None,
-        response_prefix: Optional[str] = None,
-    ) -> RichPrompt:
-        return self.INSTRUCTION_PROMPT_TEMPLATE.to_rich_prompt(
-            instruction=instruction, input=input, response_prefix=response_prefix
-        )
-
 
 class Llama2InstructModel(ControlModel):
     """A llama-2-*-chat model, prompt-optimized for single-turn instructions.
@@ -485,20 +477,14 @@ class Llama2InstructModel(ControlModel):
         client: Optional[AlephAlphaClientProtocol] = None,
     ) -> None:
         super().__init__(name, client)
+        warnings.warn(
+            "The llama-2 models are not longer supported. This class will be removed in future versions. Please use `Llama3InstructModel` instead.",
+            category=DeprecationWarning,
+        )
 
     @property
     def eot_token(self) -> str:
         return "<|endoftext|>"
-
-    def to_instruct_prompt(
-        self,
-        instruction: str,
-        input: Optional[str] = None,
-        response_prefix: Optional[str] = None,
-    ) -> RichPrompt:
-        return self.INSTRUCTION_PROMPT_TEMPLATE.to_rich_prompt(
-            instruction=instruction, input=input, response_prefix=response_prefix
-        )
 
 
 class Llama3InstructModel(ControlModel):
@@ -539,21 +525,13 @@ class Llama3InstructModel(ControlModel):
     def eot_token(self) -> str:
         return "<|eot_id|>"
 
-    def to_instruct_prompt(
-        self,
-        instruction: str,
-        input: Optional[str] = None,
-        response_prefix: Optional[str] = None,
-    ) -> RichPrompt:
-        return self.INSTRUCTION_PROMPT_TEMPLATE.to_rich_prompt(
-            instruction=instruction, input=input, response_prefix=response_prefix
-        )
-
 
 class AlephAlphaChatModel(ChatModel, AlephAlphaModel):
     """Abstract base class for any model that supports chat and runs via the Aleph Alpha API."""
 
-    @abstractmethod
+    CHAT_PROMPT_TEMPLATE: PromptTemplate
+    RECOMMENDED_MODELS: ClassVar[list[str]] = []
+
     def to_chat_prompt(
         self, messages: list[Message], response_prefix: str | None
     ) -> RichPrompt:
@@ -566,7 +544,9 @@ class AlephAlphaChatModel(ChatModel, AlephAlphaModel):
             response_prefix: Optional argument to append a string to the beginning of the
                 final agent message to steer the generation
         """
-        ...
+        return self.CHAT_PROMPT_TEMPLATE.to_rich_prompt(
+            messages=[m.model_dump() for m in messages], response_prefix=response_prefix
+        )
 
     def generate_chat(
         self, messages: list[Message], response_prefix: str | None, tracer: Tracer
@@ -585,6 +565,57 @@ class AlephAlphaChatModel(ChatModel, AlephAlphaModel):
 
         return self.generate(prompt_item.text, tracer)
 
+    def echo_chat(
+        self,
+        messages: list[Message],
+        response_prefix: str | None,
+        expected_completion: str,
+        tracer: Tracer,
+    ) -> Sequence[tuple[Any, float | None]]:
+        prompt = self.to_chat_prompt(messages, response_prefix)
+        prompt_item = prompt.items[0]
+        assert isinstance(prompt_item, Text)
+
+        return self.echo(prompt_item.text, expected_completion, tracer)
+
+
+LLAMA_3_PROMPT_TEMPLATE = PromptTemplate(
+    """<|begin_of_text|>{% for message in messages %}<|start_header_id|>{{message.role}}<|end_header_id|>
+
+{% promptrange instruction %}{{message.content}}{% endpromptrange %}<|eot_id|>{% endfor %}<|start_header_id|>assistant<|end_header_id|>
+
+{% if response_prefix %}{{response_prefix}}{% endif %}"""
+)
+
+
+class Pharia1ChatModel(AlephAlphaChatModel):
+    """Chat model to be used for any `"Pharia-1-LLM-*` model.
+
+    Args:
+        name: The name of a valid Pharia-1 model.
+            Defaults to `Pharia-1-LLM-7B-control`
+        client: Aleph Alpha client instance for running model related API calls.
+            Defaults to :class:`LimitedConcurrencyClient`
+    """
+
+    CHAT_PROMPT_TEMPLATE = LLAMA_3_PROMPT_TEMPLATE
+
+    RECOMMENDED_MODELS: ClassVar[list[str]] = [
+        "Pharia-1-LLM-7B-control",
+        "Pharia-1-LLM-7B-control-aligned",
+    ]
+
+    def __init__(
+        self,
+        name: str = "Pharia-1-LLM-7B-control",
+        client: Optional[AlephAlphaClientProtocol] = None,
+    ) -> None:
+        super().__init__(name, client)
+
+    @property
+    def eot_token(self) -> str:
+        return "<|endoftext|>"
+
 
 class Llama3ChatModel(AlephAlphaChatModel):
     """Chat model to be used for `llama-3-*` and `llama-3.1-*` models.
@@ -596,13 +627,7 @@ class Llama3ChatModel(AlephAlphaChatModel):
             Defaults to :class:`LimitedConcurrencyClient`
     """
 
-    CHAT_PROMPT_TEMPLATE = PromptTemplate(
-        """<|begin_of_text|>{% for message in messages %}<|start_header_id|>{{message.role}}<|end_header_id|>
-
-{% promptrange instruction %}{{message.content}}{% endpromptrange %}<|eot_id|>{% endfor %}<|start_header_id|>assistant<|end_header_id|>
-
-{% if response_prefix %}{{response_prefix}}{% endif %}"""
-    )
+    CHAT_PROMPT_TEMPLATE = LLAMA_3_PROMPT_TEMPLATE
 
     RECOMMENDED_MODELS: ClassVar[list[str]] = [
         "llama-3-8b-instruct",
@@ -621,10 +646,3 @@ class Llama3ChatModel(AlephAlphaChatModel):
     @property
     def eot_token(self) -> str:
         return "<|eot_id|>"
-
-    def to_chat_prompt(
-        self, messages: list[Message], response_prefix: str | None = None
-    ) -> RichPrompt:
-        return self.CHAT_PROMPT_TEMPLATE.to_rich_prompt(
-            messages=[m.model_dump() for m in messages], response_prefix=response_prefix
-        )
