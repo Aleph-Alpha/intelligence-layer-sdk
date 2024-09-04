@@ -5,13 +5,13 @@
 ### Breaking Changes
 ...
 
-
 ### Features
 - Remove cap for `max_concurrency` in `LimitedConcurrencyClient`.
 - Introduce abstract `LanguageModel` class to integrate with LLMs from any API
   - Every `LanguageModel` supports echo to retrieve log probs for an expected completion given a prompt
 - Introduce abstract `ChatModel` class to integrate with chat models from any API
-  - This also comes with the `Llama3ChatModel` for usage with llama models.
+  - Introducing `Pharia1ChatModel` for usage with pharia-1 models.
+  - Introducing `Llama3ChatModel` for usage with llama models.
 - Upgrade `ArgillaWrapperClient` to use Argilla v2.0.1
 - (Beta) Add `DataClient` and `StudioDatasetRepository` as connectors to Studio for submitting data.
 
@@ -20,6 +20,7 @@
 
 ### Deprecations 
 - Removed `DefaultArgillaClient`
+- Deprecated `Llama2InstructModel` 
 
 ### Breaking Changes
 - Upgrade argilla-server image version from  `argilla-server:v1.26.0`to `argilla-server:v1.29.0`.

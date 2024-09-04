@@ -28,6 +28,7 @@ from .model import Llama3ChatModel as Llama3ChatModel
 from .model import Llama3InstructModel as Llama3InstructModel
 from .model import LuminousControlModel as LuminousControlModel
 from .model import Message as Message
+from .model import Pharia1ChatModel as Pharia1ChatModel
 from .prompt_template import Cursor as Cursor
 from .prompt_template import PromptItemCursor as PromptItemCursor
 from .prompt_template import PromptRange as PromptRange
