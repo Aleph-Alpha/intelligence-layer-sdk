@@ -187,7 +187,7 @@ class ChatModel(LanguageModel):
 
         Args:
             messages: The messages to be used as prompt
-            response_prefix: Prefix for the response
+            response_prefix: Append the given string to the beginning of the final agent message to steer the generation.
             tracer: Valid instance of a tracer
 
         Returns:
@@ -207,7 +207,7 @@ class ChatModel(LanguageModel):
 
         Args:
             messages: The messages to be used as prompt
-            response_prefix: Prefix for the response
+            response_prefix: Append the given string to the beginning of the final agent message to steer the generation.
             expected_completion: The expected completion to get log probs for
             tracer: Valid instance of a tracer
 
@@ -554,7 +554,7 @@ class AlephAlphaChatModel(ChatModel, AlephAlphaModel):
     RECOMMENDED_MODELS: ClassVar[list[str]] = []
 
     def to_chat_prompt(
-        self, messages: list[Message], response_prefix: str | None
+        self, messages: list[Message], response_prefix: str | None = None
     ) -> RichPrompt:
         """Method to create a chat-`RichPrompt` object to use with any `AlephAlphaModel`.
 
@@ -562,8 +562,8 @@ class AlephAlphaChatModel(ChatModel, AlephAlphaModel):
 
         Args:
             messages: A number of messages to use as prompt for the model
-            response_prefix: Optional argument to append a string to the beginning of the
-                final agent message to steer the generation
+            response_prefix: Append the given string to the beginning of the final agent message to
+                steer the generation. Defaults to None.
         """
         return self.CHAT_PROMPT_TEMPLATE.to_rich_prompt(
             messages=[m.model_dump() for m in messages], response_prefix=response_prefix
@@ -632,6 +632,17 @@ class Pharia1ChatModel(AlephAlphaChatModel):
         client: Optional[AlephAlphaClientProtocol] = None,
     ) -> None:
         super().__init__(name, client)
+
+    # default behavior ("disable_optimizations"=False) will incorrectly strip newlines from end of prompt
+    @staticmethod
+    def _disable_prompt_optimizations(input: CompleteInput) -> CompleteInput:
+        dumped = input.model_dump()
+        dumped["disable_optimizations"] = True
+        return CompleteInput(**dumped)
+
+    def complete(self, input: CompleteInput, tracer: Tracer) -> CompleteOutput:
+        input_with_disabled_optimizations = self._disable_prompt_optimizations(input)
+        return super().complete(input_with_disabled_optimizations, tracer)
 
     @property
     def eot_token(self) -> str:

@@ -71,9 +71,20 @@ def test_llama_3_instruct_model_works(no_op_tracer: NoOpTracer) -> None:
         "Marc and Jessica had pizza together. However, Marc hated it. He only agreed to the date because Jessica likes pizza so much.",
     )
 
-    explain_input = CompleteInput(prompt=prompt)
-    output = llama_3_model.complete(explain_input, no_op_tracer)
+    complete_input = CompleteInput(prompt=prompt)
+    output = llama_3_model.complete(complete_input, no_op_tracer)
     assert "Jessica" in output.completion
+
+
+def test_pharia_1_chat_model_disables_optimizations(no_op_tracer: NoOpTracer) -> None:
+    pharia_1_chat_model = Pharia1ChatModel()
+
+    messages = [Message(role="user", content="What is 2+2?")]
+    prompt = pharia_1_chat_model.to_chat_prompt(messages)
+    input = CompleteInput(prompt=prompt)
+    transformed_input = pharia_1_chat_model._disable_prompt_optimizations(input)
+
+    assert transformed_input.disable_optimizations
 
 
 def test_pharia_1_chat_model_works(no_op_tracer: NoOpTracer) -> None:
