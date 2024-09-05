@@ -183,6 +183,16 @@ class ChatModel(LanguageModel):
     def generate_chat(
         self, messages: list[Message], response_prefix: str | None, tracer: Tracer
     ) -> str:
+        """A completion function that takes a prompt and generates a completion.
+
+        Args:
+            messages: The messages to be used as prompt
+            response_prefix: Prefix for the response
+            tracer: Valid instance of a tracer
+
+        Returns:
+            An LLM completion
+        """
         pass
 
     @abstractmethod
@@ -193,6 +203,17 @@ class ChatModel(LanguageModel):
         expected_completion: str,
         tracer: Tracer,
     ) -> Sequence[tuple[Any, Optional[float]]]:
+        """Echos the log probs for each token of an expected completion given a prompt.
+
+        Args:
+            messages: The messages to be used as prompt
+            response_prefix: Prefix for the response
+            expected_completion: The expected completion to get log probs for
+            tracer: Valid instance of a tracer
+
+        Returns:
+            A list of tuples with token identifier and log probability
+        """
         pass
 
 
