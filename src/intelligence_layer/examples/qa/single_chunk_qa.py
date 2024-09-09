@@ -68,7 +68,7 @@ class SingleChunkQaInput(BaseModel):
     chunk: TextChunk
     question: str
     language: Language = Language("en")
-    explainability_enabled: bool = False
+    explainability_enabled: bool = True
 
 
 class SingleChunkQaOutput(BaseModel):

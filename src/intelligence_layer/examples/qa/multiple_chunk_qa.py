@@ -35,7 +35,7 @@ class MultipleChunkQaInput(BaseModel):
     chunks: Sequence[TextChunk]
     question: str
     language: Language = Language("en")
-    explainability_enabled: bool = False
+    explainability_enabled: bool = True
 
 
 class Subanswer(BaseModel):

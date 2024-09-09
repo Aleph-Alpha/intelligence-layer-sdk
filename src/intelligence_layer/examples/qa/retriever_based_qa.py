@@ -27,7 +27,7 @@ class RetrieverBasedQaInput(BaseModel):
 
     question: str
     language: Language = Language("en")
-    explainability_enabled: bool = False
+    explainability_enabled: bool = True
 
 
 class EnrichedSubanswer(Subanswer, Generic[ID]):
