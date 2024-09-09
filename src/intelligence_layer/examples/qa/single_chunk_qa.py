@@ -62,7 +62,7 @@ class SingleChunkQaInput(BaseModel):
             Can't be longer than the context length of the model used minus the size of the system prompt.
         question: The question to be asked by about the chunk.
         language: The desired language of the answer. ISO 619 str with language e.g. en, fr, etc.
-        generate_highlights: Whether to generate highlights (using the explainability feature) for the answer; default False for performance reasons
+        generate_highlights: Whether to generate highlights (using the explainability feature) for the answer. Defaults to `False` for performance reasons.
     """
 
     chunk: TextChunk
