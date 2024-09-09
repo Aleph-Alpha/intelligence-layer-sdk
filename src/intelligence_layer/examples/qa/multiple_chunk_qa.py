@@ -29,13 +29,13 @@ class MultipleChunkQaInput(BaseModel):
             Can be arbitrarily long list of chunks.
         question: The question that will be answered based on the chunks.
         language: The desired language of the answer. ISO 619 str with language e.g. en, fr, etc.
-        explainability_enabled: Whether to generate highlights (using the explainability feature) for the answer;  default False for performance reasons
+        generate_highlights: Whether to generate highlights (using the explainability feature) for the answer;  default False for performance reasons
     """
 
     chunks: Sequence[TextChunk]
     question: str
     language: Language = Language("en")
-    explainability_enabled: bool = True
+    generate_highlights: bool = True
 
 
 class Subanswer(BaseModel):
@@ -189,7 +189,7 @@ class MultipleChunkQa(Task[MultipleChunkQaInput, MultipleChunkQaOutput]):
                     question=input.question,
                     chunk=chunk,
                     language=input.language,
-                    explainability_enabled=input.explainability_enabled,
+                    generate_highlights=input.generate_highlights,
                 )
                 for chunk in input.chunks
             ),

@@ -32,7 +32,7 @@ def test_multiple_chunk_qa_with_mulitple_chunks(
     ]
 
     input = MultipleChunkQaInput(
-        chunks=chunks, question=RELATED_QUESTION, explainability_enabled=True
+        chunks=chunks, question=RELATED_QUESTION, generate_highlights=True
     )
     output = multiple_chunk_qa.run(input, NoOpTracer())
 
@@ -56,7 +56,7 @@ def test_multiple_chunk_qa_with_mulitple_chunks_explainability_disabled(
     ]
 
     input = MultipleChunkQaInput(
-        chunks=chunks, question=RELATED_QUESTION, explainability_enabled=False
+        chunks=chunks, question=RELATED_QUESTION, generate_highlights=False
     )
     output = multiple_chunk_qa.run(input, NoOpTracer())
 
