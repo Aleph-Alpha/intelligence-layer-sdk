@@ -29,7 +29,7 @@ class MultipleChunkQaInput(BaseModel):
             Can be arbitrarily long list of chunks.
         question: The question that will be answered based on the chunks.
         language: The desired language of the answer. ISO 619 str with language e.g. en, fr, etc.
-        generate_highlights: Whether to generate highlights (using the explainability feature) for the answer.  Defaults to `False` for performance reasons.
+        generate_highlights: Whether to generate highlights (using the explainability feature) for the answer.  Defaults to `True`.
     """
 
     chunks: Sequence[TextChunk]

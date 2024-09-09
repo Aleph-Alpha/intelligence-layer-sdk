@@ -22,7 +22,7 @@ class RetrieverBasedQaInput(BaseModel):
         question: The question to be answered based on the documents accessed
             by the retriever.
         language: The desired language of the answer. ISO 619 str with language e.g. en, fr, etc.
-        generate_highlights: Whether to generate highlights (using the explainability feature) for the answer. Defaults to `False` for performance reasons.
+        generate_highlights: Whether to generate highlights (using the explainability feature) for the answer. Defaults to `True`.
     """
 
     question: str
