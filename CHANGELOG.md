@@ -14,9 +14,10 @@
   - Introducing `Llama3ChatModel` for usage with llama models.
 - Upgrade `ArgillaWrapperClient` to use Argilla v2.0.1
 - (Beta) Add `DataClient` and `StudioDatasetRepository` as connectors to Studio for submitting data.
+- Add the optional argument `generate_highlights` to `MultiChunkQa`, `RetrieverBasedQa` and `SingleChunkQa`. This makes it possible to disable highlighting for performance reasons.
 
 ### Fixes
-- increase number of returned `log_probs` in `EloQaEvaluationLogic` to avoid missing a valid answer
+- Increase number of returned `log_probs` in `EloQaEvaluationLogic` to avoid missing a valid answer
 
 ### Deprecations 
 - Removed `DefaultArgillaClient`

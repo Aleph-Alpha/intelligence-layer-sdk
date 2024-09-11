@@ -62,11 +62,13 @@ class SingleChunkQaInput(BaseModel):
             Can't be longer than the context length of the model used minus the size of the system prompt.
         question: The question to be asked by about the chunk.
         language: The desired language of the answer. ISO 619 str with language e.g. en, fr, etc.
+        generate_highlights: Whether to generate highlights (using the explainability feature) for the answer. Defaults to `True`.
     """
 
     chunk: TextChunk
     question: str
     language: Language = Language("en")
+    generate_highlights: bool = True
 
 
 class SingleChunkQaOutput(BaseModel):
@@ -155,17 +157,19 @@ class SingleChunkQa(Task[SingleChunkQaInput, SingleChunkQaOutput]):
         answer = self._no_answer_to_none(
             output.completion.strip(), qa_setup.no_answer_str
         )
-
-        raw_highlights = (
-            self._get_highlights(
-                prompt,
-                output.completion,
-                task_span,
+        if input.generate_highlights:
+            raw_highlights = (
+                self._get_highlights(
+                    prompt,
+                    output.completion,
+                    task_span,
+                )
+                if answer
+                else []
             )
-            if answer
-            else []
-        )
-        highlights = self._shift_highlight_ranges_to_input(prompt, raw_highlights)
+            highlights = self._shift_highlight_ranges_to_input(prompt, raw_highlights)
+        else:
+            highlights = []
 
         return SingleChunkQaOutput(
             answer=answer,
