@@ -177,9 +177,15 @@ class LanguageModel(ABC):
         ...
 
 
-class Message(BaseModel):
+class Message(BaseModel, frozen=True):
     role: Literal["system", "user", "assistant"]
     content: str
+
+
+class FinetuningMessage(BaseModel, frozen=True):
+    has_loss: bool
+    content: str
+    type: str = "text"
 
 
 class ChatModel(LanguageModel):
@@ -611,10 +617,22 @@ class AlephAlphaChatModel(ChatModel, ControlModel):
 
     CHAT_PROMPT_TEMPLATE: PromptTemplate
 
+    @abstractmethod
+    def to_finetuning_sample(
+        self, messages: Sequence[Message]
+    ) -> Sequence[FinetuningMessage]:
+        """Abstract function allowing a user to what the model's finetuning samples should look like.
+
+        Args:
+            messages: The messages making up the finetuning sample
+
+        Returns:
+            A finetuning sample containing the input messages
+        """
+        ...
+
     def to_chat_prompt(
-        self,
-        messages: list[Message],
-        response_prefix: str | None = None,
+        self, messages: Sequence[Message], response_prefix: str | None = None
     ) -> RichPrompt:
         """Method to create a chat-`RichPrompt` object to use with any `AlephAlphaModel`.
 
@@ -622,13 +640,16 @@ class AlephAlphaChatModel(ChatModel, ControlModel):
             messages: A number of messages to use as prompt for the model
             response_prefix: Append the given string to the beginning of the final agent message to
                 steer the generation. Defaults to None.
+
+        Returns:
+            A RichPrompt object to be consumed by the Aleph Alpha client
         """
         return self.CHAT_PROMPT_TEMPLATE.to_rich_prompt(
             messages=[m.model_dump() for m in messages], response_prefix=response_prefix
         )
 
     def generate_chat(
-        self, messages: list[Message], response_prefix: str | None, tracer: Tracer
+        self, messages: Sequence[Message], response_prefix: str | None, tracer: Tracer
     ) -> str:
         """Generate a raw completion to messages for any `AlephAlphaChatModel`.
 
@@ -637,6 +658,9 @@ class AlephAlphaChatModel(ChatModel, ControlModel):
             response_prefix: Optional argument to append a string to the beginning of the
                 final agent message to steer the generation
             tracer: Valid instance of a tracer
+
+        Returns:
+            An LLM completion
         """
         prompt = self.to_chat_prompt(messages, response_prefix)
         prompt_item = prompt.items[0]
@@ -700,6 +724,47 @@ LLAMA_3_CHAT_PROMPT_TEMPLATE = PromptTemplate(
 )
 
 
+def to_llama_3_finetuning_sample(
+    messages: Sequence[Message], eot_token: str
+) -> Sequence[FinetuningMessage]:
+    """Turn a sequence of messages into a finetuning train sample using the llama-3 format.
+
+    Args:
+        messages: The messages making up the finetuning sample
+        eot_token: The end-of-turn token used to separate the messages
+
+    Returns:
+        A sequence of formatted message for finetuning
+    """
+
+    def get_content(
+        message: Message, is_first_message: bool, is_preceding_assistant_message: bool
+    ) -> str:
+        prompt = "<|begin_of_text|>" if is_first_message else ""
+        prompt += (
+            f"<|begin_of_text|><|start_header_id|>{message.role}<|end_header_id|>\n\n{message.content}{eot_token}"
+            if message.role != "assistant"
+            else f"{message.content}{eot_token}"
+        )
+        if is_preceding_assistant_message:
+            prompt += "<|start_header_id|>assistant<|end_header_id|>\n\n"
+        return prompt
+
+    return [
+        FinetuningMessage(
+            has_loss=message.role == "assistant",
+            content=get_content(
+                message,
+                index == 0,
+                messages[index + 1].role == "assistant"
+                if index + 1 < len(messages)
+                else False,
+            ),
+        )
+        for index, message in enumerate(messages)
+    ]
+
+
 class Pharia1ChatModel(AlephAlphaChatModel):
     """Chat model to be used for any `"pharia-1-llm-*` model.
 
@@ -739,6 +804,11 @@ class Pharia1ChatModel(AlephAlphaChatModel):
     def eot_token(self) -> str:
         return "<|endoftext|>"
 
+    def to_finetuning_sample(
+        self, messages: Sequence[Message]
+    ) -> Sequence[FinetuningMessage]:
+        return to_llama_3_finetuning_sample(messages, self.eot_token)
+
 
 class Llama3ChatModel(AlephAlphaChatModel):
     """Chat model to be used for `llama-3-*` and `llama-3.1-*` models.
@@ -769,3 +839,8 @@ class Llama3ChatModel(AlephAlphaChatModel):
     @property
     def eot_token(self) -> str:
         return "<|eot_id|>"
+
+    def to_finetuning_sample(
+        self, messages: Sequence[Message]
+    ) -> Sequence[FinetuningMessage]:
+        return to_llama_3_finetuning_sample(messages, self.eot_token)

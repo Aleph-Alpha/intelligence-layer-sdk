@@ -17,7 +17,12 @@ from intelligence_layer.connectors import (
     QdrantInMemoryRetriever,
     RetrieverType,
 )
-from intelligence_layer.core import LuminousControlModel, NoOpTracer, utc_now
+from intelligence_layer.core import (
+    LuminousControlModel,
+    NoOpTracer,
+    Pharia1ChatModel,
+    utc_now,
+)
 from intelligence_layer.evaluation import (
     AsyncInMemoryEvaluationRepository,
     EvaluationOverview,
@@ -52,6 +57,11 @@ def client(token: str) -> AlephAlphaClientProtocol:
 @fixture(scope="session")
 def luminous_control_model(client: AlephAlphaClientProtocol) -> LuminousControlModel:
     return LuminousControlModel("luminous-base-control", client)
+
+
+@fixture(scope="session")
+def pharia_1_chat_model(client: AlephAlphaClientProtocol) -> Pharia1ChatModel:
+    return Pharia1ChatModel("Pharia-1-LLM-7B-control", client)
 
 
 @fixture
