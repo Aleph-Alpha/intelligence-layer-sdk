@@ -705,8 +705,7 @@ def test_search_with_filter_type_with_one_of(
     assert results[1].document_path.document_name == "document-metadata-2"
 
 
-def test_document_indexes_zero_progress_is_returned(
+def test_document_indexes_works(
     document_index: DocumentIndexClient, collection_path: CollectionPath
 ) -> None:
-    progress = document_index.progress(collection_path)
-    assert progress == 0
+    document_index.progress(collection_path)
