@@ -1,9 +1,15 @@
 # Changelog
-
 ## Unreleased
-
+### Features
+...
+### Fixes
+...
+### Deprecations 
+...
 ### Breaking Changes
 ...
+
+## 6.0.0
 
 ### Features
 - Remove cap for `max_concurrency` in `LimitedConcurrencyClient`.
@@ -12,7 +18,7 @@
 - Introduce abstract `ChatModel` class to integrate with chat models from any API
   - Introducing `Pharia1ChatModel` for usage with pharia-1 models.
   - Introducing `Llama3ChatModel` for usage with llama models.
-- Upgrade `ArgillaWrapperClient` to use Argilla v2.0.1
+- Upgrade `ArgillaWrapperClient` to use Argilla v2.x
 - (Beta) Add `DataClient` and `StudioDatasetRepository` as connectors to Studio for submitting data.
 - Add the optional argument `generate_highlights` to `MultiChunkQa`, `RetrieverBasedQa` and `SingleChunkQa`. This makes it possible to disable highlighting for performance reasons.
 
@@ -24,7 +30,7 @@
 - Deprecated `Llama2InstructModel` 
 
 ### Breaking Changes
-- Upgrade argilla-server image version from  `argilla-server:v1.26.0`to `argilla-server:v1.29.0`.
+- We needed to upgrade argilla-server image version from `argilla-server:v1.26.0` to `argilla-server:v1.29.0` to maintain compatibility.
   - Note: We also updated our elasticsearch argilla backend to `8.12.2`
 
 
