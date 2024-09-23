@@ -263,13 +263,13 @@ files = [
 
 [[package]]
 name = "argilla"
-version = "2.1.0"
+version = "2.2.1"
 description = "The Argilla python server SDK"
 optional = false
 python-versions = "<3.13,>=3.9"
 files = [
-    {file = "argilla-2.1.0-py3-none-any.whl", hash = "sha256:124a237ea39f52c9fa0d1316943973746918722e13fd6b0dfa89e0609ef82d9b"},
-    {file = "argilla-2.1.0.tar.gz", hash = "sha256:c16358ff79b354b6c1fcfe79bc0c9f544d536a8b4f5823ad227436d2187c2098"},
+    {file = "argilla-2.2.1-py3-none-any.whl", hash = "sha256:e107deb91c7cb53035c3a7d402dc689ddfa5bd884d143cb3fb4007b77ff42686"},
+    {file = "argilla-2.2.1.tar.gz", hash = "sha256:ad66136fb7b74c34be1afa2c09bfe5472e2f9c774d763e15fe851c7ec8a1d03e"},
 ]
 
 [package.dependencies]
@@ -5774,4 +5774,4 @@ test = ["big-O", "importlib-resources", "jaraco.functools", "jaraco.itertools", 
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.10,<3.13"
-content-hash = "4f8a773c63caa2945db5ca297352660250f2fdc8015af3fe916760cd77b12d94"
+content-hash = "e64b5aff674c9eef962dbab6f645b5c41a8e7fb53ef027d838797f9bad245028"
