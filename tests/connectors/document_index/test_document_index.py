@@ -57,7 +57,8 @@ def filter_index_config() -> dict[str, dict[str, str]]:
 @fixture
 def collection_path(aleph_alpha_namespace: str) -> CollectionPath:
     return CollectionPath(
-        namespace=aleph_alpha_namespace, collection="intelligence-layer-sdk-ci"
+        namespace=aleph_alpha_namespace,
+        collection="intelligence-layer-sdk-ci-2024-09-26",
     )
 
 
@@ -200,6 +201,27 @@ def test_document_index_searches_asymmetrically(
     assert "Mark" in search_result[0].section
 
 
+def test_document_index_hybrid_search_combines_semantic_and_keyword_search(
+    document_index: DocumentIndexClient, collection_path: CollectionPath
+) -> None:
+    document_path = DocumentPath(
+        collection_path=collection_path,
+        document_name="test_document_index_hybrid_search_combines_semantic_and_keyword_search",  # is always there
+    )
+    search_query = SearchQuery(
+        query="Which food do humans like?",
+        max_results=10,
+        min_score=0.0,
+    )
+    search_results = document_index.search(
+        document_path.collection_path, "asymmetric-hybrid", search_query
+    )
+
+    assert "Poison in food is bad" in search_results[0].section
+    assert "All people like pasta" in search_results[1].section
+    assert "Chairs are not food" in search_results[2].section
+
+
 @pytest.mark.internal
 @pytest.mark.parametrize(
     "document_name",
@@ -273,7 +295,7 @@ def test_document_list_all_documents(
 ) -> None:
     filter_result = document_index.documents(collection_path)
 
-    assert len(filter_result) == 6
+    assert len(filter_result) == 7
 
 
 def test_document_list_max_n_documents(
@@ -333,6 +355,7 @@ def test_document_indexes_are_returned(
     assert index_configuration.embedding_type == "asymmetric"
     assert index_configuration.chunk_overlap == 0
     assert index_configuration.chunk_size == 512
+    assert index_configuration.hybrid_index is None
 
 
 def test_create_filter_indexes_in_namespace(

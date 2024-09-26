@@ -1,7 +1,8 @@
 # Changelog
 ## Unreleased
 ### Features
-...
+- You can now specify a `hybrid_index` when creating an index for the document index to use hybrid (semantic and keyword) search.
+
 ### Fixes
 ...
 ### Deprecations 
