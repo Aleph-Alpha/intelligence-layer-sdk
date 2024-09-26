@@ -4,7 +4,7 @@ from datetime import datetime, timezone
 from enum import Enum
 from http import HTTPStatus
 from json import dumps
-from typing import Annotated, Any, Literal, Optional, Union
+from typing import Annotated, Any, Literal, Optional, TypeAlias, Union
 from urllib.parse import quote, urljoin
 
 import requests
@@ -14,6 +14,9 @@ from requests import HTTPError
 from typing_extensions import Self
 
 from intelligence_layer.connectors.base.json_serializable import JsonSerializable
+
+EmbeddingType: TypeAlias = Literal["symmetric", "asymmetric"]
+HybridIndex: TypeAlias = Literal["bm25"] | None
 
 
 class IndexPath(BaseModel, frozen=True):
@@ -39,10 +42,10 @@ class IndexConfiguration(BaseModel):
         hybrid_index: If set to "bm25", combine vector search and keyword search (bm25) results.
     """
 
-    embedding_type: Literal["symmetric", "asymmetric"]
+    embedding_type: EmbeddingType
     chunk_overlap: int = Field(default=0, ge=0)
     chunk_size: int = Field(..., gt=0, le=2046)
-    hybrid_index: Literal["bm25"] | None = None
+    hybrid_index: HybridIndex = None
 
     @model_validator(mode="after")
     def validate_chunk_overlap(self) -> Self:
@@ -489,6 +492,24 @@ class DocumentIndexClient:
             for collection in response.json()
         ]
 
+    def list_indexes(self, namespace: str) -> Sequence[IndexPath]:
+        """Lists all indexes within a namespace.
+
+        Args:
+            namespace: For a collection of documents.
+                Typically corresponds to an organization.
+
+        Returns:
+            List of all `IndexPath` instances in the given namespace.
+        """
+        url_suffix = f"indexes/{namespace}"
+        url = urljoin(self._base_document_index_url, url_suffix)
+        response = requests.get(url, headers=self.headers)
+        self._raise_for_status(response)
+        return [
+            IndexPath(namespace=namespace, index=index) for index in response.json()
+        ]
+
     def create_index(
         self, index_path: IndexPath, index_configuration: IndexConfiguration
     ) -> None:
@@ -503,10 +524,23 @@ class DocumentIndexClient:
 
         data = {
             "chunk_size": index_configuration.chunk_size,
+            "chunk_overlap": index_configuration.chunk_overlap,
             "embedding_type": index_configuration.embedding_type,
             "hybrid_index": index_configuration.hybrid_index,
         }
         response = requests.put(url, data=dumps(data), headers=self.headers)
+        self._raise_for_status(response)
+
+    def delete_index(self, index_path: IndexPath) -> None:
+        """Delete an index in a namespace.
+
+        Args:
+            index_path: Path to the index.
+        """
+        url_suffix = f"indexes/{index_path.namespace}/{index_path.index}"
+        url = urljoin(self._base_document_index_url, url_suffix)
+
+        response = requests.delete(url, headers=self.headers)
         self._raise_for_status(response)
 
     def create_filter_index_in_namespace(
@@ -558,6 +592,7 @@ class DocumentIndexClient:
             embedding_type=response_json["embedding_type"],
             chunk_overlap=response_json["chunk_overlap"],
             chunk_size=response_json["chunk_size"],
+            hybrid_index=response_json.get("hybrid_index"),
         )
 
     def assign_index_to_collection(
