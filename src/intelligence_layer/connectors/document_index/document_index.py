@@ -257,8 +257,8 @@ class SearchQuery(BaseModel):
     """
 
     query: str
-    max_results: int = Field(..., ge=0)
-    min_score: float = Field(..., ge=0.0, le=1.0)
+    max_results: int = Field(ge=0, default=1)
+    min_score: float = Field(ge=0.0, le=1.0, default=0.0)
     filters: Optional[list[Filters]] = None
 
 

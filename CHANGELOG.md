@@ -2,13 +2,17 @@
 ## Unreleased
 ### Features
 - You can now specify a `hybrid_index` when creating an index for the document index to use hybrid (semantic and keyword) search.
+- `min_score` and `max_results` are now optional parameters in `DocumentIndexClient.SearchQuery`.
+- `k` is now an optional parameter in `DocumentIndexRetriever`.
 
 ### Fixes
 ...
 ### Deprecations 
 ...
 ### Breaking Changes
-...
+- The default model for `Llama3InstructModel` is now `llama-3.1-8b-instruct` instead of `llama-3-8b-instruct`. We also removed the llama3.0 models from the recommended models of the `Llama3InstructModel`.
+- The default value of `threshold` in the `DocumentIndexRetriever` has changed from `0.5` to `0.0`. This accommodates fusion scoring for searches over hybrid indexes.
+
 
 ## 6.0.0
 

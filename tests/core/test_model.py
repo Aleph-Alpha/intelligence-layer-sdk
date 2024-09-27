@@ -116,7 +116,7 @@ def test_models_know_their_context_size(client: AlephAlphaClientProtocol) -> Non
     )
     assert AlephAlphaModel(client=client, name="luminous-base").context_size == 2048
     assert (
-        Llama3InstructModel(client=client, name="llama-3-8b-instruct").context_size
+        Llama3InstructModel(client=client, name="llama-3.1-8b-instruct").context_size
         == 8192
     )
 

@@ -513,7 +513,7 @@ class Llama3InstructModel(ControlModel):
 
     Args:
         name: The name of a valid llama-3 model.
-            Defaults to `llama-3-8b-instruct`
+            Defaults to `llama-3.1-8b-instruct`
         client: Aleph Alpha client instance for running model related API calls.
             Defaults to :class:`LimitedConcurrencyClient`
     """
@@ -529,15 +529,13 @@ class Llama3InstructModel(ControlModel):
     )
 
     RECOMMENDED_MODELS: ClassVar[list[str]] = [
-        "llama-3-8b-instruct",
-        "llama-3-70b-instruct",
         "llama-3.1-8b-instruct",
         "llama-3.1-70b-instruct",
     ]
 
     def __init__(
         self,
-        name: str = "llama-3-8b-instruct",
+        name: str = "llama-3.1-8b-instruct",
         client: Optional[AlephAlphaClientProtocol] = None,
     ) -> None:
         super().__init__(name, client)

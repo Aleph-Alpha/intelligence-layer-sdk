@@ -1,5 +1,5 @@
 #!/usr/bin/env -S bash -eu -o pipefail
-
+echo "Testing the fastapi app"
 # start the server in the background
 hypercorn src/documentation/fastapi_example:app --bind localhost:8000 &
 server_pid=$!
