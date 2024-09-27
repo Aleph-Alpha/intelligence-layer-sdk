@@ -22,16 +22,6 @@ class DocumentIndexRetriever(BaseRetriever[DocumentPath]):
 
     This retriever lets you search for relevant documents in the given Document Index collection.
 
-    Args:
-        document_index: The Document Index client.
-        index_name: The name of the Document Index index to use.
-        namespace: The Document Index namespace.
-        collection: The Document Index collection to use. This is the search context for the retriever.
-        k: The number of most-relevant documents to return when searching.
-        threshold: The minimum score for search results. For semantic indexes, this is the cosine
-            similarity between the query and the document chunk. For hybrid indexes, this corresponds
-            to fusion rank.
-
     Example:
     >>> import os
     >>> from intelligence_layer.connectors import DocumentIndexClient, DocumentIndexRetriever
@@ -49,6 +39,18 @@ class DocumentIndexRetriever(BaseRetriever[DocumentPath]):
         k: int = 1,
         threshold: float = 0.0,
     ) -> None:
+        """Initialize the DocumentIndexRetriever.
+
+        Args:
+            document_index: The Document Index client.
+            index_name: The name of the Document Index index to use.
+            namespace: The Document Index namespace.
+            collection: The Document Index collection to use. This is the search context for the retriever.
+            k: The number of most-relevant documents to return when searching. Defaults to 1.
+            threshold: The minimum score for search results. For semantic indexes, this is the cosine
+                similarity between the query and the document chunk. For hybrid indexes, this corresponds
+                to fusion rank. Defaults to 0.0.
+        """
         self._document_index = document_index
         self._index_name = index_name
         self._collection_path = CollectionPath(
