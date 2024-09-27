@@ -1,6 +1,7 @@
 # Changelog
 ## Unreleased
 ### Features
+- You can now specify a `hybrid_index` when creating an index for the document index to use hybrid (semantic and keyword) search.
 - `min_score` and `max_results` are now optional parameters in `DocumentIndexClient.SearchQuery`.
 - `k` is now an optional parameter in `DocumentIndexRetriever`.
 
