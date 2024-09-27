@@ -9,6 +9,7 @@
 ### Deprecations 
 ...
 ### Breaking Changes
+- The default model for `Llama3InstructModel` is now `llama-3.1-8b-instruct` instead of `llama-3-8b-instruct`. We also removed the llama3.0 models from the recommended models of the `Llama3InstructModel`.
 - The default value of `threshold` in the `DocumentIndexRetriever` has changed from `0.5` to `0.0`. This accommodates fusion scoring for searches over hybrid indexes.
 
 
