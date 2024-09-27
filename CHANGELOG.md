@@ -7,7 +7,7 @@
 ### Deprecations 
 ...
 ### Breaking Changes
-...
+ - The default model for `Llama3InstructModel` is now `llama-3.1-8b-instruct` instead of `llama-3-8b-instruct`. We also removed the llama3.0 models from the recommended models of the `Llama3InstructModel`.
 
 ## 6.0.0
 
