@@ -20,16 +20,17 @@ from intelligence_layer.connectors.retrievers.base_retriever import (
 class DocumentIndexRetriever(BaseRetriever[DocumentPath]):
     """Search through documents within collections in the `DocumentIndexClient`.
 
-    We initialize this Retriever with a collection & namespace names, and we can find the documents in the collection
-    most semanticly similar to our query.
+    This retriever lets you search for relevant documents in the given Document Index collection.
 
     Args:
-        document_index: Client offering functionality for search.
-        index_name: The name of the index to be used.
-        namespace: The namespace within the `DocumentIndexClient` where all collections are stored.
-        collection: The collection within the namespace that holds the desired documents.
-        k: The (top) number of documents to be returned by search.
-        threshold: The mimumum value of cosine similarity between the query vector and the document vector.
+        document_index: The Document Index client.
+        index_name: The name of the Document Index index to use.
+        namespace: The Document Index namespace.
+        collection: The Document Index collection to use. This is the search context for the retriever.
+        k: The number of most-relevant documents to return when searching.
+        threshold: The minimum score for search results. For semantic indexes, this is the cosine
+            similarity between the query and the document chunk. For hybrid indexes, this corresponds
+            to fusion rank.
 
     Example:
     >>> import os
@@ -45,8 +46,8 @@ class DocumentIndexRetriever(BaseRetriever[DocumentPath]):
         index_name: str,
         namespace: str,
         collection: str,
-        k: int,
-        threshold: float = 0.5,
+        k: int = 1,
+        threshold: float = 0.0,
     ) -> None:
         self._document_index = document_index
         self._index_name = index_name

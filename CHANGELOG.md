@@ -21,6 +21,8 @@
 - Upgrade `ArgillaWrapperClient` to use Argilla v2.x
 - (Beta) Add `DataClient` and `StudioDatasetRepository` as connectors to Studio for submitting data.
 - Add the optional argument `generate_highlights` to `MultiChunkQa`, `RetrieverBasedQa` and `SingleChunkQa`. This makes it possible to disable highlighting for performance reasons.
+- `min_score` and `max_results` are now optional parameters in `DocumentIndexClient.SearchQuery`.
+- `k` is now an optional parameter in `DocumentIndexRetriever`.
 
 ### Fixes
 - Increase number of returned `log_probs` in `EloQaEvaluationLogic` to avoid missing a valid answer
@@ -32,6 +34,7 @@
 ### Breaking Changes
 - We needed to upgrade argilla-server image version from `argilla-server:v1.26.0` to `argilla-server:v1.29.0` to maintain compatibility.
   - Note: We also updated our elasticsearch argilla backend to `8.12.2`
+- The default value of `threshold` in the `DocumentIndexRetriever` is now `0.0`. This accommodates fusion scoring for searches over hybrid indexes.
 
 
 ## 5.1.0
