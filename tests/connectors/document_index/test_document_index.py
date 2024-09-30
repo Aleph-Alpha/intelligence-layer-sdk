@@ -1,5 +1,10 @@
-from datetime import datetime, timezone
+import random
+import re
+import string
+from collections.abc import Iterator
+from datetime import datetime, timedelta, timezone
 from http import HTTPStatus
+from typing import get_args
 
 import pytest
 from pydantic import ValidationError
@@ -12,15 +17,53 @@ from intelligence_layer.connectors.document_index.document_index import (
     DocumentFilterQueryParams,
     DocumentIndexClient,
     DocumentPath,
+    EmbeddingType,
     FilterField,
     FilterOps,
     Filters,
+    HybridIndex,
     IndexConfiguration,
     IndexPath,
     InvalidInput,
     ResourceNotFound,
     SearchQuery,
 )
+
+
+def random_identifier() -> str:
+    name = "".join(random.choices(string.ascii_letters + string.digits, k=20))
+    timestamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S")
+    return f"ci-il-{name}-{timestamp}"
+
+
+@fixture(scope="session")
+def document_index_namespace() -> str:
+    return "team-document-index"
+
+
+@fixture(scope="session", autouse=True)
+def _teardown(token: str, document_index_namespace: str) -> Iterator[None]:
+    yield
+
+    # Cleanup leftover resources from previous runs.
+    timestamp_threshold = datetime.now(timezone.utc) - timedelta(hours=1)
+
+    document_index = DocumentIndexClient(token)
+    indexes = document_index.list_indexes(document_index_namespace)
+    for index_path in indexes:
+        matched = re.match(
+            r"^ci-il-[a-zA-Z0-9]{20}-(?P<timestamp>\d{8}T\d{6})$", index_path.index
+        )
+        if matched is None:
+            continue
+
+        timestamp = datetime.strptime(matched["timestamp"], "%Y%m%dT%H%M%S").replace(
+            tzinfo=timezone.utc
+        )
+        if timestamp > timestamp_threshold:
+            continue
+
+        document_index.delete_index(index_path)
 
 
 @fixture
@@ -60,6 +103,32 @@ def collection_path(aleph_alpha_namespace: str) -> CollectionPath:
         namespace=aleph_alpha_namespace,
         collection="intelligence-layer-sdk-ci-2024-09-26",
     )
+
+
+@fixture
+def random_index(
+    document_index: DocumentIndexClient, aleph_alpha_namespace: str
+) -> Iterator[tuple[IndexPath, IndexConfiguration]]:
+    name = random_identifier()
+    chunk_size, chunk_overlap = sorted(
+        random.sample([0, 32, 64, 128, 256, 512, 1024], 2), reverse=True
+    )
+    embedding_type = random.choice(get_args(EmbeddingType))
+    hybrid_index_choices: list[HybridIndex] = ["bm25", None]
+    hybrid_index = random.choice(hybrid_index_choices)
+
+    index = IndexPath(namespace=aleph_alpha_namespace, index=name)
+    index_configuration = IndexConfiguration(
+        chunk_size=chunk_size,
+        chunk_overlap=chunk_overlap,
+        embedding_type=embedding_type,
+        hybrid_index=hybrid_index,
+    )
+    try:
+        document_index.create_index(index, index_configuration)
+        yield index, index_configuration
+    finally:
+        document_index.delete_index(index)
 
 
 @fixture
@@ -343,19 +412,21 @@ def test_index_configuration_rejects_invalid_chunk_overlap() -> None:
         raise AssertionError("ValidationError was not raised")
 
 
-def test_document_indexes_are_returned(
+def test_indexes_in_namespace_are_returned(
+    document_index: DocumentIndexClient,
+    random_index: tuple[IndexPath, IndexConfiguration],
+) -> None:
+    index_path, index_configuration = random_index
+    retrieved_index_configuration = document_index.index_configuration(index_path)
+
+    assert retrieved_index_configuration == index_configuration
+
+
+def test_indexes_for_collection_are_returned(
     document_index: DocumentIndexClient, collection_path: CollectionPath
 ) -> None:
     index_names = document_index.list_assigned_index_names(collection_path)
-    index_name = index_names[0]
-    index_configuration = document_index.index_configuration(
-        IndexPath(namespace=collection_path.namespace, index=index_name)
-    )
-
-    assert index_configuration.embedding_type == "asymmetric"
-    assert index_configuration.chunk_overlap == 0
-    assert index_configuration.chunk_size == 512
-    assert index_configuration.hybrid_index is None
+    assert "asymmetric" in index_names
 
 
 def test_create_filter_indexes_in_namespace(
