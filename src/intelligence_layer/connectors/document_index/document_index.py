@@ -36,11 +36,13 @@ class IndexConfiguration(BaseModel):
         chunk_overlap: The maximum number of tokens of overlap between consecutive chunks. Must be
             less than `chunk_size`.
         chunk_size: The maximum size of the chunks in tokens to be used for the index.
+        hybrid_index: If set to "bm25", combine vector search and keyword search (bm25) results.
     """
 
     embedding_type: Literal["symmetric", "asymmetric"]
     chunk_overlap: int = Field(default=0, ge=0)
     chunk_size: int = Field(..., gt=0, le=2046)
+    hybrid_index: Literal["bm25"] | None = None
 
     @model_validator(mode="after")
     def validate_chunk_overlap(self) -> Self:
@@ -255,8 +257,8 @@ class SearchQuery(BaseModel):
     """
 
     query: str
-    max_results: int = Field(..., ge=0)
-    min_score: float = Field(..., ge=0.0, le=1.0)
+    max_results: int = Field(ge=0, default=1)
+    min_score: float = Field(ge=0.0, le=1.0, default=0.0)
     filters: Optional[list[Filters]] = None
 
 
@@ -502,6 +504,7 @@ class DocumentIndexClient:
         data = {
             "chunk_size": index_configuration.chunk_size,
             "embedding_type": index_configuration.embedding_type,
+            "hybrid_index": index_configuration.hybrid_index,
         }
         response = requests.put(url, data=dumps(data), headers=self.headers)
         self._raise_for_status(response)
