@@ -1,3 +1,4 @@
+import os
 from pathlib import Path
 
 from pytest import fixture
@@ -43,12 +44,11 @@ def instruction_finetuning_sample(
 def postgres_instruction_finetuning_data_repository() -> (
     PostgresInstructionFinetuningDataRepository
 ):
-    db_user = "postgres"
-    db_pw = "mysecretpassword"
-    db_host = "localhost"
-    db_port = "5432"
-    db_name = "postgres"
-    db_url = f"postgresql://{db_user}:{db_pw}@{db_host}:{db_port}/{db_name}"
+    db_user = os.getenv("POSTGRES_USER")
+    db_pw = os.getenv("POSTGRES_PASSWORD")
+    db_host = os.getenv("POSTGRES_HOST")
+    db_name = os.getenv("POSTGRES_DB")
+    db_url = f"postgresql://{db_user}:{db_pw}@{db_host}/{db_name}"
 
     return PostgresInstructionFinetuningDataRepository(db_url)
 

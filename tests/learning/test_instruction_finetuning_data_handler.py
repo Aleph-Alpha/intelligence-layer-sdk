@@ -216,10 +216,11 @@ def test_instruction_finetuning_data_handler_can_return_samples_with_filter(
     filtered_samples = list(
         instruction_finetuning_data_handler.samples_with_filter(filter_expression, 1000)
     )
-
+    print([sample.attributes.quality for sample in filtered_samples])
     assert sample_id in [sample.id for sample in filtered_samples]
     assert all(
-        sample.attributes.quality == expected_quality for sample in filtered_samples
+        pytest.approx(sample.attributes.quality) == expected_quality
+        for sample in filtered_samples
     )
     assert all(
         sample.attributes.domain == expected_domain for sample in filtered_samples
@@ -276,19 +277,19 @@ def test_instruction_finetuning_data_handler_can_compile_train_set_to_file(
         EnrichAction.SKIP,
         EnrichAction.SKIP,
     )
-    instruction_finetuning_data_handler.compile_train_set(
+    train_data_dir = instruction_finetuning_data_handler.compile_train_set(
         tmp_path, pharia_1_chat_model, limit=num_samples
     )
 
     train_set = instruction_finetuning_data_handler._read_json_or_jsonl(
-        tmp_path / "train_set.jsonl"
+        train_data_dir / "train_set.jsonl"
     )
     ids = instruction_finetuning_data_handler._read_json_or_jsonl(
-        tmp_path / "ids.jsonl"
+        train_data_dir / "ids.jsonl"
     )
     statistics: Mapping[Any, Mapping[Any, int]] = (
         instruction_finetuning_data_handler._read_json_or_jsonl(
-            tmp_path / "statistics.json"
+            train_data_dir / "statistics.json"
         )
     )
 

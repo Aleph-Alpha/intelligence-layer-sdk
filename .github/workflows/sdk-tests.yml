@@ -188,6 +188,10 @@ jobs:
           ARGILLA_API_KEY: "argilla.apikey"
           CLIENT_URL: ${{ secrets.CLIENT_URL }}
           STUDIO_URL: "http://localhost:8000/"
+          POSTGRES_HOST: "localhost:5433"
+          POSTGRES_DB: "il_sdk"
+          POSTGRES_USER: "il_sdk"
+          POSTGRES_PASSWORD: "test"
         run: |
           ./scripts/test.sh
   run-notebooks:

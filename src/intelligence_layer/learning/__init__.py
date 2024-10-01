@@ -7,6 +7,9 @@ from .instruction_finetuning_data_handler import EnrichAction as EnrichAction
 from .instruction_finetuning_data_handler import (
     InstructionFinetuningDataHandler as InstructionFinetuningDataHandler,
 )
+from .instruction_finetuning_data_handler import (
+    instruction_finetuning_handler_builder as instruction_finetuning_handler_builder,
+)
 from .instruction_finetuning_data_repository import (
     InstructionFinetuningDataRepository as InstructionFinetuningDataRepository,
 )

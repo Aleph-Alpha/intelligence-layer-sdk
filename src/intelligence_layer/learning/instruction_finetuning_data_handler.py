@@ -15,6 +15,7 @@ from aleph_alpha_client import Text
 from sqlalchemy import ColumnElement
 
 from intelligence_layer.core.detect_language import (
+    DetectLanguage,
     DetectLanguageInput,
     DetectLanguageOutput,
     Language,
@@ -26,7 +27,11 @@ from intelligence_layer.core.model import (
 )
 from intelligence_layer.core.task import Task
 from intelligence_layer.core.tracer.tracer import NoOpTracer, Tracer
-from intelligence_layer.learning.enrich import EnrichmentInput
+from intelligence_layer.learning.enrich import (
+    EnrichDomain,
+    EnrichmentInput,
+    EnrichQuality,
+)
 from intelligence_layer.learning.instruction_finetuning_data_repository import (
     InstructionFinetuningDataRepository,
 )
@@ -196,7 +201,8 @@ class InstructionFinetuningDataHandler:
     ) -> Iterable[InstructionFinetuningSample]:
         if filter_expression is not None:
             yield from self.repository.samples_with_filter(filter_expression, limit)
-        yield from self.repository.head(limit)
+        else:
+            yield from self.repository.head(limit)
 
     def delete_sample(self, id: str) -> None:
         self.repository.delete_sample(id)
@@ -492,7 +498,7 @@ class InstructionFinetuningDataHandler:
         model: AlephAlphaChatModel,
         filter_expression: ColumnElement[bool] | None = None,
         limit: int | None = None,
-    ) -> None:
+    ) -> Path:
         """Method to sample a finetuning train set based on some filter expressions.
 
         Args:
@@ -501,6 +507,9 @@ class InstructionFinetuningDataHandler:
             model: Model specifies tokenizer for token counting & prompt format
             filter_expression: Optional filtering statement
             limit: Optional parameter to indicate maximum sample count
+
+        Returns:
+            The directory the train set was saved to.
         """
         samples = self.samples_with_filter(filter_expression, limit)
         train_set = self.samples_to_train_set(model, samples)
@@ -517,3 +526,17 @@ class InstructionFinetuningDataHandler:
         )
         self.save_jsonl(train_set.ids, save_path / "ids.jsonl")
         self.save_json(train_set.statistics, save_path / "statistics.json")
+        return save_path
+
+
+def instruction_finetuning_handler_builder(
+    repository: InstructionFinetuningDataRepository, domains: list[str]
+) -> InstructionFinetuningDataHandler:
+    return InstructionFinetuningDataHandler(
+        repository=repository,
+        domain_task=EnrichDomain(domains),
+        quality_task=EnrichQuality(),
+        language_task=DetectLanguage(),
+        supported_languages=[Language("en"), Language("de")],
+        default_language=Language("en"),
+    )
