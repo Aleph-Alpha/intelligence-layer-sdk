@@ -36,7 +36,7 @@ argilla = "^2.1.0"
 # lint & format
 mypy = "^1.11.1"
 nbqa = "^1.9.0"
-ruff = "^0.6.4"
+ruff = "^0.6.8"
 pre-commit = "^3.8.0"
 
 # tests
