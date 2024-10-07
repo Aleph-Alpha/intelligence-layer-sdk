@@ -15,6 +15,7 @@ from .echo import EchoOutput as EchoOutput
 from .echo import TokenWithLogProb as TokenWithLogProb
 from .instruct import Instruct as Instruct
 from .instruct import InstructInput as InstructInput
+from .model import AlephAlphaChatModel as AlephAlphaChatModel
 from .model import AlephAlphaModel as AlephAlphaModel
 from .model import ChatModel as ChatModel
 from .model import CompleteInput as CompleteInput
@@ -22,6 +23,7 @@ from .model import CompleteOutput as CompleteOutput
 from .model import ControlModel as ControlModel
 from .model import ExplainInput as ExplainInput
 from .model import ExplainOutput as ExplainOutput
+from .model import FinetuningMessage as FinetuningMessage
 from .model import LanguageModel as LanguageModel
 from .model import Llama2InstructModel as Llama2InstructModel
 from .model import Llama3ChatModel as Llama3ChatModel
