@@ -230,7 +230,16 @@ For further information check out our different guides and documentations:
 
 
 ## Executing tests
-If you want to execute all tests you first need to spin up your docker container. Simply run `docker compose up --build`. Afterwards you can either run the tests in your IDE or via the terminal.
+If you want to execute all tests you first need to spin up your docker container and execute those commands with your own `GITLAB_TOKEN`.
+
+```bash
+  export GITLAB_TOKEN=...
+  (optional) export GITLAB_TOKEN=$(op item get YOUR_TOKEN --format json --fields password | jq .value | tr -d '"')
+  echo $GITLAB_TOKEN | docker login registry.gitlab.aleph-alpha.de -u your_email@for_gitlab --password-stdin
+  docker compose pull to update containers
+```
+
+ Afterwards simply run `docker compose up --build`. You can then either run the tests in your IDE or via the terminal.
 
 **In VSCode**
 1. Sidebar > Testing

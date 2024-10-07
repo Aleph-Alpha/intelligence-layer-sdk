@@ -38,9 +38,6 @@ class MyTask:
     Note:
         What is important? Does your task require a certain type of model? Any usage recommendations?
 
-    Args:
-        example_arg: Any parameter provided in the '__init__' of this task.
-
     Attributes:
         EXAMPLE_CONSTANT: Any constant that may be defined within the class.
         example_non_private_attribute: Any attribute defined within the '__init__' that is not private.
@@ -51,6 +48,7 @@ class MyTask:
         End on one newline.
     """
 ```
+The Example documentation is optional but preferred to be included in a how-to guide if it would be helpful in this case. 
 
 Do not document the `run`` function of a class. Avoid documenting any other (private) functions.
 
