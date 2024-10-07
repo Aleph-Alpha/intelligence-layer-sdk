@@ -108,7 +108,7 @@ Here's how we differentiate and allocate content between them:
 
 ### Jupyter Notebooks
 
-**Purpose**: Jupyter notebooks are used to provide a comprehensive overview and walkthrough of the tasks. They are ideal for understanding the purpose, usage, and evaluation of a task. (look [here](#when-do-we-start-a-new-notebook) to decide whether to expand an existing one)
+**Purpose**: Jupyter notebooks are used to provide a comprehensive overview and walkthrough of the tasks. They are ideal for understanding the purpose, usage, and evaluation of a task. (look [here](#when-do-we-start-a-new-notebook) to decide whether to create a new notebook or expand an existing one)
 
 - **High-level Overview**:
     - **Problem Definition**: Describe the specific problem or challenge this task addresses.
@@ -145,14 +145,7 @@ Here's how we differentiate and allocate content between them:
     - **Usage Guidelines**: (Optional) Provide notes, insights or warnings about how to correctly use this class/function.
     Mention any nuances, potential pitfalls, or best practices.
 
----
-
-By maintaining clear distinctions between the two documentation streams, we ensure that both users and developers have the necessary tools and information at their disposal for efficient task execution and code modification.
-
-## Jupyter notebooks
-
-Notebooks shall be used in a tutorial-like manner to educate users about certain tasks, functionalities & more.
-
+By maintaining clear distinctions between the three documentation streams, we ensure that both users and developers have the necessary tools and information at their disposal for efficient task execution and code modification.
 
 ## Building a new task
 
