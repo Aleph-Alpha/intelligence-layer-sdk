@@ -219,12 +219,13 @@ For further information check out our different guides and documentations:
 - [CHANGELOG.md](https://github.com/Aleph-Alpha/intelligence-layer-sdk/blob/main/CHANGELOG.md) for the latest changes.
 
 ## How to contribute
-1. Write your code according to our [style guide](https://github.com/Aleph-Alpha/intelligence-layer-sdk/blob/main/style_guide.md)
-2. Add doc strings to your code as described [here](https://github.com/Aleph-Alpha/intelligence-layer-sdk/blob/main/style_guide.md)
-3. Write tests for new features ([Executing Tests](#executing-tests))
-4. Add an how_to and/or notebook as a documentation (check out [this](https://github.com/Aleph-Alpha/intelligence-layer-sdk/blob/main/style_guide.md) for guidance)
-5. Update the [Changelog](https://github.com/Aleph-Alpha/intelligence-layer-sdk/blob/main/CHANGELOG.md) with your changes
-6. Request a review for the MR, so that it can be merged
+0. Share the details of your problem with us.
+1. Write your code according to our [style guide](https://github.com/Aleph-Alpha/intelligence-layer-sdk/blob/main/style_guide.md).
+2. Add doc strings to your code as described [here](https://github.com/Aleph-Alpha/intelligence-layer-sdk/blob/main/style_guide.md).
+3. Write tests for new features ([Executing Tests](#executing-tests)).
+4. Add an how_to and/or notebook as a documentation (check out [this](https://github.com/Aleph-Alpha/intelligence-layer-sdk/blob/main/style_guide.md) for guidance).
+5. Update the [Changelog](https://github.com/Aleph-Alpha/intelligence-layer-sdk/blob/main/CHANGELOG.md) with your changes.
+6. Request a review for the MR, so that it can be merged.
 
 
 
