@@ -255,8 +255,11 @@ class SearchQuery(BaseModel):
         query: Actual text to be searched with.
         max_results: Max number of search results to be retrieved by the query.
             Must be larger than 0.
-        min_score: Min score needed for a search result to be returned.
+        min_score: Filter out results with a similarity score below this value.
             Must be between 0 and 1.
+            For searches on hybrid indexes, the Document Index applies the min_score
+            to the semantic results before fusion of result sets. As fusion re-scores results,
+            returned scores may exceed this value.
     """
 
     query: str
@@ -297,9 +300,11 @@ class DocumentSearchResult(BaseModel):
     Args:
         document_path: Path to the document that the section originates from.
         section: Actual section of the document that was found as a match to the query.
-        score: Actual search score of the section found.
-            Generally, higher scores correspond to better matches.
-            Will be between 0 and 1.
+        score: Search score of the found section.
+            Will be between 0 and 1. Higher scores correspond to higher matches.
+            The score depends on the index configuration, e.g. the score of a section differs for hybrid
+            and non-hybrid indexes. For searches on hybrid indexes, the score can exceed the min_score of the query
+            as the min_score only applies to the similarity score.
     """
 
     document_path: DocumentPath
