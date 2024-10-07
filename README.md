@@ -29,7 +29,7 @@ The key features of the Intelligence Layer are:
 - [References](#references)
 - [License](#license)
 - [For Developers](#for-developers)
-  - [Python: Naming Conventions](#python-naming-conventions)
+  - [How to contribute](#how-to-contribute)
   - [Executing tests](#executing-tests)
 
 # Installation
@@ -212,17 +212,24 @@ This project can only be used after signing the agreement with Aleph Alpha®. Pl
 
 # For Developers
 
-## Python: Naming Conventions
+For further information check out our different guides and documentations:
+- [Concepts.md](https://github.com/Aleph-Alpha/intelligence-layer-sdk/blob/main/Concepts.md)
+- [style_guide.md](https://github.com/Aleph-Alpha/intelligence-layer-sdk/blob/main/style_guide.md)
+- [RELEASE.md](https://github.com/Aleph-Alpha/intelligence-layer-sdk/blob/main/RELEASE.md)
+- [CHANGELOG.md](https://github.com/Aleph-Alpha/intelligence-layer-sdk/blob/main/CHANGELOG.md)
 
-We follow the [PEP 8 – Style Guide for Python Code](https://peps.python.org/pep-0008/).
-In addition, there are the following naming conventions:
-* Class method names:
-  * Use only substantives for a method name having no side effects and returning some objects
-    * E.g., `evaluation_overview` which returns an evaluation overview object
-  * Use a verb for a method name if it has side effects and return nothing
-    * E.g., `store_evaluation_overview` which saves a given evaluation overview (and returns nothing)
+## How to contribute
+1. Write your code accordingly to our [style guide](https://github.com/Aleph-Alpha/intelligence-layer-sdk/blob/main/style_guide.md)
+2. Add doc strings to your code as described [here](https://github.com/Aleph-Alpha/intelligence-layer-sdk/blob/main/style_guide.md)
+3. Write tests for new features ([Executing Tests](#executing-tests))
+4. Add an how_to and/or notebook as a documentation (check out [this](https://github.com/Aleph-Alpha/intelligence-layer-sdk/blob/main/style_guide.md) for guidance)
+5. Update the [Changelog](https://github.com/Aleph-Alpha/intelligence-layer-sdk/blob/main/CHANGELOG.md) with your changes
+6. Request a review for the MR, so that it can be merged
+
+
 
 ## Executing tests
+If you want to execute all tests you first need to spin up your docker container. Simply run `docker compose up --build`. Afterwards you can either run the tests in your IDE or via the terminal.
 
 **In VSCode**
 1. Sidebar > Testing

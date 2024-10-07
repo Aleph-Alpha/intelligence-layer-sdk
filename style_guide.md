@@ -3,6 +3,26 @@
 Welcome to the project's style guide, a foundational document that ensures consistency, clarity, and quality in our collaborative efforts.
 As we work together, adhering to the guidelines outlined here will streamline our process, making our code more readable and maintainable for all team members.
 
+## Folder Structure
+The source directory is organized into four distinct folders, each with a specific responsibility.
+
+| **Folder**   | **Description**                                                                 |
+|----------------|---------------------------------------------------------------------------------|
+| Core           | The main components of the IL. This includes the `Task` abstraction, the `Tracer` and basic components like LLMs. |
+| Evaluation     | Includes all resources related to task evaluation.                               |
+| Connectors     | Provides tools to interface with third-party applications within the IL.    |
+| Examples       | Showcases various task implementations to address different use cases using the IL.                  |
+
+## Python: Naming Conventions
+
+We follow the [PEP 8 – Style Guide for Python Code](https://peps.python.org/pep-0008/).
+In addition, there are the following naming conventions:
+* Class method names:
+  * Use only substantives for a method name having no side effects and returning some objects
+    * E.g., `evaluation_overview` which returns an evaluation overview object
+  * Use a verb for a method name if it has side effects and return nothing
+    * E.g., `store_evaluation_overview` which saves a given evaluation overview (and returns nothing)
+
 ## Building a new task
 
 To make sure that we approach building new tasks in a unified way, consider this example task:
