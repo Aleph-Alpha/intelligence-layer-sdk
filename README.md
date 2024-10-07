@@ -213,13 +213,13 @@ This project can only be used after signing the agreement with Aleph Alpha®. Pl
 # For Developers
 
 For further information check out our different guides and documentations:
-- [Concepts.md](https://github.com/Aleph-Alpha/intelligence-layer-sdk/blob/main/Concepts.md)
-- [style_guide.md](https://github.com/Aleph-Alpha/intelligence-layer-sdk/blob/main/style_guide.md)
-- [RELEASE.md](https://github.com/Aleph-Alpha/intelligence-layer-sdk/blob/main/RELEASE.md)
-- [CHANGELOG.md](https://github.com/Aleph-Alpha/intelligence-layer-sdk/blob/main/CHANGELOG.md)
+- [Concepts.md](https://github.com/Aleph-Alpha/intelligence-layer-sdk/blob/main/Concepts.md) for an overview of what Intelligence Layer is and how it works.
+- [style_guide.md](https://github.com/Aleph-Alpha/intelligence-layer-sdk/blob/main/style_guide.md) on how we write and document code.
+- [RELEASE.md](https://github.com/Aleph-Alpha/intelligence-layer-sdk/blob/main/RELEASE.md) for the release process of IL.
+- [CHANGELOG.md](https://github.com/Aleph-Alpha/intelligence-layer-sdk/blob/main/CHANGELOG.md) for the latest changes.
 
 ## How to contribute
-1. Write your code accordingly to our [style guide](https://github.com/Aleph-Alpha/intelligence-layer-sdk/blob/main/style_guide.md)
+1. Write your code according to our [style guide](https://github.com/Aleph-Alpha/intelligence-layer-sdk/blob/main/style_guide.md)
 2. Add doc strings to your code as described [here](https://github.com/Aleph-Alpha/intelligence-layer-sdk/blob/main/style_guide.md)
 3. Write tests for new features ([Executing Tests](#executing-tests))
 4. Add an how_to and/or notebook as a documentation (check out [this](https://github.com/Aleph-Alpha/intelligence-layer-sdk/blob/main/style_guide.md) for guidance)
