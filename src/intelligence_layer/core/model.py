@@ -607,7 +607,7 @@ class AlephAlphaChatModel(ChatModel):
             [
                 Message(
                     role="user",
-                    content=f"{instruction}\n{input}" if input else instruction,
+                    content=f"{instruction}\n\n{input}" if input else instruction,
                 )
             ],
             response_prefix,
@@ -617,9 +617,9 @@ class AlephAlphaChatModel(ChatModel):
 LLAMA_3_CHAT_PROMPT_TEMPLATE = PromptTemplate(
     """<|begin_of_text|>{% for message in messages %}<|start_header_id|>{{message.role}}<|end_header_id|>
 
-{% promptrange instruction %}{{message.content}}{% endpromptrange %}<|eot_id|>{% endfor %}<|start_header_id|>assistant<|end_header_id|>
+{% promptrange instruction %}{{message.content}}{% endpromptrange %}<|eot_id|>{% endfor %}<|start_header_id|>assistant<|end_header_id|>{% if response_prefix %}
 
-{% if response_prefix %}{{response_prefix}}{% endif %}"""
+{{response_prefix}}{% endif %}"""
 )
 
 

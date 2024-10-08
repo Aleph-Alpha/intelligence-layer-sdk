@@ -104,20 +104,6 @@ def test_pharia_1_chat_model_works(no_op_tracer: NoOpTracer) -> None:
     assert "4" in completion
 
 
-def test_pharia_1_chat_model_can_do_completion(no_op_tracer: NoOpTracer) -> None:
-    pharia_1_chat_model = Pharia1ChatModel()
-
-    prompt = pharia_1_chat_model.to_instruct_prompt(
-        "Who likes pizza?",
-        "Marc and Jessica had pizza together. However, Marc hated it. He only agreed to the date because Jessica likes pizza so much.",
-    )
-
-    complete_input = CompleteInput(prompt=prompt)
-    output = pharia_1_chat_model.complete(complete_input, no_op_tracer)
-    print(complete_input.prompt)
-    assert "many people enjoy pizza" in output.completion
-
-
 def test_llama_3_chat_model_works(no_op_tracer: NoOpTracer) -> None:
     llama_3_chat_model = Llama3ChatModel()
 
@@ -129,7 +115,7 @@ def test_llama_3_chat_model_works(no_op_tracer: NoOpTracer) -> None:
     assert "4" in completion
 
 
-def test_llama_3_chat_model_can_do_completion(no_op_tracer: NoOpTracer) -> None:
+def test_chat_model_can_do_completion(no_op_tracer: NoOpTracer) -> None:
     llama_3_chat_model = Llama3ChatModel()
 
     prompt = llama_3_chat_model.to_instruct_prompt(
@@ -140,6 +126,24 @@ def test_llama_3_chat_model_can_do_completion(no_op_tracer: NoOpTracer) -> None:
     complete_input = CompleteInput(prompt=prompt)
     output = llama_3_chat_model.complete(complete_input, no_op_tracer)
     assert "Jessica" in output.completion
+
+
+def test_chat_model_prompt_equals_instruct_prompt() -> None:
+    llama_3_model = Llama3InstructModel()
+    instruct_prompt = llama_3_model.to_instruct_prompt(
+        "Who likes pizza?",
+        "Marc and Jessica had pizza together. However, Marc hated it. He only agreed to the date because Jessica likes pizza so much.",
+    ).items[0]
+
+    llama_3_chat_model = Llama3ChatModel()
+    chat_prompt = llama_3_chat_model.to_instruct_prompt(
+        "Who likes pizza?",
+        "Marc and Jessica had pizza together. However, Marc hated it. He only agreed to the date because Jessica likes pizza so much.",
+    ).items[0]
+
+    assert isinstance(instruct_prompt, Text)
+    assert isinstance(chat_prompt, Text)
+    assert instruct_prompt == chat_prompt
 
 
 def test_can_use_chat_model_as_control_model() -> None:
