@@ -29,7 +29,7 @@ The key features of the Intelligence Layer are:
 - [References](#references)
 - [License](#license)
 - [For Developers](#for-developers)
-  - [Python: Naming Conventions](#python-naming-conventions)
+  - [How to contribute](#how-to-contribute)
   - [Executing tests](#executing-tests)
 
 # Installation
@@ -212,17 +212,36 @@ This project can only be used after signing the agreement with Aleph Alpha®. Pl
 
 # For Developers
 
-## Python: Naming Conventions
+For further information check out our different guides and documentations:
+- [Concepts.md](https://github.com/Aleph-Alpha/intelligence-layer-sdk/blob/main/Concepts.md) for an overview of what Intelligence Layer is and how it works.
+- [style_guide.md](https://github.com/Aleph-Alpha/intelligence-layer-sdk/blob/main/style_guide.md) on how we write and document code.
+- [RELEASE.md](https://github.com/Aleph-Alpha/intelligence-layer-sdk/blob/main/RELEASE.md) for the release process of IL.
+- [CHANGELOG.md](https://github.com/Aleph-Alpha/intelligence-layer-sdk/blob/main/CHANGELOG.md) for the latest changes.
 
-We follow the [PEP 8 – Style Guide for Python Code](https://peps.python.org/pep-0008/).
-In addition, there are the following naming conventions:
-* Class method names:
-  * Use only substantives for a method name having no side effects and returning some objects
-    * E.g., `evaluation_overview` which returns an evaluation overview object
-  * Use a verb for a method name if it has side effects and return nothing
-    * E.g., `store_evaluation_overview` which saves a given evaluation overview (and returns nothing)
+## How to contribute
+:warning: **Warning:** This repository is open-source. Any contributions and MR discussions will be publicly accessible.
+
+
+1. Share the details of your problem with us.
+2. Write your code according to our [style guide](https://github.com/Aleph-Alpha/intelligence-layer-sdk/blob/main/style_guide.md).
+3. Add doc strings to your code as described [here](https://github.com/Aleph-Alpha/intelligence-layer-sdk/blob/main/style_guide.md#docstrings).
+4. Write tests for new features ([Executing Tests](#executing-tests)).
+5. Add an how_to and/or notebook as a documentation (check out [this](https://github.com/Aleph-Alpha/intelligence-layer-sdk/blob/main/style_guide.md#documentation) for guidance).
+6. Update the [Changelog](https://github.com/Aleph-Alpha/intelligence-layer-sdk/blob/main/CHANGELOG.md) with your changes.
+7. Request a review for the MR, so that it can be merged.
+
+
 
 ## Executing tests
+If you want to execute all tests, you first need to spin up your docker container and execute the commands with your own `GITLAB_TOKEN`.
+
+```bash
+  export GITLAB_TOKEN=...
+  echo $GITLAB_TOKEN | docker login registry.gitlab.aleph-alpha.de -u your_email@for_gitlab --password-stdin
+  docker compose pull to update containers
+```
+
+ Afterwards simply run `docker compose up --build`. You can then either run the tests in your IDE or via the terminal.
 
 **In VSCode**
 1. Sidebar > Testing
@@ -232,7 +251,7 @@ In addition, there are the following naming conventions:
 You can then run the tests from the sidebar.
 
 **In a terminal**
-In order to run a local proxy w.r.t. to the CI pipeline (required to merge) you can run
+In order to run a local proxy of the CI pipeline (required to merge) you can run
 > scripts/all.sh
 
 This will run linters and all tests.
