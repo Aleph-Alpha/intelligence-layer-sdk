@@ -176,47 +176,6 @@ class Message(BaseModel):
     content: str
 
 
-class ChatModel(LanguageModel):
-    """Abstract base class to implement any model that supports chat."""
-
-    @abstractmethod
-    def generate_chat(
-        self, messages: list[Message], response_prefix: str | None, tracer: Tracer
-    ) -> str:
-        """A completion function that takes a prompt and generates a completion.
-
-        Args:
-            messages: The messages to be used as prompt
-            response_prefix: Append the given string to the beginning of the final agent message to steer the generation.
-            tracer: Valid instance of a tracer
-
-        Returns:
-            An LLM completion
-        """
-        pass
-
-    @abstractmethod
-    def echo_chat(
-        self,
-        messages: list[Message],
-        response_prefix: str | None,
-        expected_completion: str,
-        tracer: Tracer,
-    ) -> Sequence[tuple[Any, Optional[float]]]:
-        """Echos the log probs for each token of an expected completion given a prompt.
-
-        Args:
-            messages: The messages to be used as prompt
-            response_prefix: Append the given string to the beginning of the final agent message to steer the generation.
-            expected_completion: The expected completion to get log probs for
-            tracer: Valid instance of a tracer
-
-        Returns:
-            A list of tuples with token identifier and log probability
-        """
-        pass
-
-
 class AlephAlphaModel(LanguageModel):
     """Model-class for any model that uses the Aleph Alpha client.
 
@@ -545,7 +504,48 @@ class Llama3InstructModel(ControlModel):
         return "<|eot_id|>"
 
 
-class AlephAlphaChatModel(ChatModel, AlephAlphaModel):
+class ChatModel(ControlModel):
+    """Abstract base class to implement any model that supports chat."""
+
+    @abstractmethod
+    def generate_chat(
+        self, messages: list[Message], response_prefix: str | None, tracer: Tracer
+    ) -> str:
+        """A completion function that takes a prompt and generates a completion.
+
+        Args:
+            messages: The messages to be used as prompt
+            response_prefix: Append the given string to the beginning of the final agent message to steer the generation.
+            tracer: Valid instance of a tracer
+
+        Returns:
+            An LLM completion
+        """
+        pass
+
+    @abstractmethod
+    def echo_chat(
+        self,
+        messages: list[Message],
+        response_prefix: str | None,
+        expected_completion: str,
+        tracer: Tracer,
+    ) -> Sequence[tuple[Any, Optional[float]]]:
+        """Echos the log probs for each token of an expected completion given a prompt.
+
+        Args:
+            messages: The messages to be used as prompt
+            response_prefix: Append the given string to the beginning of the final agent message to steer the generation.
+            expected_completion: The expected completion to get log probs for
+            tracer: Valid instance of a tracer
+
+        Returns:
+            A list of tuples with token identifier and log probability
+        """
+        pass
+
+
+class AlephAlphaChatModel(ChatModel):
     """Abstract base class for any model that supports chat and runs via the Aleph Alpha API."""
 
     CHAT_PROMPT_TEMPLATE: PromptTemplate
@@ -597,8 +597,24 @@ class AlephAlphaChatModel(ChatModel, AlephAlphaModel):
 
         return self.echo(prompt_item.text, expected_completion, tracer)
 
+    def to_instruct_prompt(
+        self,
+        instruction: str,
+        input: Optional[str] = None,
+        response_prefix: Optional[str] = None,
+    ) -> RichPrompt:
+        return self.to_chat_prompt(
+            [
+                Message(
+                    role="user",
+                    content=f"{instruction}\n{input}" if input else instruction,
+                )
+            ],
+            response_prefix,
+        )
 
-LLAMA_3_PROMPT_TEMPLATE = PromptTemplate(
+
+LLAMA_3_CHAT_PROMPT_TEMPLATE = PromptTemplate(
     """<|begin_of_text|>{% for message in messages %}<|start_header_id|>{{message.role}}<|end_header_id|>
 
 {% promptrange instruction %}{{message.content}}{% endpromptrange %}<|eot_id|>{% endfor %}<|start_header_id|>assistant<|end_header_id|>
@@ -617,7 +633,7 @@ class Pharia1ChatModel(AlephAlphaChatModel):
             Defaults to :class:`LimitedConcurrencyClient`
     """
 
-    CHAT_PROMPT_TEMPLATE = LLAMA_3_PROMPT_TEMPLATE
+    CHAT_PROMPT_TEMPLATE = LLAMA_3_CHAT_PROMPT_TEMPLATE
 
     RECOMMENDED_MODELS: ClassVar[list[str]] = [
         "Pharia-1-LLM-7B-control",
@@ -657,7 +673,7 @@ class Llama3ChatModel(AlephAlphaChatModel):
             Defaults to :class:`LimitedConcurrencyClient`
     """
 
-    CHAT_PROMPT_TEMPLATE = LLAMA_3_PROMPT_TEMPLATE
+    CHAT_PROMPT_TEMPLATE = LLAMA_3_CHAT_PROMPT_TEMPLATE
 
     RECOMMENDED_MODELS: ClassVar[list[str]] = [
         "llama-3-8b-instruct",

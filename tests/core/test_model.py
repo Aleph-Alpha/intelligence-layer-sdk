@@ -19,7 +19,13 @@ from intelligence_layer.core import (
     NoOpTracer,
     Pharia1ChatModel,
 )
+from intelligence_layer.core.chunk import TextChunk
+from intelligence_layer.core.detect_language import Language
 from intelligence_layer.core.model import _cached_context_size, _cached_tokenizer
+from intelligence_layer.examples.classify.keyword_extract import (
+    KeywordExtract,
+    KeywordExtractInput,
+)
 
 
 @fixture
@@ -98,6 +104,20 @@ def test_pharia_1_chat_model_works(no_op_tracer: NoOpTracer) -> None:
     assert "4" in completion
 
 
+def test_pharia_1_chat_model_can_do_completion(no_op_tracer: NoOpTracer) -> None:
+    pharia_1_chat_model = Pharia1ChatModel()
+
+    prompt = pharia_1_chat_model.to_instruct_prompt(
+        "Who likes pizza?",
+        "Marc and Jessica had pizza together. However, Marc hated it. He only agreed to the date because Jessica likes pizza so much.",
+    )
+
+    complete_input = CompleteInput(prompt=prompt)
+    output = pharia_1_chat_model.complete(complete_input, no_op_tracer)
+    print(complete_input.prompt)
+    assert "many people enjoy pizza" in output.completion
+
+
 def test_llama_3_chat_model_works(no_op_tracer: NoOpTracer) -> None:
     llama_3_chat_model = Llama3ChatModel()
 
@@ -107,6 +127,29 @@ def test_llama_3_chat_model_works(no_op_tracer: NoOpTracer) -> None:
         messages, response_prefix=None, tracer=no_op_tracer
     )
     assert "4" in completion
+
+
+def test_llama_3_chat_model_can_do_completion(no_op_tracer: NoOpTracer) -> None:
+    llama_3_chat_model = Llama3ChatModel()
+
+    prompt = llama_3_chat_model.to_instruct_prompt(
+        "Who likes pizza?",
+        "Marc and Jessica had pizza together. However, Marc hated it. He only agreed to the date because Jessica likes pizza so much.",
+    )
+
+    complete_input = CompleteInput(prompt=prompt)
+    output = llama_3_chat_model.complete(complete_input, no_op_tracer)
+    assert "Jessica" in output.completion
+
+
+def test_can_use_chat_model_as_control_model() -> None:
+    keyword_extract = KeywordExtract(model=Pharia1ChatModel())
+    input = KeywordExtractInput(
+        chunk=TextChunk("I really like my computer"), language=Language("en")
+    )
+
+    result = keyword_extract.run(input, NoOpTracer())
+    assert "computer" in [keyword.lower() for keyword in result.keywords]
 
 
 def test_models_know_their_context_size(client: AlephAlphaClientProtocol) -> None:
