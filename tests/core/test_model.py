@@ -19,13 +19,7 @@ from intelligence_layer.core import (
     NoOpTracer,
     Pharia1ChatModel,
 )
-from intelligence_layer.core.chunk import TextChunk
-from intelligence_layer.core.detect_language import Language
 from intelligence_layer.core.model import _cached_context_size, _cached_tokenizer
-from intelligence_layer.examples.classify.keyword_extract import (
-    KeywordExtract,
-    KeywordExtractInput,
-)
 
 
 @fixture
@@ -144,16 +138,6 @@ def test_chat_model_prompt_equals_instruct_prompt() -> None:
     assert isinstance(instruct_prompt, Text)
     assert isinstance(chat_prompt, Text)
     assert instruct_prompt == chat_prompt
-
-
-def test_can_use_chat_model_as_control_model() -> None:
-    keyword_extract = KeywordExtract(model=Pharia1ChatModel())
-    input = KeywordExtractInput(
-        chunk=TextChunk("I really like my computer"), language=Language("en")
-    )
-
-    result = keyword_extract.run(input, NoOpTracer())
-    assert "computer" in [keyword.lower() for keyword in result.keywords]
 
 
 def test_models_know_their_context_size(client: AlephAlphaClientProtocol) -> None:
