@@ -545,11 +545,10 @@ class Llama3InstructModel(ControlModel):
         return "<|eot_id|>"
 
 
-class AlephAlphaChatModel(ChatModel, AlephAlphaModel):
+class AlephAlphaChatModel(ChatModel, ControlModel):
     """Abstract base class for any model that supports chat and runs via the Aleph Alpha API."""
 
     CHAT_PROMPT_TEMPLATE: PromptTemplate
-    RECOMMENDED_MODELS: ClassVar[list[str]] = []
 
     def to_chat_prompt(
         self, messages: list[Message], response_prefix: str | None = None
@@ -597,13 +596,29 @@ class AlephAlphaChatModel(ChatModel, AlephAlphaModel):
 
         return self.echo(prompt_item.text, expected_completion, tracer)
 
+    def to_instruct_prompt(
+        self,
+        instruction: str,
+        input: Optional[str] = None,
+        response_prefix: Optional[str] = None,
+    ) -> RichPrompt:
+        return self.to_chat_prompt(
+            [
+                Message(
+                    role="user",
+                    content=f"{instruction}\n\n{input}" if input else instruction,
+                )
+            ],
+            response_prefix,
+        )
 
-LLAMA_3_PROMPT_TEMPLATE = PromptTemplate(
+
+LLAMA_3_CHAT_PROMPT_TEMPLATE = PromptTemplate(
     """<|begin_of_text|>{% for message in messages %}<|start_header_id|>{{message.role}}<|end_header_id|>
 
-{% promptrange instruction %}{{message.content}}{% endpromptrange %}<|eot_id|>{% endfor %}<|start_header_id|>assistant<|end_header_id|>
+{% promptrange instruction %}{{message.content}}{% endpromptrange %}<|eot_id|>{% endfor %}<|start_header_id|>assistant<|end_header_id|>{% if response_prefix %}
 
-{% if response_prefix %}{{response_prefix}}{% endif %}"""
+{{response_prefix}}{% endif %}"""
 )
 
 
@@ -617,7 +632,7 @@ class Pharia1ChatModel(AlephAlphaChatModel):
             Defaults to :class:`LimitedConcurrencyClient`
     """
 
-    CHAT_PROMPT_TEMPLATE = LLAMA_3_PROMPT_TEMPLATE
+    CHAT_PROMPT_TEMPLATE = LLAMA_3_CHAT_PROMPT_TEMPLATE
 
     RECOMMENDED_MODELS: ClassVar[list[str]] = [
         "Pharia-1-LLM-7B-control",
@@ -657,7 +672,7 @@ class Llama3ChatModel(AlephAlphaChatModel):
             Defaults to :class:`LimitedConcurrencyClient`
     """
 
-    CHAT_PROMPT_TEMPLATE = LLAMA_3_PROMPT_TEMPLATE
+    CHAT_PROMPT_TEMPLATE = LLAMA_3_CHAT_PROMPT_TEMPLATE
 
     RECOMMENDED_MODELS: ClassVar[list[str]] = [
         "llama-3-8b-instruct",
