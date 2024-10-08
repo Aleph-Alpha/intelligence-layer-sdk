@@ -219,7 +219,7 @@ For further information check out our different guides and documentations:
 - [CHANGELOG.md](https://github.com/Aleph-Alpha/intelligence-layer-sdk/blob/main/CHANGELOG.md) for the latest changes.
 
 ## How to contribute
-:warning: **Warning:** This repository is open-source. Any contributions you make will be publicly accessible.
+:warning: **Warning:** This repository is open-source. Any contributions and MR discussions will be publicly accessible.
 
 
 1. Share the details of your problem with us.
