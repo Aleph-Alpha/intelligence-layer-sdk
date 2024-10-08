@@ -177,6 +177,9 @@ def test_models_warn_about_non_recommended_models(
     with pytest.warns(UserWarning):
         assert AlephAlphaModel(client=client, name="No model")  # type: ignore
 
+    with pytest.warns(UserWarning):
+        assert Pharia1ChatModel(client=client, name="No model")  # type: ignore
+
 
 class DummyModelClient(AlephAlphaClientProtocol):
     # we use random here to simulate different objects to check caching behavior
