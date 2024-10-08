@@ -35,9 +35,6 @@ class MyTask:
 
     Follow up with a more detailed description, outlining the purpose & general functioning of the task.
 
-    Note:
-        What is important? Does your task require a certain type of model? Any usage recommendations?
-
     Attributes:
         EXAMPLE_CONSTANT: Any constant that may be defined within the class.
         example_non_private_attribute: Any attribute defined within the '__init__' that is not private.
