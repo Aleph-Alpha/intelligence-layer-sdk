@@ -6,6 +6,7 @@
 - `k` is now an optional parameter in `DocumentIndexRetriever`.
 - List all indexes of a namespace with `DocumentIndexClient.list_indexes`.
 - Remove an index from a namespace with `DocumentIndexClient.delete_index`.
+- `ChatModel` now inherits from `ControlModel`.
 
 ### Fixes
 - `DocumentIndexClient` now properly sets `chunk_overlap` when creating an index configuration.
