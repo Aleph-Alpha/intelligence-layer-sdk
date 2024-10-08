@@ -10,6 +10,8 @@ from requests.models import Response
 from intelligence_layer.connectors.data import (
     DataClient,
     DataDataset,
+    DataFile,
+    DataFileCreate,
     DataInternalError,
     DataRepository,
     DataRepositoryCreate,
@@ -17,8 +19,6 @@ from intelligence_layer.connectors.data import (
     DatasetCreate,
     DataStage,
     DataStageCreate,
-    DataFile,
-    DataFileCreate,
 )
 
 
@@ -600,6 +600,7 @@ def test_get_stage_handles_request_exception(
 
     mock_session.request.assert_called_once()
 
+
 def test_upload_file_to_stage(data_client: DataClient, mock_session: Mock) -> None:
     def return_json_override() -> dict[Any, Any]:
         return {
@@ -644,6 +645,7 @@ def test_upload_file_to_stage(data_client: DataClient, mock_session: Mock) -> No
         },
     )
 
+
 def test_upload_file_to_stage_handle_request_exception(
     data_client: DataClient, mock_session: Mock
 ) -> None:
@@ -659,6 +661,7 @@ def test_upload_file_to_stage_handle_request_exception(
         )
 
     mock_session.request.assert_called_once()
+
 
 def test_list_files_in_stage(data_client: DataClient, mock_session: Mock) -> None:
     def return_json_override() -> dict[Any, Any]:
@@ -714,6 +717,7 @@ def test_list_files_in_stage(data_client: DataClient, mock_session: Mock) -> Non
         },
     )
 
+
 def test_list_files_in_stage_handle_request_exception(
     data_client: DataClient, mock_session: Mock
 ) -> None:
@@ -724,12 +728,13 @@ def test_list_files_in_stage_handle_request_exception(
 
     mock_session.request.assert_called_once()
 
+
 def test_get_file_from_stage(data_client: DataClient, mock_session: Mock) -> None:
     expected_data = b"expected file content"
 
     def mock_file(*args: Any, **kwargs: Any) -> bytes:
         return b"expected file content"
-    
+
     mock_response = Mock(spec=Response)
     mock_response.status_code = 200
     mock_response.content = mock_file()
@@ -746,6 +751,7 @@ def test_get_file_from_stage(data_client: DataClient, mock_session: Mock) -> Non
             "Authorization": "Bearer some-token",
         },
     )
+
 
 def test_get_file_from_stage_handles_request_exception(
     data_client: DataClient, mock_session: Mock

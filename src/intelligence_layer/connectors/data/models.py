@@ -3,8 +3,8 @@ from datetime import datetime
 from enum import Enum
 from typing import Any, Optional
 
-from pydantic import AliasGenerator, BaseModel, ConfigDict
-from pydantic.alias_generators import to_camel, to_snake
+from pydantic import BaseModel, ConfigDict
+from pydantic.alias_generators import to_camel
 
 
 class BaseDataModel(BaseModel):
