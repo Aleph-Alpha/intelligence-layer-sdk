@@ -3,17 +3,22 @@ from datetime import datetime
 from enum import Enum
 from typing import Any, Optional
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import AliasGenerator, BaseModel, ConfigDict
 from pydantic.alias_generators import to_camel, to_snake
 
 
 class BaseDataModel(BaseModel):
-    model_config = ConfigDict(alias_generator=to_camel, arbitrary_types_allowed=True)
+    model_config = ConfigDict(
+        alias_generator=to_camel,
+        arbitrary_types_allowed=True,
+        populate_by_name=True,
+    )
 
 
 class MediaTypes(str, Enum):
     jsonlines = "application/x-ndjson"
     jsonlines_ = "application/jsonlines"
+    jsonlines__ = "jsonlines"
 
 
 class Modality(str, Enum):
@@ -91,10 +96,49 @@ class DatasetCreate(BaseDataModel):
     metadata: Metadata of the dataset
     """
 
-    model_config = ConfigDict(alias_generator=to_snake, arbitrary_types_allowed=True)
-
     source_data: io.BufferedReader | bytes
     name: Optional[str] = None
     labels: list[str]
     total_datapoints: int
     metadata: Optional[dict[str, Any]] = None
+
+
+class DataStageCreate(BaseDataModel):
+    """Stage creation model.
+
+    Attributes:
+    name: Name of the stage
+    """
+
+    name: str
+
+
+class DataStage(BaseDataModel):
+    """Stage model.
+
+    Attributes:
+    stage_id: Stage ID that identifies the stage
+    name: Name of the stage
+    created_at: Datetime when the stage was created
+    updated_at: Datetime when the stage was updated
+    """
+
+    stage_id: str
+    name: str
+    created_at: datetime
+    updated_at: datetime
+
+
+class DataFile(BaseDataModel):
+    file_id: str
+    stage_id: str
+    name: str
+    created_at: datetime
+    updated_at: datetime
+    media_type: str
+    size: int
+
+
+class DataFileCreate(BaseDataModel):
+    source_data: io.BufferedReader | bytes
+    name: str

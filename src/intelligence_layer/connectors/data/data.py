@@ -1,3 +1,4 @@
+import io
 import json
 import warnings
 from collections.abc import Iterator
@@ -20,9 +21,13 @@ from intelligence_layer.connectors.data.exceptions import (
 )
 from intelligence_layer.connectors.data.models import (
     DataDataset,
+    DataFile,
+    DataFileCreate,
     DataRepository,
     DataRepositoryCreate,
     DatasetCreate,
+    DataStage,
+    DataStageCreate,
 )
 
 
@@ -222,6 +227,113 @@ class DataClient:
         )
         response = self._do_request("GET", url, stream=True)
         return response.iter_lines()
+
+    def create_stage(self, stage: DataStageCreate) -> DataStage:
+        """Create a new stage.
+
+        Args:
+            stage: DataStageCreate object
+
+        Returns:
+            :class:`DataStage` new object
+        """
+        url = urljoin(self._base_data_platform_url, "api/v1/stages")
+        response = self._do_request("POST", url, json=stage.model_dump(by_alias=True))
+        return DataStage(**response.json())
+
+    def list_stages(self, page: int = 0, size: int = 20) -> list[DataStage]:
+        """List all the stages.
+
+        Args:
+            page: Page number. Defaults to 0
+            size: Number of items per page. Defaults to 20
+
+        Returns:
+            List of :class:`DataStage` objects
+        """
+        url = urljoin(self._base_data_platform_url, "api/v1/stages")
+        query = urlencode({"page": page, "size": size})
+        response = self._do_request("GET", f"{url}?{query}")
+        stages = response.json()
+        return [DataStage(**stage) for stage in stages["stages"]]
+
+    def get_stage(self, stage_id: str) -> DataStage:
+        """Get a stage by ID.
+
+        Args:
+            stage_id: Stage ID
+
+        Returns:
+            :class:`DataStage` object
+        """
+        url = urljoin(self._base_data_platform_url, f"api/v1/stages/{stage_id}")
+        response = self._do_request("GET", url)
+        return DataStage(**response.json())
+
+    def upload_file_to_stage(self, stage_id: str, file: DataFileCreate) -> DataFile:
+        """Upload a file to a stage.
+
+        Args:
+            stage_id: Stage ID
+            file: DataFileCreate object
+
+        Returns:
+            :class:`DataFile` new object
+        """
+        url = urljoin(
+            self._base_data_platform_url,
+            f"api/v1/stages/{stage_id}/files",
+        )
+
+        body = {
+            "sourceData": file.source_data,
+            "name": file.name,
+        }
+
+        response = self._do_request(
+            "POST",
+            url,
+            files={k: v for k, v in body.items() if v not in [None, ""]},
+        )
+        return DataFile(**response.json())
+
+    def list_files_in_stage(
+        self, stage_id: str, page: int = 0, size: int = 20
+    ) -> list[DataFile]:
+        """List all the files in a stage.
+
+        Args:
+            stage_id: Stage ID
+            page: Page number. Defaults to 0
+            size: Number of items per page. Defaults to 20
+
+        Returns:
+            List of :class:`DataFile` objects
+        """
+        url = urljoin(
+            self._base_data_platform_url,
+            f"api/v1/stages/{stage_id}/files",
+        )
+        query = urlencode({"page": page, "size": size})
+        response = self._do_request("GET", f"{url}?{query}")
+        files = response.json()
+        return [DataFile(**file) for file in files["files"]]
+
+    def get_file_from_stage(self, stage_id: str, file_id: str) -> io.BytesIO:
+        """Get a file from a stage.
+
+        Args:
+            stage_id: Stage ID
+            file_id: File ID
+
+        Returns:
+            File bytes
+        """
+        url = urljoin(
+            self._base_data_platform_url, f"api/v1/stages/{stage_id}/files/{file_id}"
+        )
+        response = self._do_request("GET", url)
+        return io.BytesIO(response.content)
 
     def _do_request(self, method: str, url: str, **kwargs: Any) -> requests.Response:
         try:

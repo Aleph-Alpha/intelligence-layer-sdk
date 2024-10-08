@@ -15,6 +15,10 @@ from intelligence_layer.connectors.data import (
     DataRepositoryCreate,
     DataResourceNotFound,
     DatasetCreate,
+    DataStage,
+    DataStageCreate,
+    DataFile,
+    DataFileCreate,
 )
 
 
@@ -448,5 +452,307 @@ def test_do_request_handles_status_code_exception(
 
     with pytest.raises(DataResourceNotFound):
         data_client._do_request("GET", "https://example.com")
+
+    mock_session.request.assert_called_once()
+
+
+def test_create_stage(data_client: DataClient, mock_session: Mock) -> None:
+    def return_json_override() -> dict[Any, Any]:
+        return {
+            "stageId": "stage1",
+            "name": "Stage 1",
+            "createdAt": "2022-01-01T00:00:00Z",
+            "updatedAt": "2022-01-01T00:00:00Z",
+        }
+
+    mock_response = Mock(spec=Response)
+    mock_response.status_code = 201
+    mock_response.json.return_value = return_json_override()
+    mock_session.request.return_value = mock_response
+
+    stage = data_client.create_stage(
+        stage=DataStageCreate(
+            name="Stage 1",
+        )
+    )
+
+    assert isinstance(stage, DataStage)
+    assert stage.stage_id == "stage1"
+    assert stage.name == "Stage 1"
+
+    mock_session.request.assert_called_once_with(
+        "POST",
+        "http://localhost:8000/api/v1/stages",
+        headers={
+            "Authorization": "Bearer some-token",
+        },
+        json={
+            "name": "Stage 1",
+        },
+    )
+
+
+def test_create_stage_handles_request_exception(
+    data_client: DataClient, mock_session: Mock
+) -> None:
+    mock_session.request.side_effect = RequestException("Request failed")
+
+    with pytest.raises(DataInternalError):
+        data_client.create_stage(
+            stage=DataStageCreate(
+                name="Stage 1",
+            )
+        )
+
+    mock_session.request.assert_called_once()
+
+
+def test_list_stages(data_client: DataClient, mock_session: Mock) -> None:
+    def return_json_override() -> dict[Any, Any]:
+        return {
+            "stages": [
+                {
+                    "stageId": "stage1",
+                    "name": "Stage 1",
+                    "createdAt": "2022-01-01T00:00:00Z",
+                    "updatedAt": "2022-01-01T00:00:00Z",
+                },
+                {
+                    "stageId": "stage2",
+                    "name": "Stage 2",
+                    "createdAt": "2022-01-01T00:00:00Z",
+                    "updatedAt": "2022-01-01T00:00:00Z",
+                },
+            ]
+        }
+
+    mock_response = Mock(spec=Response)
+    mock_response.status_code = 200
+    mock_response.json.return_value = return_json_override()
+    mock_session.request.return_value = mock_response
+
+    stages = data_client.list_stages()
+
+    assert len(stages) == 2
+    assert isinstance(stages[0], DataStage)
+    assert stages[0].stage_id == "stage1"
+    assert stages[0].name == "Stage 1"
+    assert isinstance(stages[1], DataStage)
+    assert stages[1].stage_id == "stage2"
+    assert stages[1].name == "Stage 2"
+
+    mock_session.request.assert_called_once_with(
+        "GET",
+        "http://localhost:8000/api/v1/stages?page=0&size=20",
+        headers={
+            "Authorization": "Bearer some-token",
+        },
+    )
+
+
+def test_list_stages_handles_request_exception(
+    data_client: DataClient, mock_session: Mock
+) -> None:
+    mock_session.request.side_effect = RequestException("Request failed")
+
+    with pytest.raises(DataInternalError):
+        data_client.list_stages()
+
+    mock_session.request.assert_called_once()
+
+
+def test_get_stage(data_client: DataClient, mock_session: Mock) -> None:
+    def return_json_override() -> dict[Any, Any]:
+        return {
+            "stageId": "stage1",
+            "name": "Stage 1",
+            "createdAt": "2022-01-01T00:00:00Z",
+            "updatedAt": "2022-01-01T00:00:00Z",
+        }
+
+    mock_response = Mock(spec=Response)
+    mock_response.status_code = 200
+    mock_response.json.return_value = return_json_override()
+    mock_session.request.return_value = mock_response
+
+    stage = data_client.get_stage(stage_id="stage1")
+
+    assert isinstance(stage, DataStage)
+    assert stage.stage_id == "stage1"
+    assert stage.name == "Stage 1"
+
+    mock_session.request.assert_called_once_with(
+        "GET",
+        "http://localhost:8000/api/v1/stages/stage1",
+        headers={
+            "Authorization": "Bearer some-token",
+        },
+    )
+
+
+def test_get_stage_handles_request_exception(
+    data_client: DataClient, mock_session: Mock
+) -> None:
+    mock_session.request.side_effect = RequestException("Request failed")
+
+    with pytest.raises(DataInternalError):
+        data_client.get_stage(stage_id="stage1")
+
+    mock_session.request.assert_called_once()
+
+def test_upload_file_to_stage(data_client: DataClient, mock_session: Mock) -> None:
+    def return_json_override() -> dict[Any, Any]:
+        return {
+            "fileId": "file1",
+            "stageId": "stage1",
+            "name": "File 1",
+            "mediaType": "text/plain",
+            "size": 100,
+            "createdAt": "2022-01-01T00:00:00Z",
+            "updatedAt": "2022-01-01T00:00:00Z",
+        }
+
+    mock_response = Mock(spec=Response)
+    mock_response.status_code = 201
+    mock_response.json.return_value = return_json_override()
+    mock_session.request.return_value = mock_response
+
+    file = data_client.upload_file_to_stage(
+        stage_id="stage1",
+        file=DataFileCreate(
+            source_data=b"source_data",
+            name="File 1",
+        ),
+    )
+
+    assert isinstance(file, DataFile)
+    assert file.file_id == "file1"
+    assert file.stage_id == "stage1"
+    assert file.name == "File 1"
+    assert file.media_type == "text/plain"
+    assert file.size == 100
+
+    mock_session.request.assert_called_once_with(
+        "POST",
+        "http://localhost:8000/api/v1/stages/stage1/files",
+        headers={
+            "Authorization": "Bearer some-token",
+        },
+        files={
+            "sourceData": b"source_data",
+            "name": "File 1",
+        },
+    )
+
+def test_upload_file_to_stage_handle_request_exception(
+    data_client: DataClient, mock_session: Mock
+) -> None:
+    mock_session.request.side_effect = RequestException("Request failed")
+
+    with pytest.raises(DataInternalError):
+        data_client.upload_file_to_stage(
+            stage_id="stage1",
+            file=DataFileCreate(
+                source_data=b"source_data",
+                name="File 1",
+            ),
+        )
+
+    mock_session.request.assert_called_once()
+
+def test_list_files_in_stage(data_client: DataClient, mock_session: Mock) -> None:
+    def return_json_override() -> dict[Any, Any]:
+        return {
+            "files": [
+                {
+                    "fileId": "file1",
+                    "stageId": "stage1",
+                    "name": "File 1",
+                    "mediaType": "text/plain",
+                    "size": 100,
+                    "createdAt": "2022-01-01T00:00:00Z",
+                    "updatedAt": "2022-01-01T00:00:00Z",
+                },
+                {
+                    "fileId": "file2",
+                    "stageId": "stage1",
+                    "name": "File 2",
+                    "mediaType": "text/plain",
+                    "size": 200,
+                    "createdAt": "2022-01-01T00:00:00Z",
+                    "updatedAt": "2022-01-01T00:00:00Z",
+                },
+            ]
+        }
+
+    mock_response = Mock(spec=Response)
+    mock_response.status_code = 200
+    mock_response.json.return_value = return_json_override()
+    mock_session.request.return_value = mock_response
+
+    files = data_client.list_files_in_stage(stage_id="stage1")
+
+    assert len(files) == 2
+    assert isinstance(files[0], DataFile)
+    assert files[0].file_id == "file1"
+    assert files[0].stage_id == "stage1"
+    assert files[0].name == "File 1"
+    assert files[0].media_type == "text/plain"
+    assert files[0].size == 100
+    assert isinstance(files[1], DataFile)
+    assert files[1].file_id == "file2"
+    assert files[1].stage_id == "stage1"
+    assert files[1].name == "File 2"
+    assert files[1].media_type == "text/plain"
+    assert files[1].size == 200
+
+    mock_session.request.assert_called_once_with(
+        "GET",
+        "http://localhost:8000/api/v1/stages/stage1/files?page=0&size=20",
+        headers={
+            "Authorization": "Bearer some-token",
+        },
+    )
+
+def test_list_files_in_stage_handle_request_exception(
+    data_client: DataClient, mock_session: Mock
+) -> None:
+    mock_session.request.side_effect = RequestException("Request failed")
+
+    with pytest.raises(DataInternalError):
+        data_client.list_files_in_stage(stage_id="stage1")
+
+    mock_session.request.assert_called_once()
+
+def test_get_file_from_stage(data_client: DataClient, mock_session: Mock) -> None:
+    expected_data = b"expected file content"
+
+    def mock_file(*args: Any, **kwargs: Any) -> bytes:
+        return b"expected file content"
+    
+    mock_response = Mock(spec=Response)
+    mock_response.status_code = 200
+    mock_response.content = mock_file()
+    mock_session.request.return_value = mock_response
+
+    file_content = data_client.get_file_from_stage(stage_id="stage1", file_id="file1")
+
+    assert file_content.getvalue() == expected_data
+
+    mock_session.request.assert_called_once_with(
+        "GET",
+        "http://localhost:8000/api/v1/stages/stage1/files/file1",
+        headers={
+            "Authorization": "Bearer some-token",
+        },
+    )
+
+def test_get_file_from_stage_handles_request_exception(
+    data_client: DataClient, mock_session: Mock
+) -> None:
+    mock_session.request.side_effect = RequestException("Request failed")
+
+    with pytest.raises(DataInternalError):
+        data_client.get_file_from_stage(stage_id="stage1", file_id="file1")
 
     mock_session.request.assert_called_once()

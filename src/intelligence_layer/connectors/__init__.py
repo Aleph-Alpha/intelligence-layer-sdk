@@ -35,6 +35,19 @@ from .data.models import (
 from .data.models import (
     DatasetCreate as DatasetCreate,
 )
+from .data.models import (
+    DataStage as DataStage,
+)
+from .data.models import (
+    DataStageCreate as DataStageCreate,
+)
+from .data.models import (
+    DataFile as DataFile,
+)
+from .data.models import (
+    DataFileCreate as DataFileCreate,
+)
+
 from .document_index.document_index import CollectionPath as CollectionPath
 from .document_index.document_index import ConstraintViolation as ConstraintViolation
 from .document_index.document_index import DocumentContents as DocumentContents

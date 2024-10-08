@@ -6,7 +6,18 @@ from .exceptions import (
     DataInvalidInput,
     DataResourceNotFound,
 )
-from .models import DataDataset, DataRepository, DataRepositoryCreate, DatasetCreate
+from .models import (
+    DataDataset,
+    DataFile,
+    DataFileCreate,
+    DataRepository,
+    DataRepositoryCreate,
+    DatasetCreate,
+    DataStage,
+    DataStageCreate,
+    DataFile,
+    DataFileCreate,
+)
 
 __all__ = [
     "DataClient",
@@ -19,4 +30,8 @@ __all__ = [
     "DataRepositoryCreate",
     "DataDataset",
     "DatasetCreate",
+    "DataStage",
+    "DataStageCreate",
+    "DataFile",
+    "DataFileCreate",
 ]
