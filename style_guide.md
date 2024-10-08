@@ -45,9 +45,9 @@ class MyTask:
         End on one newline.
     """
 ```
-The Example documentation is optional but preferred to be included in a how-to guide if it would be helpful in this case. 
+The Example documentation is optional but preferred to be included in a how-to guide if it is helpful in this case. 
 
-Do not document the `run`` function of a class. Avoid documenting any other (private) functions.
+Do not document the `run` function of a class. Avoid documenting any other (private) functions.
 
 ### Input and output documentation
 
@@ -120,7 +120,7 @@ Here's how we differentiate and allocate content between them:
 
 ### How-tos
 
-**Purpose**: How-tos are a short and concise way of understanding a very specific concept. They focus on a single thing which they go through in much detail in a step by step guide. 
+**Purpose**: How-tos are a short and concise way of understanding a very specific concept, which they explain in much detail in a step-by-step guide. 
 
 - **Table of Content**: Which steps are covered in the how-to?
 - **Detailed Walkthrough**: Guide the user step by step. Keep it short and concise.

@@ -219,22 +219,24 @@ For further information check out our different guides and documentations:
 - [CHANGELOG.md](https://github.com/Aleph-Alpha/intelligence-layer-sdk/blob/main/CHANGELOG.md) for the latest changes.
 
 ## How to contribute
-0. Share the details of your problem with us.
-1. Write your code according to our [style guide](https://github.com/Aleph-Alpha/intelligence-layer-sdk/blob/main/style_guide.md).
-2. Add doc strings to your code as described [here](https://github.com/Aleph-Alpha/intelligence-layer-sdk/blob/main/style_guide.md).
-3. Write tests for new features ([Executing Tests](#executing-tests)).
-4. Add an how_to and/or notebook as a documentation (check out [this](https://github.com/Aleph-Alpha/intelligence-layer-sdk/blob/main/style_guide.md) for guidance).
-5. Update the [Changelog](https://github.com/Aleph-Alpha/intelligence-layer-sdk/blob/main/CHANGELOG.md) with your changes.
-6. Request a review for the MR, so that it can be merged.
+:warning: **Warning:** This repository is open-source. Any contributions you make will be publicly accessible.
+
+
+1. Share the details of your problem with us.
+2. Write your code according to our [style guide](https://github.com/Aleph-Alpha/intelligence-layer-sdk/blob/main/style_guide.md).
+3. Add doc strings to your code as described [here](https://github.com/Aleph-Alpha/intelligence-layer-sdk/blob/main/style_guide.md#docstrings).
+4. Write tests for new features ([Executing Tests](#executing-tests)).
+5. Add an how_to and/or notebook as a documentation (check out [this](https://github.com/Aleph-Alpha/intelligence-layer-sdk/blob/main/style_guide.md#documentation) for guidance).
+6. Update the [Changelog](https://github.com/Aleph-Alpha/intelligence-layer-sdk/blob/main/CHANGELOG.md) with your changes.
+7. Request a review for the MR, so that it can be merged.
 
 
 
 ## Executing tests
-If you want to execute all tests you first need to spin up your docker container and execute those commands with your own `GITLAB_TOKEN`.
+If you want to execute all tests, you first need to spin up your docker container and execute the commands with your own `GITLAB_TOKEN`.
 
 ```bash
   export GITLAB_TOKEN=...
-  (optional) export GITLAB_TOKEN=$(op item get YOUR_TOKEN --format json --fields password | jq .value | tr -d '"')
   echo $GITLAB_TOKEN | docker login registry.gitlab.aleph-alpha.de -u your_email@for_gitlab --password-stdin
   docker compose pull to update containers
 ```
@@ -249,7 +251,7 @@ If you want to execute all tests you first need to spin up your docker container
 You can then run the tests from the sidebar.
 
 **In a terminal**
-In order to run a local proxy w.r.t. to the CI pipeline (required to merge) you can run
+In order to run a local proxy of the CI pipeline (required to merge) you can run
 > scripts/all.sh
 
 This will run linters and all tests.
