@@ -15,6 +15,7 @@ from .echo import EchoOutput as EchoOutput
 from .echo import TokenWithLogProb as TokenWithLogProb
 from .instruct import Instruct as Instruct
 from .instruct import InstructInput as InstructInput
+from .model import AlephAlphaChatModel as AlephAlphaChatModel
 from .model import AlephAlphaModel as AlephAlphaModel
 from .model import ChatModel as ChatModel
 from .model import CompleteInput as CompleteInput

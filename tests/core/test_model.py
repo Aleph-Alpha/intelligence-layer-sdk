@@ -109,6 +109,37 @@ def test_llama_3_chat_model_works(no_op_tracer: NoOpTracer) -> None:
     assert "4" in completion
 
 
+def test_chat_model_can_do_completion(no_op_tracer: NoOpTracer) -> None:
+    llama_3_chat_model = Llama3ChatModel()
+
+    prompt = llama_3_chat_model.to_instruct_prompt(
+        "Who likes pizza?",
+        "Marc and Jessica had pizza together. However, Marc hated it. He only agreed to the date because Jessica likes pizza so much.",
+    )
+
+    complete_input = CompleteInput(prompt=prompt)
+    output = llama_3_chat_model.complete(complete_input, no_op_tracer)
+    assert "Jessica" in output.completion
+
+
+def test_chat_model_prompt_equals_instruct_prompt() -> None:
+    llama_3_model = Llama3InstructModel()
+    instruct_prompt = llama_3_model.to_instruct_prompt(
+        "Who likes pizza?",
+        "Marc and Jessica had pizza together. However, Marc hated it. He only agreed to the date because Jessica likes pizza so much.",
+    ).items[0]
+
+    llama_3_chat_model = Llama3ChatModel()
+    chat_prompt = llama_3_chat_model.to_instruct_prompt(
+        "Who likes pizza?",
+        "Marc and Jessica had pizza together. However, Marc hated it. He only agreed to the date because Jessica likes pizza so much.",
+    ).items[0]
+
+    assert isinstance(instruct_prompt, Text)
+    assert isinstance(chat_prompt, Text)
+    assert instruct_prompt == chat_prompt
+
+
 def test_models_know_their_context_size(client: AlephAlphaClientProtocol) -> None:
     assert (
         LuminousControlModel(client=client, name="luminous-base-control").context_size
@@ -129,6 +160,9 @@ def test_models_warn_about_non_recommended_models(
 
     with pytest.warns(UserWarning):
         assert AlephAlphaModel(client=client, name="No model")  # type: ignore
+
+    with pytest.warns(UserWarning):
+        assert Pharia1ChatModel(client=client, name="No model")  # type: ignore
 
 
 class DummyModelClient(AlephAlphaClientProtocol):
