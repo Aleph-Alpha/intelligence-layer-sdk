@@ -53,7 +53,10 @@ class StudioDatasetRepository(DatasetRepository):
             raise NotImplementedError(
                 "Custom dataset IDs are not supported by the StudioDataRepository"
             )
-        source_data_list = [example.model_dump_json() for example in sorted(examples, key=lambda x: x.id)]
+        source_data_list = [
+            example.model_dump_json()
+            for example in sorted(examples, key=lambda x: x.id)
+        ]
         remote_dataset = self.data_client.create_dataset(
             repository_id=self.repository_id,
             dataset=DatasetCreate(
