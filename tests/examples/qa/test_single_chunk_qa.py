@@ -104,7 +104,7 @@ def test_qa_with_logit_bias_for_no_answer(
 
 
 def test_qa_highlights_will_not_become_out_of_bounds(
-    single_chunk_qa: SingleChunkQa,
+    luminous_control_model: LuminousControlModel,
 ) -> None:
     input_text = """Zubereitung
 Ein Hotdog besteht aus einem erwärmten Brühwürstchen in einem länglichen, meist weichen Weizenbrötchen, das üblicherweise getoastet oder gedämpft wird. Das Hotdogbrötchen wird zur Hälfte der Länge nach aufgeschnitten und ggf. erhitzt. Danach legt man das heiße Würstchen hinein und garniert es mit den Saucen (Ketchup, Senf, Mayonnaise usw.). Häufig werden auch noch weitere Zugaben, etwa Röstzwiebeln, Essiggurken, Sauerkraut oder Krautsalat in das Brötchen gegeben.
@@ -116,10 +116,11 @@ In Dänemark und teilweise auch in Schweden wird der Hotdog mit leuchtend rot ei
 Weltweit bekannt sind die Hotdog-Stände der schwedischen Möbelhauskette IKEA, an denen im Möbelhaus hinter den Kassen Hot Dogs der schwedischen Variante zum Selberbelegen mit Röstzwiebeln, Gurken und verschiedenen Soßen verkauft werden. Der Hotdogstand in der Filiale gilt weltweit als eine Art Markenzeichen von IKEA. In Deutschland wird das Gericht meist mit Frankfurter oder Wiener Würstchen zubereitet.
 
 In den USA wird der Hotdog meist auf einem Roller Grill gegart. So bekommt die Wurst einen besonderen Grillgeschmack. Amerikanische Hotdogs werden mit speziellen Pickled Gherkins (Gurkenscheiben) und Relishes (Sweet Relish, Hot Pepper Relish oder Corn Relish), häufig mit mildem Senf (Yellow Mustard, die populärste Hotdog-Zutat) oder mit Ketchup serviert. Auch eine Garnitur aus warmem Sauerkraut ist möglich (Nathan’s Famous in New York)."""
-    model = LuminousControlModel("luminous-supreme-control")
     qa_task = SingleChunkQa(
-        text_highlight=TextHighlight(model=model, granularity=None, clamp=True),
-        model=model,
+        text_highlight=TextHighlight(
+            model=luminous_control_model, granularity=None, clamp=True
+        ),
+        model=luminous_control_model,
     )
     input = SingleChunkQaInput(
         chunk=TextChunk(input_text),
