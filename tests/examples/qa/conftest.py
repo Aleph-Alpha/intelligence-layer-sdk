@@ -13,8 +13,10 @@ def single_chunk_qa(luminous_control_model: LuminousControlModel) -> SingleChunk
 
 
 @fixture
-def multiple_chunk_qa(single_chunk_qa: SingleChunkQa) -> MultipleChunkQa:
-    return MultipleChunkQa(single_chunk_qa)
+def multiple_chunk_qa(
+    single_chunk_qa: SingleChunkQa, luminous_control_model: LuminousControlModel
+) -> MultipleChunkQa:
+    return MultipleChunkQa(single_chunk_qa, merge_answers_model=luminous_control_model)
 
 
 @fixture

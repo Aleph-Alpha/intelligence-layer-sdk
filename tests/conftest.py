@@ -44,7 +44,9 @@ def client(token: str) -> AlephAlphaClientProtocol:
     Args:
         token: AA Token
     """
-    return LimitedConcurrencyClient(Client(token), max_concurrency=10)
+    return LimitedConcurrencyClient(
+        Client(token), max_concurrency=10, max_retry_time=2 * 60
+    )
 
 
 @fixture(scope="session")
