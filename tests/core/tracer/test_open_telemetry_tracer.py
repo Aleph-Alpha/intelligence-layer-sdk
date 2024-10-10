@@ -168,7 +168,7 @@ def test_open_telemetry_tracer_works_with_jaeger(
     input_value = str(uuid4())
     tracer_test_task.run(input_value, jaeger_compatible_tracer)
     # the processor needs time to submit the trace to jaeger
-    time.sleep(1)
+    time.sleep(3)
 
     res = get_current_traces(url)
 
