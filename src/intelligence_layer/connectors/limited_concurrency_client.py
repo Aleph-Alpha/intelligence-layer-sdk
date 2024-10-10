@@ -151,8 +151,9 @@ class LimitedConcurrencyClient:
         retries = 0
         start_time = time.time()
         latest_exception = None
+        current_time = start_time
         while (
-            time.time() - start_time < self._max_retry_time or self._max_retry_time < 0
+            current_time - start_time < self._max_retry_time or self._max_retry_time < 0
         ):
             try:
                 return func()
@@ -161,10 +162,11 @@ class LimitedConcurrencyClient:
                 time.sleep(
                     min(
                         2**retries,
-                        self._max_retry_time - (time.time() - start_time),
+                        self._max_retry_time - (current_time - start_time),
                     )
                 )
                 retries += 1
+                current_time = time.time()
                 continue
         assert latest_exception is not None
         raise latest_exception
