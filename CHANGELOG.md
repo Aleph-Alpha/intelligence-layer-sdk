@@ -1,12 +1,25 @@
 # Changelog
 ## Unreleased
+
+### Features
+...
+### Fixes
+...
+### Deprecations 
+...
+### Breaking Changes
+...
+
+
+## 7.0.0
+
 ### Features
 - You can now specify a `hybrid_index` when creating an index for the document index to use hybrid (semantic and keyword) search.
 - `min_score` and `max_results` are now optional parameters in `DocumentIndexClient.SearchQuery`.
 - `k` is now an optional parameter in `DocumentIndexRetriever`.
 - List all indexes of a namespace with `DocumentIndexClient.list_indexes`.
 - Remove an index from a namespace with `DocumentIndexClient.delete_index`.
-- `ChatModel` now inherits from `ControlModel`.
+- `ChatModel` now inherits from `ControlModel`. Although we recommend to use the new chat interface, you can use the `Pharia1ChatModel` with tasks that rely on `ControlModel` now.
 
 ### Fixes
 - `DocumentIndexClient` now properly sets `chunk_overlap` when creating an index configuration.

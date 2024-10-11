@@ -1475,13 +1475,13 @@ zstd = ["zstandard (>=0.18.0)"]
 
 [[package]]
 name = "huggingface-hub"
-version = "0.25.1"
+version = "0.25.2"
 description = "Client library to download and publish models, datasets and other repos on the huggingface.co hub"
 optional = false
 python-versions = ">=3.8.0"
 files = [
-    {file = "huggingface_hub-0.25.1-py3-none-any.whl", hash = "sha256:a5158ded931b3188f54ea9028097312cb0acd50bffaaa2612014c3c526b44972"},
-    {file = "huggingface_hub-0.25.1.tar.gz", hash = "sha256:9ff7cb327343211fbd06e2b149b8f362fd1e389454f3f14c6db75a4999ee20ff"},
+    {file = "huggingface_hub-0.25.2-py3-none-any.whl", hash = "sha256:1897caf88ce7f97fe0110603d8f66ac264e3ba6accdf30cd66cc0fed5282ad25"},
+    {file = "huggingface_hub-0.25.2.tar.gz", hash = "sha256:a1014ea111a5f40ccd23f7f7ba8ac46e20fa3b658ced1f86a00c75c06ec6423c"},
 ]
 
 [package.dependencies]
@@ -4610,22 +4610,22 @@ ko = ["mecab-ko (>=1.0.0,<=1.0.1)", "mecab-ko-dic (>=1.0,<2.0)"]
 
 [[package]]
 name = "semantic-text-splitter"
-version = "0.16.1"
+version = "0.17.0"
 description = "Split text into semantic chunks, up to a desired chunk size. Supports calculating length by characters and tokens, and is callable from Rust and Python."
 optional = false
 python-versions = ">=3.9"
 files = [
-    {file = "semantic_text_splitter-0.16.1-cp39-abi3-macosx_10_12_x86_64.whl", hash = "sha256:2c1633d028629a6145da5529f354753904bc766a881e840fa1c897670beac953"},
-    {file = "semantic_text_splitter-0.16.1-cp39-abi3-macosx_11_0_arm64.whl", hash = "sha256:d875440f44b44d71981a65c99ba6830cec7784a66b7d88c4ca29c2b275507339"},
-    {file = "semantic_text_splitter-0.16.1-cp39-abi3-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:a1e7ace48bfc744546e67bcf08584e4b53e8c289c9a30dc5e61f40b47806a075"},
-    {file = "semantic_text_splitter-0.16.1-cp39-abi3-manylinux_2_17_armv7l.manylinux2014_armv7l.whl", hash = "sha256:82bcf0c72e7a63c86a4bb79139f3cc9818af3d2f66cd4122cc31558d749dd45f"},
-    {file = "semantic_text_splitter-0.16.1-cp39-abi3-manylinux_2_17_i686.manylinux2014_i686.whl", hash = "sha256:b1225f97636e2e943e5c2250645068b0456ae7fefaf3c5e39fab0108f3f7f5e9"},
-    {file = "semantic_text_splitter-0.16.1-cp39-abi3-manylinux_2_17_ppc64le.manylinux2014_ppc64le.whl", hash = "sha256:6df2c89612f796d2fa08ba9c0d6d2eaa2ee41351f027b0bb44afbd6529a31e84"},
-    {file = "semantic_text_splitter-0.16.1-cp39-abi3-manylinux_2_17_s390x.manylinux2014_s390x.whl", hash = "sha256:64dec8681bbdd8553530de2719b83f7e5030457faa4a97906d7fedd6b69ae426"},
-    {file = "semantic_text_splitter-0.16.1-cp39-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:a0e6bbed980d08e609b78b567f272a39be799ab85f1d370a4761905acb208e26"},
-    {file = "semantic_text_splitter-0.16.1-cp39-abi3-win32.whl", hash = "sha256:6e5b677af18e3a147c0610546588eb401bf265f4d5690101129eb1f5d40076dd"},
-    {file = "semantic_text_splitter-0.16.1-cp39-abi3-win_amd64.whl", hash = "sha256:81237fcaa4ba674e764a9eb4fc70cfd4802588705cf9dc7584d0f3ac32cf2af1"},
-    {file = "semantic_text_splitter-0.16.1.tar.gz", hash = "sha256:173afa22f128f3c50887ce5fc7bcb7d97c101a610b8278ef80c19de226a227f5"},
+    {file = "semantic_text_splitter-0.17.0-cp39-abi3-macosx_10_12_x86_64.whl", hash = "sha256:c18aac8e1ddbf1598e6a716243e3f4de49128dc51cf0a9a30f60d92d17051756"},
+    {file = "semantic_text_splitter-0.17.0-cp39-abi3-macosx_11_0_arm64.whl", hash = "sha256:e9d9178a8798202ed69ef64c91cbacf1aa36f2796cd4a3abf7eff256d4952946"},
+    {file = "semantic_text_splitter-0.17.0-cp39-abi3-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:3d3c6c33dfdee1ff52e981293eb7116aeb4162516f7b668d31881fef4f5ea427"},
+    {file = "semantic_text_splitter-0.17.0-cp39-abi3-manylinux_2_17_armv7l.manylinux2014_armv7l.whl", hash = "sha256:1fa15884d52b9a8530ba6061ab7dc2ff566e1b09961fc6301ae712d333b86f8c"},
+    {file = "semantic_text_splitter-0.17.0-cp39-abi3-manylinux_2_17_i686.manylinux2014_i686.whl", hash = "sha256:4bc30170ac5d4351cfe3b2710b608f83a23fe5565a201ebcbbfcfec257eaad12"},
+    {file = "semantic_text_splitter-0.17.0-cp39-abi3-manylinux_2_17_ppc64le.manylinux2014_ppc64le.whl", hash = "sha256:58f7d0d91f78ddb782259792bd47958a149af92a9a3a955fade6f37fa083c341"},
+    {file = "semantic_text_splitter-0.17.0-cp39-abi3-manylinux_2_17_s390x.manylinux2014_s390x.whl", hash = "sha256:70e8da36845b27a3c06ee3840e2998ce671807dd7f2255afecead4fb6de795fa"},
+    {file = "semantic_text_splitter-0.17.0-cp39-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:970d0cb0eaacbfc0d86b812eb82f45bf308aba221980f857092bbcb0b188fe93"},
+    {file = "semantic_text_splitter-0.17.0-cp39-abi3-win32.whl", hash = "sha256:33b8e37454121c278edb0e378d3bb361527f9953d965927b80e170bf93ce8b37"},
+    {file = "semantic_text_splitter-0.17.0-cp39-abi3-win_amd64.whl", hash = "sha256:12bbf3f69467780fb6b6cc33e0a0311004cc6bab968bbbd1b6292d28750c2a20"},
+    {file = "semantic_text_splitter-0.17.0.tar.gz", hash = "sha256:6ce04311c2f2799ea81c1cc4c0143310767a5a7152c52ecfe12ddf3edc0a06a1"},
 ]
 
 [package.extras]
@@ -5191,13 +5191,13 @@ files = [
 
 [[package]]
 name = "types-docutils"
-version = "0.21.0.20240907"
+version = "0.21.0.20241005"
 description = "Typing stubs for docutils"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "types-docutils-0.21.0.20240907.tar.gz", hash = "sha256:5dd2aa5e2e06fcfa090020bc4115479b4dd28da3329ab708563ee29894bd3c0d"},
-    {file = "types_docutils-0.21.0.20240907-py3-none-any.whl", hash = "sha256:9c8ed6d90583944af00f6b5fa3aecc2101e20672f6b1a4a299c6bf7d1e47084d"},
+    {file = "types-docutils-0.21.0.20241005.tar.gz", hash = "sha256:48f804a2b50da3a1b1681c4ca1b6184416a6e4129e302d15c44e9d97c59b3365"},
+    {file = "types_docutils-0.21.0.20241005-py3-none-any.whl", hash = "sha256:4d9021422f2f3fca8b0726fb8949395f66a06c0d951479eb3b1387d75b134430"},
 ]
 
 [[package]]
@@ -5775,4 +5775,4 @@ test = ["big-O", "importlib-resources", "jaraco.functools", "jaraco.itertools", 
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.10,<3.13"
-content-hash = "932b897a5237a4fa7cd542d57c49c067fd59a9f07e76ee52fc3517dd6e66d2a8"
+content-hash = "cfb3f47ec18d379de0811fc38f0c51e7176af45507b8d5a44294a092cdb9a382"
