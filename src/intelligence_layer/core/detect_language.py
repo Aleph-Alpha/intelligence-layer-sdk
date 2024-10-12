@@ -103,6 +103,8 @@ class DetectLanguage(Task[DetectLanguageInput, DetectLanguageOutput]):
         LinguaLanguage.ITALIAN,
         LinguaLanguage.FRENCH,
         LinguaLanguage.SPANISH,
+        LinguaLanguage.POLISH,
+        LinguaLanguage.CATALAN,
     ]
 
     def __init__(self, threshold: float = 0.5):
