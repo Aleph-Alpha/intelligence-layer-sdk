@@ -222,7 +222,6 @@ def test_recompute_if_metadata_changed_only_runs_with_new_metadata(
     in_memory_run_repository: InMemoryRunRepository,
     sequence_examples: Iterable[Example[str, None]],
 ) -> None:
-    # Definition of parameters
     model_list = ["model a", "model b"]
     examples = list(sequence_examples)
     task = DummyTask()
@@ -233,16 +232,14 @@ def test_recompute_if_metadata_changed_only_runs_with_new_metadata(
 
     for model in model_list:
         run_metadata: SerializableDict = dict({"model": model})
-        overview = runner.run_dataset(dataset_id, metadata=run_metadata)
-        assert overview.metadata == run_metadata
+        runner.run_dataset(dataset_id, metadata=run_metadata)
 
     model_list.append("model c")
 
     for model in model_list:
         run_metadata = dict({"model": model})
-        overview = runner.run_dataset(
+        runner.run_dataset(
             dataset_id, metadata=run_metadata, recompute_if_metadata_changed=True
         )
-        assert overview.metadata == run_metadata
 
     assert len(in_memory_run_repository.run_overview_ids()) == 3

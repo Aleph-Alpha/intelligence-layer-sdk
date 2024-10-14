@@ -110,7 +110,7 @@ class Runner(Generic[Input, Output]):
             trace_examples_individually: Flag to create individual tracers for each example. Defaults to True.
             labels: A list of labels for filtering. Defaults to an empty list.
             metadata: A dict for additional information about the run overview. Defaults to an empty dict.
-            recompute_if_metadata_changed: Flag for only computing runs with new metadata.
+            recompute_if_metadata_changed: Flag for only computing runs with new or changed metadata.
             Previously computed runs will simply have their old results returned. Defaults to False.
             resume_from_recovery_data: Flag to resume if execution failed previously.
 
