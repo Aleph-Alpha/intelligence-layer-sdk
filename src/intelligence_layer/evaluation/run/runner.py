@@ -91,7 +91,6 @@ class Runner(Generic[Input, Output]):
         labels: Optional[set[str]] = None,
         metadata: Optional[SerializableDict] = None,
         resume_from_recovery_data: bool = False,
-        recompute_if_metadata_changed: bool = False,
     ) -> RunOverview:
         """Generates all outputs for the provided dataset.
 
@@ -110,8 +109,6 @@ class Runner(Generic[Input, Output]):
             trace_examples_individually: Flag to create individual tracers for each example. Defaults to True.
             labels: A list of labels for filtering. Defaults to an empty list.
             metadata: A dict for additional information about the run overview. Defaults to an empty dict.
-            recompute_if_metadata_changed: Flag for only computing runs with new or changed metadata.
-            Previously computed runs will simply have their old results returned. Defaults to False.
             resume_from_recovery_data: Flag to resume if execution failed previously.
 
         Returns:
@@ -122,11 +119,6 @@ class Runner(Generic[Input, Output]):
             labels = set()
         if metadata is None:
             metadata = dict()
-
-        if recompute_if_metadata_changed:
-            run_overview = self.retrieve_previous_run_overview(metadata)
-            if run_overview:
-                return run_overview
 
         run_id = str(uuid4())
         tmp_hash = self._run_hash(dataset_id, description or "")
@@ -298,3 +290,21 @@ class Runner(Generic[Input, Output]):
             expected_output_type=expected_output_type,
             output_type=self.output_type(),
         )
+
+    def run_is_already_computed(
+        self,
+        metadata: SerializableDict,
+    ) -> bool:
+        """Checks if a run with the given metadata has already been computed.
+
+        Args:
+            metadata: The metadata dictionary to check.
+
+        Returns:
+            True if a run with the same metadata has already been computed. False otherwise.
+        """
+        previous_runs = {
+            dict_hash(run_overview.metadata)
+            for run_overview in self._run_repository.run_overviews()
+        }
+        return dict_hash(metadata) in previous_runs

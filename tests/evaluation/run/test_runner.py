@@ -217,12 +217,12 @@ def test_runner_run_overview_has_specified_metadata_and_labels(
     assert overview.labels == run_labels
 
 
-def test_recompute_if_metadata_changed_only_runs_with_new_metadata(
+def test_run_is_already_computed_works(
     in_memory_dataset_repository: InMemoryDatasetRepository,
     in_memory_run_repository: InMemoryRunRepository,
     sequence_examples: Iterable[Example[str, None]],
 ) -> None:
-    model_list = ["model a", "model b"]
+    old_model = "old_model"
     examples = list(sequence_examples)
     task = DummyTask()
     runner = Runner(task, in_memory_dataset_repository, in_memory_run_repository, "foo")
@@ -230,16 +230,8 @@ def test_recompute_if_metadata_changed_only_runs_with_new_metadata(
         examples=examples, dataset_name=""
     ).id
 
-    for model in model_list:
-        run_metadata: SerializableDict = dict({"model": model})
-        runner.run_dataset(dataset_id, metadata=run_metadata)
+    run_metadata: SerializableDict = dict({"model": old_model})
+    runner.run_dataset(dataset_id, metadata=run_metadata)
 
-    model_list.append("model c")
-
-    for model in model_list:
-        run_metadata = dict({"model": model})
-        runner.run_dataset(
-            dataset_id, metadata=run_metadata, recompute_if_metadata_changed=True
-        )
-
-    assert len(in_memory_run_repository.run_overview_ids()) == 3
+    assert runner.run_is_already_computed(dict({"model": old_model}))
+    assert not runner.run_is_already_computed(dict({"model": "new_model"}))
