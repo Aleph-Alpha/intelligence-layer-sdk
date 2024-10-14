@@ -113,7 +113,7 @@ class LimitedConcurrencyClient:
         self,
         client: AlephAlphaClientProtocol,
         max_concurrency: int = 10,
-        max_retry_time: int = 3 * 60,  # one day in seconds
+        max_retry_time: int = 3 * 60,  # three minutes in seconds
     ) -> None:
         self._client = client
         self._concurrency_limit_semaphore = Semaphore(max_concurrency)
