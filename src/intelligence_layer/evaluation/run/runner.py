@@ -91,6 +91,7 @@ class Runner(Generic[Input, Output]):
         labels: Optional[set[str]] = None,
         metadata: Optional[SerializableDict] = None,
         resume_from_recovery_data: bool = False,
+        recompute_if_metadata_changed: bool = False,
     ) -> RunOverview:
         """Generates all outputs for the provided dataset.
 
@@ -109,6 +110,8 @@ class Runner(Generic[Input, Output]):
             trace_examples_individually: Flag to create individual tracers for each example. Defaults to True.
             labels: A list of labels for filtering. Defaults to an empty list.
             metadata: A dict for additional information about the run overview. Defaults to an empty dict.
+            recompute_if_metadata_changed: Flag for only computing runs with new metadata.
+            Previously computed runs will simply have their old results returned. Defaults to False.
             resume_from_recovery_data: Flag to resume if execution failed previously.
 
         Returns:
@@ -119,6 +122,11 @@ class Runner(Generic[Input, Output]):
             labels = set()
         if metadata is None:
             metadata = dict()
+
+        if recompute_if_metadata_changed:
+            run_overview = self.retrieve_previous_run_overview(metadata)
+            if run_overview:
+                return run_overview
 
         run_id = str(uuid4())
         tmp_hash = self._run_hash(dataset_id, description or "")
@@ -234,43 +242,15 @@ class Runner(Generic[Input, Output]):
         )
         return (lineage for lineage in lineages if lineage is not None)
 
-    def run_dataset_non_redundant(
+    def retrieve_previous_run_overview(
         self,
-        dataset_id: str,
-        tracer: Optional[Tracer] = None,
-        num_examples: Optional[int] = None,
-        abort_on_error: bool = False,
-        max_workers: int = 10,
-        description: Optional[str] = None,
-        trace_examples_individually: bool = True,
-        labels: Optional[set[str]] = None,
-        metadata: Optional[SerializableDict] = None,
-        resume_from_recovery_data: bool = False,
-    ) -> RunOverview:
-        if metadata:
-            metadata_hash = dict_hash(metadata)
-            existing_run_overviews = self._run_repository.run_overviews()
-            hashed_run_overviews = [
-                dict_hash(run_overview.metadata)
-                for run_overview in existing_run_overviews
-            ]
-
-        for i, hash in enumerate(hashed_run_overviews):
-            if metadata_hash == hash:
-                return list(existing_run_overviews)[i]
-
-        return self.run_dataset(
-            dataset_id=dataset_id,
-            tracer=tracer,
-            num_examples=num_examples,
-            abort_on_error=abort_on_error,
-            max_workers=max_workers,
-            description=description,
-            trace_examples_individually=trace_examples_individually,
-            labels=labels,
-            metadata=metadata,
-            resume_from_recovery_data=resume_from_recovery_data,
-        )
+        metadata: SerializableDict,
+    ) -> RunOverview | None:
+        previous_run_overviews = {
+            dict_hash(run_overview.metadata): run_overview
+            for run_overview in self._run_repository.run_overviews()
+        }
+        return previous_run_overviews.get(dict_hash(metadata))
 
     def run_lineages(
         self,
