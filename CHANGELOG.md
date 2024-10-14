@@ -15,7 +15,7 @@
 
 ### Features
 - Add Catalan and Polish support to `detectLanguage`.
-- Add parameter `recompute_if_metadata_changed` to `run_dataset` for only computing runs with new or changed metadata.
+- Add utility function `run_is_already_computed` to `Runner` to check if a run with the given metadata has already been computed.
 - You can now specify a `hybrid_index` when creating an index for the document index to use hybrid (semantic and keyword) search.
 - `min_score` and `max_results` are now optional parameters in `DocumentIndexClient.SearchQuery`.
 - `k` is now an optional parameter in `DocumentIndexRetriever`.
