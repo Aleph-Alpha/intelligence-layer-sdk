@@ -6,6 +6,7 @@ from itertools import islice
 from typing import Generic, Optional, cast
 from uuid import uuid4
 
+from dict_hash import dict_hash  # type: ignore
 from pydantic import JsonValue
 
 from intelligence_layer.connectors.base.json_serializable import (
@@ -232,6 +233,44 @@ class Runner(Generic[Input, Output]):
             for output in failed_example_outputs
         )
         return (lineage for lineage in lineages if lineage is not None)
+
+    def run_dataset_non_redundant(
+        self,
+        dataset_id: str,
+        tracer: Optional[Tracer] = None,
+        num_examples: Optional[int] = None,
+        abort_on_error: bool = False,
+        max_workers: int = 10,
+        description: Optional[str] = None,
+        trace_examples_individually: bool = True,
+        labels: Optional[set[str]] = None,
+        metadata: Optional[SerializableDict] = None,
+        resume_from_recovery_data: bool = False,
+    ) -> RunOverview:
+        if metadata:
+            metadata_hash = dict_hash(metadata)
+            existing_run_overviews = self._run_repository.run_overviews()
+            hashed_run_overviews = [
+                dict_hash(run_overview.metadata)
+                for run_overview in existing_run_overviews
+            ]
+
+        for i, hash in enumerate(hashed_run_overviews):
+            if metadata_hash == hash:
+                return list(existing_run_overviews)[i]
+
+        return self.run_dataset(
+            dataset_id=dataset_id,
+            tracer=tracer,
+            num_examples=num_examples,
+            abort_on_error=abort_on_error,
+            max_workers=max_workers,
+            description=description,
+            trace_examples_individually=trace_examples_individually,
+            labels=labels,
+            metadata=metadata,
+            resume_from_recovery_data=resume_from_recovery_data,
+        )
 
     def run_lineages(
         self,

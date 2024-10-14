@@ -215,3 +215,46 @@ def test_runner_run_overview_has_specified_metadata_and_labels(
 
     assert overview.metadata == run_metadata
     assert overview.labels == run_labels
+
+
+def test_runner_runs_only_new_metdata_configuration(
+    in_memory_dataset_repository: InMemoryDatasetRepository,
+    in_memory_run_repository: InMemoryRunRepository,
+    sequence_examples: Iterable[Example[str, None]],
+) -> None:
+    # Definition of parameters
+    model_list = ["model a", "model b"]
+
+    for model in model_list:
+        run_metadata: SerializableDict = dict({"model": model})
+
+        examples = list(sequence_examples)
+        task = DummyTask()
+        runner = Runner(
+            task, in_memory_dataset_repository, in_memory_run_repository, "foo"
+        )
+
+        dataset_id = in_memory_dataset_repository.create_dataset(
+            examples=examples, dataset_name=""
+        ).id
+        overview = runner.run_dataset(dataset_id, metadata=run_metadata)
+        assert overview.metadata == run_metadata
+
+    model_list.append("model c")
+
+    for model in model_list:
+        run_metadata = dict({"model": model})
+
+        examples = list(sequence_examples)
+        task = DummyTask()
+        runner = Runner(
+            task, in_memory_dataset_repository, in_memory_run_repository, "foo"
+        )
+
+        dataset_id = in_memory_dataset_repository.create_dataset(
+            examples=examples, dataset_name=""
+        ).id
+        overview = runner.run_dataset_non_redundant(dataset_id, metadata=run_metadata)
+        assert overview.metadata == run_metadata
+
+    assert len(in_memory_run_repository.run_overview_ids()) == 3
