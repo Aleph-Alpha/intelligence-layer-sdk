@@ -32,6 +32,14 @@ from intelligence_layer.core import (
             "Bonjour, je m'appelle Niklas. Je travaille avec Pit sur cette pièce de détection de langue.",
             Language("fr"),
         ),
+        (
+            "Hola, em dic Niklas. Estic treballant amb Pit en aquesta peça de detecció d'idiomes.",
+            Language("ca"),
+        ),
+        (
+            "Cześć, nazywam się Niklas. Pracuję z Pitem nad tym kawałkiem wykrywania języka.",
+            Language("pl"),
+        ),
     ],
 )
 def test_detect_language_returns_correct_language(
@@ -40,7 +48,9 @@ def test_detect_language_returns_correct_language(
     task = DetectLanguage()
     input = DetectLanguageInput(
         text=text_input,
-        possible_languages=[Language(lang) for lang in ["en", "de", "fr", "it", "es"]],
+        possible_languages=[
+            Language(lang) for lang in ["en", "de", "fr", "it", "es", "pl", "ca"]
+        ],
     )
     tracer = NoOpTracer()
     output = task.run(input, tracer)
