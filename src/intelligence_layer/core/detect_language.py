@@ -98,13 +98,13 @@ class DetectLanguage(Task[DetectLanguageInput, DetectLanguageOutput]):
     """
 
     AVAILABLE_LANGUAGES: ClassVar[list[LinguaLanguage]] = [
-        LinguaLanguage.GERMAN,
-        LinguaLanguage.ENGLISH,
-        LinguaLanguage.ITALIAN,
-        LinguaLanguage.FRENCH,
-        LinguaLanguage.SPANISH,
-        LinguaLanguage.POLISH,
         LinguaLanguage.CATALAN,
+        LinguaLanguage.ENGLISH,
+        LinguaLanguage.FRENCH,
+        LinguaLanguage.GERMAN,
+        LinguaLanguage.ITALIAN,
+        LinguaLanguage.POLISH,
+        LinguaLanguage.SPANISH,
     ]
 
     def __init__(self, threshold: float = 0.5):
