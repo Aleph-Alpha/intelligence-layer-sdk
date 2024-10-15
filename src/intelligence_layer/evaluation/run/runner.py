@@ -234,16 +234,6 @@ class Runner(Generic[Input, Output]):
         )
         return (lineage for lineage in lineages if lineage is not None)
 
-    def retrieve_previous_run_overview(
-        self,
-        metadata: SerializableDict,
-    ) -> RunOverview | None:
-        previous_run_overviews = {
-            dict_hash(run_overview.metadata): run_overview
-            for run_overview in self._run_repository.run_overviews()
-        }
-        return previous_run_overviews.get(dict_hash(metadata))
-
     def run_lineages(
         self,
         run_id: str,

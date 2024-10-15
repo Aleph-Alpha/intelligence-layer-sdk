@@ -2,7 +2,7 @@
 ## Unreleased
 
 ### Features
-- Add Catalan and Polish support to `detectLanguage`.
+- Add Catalan and Polish support to `DetectLanguage`.
 - Add utility function `run_is_already_computed` to `Runner` to check if a run with the given metadata has already been computed.
 ### Fixes
 ...
