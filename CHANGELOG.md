@@ -6,7 +6,9 @@
 - Add utility function `run_is_already_computed` to `Runner` to check if a run with the given metadata has already been computed.
   - The `parameter_optimization` notebook describes how to use the `run_is_already_computed` function.
 ### Fixes
-...
+- The default `max_retry_time` for the `LimitedConcurrencyClient` is now set to 3 minutes from a day. If you have long-running evaluations that need this, you can re-set a long retry time in the constructor.
+
+
 ### Deprecations 
 ...
 ### Breaking Changes

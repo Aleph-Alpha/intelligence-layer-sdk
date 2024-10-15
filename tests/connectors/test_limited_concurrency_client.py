@@ -1,3 +1,4 @@
+import time
 from concurrent.futures import ThreadPoolExecutor
 from threading import Lock
 from time import sleep
@@ -40,14 +41,16 @@ class ConcurrencyCountingClient:
 
 class BusyClient:
     def __init__(
-        self,
-        return_value: CompletionResponse | Exception,
+        self, return_value: CompletionResponse | Exception, wait_time: int | None = None
     ) -> None:
         self.number_of_retries: int = 0
         self.return_value = return_value
+        self.wait_time = wait_time
 
     def complete(self, request: CompletionRequest, model: str) -> CompletionResponse:
         self.number_of_retries += 1
+        if self.wait_time:
+            time.sleep(self.wait_time)
         if self.number_of_retries < 2:
             raise BusyError(503)  # type: ignore
         else:
@@ -104,6 +107,42 @@ def test_limited_concurrency_client_retries() -> None:
         CompletionRequest(prompt=Prompt("")), "model"
     )
     assert completion == expected_completion
+
+
+def test_limited_concurrency_client_stops_retrying_after_max_retry() -> None:
+    expected_completion = CompletionResponse(
+        model_version="model-version",
+        completions=[],
+        optimized_prompt=None,
+        num_tokens_generated=0,
+        num_tokens_prompt_total=0,
+    )
+    busy_client = BusyClient(return_value=expected_completion)
+    limited_concurrency_client = LimitedConcurrencyClient(
+        cast(AlephAlphaClientProtocol, busy_client), max_retry_time=1
+    )
+    with pytest.raises(BusyError):
+        limited_concurrency_client.complete(
+            CompletionRequest(prompt=Prompt("")), "model"
+        )
+
+
+def test_limited_concurrency_client_handles_long_running_functions_properly() -> None:
+    expected_completion = CompletionResponse(
+        model_version="model-version",
+        completions=[],
+        optimized_prompt=None,
+        num_tokens_generated=0,
+        num_tokens_prompt_total=0,
+    )
+    busy_client = BusyClient(return_value=expected_completion, wait_time=1)
+    limited_concurrency_client = LimitedConcurrencyClient(
+        cast(AlephAlphaClientProtocol, busy_client), max_retry_time=1
+    )
+    with pytest.raises(BusyError):
+        limited_concurrency_client.complete(
+            CompletionRequest(prompt=Prompt("")), "model"
+        )
 
 
 def test_limited_concurrency_client_throws_exception() -> None:
