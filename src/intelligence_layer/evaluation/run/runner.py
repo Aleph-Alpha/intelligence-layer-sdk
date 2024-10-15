@@ -6,6 +6,7 @@ from itertools import islice
 from typing import Generic, Optional, cast
 from uuid import uuid4
 
+from dict_hash import dict_hash  # type: ignore
 from pydantic import JsonValue
 
 from intelligence_layer.connectors.base.json_serializable import (
@@ -279,3 +280,21 @@ class Runner(Generic[Input, Output]):
             expected_output_type=expected_output_type,
             output_type=self.output_type(),
         )
+
+    def run_is_already_computed(
+        self,
+        metadata: SerializableDict,
+    ) -> bool:
+        """Checks if a run with the given metadata has already been computed.
+
+        Args:
+            metadata: The metadata dictionary to check.
+
+        Returns:
+            True if a run with the same metadata has already been computed. False otherwise.
+        """
+        previous_runs = {
+            dict_hash(run_overview.metadata)
+            for run_overview in self._run_repository.run_overviews()
+        }
+        return dict_hash(metadata) in previous_runs

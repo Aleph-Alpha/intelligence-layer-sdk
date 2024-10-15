@@ -4,7 +4,7 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.poetry]
 name = "intelligence-layer"
-version = "7.0.0"
+version = "7.1.0"
 description = ""
 authors = ["Aleph Alpha Engineering <engineering@aleph-alpha.com>"]
 readme = "README.md"
@@ -16,8 +16,8 @@ python = ">=3.10,<3.13"
 pydantic = "2.9.*"
 aleph-alpha-client = ">=7.1.0"
 python-dotenv = "*"
-semantic-text-splitter = "^0.17.0"
-qdrant-client = "^1.11.3"
+semantic-text-splitter = "^0.18.0"
+qdrant-client = "^1.12.0"
 rich = "^13.9.2"
 datasets = "^3.0.1"
 requests = "^2.32.3"
@@ -30,13 +30,14 @@ opentelemetry-exporter-otlp-proto-http = "1.23.0"
 rouge-score = "^0.1.2"
 sacrebleu = "^2.4.3"
 lingua-language-detector = "^2.0.2"
-argilla = "^2.1.0"
+argilla = "^2.3.0"
+dict-hash = "^1.3.4"
 
 [tool.poetry.group.dev.dependencies]
 # lint & format
 mypy = "^1.11.1"
 nbqa = "^1.9.0"
-ruff = "^0.6.8"
+ruff = "^0.6.9"
 pre-commit = "^4.0.1"
 
 # tests
@@ -53,16 +54,16 @@ types-setuptools = "*"
 types-decorator = "*"
 types-requests = "*"
 types-tqdm = "*"
-pandas-stubs = "^2.2.2.240909"
+pandas-stubs = "^2.2.3.241009"
 
 # docs
-sphinx-rtd-theme = "^2.0.0"
+sphinx-rtd-theme = "^3.0.1"
 sphinx = "^7.4.7"
 matplotlib = "^3.9.2"
 
 [tool.poetry.group.docs.dependencies]
-fastapi = "^0.115.0"
-uvicorn = "^0.30.6"
+fastapi = "^0.115.2"
+uvicorn = "^0.31.1"
 hypercorn = "^0.17.3"
 jupyter = "^1.1.1"
 

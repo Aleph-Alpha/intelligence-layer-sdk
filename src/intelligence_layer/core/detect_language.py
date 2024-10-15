@@ -98,10 +98,12 @@ class DetectLanguage(Task[DetectLanguageInput, DetectLanguageOutput]):
     """
 
     AVAILABLE_LANGUAGES: ClassVar[list[LinguaLanguage]] = [
-        LinguaLanguage.GERMAN,
+        LinguaLanguage.CATALAN,
         LinguaLanguage.ENGLISH,
-        LinguaLanguage.ITALIAN,
         LinguaLanguage.FRENCH,
+        LinguaLanguage.GERMAN,
+        LinguaLanguage.ITALIAN,
+        LinguaLanguage.POLISH,
         LinguaLanguage.SPANISH,
     ]
 
