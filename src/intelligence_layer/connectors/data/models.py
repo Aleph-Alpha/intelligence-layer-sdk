@@ -18,7 +18,7 @@ class BaseDataModel(BaseModel):
 allowed_media_types = ["application/x-ndjson", "application/jsonlines", "jsonlines"]
 
 
-def media_type_validator(v):
+def media_type_validator(v: str) -> str:
     assert v in allowed_media_types
     return v
 
