@@ -2,10 +2,10 @@
 ## Unreleased
 
 ### Features
-...
+- Add support for stages and files in Data client.
 
 ### Fixes
-...
+- Data repository media types now validated with a function instead of an Enum.
 
 ### Deprecations 
 ...
