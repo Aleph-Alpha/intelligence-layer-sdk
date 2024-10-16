@@ -20,7 +20,7 @@ class PostgresInstructionFinetuningDataRepository(InstructionFinetuningDataRepos
         self,
         database_url: str,
     ) -> None:
-        self.engine = create_engine(database_url)
+        self.engine = create_engine(database_url, pool_size=20, max_overflow=0)
         self.Session = sessionmaker(bind=self.engine)
 
         Base.metadata.create_all(self.engine)
@@ -62,10 +62,14 @@ class PostgresInstructionFinetuningDataRepository(InstructionFinetuningDataRepos
             return db_sample.to_pydantic() if db_sample else None
 
     def samples(self, ids: Iterable[str]) -> Iterable[InstructionFinetuningSample]:
+        page, page_size = 1, 100
+        offset = (page - 1) * page_size
         with self.Session.begin() as session:
             db_samples = (
                 session.query(InstructionFinetuningSample_)
                 .filter(InstructionFinetuningSample_.id.in_(ids))
+                .offset(offset)
+                .limit(page_size)
                 .all()
             )
             for db_sample in db_samples:
