@@ -1,9 +1,9 @@
 import io
 from datetime import datetime
 from enum import Enum
-from typing import Any, Optional
+from typing import Any, Optional, Annotated
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, AfterValidator
 from pydantic.alias_generators import to_camel
 
 
@@ -14,12 +14,12 @@ class BaseDataModel(BaseModel):
         populate_by_name=True,
     )
 
+allowed_media_types = ["application/x-ndjson", "application/jsonlines", "jsonlines"]
+def media_type_validator(v):
+    assert v in allowed_media_types
+    return v
 
-class MediaTypes(str, Enum):
-    jsonlines = "application/x-ndjson"
-    jsonlines_ = "application/jsonlines"
-    jsonlines__ = "jsonlines"
-
+custom_media_type = Annotated[str, AfterValidator(media_type_validator)]
 
 class Modality(str, Enum):
     text = "text"
@@ -41,7 +41,7 @@ class DataRepository(BaseDataModel):
     repository_id: str
     name: str
     mutable: bool
-    media_type: MediaTypes
+    media_type: custom_media_type
     modality: Modality
     created_at: datetime
     updated_at: datetime
@@ -57,7 +57,7 @@ class DataRepositoryCreate(BaseDataModel):
     """
 
     name: str
-    media_type: MediaTypes
+    media_type: custom_media_type
     modality: Modality
 
 
