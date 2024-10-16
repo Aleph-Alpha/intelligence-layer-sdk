@@ -2,7 +2,7 @@ services:
   otel-collector:
     image: otel/opentelemetry-collector
     volumes:
-      - ./collector-config.yaml:/etc/otelcol-contrib/config.yaml
+      - <your-full-path>/collector_config.yaml:/etc/otelcol/config.yaml
     ports:
       - 1888:1888 # pprof extension
       - 8888:8888 # Prometheus metrics exposed by the Collector
@@ -11,3 +11,5 @@ services:
       - 4317:4317 # OTLP gRPC receiver
       - 4318:4318 # OTLP http receiver
       - 55679:55679 # zpages extension
+    network_mode: host
+

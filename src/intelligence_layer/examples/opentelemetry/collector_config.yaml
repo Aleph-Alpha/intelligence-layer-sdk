@@ -1,8 +1,11 @@
 receivers:
   otlp:
     protocols:
+      grpc:
+        endpoint: 0.0.0.0:4317
       http:
-        endpoint: http://localhost:4318
+        endpoint: 0.0.0.0:4318
+
 processors:
   batch:
 
@@ -10,13 +13,19 @@ exporters:
   debug:
     verbosity: detailed
   otlphttp:
-    endpoint: http://localhost:8000
+    traces_endpoint: http://host.docker.internal:8000/print_json
     encoding: json
     compression: none
 
+extensions:
+  health_check:
+  pprof:
+  zpages:
+
 service:
+  extensions: [health_check, pprof, zpages]
   pipelines:
-    traces/dev:
+    traces:
       receivers: [otlp]
       processors: [batch]
       exporters: [otlphttp]
