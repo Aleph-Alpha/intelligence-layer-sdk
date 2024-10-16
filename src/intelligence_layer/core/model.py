@@ -623,11 +623,11 @@ LLAMA_3_CHAT_PROMPT_TEMPLATE = PromptTemplate(
 
 
 class Pharia1ChatModel(AlephAlphaChatModel):
-    """Chat model to be used for any `"Pharia-1-LLM-*` model.
+    """Chat model to be used for any `"pharia-1-llm-*` model.
 
     Args:
         name: The name of a valid Pharia-1 model.
-            Defaults to `Pharia-1-LLM-7B-control`
+            Defaults to `pharia-1-llm-7b-control`
         client: Aleph Alpha client instance for running model related API calls.
             Defaults to :class:`LimitedConcurrencyClient`
     """
@@ -635,13 +635,13 @@ class Pharia1ChatModel(AlephAlphaChatModel):
     CHAT_PROMPT_TEMPLATE = LLAMA_3_CHAT_PROMPT_TEMPLATE
 
     RECOMMENDED_MODELS: ClassVar[list[str]] = [
-        "Pharia-1-LLM-7B-control",
-        "Pharia-1-LLM-7B-control-aligned",
+        "pharia-1-llm-7b-control",
+        "pharia-1-llm-7b-control-aligned",
     ]
 
     def __init__(
         self,
-        name: str = "Pharia-1-LLM-7B-control",
+        name: str = "pharia-1-llm-7b-control",
         client: Optional[AlephAlphaClientProtocol] = None,
     ) -> None:
         super().__init__(name, client)
