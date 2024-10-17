@@ -6,6 +6,7 @@
 
 ### Fixes
 - Data repository media types now validated with a function instead of an Enum.
+- Update names of `pharia-1` models to lowercase, aligning with fresh deployments of the api-scheduler.
 
 ### Deprecations 
 ...
