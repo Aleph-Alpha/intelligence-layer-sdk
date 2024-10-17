@@ -1,19 +1,29 @@
 import io
 from datetime import datetime
 from enum import Enum
-from typing import Any, Optional
+from typing import Annotated, Any, Optional
 
-from pydantic import BaseModel, ConfigDict
-from pydantic.alias_generators import to_camel, to_snake
+from pydantic import AfterValidator, BaseModel, ConfigDict
+from pydantic.alias_generators import to_camel
 
 
 class BaseDataModel(BaseModel):
-    model_config = ConfigDict(alias_generator=to_camel, arbitrary_types_allowed=True)
+    model_config = ConfigDict(
+        alias_generator=to_camel,
+        arbitrary_types_allowed=True,
+        populate_by_name=True,
+    )
 
 
-class MediaTypes(str, Enum):
-    jsonlines = "application/x-ndjson"
-    jsonlines_ = "application/jsonlines"
+allowed_media_types = ["application/x-ndjson", "application/jsonlines", "jsonlines"]
+
+
+def media_type_validator(v: str) -> str:
+    assert v in allowed_media_types
+    return v
+
+
+custom_media_type = Annotated[str, AfterValidator(media_type_validator)]
 
 
 class Modality(str, Enum):
@@ -36,7 +46,7 @@ class DataRepository(BaseDataModel):
     repository_id: str
     name: str
     mutable: bool
-    media_type: MediaTypes
+    media_type: custom_media_type
     modality: Modality
     created_at: datetime
     updated_at: datetime
@@ -52,7 +62,7 @@ class DataRepositoryCreate(BaseDataModel):
     """
 
     name: str
-    media_type: MediaTypes
+    media_type: custom_media_type
     modality: Modality
 
 
@@ -91,10 +101,49 @@ class DatasetCreate(BaseDataModel):
     metadata: Metadata of the dataset
     """
 
-    model_config = ConfigDict(alias_generator=to_snake, arbitrary_types_allowed=True)
-
     source_data: io.BufferedReader | bytes
     name: Optional[str] = None
     labels: list[str]
     total_datapoints: int
     metadata: Optional[dict[str, Any]] = None
+
+
+class DataStageCreate(BaseDataModel):
+    """Stage creation model.
+
+    Attributes:
+    name: Name of the stage
+    """
+
+    name: str
+
+
+class DataStage(BaseDataModel):
+    """Stage model.
+
+    Attributes:
+    stage_id: Stage ID that identifies the stage
+    name: Name of the stage
+    created_at: Datetime when the stage was created
+    updated_at: Datetime when the stage was updated
+    """
+
+    stage_id: str
+    name: str
+    created_at: datetime
+    updated_at: datetime
+
+
+class DataFile(BaseDataModel):
+    file_id: str
+    stage_id: str
+    name: str
+    created_at: datetime
+    updated_at: datetime
+    media_type: str
+    size: int
+
+
+class DataFileCreate(BaseDataModel):
+    source_data: io.BufferedReader | bytes
+    name: str
