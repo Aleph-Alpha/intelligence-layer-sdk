@@ -81,6 +81,12 @@ class RichPrompt(Prompt):
 
     ranges: Mapping[str, Sequence[PromptRange]] = field(default_factory=dict)
 
+    @staticmethod
+    def from_prompt(
+        prompt: Prompt, ranges: Mapping[str, Sequence[PromptRange]]
+    ) -> "RichPrompt":
+        return RichPrompt(items=prompt.items, ranges=ranges)
+
 
 PROMPT_RANGE_TAG = intern("promptrange")
 PROMPT_RANGE_END_TAG = intern("endpromptrange")

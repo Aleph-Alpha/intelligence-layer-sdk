@@ -3,6 +3,7 @@ import warnings
 from abc import ABC, abstractmethod
 from collections.abc import Sequence
 from copy import deepcopy
+from dataclasses import replace
 from functools import lru_cache
 from typing import Any, ClassVar, Literal, Optional
 
@@ -13,6 +14,7 @@ from aleph_alpha_client import (
     ExplanationResponse,
     Prompt,
     Text,
+    TextControl,
     Tokens,
 )
 from pydantic import BaseModel, ConfigDict
@@ -408,6 +410,8 @@ class ControlModel(AlephAlphaModel, ABC):
         instruction: str,
         input: Optional[str] = None,
         response_prefix: Optional[str] = None,
+        input_controls: Optional[Sequence[TextControl]] = None,
+        instruction_controls: Optional[Sequence[TextControl]] = None,
     ) -> RichPrompt:
         """Method to create an instruct-`RichPrompt` object to use with any `ControlModel`.
 
@@ -418,10 +422,41 @@ class ControlModel(AlephAlphaModel, ABC):
             input: Any context necessary to solve the task, such as the text to be summarize
             response_prefix: Optional argument to append a string to the beginning of the
                 final agent message to steer the generation
+            input_controls: TextControls for the input part of the prompt
+            instruction_controls: TextControls for the instruction part of the prompt
         """
-        return self.INSTRUCTION_PROMPT_TEMPLATE.to_rich_prompt(
+        rich_prompt = self.INSTRUCTION_PROMPT_TEMPLATE.to_rich_prompt(
             instruction=instruction, input=input, response_prefix=response_prefix
         )
+
+        text_controls = []
+        if instruction_controls:
+            instruction_start = rich_prompt.ranges.get("instruction")[0].start.position  # type: ignore
+            for control in instruction_controls:
+                if control.start + control.length > len(instruction):
+                    raise ValueError(
+                        f"TextControl is out of bounds for instruction {instruction}"
+                    )
+                text_controls.append(
+                    replace(control, start=control.start + instruction_start)
+                )
+
+        if input_controls and input:
+            input_start = rich_prompt.ranges.get("input")[0].start.position  # type: ignore
+            for control in input_controls:
+                if control.start + control.length > len(input):
+                    raise ValueError(
+                        f"TextControl is out of bounds for instruction {instruction}"
+                    )
+                text_controls.append(
+                    replace(control, start=control.start + input_start)
+                )
+
+        prompt = rich_prompt.items[0]
+        ranges = rich_prompt.ranges
+        assert isinstance(prompt, Text)
+        prompt_with_controls = Prompt.from_text(prompt.text, text_controls)
+        return RichPrompt.from_prompt(prompt=prompt_with_controls, ranges=ranges)
 
 
 class LuminousControlModel(ControlModel):
@@ -551,7 +586,9 @@ class AlephAlphaChatModel(ChatModel, ControlModel):
     CHAT_PROMPT_TEMPLATE: PromptTemplate
 
     def to_chat_prompt(
-        self, messages: list[Message], response_prefix: str | None = None
+        self,
+        messages: list[Message],
+        response_prefix: str | None = None,
     ) -> RichPrompt:
         """Method to create a chat-`RichPrompt` object to use with any `AlephAlphaModel`.
 
@@ -596,11 +633,14 @@ class AlephAlphaChatModel(ChatModel, ControlModel):
 
         return self.echo(prompt_item.text, expected_completion, tracer)
 
+    # TODO: apply changes here as well
     def to_instruct_prompt(
         self,
         instruction: str,
         input: Optional[str] = None,
         response_prefix: Optional[str] = None,
+        input_controls: Optional[Sequence[TextControl]] = None,
+        instruction_controls: Optional[Sequence[TextControl]] = None,
     ) -> RichPrompt:
         return self.to_chat_prompt(
             [
