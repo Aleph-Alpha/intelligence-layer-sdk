@@ -35,7 +35,7 @@ dict-hash = "^1.3.4"
 
 [tool.poetry.group.dev.dependencies]
 # lint & format
-mypy = "^1.12.0"
+mypy = "^1.12.1"
 nbqa = "^1.9.0"
 ruff = "^0.7.0"
 pre-commit = "^4.0.1"
