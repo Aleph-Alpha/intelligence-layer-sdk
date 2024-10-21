@@ -3,7 +3,7 @@ from collections.abc import Mapping, Sequence
 from typing import Any
 
 import pytest
-from aleph_alpha_client import Prompt, PromptGranularity, Text
+from aleph_alpha_client import Prompt, PromptGranularity, Text, TextControl
 from pytest import fixture
 
 from intelligence_layer.connectors import AlephAlphaClientProtocol
@@ -247,3 +247,19 @@ def test_aleph_alpha_model_can_echo(
     log_probability = echo_output[0][1]
     assert log_probability
     assert 0 > log_probability > -5
+
+
+def test_text_control_works(model: ControlModel, no_op_tracer: NoOpTracer) -> None:
+    text_control = TextControl(start=0, length=1, factor=3)
+    llama_3_model = Llama3InstructModel()
+
+    prompt = llama_3_model.to_instruct_prompt(
+        "Who likes pizza?",
+        "Marc and Jessica had pizza together. However, Marc hated it. He only agreed to the date because Jessica likes pizza so much.",
+        instruction_controls=[text_control]
+    )
+
+    complete_input = CompleteInput(prompt=prompt)
+    output = llama_3_model.complete(complete_input, no_op_tracer)
+
+    assert "Jessica" in output.completion

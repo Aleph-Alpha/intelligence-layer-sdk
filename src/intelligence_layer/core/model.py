@@ -13,6 +13,7 @@ from aleph_alpha_client import (
     ExplanationResponse,
     Prompt,
     Text,
+    TextControl,
     Tokens,
 )
 from pydantic import BaseModel, ConfigDict
@@ -22,7 +23,11 @@ from intelligence_layer.connectors.limited_concurrency_client import (
     AlephAlphaClientProtocol,
     LimitedConcurrencyClient,
 )
-from intelligence_layer.core.prompt_template import PromptTemplate, RichPrompt
+from intelligence_layer.core.prompt_template import (
+    PromptTemplate,
+    RichPrompt,
+    TextCursor,
+)
 from intelligence_layer.core.task import Task, Token
 from intelligence_layer.core.tracer.tracer import TaskSpan, Tracer
 
@@ -408,6 +413,8 @@ class ControlModel(AlephAlphaModel, ABC):
         instruction: str,
         input: Optional[str] = None,
         response_prefix: Optional[str] = None,
+        input_controls: Sequence[TextControl] = [],
+        instruction_controls: Sequence[TextControl] = [],
     ) -> RichPrompt:
         """Method to create an instruct-`RichPrompt` object to use with any `ControlModel`.
 
@@ -419,9 +426,26 @@ class ControlModel(AlephAlphaModel, ABC):
             response_prefix: Optional argument to append a string to the beginning of the
                 final agent message to steer the generation
         """
-        return self.INSTRUCTION_PROMPT_TEMPLATE.to_rich_prompt(
+        rich_prompt = self.INSTRUCTION_PROMPT_TEMPLATE.to_rich_prompt(
             instruction=instruction, input=input, response_prefix=response_prefix
         )
+
+        controls = []
+        if instruction_controls:
+            instruction_cursor = rich_prompt.ranges.get("instruction")[0].start
+            assert isinstance(instruction_cursor, TextCursor)
+            instruction_start = instruction_cursor.position
+            for control in instruction_controls:
+                controls.append(TextControl(start=control.start + instruction_start, length=control.length, factor=control.factor, token_overlap=control.token_overlap)),
+
+        if input_controls and input:
+            input_cursor = rich_prompt.ranges.get("input")[0].start
+            assert isinstance(input_cursor, TextCursor)
+            input_start = input_cursor.position
+            for control in input_controls:
+                controls.append(TextControl(start=control.start + input_start, length=control.length, factor=control.factor, token_overlap=control.token_overlap)),
+
+        return RichPrompt.from_text(rich_prompt.items[0].text, [instruction_controls + input_controls])
 
 
 class LuminousControlModel(ControlModel):
