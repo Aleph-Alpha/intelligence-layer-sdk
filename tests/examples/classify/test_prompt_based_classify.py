@@ -1,10 +1,11 @@
 from collections.abc import Sequence
 
 import pytest
+from _pytest.fixtures import FixtureRequest
 from pytest import fixture
 
 from intelligence_layer.core import InMemoryTracer, NoOpTracer, TextChunk
-from intelligence_layer.core.model import LuminousControlModel
+from intelligence_layer.core.model import Llama3InstructModel, LuminousControlModel
 from intelligence_layer.evaluation import (
     Aggregator,
     DatasetRepository,
@@ -30,10 +31,17 @@ from intelligence_layer.examples.classify.prompt_based_classify import (
 
 
 @fixture
-def prompt_based_classify(
+def prompt_based_classify_luminous(
     luminous_control_model: LuminousControlModel,
 ) -> PromptBasedClassify:
     return PromptBasedClassify(luminous_control_model)
+
+
+@fixture
+def prompt_based_classify_llama3(
+    luminous_control_model: Llama3InstructModel,
+) -> PromptBasedClassify:
+    return PromptBasedClassify(Llama3InstructModel())
 
 
 @fixture
@@ -86,21 +94,26 @@ def classify_aggregator(
 
 @fixture
 def classify_runner(
-    prompt_based_classify: PromptBasedClassify,
+    prompt_based_classify_luminous: PromptBasedClassify,
     in_memory_dataset_repository: DatasetRepository,
     in_memory_run_repository: RunRepository,
 ) -> Runner[ClassifyInput, SingleLabelClassifyOutput]:
     return Runner(
-        prompt_based_classify,
+        prompt_based_classify_luminous,
         in_memory_dataset_repository,
         in_memory_run_repository,
         "prompt-based-classify",
     )
 
 
+@pytest.mark.parametrize(
+    "prompt_based_classify_model",
+    ["prompt_based_classify_luminous", "prompt_based_classify_llama3"],
+)
 def test_prompt_based_classify_returns_score_for_all_labels(
-    prompt_based_classify: PromptBasedClassify,
+    prompt_based_classify_model: str, request: FixtureRequest
 ) -> None:
+    prompt_based_classify = request.getfixturevalue(prompt_based_classify_model)
     classify_input = ClassifyInput(
         chunk=TextChunk("This is good"),
         labels=frozenset({"positive", "negative"}),
@@ -113,9 +126,15 @@ def test_prompt_based_classify_returns_score_for_all_labels(
     assert classify_input.labels == set(r for r in classify_output.scores)
 
 
+@pytest.mark.parametrize(
+    "prompt_based_classify_model",
+    ["prompt_based_classify_luminous", "prompt_based_classify_llama3"],
+)
 def test_prompt_based_classify_accomodates_labels_starting_with_spaces(
-    prompt_based_classify: PromptBasedClassify,
+    prompt_based_classify_model: str,
+    request: FixtureRequest,
 ) -> None:
+    prompt_based_classify = request.getfixturevalue(prompt_based_classify_model)
     classify_input = ClassifyInput(
         chunk=TextChunk("This is good"), labels=frozenset({" positive", "negative"})
     )
@@ -127,9 +146,15 @@ def test_prompt_based_classify_accomodates_labels_starting_with_spaces(
     assert classify_input.labels == set(r for r in classify_output.scores)
 
 
+@pytest.mark.parametrize(
+    "prompt_based_classify_model",
+    ["prompt_based_classify_luminous", "prompt_based_classify_llama3"],
+)
 def test_prompt_based_classify_accomodates_labels_starting_with_different_spaces(
-    prompt_based_classify: PromptBasedClassify,
+    prompt_based_classify_model: str,
+    request: FixtureRequest,
 ) -> None:
+    prompt_based_classify = request.getfixturevalue(prompt_based_classify_model)
     classify_input = ClassifyInput(
         chunk=TextChunk("This is good"), labels=frozenset({" positive", "  positive"})
     )
@@ -141,9 +166,14 @@ def test_prompt_based_classify_accomodates_labels_starting_with_different_spaces
     assert classify_output.scores[" positive"] != classify_output.scores["  positive"]
 
 
+@pytest.mark.parametrize(
+    "prompt_based_classify_model",
+    ["prompt_based_classify_luminous", "prompt_based_classify_llama3"],
+)
 def test_prompt_based_classify_sentiment_classification(
-    prompt_based_classify: PromptBasedClassify,
+    prompt_based_classify_model: str, request: FixtureRequest
 ) -> None:
+    prompt_based_classify = request.getfixturevalue(prompt_based_classify_model)
     classify_input = ClassifyInput(
         chunk=TextChunk("This is good"), labels=frozenset({"positive", "negative"})
     )
@@ -154,9 +184,15 @@ def test_prompt_based_classify_sentiment_classification(
     assert classify_output.scores["positive"] > classify_output.scores["negative"]
 
 
+@pytest.mark.parametrize(
+    "prompt_based_classify_model",
+    ["prompt_based_classify_luminous", "prompt_based_classify_llama3"],
+)
 def test_prompt_based_classify_emotion_classification(
-    prompt_based_classify: PromptBasedClassify,
+    prompt_based_classify_model: str,
+    request: FixtureRequest,
 ) -> None:
+    prompt_based_classify = request.getfixturevalue(prompt_based_classify_model)
     classify_input = ClassifyInput(
         chunk=TextChunk("I love my job"),
         labels=frozenset({"happy", "sad", "frustrated", "angry"}),
@@ -168,9 +204,14 @@ def test_prompt_based_classify_emotion_classification(
     assert classify_output.scores["happy"] == max(classify_output.scores.values())
 
 
+@pytest.mark.parametrize(
+    "prompt_based_classify_model",
+    ["prompt_based_classify_luminous", "prompt_based_classify_llama3"],
+)
 def test_prompt_based_classify_handles_labels_starting_with_same_token(
-    prompt_based_classify: PromptBasedClassify,
+    prompt_based_classify_model: str, request: FixtureRequest
 ) -> None:
+    prompt_based_classify = request.getfixturevalue(prompt_based_classify_model)
     classify_input = ClassifyInput(
         chunk=TextChunk("This is good"),
         labels=frozenset({"positive", "positive positive"}),
@@ -191,7 +232,7 @@ def test_can_evaluate_classify(
         Sequence[str],
         SingleLabelClassifyEvaluation,
     ],
-    prompt_based_classify: PromptBasedClassify,
+    prompt_based_classify_luminous: PromptBasedClassify,
 ) -> None:
     example = Example(
         input=ClassifyInput(
@@ -227,7 +268,7 @@ def test_classify_warns_on_missing_label(
         Sequence[str],
         SingleLabelClassifyEvaluation,
     ],
-    prompt_based_classify: PromptBasedClassify,
+    prompt_based_classify_luminous: PromptBasedClassify,
 ) -> None:
     example = Example(
         input=ClassifyInput(
