@@ -250,16 +250,18 @@ def test_aleph_alpha_model_can_echo(
 
 
 def test_text_control_works(model: ControlModel, no_op_tracer: NoOpTracer) -> None:
-    text_control = TextControl(start=0, length=1, factor=3)
+    text_control = TextControl(start=10, length=15, factor=3)
     llama_3_model = Llama3InstructModel()
 
-    prompt = llama_3_model.to_instruct_prompt(
+    prompt_with_control = llama_3_model.to_instruct_prompt(
         "Who likes pizza?",
         "Marc and Jessica had pizza together. However, Marc hated it. He only agreed to the date because Jessica likes pizza so much.",
-        instruction_controls=[text_control]
+        instruction_controls=[text_control],
     )
 
-    complete_input = CompleteInput(prompt=prompt)
-    output = llama_3_model.complete(complete_input, no_op_tracer)
+    assert prompt_with_control
 
-    assert "Jessica" in output.completion
+    complete_input = CompleteInput(prompt=prompt_with_control)
+    output_with_control = llama_3_model.complete(complete_input, no_op_tracer)
+
+    assert "Jessica" in output_with_control.completion

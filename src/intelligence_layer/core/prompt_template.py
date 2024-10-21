@@ -13,6 +13,7 @@ from typing import (
 )
 from uuid import UUID, uuid4
 
+from aleph_alpha_client import TextControl
 from aleph_alpha_client.prompt import Image, Prompt, PromptItem, Text, Tokens
 from liquid import BoundTemplate, Context, Environment
 from liquid.ast import BlockNode, Node
@@ -273,11 +274,14 @@ class PromptTemplate:
             last_item = item
         return prompt_text
 
-    def to_rich_prompt(self, **kwargs: Any) -> RichPrompt:
+    def to_rich_prompt(
+        self, controls: Sequence[TextControl] = [], **kwargs: Any
+    ) -> RichPrompt:
         """Creates a `Prompt` along with metadata from the template string and the given parameters.
 
         Args:
-             **kwargs: Parameters to enrich prompt with
+            controls: TODO
+            **kwargs: Parameters to enrich prompt with
          Currently, the only metadata returned is information about ranges that are marked in the template.
          Provided parameters are passed to `liquid.Template.render`.
         """
@@ -297,7 +301,10 @@ class PromptTemplate:
             liquid_prompt,
         )
         modalities, placeholder_ranges = self._compute_modalities_and_ranges(
-            placeholder_indices, context.placeholder_range_names(), liquid_prompt
+            placeholder_indices,
+            context.placeholder_range_names(),
+            liquid_prompt,
+            controls,
         )
 
         result = RichPrompt(modalities, placeholder_ranges)
@@ -325,10 +332,13 @@ class PromptTemplate:
         placeholder_indices: Iterable[tuple[int, int]],
         placeholder_range_names: Mapping[Placeholder, str],
         template: str,
+        controls: Sequence[TextControl],
     ) -> tuple[Sequence[PromptItem], Mapping[str, Sequence[PromptRange]]]:
         placeholder_ranges: dict[Placeholder, list[PromptRange]] = defaultdict(list)
         modalities = list(
-            self._modalities_from(placeholder_indices, placeholder_ranges, template)
+            self._modalities_from(
+                placeholder_indices, placeholder_ranges, template, controls
+            )
         )
         self._replace_start_cursors_of_non_text_items(modalities, placeholder_ranges)
         return modalities, {
@@ -354,6 +364,7 @@ class PromptTemplate:
         placeholder_indices: Iterable[tuple[int, int]],
         placeholder_ranges: dict[Placeholder, list[PromptRange]],
         template: str,
+        controls: Sequence[TextControl],
     ) -> Iterable[PromptItem]:
         last_to = 0
         accumulated_text = ""
@@ -389,7 +400,7 @@ class PromptTemplate:
             placeholder_prompt_item = self._prompt_item_placeholders.get(placeholder)
             if placeholder_prompt_item:
                 if accumulated_text:
-                    yield new_prompt_item(Text.from_text(accumulated_text))
+                    yield new_prompt_item(Text(accumulated_text, controls))
 
                 yield new_prompt_item(placeholder_prompt_item)
             else:
@@ -411,4 +422,4 @@ class PromptTemplate:
                     range_starts[placeholder] = initial_start_text_cursor()
             last_to = placeholder_to
         if last_to < len(template) or accumulated_text:
-            yield Text.from_text(accumulated_text + template[last_to:])
+            yield Text(accumulated_text + template[last_to:], controls)

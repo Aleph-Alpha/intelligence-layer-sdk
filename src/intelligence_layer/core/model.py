@@ -425,6 +425,8 @@ class ControlModel(AlephAlphaModel, ABC):
             input: Any context necessary to solve the task, such as the text to be summarize
             response_prefix: Optional argument to append a string to the beginning of the
                 final agent message to steer the generation
+            input_controls: TODO
+            instruction_controls: TODO
         """
         rich_prompt = self.INSTRUCTION_PROMPT_TEMPLATE.to_rich_prompt(
             instruction=instruction, input=input, response_prefix=response_prefix
@@ -432,23 +434,43 @@ class ControlModel(AlephAlphaModel, ABC):
 
         controls = []
         if instruction_controls:
-            instruction_cursor = rich_prompt.ranges.get("instruction")[0].start
-            assert isinstance(instruction_cursor, TextCursor)
+            instruction_range = rich_prompt.ranges.get("instruction")
+            assert isinstance(instruction_range, list)
+            assert isinstance(instruction_range[0].start, TextCursor)
+            instruction_cursor = instruction_range[0].start
             instruction_start = instruction_cursor.position
             for control in instruction_controls:
-                controls.append(TextControl(start=control.start + instruction_start, length=control.length, factor=control.factor, token_overlap=control.token_overlap)),
+                controls.append(
+                    TextControl(
+                        start=control.start + instruction_start,
+                        length=control.length,
+                        factor=control.factor,
+                        token_overlap=control.token_overlap,
+                    )
+                )
 
         if input_controls and input:
-            input_cursor = rich_prompt.ranges.get("input")[0].start
-            assert isinstance(input_cursor, TextCursor)
+            input_range = rich_prompt.ranges.get("input")
+            assert isinstance(input_range, list)
+            assert isinstance(input_range[0].start, TextCursor)
+            input_cursor = input_range[0].start
             input_start = input_cursor.position
             for control in input_controls:
-                controls.append(TextControl(start=control.start + input_start, length=control.length, factor=control.factor, token_overlap=control.token_overlap)),
+                controls.append(
+                    TextControl(
+                        start=control.start + input_start,
+                        length=control.length,
+                        factor=control.factor,
+                        token_overlap=control.token_overlap,
+                    )
+                )
 
-        text = rich_prompt.items[0].text
-        controls = instruction_controls + input_controls
-
-        return RichPrompt.from_text(text, controls)
+        return self.INSTRUCTION_PROMPT_TEMPLATE.to_rich_prompt(
+            instruction=instruction,
+            input=input,
+            response_prefix=response_prefix,
+            controls=controls,
+        )
 
 
 class LuminousControlModel(ControlModel):
@@ -628,6 +650,8 @@ class AlephAlphaChatModel(ChatModel, ControlModel):
         instruction: str,
         input: Optional[str] = None,
         response_prefix: Optional[str] = None,
+        input_controls: Sequence[TextControl] = [],
+        instruction_controls: Sequence[TextControl] = [],
     ) -> RichPrompt:
         return self.to_chat_prompt(
             [
