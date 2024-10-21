@@ -445,7 +445,10 @@ class ControlModel(AlephAlphaModel, ABC):
             for control in input_controls:
                 controls.append(TextControl(start=control.start + input_start, length=control.length, factor=control.factor, token_overlap=control.token_overlap)),
 
-        return RichPrompt.from_text(rich_prompt.items[0].text, [instruction_controls + input_controls])
+        text = rich_prompt.items[0].text
+        controls = instruction_controls + input_controls
+
+        return RichPrompt.from_text(text, controls)
 
 
 class LuminousControlModel(ControlModel):
