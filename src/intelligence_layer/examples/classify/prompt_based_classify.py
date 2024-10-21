@@ -74,9 +74,7 @@ Reply with only the class label."""
 
     def __init__(
         self,
-        model: (
-            LuminousControlModel | Llama3InstructModel | None
-        ) = None,  # Must use LuminousControl model due to custom logic
+        model: (LuminousControlModel | Llama3InstructModel | None) = None,
         echo: Task[EchoInput, EchoOutput] | None = None,
         instruction: str = INSTRUCTION,
     ) -> None:
