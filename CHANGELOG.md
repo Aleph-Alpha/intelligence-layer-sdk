@@ -2,7 +2,8 @@
 ## Unreleased
 
 ### Features
-...
+- Add support for Llama3InstructModel in PromptBasedClassify
+
 ### Fixes
 ...
 ### Deprecations 
