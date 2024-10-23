@@ -124,20 +124,21 @@ To use an **on-premises setup**, set the `CLIENT_URL` variable to your host URL.
 
 ## Tutorial Notebooks
 
-| Order | Topic                  | Description                                          | Notebook 📓                                                                              |
-|-------|------------------------|------------------------------------------------------|------------------------------------------------------------------------------------------|
-| 1     | Summarization          | Summarize a document                                 | [summarization.ipynb](./src/documentation/summarization.ipynb)                           |
-| 2     | Question Answering     | Various approaches for QA                            | [qa.ipynb](./src/documentation/qa.ipynb)                                                 |
-| 3     | Classification         | Learn about two methods of classification            | [classification.ipynb](./src/documentation/classification.ipynb)                         |
-| 4     | Evaluation             | Evaluate LLM-based methodologies                     | [evaluation.ipynb](./src/documentation/evaluation.ipynb)                                 |
-| 5     | Parameter Optimization | Compare Task configuration for optimization          | [parameter_optimization.ipynb](./src/documentation/parameter_optimization.ipynb)         |
-| 5     | Elo QA Evaluation      | Evaluate QA tasks in an Elo ranking                  | [elo_qa_eval.ipynb](./src/documentation/elo_qa_eval.ipynb)                               |
-| 6     | Quickstart Task        | Build a custom `Task` for your use case              | [quickstart_task.ipynb](./src/documentation/quickstart_task.ipynb)                       |
-| 7     | Document Index         | Connect your proprietary knowledge base              | [document_index.ipynb](./src/documentation/document_index.ipynb)                         |
-| 8     | Human Evaluation       | Connect to Argilla for manual evaluation             | [human_evaluation.ipynb](./src/documentation/human_evaluation.ipynb)                     |
-| 9     | Performance tips       | Contains some small tips for performance             | [performance_tips.ipynb](./src/documentation/performance_tips.ipynb)                     |
-| 10    | Deployment             | Shows how to deploy a Task in a minimal FastAPI app. | [fastapi_tutorial.ipynb](./src/documentation/fastapi_tutorial.ipynb)                     |
-| 11    | Issue Classification   | Deploy a Task in Kubernetes to classify Jira issues  | [Found in adjacent repository](https://github.com/Aleph-Alpha/IL-Classification-Journey) |
+| Order | Topic                  | Description                                           | Notebook 📓                                                                                                            |
+|-------|------------------------|-------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------|
+| 1     | Summarization          | Summarize a document                                  | [summarization.ipynb](./src/documentation/summarization.ipynb)                                                         |
+| 2     | Question Answering     | Various approaches for QA                             | [qa.ipynb](./src/documentation/qa.ipynb)                                                                               |
+| 3     | Classification         | Learn about two methods of classification             | [classification.ipynb](./src/documentation/classification.ipynb)                                                       |
+| 4     | Evaluation             | Evaluate LLM-based methodologies                      | [evaluation.ipynb](./src/documentation/evaluation.ipynb)                                                               |
+| 5     | Parameter Optimization | Compare Task configuration for optimization           | [parameter_optimization.ipynb](./src/documentation/parameter_optimization.ipynb)                                       |
+| 6     | Attention Manipulation | Use `TextControls` for Attention Manipulation (AtMan) | [attention_manipulation_with_text_controls.ipynb](./src/documentation/attention_manipulation_with_text_controls.ipynb) |
+| 7     | Elo QA Evaluation      | Evaluate QA tasks in an Elo ranking                   | [elo_qa_eval.ipynb](./src/documentation/elo_qa_eval.ipynb)                                                             |
+| 8     | Quickstart Task        | Build a custom `Task` for your use case               | [quickstart_task.ipynb](./src/documentation/quickstart_task.ipynb)                                                     |
+| 9     | Document Index         | Connect your proprietary knowledge base               | [document_index.ipynb](./src/documentation/document_index.ipynb)                                                       |
+| 10    | Human Evaluation       | Connect to Argilla for manual evaluation              | [human_evaluation.ipynb](./src/documentation/human_evaluation.ipynb)                                                   |
+| 11    | Performance tips       | Contains some small tips for performance              | [performance_tips.ipynb](./src/documentation/performance_tips.ipynb)                                                   |
+| 12    | Deployment             | Shows how to deploy a Task in a minimal FastAPI app.  | [fastapi_tutorial.ipynb](./src/documentation/fastapi_tutorial.ipynb)                                                   |
+| 13    | Issue Classification   | Deploy a Task in Kubernetes to classify Jira issues   | [Found in adjacent repository](https://github.com/Aleph-Alpha/IL-Classification-Journey)                               |
 
 ## How-Tos
 
