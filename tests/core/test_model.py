@@ -1,9 +1,15 @@
 import random
 from collections.abc import Mapping, Sequence
 from typing import Any
+from unittest.mock import patch
 
 import pytest
-from aleph_alpha_client import Prompt, PromptGranularity, Text, TextControl
+from aleph_alpha_client import (
+    Prompt,
+    PromptGranularity,
+    Text,
+    TextControl,
+)
 from pytest import fixture
 
 from intelligence_layer.connectors import AlephAlphaClientProtocol
@@ -20,6 +26,7 @@ from intelligence_layer.core import (
     Pharia1ChatModel,
 )
 from intelligence_layer.core.model import _cached_context_size, _cached_tokenizer
+from intelligence_layer.core.prompt_template import PromptRange, PromptTemplate
 
 INSTRUCTION = "Who likes pizza?"
 INPUT = "Marc and Jessica had pizza together. However, Marc hated it. He only agreed to the date because Jessica likes pizza so much."
@@ -83,6 +90,23 @@ def test_llama_3_instruct_model_works(no_op_tracer: NoOpTracer) -> None:
     assert "Jessica" in output.completion
 
 
+class FakeRichPrompt:
+    items: Sequence[int] = [1]
+    ranges: Mapping[str, Sequence[PromptRange]] = {}
+
+
+def test_text_control_raises_error_for_non_text_prompt(
+    no_op_tracer: NoOpTracer,
+) -> None:
+    llama_3_model = Llama3InstructModel()
+
+    with (
+        patch.object(PromptTemplate, "to_rich_prompt", return_value=FakeRichPrompt()),
+        pytest.raises(ValueError, match="Text control only valid for text prompts."),
+    ):
+        llama_3_model.to_instruct_prompt(INSTRUCTION)
+
+
 def test_pharia_1_chat_model_disables_optimizations(no_op_tracer: NoOpTracer) -> None:
     pharia_1_chat_model = Pharia1ChatModel()
 
@@ -129,7 +153,7 @@ def test_chat_model_can_do_completion(no_op_tracer: NoOpTracer) -> None:
     assert "Jessica" in output.completion
 
 
-def test_chat_model_prompt_equals_instruct_prompt() -> None:
+def test_chat_model_prompt_text_equals_instruct_prompt() -> None:
     llama_3_model = Llama3InstructModel()
     instruct_prompt = llama_3_model.to_instruct_prompt(
         INSTRUCTION,
@@ -147,7 +171,9 @@ def test_chat_model_prompt_equals_instruct_prompt() -> None:
     assert instruct_prompt == chat_prompt
 
 
-def test_text_control_handles_only_instruction_controls() -> None:
+def test_text_control_handles_only_instruction_controls(
+    no_op_tracer: NoOpTracer,
+) -> None:
     index_of_focused_word = 5
     text_control = TextControl(start=index_of_focused_word, length=5, factor=10)
     llama_3_model = Llama3InstructModel()
@@ -162,6 +188,10 @@ def test_text_control_handles_only_instruction_controls() -> None:
         prompt_with_control.items[0].controls[0].start  # type: ignore
         == INSTRUCTION_PROMPT_TEMPLATE_PREFIX_LEN + index_of_focused_word
     )
+
+    complete_input = CompleteInput(prompt=prompt_with_control)
+    output = llama_3_model.complete(complete_input, no_op_tracer)
+    assert "Jessica" in output.completion
 
 
 def test_text_control_handles_only_input_controls(no_op_tracer: NoOpTracer) -> None:
@@ -181,9 +211,13 @@ def test_text_control_handles_only_input_controls(no_op_tracer: NoOpTracer) -> N
     )
 
 
-def test_text_control_handles_both_control_parameters() -> None:
-    instruction_control = TextControl(start=5, length=5, factor=2)
-    input_control = TextControl(start=10, length=5, factor=2)
+def test_text_control_changes_completion_result(no_op_tracer: NoOpTracer) -> None:
+    instruction_focus_index = INSTRUCTION.index("likes")
+    instruction_control = TextControl(
+        start=instruction_focus_index, length=5, factor=0.10
+    )
+    input_focus_index = INPUT.index("hated")
+    input_control = TextControl(start=input_focus_index, length=5, factor=10)
     llama_3_model = Llama3InstructModel()
 
     prompt_with_control = llama_3_model.to_instruct_prompt(
@@ -205,6 +239,10 @@ def test_text_control_handles_both_control_parameters() -> None:
         + INPUT_PREFIX_LEN
         + input_control.start
     )
+
+    complete_input = CompleteInput(prompt=prompt_with_control)
+    output = llama_3_model.complete(complete_input, no_op_tracer)
+    assert "hate" in output.completion
 
 
 def test_text_control_raises_error_when_out_of_instruction_boundaries() -> None:

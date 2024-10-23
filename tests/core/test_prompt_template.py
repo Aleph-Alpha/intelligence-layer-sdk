@@ -1,7 +1,6 @@
 from pathlib import Path
 from textwrap import dedent
 
-from aleph_alpha_client import Prompt
 from aleph_alpha_client.prompt import Image, PromptItem, Text, Tokens
 from liquid.exceptions import LiquidSyntaxError, LiquidTypeError
 from pytest import raises
@@ -315,21 +314,3 @@ def test_to_rich_prompt_returns_multiple_image_ranges_in_for_loop(
         )
         for i in range(4)
     ]
-
-
-def test_from_prompt_creates_valid_rich_prompt() -> None:
-    prompt = Prompt(items=[Text.from_text("FooBar")])
-    ranges = {
-        "foo": [
-            PromptRange(
-                start=TextCursor(item=0, position=0),
-                end=TextCursor(item=0, position=5),
-            )
-        ]
-    }
-
-    rich_prompt = RichPrompt.from_prompt(prompt=prompt, ranges=ranges)
-
-    assert isinstance(rich_prompt, RichPrompt)
-    assert rich_prompt.items[0] == prompt.items[0]
-    assert rich_prompt.ranges == ranges

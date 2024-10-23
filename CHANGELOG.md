@@ -3,6 +3,7 @@
 
 ### Features
 - Add support for Llama3InstructModel in PromptBasedClassify
+- Add TextControl to 'to_instruct_prompt' for instruct models
 
 ### Fixes
 ...
