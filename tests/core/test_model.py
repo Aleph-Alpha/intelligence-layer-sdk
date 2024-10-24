@@ -100,11 +100,11 @@ def test_text_control_raises_error_for_non_text_prompt(
 ) -> None:
     llama_3_model = Llama3InstructModel()
 
-    with (
-        patch.object(PromptTemplate, "to_rich_prompt", return_value=FakeRichPrompt()),
-        pytest.raises(ValueError, match="Text control only valid for text prompts."),
-    ):
-        llama_3_model.to_instruct_prompt(INSTRUCTION)
+    with patch.object(PromptTemplate, "to_rich_prompt", return_value=FakeRichPrompt()):  # noqa: SIM117
+        with pytest.raises(
+            ValueError, match="Text control only valid for text prompts."
+        ):
+            llama_3_model.to_instruct_prompt(INSTRUCTION)
 
 
 def test_pharia_1_chat_model_disables_optimizations(no_op_tracer: NoOpTracer) -> None:

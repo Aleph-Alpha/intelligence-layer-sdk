@@ -440,17 +440,15 @@ class ControlModel(AlephAlphaModel, ABC):
         text_controls: list[TextControl] = []
 
         if instruction_controls:
-            shifted_instruction_controls = self._shift_instruction_control_ranges(
-                instruction,
-                instruction_controls,
-                rich_prompt,
+            shifted_instruction_controls = self._shift_text_control_ranges(
+                instruction, instruction_controls, rich_prompt, "instruction"
             )
             for shifted_input_control_range in shifted_instruction_controls:
                 text_controls.append(shifted_input_control_range)
 
         if input_controls and input:
-            shifted_input_control_ranges = self._shift_input_control_ranges(
-                input, input_controls, rich_prompt
+            shifted_input_control_ranges = self._shift_text_control_ranges(
+                input, input_controls, rich_prompt, "input"
             )
             for shifted_input_control_range in shifted_input_control_ranges:
                 text_controls.append(shifted_input_control_range)
@@ -458,36 +456,20 @@ class ControlModel(AlephAlphaModel, ABC):
         prompt_with_controls = Prompt.from_text(prompt.text, text_controls)
         return RichPrompt(items=prompt_with_controls.items, ranges=ranges)
 
-    def _shift_instruction_control_ranges(
+    def _shift_text_control_ranges(
         self,
-        instruction: str,
-        instruction_controls: Sequence[TextControl],
+        input: str,
+        text_controls: Sequence[TextControl],
         rich_prompt: RichPrompt,
+        control_type: str,
     ) -> Sequence[TextControl]:
-        text_controls = []
-        instruction_start = self._get_text_control_start_index(
-            rich_prompt, "instruction"
-        )
-        for control in instruction_controls:
-            if control.start + control.length > len(instruction):
-                raise ValueError(
-                    f"TextControl is out of bounds for instruction {instruction}"
-                )
-            text_controls.append(
-                replace(control, start=control.start + instruction_start)
-            )
-        return text_controls
-
-    def _shift_input_control_ranges(
-        self, input: str, input_controls: Sequence[TextControl], rich_prompt: RichPrompt
-    ) -> Sequence[TextControl]:
-        input_start = self._get_text_control_start_index(rich_prompt, "input")
-        text_controls = []
-        for control in input_controls:
+        input_start = self._get_text_control_start_index(rich_prompt, control_type)
+        shifted_controls = []
+        for control in text_controls:
             if control.start + control.length > len(input):
                 raise ValueError(f"TextControl is out of bounds for input {input}")
-            text_controls.append(replace(control, start=control.start + input_start))
-        return text_controls
+            shifted_controls.append(replace(control, start=control.start + input_start))
+        return shifted_controls
 
     def _get_text_control_start_index(
         self, rich_prompt: RichPrompt, control_type: str
@@ -496,7 +478,8 @@ class ControlModel(AlephAlphaModel, ABC):
         assert prompt_ranges is not None
         assert (
             len(prompt_ranges) == 1
-        )  # There should always only be one prompt range per control type.
+        ), "There should always only be one prompt range per control type."
+
         assert isinstance(prompt_ranges[0].start, TextCursor)
         cursor_start = prompt_ranges[0].start.position
         return cursor_start
@@ -635,8 +618,6 @@ class AlephAlphaChatModel(ChatModel, ControlModel):
     ) -> RichPrompt:
         """Method to create a chat-`RichPrompt` object to use with any `AlephAlphaModel`.
 
-        Allows the implementation of a custom prompt format for the specific model in use.
-
         Args:
             messages: A number of messages to use as prompt for the model
             response_prefix: Append the given string to the beginning of the final agent message to
@@ -684,9 +665,7 @@ class AlephAlphaChatModel(ChatModel, ControlModel):
         instruction_controls: Optional[Sequence[TextControl]] = None,
         input_controls: Optional[Sequence[TextControl]] = None,
     ) -> RichPrompt:
-        """Method to use a Chat Model like an Instruct Model`.
-
-        Allows the implementation of a custom prompt format for the specific model in use.
+        """Method to use a chat model like an instruct model`.
 
         Args:
             instruction: The task the model should fulfill, for example summarization
