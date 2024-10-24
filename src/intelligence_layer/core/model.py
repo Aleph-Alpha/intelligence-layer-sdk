@@ -494,6 +494,9 @@ class ControlModel(AlephAlphaModel, ABC):
     ) -> int:
         prompt_ranges = rich_prompt.ranges.get(control_type)
         assert prompt_ranges is not None
+        assert (
+            len(prompt_ranges) == 1
+        )  # There should always only be one prompt range per control type.
         assert isinstance(prompt_ranges[0].start, TextCursor)
         cursor_start = prompt_ranges[0].start.position
         return cursor_start
