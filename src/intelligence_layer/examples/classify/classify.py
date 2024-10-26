@@ -85,12 +85,18 @@ class AggregatedSingleLabelClassifyEvaluation(BaseModel):
 
     Attributes:
         percentage_correct: Percentage of answers that were considered to be correct.
+        precision_by_class: Precision for each class
+        recall_by_class: Recall for each class
+        f1_by_class: f1-score for each class
         confusion_matrix: A matrix showing the predicted classifications vs the expected classifications.
         by_label: Each label along side the counts how often it was expected or predicted.
         missing_labels: Each expected label which is missing in the set of possible labels in the task input and the number of its occurrences.
     """
 
     percentage_correct: float
+    precision_by_class: dict[str, float | None]
+    recall_by_class: dict[str, float | None]
+    f1_by_class: dict[str, float]
     confusion_matrix: dict[str, dict[str, int]]
     by_label: dict[str, AggregatedLabelInfo]
     missing_labels: dict[str, int]
@@ -101,6 +107,54 @@ class SingleLabelClassifyAggregationLogic(
         SingleLabelClassifyEvaluation, AggregatedSingleLabelClassifyEvaluation
     ]
 ):
+    @staticmethod
+    def _true_positives(
+        confusion_matrix: dict[str, dict[str, int]], predicted_class: str
+    ) -> int:
+        return confusion_matrix[predicted_class][predicted_class]
+
+    @staticmethod
+    def _false_positives(
+        confusion_matrix: dict[str, dict[str, int]], predicted_class: str
+    ) -> int:
+        expected_classes_for_predicted_class = confusion_matrix[predicted_class].keys()
+        return sum(
+            confusion_matrix[predicted_class][e]
+            for e in expected_classes_for_predicted_class
+            if e != predicted_class
+        )
+
+    @staticmethod
+    def _false_negatives(
+        confusion_matrix: dict[str, dict[str, int]], predicted_class: str
+    ) -> int:
+        predicted_classes = confusion_matrix.keys()
+        return sum(
+            confusion_matrix[p][predicted_class]
+            for p in predicted_classes
+            if p != predicted_class
+        )
+
+    @staticmethod
+    def _precision(true_positives: int, false_positives: int) -> float | None:
+        if true_positives + false_positives == 0:
+            return None
+        return true_positives / (true_positives + false_positives)
+
+    @staticmethod
+    def _recall(true_positives: int, false_negatives: int) -> float | None:
+        if true_positives + false_negatives == 0:
+            return None
+        return true_positives / (true_positives + false_negatives)
+
+    @staticmethod
+    def _f1(true_positives: int, false_positives: int, false_negatives: int) -> float:
+        return (
+            2
+            * true_positives
+            / (2 * true_positives + false_positives + false_negatives)
+        )
+
     def aggregate(
         self, evaluations: Iterable[SingleLabelClassifyEvaluation]
     ) -> AggregatedSingleLabelClassifyEvaluation:
@@ -110,7 +164,11 @@ class SingleLabelClassifyAggregationLogic(
             lambda: defaultdict(int)
         )
         by_label: dict[str, dict[str, int]] = defaultdict(lambda: defaultdict(int))
+
+        predicted_classes = []
+
         for evaluation in evaluations:
+            predicted_classes.append(evaluation.predicted)
             acc.add(1.0 if evaluation.correct else 0.0)
             if evaluation.expected_label_missing:
                 missing_labels[evaluation.expected] += 1
@@ -126,6 +184,28 @@ class SingleLabelClassifyAggregationLogic(
         return AggregatedSingleLabelClassifyEvaluation(
             percentage_correct=acc.extract(),
             confusion_matrix=confusion_matrix,
+            precision_by_class={
+                c: self._precision(
+                    true_positives=self._true_positives(confusion_matrix, c),
+                    false_positives=self._false_positives(confusion_matrix, c),
+                )
+                for c in predicted_classes
+            },
+            recall_by_class={
+                c: self._recall(
+                    true_positives=self._true_positives(confusion_matrix, c),
+                    false_negatives=self._false_negatives(confusion_matrix, c),
+                )
+                for c in predicted_classes
+            },
+            f1_by_class={
+                c: self._f1(
+                    self._true_positives(confusion_matrix, c),
+                    self._false_positives(confusion_matrix, c),
+                    self._false_negatives(confusion_matrix, c),
+                )
+                for c in predicted_classes
+            },
             by_label={
                 label: AggregatedLabelInfo(
                     expected_count=counts["expected"],

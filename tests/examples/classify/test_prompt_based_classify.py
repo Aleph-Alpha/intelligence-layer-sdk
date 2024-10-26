@@ -327,6 +327,16 @@ def test_can_aggregate_evaluations(
     )
 
     assert aggregation_overview.statistics.percentage_correct == 0.5
+    assert aggregation_overview.statistics.confusion_matrix == {
+        "positive": {"positive": 1, "negative": 0},
+        "negative": {"positive": 1, "negative": 0},
+    }
+    assert aggregation_overview.statistics.recall_by_class["positive"] == 1 / 2
+    assert aggregation_overview.statistics.precision_by_class["positive"] == 1
+    assert aggregation_overview.statistics.f1_by_class["positive"] == 2 / 3
+    assert aggregation_overview.statistics.precision_by_class["negative"] == 0
+    assert aggregation_overview.statistics.recall_by_class["negative"] is None
+    assert aggregation_overview.statistics.f1_by_class["negative"] == 0
 
 
 @pytest.mark.filterwarnings("ignore::UserWarning")

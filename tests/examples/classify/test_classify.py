@@ -33,6 +33,8 @@ from intelligence_layer.examples import (
     MultiLabelClassifyEvaluationLogic,
     MultiLabelClassifyOutput,
     Probability,
+    SingleLabelClassifyAggregationLogic,
+    SingleLabelClassifyEvaluation,
 )
 
 
@@ -339,10 +341,13 @@ def test_confusion_matrix_in_single_label_classify_aggregation_is_compatible_wit
     aggregated_single_label_classify_evaluation = (
         AggregatedSingleLabelClassifyEvaluation(
             percentage_correct=0.123,
+            precision_by_class={"happy": 1, "sad": 1, "angry": 0},
+            recall_by_class={"happy": 1, "sad": 2 / 3, "angry": None},
+            f1_by_class={"happy": 1, "sad": 4 / 5, "angry": 0},
             confusion_matrix={
-                "happy": {"happy": 1},
-                "sad": {"sad": 2},
-                "angry": {"sad": 1},
+                "happy": {"happy": 1, "sad": 0, "angry": 0},
+                "sad": {"happy": 0, "sad": 2, "angry": 0},
+                "angry": {"happy": 0, "sad": 1, "angry": 0},
             },
             by_label={
                 "happy": AggregatedLabelInfo(expected_count=1, predicted_count=1),
@@ -374,3 +379,53 @@ def test_confusion_matrix_in_single_label_classify_aggregation_is_compatible_wit
     )
 
     assert aggregation_overview_from_file_repository == aggregation_overview
+
+
+def test_single_label_classify_aggregation_logic_aggregate() -> None:
+    evaluations = [
+        SingleLabelClassifyEvaluation(
+            correct=True,
+            predicted="happy",
+            expected="happy",
+            expected_label_missing=False,
+        ),
+        SingleLabelClassifyEvaluation(
+            correct=True, predicted="sad", expected="sad", expected_label_missing=False
+        ),
+        SingleLabelClassifyEvaluation(
+            correct=True, predicted="sad", expected="sad", expected_label_missing=False
+        ),
+        SingleLabelClassifyEvaluation(
+            correct=False,
+            predicted="angry",
+            expected="sad",
+            expected_label_missing=False,
+        ),
+    ]
+    aggregated_single_label_classify_evaluation = (
+        SingleLabelClassifyAggregationLogic().aggregate(evaluations)
+    )
+    expected_aggregated_single_label_classify_evaluation = (
+        AggregatedSingleLabelClassifyEvaluation(
+            percentage_correct=3 / 4,
+            precision_by_class={"happy": 1, "sad": 1, "angry": 0},
+            recall_by_class={"happy": 1, "sad": 2 / 3, "angry": None},
+            f1_by_class={"happy": 1, "sad": 4 / 5, "angry": 0},
+            confusion_matrix={
+                "happy": {"happy": 1, "sad": 0, "angry": 0},
+                "sad": {"happy": 0, "sad": 2, "angry": 0},
+                "angry": {"happy": 0, "sad": 1, "angry": 0},
+            },
+            by_label={
+                "happy": AggregatedLabelInfo(expected_count=1, predicted_count=1),
+                "sad": AggregatedLabelInfo(expected_count=3, predicted_count=2),
+                "angry": AggregatedLabelInfo(expected_count=0, predicted_count=1),
+            },
+            missing_labels={},
+        )
+    )
+
+    assert (
+        aggregated_single_label_classify_evaluation
+        == expected_aggregated_single_label_classify_evaluation
+    )
