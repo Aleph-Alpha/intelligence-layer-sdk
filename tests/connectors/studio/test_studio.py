@@ -11,6 +11,10 @@ from pytest import fixture
 
 from intelligence_layer.connectors import StudioClient
 from intelligence_layer.core import ExportedSpan, InMemoryTracer, Task, TaskSpan
+from intelligence_layer.evaluation.dataset.domain import Example
+from intelligence_layer.evaluation.dataset.in_memory_dataset_repository import (
+    InMemoryDatasetRepository,
+)
 
 
 class TracerTestSubTask(Task[None, None]):
@@ -151,3 +155,37 @@ def test_submit_from_tracer_works_with_empty_tracer(
     empty_trace_id_list = studio_client.submit_from_tracer(tracer)
 
     assert len(empty_trace_id_list) == 0
+
+
+def test_can_upload_dataset(studio_client: StudioClient) -> None:
+    example = Example(input="input_str", expected_output="output_str")
+    dataset_repo = InMemoryDatasetRepository()
+    dataset = dataset_repo.create_dataset(examples=[example], dataset_name="my_dataset")
+    result = studio_client.submit_dataset(
+        dataset_repository=dataset_repo,
+        dataset_id=dataset.id,
+        input_type=str,
+        expected_output_type=str,
+    )
+
+    assert result == dataset.id
+
+
+def test_cannot_upload_same_dataset_twice(studio_client: StudioClient) -> None:
+    example = Example(input="input_str", expected_output="output_str")
+    dataset_repo = InMemoryDatasetRepository()
+    dataset = dataset_repo.create_dataset(examples=[example], dataset_name="my_dataset")
+    studio_client.submit_dataset(
+        dataset_repository=dataset_repo,
+        dataset_id=dataset.id,
+        input_type=str,
+        expected_output_type=str,
+    )
+
+    with pytest.raises(ValueError):
+        studio_client.submit_dataset(
+            dataset_repository=dataset_repo,
+            dataset_id=dataset.id,
+            input_type=str,
+            expected_output_type=str,
+        )

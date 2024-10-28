@@ -2,15 +2,16 @@ import json
 from collections.abc import Iterable
 from typing import Optional
 
-from intelligence_layer.connectors.base.json_serializable import (
+from intelligence_layer.connectors import (
+    DataClient,
+    DatasetCreate,
     SerializableDict,
+    StudioClient,
 )
-from intelligence_layer.connectors.data import DataClient
-from intelligence_layer.connectors.data.models import DatasetCreate
 from intelligence_layer.core import Input
-from intelligence_layer.evaluation.dataset.dataset_repository import DatasetRepository
-from intelligence_layer.evaluation.dataset.domain import (
+from intelligence_layer.evaluation import (
     Dataset,
+    DatasetRepository,
     Example,
     ExpectedOutput,
 )
@@ -19,7 +20,9 @@ from intelligence_layer.evaluation.dataset.domain import (
 class StudioDatasetRepository(DatasetRepository):
     """Dataset repository interface with Data Platform."""
 
-    def __init__(self, repository_id: str, data_client: DataClient) -> None:
+    def __init__(
+        self, repository_id: str, data_client: DataClient, studio_client: StudioClient
+    ) -> None:
         """Initializes the StudioDatasetRepository.
 
         Args:

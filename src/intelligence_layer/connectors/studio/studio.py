@@ -1,3 +1,4 @@
+import json
 import os
 from collections import defaultdict
 from collections.abc import Sequence
@@ -8,11 +9,14 @@ import requests
 from pydantic import BaseModel
 from requests.exceptions import ConnectionError, MissingSchema
 
+from intelligence_layer.core.task import Input
 from intelligence_layer.core.tracer.tracer import (  # Import to be fixed with PHS-731
     ExportedSpan,
     ExportedSpanList,
     Tracer,
 )
+from intelligence_layer.evaluation.dataset.dataset_repository import DatasetRepository
+from intelligence_layer.evaluation.dataset.domain import ExpectedOutput
 
 
 class StudioProject(BaseModel):
@@ -188,6 +192,59 @@ class StudioClient:
                 raise ValueError(
                     f"Uploading the trace failed with 422. Response: {response.json()}"
                 )
+            case _:
+                response.raise_for_status()
+        return str(response.json())
+
+    def submit_dataset(
+        self,
+        dataset_repository: DatasetRepository,
+        dataset_id: str,
+        input_type: type[Input],
+        expected_output_type: type[ExpectedOutput],
+    ) -> str:
+        """Create a new dataset in a repository.
+
+        Args:
+            project_id: Repository ID
+            dataset: :DatasetCreate object
+
+        Returns:
+            id of created dataset
+        """
+        url = urljoin(self.url, f"/api/projects/{self.project_id}/datasets")
+
+        dataset = dataset_repository.dataset(dataset_id)
+
+        if dataset is None:
+            raise ValueError("Dataset not found")
+        examples = dataset_repository.examples(
+            dataset_id=dataset_id,
+            input_type=input_type,
+            expected_output_type=expected_output_type,
+        )
+        source_data_list = [
+            example.model_dump_json()
+            for example in sorted(examples, key=lambda x: x.id)
+        ]
+        file_data = "\n".join(source_data_list).encode()
+
+        data = {
+            "name": dataset.name,
+            "labels": list(dataset.labels) if dataset.labels is not None else [],
+            "total_datapoints": len(source_data_list),
+            "metadata": json.dumps(dataset.metadata) if dataset.metadata else None,
+        }
+        response = requests.post(
+            url,
+            files={"source_data": file_data},
+            data=data,
+            headers=self._headers,
+        )
+       
+        match response.status_code:
+            case 409:
+                raise ValueError("Dataset already exists")
             case _:
                 response.raise_for_status()
         return str(response.json())
