@@ -185,26 +185,34 @@ class SingleLabelClassifyAggregationLogic(
             percentage_correct=acc.extract(),
             confusion_matrix=confusion_matrix,
             precision_by_class={
-                c: self._precision(
-                    true_positives=self._true_positives(confusion_matrix, c),
-                    false_positives=self._false_positives(confusion_matrix, c),
+                predicted_class: self._precision(
+                    true_positives=self._true_positives(
+                        confusion_matrix, predicted_class
+                    ),
+                    false_positives=self._false_positives(
+                        confusion_matrix, predicted_class
+                    ),
                 )
-                for c in predicted_classes
+                for predicted_class in predicted_classes
             },
             recall_by_class={
-                c: self._recall(
-                    true_positives=self._true_positives(confusion_matrix, c),
-                    false_negatives=self._false_negatives(confusion_matrix, c),
+                predicted_class: self._recall(
+                    true_positives=self._true_positives(
+                        confusion_matrix, predicted_class
+                    ),
+                    false_negatives=self._false_negatives(
+                        confusion_matrix, predicted_class
+                    ),
                 )
-                for c in predicted_classes
+                for predicted_class in predicted_classes
             },
             f1_by_class={
-                c: self._f1(
-                    self._true_positives(confusion_matrix, c),
-                    self._false_positives(confusion_matrix, c),
-                    self._false_negatives(confusion_matrix, c),
+                predicted_class: self._f1(
+                    self._true_positives(confusion_matrix, predicted_class),
+                    self._false_positives(confusion_matrix, predicted_class),
+                    self._false_negatives(confusion_matrix, predicted_class),
                 )
-                for c in predicted_classes
+                for predicted_class in predicted_classes
             },
             by_label={
                 label: AggregatedLabelInfo(
