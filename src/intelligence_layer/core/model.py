@@ -3,6 +3,7 @@ import warnings
 from abc import ABC, abstractmethod
 from collections.abc import Sequence
 from copy import deepcopy
+from dataclasses import replace
 from functools import lru_cache
 from typing import Any, ClassVar, Literal, Optional
 
@@ -13,6 +14,7 @@ from aleph_alpha_client import (
     ExplanationResponse,
     Prompt,
     Text,
+    TextControl,
     Tokens,
 )
 from pydantic import BaseModel, ConfigDict
@@ -22,7 +24,11 @@ from intelligence_layer.connectors.limited_concurrency_client import (
     AlephAlphaClientProtocol,
     LimitedConcurrencyClient,
 )
-from intelligence_layer.core.prompt_template import PromptTemplate, RichPrompt
+from intelligence_layer.core.prompt_template import (
+    PromptTemplate,
+    RichPrompt,
+    TextCursor,
+)
 from intelligence_layer.core.task import Task, Token
 from intelligence_layer.core.tracer.tracer import TaskSpan, Tracer
 
@@ -408,20 +414,75 @@ class ControlModel(AlephAlphaModel, ABC):
         instruction: str,
         input: Optional[str] = None,
         response_prefix: Optional[str] = None,
+        instruction_controls: Optional[Sequence[TextControl]] = None,
+        input_controls: Optional[Sequence[TextControl]] = None,
     ) -> RichPrompt:
         """Method to create an instruct-`RichPrompt` object to use with any `ControlModel`.
-
-        Allows the implementation of a custom prompt format for the specific model in use.
 
         Args:
             instruction: The task the model should fulfill, for example summarization
             input: Any context necessary to solve the task, such as the text to be summarize
             response_prefix: Optional argument to append a string to the beginning of the
                 final agent message to steer the generation
+            input_controls: TextControls for the input part of the prompt. Only for text prompts
+            instruction_controls: TextControls for the instruction part of the prompt.  Only for text prompts
         """
-        return self.INSTRUCTION_PROMPT_TEMPLATE.to_rich_prompt(
+        rich_prompt = self.INSTRUCTION_PROMPT_TEMPLATE.to_rich_prompt(
             instruction=instruction, input=input, response_prefix=response_prefix
         )
+
+        prompt = rich_prompt.items[0]
+        ranges = rich_prompt.ranges
+
+        if not isinstance(prompt, Text):
+            raise ValueError("Text control only valid for text prompts.")
+
+        text_controls: list[TextControl] = []
+
+        if instruction_controls:
+            shifted_instruction_controls = self._shift_text_control_ranges(
+                instruction, instruction_controls, rich_prompt, "instruction"
+            )
+            for shifted_input_control_range in shifted_instruction_controls:
+                text_controls.append(shifted_input_control_range)
+
+        if input_controls and input:
+            shifted_input_control_ranges = self._shift_text_control_ranges(
+                input, input_controls, rich_prompt, "input"
+            )
+            for shifted_input_control_range in shifted_input_control_ranges:
+                text_controls.append(shifted_input_control_range)
+
+        prompt_with_controls = Prompt.from_text(prompt.text, text_controls)
+        return RichPrompt(items=prompt_with_controls.items, ranges=ranges)
+
+    def _shift_text_control_ranges(
+        self,
+        input: str,
+        text_controls: Sequence[TextControl],
+        rich_prompt: RichPrompt,
+        control_type: str,
+    ) -> Sequence[TextControl]:
+        input_start = self._get_text_control_start_index(rich_prompt, control_type)
+        shifted_controls = []
+        for control in text_controls:
+            if control.start + control.length > len(input):
+                raise ValueError(f"TextControl is out of bounds for input {input}")
+            shifted_controls.append(replace(control, start=control.start + input_start))
+        return shifted_controls
+
+    def _get_text_control_start_index(
+        self, rich_prompt: RichPrompt, control_type: str
+    ) -> int:
+        prompt_ranges = rich_prompt.ranges.get(control_type)
+        assert prompt_ranges is not None
+        assert (
+            len(prompt_ranges) == 1
+        ), "There should always only be one prompt range per control type."
+
+        assert isinstance(prompt_ranges[0].start, TextCursor)
+        cursor_start = prompt_ranges[0].start.position
+        return cursor_start
 
 
 class LuminousControlModel(ControlModel):
@@ -551,11 +612,11 @@ class AlephAlphaChatModel(ChatModel, ControlModel):
     CHAT_PROMPT_TEMPLATE: PromptTemplate
 
     def to_chat_prompt(
-        self, messages: list[Message], response_prefix: str | None = None
+        self,
+        messages: list[Message],
+        response_prefix: str | None = None,
     ) -> RichPrompt:
         """Method to create a chat-`RichPrompt` object to use with any `AlephAlphaModel`.
-
-        Allows the implementation of a custom prompt format for the specific model in use.
 
         Args:
             messages: A number of messages to use as prompt for the model
@@ -601,12 +662,29 @@ class AlephAlphaChatModel(ChatModel, ControlModel):
         instruction: str,
         input: Optional[str] = None,
         response_prefix: Optional[str] = None,
+        instruction_controls: Optional[Sequence[TextControl]] = None,
+        input_controls: Optional[Sequence[TextControl]] = None,
     ) -> RichPrompt:
+        """Method to use a chat model like an instruct model`.
+
+        Args:
+            instruction: The task the model should fulfill, for example summarization
+            input: Any context necessary to solve the task, such as the text to be summarized
+            response_prefix: Optional argument to append a string to the beginning of the
+                final agent message to steer the generation
+            instruction_controls: Instruction controls are not used but needed for the interface.
+            input_controls: Input controls are not used but needed for the interface
+        """
+        if instruction_controls or input_controls:
+            warnings.warn(
+                "'instruction_controls' and 'input_controls' are not supported for 'ChatModel'. Parameter(s) will be ignored."
+            )
+
         return self.to_chat_prompt(
             [
                 Message(
                     role="user",
-                    content=f"{instruction}\n\n{input}" if input else instruction,
+                    content=(f"{instruction}\n\n{input}" if input else instruction),
                 )
             ],
             response_prefix,
