@@ -53,13 +53,13 @@ def test_postgres_instruction_finetuning_data_repository_can_show_first_n_sample
     postgres_instruction_finetuning_data_repository: PostgresInstructionFinetuningDataRepository,
     raw_instruction_finetuning_sample: RawInstructionFinetuningSample,
 ) -> None:
-    n = 5
+    n = 10
     samples = [
         InstructionFinetuningSample.from_raw_sample(raw_instruction_finetuning_sample)
         for _ in range(n)
     ]
 
     postgres_instruction_finetuning_data_repository.store_samples(samples)
-    head = list(postgres_instruction_finetuning_data_repository.head(n))
+    head = list(postgres_instruction_finetuning_data_repository.head(n // 2))
 
-    assert len(head) == n
+    assert len(head) == n // 2

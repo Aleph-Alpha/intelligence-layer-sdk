@@ -12,11 +12,27 @@ from intelligence_layer.core.tracer.tracer import TaskSpan
 
 
 class EnrichmentInput(BaseModel):
+    """The input to every enrichment action.
+
+    Args:
+        messages: A number of messages making up one "chat" or "sample"
+        language: Language to be used by enrichment task
+    """
+
     messages: Sequence[Message]
     language: Language
 
 
 class EnrichDomainConfig(BaseModel):
+    """Prompt configuration for task that annotates the domain for each sample.
+
+    Args:
+        prompt_template: Instruction for the task
+        system_verbose: Prefix for chat messages by the "system"
+        user_verbose: Prefix for chat messages by the "user"
+        assistant_verbose: Prefix for chat messages by the "assistant"
+    """
+
     prompt_template: str
     system_verbose: str
     user_verbose: str
@@ -40,6 +56,14 @@ ENRICH_DOMAIN_INSTRUCTIONS = {
 
 
 class EnrichDomain(Task[EnrichmentInput, Optional[str]]):
+    """Task that finds a matching domain for a sample.
+
+    Args:
+        domains: A list of domains that any given sample should be classified as
+        chat_model: A multi-turn capable model to be used for domain generation
+        instruction_config: Specifies prompt details to be used for requests
+    """
+
     def __init__(
         self,
         domains: Sequence[str],
@@ -91,6 +115,14 @@ class EnrichDomain(Task[EnrichmentInput, Optional[str]]):
 
 
 class EnrichQualityConfig(BaseModel):
+    """Prompt configuration for task that annotates the domain for each sample.
+
+    Args:
+        system_prompt: System prompt to be used
+        final_user_prompt: Final user prompt template used for "criticizing" the chat
+        grading_scale: Maps natural language grade in prompt to integer value
+    """
+
     system_prompt: str
     final_user_prompt: str
     grading_scale: Mapping[Any, int]
@@ -127,6 +159,13 @@ Die Bewertung sollte in Form einer deutschen Schulnote erfolgen, wobei "1" für 
 
 
 class EnrichQuality(Task[EnrichmentInput, Optional[int]]):
+    """Task that annotates the quality of a sample.
+
+    Args:
+        chat_model: A multi-turn capable model to be used for domain generation
+        instruction_config: Specifies prompt details to be used for requests
+    """
+
     def __init__(
         self,
         chat_model: Optional[ChatModel] = None,

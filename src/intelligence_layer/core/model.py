@@ -183,6 +183,14 @@ class Message(BaseModel, frozen=True):
 
 
 class FinetuningMessage(BaseModel, frozen=True):
+    """Represent a prompt message in a finetuning sample as required to finetune an llm using [scaling](https://github.com/Aleph-Alpha/scaling).
+
+    Args:
+        has_loss: Flag indicated whether loss should be applied to the message during training.
+        content: The text in the message
+        type: Should always be "text"
+    """
+
     has_loss: bool
     content: str
     type: str = "text"
@@ -621,7 +629,7 @@ class AlephAlphaChatModel(ChatModel, ControlModel):
     def to_finetuning_sample(
         self, messages: Sequence[Message]
     ) -> Sequence[FinetuningMessage]:
-        """Abstract function allowing a user to what the model's finetuning samples should look like.
+        """Abstract function allowing a user to define what the model's finetuning samples should look like.
 
         Args:
             messages: The messages making up the finetuning sample
@@ -727,7 +735,7 @@ LLAMA_3_CHAT_PROMPT_TEMPLATE = PromptTemplate(
 def to_llama_3_finetuning_sample(
     messages: Sequence[Message], eot_token: str
 ) -> Sequence[FinetuningMessage]:
-    """Turn a sequence of messages into a finetuning train sample using the llama-3 format.
+    """Turn a sequence of messages into a finetuning training sample using the llama-3 format.
 
     Args:
         messages: The messages making up the finetuning sample

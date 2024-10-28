@@ -57,13 +57,13 @@ class EnrichAction(Enum):
 class InstructionFinetuningDataHandler:
     """Acts as the interface between a user and his fine-tuning data.
 
-    Takes a repository and tasks that carry "enrichment" or annotation tasks. Added
-    data will be stored in repository and data will be annotated, e.g. with a `quality`-
+    Takes a repository and tasks that enrich the input data. Added data will be
+    stored in the repository and data will be annotated, e.g. with a `quality`-
     label.
 
     Args:
         repository: `InstructionFinetuningDataRepository` implementation. Responsible for
-            efficient data storage, indexing & retrieval.
+            data storage, indexing & retrieval.
         domain_task: Task-implementation used for annotating domains.
         quality_task: Task-implementation used for annotating sample quality.
         language_task: Task-implementation used for detecting languages used.
@@ -97,6 +97,17 @@ class InstructionFinetuningDataHandler:
         quality_action: EnrichAction = EnrichAction.GET,
         language_action: EnrichAction = EnrichAction.GET,
     ) -> str:
+        """Add a single sample to the handler's repository.
+
+        Args:
+            raw_sample: The raw sample to be added.
+            domain_action: Action to take for domain enrichment.
+            quality_action: Action to take for quality enrichment.
+            language_action: Action to take for language enrichment.
+
+        Returns:
+            The id of the stored sample.
+        """
         validated_and_enriched_sample = self._validate_and_enrich_sample(
             raw_sample, domain_action, quality_action, language_action
         )
@@ -110,6 +121,19 @@ class InstructionFinetuningDataHandler:
         language_action: EnrichAction = EnrichAction.GET,
         max_workers: int = 10,
     ) -> list[str]:
+        """Add multiple samples to the handler's repository.
+
+        Args:
+            raw_samples: The raw samples to be added.
+            domain_action: Action to take for domain enrichment.
+            quality_action: Action to take for quality enrichment.
+            language_action: Action to take for language enrichment.
+            max_workers: The maximum number of workers to use for parallel processing.
+
+        Returns:
+            The ids of the stored samples.
+        """
+
         def _safe_validate_and_enrich_sample(
             raw_sample: RawInstructionFinetuningSample,
             domain_action: EnrichAction,
@@ -147,6 +171,17 @@ class InstructionFinetuningDataHandler:
         quality_action: EnrichAction = EnrichAction.GET,
         language_action: EnrichAction = EnrichAction.GET,
     ) -> str:
+        """Update a single sample in the handler's repository.
+
+        Args:
+            id: The id of the sample to be updated.
+            domain_action: Action to take for domain enrichment.
+            quality_action: Action to take for quality enrichment.
+            language_action: Action to take for language enrichment.
+
+        Returns:
+        The id of the updated sample.
+        """
         sample = self._update_sample(id, domain_action, quality_action, language_action)
         return self.repository.store_sample(sample)
 
@@ -158,6 +193,19 @@ class InstructionFinetuningDataHandler:
         language_action: EnrichAction = EnrichAction.GET,
         max_workers: int = 10,
     ) -> Iterable[str]:
+        """Update multiple samples in the handler's repository.
+
+        Args:
+            ids: The ids of the samples to be updated.
+            domain_action: Action to take for domain enrichment.
+            quality_action: Action to take for quality enrichment.
+            language_action: Action to take for language enrichment.
+            max_workers: The maximum number of workers to use for parallel processing.
+
+        Returns:
+            The ids of the updated samples.
+        """
+
         def _safe_update_sample(
             id: str,
             domain_action: EnrichAction,
@@ -188,26 +236,69 @@ class InstructionFinetuningDataHandler:
         yield from self.repository.store_samples(results)
 
     def head(self, limit: Optional[int] = 100) -> Iterable[InstructionFinetuningSample]:
+        """Get the first n samples from the handler's repository.
+
+        Args:
+            limit: The maximum number of samples to return.
+
+        Returns:
+            The first n samples.
+        """
         yield from self.repository.head(limit)
 
     def sample(self, id: str) -> Optional[InstructionFinetuningSample]:
+        """Get a single sample from the handler's repository.
+
+        Args:
+            id: The id of the sample to return.
+
+        Returns:
+            The sample with the given id, if it exists.
+        """
         return self.repository.sample(id)
 
     def samples(self, ids: Iterable[str]) -> Iterable[InstructionFinetuningSample]:
+        """Get multiple samples from the handler's repository.
+
+        Args:
+            ids: The ids of the samples to return.
+
+        Returns:
+            The samples with the given ids.
+        """
         yield from self.repository.samples(ids)
 
     def samples_with_filter(
         self, filter_expression: ColumnElement[bool] | None, limit: int | None
     ) -> Iterable[InstructionFinetuningSample]:
+        """Get samples from the handler's repository based on a filter expression.
+
+        Args:
+            filter_expression: The filter expression to apply.
+            limit: The maximum number of samples to return.
+
+        Returns:
+            The samples that match the filter expression.
+        """
         if filter_expression is not None:
             yield from self.repository.samples_with_filter(filter_expression, limit)
         else:
             yield from self.repository.head(limit)
 
     def delete_sample(self, id: str) -> None:
+        """Delete a single sample from the handler's repository.
+
+        Args:
+            id: The id of the sample to delete.
+        """
         self.repository.delete_sample(id)
 
     def delete_samples(self, ids: Iterable[str]) -> None:
+        """Delete multiple samples from the handler's repository.
+
+        Args:
+            ids: The ids of the samples to delete.
+        """
         self.repository.delete_samples(ids)
 
     @staticmethod
@@ -216,6 +307,17 @@ class InstructionFinetuningDataHandler:
         samples: Iterable[InstructionFinetuningSample],
         max_workers: int = 10,
     ) -> TrainSet:
+        """Convert samples to a finetuning train set.
+
+        Args:
+            model: The model to use for tokenization.
+            samples: The samples to convert.
+            max_workers: The maximum number of workers to use for parallel processing.
+
+        Returns:
+            The finetuning train set.
+        """
+
         def process_sample(
             sample: InstructionFinetuningSample,
             # actual type is Synchronized[int] but declaring this will actually fail at runtime
@@ -437,6 +539,15 @@ class InstructionFinetuningDataHandler:
         language_action: EnrichAction = EnrichAction.GET,
         max_workers: int = 10,
     ) -> None:
+        """Add chat messages data from a file to the handler's repository.
+
+        Args:
+            path: The path to the file containing the data.
+            domain_action: Action to take for domain enrichment.
+            quality_action: Action to take for quality enrichment.
+            language_action: Action to take for language enrichment.
+            max_workers: The maximum number of workers to use for parallel processing.
+        """
         data = self._read_json_or_jsonl(path)
         samples = [
             InstructionFinetuningSample.from_chat_messages_json(datapoint, path.stem)
@@ -455,6 +566,16 @@ class InstructionFinetuningDataHandler:
         max_workers: int = 10,
         triplet_transformation: TripletTransformation = TripletTransformation.INSTRUCTION_AS_SYSTEM,
     ) -> None:
+        """Add triplet data from a file to the handler's repository.
+
+        Args:
+            path: The path to the file containing the data.
+            domain_action: Action to take for domain enrichment.
+            quality_action: Action to take for quality enrichment.
+            language_action: Action to take for language enrichment.
+            max_workers: The maximum number of workers to use for parallel processing.
+            triplet_transformation: The transformation to apply to the triplet data.
+        """
         data = self._read_json_or_jsonl(path)
         samples = [
             InstructionFinetuningSample.from_triplet_json(
@@ -532,6 +653,15 @@ class InstructionFinetuningDataHandler:
 def instruction_finetuning_handler_builder(
     repository: InstructionFinetuningDataRepository, domains: list[str]
 ) -> InstructionFinetuningDataHandler:
+    """Builder function for the `InstructionFinetuningDataHandler`.
+
+    Args:
+        repository: The repository to use.
+        domains: The domains to consider for domain enrichment.
+
+    Returns:
+        The `InstructionFinetuningDataHandler` instance.
+    """
     return InstructionFinetuningDataHandler(
         repository=repository,
         domain_task=EnrichDomain(domains),
