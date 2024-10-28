@@ -88,7 +88,7 @@ class AggregatedSingleLabelClassifyEvaluation(BaseModel):
         precision_by_class: Precision for each class
         recall_by_class: Recall for each class
         f1_by_class: f1-score for each class
-        confusion_matrix: A matrix showing the predicted classifications vs the expected classifications.
+        confusion_matrix: A matrix showing the predicted classifications vs the expected classifications. First key refers to the rows of the confusion matrix (=actual prediction), second key refers to the columns of the matrix (=expected value).
         by_label: Each label along side the counts how often it was expected or predicted.
         missing_labels: Each expected label which is missing in the set of possible labels in the task input and the number of its occurrences.
     """
