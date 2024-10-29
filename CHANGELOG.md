@@ -5,11 +5,17 @@
 - Add support for Llama3InstructModel in PromptBasedClassify
 - Add TextControl to 'to_instruct_prompt' for instruct models
   - Add 'attention_manipulation_with_text_controls.ipynb' to tutorial notebooks
+- Introduced `InstructionFinetuningDataHandler` to provide methods for storing, retrieving and updating finetuning data samples given an `InstructionFinetuningDataRepository`. Also has methods for filtered sample retrieval and for dataset formatting.
+- Introduced `InstructionFinetuningDataRepository` for storing and retrieving finetuning samples. Comes in two implementations:
+  - `PostgresInstructionFinetuningDataRepository` to work with data stored in a Postgres database.
+  - `FileInstructionFinetuningDataRepository` to work with data stored in the local file-system.
+
 
 ### Fixes
 ...
 ### Deprecations 
 ...
+
 ### Breaking Changes
 ...
 
