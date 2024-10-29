@@ -94,10 +94,7 @@ def test_file_instruction_finetuning_data_repository_can_return_sample_with_filt
     )
     filter_expression = (
         InstructionFinetuningSample_.quality >= expected_minimum_quality
-    ) & (
-        InstructionFinetuningSample_.quality <= expected_maximum_quality
-        # and InstructionFinetuningSample_.domain == expected_domain
-    )
+    ) & (InstructionFinetuningSample_.quality <= expected_maximum_quality)
 
     file_instruction_finetuning_data_repository.store_sample(sample)
     filtered_samples = list(

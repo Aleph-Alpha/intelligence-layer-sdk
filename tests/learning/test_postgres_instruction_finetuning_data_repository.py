@@ -37,9 +37,10 @@ def test_postgres_instruction_finetuning_data_repository_can_store_load_and_dele
         for _ in range(10)
     ]
     ids = [sample.id for sample in samples]
+    id_iter = (id for id in ids)
 
     postgres_instruction_finetuning_data_repository.store_samples(samples)
-    loaded_samples = postgres_instruction_finetuning_data_repository.samples(ids)
+    loaded_samples = postgres_instruction_finetuning_data_repository.samples(id_iter)
 
     assert set(ids) == set(loaded_sample.id for loaded_sample in loaded_samples)
 

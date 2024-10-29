@@ -19,11 +19,14 @@ class PostgresInstructionFinetuningDataRepository(InstructionFinetuningDataRepos
     def __init__(
         self,
         database_url: str,
+        page_size: int = 100,
     ) -> None:
         self.engine = create_engine(database_url, pool_size=20, max_overflow=0)
         self.Session = sessionmaker(bind=self.engine)
 
         Base.metadata.create_all(self.engine)
+
+        self.page_size = page_size
 
     def store_sample(self, sample: InstructionFinetuningSample) -> str:
         with self.Session.begin() as session:
@@ -48,11 +51,30 @@ class PostgresInstructionFinetuningDataRepository(InstructionFinetuningDataRepos
         return stored_ids
 
     def head(self, limit: Optional[int] = 100) -> Iterable[InstructionFinetuningSample]:
+        retrieved, page = 0, 1
+
         with self.Session.begin() as session:
-            query = session.query(InstructionFinetuningSample_)
-            query = self._set_query_limit(query, limit)
-            for db_sample in query.all():
-                yield db_sample.to_pydantic()
+            while retrieved < limit if limit is not None else True:
+                offset = (page - 1) * self.page_size
+                query = session.query(InstructionFinetuningSample_)
+                query = query.offset(offset).limit(
+                    min(self.page_size, limit - retrieved)
+                    if limit is not None
+                    else self.page_size
+                )
+                db_samples = query.all()
+
+                if not db_samples:
+                    break
+
+                for db_sample in db_samples:
+                    yield db_sample.to_pydantic()
+                    retrieved += 1
+
+                if limit is not None and retrieved >= limit:
+                    break
+
+                page += 1
 
     def sample(self, id: str) -> Optional[InstructionFinetuningSample]:
         with self.Session.begin() as session:
@@ -62,18 +84,26 @@ class PostgresInstructionFinetuningDataRepository(InstructionFinetuningDataRepos
             return db_sample.to_pydantic() if db_sample else None
 
     def samples(self, ids: Iterable[str]) -> Iterable[InstructionFinetuningSample]:
-        page, page_size = 1, 100
-        offset = (page - 1) * page_size
+        page = 1
+
         with self.Session.begin() as session:
-            db_samples = (
-                session.query(InstructionFinetuningSample_)
-                .filter(InstructionFinetuningSample_.id.in_(ids))
-                .offset(offset)
-                .limit(page_size)
-                .all()
-            )
-            for db_sample in db_samples:
-                yield db_sample.to_pydantic()
+            while True:
+                offset = (page - 1) * self.page_size
+                db_samples = (
+                    session.query(InstructionFinetuningSample_)
+                    .filter(InstructionFinetuningSample_.id.in_(ids))
+                    .offset(offset)
+                    .limit(self.page_size)
+                    .all()
+                )
+
+                if not db_samples:
+                    break
+
+                for db_sample in db_samples:
+                    yield db_sample.to_pydantic()
+
+                page += 1
 
     def samples_with_filter(
         self, filter_expression: ColumnElement[bool], limit: Optional[int] = 100
