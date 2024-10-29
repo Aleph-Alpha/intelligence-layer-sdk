@@ -6,7 +6,7 @@ from itertools import islice
 from typing import Generic, Optional, cast
 from uuid import uuid4
 
-from dict_hash import dict_hash  # type: ignore
+from dict_hash import dict_hash
 from pydantic import JsonValue
 
 from intelligence_layer.connectors.base.json_serializable import (
