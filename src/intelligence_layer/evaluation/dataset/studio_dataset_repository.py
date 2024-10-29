@@ -4,7 +4,6 @@ from typing import Optional
 
 from intelligence_layer.connectors import (
     DataClient,
-    DatasetCreate,
     SerializableDict,
     StudioClient,
 )
@@ -21,15 +20,22 @@ class StudioDatasetRepository(DatasetRepository):
     """Dataset repository interface with Data Platform."""
 
     def __init__(
-        self, repository_id: str, data_client: DataClient, studio_client: StudioClient
+        self,
+        repository_id: str,
+        data_client: DataClient,
+        studio_client: Optional[
+            StudioClient
+        ] = None,  # As of now (2024-10-29) optional until Studio Dataset Repository is completely ported to StudioClient
     ) -> None:
         """Initializes the StudioDatasetRepository.
 
         Args:
             data_client: Data client to interact with the Data Platform API.
+            studio_client: Client to interact with the Studio API.
             repository_id: Repository ID that identifies the repository(group of datasets).
         """
         self.data_client = data_client
+        self.studio_client = studio_client
         self.repository_id = repository_id
 
     def create_dataset(
@@ -56,28 +62,19 @@ class StudioDatasetRepository(DatasetRepository):
             raise NotImplementedError(
                 "Custom dataset IDs are not supported by the StudioDataRepository"
             )
-        source_data_list = [
-            example.model_dump_json()
-            for example in sorted(examples, key=lambda x: x.id)
-        ]
-        remote_dataset = self.data_client.create_dataset(
-            repository_id=self.repository_id,
-            dataset=DatasetCreate(
-                source_data="\n".join(source_data_list).encode(),
-                name=dataset_name,
-                labels=list(labels) if labels is not None else [],
-                total_datapoints=len(source_data_list),
-                metadata=metadata,
-            ),
+
+        created_dataset = Dataset(
+            name=dataset_name,
+            labels=labels or set(),
+            metadata=metadata or dict(),
         )
-        return Dataset(
-            id=remote_dataset.dataset_id,
-            name=remote_dataset.name or "",
-            labels=set(remote_dataset.labels)
-            if remote_dataset.labels is not None
-            else set(),
-            metadata=remote_dataset.metadata or dict(),
+
+        assert self.studio_client, "Creation of Datasets requires StudioClient"
+        studio_dataset_id = self.studio_client.submit_dataset(
+            dataset=created_dataset, examples=examples
         )
+        created_dataset.id = studio_dataset_id
+        return created_dataset
 
     def delete_dataset(self, dataset_id: str) -> None:
         """Deletes a dataset identified by the given dataset ID.

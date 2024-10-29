@@ -161,12 +161,7 @@ def test_can_upload_dataset(studio_client: StudioClient) -> None:
     example = Example(input="input_str", expected_output="output_str")
     dataset_repo = InMemoryDatasetRepository()
     dataset = dataset_repo.create_dataset(examples=[example], dataset_name="my_dataset")
-    result = studio_client.submit_dataset(
-        dataset_repository=dataset_repo,
-        dataset_id=dataset.id,
-        input_type=str,
-        expected_output_type=str,
-    )
+    result = studio_client.submit_dataset(dataset=dataset, examples=[example])
 
     assert result == dataset.id
 
@@ -175,17 +170,7 @@ def test_cannot_upload_same_dataset_twice(studio_client: StudioClient) -> None:
     example = Example(input="input_str", expected_output="output_str")
     dataset_repo = InMemoryDatasetRepository()
     dataset = dataset_repo.create_dataset(examples=[example], dataset_name="my_dataset")
-    studio_client.submit_dataset(
-        dataset_repository=dataset_repo,
-        dataset_id=dataset.id,
-        input_type=str,
-        expected_output_type=str,
-    )
+    studio_client.submit_dataset(dataset=dataset, examples=[example])
 
     with pytest.raises(ValueError):
-        studio_client.submit_dataset(
-            dataset_repository=dataset_repo,
-            dataset_id=dataset.id,
-            input_type=str,
-            expected_output_type=str,
-        )
+        studio_client.submit_dataset(dataset=dataset, examples=[example])

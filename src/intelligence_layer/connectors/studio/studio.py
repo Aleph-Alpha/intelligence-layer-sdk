@@ -1,7 +1,7 @@
 import json
 import os
 from collections import defaultdict
-from collections.abc import Sequence
+from collections.abc import Iterable, Sequence
 from typing import Optional
 from urllib.parse import urljoin
 
@@ -15,8 +15,11 @@ from intelligence_layer.core.tracer.tracer import (  # Import to be fixed with P
     ExportedSpanList,
     Tracer,
 )
-from intelligence_layer.evaluation.dataset.dataset_repository import DatasetRepository
-from intelligence_layer.evaluation.dataset.domain import ExpectedOutput
+from intelligence_layer.evaluation.dataset.domain import (
+    Dataset,
+    Example,
+    ExpectedOutput,
+)
 
 
 class StudioProject(BaseModel):
@@ -198,31 +201,20 @@ class StudioClient:
 
     def submit_dataset(
         self,
-        dataset_repository: DatasetRepository,
-        dataset_id: str,
-        input_type: type[Input],
-        expected_output_type: type[ExpectedOutput],
+        dataset: Dataset,
+        examples: Iterable[Example[Input, ExpectedOutput]],
     ) -> str:
-        """Create a new dataset in a repository.
+        """Submits a dataset to Studio.
 
         Args:
-            project_id: Repository ID
-            dataset: :DatasetCreate object
+            dataset: :Dataset: to be uploaded
+            examples: :Examples: of Dataset
 
         Returns:
             id of created dataset
         """
         url = urljoin(self.url, f"/api/projects/{self.project_id}/datasets")
 
-        dataset = dataset_repository.dataset(dataset_id)
-
-        if dataset is None:
-            raise ValueError("Dataset not found")
-        examples = dataset_repository.examples(
-            dataset_id=dataset_id,
-            input_type=input_type,
-            expected_output_type=expected_output_type,
-        )
         source_data_list = [
             example.model_dump_json()
             for example in sorted(examples, key=lambda x: x.id)
@@ -241,7 +233,7 @@ class StudioClient:
             data=data,
             headers=self._headers,
         )
-       
+
         match response.status_code:
             case 409:
                 raise ValueError("Dataset already exists")
