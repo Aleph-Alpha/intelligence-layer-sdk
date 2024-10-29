@@ -57,7 +57,6 @@ class StudioClient:
                 "'AA_TOKEN' is not set and auth_token is not given as a parameter. Please provide one or the other."
             )
         self._headers = {
-            "Content-Type": "application/json",
             "Accept": "application/json",
             "Authorization": f"Bearer {self._token}",
         }
@@ -207,36 +206,44 @@ class StudioClient:
         """Submits a dataset to Studio.
 
         Args:
-            dataset: :Dataset: to be uploaded
-            examples: :Examples: of Dataset
+            dataset: Dataset to be uploaded
+            examples: Examples of Dataset
 
         Returns:
             id of created dataset
         """
         url = urljoin(self.url, f"/api/projects/{self.project_id}/datasets")
-
         source_data_list = [
             example.model_dump_json()
             for example in sorted(examples, key=lambda x: x.id)
         ]
-        file_data = "\n".join(source_data_list).encode()
+
+        source_data_file = "\n".join(source_data_list).encode()
 
         data = {
             "name": dataset.name,
             "labels": list(dataset.labels) if dataset.labels is not None else [],
             "total_datapoints": len(source_data_list),
-            "metadata": json.dumps(dataset.metadata) if dataset.metadata else None,
         }
+
+        if dataset.metadata:
+            data["metadata"] = json.dumps(dataset.metadata)
+
         response = requests.post(
             url,
-            files={"source_data": file_data},
+            files={"source_data": source_data_file},
             data=data,
             headers=self._headers,
         )
 
-        match response.status_code:
-            case 409:
-                raise ValueError("Dataset already exists")
-            case _:
-                response.raise_for_status()
-        return str(response.json())
+        self._raise_for_status(response)
+        return str(response.text)
+
+    def _raise_for_status(self, response: requests.Response) -> None:
+        try:
+            response.raise_for_status()
+        except requests.HTTPError as e:
+            print(
+                f"The following error has been raised via execution {e.response.text}"
+            )
+            raise e

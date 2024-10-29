@@ -2,16 +2,16 @@ import os
 import time
 from collections.abc import Sequence
 from typing import Any
-from unittest.mock import patch
+from unittest.mock import Mock, patch
 from uuid import uuid4
 
 import pytest
 from dotenv import load_dotenv
 from pytest import fixture
 
-from intelligence_layer.connectors import StudioClient
+from intelligence_layer.connectors.studio.studio import StudioClient
 from intelligence_layer.core import ExportedSpan, InMemoryTracer, Task, TaskSpan
-from intelligence_layer.evaluation.dataset.domain import Example
+from intelligence_layer.evaluation.dataset.domain import Dataset, Example
 from intelligence_layer.evaluation.dataset.in_memory_dataset_repository import (
     InMemoryDatasetRepository,
 )
@@ -58,6 +58,29 @@ def studio_client() -> StudioClient:
     client = StudioClient(project_name)
     client.create_project(project_name)
     return client
+
+
+@pytest.fixture
+def mock_studio_client() -> Mock:
+    return Mock(spec=StudioClient)
+
+
+@fixture
+def examples() -> Sequence[Example[str, str]]:
+    return [
+        Example(input="input_str", expected_output="output_str"),
+        Example(input="input_str2", expected_output="output_str2"),
+    ]
+
+
+@fixture
+def labels() -> set[str]:
+    return {"label1", "label2"}
+
+
+@fixture
+def metadata() -> dict[str, Any]:
+    return {"key": "value"}
 
 
 def test_cannot_connect_to_non_existing_project() -> None:
@@ -157,20 +180,51 @@ def test_submit_from_tracer_works_with_empty_tracer(
     assert len(empty_trace_id_list) == 0
 
 
-def test_can_upload_dataset(studio_client: StudioClient) -> None:
-    example = Example(input="input_str", expected_output="output_str")
+def test_can_upload_dataset_with_minimal_request_body(
+    mock_studio_client: Mock,
+    examples: Sequence[Example[str, str]],
+) -> None:
+    expected_return_value = "mock_id"
+    mock_studio_client.submit_dataset.return_value = expected_return_value
     dataset_repo = InMemoryDatasetRepository()
-    dataset = dataset_repo.create_dataset(examples=[example], dataset_name="my_dataset")
-    result = studio_client.submit_dataset(dataset=dataset, examples=[example])
+    dataset = dataset_repo.create_dataset(examples, "my_dataset")
+    result = mock_studio_client.submit_dataset(dataset=dataset, examples=examples)
+    assert result == expected_return_value
 
-    assert result == dataset.id
+    mock_studio_client.submit_dataset.assert_called_once_with(
+        dataset=Dataset.model_validate(
+            {
+                "id": dataset.id,
+                "name": dataset.name,
+            }
+        ),
+        examples=examples,
+    )
 
 
-def test_cannot_upload_same_dataset_twice(studio_client: StudioClient) -> None:
-    example = Example(input="input_str", expected_output="output_str")
+def test_can_upload_dataset_with_complete_request_body(
+    mock_studio_client: Mock,
+    examples: Sequence[Example[str, str]],
+    labels: set[str],
+    metadata: dict[str, Any],
+) -> None:
+    expected_return_value = "mock_id"
+    mock_studio_client.submit_dataset.return_value = expected_return_value
     dataset_repo = InMemoryDatasetRepository()
-    dataset = dataset_repo.create_dataset(examples=[example], dataset_name="my_dataset")
-    studio_client.submit_dataset(dataset=dataset, examples=[example])
+    dataset = dataset_repo.create_dataset(
+        examples, "my_dataset", labels=labels, metadata=metadata
+    )
+    result = mock_studio_client.submit_dataset(dataset=dataset, examples=examples)
 
-    with pytest.raises(ValueError):
-        studio_client.submit_dataset(dataset=dataset, examples=[example])
+    assert result is not None
+    mock_studio_client.submit_dataset.assert_called_once_with(
+        dataset=Dataset.model_validate(
+            {
+                "id": dataset.id,
+                "name": dataset.name,
+                "labels": dataset.labels,
+                "metadata": dataset.metadata,
+            }
+        ),
+        examples=examples,
+    )

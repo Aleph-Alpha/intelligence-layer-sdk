@@ -3,7 +3,8 @@ from unittest.mock import Mock
 import pytest
 from pydantic import BaseModel
 
-from intelligence_layer.connectors import DataClient, DataDataset, DatasetCreate
+from intelligence_layer.connectors import DataClient, DataDataset
+from intelligence_layer.connectors.studio.studio import StudioClient
 from intelligence_layer.evaluation.dataset.domain import (
     Dataset,
     Example,
@@ -19,8 +20,19 @@ def mock_data_client() -> Mock:
 
 
 @pytest.fixture
-def studio_dataset_repository(mock_data_client: Mock) -> StudioDatasetRepository:
-    return StudioDatasetRepository(repository_id="repo1", data_client=mock_data_client)
+def mock_studio_client() -> Mock:
+    return Mock(spec=StudioClient)
+
+
+@pytest.fixture
+def studio_dataset_repository(
+    mock_data_client: Mock, mock_studio_client: Mock
+) -> StudioDatasetRepository:
+    return StudioDatasetRepository(
+        repository_id="repo1",
+        data_client=mock_data_client,
+        studio_client=mock_studio_client,
+    )
 
 
 class InputExample(BaseModel):
@@ -32,14 +44,14 @@ class ExpectedOutputExample(BaseModel):
 
 
 def test_create_dataset(
-    studio_dataset_repository: StudioDatasetRepository, mock_data_client: Mock
+    studio_dataset_repository: StudioDatasetRepository, mock_studio_client: Mock
 ) -> None:
     return_dataset_mock = Mock(spec=DataDataset)
     return_dataset_mock.dataset_id = "dataset1"
     return_dataset_mock.labels = ["label"]
     return_dataset_mock.metadata = {}
     return_dataset_mock.name = "Dataset 1"
-    mock_data_client.create_dataset.return_value = return_dataset_mock
+    mock_studio_client.submit_dataset.return_value = return_dataset_mock.dataset_id
 
     examples = [
         Example(
@@ -64,17 +76,16 @@ def test_create_dataset(
     assert dataset.labels == {"label"}
     assert dataset.metadata == {}
 
-    mock_data_client.create_dataset.assert_called_once_with(
-        repository_id="repo1",
-        dataset=DatasetCreate.model_validate(
+    mock_studio_client.submit_dataset.assert_called_once_with(
+        dataset=Dataset.model_validate(
             {
-                "source_data": b'{"input":{"data":"input1"},"expected_output":{"data":"output1"},"id":"example1","metadata":null}\n{"input":{"data":"input2"},"expected_output":{"data":"output2"},"id":"example2","metadata":null}',
+                "id": dataset.id,
                 "labels": ["label"],
                 "name": "Dataset 1",
-                "total_datapoints": 2,
                 "metadata": {},
             }
         ),
+        examples=examples,
     )
 
 

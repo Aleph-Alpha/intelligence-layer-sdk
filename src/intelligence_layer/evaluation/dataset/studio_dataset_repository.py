@@ -5,8 +5,8 @@ from typing import Optional
 from intelligence_layer.connectors import (
     DataClient,
     SerializableDict,
-    StudioClient,
 )
+from intelligence_layer.connectors.studio.studio import StudioClient
 from intelligence_layer.core import Input
 from intelligence_layer.evaluation import (
     Dataset,

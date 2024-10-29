@@ -10,6 +10,8 @@
   - `PostgresInstructionFinetuningDataRepository` to work with data stored in a Postgres database.
   - `FileInstructionFinetuningDataRepository` to work with data stored in the local file-system.
 - Compute precision, recall and f1-score by class in `SingleLabelClassifyAggregationLogic`
+- Add submit_dataset function to StudioClient
+  - Add `how_to_upload_existing_datasets_to_studio.ipynb` to how-tos
 
 ### Fixes
 ...
