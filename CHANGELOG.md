@@ -17,6 +17,7 @@
 
 ### Features
 - Add support for stages and files in Data client.
+- Add more in-depth description for `MiltipleChunRetrieverQaOutput` and `ExpandChunks`
 
 ### Fixes
 - Data repository media types now validated with a function instead of an Enum.
