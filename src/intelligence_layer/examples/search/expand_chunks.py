@@ -31,6 +31,7 @@ class ExpandChunks(Generic[ID], Task[ExpandChunksInput[ID], ExpandChunksOutput])
 
     A `Task` class that expands specific text chunks identified during a document search using a retriever to access the original document.
     It expands the found chunks to the specified maximum size, and ensures overlapping and unique chunk coverage.
+    This process ensures that the expanded chunks cover the chunks_found completely and include immediate context, which is often valuable for downstream tasks.
 
     Args:
         retriever: Used to access and return a set of texts.
