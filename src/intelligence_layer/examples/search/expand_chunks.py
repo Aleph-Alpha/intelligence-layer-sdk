@@ -27,7 +27,10 @@ class ExpandChunksOutput(BaseModel):
 
 
 class ExpandChunks(Generic[ID], Task[ExpandChunksInput[ID], ExpandChunksOutput]):
-    """Expand chunks found during search.
+    """Expand chunks found during search with the chunks directly before and after the chunk of interest.
+
+    A `Task` class that expands specific text chunks identified during a document search using a retriever to access the original document.
+    It expands the found chunks to the specified maximum size, and ensures overlapping and unique chunk coverage.
 
     Args:
         retriever: Used to access and return a set of texts.
