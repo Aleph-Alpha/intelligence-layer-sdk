@@ -893,12 +893,12 @@ files = [
 
 [[package]]
 name = "deflate-dict"
-version = "1.2.0"
+version = "1.2.2"
 description = "Package to deflate and inflate dictionaries."
 optional = false
 python-versions = "*"
 files = [
-    {file = "deflate_dict-1.2.0.tar.gz", hash = "sha256:f03d8335629b192467fcc4ce5cb4fdc0f716e3ebdd0bd30edbf81113d49e2bb8"},
+    {file = "deflate_dict-1.2.2.tar.gz", hash = "sha256:a51f72562a2056118c6b0915b4ac46a483cc329b43d13d759307e4c027ea20ea"},
 ]
 
 [package.extras]
@@ -934,16 +934,16 @@ dev = ["PyTest", "PyTest-Cov", "bump2version (<1)", "sphinx (<2)", "tox"]
 
 [[package]]
 name = "dict-hash"
-version = "1.3.4"
+version = "1.3.5"
 description = "Python package to hash dictionaries using default hash, md5, sha256 and more."
 optional = false
 python-versions = "*"
 files = [
-    {file = "dict_hash-1.3.4.tar.gz", hash = "sha256:5bb7d222bc336452fc94b0cbfa4ea5764049591c83b4d7e37a51b212dcc55cfd"},
+    {file = "dict_hash-1.3.5.tar.gz", hash = "sha256:32614b913c220100f0e06d44130bd2d96a24de5abbf5189ae3180978975f91a3"},
 ]
 
 [package.dependencies]
-deflate_dict = ">=1.0.8"
+deflate_dict = ">=1.2.2"
 
 [package.extras]
 test = ["netaddr", "pytest", "pytest-cov", "pytest-readme", "random_dict", "validate_version_code"]
