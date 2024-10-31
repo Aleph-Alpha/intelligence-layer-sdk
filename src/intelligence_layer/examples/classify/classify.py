@@ -155,6 +155,57 @@ class SingleLabelClassifyAggregationLogic(
             / (2 * true_positives + false_positives + false_negatives)
         )
 
+    @staticmethod
+    def _precision_by_class(
+        confusion_matrix: dict[str, dict[str, int]], predicted_classes: list[str]
+    ):
+        return {
+            predicted_class: SingleLabelClassifyAggregationLogic._precision(
+                true_positives=SingleLabelClassifyAggregationLogic._true_positives(
+                    confusion_matrix, predicted_class
+                ),
+                false_positives=SingleLabelClassifyAggregationLogic._false_positives(
+                    confusion_matrix, predicted_class
+                ),
+            )
+            for predicted_class in predicted_classes
+        }
+
+    @staticmethod
+    def _recall_by_class(
+        confusion_matrix: dict[str, dict[str, int]], predicted_classes: list[str]
+    ):
+        return {
+            predicted_class: SingleLabelClassifyAggregationLogic._recall(
+                true_positives=SingleLabelClassifyAggregationLogic._true_positives(
+                    confusion_matrix, predicted_class
+                ),
+                false_negatives=SingleLabelClassifyAggregationLogic._false_negatives(
+                    confusion_matrix, predicted_class
+                ),
+            )
+            for predicted_class in predicted_classes
+        }
+
+    @staticmethod
+    def _f1_by_class(
+        confusion_matrix: dict[str, dict[str, int]], predicted_classes: list[str]
+    ):
+        return {
+            predicted_class: SingleLabelClassifyAggregationLogic._f1(
+                SingleLabelClassifyAggregationLogic._true_positives(
+                    confusion_matrix, predicted_class
+                ),
+                SingleLabelClassifyAggregationLogic._false_positives(
+                    confusion_matrix, predicted_class
+                ),
+                SingleLabelClassifyAggregationLogic._false_negatives(
+                    confusion_matrix, predicted_class
+                ),
+            )
+            for predicted_class in predicted_classes
+        }
+
     def aggregate(
         self, evaluations: Iterable[SingleLabelClassifyEvaluation]
     ) -> AggregatedSingleLabelClassifyEvaluation:
@@ -184,36 +235,11 @@ class SingleLabelClassifyAggregationLogic(
         return AggregatedSingleLabelClassifyEvaluation(
             percentage_correct=acc.extract(),
             confusion_matrix=confusion_matrix,
-            precision_by_class={
-                predicted_class: self._precision(
-                    true_positives=self._true_positives(
-                        confusion_matrix, predicted_class
-                    ),
-                    false_positives=self._false_positives(
-                        confusion_matrix, predicted_class
-                    ),
-                )
-                for predicted_class in predicted_classes
-            },
-            recall_by_class={
-                predicted_class: self._recall(
-                    true_positives=self._true_positives(
-                        confusion_matrix, predicted_class
-                    ),
-                    false_negatives=self._false_negatives(
-                        confusion_matrix, predicted_class
-                    ),
-                )
-                for predicted_class in predicted_classes
-            },
-            f1_by_class={
-                predicted_class: self._f1(
-                    self._true_positives(confusion_matrix, predicted_class),
-                    self._false_positives(confusion_matrix, predicted_class),
-                    self._false_negatives(confusion_matrix, predicted_class),
-                )
-                for predicted_class in predicted_classes
-            },
+            precision_by_class=self._precision_by_class(
+                confusion_matrix, predicted_classes
+            ),
+            recall_by_class=self._recall_by_class(confusion_matrix, predicted_classes),
+            f1_by_class=self._f1_by_class(confusion_matrix, predicted_classes),
             by_label={
                 label: AggregatedLabelInfo(
                     expected_count=counts["expected"],
