@@ -5,6 +5,7 @@
 - Add support for Llama3InstructModel in PromptBasedClassify
 - Add TextControl to 'to_instruct_prompt' for instruct models
   - Add 'attention_manipulation_with_text_controls.ipynb' to tutorial notebooks
+- Compute precision, recall and f1-score by class in `SingleLabelClassifyAggregationLogic`
 
 ### Fixes
 ...
