@@ -158,7 +158,7 @@ class SingleLabelClassifyAggregationLogic(
     @staticmethod
     def _precision_by_class(
         confusion_matrix: dict[str, dict[str, int]], predicted_classes: list[str]
-    ):
+    ) -> dict[str, float | None]:
         return {
             predicted_class: SingleLabelClassifyAggregationLogic._precision(
                 true_positives=SingleLabelClassifyAggregationLogic._true_positives(
@@ -174,7 +174,7 @@ class SingleLabelClassifyAggregationLogic(
     @staticmethod
     def _recall_by_class(
         confusion_matrix: dict[str, dict[str, int]], predicted_classes: list[str]
-    ):
+    ) -> dict[str, float | None]:
         return {
             predicted_class: SingleLabelClassifyAggregationLogic._recall(
                 true_positives=SingleLabelClassifyAggregationLogic._true_positives(
@@ -190,7 +190,7 @@ class SingleLabelClassifyAggregationLogic(
     @staticmethod
     def _f1_by_class(
         confusion_matrix: dict[str, dict[str, int]], predicted_classes: list[str]
-    ):
+    ) -> dict[str, float]:
         return {
             predicted_class: SingleLabelClassifyAggregationLogic._f1(
                 SingleLabelClassifyAggregationLogic._true_positives(
