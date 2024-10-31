@@ -2,29 +2,54 @@ import json
 import os
 from collections import defaultdict
 from collections.abc import Iterable, Sequence
-from typing import Optional
+from typing import Generic, Optional, TypeVar
 from urllib.parse import urljoin
+from uuid import uuid4
 
 import requests
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from requests.exceptions import ConnectionError, MissingSchema
 
-from intelligence_layer.core.task import Input
+from intelligence_layer.connectors.base.json_serializable import (
+    SerializableDict,
+)
 from intelligence_layer.core.tracer.tracer import (  # Import to be fixed with PHS-731
     ExportedSpan,
     ExportedSpanList,
+    PydanticSerializable,
     Tracer,
 )
-from intelligence_layer.evaluation.dataset.domain import (
-    Dataset,
-    Example,
-    ExpectedOutput,
-)
+
+Input = TypeVar("Input", bound=PydanticSerializable)
+ExpectedOutput = TypeVar("ExpectedOutput", bound=PydanticSerializable)
 
 
 class StudioProject(BaseModel):
     name: str
     description: Optional[str]
+
+
+class StudioExample(BaseModel, Generic[Input, ExpectedOutput]):
+    input: Input
+    expected_output: ExpectedOutput
+    id: str = Field(default_factory=lambda: str(uuid4()))
+    metadata: Optional[SerializableDict] = None
+
+
+class StudioDataset(BaseModel):
+    """Represents a Studio dataset linked to multiple examples.
+
+    Attributes:
+        id: Dataset ID.
+        name: A short name of the dataset.
+        label: Labels for filtering datasets. Defaults to empty list.
+        metadata: Additional information about the dataset. Defaults to empty dict.
+    """
+
+    id: str = Field(default_factory=lambda: str(uuid4()))
+    name: str
+    labels: set[str] = set()
+    metadata: SerializableDict = dict()
 
 
 class StudioClient:
@@ -200,8 +225,8 @@ class StudioClient:
 
     def submit_dataset(
         self,
-        dataset: Dataset,
-        examples: Iterable[Example[Input, ExpectedOutput]],
+        dataset: StudioDataset,
+        examples: Iterable[StudioExample[Input, ExpectedOutput]],
     ) -> str:
         """Submits a dataset to Studio.
 

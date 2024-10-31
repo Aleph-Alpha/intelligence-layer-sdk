@@ -6,7 +6,11 @@ from intelligence_layer.connectors import (
     DataClient,
     SerializableDict,
 )
-from intelligence_layer.connectors.studio.studio import StudioClient
+from intelligence_layer.connectors.studio.studio import (
+    StudioClient,
+    StudioDataset,
+    StudioExample,
+)
 from intelligence_layer.core import Input
 from intelligence_layer.evaluation import (
     Dataset,
@@ -70,9 +74,13 @@ class StudioDatasetRepository(DatasetRepository):
         )
 
         assert self.studio_client, "Creation of Datasets requires StudioClient"
+        studio_dataset = self.map_to_studio_dataset(created_dataset)
+        studio_examples = self.map_to_many_studio_example(examples)
+
         studio_dataset_id = self.studio_client.submit_dataset(
-            dataset=created_dataset, examples=examples
+            dataset=studio_dataset, examples=studio_examples
         )
+
         created_dataset.id = studio_dataset_id
         return created_dataset
 
@@ -188,3 +196,16 @@ class StudioDatasetRepository(DatasetRepository):
             if examples_to_skip is not None and data["id"] in examples_to_skip:
                 continue
             yield Example[input_type, expected_output_type].model_validate(data)  # type: ignore
+
+    def map_to_studio_example(
+        self, example_to_map: Example[Input, ExpectedOutput]
+    ) -> StudioExample[Input, ExpectedOutput]:
+        return StudioExample(**example_to_map.model_dump())
+
+    def map_to_many_studio_example(
+        self, examples_to_map: Iterable[Example[Input, ExpectedOutput]]
+    ) -> Iterable[StudioExample[Input, ExpectedOutput]]:
+        return [self.map_to_studio_example(example) for example in examples_to_map]
+
+    def map_to_studio_dataset(self, dataset_to_map: Dataset) -> StudioDataset:
+        return StudioDataset(**dataset_to_map.model_dump())

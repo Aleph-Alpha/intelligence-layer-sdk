@@ -4,7 +4,7 @@ import pytest
 from pydantic import BaseModel
 
 from intelligence_layer.connectors import DataClient, DataDataset
-from intelligence_layer.connectors.studio.studio import StudioClient
+from intelligence_layer.connectors.studio.studio import StudioClient, StudioDataset
 from intelligence_layer.evaluation.dataset.domain import (
     Dataset,
     Example,
@@ -43,15 +43,11 @@ class ExpectedOutputExample(BaseModel):
     data: str
 
 
-def test_create_dataset(
-    studio_dataset_repository: StudioDatasetRepository, mock_studio_client: Mock
-) -> None:
-    return_dataset_mock = Mock(spec=DataDataset)
-    return_dataset_mock.dataset_id = "dataset1"
-    return_dataset_mock.labels = ["label"]
-    return_dataset_mock.metadata = {}
-    return_dataset_mock.name = "Dataset 1"
-    mock_studio_client.submit_dataset.return_value = return_dataset_mock.dataset_id
+def test_create_dataset(studio_dataset_repository: StudioDatasetRepository) -> None:
+    expected_dataset_id = "dataset1"
+    studio_dataset_repository.studio_client.submit_dataset.return_value = (  # type: ignore
+        expected_dataset_id
+    )
 
     examples = [
         Example(
@@ -67,26 +63,37 @@ def test_create_dataset(
     ]
 
     dataset = studio_dataset_repository.create_dataset(
-        examples=examples, dataset_name="Dataset 1", labels={"label"}, metadata={}
+        examples=examples,
+        dataset_name="Dataset 1",
+        labels={"label"},
+        metadata={},
     )
 
     assert isinstance(dataset, Dataset)
-    assert dataset.id == "dataset1"
+    assert dataset.id == expected_dataset_id
     assert dataset.name == "Dataset 1"
     assert dataset.labels == {"label"}
     assert dataset.metadata == {}
 
-    mock_studio_client.submit_dataset.assert_called_once_with(
-        dataset=Dataset.model_validate(
-            {
-                "id": dataset.id,
-                "labels": ["label"],
-                "name": "Dataset 1",
-                "metadata": {},
-            }
-        ),
-        examples=examples,
+    actual_call = studio_dataset_repository.studio_client.submit_dataset.call_args  # type: ignore
+    submitted_dataset = actual_call[1]["dataset"]
+    submitted_examples = actual_call[1]["examples"]
+
+    expected_dataset = StudioDataset.model_validate(
+        {
+            "labels": ["label"],
+            "name": "Dataset 1",
+            "metadata": {},
+        }
     )
+
+    studio_examples = studio_dataset_repository.map_to_many_studio_example(examples)
+
+    # Assertions
+    assert submitted_dataset.labels == expected_dataset.labels
+    assert submitted_dataset.name == expected_dataset.name
+    assert submitted_dataset.metadata == expected_dataset.metadata
+    assert submitted_examples == studio_examples
 
 
 def test_delete_dataset(
