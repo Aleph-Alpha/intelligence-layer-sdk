@@ -1,3 +1,4 @@
+import warnings
 from collections.abc import Iterable
 from typing import Optional
 
@@ -28,6 +29,9 @@ class StudioDatasetRepository(DatasetRepository):
             studio_client: Client to interact with the Studio API.
         """
         self.studio_client = studio_client
+        warnings.warn(
+            "The StudioDatasetRepository is currently in beta and only supports create_dataset."
+        )
 
     def create_dataset(
         self,
