@@ -68,19 +68,13 @@ services:
       postgres:
         condition: service_started
         restart: true
-    env_file: ".env" # mainly for AA-TOKEN
+    env_file: ".env" # mainly for AA-TOKEN, DB User/PW
     environment:
       DATABASE_URL: postgres:5432
-      POSTGRES_DB: il_sdk
-      POSTGRES_USER: il_sdk
-      POSTGRES_PASSWORD: test
       AUTHORIZATION_SERVICE_URL: "none"
       API_SCHEDULER_URL: "https://api.aleph-alpha.com"
   postgres:
     image: postgres:15
     ports:
       - "5433:5432"
-    environment:
-      POSTGRES_DB: il_sdk
-      POSTGRES_USER: il_sdk
-      POSTGRES_PASSWORD: test
+    env_file: ".env"
