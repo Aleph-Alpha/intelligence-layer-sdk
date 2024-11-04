@@ -9,11 +9,14 @@ import pytest
 from dotenv import load_dotenv
 from pytest import fixture
 
-from intelligence_layer.connectors.studio.studio import StudioClient
+from intelligence_layer.connectors import StudioClient
 from intelligence_layer.core import ExportedSpan, InMemoryTracer, Task, TaskSpan
-from intelligence_layer.evaluation.dataset.domain import Dataset, Example
+from intelligence_layer.evaluation.dataset.domain import Example
 from intelligence_layer.evaluation.dataset.in_memory_dataset_repository import (
     InMemoryDatasetRepository,
+)
+from intelligence_layer.evaluation.dataset.studio_dataset_repository import (
+    StudioDatasetRepository,
 )
 
 
@@ -181,50 +184,44 @@ def test_submit_from_tracer_works_with_empty_tracer(
 
 
 def test_can_upload_dataset_with_minimal_request_body(
-    mock_studio_client: Mock,
+    studio_client: StudioClient,
     examples: Sequence[Example[str, str]],
 ) -> None:
-    expected_return_value = "mock_id"
-    mock_studio_client.submit_dataset.return_value = expected_return_value
     dataset_repo = InMemoryDatasetRepository()
     dataset = dataset_repo.create_dataset(examples, "my_dataset")
-    result = mock_studio_client.submit_dataset(dataset=dataset, examples=examples)
-    assert result == expected_return_value
 
-    mock_studio_client.submit_dataset.assert_called_once_with(
-        dataset=Dataset.model_validate(
-            {
-                "id": dataset.id,
-                "name": dataset.name,
-            }
-        ),
-        examples=examples,
+    studio_dataset = StudioDatasetRepository(studio_client).map_to_studio_dataset(
+        dataset
     )
+    studio_examples = StudioDatasetRepository(studio_client).map_to_many_studio_example(
+        examples
+    )
+
+    result = studio_client.submit_dataset(
+        dataset=studio_dataset, examples=studio_examples
+    )
+    assert result
 
 
 def test_can_upload_dataset_with_complete_request_body(
-    mock_studio_client: Mock,
+    studio_client: StudioClient,
     examples: Sequence[Example[str, str]],
     labels: set[str],
     metadata: dict[str, Any],
 ) -> None:
-    expected_return_value = "mock_id"
-    mock_studio_client.submit_dataset.return_value = expected_return_value
     dataset_repo = InMemoryDatasetRepository()
     dataset = dataset_repo.create_dataset(
         examples, "my_dataset", labels=labels, metadata=metadata
     )
-    result = mock_studio_client.submit_dataset(dataset=dataset, examples=examples)
 
-    assert result is not None
-    mock_studio_client.submit_dataset.assert_called_once_with(
-        dataset=Dataset.model_validate(
-            {
-                "id": dataset.id,
-                "name": dataset.name,
-                "labels": dataset.labels,
-                "metadata": dataset.metadata,
-            }
-        ),
-        examples=examples,
+    studio_dataset = StudioDatasetRepository(studio_client).map_to_studio_dataset(
+        dataset
     )
+    studio_examples = StudioDatasetRepository(studio_client).map_to_many_studio_example(
+        examples
+    )
+
+    result = studio_client.submit_dataset(
+        dataset=studio_dataset, examples=studio_examples
+    )
+    assert result

@@ -30,6 +30,20 @@ class StudioProject(BaseModel):
 
 
 class StudioExample(BaseModel, Generic[Input, ExpectedOutput]):
+    """Represents an instance of :class:`Example`as sent to Studio.
+
+    Attributes:
+        input: Input for the :class:`Task`. Has to be same type as the input for the task used.
+        expected_output: The expected output from a given example run.
+            This will be used by the evaluator to compare the received output with.
+        id: Identifier for the example, defaults to uuid.
+        metadata: Optional dictionary of custom key-value pairs.
+
+    Generics:
+        Input: Interface to be passed to the :class:`Task` that shall be evaluated.
+        ExpectedOutput: Output that is expected from the run with the supplied input.
+    """
+
     input: Input
     expected_output: ExpectedOutput
     id: str = Field(default_factory=lambda: str(uuid4()))
@@ -37,7 +51,7 @@ class StudioExample(BaseModel, Generic[Input, ExpectedOutput]):
 
 
 class StudioDataset(BaseModel):
-    """Represents a Studio dataset linked to multiple examples.
+    """Represents a :class:`Dataset` linked to multiple examples as sent to Studio.
 
     Attributes:
         id: Dataset ID.
@@ -179,7 +193,7 @@ class StudioClient:
         spans belong to multiple traces.
 
         Args:
-            data: Spans to create the trace from. Created by exporting from a `Tracer`.
+            data: :class:`Spans` to create the trace from. Created by exporting from a :class:`Tracer`.
 
         Returns:
             The ID of the created trace.
@@ -192,7 +206,7 @@ class StudioClient:
         """Sends all trace data from the Tracer to Studio.
 
         Args:
-            tracer: Tracer to extract data from.
+            tracer: :class:`Tracer` to extract data from.
 
         Returns:
             List of created trace IDs.
@@ -231,13 +245,13 @@ class StudioClient:
         """Submits a dataset to Studio.
 
         Args:
-            dataset: Dataset to be uploaded
-            examples: Examples of Dataset
+            dataset: :class:`Dataset` to be uploaded
+            examples: :class:`Examples` of the :class:`Dataset`
 
         Returns:
-            id of created dataset
+            ID of the created dataset
         """
-        url = urljoin(self.url, f"/api/projects/{self.project_id}/datasets")
+        url = urljoin(self.url, f"/api/projects/{self.project_id}/evaluation/datasets")
         source_data_list = [
             example.model_dump_json()
             for example in sorted(examples, key=lambda x: x.id)
