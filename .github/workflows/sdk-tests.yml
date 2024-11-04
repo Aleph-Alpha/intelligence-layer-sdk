@@ -149,6 +149,7 @@ jobs:
           AUTHORIZATION_SERVICE_URL: "none"
           AA_TOKEN: ${{ secrets.AA_TOKEN }}
           API_SCHEDULER_URL: "https://api.aleph-alpha.com"
+          DATA_SERVICE_URL: ${{secrets.DATA_SERVICE_URL}}
         credentials:
           username: "unused"
           password: ${{ secrets.GL_STUDIO_CONTAINER_TOKEN }}
@@ -234,6 +235,7 @@ jobs:
           AUTHORIZATION_SERVICE_URL: "none"
           AA_TOKEN: ${{ secrets.AA_TOKEN }}
           API_SCHEDULER_URL: "https://api.aleph-alpha.com"
+          DATA_SERVICE_URL: ${{secrets.DATA_SERVICE_URL}}
         credentials:
           username: "unused"
           password: ${{ secrets.GL_STUDIO_CONTAINER_TOKEN }}
