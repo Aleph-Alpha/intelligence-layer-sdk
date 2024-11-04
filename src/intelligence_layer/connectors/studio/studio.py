@@ -1,23 +1,69 @@
+import json
 import os
 from collections import defaultdict
-from collections.abc import Sequence
-from typing import Optional
+from collections.abc import Iterable, Sequence
+from typing import Generic, Optional, TypeVar
 from urllib.parse import urljoin
+from uuid import uuid4
 
 import requests
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from requests.exceptions import ConnectionError, MissingSchema
 
+from intelligence_layer.connectors.base.json_serializable import (
+    SerializableDict,
+)
 from intelligence_layer.core.tracer.tracer import (  # Import to be fixed with PHS-731
     ExportedSpan,
     ExportedSpanList,
+    PydanticSerializable,
     Tracer,
 )
+
+Input = TypeVar("Input", bound=PydanticSerializable)
+ExpectedOutput = TypeVar("ExpectedOutput", bound=PydanticSerializable)
 
 
 class StudioProject(BaseModel):
     name: str
     description: Optional[str]
+
+
+class StudioExample(BaseModel, Generic[Input, ExpectedOutput]):
+    """Represents an instance of :class:`Example`as sent to Studio.
+
+    Attributes:
+        input: Input for the :class:`Task`. Has to be same type as the input for the task used.
+        expected_output: The expected output from a given example run.
+            This will be used by the evaluator to compare the received output with.
+        id: Identifier for the example, defaults to uuid.
+        metadata: Optional dictionary of custom key-value pairs.
+
+    Generics:
+        Input: Interface to be passed to the :class:`Task` that shall be evaluated.
+        ExpectedOutput: Output that is expected from the run with the supplied input.
+    """
+
+    input: Input
+    expected_output: ExpectedOutput
+    id: str = Field(default_factory=lambda: str(uuid4()))
+    metadata: Optional[SerializableDict] = None
+
+
+class StudioDataset(BaseModel):
+    """Represents a :class:`Dataset` linked to multiple examples as sent to Studio.
+
+    Attributes:
+        id: Dataset ID.
+        name: A short name of the dataset.
+        label: Labels for filtering datasets. Defaults to empty list.
+        metadata: Additional information about the dataset. Defaults to empty dict.
+    """
+
+    id: str = Field(default_factory=lambda: str(uuid4()))
+    name: str
+    labels: set[str] = set()
+    metadata: SerializableDict = dict()
 
 
 class StudioClient:
@@ -50,7 +96,6 @@ class StudioClient:
                 "'AA_TOKEN' is not set and auth_token is not given as a parameter. Please provide one or the other."
             )
         self._headers = {
-            "Content-Type": "application/json",
             "Accept": "application/json",
             "Authorization": f"Bearer {self._token}",
         }
@@ -148,7 +193,7 @@ class StudioClient:
         spans belong to multiple traces.
 
         Args:
-            data: Spans to create the trace from. Created by exporting from a `Tracer`.
+            data: :class:`Spans` to create the trace from. Created by exporting from a :class:`Tracer`.
 
         Returns:
             The ID of the created trace.
@@ -161,7 +206,7 @@ class StudioClient:
         """Sends all trace data from the Tracer to Studio.
 
         Args:
-            tracer: Tracer to extract data from.
+            tracer: :class:`Tracer` to extract data from.
 
         Returns:
             List of created trace IDs.
@@ -191,3 +236,53 @@ class StudioClient:
             case _:
                 response.raise_for_status()
         return str(response.json())
+
+    def submit_dataset(
+        self,
+        dataset: StudioDataset,
+        examples: Iterable[StudioExample[Input, ExpectedOutput]],
+    ) -> str:
+        """Submits a dataset to Studio.
+
+        Args:
+            dataset: :class:`Dataset` to be uploaded
+            examples: :class:`Examples` of the :class:`Dataset`
+
+        Returns:
+            ID of the created dataset
+        """
+        url = urljoin(self.url, f"/api/projects/{self.project_id}/evaluation/datasets")
+        source_data_list = [
+            example.model_dump_json()
+            for example in sorted(examples, key=lambda x: x.id)
+        ]
+
+        source_data_file = "\n".join(source_data_list).encode()
+
+        data = {
+            "name": dataset.name,
+            "labels": list(dataset.labels) if dataset.labels is not None else [],
+            "total_datapoints": len(source_data_list),
+        }
+
+        if dataset.metadata:
+            data["metadata"] = json.dumps(dataset.metadata)
+
+        response = requests.post(
+            url,
+            files={"source_data": source_data_file},
+            data=data,
+            headers=self._headers,
+        )
+
+        self._raise_for_status(response)
+        return str(response.text)
+
+    def _raise_for_status(self, response: requests.Response) -> None:
+        try:
+            response.raise_for_status()
+        except requests.HTTPError as e:
+            print(
+                f"The following error has been raised via execution {e.response.text}"
+            )
+            raise e

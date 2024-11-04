@@ -1,16 +1,19 @@
-import json
+import warnings
 from collections.abc import Iterable
 from typing import Optional
 
-from intelligence_layer.connectors.base.json_serializable import (
+from intelligence_layer.connectors import (
     SerializableDict,
+    StudioClient,
 )
-from intelligence_layer.connectors.data import DataClient
-from intelligence_layer.connectors.data.models import DatasetCreate
+from intelligence_layer.connectors.studio.studio import (
+    StudioDataset,
+    StudioExample,
+)
 from intelligence_layer.core import Input
-from intelligence_layer.evaluation.dataset.dataset_repository import DatasetRepository
-from intelligence_layer.evaluation.dataset.domain import (
+from intelligence_layer.evaluation import (
     Dataset,
+    DatasetRepository,
     Example,
     ExpectedOutput,
 )
@@ -19,15 +22,16 @@ from intelligence_layer.evaluation.dataset.domain import (
 class StudioDatasetRepository(DatasetRepository):
     """Dataset repository interface with Data Platform."""
 
-    def __init__(self, repository_id: str, data_client: DataClient) -> None:
+    def __init__(self, studio_client: StudioClient) -> None:
         """Initializes the StudioDatasetRepository.
 
         Args:
-            data_client: Data client to interact with the Data Platform API.
-            repository_id: Repository ID that identifies the repository(group of datasets).
+            studio_client: Client to interact with the Studio API.
         """
-        self.data_client = data_client
-        self.repository_id = repository_id
+        self.studio_client = studio_client
+        warnings.warn(
+            "The StudioDatasetRepository is currently in beta and only supports create_dataset."
+        )
 
     def create_dataset(
         self,
@@ -53,28 +57,22 @@ class StudioDatasetRepository(DatasetRepository):
             raise NotImplementedError(
                 "Custom dataset IDs are not supported by the StudioDataRepository"
             )
-        source_data_list = [
-            example.model_dump_json()
-            for example in sorted(examples, key=lambda x: x.id)
-        ]
-        remote_dataset = self.data_client.create_dataset(
-            repository_id=self.repository_id,
-            dataset=DatasetCreate(
-                source_data="\n".join(source_data_list).encode(),
-                name=dataset_name,
-                labels=list(labels) if labels is not None else [],
-                total_datapoints=len(source_data_list),
-                metadata=metadata,
-            ),
+
+        created_dataset = Dataset(
+            name=dataset_name,
+            labels=labels or set(),
+            metadata=metadata or dict(),
         )
-        return Dataset(
-            id=remote_dataset.dataset_id,
-            name=remote_dataset.name or "",
-            labels=set(remote_dataset.labels)
-            if remote_dataset.labels is not None
-            else set(),
-            metadata=remote_dataset.metadata or dict(),
+
+        studio_dataset = self.map_to_studio_dataset(created_dataset)
+        studio_examples = self.map_to_many_studio_example(examples)
+
+        studio_dataset_id = self.studio_client.submit_dataset(
+            dataset=studio_dataset, examples=studio_examples
         )
+
+        created_dataset.id = studio_dataset_id
+        return created_dataset
 
     def delete_dataset(self, dataset_id: str) -> None:
         """Deletes a dataset identified by the given dataset ID.
@@ -83,9 +81,7 @@ class StudioDatasetRepository(DatasetRepository):
             dataset_id: Dataset ID of the dataset to delete.
 
         """
-        self.data_client.delete_dataset(
-            repository_id=self.repository_id, dataset_id=dataset_id
-        )
+        raise NotImplementedError()
 
     def dataset(self, dataset_id: str) -> Optional[Dataset]:
         """Returns a dataset identified by the given dataset ID.
@@ -96,17 +92,7 @@ class StudioDatasetRepository(DatasetRepository):
         Returns:
             :class:`Dataset` if it was not, `None` otherwise.
         """
-        remote_dataset = self.data_client.get_dataset(
-            repository_id=self.repository_id, dataset_id=dataset_id
-        )
-        return Dataset(
-            id=remote_dataset.dataset_id,
-            name=remote_dataset.name or "",
-            labels=set(remote_dataset.labels)
-            if remote_dataset.labels is not None
-            else set(),
-            metadata=remote_dataset.metadata or dict(),
-        )
+        raise NotImplementedError()
 
     def datasets(self) -> Iterable[Dataset]:
         """Returns all :class:`Dataset`s. Sorting is not guaranteed.
@@ -114,17 +100,7 @@ class StudioDatasetRepository(DatasetRepository):
         Returns:
             :class:`Sequence` of :class:`Dataset`s.
         """
-        for remote_dataset in self.data_client.list_datasets(
-            repository_id=self.repository_id
-        ):
-            yield Dataset(
-                id=remote_dataset.dataset_id,
-                name=remote_dataset.name or "",
-                labels=set(remote_dataset.labels)
-                if remote_dataset.labels is not None
-                else set(),
-                metadata=remote_dataset.metadata or dict(),
-            )
+        raise NotImplementedError()
 
     def dataset_ids(self) -> Iterable[str]:
         """Returns all sorted dataset IDs.
@@ -132,8 +108,7 @@ class StudioDatasetRepository(DatasetRepository):
         Returns:
             :class:`Iterable` of dataset IDs.
         """
-        datasets = self.data_client.list_datasets(repository_id=self.repository_id)
-        return (dataset.dataset_id for dataset in datasets)
+        raise NotImplementedError()
 
     def example(
         self,
@@ -153,14 +128,7 @@ class StudioDatasetRepository(DatasetRepository):
         Returns:
             :class:`Example` if it was found, `None` otherwise.
         """
-        stream = self.data_client.stream_dataset(
-            repository_id=self.repository_id, dataset_id=dataset_id
-        )
-        for item in stream:
-            data = json.loads(item.decode())
-            if data["id"] == example_id:
-                return Example[input_type, expected_output_type].model_validate(data)  # type: ignore
-        return None
+        raise NotImplementedError()
 
     def examples(
         self,
@@ -180,11 +148,17 @@ class StudioDatasetRepository(DatasetRepository):
         Returns:
             :class:`Iterable` of :class`Example`s.
         """
-        stream = self.data_client.stream_dataset(
-            repository_id=self.repository_id, dataset_id=dataset_id
-        )
-        for item in stream:
-            data = json.loads(item.decode())
-            if examples_to_skip is not None and data["id"] in examples_to_skip:
-                continue
-            yield Example[input_type, expected_output_type].model_validate(data)  # type: ignore
+        raise NotImplementedError()
+
+    def map_to_studio_example(
+        self, example_to_map: Example[Input, ExpectedOutput]
+    ) -> StudioExample[Input, ExpectedOutput]:
+        return StudioExample(**example_to_map.model_dump())
+
+    def map_to_many_studio_example(
+        self, examples_to_map: Iterable[Example[Input, ExpectedOutput]]
+    ) -> Iterable[StudioExample[Input, ExpectedOutput]]:
+        return (self.map_to_studio_example(example) for example in examples_to_map)
+
+    def map_to_studio_dataset(self, dataset_to_map: Dataset) -> StudioDataset:
+        return StudioDataset(**dataset_to_map.model_dump())

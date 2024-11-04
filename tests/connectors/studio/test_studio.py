@@ -2,7 +2,7 @@ import os
 import time
 from collections.abc import Sequence
 from typing import Any
-from unittest.mock import patch
+from unittest.mock import Mock, patch
 from uuid import uuid4
 
 import pytest
@@ -11,6 +11,13 @@ from pytest import fixture
 
 from intelligence_layer.connectors import StudioClient
 from intelligence_layer.core import ExportedSpan, InMemoryTracer, Task, TaskSpan
+from intelligence_layer.evaluation.dataset.domain import Example
+from intelligence_layer.evaluation.dataset.in_memory_dataset_repository import (
+    InMemoryDatasetRepository,
+)
+from intelligence_layer.evaluation.dataset.studio_dataset_repository import (
+    StudioDatasetRepository,
+)
 
 
 class TracerTestSubTask(Task[None, None]):
@@ -54,6 +61,29 @@ def studio_client() -> StudioClient:
     client = StudioClient(project_name)
     client.create_project(project_name)
     return client
+
+
+@pytest.fixture
+def mock_studio_client() -> Mock:
+    return Mock(spec=StudioClient)
+
+
+@fixture
+def examples() -> Sequence[Example[str, str]]:
+    return [
+        Example(input="input_str", expected_output="output_str"),
+        Example(input="input_str2", expected_output="output_str2"),
+    ]
+
+
+@fixture
+def labels() -> set[str]:
+    return {"label1", "label2"}
+
+
+@fixture
+def metadata() -> dict[str, Any]:
+    return {"key": "value"}
 
 
 def test_cannot_connect_to_non_existing_project() -> None:
@@ -151,3 +181,47 @@ def test_submit_from_tracer_works_with_empty_tracer(
     empty_trace_id_list = studio_client.submit_from_tracer(tracer)
 
     assert len(empty_trace_id_list) == 0
+
+
+def test_can_upload_dataset_with_minimal_request_body(
+    studio_client: StudioClient,
+    examples: Sequence[Example[str, str]],
+) -> None:
+    dataset_repo = InMemoryDatasetRepository()
+    dataset = dataset_repo.create_dataset(examples, "my_dataset")
+
+    studio_dataset = StudioDatasetRepository(studio_client).map_to_studio_dataset(
+        dataset
+    )
+    studio_examples = StudioDatasetRepository(studio_client).map_to_many_studio_example(
+        examples
+    )
+
+    result = studio_client.submit_dataset(
+        dataset=studio_dataset, examples=studio_examples
+    )
+    assert result
+
+
+def test_can_upload_dataset_with_complete_request_body(
+    studio_client: StudioClient,
+    examples: Sequence[Example[str, str]],
+    labels: set[str],
+    metadata: dict[str, Any],
+) -> None:
+    dataset_repo = InMemoryDatasetRepository()
+    dataset = dataset_repo.create_dataset(
+        examples, "my_dataset", labels=labels, metadata=metadata
+    )
+
+    studio_dataset = StudioDatasetRepository(studio_client).map_to_studio_dataset(
+        dataset
+    )
+    studio_examples = StudioDatasetRepository(studio_client).map_to_many_studio_example(
+        examples
+    )
+
+    result = studio_client.submit_dataset(
+        dataset=studio_dataset, examples=studio_examples
+    )
+    assert result
