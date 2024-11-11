@@ -27,7 +27,9 @@ from intelligence_layer.evaluation.evaluation.evaluator.evaluator import (
 )
 
 
-class StudioBenchmark(Benchmark[Input, Output, ExpectedOutput, Evaluation, AggregatedEvaluation]):  # <- skip the impl here for now, not this is another ticket
+class StudioBenchmark(
+    Benchmark[Input, Output, ExpectedOutput, Evaluation, AggregatedEvaluation]
+):  # <- skip the impl here for now, not this is another ticket
     def __init__(
         self,
         benchmark_id: str,
@@ -38,12 +40,18 @@ class StudioBenchmark(Benchmark[Input, Output, ExpectedOutput, Evaluation, Aggre
         **kwargs: Any,
     ):
         self.id = benchmark_id
+        self.dataset_id = dataset_id
+        self.eval_logic = eval_logic
+        self.aggregation_logic = aggregation_logic
+        self.client = studio_client
 
     def run(self, task: Task[Input, Output], metadata: dict[str, Any]) -> str:
         return ""
 
 
-class StudioBenchmarkRepository(BenchmarkRepository[Input, Output, ExpectedOutput, Evaluation, AggregatedEvaluation]):
+class StudioBenchmarkRepository(
+    BenchmarkRepository[Input, Output, ExpectedOutput, Evaluation, AggregatedEvaluation]
+):
     def __init__(self, studio_client: StudioClient):
         self.client = studio_client
 
@@ -55,7 +63,9 @@ class StudioBenchmarkRepository(BenchmarkRepository[Input, Output, ExpectedOutpu
         name: str,
         metadata: Optional[dict[str, Any]] = None,
         description: Optional[str] = None,
-    ) -> StudioBenchmark[Input, Output, ExpectedOutput, Evaluation, AggregatedEvaluation]:
+    ) -> StudioBenchmark[
+        Input, Output, ExpectedOutput, Evaluation, AggregatedEvaluation
+    ]:
         benchmark_id = self.client.create_benchmark(
             dataset_id,
             create_evaluation_logic_identifier(eval_logic),
@@ -78,17 +88,30 @@ class StudioBenchmarkRepository(BenchmarkRepository[Input, Output, ExpectedOutpu
         eval_logic: EvaluationLogic[Input, Output, ExpectedOutput, Evaluation],
         aggregation_logic: AggregationLogic[Evaluation, AggregatedEvaluation],
         force: bool = False,
-    ) -> StudioBenchmark[Input, Output, ExpectedOutput, Evaluation, AggregatedEvaluation]:
-        return StudioBenchmark()
+    ) -> StudioBenchmark[
+        Input, Output, ExpectedOutput, Evaluation, AggregatedEvaluation
+    ]:
+        benchmark = self.client.get_benchmark(benchmark_id)
+        if benchmark is None:
+            raise ValueError("Benchmark not found")
+        # check if the logic is the same
+        # check force bool
+        return StudioBenchmark(
+            benchmark_id,
+            benchmark.dataset_id,
+            eval_logic,
+            aggregation_logic,
+            self.client,
+        )
 
 
 def create_evaluation_logic_identifier(
     eval_logic: EvaluationLogic[Input, Output, ExpectedOutput, Evaluation],
 ) -> EvaluationLogicIdentifier:
     evaluator = Evaluator(
-        dataset_repository=None, # type: ignore
-        run_repository=None, # type: ignore
-        evaluation_repository=None, # type: ignore
+        dataset_repository=None,  # type: ignore
+        run_repository=None,  # type: ignore
+        evaluation_repository=None,  # type: ignore
         description="",
         evaluation_logic=eval_logic,
     )
@@ -107,8 +130,8 @@ def create_aggregation_logic_identifier(
     aggregation_logic: AggregationLogic[Evaluation, AggregatedEvaluation],
 ) -> AggregationLogicIdentifier:
     aggregator = Aggregator(
-        evaluation_repository=None, # type: ignore
-        aggregation_repository=None, # type: ignore
+        evaluation_repository=None,  # type: ignore
+        aggregation_repository=None,  # type: ignore
         description="",
         aggregation_logic=aggregation_logic,
     )

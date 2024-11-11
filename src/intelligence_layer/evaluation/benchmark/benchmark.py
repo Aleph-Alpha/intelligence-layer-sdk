@@ -10,7 +10,9 @@ from intelligence_layer.evaluation.evaluation.domain import Evaluation
 from intelligence_layer.evaluation.evaluation.evaluator.evaluator import EvaluationLogic
 
 
-class Benchmark(Generic[Input, Output, ExpectedOutput, Evaluation, AggregatedEvaluation]):
+class Benchmark(
+    Generic[Input, Output, ExpectedOutput, Evaluation, AggregatedEvaluation]
+):
     def __init__(
         self,
         benchmark_id: str,
@@ -25,7 +27,9 @@ class Benchmark(Generic[Input, Output, ExpectedOutput, Evaluation, AggregatedEva
         return ""
 
 
-class BenchmarkRepository(Generic[Input, Output, ExpectedOutput, Evaluation, AggregatedEvaluation], ABC):
+class BenchmarkRepository(
+    Generic[Input, Output, ExpectedOutput, Evaluation, AggregatedEvaluation], ABC
+):
     @abstractmethod
     def create_benchmark(
         self,

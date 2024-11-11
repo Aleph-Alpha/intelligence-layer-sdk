@@ -2,11 +2,10 @@ import os
 import time
 from collections.abc import Sequence
 from typing import Any
-from unittest.mock import Mock, patch
-from uuid import uuid4
+from unittest.mock import patch
+from uuid import UUID, uuid4
 
 import pytest
-from dotenv import load_dotenv
 from pytest import fixture
 
 from intelligence_layer.connectors import StudioClient
@@ -52,28 +51,6 @@ def test_trace() -> Sequence[ExportedSpan]:
     task = TracerTestTask()
     task.run("my input", tracer)
     return tracer.export_for_viewing()
-
-
-@fixture
-def studio_client() -> StudioClient:
-    load_dotenv()
-    project_name = str(uuid4())
-    client = StudioClient(project_name)
-    client.create_project(project_name)
-    return client
-
-
-@pytest.fixture
-def mock_studio_client() -> Mock:
-    return Mock(spec=StudioClient)
-
-
-@fixture
-def examples() -> Sequence[Example[str, str]]:
-    return [
-        Example(input="input_str", expected_output="output_str"),
-        Example(input="input_str2", expected_output="output_str2"),
-    ]
 
 
 @fixture
@@ -200,7 +177,8 @@ def test_can_upload_dataset_with_minimal_request_body(
     result = studio_client.submit_dataset(
         dataset=studio_dataset, examples=studio_examples
     )
-    assert result
+    uuid = UUID(result)
+    assert uuid
 
 
 def test_can_upload_dataset_with_complete_request_body(

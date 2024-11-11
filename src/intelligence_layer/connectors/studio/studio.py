@@ -2,6 +2,7 @@ import json
 import os
 from collections import defaultdict
 from collections.abc import Iterable, Sequence
+from datetime import datetime
 from typing import Any, Generic, Optional, TypeVar
 from urllib.parse import urljoin
 from uuid import uuid4
@@ -87,6 +88,22 @@ class PostBenchmarkRequest(BaseModel):
     benchmark_metadata: Optional[dict[str, Any]]
     evaluation_logic: EvaluationLogicIdentifier
     aggregation_logic: AggregationLogicIdentifier
+
+
+class GetBenchmarkResponse(BaseModel):
+    id: str
+    project_id: int
+    dataset_id: str
+    name: str
+    description: str | None
+    benchmark_metadata: dict[str, Any] | None
+    evaluation_logic: EvaluationLogicIdentifier
+    aggregation_logic: AggregationLogicIdentifier
+    created_at: datetime
+    updated_at: datetime | None
+    last_executed_at: datetime | None
+    created_by: str | None
+    updated_by: str | None
 
 
 class StudioClient:
@@ -299,7 +316,7 @@ class StudioClient:
         )
 
         self._raise_for_status(response)
-        return str(response.text)
+        return str(response.json())
 
     def create_benchmark(
         self,
@@ -323,11 +340,29 @@ class StudioClient:
         )
         response = requests.post(
             url,
-            data=json.dumps(benchmark),
+            data=benchmark.model_dump_json(),
             headers=self._headers,
         )
         self._raise_for_status(response)
-        return str(response.text)
+        return str(response.json())
+
+    def get_benchmark(
+        self,
+        benchmark_id: str,
+    ) -> GetBenchmarkResponse | None:
+        url = urljoin(
+            self.url,
+            f"/api/projects/{self.project_id}/evaluation/benchmarks/{benchmark_id}",
+        )
+        response = requests.get(
+            url,
+            headers=self._headers,
+        )
+        self._raise_for_status(response)
+        response_text = response.json()
+        if response_text is None:
+            return None
+        return GetBenchmarkResponse.model_validate(response_text)
 
     def _raise_for_status(self, response: requests.Response) -> None:
         try:

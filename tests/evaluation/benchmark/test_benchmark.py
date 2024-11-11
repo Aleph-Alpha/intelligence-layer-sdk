@@ -1,4 +1,3 @@
-
 from intelligence_layer.evaluation.benchmark.studio_benchmark import (
     StudioBenchmarkRepository,
     create_aggregation_logic_identifier,
@@ -41,12 +40,49 @@ def test_extract_types_from_aggregation_logic() -> None:
     assert created_identifier.evaluation_schema["type"] == "object"
     assert created_identifier.aggregation_schema["type"] == "object"
 
-def test_create_benchmark(studio_benchmark_repository: StudioBenchmarkRepository[str, str, None, DummyEvaluation, DummyAggregation], studio_dataset_repository: StudioDatasetRepository) -> None:
-    dataset_id = studio_dataset_repository.create_dataset(examples=[], dataset_name="dataset").id
+
+def test_create_benchmark(
+    studio_benchmark_repository: StudioBenchmarkRepository[
+        str, str, None, DummyEvaluation, DummyAggregation
+    ],
+    studio_dataset_repository: StudioDatasetRepository,
+) -> None:
+    dataset_id = studio_dataset_repository.create_dataset(
+        examples=[], dataset_name="dataset"
+    ).id
     eval_logic = DummyEvaluationLogic()
     aggregation_logic = DummyAggregationLogic()
-    benchmark = studio_benchmark_repository.create_benchmark(dataset_id, eval_logic, aggregation_logic, "benchmark_name")
+    benchmark = studio_benchmark_repository.create_benchmark(
+        dataset_id, eval_logic, aggregation_logic, "benchmark_name"
+    )
 
     assert benchmark.id
 
 
+def test_get_benchmark(
+    studio_benchmark_repository: StudioBenchmarkRepository[
+        str, str, None, DummyEvaluation, DummyAggregation
+    ],
+) -> None:
+    eval_logic = DummyEvaluationLogic()
+    aggregation_logic = DummyAggregationLogic()
+    benchmark = studio_benchmark_repository.get_benchmark(
+        "benchmark_id", eval_logic, aggregation_logic
+    )
+    assert benchmark.id == "benchmark_id"
+    assert benchmark.dataset_id == "dataset_id"
+    assert benchmark.eval_logic
+    assert benchmark.aggregation_logic
+
+
+def test_get_non_existing_benchmark(
+    studio_benchmark_repository: StudioBenchmarkRepository[
+        str, str, None, DummyEvaluation, DummyAggregation
+    ],
+) -> None:
+    eval_logic = DummyEvaluationLogic()
+    aggregation_logic = DummyAggregationLogic()
+
+    studio_benchmark_repository.get_benchmark(
+        "non_existing_id", eval_logic, aggregation_logic
+    )
