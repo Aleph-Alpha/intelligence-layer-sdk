@@ -7,9 +7,7 @@ from intelligence_layer.evaluation.dataset.studio_dataset_repository import (
     StudioDatasetRepository,
 )
 from tests.evaluation.conftest import (
-    DummyAggregation,
     DummyAggregationLogic,
-    DummyEvaluation,
     DummyEvaluationLogic,
 )
 
@@ -42,9 +40,7 @@ def test_extract_types_from_aggregation_logic() -> None:
 
 
 def test_create_benchmark(
-    studio_benchmark_repository: StudioBenchmarkRepository[
-        str, str, None, DummyEvaluation, DummyAggregation
-    ],
+    studio_benchmark_repository: StudioBenchmarkRepository,
     studio_dataset_repository: StudioDatasetRepository,
 ) -> None:
     dataset_id = studio_dataset_repository.create_dataset(
@@ -60,9 +56,7 @@ def test_create_benchmark(
 
 
 def test_get_benchmark(
-    studio_benchmark_repository: StudioBenchmarkRepository[
-        str, str, None, DummyEvaluation, DummyAggregation
-    ],
+    studio_benchmark_repository: StudioBenchmarkRepository,
 ) -> None:
     eval_logic = DummyEvaluationLogic()
     aggregation_logic = DummyAggregationLogic()
@@ -76,9 +70,7 @@ def test_get_benchmark(
 
 
 def test_get_non_existing_benchmark(
-    studio_benchmark_repository: StudioBenchmarkRepository[
-        str, str, None, DummyEvaluation, DummyAggregation
-    ],
+    studio_benchmark_repository: StudioBenchmarkRepository,
 ) -> None:
     eval_logic = DummyEvaluationLogic()
     aggregation_logic = DummyAggregationLogic()

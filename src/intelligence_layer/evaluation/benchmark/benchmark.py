@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import Any, Generic, Optional
+from typing import Any, Optional
 
 from intelligence_layer.core import Input, Output
 from intelligence_layer.core.task import Task
@@ -10,9 +10,7 @@ from intelligence_layer.evaluation.evaluation.domain import Evaluation
 from intelligence_layer.evaluation.evaluation.evaluator.evaluator import EvaluationLogic
 
 
-class Benchmark(
-    Generic[Input, Output, ExpectedOutput, Evaluation, AggregatedEvaluation]
-):
+class Benchmark:
     def __init__(
         self,
         benchmark_id: str,
@@ -27,9 +25,7 @@ class Benchmark(
         return ""
 
 
-class BenchmarkRepository(
-    Generic[Input, Output, ExpectedOutput, Evaluation, AggregatedEvaluation], ABC
-):
+class BenchmarkRepository(ABC):
     @abstractmethod
     def create_benchmark(
         self,
@@ -39,7 +35,7 @@ class BenchmarkRepository(
         name: str,
         metadata: Optional[dict[str, Any]] = None,
         description: Optional[str] = None,
-    ) -> Benchmark[Input, Output, ExpectedOutput, Evaluation, AggregatedEvaluation]:
+    ) -> Benchmark:
         pass
 
     @abstractmethod
@@ -49,5 +45,5 @@ class BenchmarkRepository(
         eval_logic: EvaluationLogic[Input, Output, ExpectedOutput, Evaluation],
         aggregation_logic: AggregationLogic[Evaluation, AggregatedEvaluation],
         force: bool = False,
-    ) -> Benchmark[Input, Output, ExpectedOutput, Evaluation, AggregatedEvaluation]:
+    ) -> Benchmark:
         pass

@@ -57,21 +57,30 @@ class DummyAggregationLogic(AggregationLogic[DummyEvaluation, DummyAggregation])
     def aggregate(self, evaluations: Iterable[DummyEvaluation]) -> DummyAggregation:
         return DummyAggregation(num_evaluations=len(list(evaluations)))
 
+
 @fixture
-def studio_dataset(studio_client: StudioClient, examples: Sequence[StudioExample[str, str]]) -> str:
-    return studio_client.submit_dataset(
-            StudioDataset(name="dataset_name"), examples
-        )
+def studio_dataset(
+    studio_client: StudioClient, examples: Sequence[StudioExample[str, str]]
+) -> str:
+    return studio_client.submit_dataset(StudioDataset(name="dataset_name"), examples)
+
 
 @fixture
 def evaluation_logic_identifier() -> EvaluationLogicIdentifier:
     return create_evaluation_logic_identifier(DummyEvaluationLogic())
 
+
 @fixture
 def aggregation_logic_identifier() -> AggregationLogicIdentifier:
     return create_aggregation_logic_identifier(DummyAggregationLogic())
 
-def test_create_benchmark(studio_client: StudioClient, studio_dataset: str, evaluation_logic_identifier: EvaluationLogicIdentifier, aggregation_logic_identifier: AggregationLogicIdentifier) -> None:
+
+def test_create_benchmark(
+    studio_client: StudioClient,
+    studio_dataset: str,
+    evaluation_logic_identifier: EvaluationLogicIdentifier,
+    aggregation_logic_identifier: AggregationLogicIdentifier,
+) -> None:
     benchmark_id = studio_client.create_benchmark(
         studio_dataset,
         evaluation_logic_identifier,
@@ -83,7 +92,9 @@ def test_create_benchmark(studio_client: StudioClient, studio_dataset: str, eval
 
 
 def test_create_benchmark_with_non_existing_dataset(
-    studio_client: StudioClient,  evaluation_logic_identifier: EvaluationLogicIdentifier, aggregation_logic_identifier: AggregationLogicIdentifier
+    studio_client: StudioClient,
+    evaluation_logic_identifier: EvaluationLogicIdentifier,
+    aggregation_logic_identifier: AggregationLogicIdentifier,
 ) -> None:
     with pytest.raises(HTTPError, match=str(HTTPStatus.BAD_REQUEST)):
         studio_client.create_benchmark(
@@ -94,7 +105,12 @@ def test_create_benchmark_with_non_existing_dataset(
         )
 
 
-def test_get_benchmark(studio_client: StudioClient, studio_dataset: str,  evaluation_logic_identifier: EvaluationLogicIdentifier, aggregation_logic_identifier: AggregationLogicIdentifier) -> None:
+def test_get_benchmark(
+    studio_client: StudioClient,
+    studio_dataset: str,
+    evaluation_logic_identifier: EvaluationLogicIdentifier,
+    aggregation_logic_identifier: AggregationLogicIdentifier,
+) -> None:
     dummy_evaluation_logic = """return DummyEvaluation(result="success")"""
     benchmark_name = "benchmark_name"
 

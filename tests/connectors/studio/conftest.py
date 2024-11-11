@@ -1,4 +1,4 @@
-from typing import Sequence
+from collections.abc import Sequence
 from unittest.mock import Mock
 from uuid import uuid4
 
@@ -20,6 +20,7 @@ def studio_client() -> StudioClient:
 @fixture
 def mock_studio_client() -> Mock:
     return Mock(spec=StudioClient)
+
 
 @fixture
 def examples() -> Sequence[StudioExample[str, str]]:

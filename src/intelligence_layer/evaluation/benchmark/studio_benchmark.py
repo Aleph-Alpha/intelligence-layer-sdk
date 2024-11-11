@@ -28,7 +28,7 @@ from intelligence_layer.evaluation.evaluation.evaluator.evaluator import (
 
 
 class StudioBenchmark(
-    Benchmark[Input, Output, ExpectedOutput, Evaluation, AggregatedEvaluation]
+    Benchmark
 ):  # <- skip the impl here for now, not this is another ticket
     def __init__(
         self,
@@ -49,9 +49,7 @@ class StudioBenchmark(
         return ""
 
 
-class StudioBenchmarkRepository(
-    BenchmarkRepository[Input, Output, ExpectedOutput, Evaluation, AggregatedEvaluation]
-):
+class StudioBenchmarkRepository(BenchmarkRepository):
     def __init__(self, studio_client: StudioClient):
         self.client = studio_client
 
@@ -63,9 +61,7 @@ class StudioBenchmarkRepository(
         name: str,
         metadata: Optional[dict[str, Any]] = None,
         description: Optional[str] = None,
-    ) -> StudioBenchmark[
-        Input, Output, ExpectedOutput, Evaluation, AggregatedEvaluation
-    ]:
+    ) -> StudioBenchmark:
         benchmark_id = self.client.create_benchmark(
             dataset_id,
             create_evaluation_logic_identifier(eval_logic),
@@ -88,9 +84,7 @@ class StudioBenchmarkRepository(
         eval_logic: EvaluationLogic[Input, Output, ExpectedOutput, Evaluation],
         aggregation_logic: AggregationLogic[Evaluation, AggregatedEvaluation],
         force: bool = False,
-    ) -> StudioBenchmark[
-        Input, Output, ExpectedOutput, Evaluation, AggregatedEvaluation
-    ]:
+    ) -> StudioBenchmark:
         benchmark = self.client.get_benchmark(benchmark_id)
         if benchmark is None:
             raise ValueError("Benchmark not found")

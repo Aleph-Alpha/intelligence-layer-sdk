@@ -100,7 +100,7 @@ def mock_studio_client() -> Mock:
 @fixture
 def studio_benchmark_repository(
     mock_studio_client: StudioClient,
-) -> StudioBenchmarkRepository[str, str, None, DummyEvaluation, DummyAggregation]:
+) -> StudioBenchmarkRepository:
     return StudioBenchmarkRepository(
         studio_client=mock_studio_client,
     )
