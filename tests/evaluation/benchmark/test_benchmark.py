@@ -1,10 +1,10 @@
+from uuid import UUID, uuid4
+
+from intelligence_layer.connectors.studio.studio import StudioClient
 from intelligence_layer.evaluation.benchmark.studio_benchmark import (
     StudioBenchmarkRepository,
     create_aggregation_logic_identifier,
     create_evaluation_logic_identifier,
-)
-from intelligence_layer.evaluation.dataset.studio_dataset_repository import (
-    StudioDatasetRepository,
 )
 from tests.evaluation.conftest import (
     DummyAggregationLogic,
@@ -40,26 +40,30 @@ def test_extract_types_from_aggregation_logic() -> None:
 
 
 def test_create_benchmark(
-    studio_benchmark_repository: StudioBenchmarkRepository,
-    studio_dataset_repository: StudioDatasetRepository,
+    studio_benchmark_repository: StudioBenchmarkRepository, mock_studio_client: StudioClient
 ) -> None:
-    dataset_id = studio_dataset_repository.create_dataset(
-        examples=[], dataset_name="dataset"
-    ).id
     eval_logic = DummyEvaluationLogic()
     aggregation_logic = DummyAggregationLogic()
+    dataset_id = "fake_dataset_id"
+    mock_studio_client.create_benchmark.return_value = str(uuid4())
+
     benchmark = studio_benchmark_repository.create_benchmark(
         dataset_id, eval_logic, aggregation_logic, "benchmark_name"
     )
-
-    assert benchmark.id
+    uuid = UUID(benchmark.id)
+    assert uuid
+    assert benchmark.dataset_id == dataset_id
+    studio_benchmark_repository.client.create_benchmark.assert_called_once()
 
 
 def test_get_benchmark(
-    studio_benchmark_repository: StudioBenchmarkRepository,
+    studio_benchmark_repository: StudioBenchmarkRepository, mock_studio_client: StudioClient
 ) -> None:
     eval_logic = DummyEvaluationLogic()
     aggregation_logic = DummyAggregationLogic()
+    mock_studio_client.create_benchmark.return_value = str(uuid4())
+
+
     benchmark = studio_benchmark_repository.get_benchmark(
         "benchmark_id", eval_logic, aggregation_logic
     )
