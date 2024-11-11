@@ -2,7 +2,7 @@ import json
 import os
 from collections import defaultdict
 from collections.abc import Iterable, Sequence
-from typing import Generic, Optional, TypeVar
+from typing import Any, Generic, Optional, TypeVar
 from urllib.parse import urljoin
 from uuid import uuid4
 
@@ -64,6 +64,29 @@ class StudioDataset(BaseModel):
     name: str
     labels: set[str] = set()
     metadata: SerializableDict = dict()
+
+
+class EvaluationLogicIdentifier(BaseModel):
+    logic: str
+    input_schema: dict[str, Any]
+    output_schema: dict[str, Any]
+    expected_output_schema: dict[str, Any]
+    evaluation_schema: dict[str, Any]
+
+
+class AggregationLogicIdentifier(BaseModel):
+    logic: str
+    evaluation_schema: dict[str, Any]
+    aggregation_schema: dict[str, Any]
+
+
+class PostBenchmarkRequest(BaseModel):
+    dataset_id: str
+    name: str
+    description: Optional[str]
+    benchmark_metadata: Optional[dict[str, Any]]
+    evaluation_logic: EvaluationLogicIdentifier
+    aggregation_logic: AggregationLogicIdentifier
 
 
 class StudioClient:
@@ -275,6 +298,34 @@ class StudioClient:
             headers=self._headers,
         )
 
+        self._raise_for_status(response)
+        return str(response.text)
+
+    def create_benchmark(
+        self,
+        dataset_id: str,
+        eval_logic: EvaluationLogicIdentifier,
+        aggregation_logic: AggregationLogicIdentifier,
+        name: str,
+        description: Optional[str] = None,
+        metadata: Optional[dict[str, Any]] = None,
+    ) -> str:
+        benchmark = PostBenchmarkRequest(
+            dataset_id=dataset_id,
+            name=name,
+            description=description,
+            benchmark_metadata=metadata,
+            evaluation_logic=eval_logic,
+            aggregation_logic=aggregation_logic,
+        )
+        url = urljoin(
+            self.url, f"/api/projects/{self.project_id}/evaluation/benchmarks"
+        )
+        response = requests.post(
+            url,
+            data=json.dumps(benchmark),
+            headers=self._headers,
+        )
         self._raise_for_status(response)
         return str(response.text)
 
