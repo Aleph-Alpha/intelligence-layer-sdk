@@ -40,12 +40,13 @@ def test_extract_types_from_aggregation_logic() -> None:
 
 
 def test_create_benchmark(
-    studio_benchmark_repository: StudioBenchmarkRepository, mock_studio_client: StudioClient
+    studio_benchmark_repository: StudioBenchmarkRepository,
+    mock_studio_client: StudioClient,
 ) -> None:
     eval_logic = DummyEvaluationLogic()
     aggregation_logic = DummyAggregationLogic()
     dataset_id = "fake_dataset_id"
-    mock_studio_client.create_benchmark.return_value = str(uuid4())
+    mock_studio_client.create_benchmark.return_value = str(uuid4())  # type: ignore
 
     benchmark = studio_benchmark_repository.create_benchmark(
         dataset_id, eval_logic, aggregation_logic, "benchmark_name"
@@ -53,16 +54,16 @@ def test_create_benchmark(
     uuid = UUID(benchmark.id)
     assert uuid
     assert benchmark.dataset_id == dataset_id
-    studio_benchmark_repository.client.create_benchmark.assert_called_once()
+    studio_benchmark_repository.client.create_benchmark.assert_called_once()  # type: ignore
 
 
-def test_get_benchmark(
-    studio_benchmark_repository: StudioBenchmarkRepository, mock_studio_client: StudioClient
+def test_get_benchmark(  # TODO
+    studio_benchmark_repository: StudioBenchmarkRepository,
+    mock_studio_client: StudioClient,
 ) -> None:
     eval_logic = DummyEvaluationLogic()
     aggregation_logic = DummyAggregationLogic()
-    mock_studio_client.create_benchmark.return_value = str(uuid4())
-
+    mock_studio_client.create_benchmark.return_value = str(uuid4())  # type: ignore
 
     benchmark = studio_benchmark_repository.get_benchmark(
         "benchmark_id", eval_logic, aggregation_logic
@@ -73,7 +74,7 @@ def test_get_benchmark(
     assert benchmark.aggregation_logic
 
 
-def test_get_non_existing_benchmark(
+def test_get_non_existing_benchmark(  # TODO
     studio_benchmark_repository: StudioBenchmarkRepository,
 ) -> None:
     eval_logic = DummyEvaluationLogic()

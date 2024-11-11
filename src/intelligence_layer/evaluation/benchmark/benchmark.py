@@ -10,7 +10,8 @@ from intelligence_layer.evaluation.evaluation.domain import Evaluation
 from intelligence_layer.evaluation.evaluation.evaluator.evaluator import EvaluationLogic
 
 
-class Benchmark:
+class Benchmark(ABC):
+    @abstractmethod
     def __init__(
         self,
         benchmark_id: str,
@@ -21,8 +22,9 @@ class Benchmark:
     ) -> None:
         pass
 
+    @abstractmethod
     def run(self, task: Task[Input, Output], metadata: dict[str, Any]) -> str:
-        return ""
+        pass
 
 
 class BenchmarkRepository(ABC):
