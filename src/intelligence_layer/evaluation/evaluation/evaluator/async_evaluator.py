@@ -30,7 +30,7 @@ class AsyncEvaluator(EvaluatorBase[Input, Output, ExpectedOutput, Evaluation], A
         Failed submissions are saved as FailedExampleEvaluations.
 
         Args:
-            run_ids: The runs to be evaluated. Each run is expected to have the same
+            *run_ids: The runs to be evaluated. Each run is expected to have the same
                 dataset as input (which implies their tasks have the same input-type)
                 and their tasks have the same output-type. For each example in the
                 dataset referenced by the runs the outputs of all runs are collected
@@ -91,8 +91,8 @@ class AsyncEvaluationRepository(EvaluationRepository):
     def partial_evaluation_overviews(self) -> Iterable[PartialEvaluationOverview]:
         """Returns all :class:`PartialEvaluationOverview`s sorted by their ID.
 
-        Returns:
-            :class:`Iterable` of :class:`PartialEvaluationOverview`s.
+        Yields:
+            :class:`PartialEvaluationOverview`s.
         """
         for eval_id in self.partial_evaluation_overview_ids():
             evaluation_overview = self.partial_evaluation_overview(eval_id)

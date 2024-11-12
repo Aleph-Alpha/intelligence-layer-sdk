@@ -66,8 +66,8 @@ class DatasetRepository(ABC):
     def datasets(self) -> Iterable[Dataset]:
         """Returns all :class:`Dataset`s sorted by their ID.
 
-        Returns:
-            :class:`Sequence` of :class:`Dataset`s.
+        Yields:
+            :class:`Dataset`s.
         """
         for dataset_id in self.dataset_ids():
             dataset = self.dataset(dataset_id)

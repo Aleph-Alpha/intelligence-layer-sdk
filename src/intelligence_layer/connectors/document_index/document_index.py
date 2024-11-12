@@ -211,11 +211,10 @@ class FilterField(BaseModel):
         """Validate field_value and convert datetime to RFC3339 format with Z suffix.
 
         Args:
-            cls (BaseModel): The class that this method is bound to.
-            v (Union[str, int, float, bool]): The value to be validated and converted.  # noqa: DAR102: + cls
+            v: The value to be validated and converted.  # noqa: DAR102: + cls
 
         Returns:
-            Union[str, int, float, bool]: The validated and converted value.
+            The validated and converted value.
         """
         if isinstance(v, datetime):
             if v.tzinfo is None or v.tzinfo.utcoffset(v) is None:
@@ -338,6 +337,12 @@ class DocumentIndexError(RuntimeError):
     """
 
     def __init__(self, message: str, status_code: HTTPStatus) -> None:
+        """Initialize the error.
+
+        Args:
+            message: Message to return.
+            status_code: Status code to return.
+        """
         super().__init__(message)
         self.message = message
         self.status_code = status_code
@@ -391,7 +396,7 @@ class DocumentIndexClient:
     Document Index is a tool for managing collections of documents, enabling operations such as creation, deletion, listing, and searching.
     Documents can be stored either in the cloud or in a local deployment.
 
-    Attributes:
+    Args:
         token: A valid token for the document index API.
         base_document_index_url: The url of the document index' API.
 
@@ -558,13 +563,10 @@ class DocumentIndexClient:
         """Create a filter index in a specified namespace.
 
         Args:
-            namespace (str): The namespace in which to create the filter index.
-            filter_index_name (str): The name of the filter index to create.
-            field_name (str): The name of the field to index.
-            field_type (Literal["string", "integer", "float", "boolean", "datetime"]): The type of the field to index.
-
-        Returns:
-            None
+            namespace: The namespace in which to create the filter index.
+            filter_index_name: The name of the filter index to create.
+            field_name: The name of the field to index.
+            field_type: The type of the field to index.
         """
         if not re.match(r"^[a-zA-Z0-9\-.]+$", filter_index_name):
             raise ValueError(
@@ -649,8 +651,8 @@ class DocumentIndexClient:
         """Delete an index from a collection.
 
         Args:
-            index_name: Name of the index.
             collection_path: Path to the collection of interest.
+            index_name: Name of the index.
         """
         url_suffix = f"collections/{collection_path.namespace}/{collection_path.collection}/indexes/{index_name}"
         url = urljoin(self._base_document_index_url, url_suffix)

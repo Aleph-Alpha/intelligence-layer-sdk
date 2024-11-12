@@ -133,6 +133,9 @@ class LimitedConcurrencyClient:
                 this method tries to fetch it from the environment under the name of "CLIENT_URL".
                 If this is not present, it defaults to the Aleph Alpha Api.
                 If you have an on premise setup, change this to your host URL.
+
+        Returns:
+            A `LimitedConcurrencyClient`
         """
         if token is None:
             token = getenv("AA_TOKEN")

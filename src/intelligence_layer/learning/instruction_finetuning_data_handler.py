@@ -202,7 +202,7 @@ class InstructionFinetuningDataHandler:
             language_action: Action to take for language enrichment.
             max_workers: The maximum number of workers to use for parallel processing.
 
-        Returns:
+        Yields:
             The ids of the updated samples.
         """
 
@@ -241,7 +241,7 @@ class InstructionFinetuningDataHandler:
         Args:
             limit: The maximum number of samples to return.
 
-        Returns:
+        Yields:
             The first n samples.
         """
         yield from self.repository.head(limit)
@@ -263,7 +263,7 @@ class InstructionFinetuningDataHandler:
         Args:
             ids: The ids of the samples to return.
 
-        Returns:
+        Yields:
             The samples with the given ids.
         """
         yield from self.repository.samples(ids)
@@ -277,7 +277,7 @@ class InstructionFinetuningDataHandler:
             filter_expression: The filter expression to apply.
             limit: The maximum number of samples to return.
 
-        Returns:
+        Yields:
             The samples that match the filter expression.
         """
         if filter_expression is not None:

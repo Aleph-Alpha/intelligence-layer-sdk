@@ -74,6 +74,7 @@ class CompositeSpan(Generic[SpanVar], CompositeTracer[SpanVar], Span):
 
     Args:
         tracers: spans that will be forwarded all subsequent log and span calls.
+        context: Context of the parent. Defaults to None.
     """
 
     def __init__(

@@ -345,7 +345,7 @@ class EvaluatorBase(Generic[Input, Output, ExpectedOutput, Evaluation], ABC):
     def failed_evaluations(
         self, evaluation_id: str
     ) -> Iterable[EvaluationLineage[Input, ExpectedOutput, Output, Evaluation]]:
-        """Returns the `EvaluationLineage` objects for all failed example evalations that belong to the given evaluation ID.
+        """Returns the `EvaluationLineage` objects for all failed example evaluations that belong to the given evaluation ID.
 
         Args:
             evaluation_id: The ID of the evaluation overview

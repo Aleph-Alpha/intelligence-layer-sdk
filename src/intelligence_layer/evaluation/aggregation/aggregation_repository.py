@@ -48,8 +48,8 @@ class AggregationRepository(ABC):
         Args:
             aggregation_type: Type of the aggregation.
 
-        Returns:
-            An :class:`Iterable` of :class:`AggregationOverview`s.
+        Yields:
+            :class:`AggregationOverview`s.
         """
         for aggregation_id in self.aggregation_overview_ids():
             aggregation_overview = self.aggregation_overview(

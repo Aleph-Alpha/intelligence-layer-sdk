@@ -48,6 +48,7 @@ class PromptBasedClassify(Task[ClassifyInput, SingleLabelClassifyOutput]):
         model: The model used throughout the task for model related API calls. Defaults
             to luminous-base-control.
         echo: echo-task used to compute the score for each label. Defaults to :class:`Echo`.
+        instruction: The prompt to use. Check the class for the default.
 
     Attributes:
         PROMPT_TEMPLATE_STR: The prompt template used for answering the question.

@@ -22,7 +22,7 @@ class LabelWithDefinition(BaseModel):
 
     Attributes:
         name: Name of the label.
-        definition: Ad efinition or description of the label.
+        definition: A definition or description of the label.
     """
 
     name: str

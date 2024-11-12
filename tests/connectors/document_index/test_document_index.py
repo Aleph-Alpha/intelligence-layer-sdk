@@ -89,10 +89,7 @@ def is_outdated_identifier(identifier: str, timestamp_threshold: datetime) -> bo
     timestamp = datetime.strptime(matched["timestamp"], "%Y%m%dT%H%M%S").replace(
         tzinfo=timezone.utc
     )
-    if timestamp > timestamp_threshold:
-        return False
-
-    return True
+    return not timestamp > timestamp_threshold
 
 
 @fixture(scope="session")

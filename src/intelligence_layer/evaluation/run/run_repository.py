@@ -85,7 +85,7 @@ class RunRepository(ABC):
     def run_overviews(self) -> Iterable[RunOverview]:
         """Returns all :class:`RunOverview`s sorted by their ID.
 
-        Returns:
+        Yields:
             :class:`Iterable` of :class:`RunOverview`s.
         """
         for run_id in self.run_overview_ids():

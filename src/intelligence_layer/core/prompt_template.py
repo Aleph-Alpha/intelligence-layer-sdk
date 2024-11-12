@@ -218,9 +218,13 @@ class PromptTemplate:
     def placeholder(self, value: Union[Image, Tokens]) -> Placeholder:
         """Saves a non-text prompt item to the template and returns a placeholder.
 
+        The placeholder is used to embed the prompt item in the template
+
         Args:
             value: Tokens to store
-        The placeholder is used to embed the prompt item in the template
+
+        Returns:
+            A placeholder for the given non-text item.
         """
         id = Placeholder(uuid4())
         self._prompt_item_placeholders[id] = value
@@ -258,6 +262,9 @@ class PromptTemplate:
             ... ])
             >>> template = PromptTemplate("Question: {{user_prompt}}\n Answer: ")
             >>> prompt = template.to_rich_prompt(user_prompt=template.embed_prompt(user_prompt))
+
+        Returns:
+            The prompt template with the embedded prompt.
         """
         prompt_text = ""
         last_item = None
@@ -276,10 +283,13 @@ class PromptTemplate:
     def to_rich_prompt(self, **kwargs: Any) -> RichPrompt:
         """Creates a `Prompt` along with metadata from the template string and the given parameters.
 
+        Currently, the only metadata returned is information about ranges that are marked in the template.
+        Provided parameters are passed to `liquid.Template.render`.
+
         Args:
              **kwargs: Parameters to enrich prompt with
-         Currently, the only metadata returned is information about ranges that are marked in the template.
-         Provided parameters are passed to `liquid.Template.render`.
+        Returns:
+            The rendered prompt as a `RichPrompt`
         """
         context = PromptRangeContext(
             self._template.env,
