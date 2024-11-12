@@ -183,6 +183,20 @@ class Aggregator(Generic[Evaluation, AggregatedEvaluation]):
             ) from None
         return cast(type[Evaluation], evaluation_type)
 
+    def aggregated_evaluation_type(self) -> type[AggregatedEvaluation]:
+        """Returns the type of the aggregated result of a run.
+
+        Returns:
+            Returns the type of the aggreagtion result.
+        """
+        try:
+            aggregated_evaluation_type = self._get_types["AggregatedEvaluation"]
+        except KeyError:
+            raise TypeError(
+                f"Alternatively overwrite aggregated_evaluation_type() in {type(self)}"
+            ) from None
+        return cast(type[AggregatedEvaluation], aggregated_evaluation_type)
+
     @final
     def aggregate_evaluation(
         self,

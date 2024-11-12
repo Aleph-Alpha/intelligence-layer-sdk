@@ -1,7 +1,9 @@
 from datetime import datetime
+from typing import Optional
 from uuid import UUID, uuid4
 
 import pytest
+from pydantic import BaseModel
 from pytest import fixture
 from requests import HTTPError, Response
 
@@ -13,6 +15,7 @@ from intelligence_layer.evaluation.benchmark.studio_benchmark import (
     StudioBenchmarkRepository,
     create_aggregation_logic_identifier,
     create_evaluation_logic_identifier,
+    type_to_schema,
 )
 from tests.evaluation.conftest import (
     DummyAggregationLogic,
@@ -56,6 +59,44 @@ def evaluation_logic() -> DummyEvaluationLogic:
 @fixture
 def aggregation_logic() -> DummyAggregationLogic:
     return DummyAggregationLogic()
+
+
+def test_type_to_schema() -> None:
+    class ExampleModel(BaseModel):
+        name: str
+        age: int
+
+    class NestedModel(BaseModel):
+        example: ExampleModel
+        tags: list[str]
+
+    assert type_to_schema(int) == {"type": "integer"}
+    assert type_to_schema(str) == {"type": "string"}
+    assert type_to_schema(bool) == {"type": "boolean"}
+    assert type_to_schema(float) == {"type": "number"}
+    assert type_to_schema(None) == {"type": "null"}  # type: ignore
+    assert type_to_schema(Optional[int]) == {  # type: ignore
+        "anyOf": [{"type": "integer"}, {"type": "null"}]
+    }
+    assert type_to_schema(list[int]) == {"type": "array", "items": {"type": "integer"}}
+
+    assert type_to_schema(dict[str, int]) == {
+        "type": "object",
+        "additionalProperties": {"type": "integer"},
+    }
+    schema = type_to_schema(ExampleModel)
+    assert schema["title"] == "ExampleModel"
+    assert "properties" in schema
+    assert schema["properties"]["name"]["type"] == "string"
+    assert schema["properties"]["age"]["type"] == "integer"
+
+    schema = type_to_schema(NestedModel)
+    assert schema["title"] == "NestedModel"
+    assert "properties" in schema
+    assert "example" in schema["properties"]
+    assert "tags" in schema["properties"]
+    assert schema["properties"]["tags"]["type"] == "array"
+    assert schema["properties"]["tags"]["items"] == {"type": "string"}
 
 
 def test_extract_types_from_eval_logic(evaluation_logic: DummyEvaluationLogic) -> None:

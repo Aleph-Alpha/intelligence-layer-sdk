@@ -104,6 +104,10 @@ class StudioBenchmarkRepository(BenchmarkRepository):
         )
 
 
+def type_to_schema(type_: type) -> dict[str, Any]:
+    return TypeAdapter(type_).json_schema()
+
+
 def create_evaluation_logic_identifier(
     eval_logic: EvaluationLogic[Input, Output, ExpectedOutput, Evaluation],
 ) -> EvaluationLogicIdentifier:
@@ -116,12 +120,10 @@ def create_evaluation_logic_identifier(
     )
     return EvaluationLogicIdentifier(
         logic=inspect.getsource(type(eval_logic)),
-        input_schema=TypeAdapter(evaluator.input_type()).json_schema(),
-        output_schema=TypeAdapter(evaluator.output_type()).json_schema(),
-        expected_output_schema=TypeAdapter(
-            evaluator.expected_output_type()
-        ).json_schema(),
-        evaluation_schema=TypeAdapter(evaluator.evaluation_type()).json_schema(),
+        input_schema=type_to_schema(evaluator.input_type()),
+        output_schema=type_to_schema(evaluator.output_type()),
+        expected_output_schema=type_to_schema(evaluator.expected_output_type()),
+        evaluation_schema=type_to_schema(evaluator.evaluation_type()),
     )
 
 
@@ -136,8 +138,6 @@ def create_aggregation_logic_identifier(
     )
     return AggregationLogicIdentifier(
         logic=inspect.getsource(type(aggregation_logic)),
-        evaluation_schema=TypeAdapter(aggregator.evaluation_type()).json_schema(),
-        aggregation_schema=TypeAdapter(
-            aggregator._get_types["AggregatedEvaluation"]
-        ).json_schema(),
+        evaluation_schema=type_to_schema(aggregator.evaluation_type()),
+        aggregation_schema=type_to_schema(aggregator.aggregated_evaluation_type()),
     )

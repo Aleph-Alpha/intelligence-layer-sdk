@@ -676,6 +676,9 @@ def test_aggregator_type_magic_works(
 
     assert who_is_timmy == types
 
+    assert timmy.evaluation_type() == EvaluationType
+    assert timmy.aggregated_evaluation_type() == AggregatedEvaluationType
+
 
 def test_eval_and_aggregate_runs_only_runs_n_examples(
     dummy_evaluator: Evaluator[str, str, None, DummyEvaluation],
