@@ -88,7 +88,7 @@ class StudioBenchmarkRepository(BenchmarkRepository):
         benchmark_id: str,
         eval_logic: EvaluationLogic[Input, Output, ExpectedOutput, Evaluation],
         aggregation_logic: AggregationLogic[Evaluation, AggregatedEvaluation],
-        force: bool = False,
+        force_execution: bool = False,
     ) -> StudioBenchmark:
         benchmark = self.client.get_benchmark(benchmark_id)
         if benchmark is None:
