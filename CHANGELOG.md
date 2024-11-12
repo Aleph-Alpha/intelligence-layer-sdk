@@ -14,7 +14,7 @@
   - Add `how_to_upload_existing_datasets_to_studio.ipynb` to how-tos
 
 ### Fixes
-...
+ - Improved some docstring inconsistencies across the codebase and switched the docstring checker to pydoclint.
 ### Deprecations 
 ...
 
