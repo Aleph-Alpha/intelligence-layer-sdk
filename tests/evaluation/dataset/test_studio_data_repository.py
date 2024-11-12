@@ -3,7 +3,7 @@ from unittest.mock import Mock
 import pytest
 from pydantic import BaseModel
 
-from intelligence_layer.connectors import DataClient, StudioClient
+from intelligence_layer.connectors import DataClient
 from intelligence_layer.connectors.studio.studio import StudioDataset
 from intelligence_layer.evaluation.dataset.domain import (
     Dataset,
@@ -17,11 +17,6 @@ from intelligence_layer.evaluation.dataset.studio_dataset_repository import (
 @pytest.fixture
 def mock_data_client() -> Mock:
     return Mock(spec=DataClient)
-
-
-@pytest.fixture
-def mock_studio_client() -> Mock:
-    return Mock(spec=StudioClient)
 
 
 @pytest.fixture
