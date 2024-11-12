@@ -88,7 +88,7 @@ class BenchmarkRepository(ABC):
         benchmark_id: str,
         eval_logic: EvaluationLogic[Input, Output, ExpectedOutput, Evaluation],
         aggregation_logic: AggregationLogic[Evaluation, AggregatedEvaluation],
-        force_execution: bool = False,
+        allow_diff: bool = False,
     ) -> Benchmark:
         """Retrieves an existing benchmark from the repository.
 
@@ -96,7 +96,7 @@ class BenchmarkRepository(ABC):
             benchmark_id: Unique identifier for the benchmark to retrieve.
             eval_logic: Evaluation logic to apply.
             aggregation_logic (AggregationLogic[Evaluation, AggregatedEvaluation]): Aggregation logic to apply.
-            force_execution: Execute the benchmark even though logics behaviour do not match.
+            allow_diff: Retrieve the benchmark even though logics behaviour do not match.
 
         Returns:
             The retrieved benchmark instance. Raises ValueError if no benchmark is found.

@@ -46,7 +46,7 @@ class StudioBenchmark(Benchmark):
         self.client = studio_client
 
     def execute(self, task: Task[Input, Output], metadata: dict[str, Any]) -> str:
-        raise NotImplementedError  # <- skip the impl here for now, not this is another ticket
+        raise NotImplementedError
 
 
 class StudioBenchmarkRepository(BenchmarkRepository):
@@ -88,13 +88,11 @@ class StudioBenchmarkRepository(BenchmarkRepository):
         benchmark_id: str,
         eval_logic: EvaluationLogic[Input, Output, ExpectedOutput, Evaluation],
         aggregation_logic: AggregationLogic[Evaluation, AggregatedEvaluation],
-        force_execution: bool = False,
+        allow_diff: bool = False,
     ) -> StudioBenchmark:
         benchmark = self.client.get_benchmark(benchmark_id)
         if benchmark is None:
             raise ValueError("Benchmark not found")
-        # check if the logic is the same
-        # check force bool
         return StudioBenchmark(
             benchmark_id,
             benchmark.dataset_id,
