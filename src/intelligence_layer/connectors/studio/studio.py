@@ -68,7 +68,7 @@ class StudioDataset(BaseModel):
 
 
 class EvaluationLogicIdentifier(BaseModel):
-    logic: str
+    logic: str  # code from the evaluation logic as a string
     input_schema: dict[str, Any]
     output_schema: dict[str, Any]
     expected_output_schema: dict[str, Any]
@@ -76,7 +76,7 @@ class EvaluationLogicIdentifier(BaseModel):
 
 
 class AggregationLogicIdentifier(BaseModel):
-    logic: str
+    logic: str  # code from the aggregation logic as a string
     evaluation_schema: dict[str, Any]
     aggregation_schema: dict[str, Any]
 

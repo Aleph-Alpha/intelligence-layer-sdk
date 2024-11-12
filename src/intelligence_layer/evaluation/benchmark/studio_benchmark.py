@@ -45,7 +45,7 @@ class StudioBenchmark(Benchmark):
         self.aggregation_logic = aggregation_logic
         self.client = studio_client
 
-    def run(self, task: Task[Input, Output], metadata: dict[str, Any]) -> str:
+    def execute(self, task: Task[Input, Output], metadata: dict[str, Any]) -> str:
         raise NotImplementedError  # <- skip the impl here for now, not this is another ticket
 
 

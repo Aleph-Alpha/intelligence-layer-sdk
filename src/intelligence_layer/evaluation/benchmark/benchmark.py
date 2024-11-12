@@ -41,7 +41,7 @@ class Benchmark(ABC):
         pass
 
     @abstractmethod
-    def run(self, task: Task[Input, Output], metadata: dict[str, Any]) -> str:
+    def execute(self, task: Task[Input, Output], metadata: dict[str, Any]) -> str:
         """Executes the benchmark on a given task.
 
         Args:
