@@ -76,7 +76,7 @@ class SingleHuggingfaceDatasetRepository(DatasetRepository):
         examples_to_skip = examples_to_skip or frozenset()
         answers = "ABCD"
         assert input_type == MultipleChoiceInput
-        assert expected_output_type == str
+        assert expected_output_type is str
         for index, sample in enumerate(self._huggingface_dataset["test"]):
             if str(index) not in examples_to_skip:
                 yield Example(
