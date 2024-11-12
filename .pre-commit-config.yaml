@@ -14,11 +14,11 @@ repos:
       # Run the linter.
       - id: ruff
         name: ruff-lint
-        args: [ --fix ]
-        types_or: [ python, pyi, jupyter ]
+        args: [--fix]
+        types_or: [python, pyi, jupyter]
       # Run the formatter.
       - id: ruff-format
-        types_or: [ python, pyi, jupyter ]
+        types_or: [python, pyi, jupyter]
   - repo: https://github.com/kynan/nbstripout
     rev: 0.8.0
     hooks:
@@ -34,7 +34,7 @@ repos:
             "newyorker,te,responde,ist,als,oder,technik,sie,rouge,unter,juli,fiel,couldn,mke, vor,fille,ans",
           ]
         exclude: '^(poetry\.lock|tests/.*|src/intelligence_layer/examples/qa/multiple_chunk_qa.py|src/intelligence_layer/examples/summarize/.*|src/intelligence_layer/examples/classify/keyword_extract.py|src/intelligence_layer/learning/enrich.py)$'
-  - repo: https://github.com/akaihola/darglint2
-    rev: v1.8.2
+  - repo: https://github.com/jsh9/pydoclint
+    rev: 0.5.9
     hooks:
-      - id: darglint2
+      - id: pydoclint

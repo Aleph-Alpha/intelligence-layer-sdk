@@ -98,7 +98,9 @@ extend-include = ["*.ipynb"]
 # defaults: ["E4", "E7", "E9", "F"]
 # check https://docs.astral.sh/ruff/rules/ for more info
 select = [
-    "E4", "E7", "E9",
+    "E4",
+    "E7",
+    "E9",
     "F",
     "W",
     # isort
@@ -114,7 +116,7 @@ select = [
     # bugbear
     "B",
     # pydocstring
-    "D"
+    "D",
 
 
 ]
@@ -124,8 +126,10 @@ ignore = [
     "E501",
     # X | Y for hinting over optional
     "UP007",
-    # unusual unicodes, next() instead of [0]
-    "RUF001", "RUF015",
+    # next() instead of [0],
+    "RUF015",
+    # unusual unicodes
+    "RUF001",
     # warnings should be self explanatory
     "B028",
     # we do not docstring everything
@@ -138,3 +142,15 @@ known-first-party = ["intelligence_layer", "documentation"]
 
 [tool.ruff.lint.pydocstyle]
 convention = "google"
+
+[tool.pydoclint]
+style = 'google'
+exclude = '\.git|tests'
+require-return-section-when-returning-nothing = false
+check-return-types = false
+require-yield-section-when-yielding-nothing = false
+check-yield-types = false
+arg-type-hints-in-docstring = false
+allow-init-docstring = true
+skip-checking-raises = true
+check-class-attributes = false # this does not work well with type definitons in class attributes
