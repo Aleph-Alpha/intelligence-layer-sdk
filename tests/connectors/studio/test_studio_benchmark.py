@@ -96,7 +96,7 @@ def test_create_benchmark_with_non_existing_dataset(
     evaluation_logic_identifier: EvaluationLogicIdentifier,
     aggregation_logic_identifier: AggregationLogicIdentifier,
 ) -> None:
-    with pytest.raises(HTTPError, match=str(HTTPStatus.BAD_REQUEST)):
+    with pytest.raises(HTTPError, match=str(HTTPStatus.BAD_REQUEST.value)):
         studio_client.create_benchmark(
             "fake_id",
             evaluation_logic_identifier,
