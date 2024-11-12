@@ -151,7 +151,7 @@ def test_get_non_existing_benchmark(
 ) -> None:
     mock_studio_client.get_benchmark.return_value = None  # type: ignore
 
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match="Benchmark not found"):
         studio_benchmark_repository.get_benchmark(
             "non_existing_id", evaluation_logic, aggregation_logic
         )
