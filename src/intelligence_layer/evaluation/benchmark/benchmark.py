@@ -95,7 +95,7 @@ class BenchmarkRepository(ABC):
         Args:
             benchmark_id: Unique identifier for the benchmark to retrieve.
             eval_logic: Evaluation logic to apply.
-            aggregation_logic (AggregationLogic[Evaluation, AggregatedEvaluation]): Aggregation logic to apply.
+            aggregation_logic: Aggregation logic to apply.
             allow_diff: Retrieve the benchmark even though logics behaviour do not match.
 
         Returns:
