@@ -212,7 +212,7 @@ class RepositoryNavigator:
             expected_output_type: The type of the expected output as defined by the :class:`Example`
             output_type: The type of the run output as defined by the :class:`Output`
 
-        Returns:
+        Yields:
             An iterator over all :class:`RunLineage`s for the given run id.
         """
         run_overview = self._run_repository.run_overview(run_id)
@@ -259,8 +259,8 @@ class RepositoryNavigator:
             output_type: The type of the run output as defined by the :class:`Output`
             evaluation_type: The type of the evaluation as defined by the :class:`Evaluation`
 
-        Returns:
-            An iterator over all :class:`EvaluationLineage`s for the given evaluation id.
+        Yields:
+            All :class:`EvaluationLineage`s for the given evaluation id.
         """
         if self._eval_repository is None:
             raise ValueError("Evaluation Repository is not set, but required.")

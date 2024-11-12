@@ -104,8 +104,8 @@ class EvaluationRepository(ABC):
     def evaluation_overviews(self) -> Iterable[EvaluationOverview]:
         """Returns all :class:`EvaluationOverview`s sorted by their ID.
 
-        Returns:
-            :class:`Iterable` of :class:`EvaluationOverview`s.
+        Yields:
+            :class:`EvaluationOverview`s.
         """
         for eval_id in self.evaluation_overview_ids():
             evaluation_overview = self.evaluation_overview(eval_id)

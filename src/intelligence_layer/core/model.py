@@ -438,8 +438,11 @@ class ControlModel(AlephAlphaModel, ABC):
             input: Any context necessary to solve the task, such as the text to be summarize
             response_prefix: Optional argument to append a string to the beginning of the
                 final agent message to steer the generation
-            input_controls: TextControls for the input part of the prompt. Only for text prompts
-            instruction_controls: TextControls for the instruction part of the prompt.  Only for text prompts
+            instruction_controls: TextControls for the instruction part of the prompt. Only for text prompts.
+            input_controls: TextControls for the input part of the prompt. Only for text prompts.
+
+        Returns:
+            The rendered prompt with all variables filled in.
         """
         rich_prompt = self.INSTRUCTION_PROMPT_TEMPLATE.to_rich_prompt(
             instruction=instruction, input=input, response_prefix=response_prefix
@@ -706,6 +709,9 @@ class AlephAlphaChatModel(ChatModel, ControlModel):
                 final agent message to steer the generation
             instruction_controls: Instruction controls are not used but needed for the interface.
             input_controls: Input controls are not used but needed for the interface
+
+        Returns:
+            The rendered prompt with all variables filled in.
         """
         if instruction_controls or input_controls:
             warnings.warn(

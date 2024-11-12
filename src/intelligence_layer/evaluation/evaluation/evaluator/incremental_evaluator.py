@@ -136,7 +136,7 @@ class IncrementalEvaluator(Evaluator[Input, Output, ExpectedOutput, Evaluation])
         stored in the provided :class:`EvaluationRepository`.
 
         Args:
-            run_ids: The runs to be evaluated. Each run is expected to have the same
+            *run_ids: The runs to be evaluated. Each run is expected to have the same
                 dataset as input (which implies their tasks have the same input-type)
                 and their tasks have the same output-type. For each example in the
                 dataset referenced by the runs the outputs of all runs are collected
@@ -293,7 +293,7 @@ class EloEvaluationLogic(
         second: SuccessfulExampleOutput[Output],
         example: Example[Input, ExpectedOutput],
     ) -> MatchOutcome:
-        """Returns a :class: `MatchOutcome`for the provided two contestants on the given example.
+        """Returns a :class: `MatchOutcome` for the provided two contestants on the given example.
 
         Defines the use case specific logic how to determine the winner of the two provided outputs.
 
@@ -303,7 +303,7 @@ class EloEvaluationLogic(
             second: Instance of :class: `SuccessfulExampleOutut[Output]` of the second contestant in the comparison
             example: Datapoint of :class: `Example` on which the two outputs were generated
 
-        Return:
+        Returns:
             Instance of :class: `MatchOutcome`
         """
         pass

@@ -87,6 +87,8 @@ class MultipleChunkRetrieverQa(
             "expanded" chunks will be injected into the prompt.
         single_chunk_qa: The task used to generate an answer for a single chunk (retrieved through
             the retriever). Defaults to :class:`SingleChunkQa`.
+        source_prefix_config: A mapping that describes the source section string for different languages.
+            Defaults to the equivalent of "Source {language}".
     """
 
     def __init__(

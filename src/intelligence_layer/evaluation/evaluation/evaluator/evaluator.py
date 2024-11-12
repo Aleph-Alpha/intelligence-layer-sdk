@@ -43,7 +43,7 @@ class EvaluationLogic(
 
         Args:
             example: Input data of :class:`Task` to produce the output.
-            output: Output of the :class:`Task`.
+            *output: Output of the :class:`Task`.
 
         Returns:
             The metrics that come from the evaluated :class:`Task`.
@@ -112,7 +112,7 @@ class Evaluator(EvaluatorBase[Input, Output, ExpectedOutput, Evaluation]):
         stored in the provided :class:`EvaluationRepository`.
 
         Args:
-            run_ids: The runs to be evaluated. Each run is expected to have the same
+            *run_ids: The runs to be evaluated. Each run is expected to have the same
                 dataset as input (which implies their tasks have the same input-type)
                 and their tasks have the same output-type. For each example in the
                 dataset referenced by the runs the outputs of all runs are collected

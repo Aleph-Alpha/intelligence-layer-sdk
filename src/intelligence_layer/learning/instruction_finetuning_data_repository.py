@@ -15,10 +15,10 @@ class InstructionFinetuningDataRepository(ABC):
         """Stores a finetuning sample and returns its ID.
 
         Args:
-            sample (InstructionFinetuningSample): The sample to store.
+            sample: The sample to store.
 
         Returns:
-            str: The ID of the stored sample.
+            The ID of the stored sample.
         """
         pass
 
@@ -29,10 +29,10 @@ class InstructionFinetuningDataRepository(ABC):
         """Stores multiple finetuning samples and returns their IDs.
 
         Args:
-            samples (Iterable[InstructionFinetuningSample]): The samples to store.
+            samples: The samples to store.
 
         Returns:
-            list[str]: The IDs of the stored samples.
+            The IDs of the stored samples.
         """
         pass
 

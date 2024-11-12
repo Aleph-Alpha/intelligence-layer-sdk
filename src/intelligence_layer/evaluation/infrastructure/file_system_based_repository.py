@@ -9,6 +9,7 @@ class FileSystemBasedRepository:
     """An :class:`FileBasedRepository` that stores evaluation results in files.
 
     Args:
+        file_system: The specific file system to use from fsspec.
         root_directory: The folder where the files are stored. The folder
             (along with its parents) will be created if it does not exist yet.
     """

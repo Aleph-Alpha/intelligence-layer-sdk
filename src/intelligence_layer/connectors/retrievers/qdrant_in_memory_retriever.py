@@ -39,9 +39,9 @@ class QdrantInMemoryRetriever(BaseRetriever[int]):
     When run, the given query is embedded and scored against the document embeddings to retrieve the k-most similar matches by cosine similarity.
 
     Args:
-        client: Aleph Alpha client instance for running model related API calls.
-        texts: The sequence of texts to be made searchable.
+        documents: The sequence of documents to be made searchable.
         k: The (top) number of documents to be returned by search.
+        client: Aleph Alpha client instance for running model related API calls.
         threshold: The mimumum value of cosine similarity between the query vector and the document vector.
         retriever_type: The type of retriever to be instantiated.
             Should be `ASYMMETRIC` for most query-document retrieveal use cases, `SYMMETRIC` is optimized
@@ -157,6 +157,9 @@ class QdrantInMemoryRetriever(BaseRetriever[int]):
         Args:
             query: The text to be searched with.
             filter: Conditions to filter by.
+
+        Returns:
+            All documents that correspond to the query and pass the filter.
         """
         query_embedding = self._embed(query, self._query_representation)
         search_result = self._search_client.search(

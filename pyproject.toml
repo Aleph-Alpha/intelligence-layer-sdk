@@ -146,6 +146,7 @@ convention = "google"
 [tool.pydoclint]
 style = 'google'
 exclude = '\.git|tests'
+quiet = true
 require-return-section-when-returning-nothing = false
 check-return-types = false
 require-yield-section-when-yielding-nothing = false
@@ -153,4 +154,5 @@ check-yield-types = false
 arg-type-hints-in-docstring = false
 allow-init-docstring = true
 skip-checking-raises = true
-check-class-attributes = false # this does not work well with type definitons in class attributes
+# this does not work well with type definitions in class attributes
+check-class-attributes = false

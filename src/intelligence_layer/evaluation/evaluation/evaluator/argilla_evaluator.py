@@ -66,7 +66,7 @@ class ArgillaEvaluationLogic(
 
         Args:
             example: The example to be translated.
-            output: The output of the example that was run.
+            *output: The output of the example that was run.
 
         Returns:
             A :class:`RecordDataSequence` that contains entries that should be evaluated in Argilla.
