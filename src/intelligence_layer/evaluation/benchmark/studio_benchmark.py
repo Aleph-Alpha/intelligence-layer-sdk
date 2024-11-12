@@ -1,6 +1,8 @@
 import inspect
+from http import HTTPStatus
 from typing import Any, Optional
 
+import requests
 from pydantic import TypeAdapter
 
 from intelligence_layer.connectors.studio.studio import (
@@ -27,9 +29,7 @@ from intelligence_layer.evaluation.evaluation.evaluator.evaluator import (
 )
 
 
-class StudioBenchmark(
-    Benchmark
-):  # <- skip the impl here for now, not this is another ticket
+class StudioBenchmark(Benchmark):
     def __init__(
         self,
         benchmark_id: str,
@@ -46,7 +46,7 @@ class StudioBenchmark(
         self.client = studio_client
 
     def run(self, task: Task[Input, Output], metadata: dict[str, Any]) -> str:
-        return ""
+        raise NotImplementedError  # <- skip the impl here for now, not this is another ticket
 
 
 class StudioBenchmarkRepository(BenchmarkRepository):
@@ -62,14 +62,19 @@ class StudioBenchmarkRepository(BenchmarkRepository):
         metadata: Optional[dict[str, Any]] = None,
         description: Optional[str] = None,
     ) -> StudioBenchmark:
-        benchmark_id = self.client.create_benchmark(
-            dataset_id,
-            create_evaluation_logic_identifier(eval_logic),
-            create_aggregation_logic_identifier(aggregation_logic),
-            name,
-            description,
-            metadata,
-        )
+        try:
+            benchmark_id = self.client.create_benchmark(
+                dataset_id,
+                create_evaluation_logic_identifier(eval_logic),
+                create_aggregation_logic_identifier(aggregation_logic),
+                name,
+                description,
+                metadata,
+            )
+        except requests.HTTPError as e:
+            if e.response.status_code == HTTPStatus.BAD_REQUEST:
+                raise ValueError(f"Dataset with ID {dataset_id} not found") from e
+
         return StudioBenchmark(
             benchmark_id,
             dataset_id,

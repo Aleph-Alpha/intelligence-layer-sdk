@@ -3,6 +3,7 @@ from uuid import UUID, uuid4
 
 import pytest
 from pytest import fixture
+from requests import HTTPError, Response
 
 from intelligence_layer.connectors.studio.studio import (
     GetBenchmarkResponse,
@@ -102,7 +103,27 @@ def test_create_benchmark(
     studio_benchmark_repository.client.create_benchmark.assert_called_once()  # type: ignore
 
 
-def test_get_benchmark(  # TODO
+def test_create_benchmark_with_non_existing_dataset(
+    studio_benchmark_repository: StudioBenchmarkRepository,
+    mock_studio_client: StudioClient,
+    evaluation_logic: DummyEvaluationLogic,
+    aggregation_logic: DummyAggregationLogic,
+) -> None:
+    dataset_id = "fake_dataset_id"
+    response = Response()
+    response.status_code = 400
+
+    mock_studio_client.create_benchmark.side_effect = HTTPError(  # type: ignore
+        "400 Client Error: Bad Request for url", response=response
+    )
+
+    with pytest.raises(ValueError, match=f"Dataset with ID {dataset_id} not found"):
+        studio_benchmark_repository.create_benchmark(
+            dataset_id, evaluation_logic, aggregation_logic, "benchmark_name"
+        )
+
+
+def test_get_benchmark(
     studio_benchmark_repository: StudioBenchmarkRepository,
     mock_studio_client: StudioClient,
     get_benchmark_response: GetBenchmarkResponse,
@@ -122,7 +143,7 @@ def test_get_benchmark(  # TODO
     assert benchmark.aggregation_logic
 
 
-def test_get_non_existing_benchmark(  # TODO
+def test_get_non_existing_benchmark(
     studio_benchmark_repository: StudioBenchmarkRepository,
     mock_studio_client: StudioClient,
     evaluation_logic: DummyEvaluationLogic,
