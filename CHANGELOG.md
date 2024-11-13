@@ -2,6 +2,20 @@
 ## Unreleased
 
 ### Features
+...
+
+### Fixes
+...
+
+### Deprecations
+...
+
+### Breaking Changes
+...
+
+## 7.3.0
+
+### Features
 - Add support for Llama3InstructModel in PromptBasedClassify
 - Add TextControl to 'to_instruct_prompt' for instruct models
   - Add 'attention_manipulation_with_text_controls.ipynb' to tutorial notebooks
@@ -15,11 +29,6 @@
 
 ### Fixes
  - Improved some docstring inconsistencies across the codebase and switched the docstring checker to pydoclint.
-### Deprecations 
-...
-
-### Breaking Changes
-...
 
 ## 7.2.0
 
