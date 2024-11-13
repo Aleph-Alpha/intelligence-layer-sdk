@@ -81,8 +81,7 @@ class EloCalculator:
 
     def _calc_k_factor(self, player: str) -> float:
         n = self._match_counts.get(player) or 0
-        # Mypy thinks this is Any
-        return self._k_ceiling * np.exp(-self._decay_factor * n) + self._k_floor  # type: ignore
+        return self._k_ceiling * np.exp(-self._decay_factor * n) + self._k_floor
 
     def _calc_expected_win_rates(
         self, player_a: str, player_b: str
