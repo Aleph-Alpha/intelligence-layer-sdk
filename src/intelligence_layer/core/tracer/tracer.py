@@ -16,6 +16,8 @@ import rich
 from pydantic import BaseModel, Field, RootModel, SerializeAsAny
 from typing_extensions import Self, TypeAliasType
 
+# IMPORTANT: Only use this for converting your data to JSON. Do NOT use it for reading a JSON and convert it to an object.
+# This could lead to loss of information (e.g. dictionaries getting dropped). For reading use JsonSerializable instead.
 if TYPE_CHECKING:
     PydanticSerializable = (
         int
