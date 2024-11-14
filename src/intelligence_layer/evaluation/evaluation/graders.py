@@ -28,7 +28,7 @@ class BleuGrader:
             hypotheses=[hypothesis], references=[[reference]]
         )
 
-        return bleu_score.score  # type: ignore
+        return bleu_score.score
 
 
 @dataclass

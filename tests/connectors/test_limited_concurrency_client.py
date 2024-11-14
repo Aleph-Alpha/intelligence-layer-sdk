@@ -52,7 +52,7 @@ class BusyClient:
         if self.wait_time:
             time.sleep(self.wait_time)
         if self.number_of_retries < 2:
-            raise BusyError(503)  # type: ignore
+            raise BusyError(503)
         else:
             if isinstance(self.return_value, Exception):
                 raise self.return_value

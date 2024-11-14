@@ -321,8 +321,7 @@ class InstructionFinetuningDataHandler:
         def process_sample(
             sample: InstructionFinetuningSample,
             # actual type is Synchronized[int] but declaring this will actually fail at runtime
-            # only declaring Synchronized will trigger mypy
-            emitted_counter: Synchronized,  # type: ignore
+            emitted_counter: Synchronized,
             statistics_counter: dict[Any, dict[Any, int]],
         ) -> Optional[tuple[Sequence[FinetuningMessage], str]]:
             prompt = model.to_chat_prompt(sample.messages)
