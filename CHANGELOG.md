@@ -13,6 +13,10 @@
 ### Breaking Changes
 ...
 
+## 7.3.1
+### Features
+- Dependency updates
+
 ## 7.3.0
 
 ### Features
