@@ -8,15 +8,16 @@ from typing import Annotated, Any, Literal, Optional, TypeAlias, Union
 from urllib.parse import quote, urljoin
 
 import requests
-from pydantic import BaseModel, Field, field_validator, model_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 from pydantic.types import StringConstraints
 from requests import HTTPError
 from typing_extensions import Self
 
 from intelligence_layer.connectors.base.json_serializable import JsonSerializable
 
-EmbeddingType: TypeAlias = Literal["symmetric", "asymmetric"]
+Representation: TypeAlias = Literal["symmetric", "asymmetric"]
 HybridIndex: TypeAlias = Literal["bm25"] | None
+EmbeddingConfig: TypeAlias = Union["SemanticEmbed", "InstructableEmbed"]
 
 
 class IndexPath(BaseModel, frozen=True):
@@ -31,21 +32,60 @@ class IndexPath(BaseModel, frozen=True):
     index: str
 
 
+class SemanticEmbed(BaseModel):
+    """Semantic embedding configuration.
+
+    Args:
+        model_name: Name of the model to use.
+        representation: The embedding representation to use: "symmetric" or "asymmetric".
+            Use "symmetric" when the queries and documents are the same, e.g., for classification tasks.
+            Use "asymmetric" when the queries and documents are different, e.g., for search tasks.
+    """
+
+    # `model_name` conflicts with the default protected `model_*` namespace
+    model_config = ConfigDict(protected_namespaces=())
+
+    strategy: Literal["semantic_embed"] = "semantic_embed"
+    model_name: str
+    representation: Representation
+
+
+class InstructableEmbed(BaseModel):
+    """Instructable embedding configuration.
+
+    Args:
+        model_name: Name of the model to use.
+        query_instruction: Instruction to apply when embedding queries.
+        document_instruction: Instruction to apply when embedding documents.
+    """
+
+    # `model_name` conflicts with the default protected `model_*` namespace
+    model_config = ConfigDict(protected_namespaces=())
+
+    strategy: Literal["instructable_embed"] = "instructable_embed"
+    model_name: str
+    query_instruction: str = ""
+    document_instruction: str = ""
+
+
 class IndexConfiguration(BaseModel):
     """Configuration of an index.
 
     Args:
-        embedding_type: "symmetric" or "asymmetric" embedding type.
         chunk_overlap: The maximum number of tokens of overlap between consecutive chunks. Must be
             less than `chunk_size`.
         chunk_size: The maximum size of the chunks in tokens to be used for the index.
         hybrid_index: If set to "bm25", combine vector search and keyword search (bm25) results.
+        embedding: Configuration for the embedding of chunks.
     """
 
-    embedding_type: EmbeddingType
+    # `model_name` in `embedding` conflicts with the default protected `model_*` namespace
+    model_config = ConfigDict(protected_namespaces=())
+
     chunk_overlap: int = Field(default=0, ge=0)
     chunk_size: int = Field(..., gt=0, le=2046)
     hybrid_index: HybridIndex = None
+    embedding: EmbeddingConfig
 
     @model_validator(mode="after")
     def validate_chunk_overlap(self) -> Self:
@@ -535,8 +575,8 @@ class DocumentIndexClient:
         data = {
             "chunk_size": index_configuration.chunk_size,
             "chunk_overlap": index_configuration.chunk_overlap,
-            "embedding_type": index_configuration.embedding_type,
             "hybrid_index": index_configuration.hybrid_index,
+            "embedding": index_configuration.embedding.model_dump(),
         }
         response = requests.put(url, data=dumps(data), headers=self.headers)
         self._raise_for_status(response)
@@ -596,10 +636,10 @@ class DocumentIndexClient:
         self._raise_for_status(response)
         response_json: Mapping[str, Any] = response.json()
         return IndexConfiguration(
-            embedding_type=response_json["embedding_type"],
             chunk_overlap=response_json["chunk_overlap"],
             chunk_size=response_json["chunk_size"],
             hybrid_index=response_json.get("hybrid_index"),
+            embedding=response_json["embedding"],
         )
 
     def assign_index_to_collection(

@@ -19,16 +19,19 @@ from intelligence_layer.connectors.document_index.document_index import (
     DocumentFilterQueryParams,
     DocumentIndexClient,
     DocumentPath,
-    EmbeddingType,
+    EmbeddingConfig,
     FilterField,
     FilterOps,
     Filters,
     HybridIndex,
     IndexConfiguration,
     IndexPath,
+    InstructableEmbed,
     InvalidInput,
+    Representation,
     ResourceNotFound,
     SearchQuery,
+    SemanticEmbed,
 )
 
 P = ParamSpec("P")
@@ -72,8 +75,12 @@ def retry(
         return decorator(func)
 
 
+def random_alphanumeric_string(length: int = 20) -> str:
+    return "".join(random.choices(string.ascii_letters + string.digits, k=length))
+
+
 def random_identifier() -> str:
-    name = "".join(random.choices(string.ascii_letters + string.digits, k=20))
+    name = random_alphanumeric_string(20)
     timestamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S")
     return f"ci-il-{name}-{timestamp}"
 
@@ -90,6 +97,25 @@ def is_outdated_identifier(identifier: str, timestamp_threshold: datetime) -> bo
         tzinfo=timezone.utc
     )
     return not timestamp > timestamp_threshold
+
+
+def random_semantic_embed() -> EmbeddingConfig:
+    return SemanticEmbed(
+        representation=random.choice(get_args(Representation)),
+        model_name="luminous-base",
+    )
+
+
+def random_instructable_embed() -> EmbeddingConfig:
+    return InstructableEmbed(
+        model_name="pharia-1-embedding-4608-control",
+        query_instruction=random_alphanumeric_string(),
+        document_instruction=random_alphanumeric_string(),
+    )
+
+
+def random_embedding_config() -> EmbeddingConfig:
+    return random.choice([random_semantic_embed(), random_instructable_embed()])
 
 
 @fixture(scope="session")
@@ -208,10 +234,13 @@ def random_index(
     document_index: DocumentIndexClient, document_index_namespace: str
 ) -> Iterator[tuple[IndexPath, IndexConfiguration]]:
     name = random_identifier()
+
     chunk_size, chunk_overlap = sorted(
         random.sample([0, 32, 64, 128, 256, 512, 1024], 2), reverse=True
     )
-    embedding_type = random.choice(get_args(EmbeddingType))
+
+    embedding_config = random_embedding_config()
+
     hybrid_index_choices: list[HybridIndex] = ["bm25", None]
     hybrid_index = random.choice(hybrid_index_choices)
 
@@ -219,8 +248,8 @@ def random_index(
     index_configuration = IndexConfiguration(
         chunk_size=chunk_size,
         chunk_overlap=chunk_overlap,
-        embedding_type=embedding_type,
         hybrid_index=hybrid_index,
+        embedding=embedding_config,
     )
     try:
         document_index.create_index(index, index_configuration)
@@ -547,7 +576,9 @@ def test_document_path_is_immutable() -> None:
 def test_index_configuration_rejects_invalid_chunk_overlap() -> None:
     try:
         IndexConfiguration(
-            chunk_size=128, chunk_overlap=128, embedding_type="asymmetric"
+            chunk_size=128,
+            chunk_overlap=128,
+            embedding=random_embedding_config(),
         )
     except ValidationError as e:
         assert "chunk_overlap must be less than chunk_size" in str(e)
