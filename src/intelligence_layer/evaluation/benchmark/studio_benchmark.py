@@ -1,13 +1,16 @@
 import inspect
+from datetime import datetime
 from http import HTTPStatus
 from typing import Any, Optional
 
 import requests
 from pydantic import TypeAdapter
+from tqdm import tqdm
 
 from intelligence_layer.connectors.studio.studio import (
     AggregationLogicIdentifier,
     EvaluationLogicIdentifier,
+    PostBenchmarkExecution,
     StudioClient,
 )
 from intelligence_layer.core import Input, Output
@@ -17,22 +20,36 @@ from intelligence_layer.evaluation.aggregation.aggregator import (
     Aggregator,
 )
 from intelligence_layer.evaluation.aggregation.domain import AggregatedEvaluation
+from intelligence_layer.evaluation.aggregation.in_memory_aggregation_repository import (
+    InMemoryAggregationRepository,
+)
 from intelligence_layer.evaluation.benchmark.benchmark import (
     Benchmark,
     BenchmarkRepository,
 )
 from intelligence_layer.evaluation.dataset.domain import ExpectedOutput
+from intelligence_layer.evaluation.dataset.studio_dataset_repository import (
+    StudioDatasetRepository,
+)
 from intelligence_layer.evaluation.evaluation.domain import Evaluation
 from intelligence_layer.evaluation.evaluation.evaluator.evaluator import (
     EvaluationLogic,
     Evaluator,
 )
+from intelligence_layer.evaluation.evaluation.in_memory_evaluation_repository import (
+    InMemoryEvaluationRepository,
+)
+from intelligence_layer.evaluation.run.in_memory_run_repository import (
+    InMemoryRunRepository,
+)
+from intelligence_layer.evaluation.run.runner import Runner
 
 
 class StudioBenchmark(Benchmark):
     def __init__(
         self,
         benchmark_id: str,
+        name: str,
         dataset_id: str,
         eval_logic: EvaluationLogic[Input, Output, ExpectedOutput, Evaluation],
         aggregation_logic: AggregationLogic[Evaluation, AggregatedEvaluation],
@@ -40,13 +57,94 @@ class StudioBenchmark(Benchmark):
         **kwargs: Any,
     ):
         self.id = benchmark_id
+        self.name = name
         self.dataset_id = dataset_id
         self.eval_logic = eval_logic
         self.aggregation_logic = aggregation_logic
         self.client = studio_client
+        self.run_repository = InMemoryRunRepository()
+        self.evaluation_repository = InMemoryEvaluationRepository()
+        self.aggregation_repository = InMemoryAggregationRepository()
+        self.dataset_repository = StudioDatasetRepository(self.client)
+        self.evaluator = Evaluator(
+            self.dataset_repository,
+            self.run_repository,
+            self.evaluation_repository,
+            f"benchmark-{self.id}-evaluator",
+            self.eval_logic,
+        )
+        self.aggregator = Aggregator(
+            self.evaluation_repository,
+            self.aggregation_repository,
+            f"benchmark-{self.id}-aggregator",
+            self.aggregation_logic,
+        )
 
-    def execute(self, task: Task[Input, Output], metadata: dict[str, Any]) -> str:
-        raise NotImplementedError
+    def execute(
+        self,
+        task: Task[Input, Output],
+        name: str,
+        description: Optional[str] = None,
+        labels: Optional[set[str]] = None,
+        metadata: Optional[dict[str, Any]] = None,
+    ) -> str:
+        start = datetime.now()
+
+        runner = Runner(
+            task,
+            self.dataset_repository,
+            self.run_repository,
+            f"benchmark-{self.id}-runner",
+        )
+        run_overview = runner.run_dataset(
+            self.dataset_id, description=description, labels=labels, metadata=metadata
+        )
+
+        evaluation_overview = self.evaluator.evaluate_runs(
+            run_overview.id, description=description, labels=labels, metadata=metadata
+        )
+
+        aggregation_overview = self.aggregator.aggregate_evaluation(
+            evaluation_overview.id,
+            description=description,
+            labels=labels,
+            metadata=metadata,
+        )
+
+        end = datetime.now()
+
+        data = PostBenchmarkExecution(
+            name=name,
+            description=description,
+            labels=labels,
+            metadata=metadata,
+            start=start,
+            end=end,
+            run_start=run_overview.start,
+            run_end=run_overview.end,
+            run_successful_count=run_overview.successful_example_count,
+            run_failed_count=run_overview.failed_example_count,
+            run_success_avg_latency=0,  # TODO: Implement this
+            run_success_avg_token_count=0,  # TODO: Implement this
+            eval_start=evaluation_overview.start_date,
+            eval_end=evaluation_overview.end_date,
+            eval_successful_count=evaluation_overview.successful_evaluation_count,
+            eval_failed_count=evaluation_overview.failed_evaluation_count,
+            aggregation_start=aggregation_overview.start,
+            aggregation_end=aggregation_overview.end,
+            statistics=aggregation_overview.statistics.model_dump_json(),
+        )
+
+        benchmark_execution_id = self.client.create_benchmark_execution(
+            benchmark_id=self.id, data=data
+        )
+
+        evaluation_lineages = self.evaluator.evaluation_lineages(evaluation_overview.id)
+        for lineage in tqdm(evaluation_lineages, desc="Submitting traces to Studio"):
+            trace = lineage.tracers[0]
+            assert trace
+            self.client.submit_trace(trace.export_for_viewing())
+        return benchmark_execution_id
 
 
 class StudioBenchmarkRepository(BenchmarkRepository):
@@ -77,6 +175,7 @@ class StudioBenchmarkRepository(BenchmarkRepository):
 
         return StudioBenchmark(
             benchmark_id,
+            name,
             dataset_id,
             eval_logic,
             aggregation_logic,
@@ -89,12 +188,13 @@ class StudioBenchmarkRepository(BenchmarkRepository):
         eval_logic: EvaluationLogic[Input, Output, ExpectedOutput, Evaluation],
         aggregation_logic: AggregationLogic[Evaluation, AggregatedEvaluation],
         allow_diff: bool = False,
-    ) -> StudioBenchmark:
+    ) -> StudioBenchmark | None:
         benchmark = self.client.get_benchmark(benchmark_id)
         if benchmark is None:
-            raise ValueError("Benchmark not found")
+            return None
         return StudioBenchmark(
             benchmark_id,
+            benchmark.name,
             benchmark.dataset_id,
             eval_logic,
             aggregation_logic,

@@ -1,4 +1,5 @@
 from collections.abc import Iterable, Sequence
+from datetime import datetime
 from http import HTTPStatus
 from uuid import UUID, uuid4
 
@@ -10,6 +11,7 @@ from requests import HTTPError
 from intelligence_layer.connectors.studio.studio import (
     AggregationLogicIdentifier,
     EvaluationLogicIdentifier,
+    PostBenchmarkExecution,
     StudioClient,
     StudioDataset,
     StudioExample,
@@ -132,3 +134,45 @@ def test_get_benchmark(
 def test_get_non_existing_benchmark(studio_client: StudioClient) -> None:
     benchmark = studio_client.get_benchmark(str(uuid4()))
     assert not benchmark
+
+
+def test_can_create_benchmark_execution(
+    studio_client: StudioClient,
+    studio_dataset: str,
+    evaluation_logic_identifier: EvaluationLogicIdentifier,
+    aggregation_logic_identifier: AggregationLogicIdentifier,
+) -> None:
+    benchmark_id = studio_client.create_benchmark(
+        studio_dataset,
+        evaluation_logic_identifier,
+        aggregation_logic_identifier,
+        "benchmark_name",
+    )
+
+    example_request = PostBenchmarkExecution(
+        name="name",
+        description="Test benchmark execution",
+        labels={"performance", "testing"},
+        metadata={"project": "AI Testing", "team": "QA"},
+        start=datetime.now(),
+        end=datetime.now(),
+        run_start=datetime.now(),
+        run_end=datetime.now(),
+        run_successful_count=10,
+        run_failed_count=2,
+        run_success_avg_latency=120,
+        run_success_avg_token_count=300,
+        eval_start=datetime.now(),
+        eval_end=datetime.now(),
+        eval_successful_count=8,
+        eval_failed_count=1,
+        aggregation_start=datetime.now(),
+        aggregation_end=datetime.now(),
+        statistics=DummyAggregatedEvaluation(score=1.0).model_dump_json(),
+    )
+
+    benchmark_execution_id = studio_client.create_benchmark_execution(
+        benchmark_id=benchmark_id, data=example_request
+    )
+
+    assert UUID(benchmark_execution_id)

@@ -3,20 +3,13 @@ import time
 from collections.abc import Sequence
 from typing import Any
 from unittest.mock import patch
-from uuid import UUID, uuid4
+from uuid import uuid4
 
 import pytest
 from pytest import fixture
 
 from intelligence_layer.connectors import StudioClient
 from intelligence_layer.core import ExportedSpan, InMemoryTracer, Task, TaskSpan
-from intelligence_layer.evaluation.dataset.domain import Example
-from intelligence_layer.evaluation.dataset.in_memory_dataset_repository import (
-    InMemoryDatasetRepository,
-)
-from intelligence_layer.evaluation.dataset.studio_dataset_repository import (
-    StudioDatasetRepository,
-)
 
 
 class TracerTestSubTask(Task[None, None]):
@@ -67,6 +60,12 @@ def test_cannot_connect_to_non_existing_project() -> None:
     project_name = "non-existing-project"
     with pytest.raises(ValueError, match=project_name):
         StudioClient(project="non-existing-project").project_id  # noqa: B018
+
+
+def test_create_project_on_init_if_not_exists() -> None:
+    project_name = str(uuid4())
+    client = StudioClient(project=project_name, create_project=True)
+    assert client.project_id is not None
 
 
 def test_cannot_create_the_same_project_twice() -> None:
@@ -158,48 +157,3 @@ def test_submit_from_tracer_works_with_empty_tracer(
     empty_trace_id_list = studio_client.submit_from_tracer(tracer)
 
     assert len(empty_trace_id_list) == 0
-
-
-def test_can_upload_dataset_with_minimal_request_body(
-    studio_client: StudioClient,
-    examples: Sequence[Example[str, str]],
-) -> None:
-    dataset_repo = InMemoryDatasetRepository()
-    dataset = dataset_repo.create_dataset(examples, "my_dataset")
-
-    studio_dataset = StudioDatasetRepository(studio_client).map_to_studio_dataset(
-        dataset
-    )
-    studio_examples = StudioDatasetRepository(studio_client).map_to_many_studio_example(
-        examples
-    )
-
-    result = studio_client.submit_dataset(
-        dataset=studio_dataset, examples=studio_examples
-    )
-    uuid = UUID(result)
-    assert uuid
-
-
-def test_can_upload_dataset_with_complete_request_body(
-    studio_client: StudioClient,
-    examples: Sequence[Example[str, str]],
-    labels: set[str],
-    metadata: dict[str, Any],
-) -> None:
-    dataset_repo = InMemoryDatasetRepository()
-    dataset = dataset_repo.create_dataset(
-        examples, "my_dataset", labels=labels, metadata=metadata
-    )
-
-    studio_dataset = StudioDatasetRepository(studio_client).map_to_studio_dataset(
-        dataset
-    )
-    studio_examples = StudioDatasetRepository(studio_client).map_to_many_studio_example(
-        examples
-    )
-
-    result = studio_client.submit_dataset(
-        dataset=studio_dataset, examples=studio_examples
-    )
-    assert result

@@ -41,11 +41,21 @@ class Benchmark(ABC):
         pass
 
     @abstractmethod
-    def execute(self, task: Task[Input, Output], metadata: dict[str, Any]) -> str:
+    def execute(
+        self,
+        task: Task[Input, Output],
+        name: str,
+        description: Optional[str],
+        labels: Optional[set[str]],
+        metadata: Optional[dict[str, Any]],
+    ) -> str:
         """Executes the benchmark on a given task.
 
         Args:
             task: The task to be evaluated in the benchmark.
+            name: Name of the benchmark execution.
+            description: Description of the task to be evaluated.
+            labels: Labels for filtering or categorizing the benchmark.
             metadata: Additional information about the task for logging or configuration.
 
         Returns:
@@ -89,7 +99,7 @@ class BenchmarkRepository(ABC):
         eval_logic: EvaluationLogic[Input, Output, ExpectedOutput, Evaluation],
         aggregation_logic: AggregationLogic[Evaluation, AggregatedEvaluation],
         allow_diff: bool = False,
-    ) -> Benchmark:
+    ) -> Benchmark | None:
         """Retrieves an existing benchmark from the repository.
 
         Args:

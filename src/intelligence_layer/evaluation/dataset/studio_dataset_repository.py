@@ -1,4 +1,3 @@
-import warnings
 from collections.abc import Iterable
 from typing import Optional
 
@@ -17,6 +16,9 @@ from intelligence_layer.evaluation import (
     Example,
     ExpectedOutput,
 )
+from intelligence_layer.evaluation.dataset.in_memory_dataset_repository import (
+    InMemoryDatasetRepository,
+)
 
 
 class StudioDatasetRepository(DatasetRepository):
@@ -29,9 +31,7 @@ class StudioDatasetRepository(DatasetRepository):
             studio_client: Client to interact with the Studio API.
         """
         self.studio_client = studio_client
-        warnings.warn(
-            "The StudioDatasetRepository is currently in beta and only supports create_dataset."
-        )
+        self._in_memory_dataset_repository = InMemoryDatasetRepository()
 
     def create_dataset(
         self,
@@ -148,17 +148,57 @@ class StudioDatasetRepository(DatasetRepository):
         Returns:
             :class:`Iterable` of :class`Example`s.
         """
-        raise NotImplementedError()
+        if self._in_memory_dataset_repository.dataset(dataset_id) is None:
+            examples = self.map_to_many_example(
+                self.studio_client.get_dataset_examples(
+                    dataset_id,
+                    input_type=input_type,
+                    expected_output_type=expected_output_type,
+                )
+            )
+            self._in_memory_dataset_repository.create_dataset(
+                examples, id=dataset_id, dataset_name="in_memory_dataset"
+            )
 
+        return self._in_memory_dataset_repository.examples(
+            dataset_id, input_type, expected_output_type
+        )
+
+    @staticmethod
     def map_to_studio_example(
-        self, example_to_map: Example[Input, ExpectedOutput]
+        example_to_map: Example[Input, ExpectedOutput],
     ) -> StudioExample[Input, ExpectedOutput]:
         return StudioExample(**example_to_map.model_dump())
 
+    @staticmethod
     def map_to_many_studio_example(
-        self, examples_to_map: Iterable[Example[Input, ExpectedOutput]]
+        examples_to_map: Iterable[Example[Input, ExpectedOutput]],
     ) -> Iterable[StudioExample[Input, ExpectedOutput]]:
-        return (self.map_to_studio_example(example) for example in examples_to_map)
+        return (
+            StudioDatasetRepository.map_to_studio_example(example)
+            for example in examples_to_map
+        )
 
-    def map_to_studio_dataset(self, dataset_to_map: Dataset) -> StudioDataset:
+    @staticmethod
+    def map_to_studio_dataset(dataset_to_map: Dataset) -> StudioDataset:
         return StudioDataset(**dataset_to_map.model_dump())
+
+    @staticmethod
+    def map_to_example(
+        example_to_map: StudioExample[Input, ExpectedOutput],
+    ) -> Example[Input, ExpectedOutput]:
+        return Example[Input, ExpectedOutput](
+            input=example_to_map.input,
+            expected_output=example_to_map.expected_output,
+            id=example_to_map.id,
+            metadata=example_to_map.metadata,
+        )
+
+    @staticmethod
+    def map_to_many_example(
+        examples_to_map: Iterable[StudioExample[Input, ExpectedOutput]],
+    ) -> Iterable[Example[Input, ExpectedOutput]]:
+        return (
+            StudioDatasetRepository.map_to_example(example)
+            for example in examples_to_map
+        )
