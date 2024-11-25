@@ -2,6 +2,7 @@ import random
 import re
 import string
 from collections.abc import Callable, Iterator
+from contextlib import contextmanager
 from datetime import datetime, timedelta, timezone
 from functools import wraps
 from http import HTTPStatus
@@ -229,17 +230,17 @@ def read_only_collection_path(
         document_index.delete_collection(collection_path)
 
 
-@fixture
-def random_index(
-    document_index: DocumentIndexClient, document_index_namespace: str
+@contextmanager
+def random_index_with_embedding_config(
+    document_index: DocumentIndexClient,
+    document_index_namespace: str,
+    embedding_config: EmbeddingConfig,
 ) -> Iterator[tuple[IndexPath, IndexConfiguration]]:
     name = random_identifier()
 
     chunk_size, chunk_overlap = sorted(
         random.sample([0, 32, 64, 128, 256, 512, 1024], 2), reverse=True
     )
-
-    embedding_config = random_embedding_config()
 
     hybrid_index_choices: list[HybridIndex] = ["bm25", None]
     hybrid_index = random.choice(hybrid_index_choices)
@@ -256,6 +257,26 @@ def random_index(
         yield index, index_configuration
     finally:
         document_index.delete_index(index)
+
+
+@fixture
+def random_instructable_index(
+    document_index: DocumentIndexClient, document_index_namespace: str
+) -> Iterator[tuple[IndexPath, IndexConfiguration]]:
+    with random_index_with_embedding_config(
+        document_index, document_index_namespace, random_instructable_embed()
+    ) as index:
+        yield index
+
+
+@fixture
+def random_semantic_index(
+    document_index: DocumentIndexClient, document_index_namespace: str
+) -> Iterator[tuple[IndexPath, IndexConfiguration]]:
+    with random_index_with_embedding_config(
+        document_index, document_index_namespace, random_semantic_embed()
+    ) as index:
+        yield index
 
 
 @fixture
@@ -586,11 +607,21 @@ def test_index_configuration_rejects_invalid_chunk_overlap() -> None:
         raise AssertionError("ValidationError was not raised")
 
 
-def test_indexes_in_namespace_are_returned(
+def test_semantic_indexes_in_namespace_are_returned(
     document_index: DocumentIndexClient,
-    random_index: tuple[IndexPath, IndexConfiguration],
+    random_semantic_index: tuple[IndexPath, IndexConfiguration],
 ) -> None:
-    index_path, index_configuration = random_index
+    index_path, index_configuration = random_semantic_index
+    retrieved_index_configuration = document_index.index_configuration(index_path)
+
+    assert retrieved_index_configuration == index_configuration
+
+
+def test_instructable_indexes_in_namespace_are_returned(
+    document_index: DocumentIndexClient,
+    random_instructable_index: tuple[IndexPath, IndexConfiguration],
+) -> None:
+    index_path, index_configuration = random_instructable_index
     retrieved_index_configuration = document_index.index_configuration(index_path)
 
     assert retrieved_index_configuration == index_configuration
