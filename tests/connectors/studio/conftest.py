@@ -28,3 +28,13 @@ def examples() -> Sequence[StudioExample[str, str]]:
         StudioExample(input="input_str", expected_output="output_str"),
         StudioExample(input="input_str2", expected_output="output_str2"),
     ]
+
+
+@fixture
+def many_examples() -> Sequence[StudioExample[str, str]]:
+    examples = []
+    for i in range(201):
+        examples.append(
+            StudioExample(input=f"input_str_{i}", expected_output=f"output_str_{i}")
+        )
+    return examples

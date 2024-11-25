@@ -1,6 +1,6 @@
 import json
 import os
-from collections import defaultdict
+from collections import defaultdict, deque
 from collections.abc import Iterable, Sequence
 from datetime import datetime
 from typing import Any, Generic, Optional, TypeVar
@@ -11,6 +11,7 @@ import requests
 from pydantic import BaseModel, Field
 from requests.exceptions import ConnectionError, MissingSchema
 
+from intelligence_layer.connectors import JsonSerializable
 from intelligence_layer.connectors.base.json_serializable import (
     SerializableDict,
 )
@@ -106,6 +107,39 @@ class GetBenchmarkResponse(BaseModel):
     updated_by: str | None
 
 
+class PostBenchmarkExecution(BaseModel):
+    name: str
+    description: Optional[str]
+    labels: Optional[set[str]]
+    metadata: Optional[dict[str, Any]]
+    start: datetime
+    end: datetime
+    # Run Overview
+    run_start: datetime
+    run_end: datetime
+    run_successful_count: int
+    run_failed_count: int
+    run_success_avg_latency: int
+    run_success_avg_token_count: int
+    # Eval Overview
+    eval_start: datetime
+    eval_end: datetime
+    eval_successful_count: int
+    eval_failed_count: int
+    # Aggregation Overview
+    aggregation_start: datetime
+    aggregation_end: datetime
+    statistics: JsonSerializable
+
+
+class GetDatasetExamplesResponse(BaseModel, Generic[Input, ExpectedOutput]):
+    total: int
+    page: int
+    size: int
+    num_pages: int
+    items: Sequence[StudioExample[Input, ExpectedOutput]]
+
+
 class StudioClient:
     """Client for communicating with Studio.
 
@@ -114,11 +148,33 @@ class StudioClient:
       url: The url of your current Studio instance.
     """
 
+    @staticmethod
+    def get_headers(auth_token: Optional[str] = None) -> dict[str, str]:
+        _token = auth_token if auth_token is not None else os.getenv("AA_TOKEN")
+        if _token is None:
+            raise ValueError(
+                "'AA_TOKEN' is not set and auth_token is not given as a parameter. Please provide one or the other."
+            )
+        return {
+            "Accept": "application/json",
+            "Authorization": f"Bearer {_token}",
+        }
+
+    @staticmethod
+    def get_url(studio_url: Optional[str] = None) -> str:
+        temp_url = studio_url if studio_url is not None else os.getenv("STUDIO_URL")
+        if temp_url is None:
+            raise ValueError(
+                "'STUDIO_URL' is not set and url is not given as a parameter. Please provide one or the other."
+            )
+        return temp_url
+
     def __init__(
         self,
         project: str,
         studio_url: Optional[str] = None,
         auth_token: Optional[str] = None,
+        create_project: bool = False,
     ) -> None:
         """Initializes the client.
 
@@ -129,28 +185,19 @@ class StudioClient:
             project: The human readable identifier provided by the user.
             studio_url: The url of your current Studio instance.
             auth_token: The authorization bearer token of the user. This corresponds to the user's Aleph Alpha token.
+            create_project: If True, the client will try to create the project if it does not exist. Defaults to False.
         """
-        self._token = auth_token if auth_token is not None else os.getenv("AA_TOKEN")
-        if self._token is None:
-            raise ValueError(
-                "'AA_TOKEN' is not set and auth_token is not given as a parameter. Please provide one or the other."
-            )
-        self._headers = {
-            "Accept": "application/json",
-            "Authorization": f"Bearer {self._token}",
-        }
-
-        temp_url = studio_url if studio_url is not None else os.getenv("STUDIO_URL")
-        if temp_url is None:
-            raise ValueError(
-                "'STUDIO_URL' is not set and url is not given as a parameter. Please provide one or the other."
-            )
-        self.url = temp_url
-
+        self._headers = StudioClient.get_headers(auth_token)
+        self.url = StudioClient.get_url(studio_url)
         self._check_connection()
-
         self._project_name = project
         self._project_id: int | None = None
+
+        if create_project:
+            project_id = self._get_project(self._project_name)
+            if project_id is None:
+                self.create_project(self._project_name)
+            self._project_id = project_id
 
     def _check_connection(self) -> None:
         try:
@@ -292,10 +339,7 @@ class StudioClient:
             ID of the created dataset
         """
         url = urljoin(self.url, f"/api/projects/{self.project_id}/evaluation/datasets")
-        source_data_list = [
-            example.model_dump_json()
-            for example in sorted(examples, key=lambda x: x.id)
-        ]
+        source_data_list = [example.model_dump_json() for example in examples]
 
         source_data_file = "\n".join(source_data_list).encode()
 
@@ -317,6 +361,47 @@ class StudioClient:
 
         self._raise_for_status(response)
         return str(response.json())
+
+    def get_dataset_examples(
+        self,
+        dataset_id: str,
+        input_type: type[Input],
+        expected_output_type: type[ExpectedOutput],
+    ) -> Iterable[StudioExample[Input, ExpectedOutput]]:
+        buffer_size = 200
+        page_size = 100
+        page: int | None = 1
+        buffer: deque[StudioExample[Input, ExpectedOutput]] = deque()
+
+        while True:
+            if len(buffer) < buffer_size // 2 and page is not None:
+                page_url = urljoin(
+                    self.url,
+                    f"/api/projects/{self.project_id}/evaluation/datasets/{dataset_id}/datapoints?page={page}&size={page_size}",
+                )
+
+                response = requests.get(page_url, headers=self._headers)
+
+                if response.status_code == 200:
+                    examples = GetDatasetExamplesResponse(**response.json()).items
+                    buffer.extend(examples)
+
+                    if len(examples) < page_size:
+                        page = None
+                    else:
+                        page += 1
+                else:
+                    raise Exception(
+                        f"Failed to fetch items from {page_url}. Status code: {response.status_code}"
+                    )
+
+            if len(buffer) > 0:
+                yield StudioExample[
+                    input_type, expected_output_type  # type: ignore
+                ].model_validate_json(json_data=buffer.popleft().model_dump_json())
+            else:
+                if page is None:
+                    break
 
     def create_benchmark(
         self,
@@ -363,6 +448,21 @@ class StudioClient:
         if response_text is None:
             return None
         return GetBenchmarkResponse.model_validate(response_text)
+
+    def create_benchmark_execution(
+        self, benchmark_id: str, data: PostBenchmarkExecution
+    ) -> str:
+        url = urljoin(
+            self.url,
+            f"/api/projects/{self.project_id}/evaluation/benchmarks/{benchmark_id}/executions",
+        )
+
+        response = requests.post(
+            url, headers=self._headers, data=data.model_dump_json()
+        )
+
+        self._raise_for_status(response)
+        return str(response.json())
 
     def _raise_for_status(self, response: requests.Response) -> None:
         try:

@@ -2,7 +2,12 @@
 ## Unreleased
 
 ### Features
-...
+- Introduce `Benchmark` and `StudioBenchmark`
+  - Add `how_to_execute_a_benchmark.ipynb` to how-tos
+  - Add `studio.ipynb` to notebooks to show how one can debug a `Task` with Studio
+- Introduce `BenchmarkRepository`and `StudioBenchmarkRepository`
+- Add `create_project` bool to `StudioClient.__init__()` to enable users to automatically create their Studio projects
+- Add progressbar to the `Runner` to be able to track the `Run`
 
 ### Fixes
 ...

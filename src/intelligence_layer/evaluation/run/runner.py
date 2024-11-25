@@ -1,6 +1,5 @@
-import concurrent.futures
 from collections.abc import Iterable
-from concurrent.futures import ThreadPoolExecutor
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from inspect import get_annotations
 from itertools import islice
 from typing import Generic, Optional, cast
@@ -8,6 +7,7 @@ from uuid import uuid4
 
 from dict_hash import dict_hash
 from pydantic import JsonValue
+from tqdm import tqdm
 
 from intelligence_layer.connectors.base.json_serializable import (
     SerializableDict,
@@ -179,9 +179,11 @@ class Runner(Generic[Input, Output]):
 
         with ThreadPoolExecutor(max_workers=max_workers) as executor:
             futures = [executor.submit(run, example) for example in examples]
-            concurrent.futures.wait(futures)
-            for future in futures:
-                future.result()  # result of the futures must be  retrieved for exceptions to be raised
+            with tqdm(total=len(futures)) as pbar:
+                pbar.set_description("Running Task")
+                for future in as_completed(futures):
+                    future.result()
+                    pbar.update(1)
         self._run_repository.delete_temporary_run_data(tmp_hash)
 
         full_description = (

@@ -71,7 +71,7 @@ class DummyEvaluationLogic(
     ) -> DummyEvaluation:
         if output == FAIL_IN_EVAL_INPUT:
             raise RuntimeError(output)
-        return DummyEvaluation(result="pass")
+        return DummyEvaluation(result="Dummy result")
 
 
 class DummyAggregation(BaseModel):

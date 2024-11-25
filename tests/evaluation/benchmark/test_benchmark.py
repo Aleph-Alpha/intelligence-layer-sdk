@@ -10,6 +10,7 @@ from requests import HTTPError, Response
 from intelligence_layer.connectors.studio.studio import (
     GetBenchmarkResponse,
     StudioClient,
+    StudioExample,
 )
 from intelligence_layer.evaluation.benchmark.studio_benchmark import (
     StudioBenchmarkRepository,
@@ -20,6 +21,7 @@ from intelligence_layer.evaluation.benchmark.studio_benchmark import (
 from tests.evaluation.conftest import (
     DummyAggregationLogic,
     DummyEvaluationLogic,
+    DummyTask,
 )
 
 
@@ -49,6 +51,11 @@ def get_benchmark_response(datatset_id: str) -> GetBenchmarkResponse:
         created_by=None,
         updated_by=None,
     )
+
+
+@fixture
+def task() -> DummyTask:
+    return DummyTask()
 
 
 @fixture
@@ -178,6 +185,8 @@ def test_get_benchmark(
     benchmark = studio_benchmark_repository.get_benchmark(
         benchmark_id, evaluation_logic, aggregation_logic
     )
+
+    assert benchmark
     assert benchmark.id == benchmark_id
     assert benchmark.dataset_id == datatset_id
     assert benchmark.eval_logic
@@ -192,7 +201,43 @@ def test_get_non_existing_benchmark(
 ) -> None:
     mock_studio_client.get_benchmark.return_value = None  # type: ignore
 
-    with pytest.raises(ValueError, match="Benchmark not found"):
+    assert (
         studio_benchmark_repository.get_benchmark(
             "non_existing_id", evaluation_logic, aggregation_logic
         )
+        is None
+    )
+
+
+def test_execute_benchmark(
+    studio_benchmark_repository: StudioBenchmarkRepository,
+    mock_studio_client: StudioClient,
+    evaluation_logic: DummyEvaluationLogic,
+    get_benchmark_response: GetBenchmarkResponse,
+    aggregation_logic: DummyAggregationLogic,
+    task,
+) -> None:
+    mock_studio_client.get_benchmark.return_value = get_benchmark_response  # type: ignore
+    examples = [
+        StudioExample(input="input0", expected_output="expected_output0"),
+        StudioExample(input="input1", expected_output="expected_output1"),
+        StudioExample(input="input2", expected_output="expected_output2"),
+        StudioExample(input="input3", expected_output="expected_output3"),
+    ]
+
+    mock_studio_client.get_dataset_examples.return_value = examples  # type: ignore
+    benchmark = studio_benchmark_repository.get_benchmark(
+        "benchmark_id", evaluation_logic, aggregation_logic
+    )
+
+    assert benchmark
+    benchmark.execute(
+        task,
+        name="name",
+        description="description",
+        metadata={"key": "value"},
+        labels={"label"},
+    )
+
+    mock_studio_client.create_benchmark_execution.assert_called_once()  # type: ignore
+    assert mock_studio_client.submit_trace.call_count == 4  # type: ignore

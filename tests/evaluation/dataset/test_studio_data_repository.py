@@ -1,10 +1,11 @@
+from collections.abc import Iterable
 from unittest.mock import Mock
 
 import pytest
 from pydantic import BaseModel
 
 from intelligence_layer.connectors import DataClient
-from intelligence_layer.connectors.studio.studio import StudioDataset
+from intelligence_layer.connectors.studio.studio import StudioClient, StudioDataset
 from intelligence_layer.evaluation.dataset.domain import (
     Dataset,
     Example,
@@ -86,3 +87,16 @@ def test_create_dataset(studio_dataset_repository: StudioDatasetRepository) -> N
     assert submitted_dataset.name == expected_dataset.name
     assert submitted_dataset.metadata == expected_dataset.metadata
     assert submitted_examples == studio_examples
+
+
+def test_studio_client_is_only_called_once_when_examples_are_called(
+    studio_dataset_repository: StudioDatasetRepository,
+    mock_studio_client: StudioClient,
+    sequence_examples: Iterable[Example[str, None]],
+) -> None:
+    dataset_id = "dataset_id"
+    mock_studio_client.get_dataset_examples.return_value = sequence_examples  # type: ignore
+    studio_dataset_repository.examples(dataset_id, str, type(None))
+    studio_dataset_repository.examples(dataset_id, str, type(None))
+
+    mock_studio_client.get_dataset_examples.assert_called_once()  # type: ignore

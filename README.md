@@ -139,6 +139,7 @@ To use an **on-premises setup**, set the `CLIENT_URL` variable to your host URL.
 | 11    | Performance tips       | Contains some small tips for performance              | [performance_tips.ipynb](./src/documentation/performance_tips.ipynb)                                                   |
 | 12    | Deployment             | Shows how to deploy a Task in a minimal FastAPI app.  | [fastapi_tutorial.ipynb](./src/documentation/fastapi_tutorial.ipynb)                                                   |
 | 13    | Issue Classification   | Deploy a Task in Kubernetes to classify Jira issues   | [Found in adjacent repository](https://github.com/Aleph-Alpha/IL-Classification-Journey)                               |
+| 14    | Evaluate with Studio                 | Shows how to evaluate your `Task` using Studio           | [evaluate_with_studio.ipynb](./src/documentation/evaluate_with_studio.ipynb)                                                                       |
 
 ## How-Tos
 
@@ -150,18 +151,23 @@ The how-tos are quick lookups about how to do things. Compared to the tutorials,
 | [...define a task](./src/documentation/how_tos/how_to_define_a_task.ipynb)                                                                             | How to come up with a new task and formulate it                            |
 | [...implement a task](./src/documentation/how_tos/how_to_implement_a_task.ipynb)                                                                       | Implement a formulated task and make it run with the Intelligence Layer    |
 | [...debug and log a task](./src/documentation/how_tos/how_to_log_and_debug_a_task.ipynb)                                                               | Tools for logging and debugging in tasks                                   |
-| [...use Studio with traces](./src/documentation/how_tos/studio/how_to_use_studio_with_traces.ipynb)                                                    | Submitting Traces to Studio for debugging                                  |
 | **Analysis Pipeline**                                                                                                                                  |                                                                            |
 | [...implement a simple evaluation and aggregation logic](./src/documentation/how_tos/how_to_implement_a_simple_evaluation_and_aggregation_logic.ipynb) | Basic examples of evaluation and aggregation logic                         |
 | [...create a dataset](./src/documentation/how_tos/how_to_create_a_dataset.ipynb)                                                                       | Create a dataset used for running a task                                   |
 | [...run a task on a dataset](./src/documentation/how_tos/how_to_run_a_task_on_a_dataset.ipynb)                                                         | Run a task on a whole dataset instead of single examples                   |
-| [...resume a run after a crash](./src/documentation/how_tos/how_to_resume_a_run_after_a_crash.ipynb) | Resume a run after a crash or exception occurred |
+| [...resume a run after a crash](./src/documentation/how_tos/how_to_resume_a_run_after_a_crash.ipynb)                                                   | Resume a run after a crash or exception occurred                           |
 | [...evaluate multiple runs](./src/documentation/how_tos/how_to_evaluate_runs.ipynb)                                                                    | Evaluate (multiple) runs in a single evaluation                            |
 | [...aggregate multiple evaluations](./src/documentation/how_tos/how_to_aggregate_evaluations.ipynb)                                                    | Aggregate (multiple) evaluations in a single aggregation                   |
 | [...retrieve data for analysis](./src/documentation/how_tos/how_to_retrieve_data_for_analysis.ipynb)                                                   | Retrieve experiment data in multiple different ways                        |
 | [...implement a custom human evaluation](./src/documentation/how_tos/how_to_human_evaluation_via_argilla.ipynb)                                        | Necessary steps to create an evaluation with humans as a judge via Argilla |
 | [...implement elo evaluations](./src/documentation/how_tos/how_to_implement_elo_evaluations.ipynb)                                                     | Evaluate runs and create ELO ranking for them                              |
 | [...implement incremental evaluation](./src/documentation/how_tos/how_to_implement_incremental_evaluation.ipynb)                                       | Implement and run an incremental evaluation                                |
+| **Studio**                                                                                                                                             |                                                                            |
+| [...use Studio with traces](./src/documentation/how_tos/studio/how_to_use_studio_with_traces.ipynb)                                                    | Submitting Traces to Studio for debugging                                  |
+| [...upload existing datasets](./src/documentation/how_tos/studio/how_to_upload_existing_datasets_to_studio.ipynb)                                      | Upload Datasets to Studio                                                  |
+| [...execute a benchmark](./src/documentation/how_tos/studio/how_to_execute_a_benchmark.ipynb)                                                          | Execute a benchmark                                                        |
+
+
 
 # Models
 
