@@ -2,6 +2,7 @@ import random
 import re
 import string
 from collections.abc import Callable, Iterator
+from contextlib import contextmanager
 from datetime import datetime, timedelta, timezone
 from functools import wraps
 from http import HTTPStatus
@@ -19,16 +20,19 @@ from intelligence_layer.connectors.document_index.document_index import (
     DocumentFilterQueryParams,
     DocumentIndexClient,
     DocumentPath,
-    EmbeddingType,
+    EmbeddingConfig,
     FilterField,
     FilterOps,
     Filters,
     HybridIndex,
     IndexConfiguration,
     IndexPath,
+    InstructableEmbed,
     InvalidInput,
+    Representation,
     ResourceNotFound,
     SearchQuery,
+    SemanticEmbed,
 )
 
 P = ParamSpec("P")
@@ -72,8 +76,12 @@ def retry(
         return decorator(func)
 
 
+def random_alphanumeric_string(length: int = 20) -> str:
+    return "".join(random.choices(string.ascii_letters + string.digits, k=length))
+
+
 def random_identifier() -> str:
-    name = "".join(random.choices(string.ascii_letters + string.digits, k=20))
+    name = random_alphanumeric_string(20)
     timestamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S")
     return f"ci-il-{name}-{timestamp}"
 
@@ -90,6 +98,25 @@ def is_outdated_identifier(identifier: str, timestamp_threshold: datetime) -> bo
         tzinfo=timezone.utc
     )
     return not timestamp > timestamp_threshold
+
+
+def random_semantic_embed() -> EmbeddingConfig:
+    return SemanticEmbed(
+        representation=random.choice(get_args(Representation)),
+        model_name="luminous-base",
+    )
+
+
+def random_instructable_embed() -> EmbeddingConfig:
+    return InstructableEmbed(
+        model_name="pharia-1-embedding-4608-control",
+        query_instruction=random_alphanumeric_string(),
+        document_instruction=random_alphanumeric_string(),
+    )
+
+
+def random_embedding_config() -> EmbeddingConfig:
+    return random.choice([random_semantic_embed(), random_instructable_embed()])
 
 
 @fixture(scope="session")
@@ -203,15 +230,18 @@ def read_only_collection_path(
         document_index.delete_collection(collection_path)
 
 
-@fixture
-def random_index(
-    document_index: DocumentIndexClient, document_index_namespace: str
+@contextmanager
+def random_index_with_embedding_config(
+    document_index: DocumentIndexClient,
+    document_index_namespace: str,
+    embedding_config: EmbeddingConfig,
 ) -> Iterator[tuple[IndexPath, IndexConfiguration]]:
     name = random_identifier()
+
     chunk_size, chunk_overlap = sorted(
         random.sample([0, 32, 64, 128, 256, 512, 1024], 2), reverse=True
     )
-    embedding_type = random.choice(get_args(EmbeddingType))
+
     hybrid_index_choices: list[HybridIndex] = ["bm25", None]
     hybrid_index = random.choice(hybrid_index_choices)
 
@@ -219,14 +249,34 @@ def random_index(
     index_configuration = IndexConfiguration(
         chunk_size=chunk_size,
         chunk_overlap=chunk_overlap,
-        embedding_type=embedding_type,
         hybrid_index=hybrid_index,
+        embedding=embedding_config,
     )
     try:
         document_index.create_index(index, index_configuration)
         yield index, index_configuration
     finally:
         document_index.delete_index(index)
+
+
+@fixture
+def random_instructable_index(
+    document_index: DocumentIndexClient, document_index_namespace: str
+) -> Iterator[tuple[IndexPath, IndexConfiguration]]:
+    with random_index_with_embedding_config(
+        document_index, document_index_namespace, random_instructable_embed()
+    ) as index:
+        yield index
+
+
+@fixture
+def random_semantic_index(
+    document_index: DocumentIndexClient, document_index_namespace: str
+) -> Iterator[tuple[IndexPath, IndexConfiguration]]:
+    with random_index_with_embedding_config(
+        document_index, document_index_namespace, random_semantic_embed()
+    ) as index:
+        yield index
 
 
 @fixture
@@ -547,7 +597,9 @@ def test_document_path_is_immutable() -> None:
 def test_index_configuration_rejects_invalid_chunk_overlap() -> None:
     try:
         IndexConfiguration(
-            chunk_size=128, chunk_overlap=128, embedding_type="asymmetric"
+            chunk_size=128,
+            chunk_overlap=128,
+            embedding=random_embedding_config(),
         )
     except ValidationError as e:
         assert "chunk_overlap must be less than chunk_size" in str(e)
@@ -555,11 +607,21 @@ def test_index_configuration_rejects_invalid_chunk_overlap() -> None:
         raise AssertionError("ValidationError was not raised")
 
 
-def test_indexes_in_namespace_are_returned(
+def test_semantic_indexes_in_namespace_are_returned(
     document_index: DocumentIndexClient,
-    random_index: tuple[IndexPath, IndexConfiguration],
+    random_semantic_index: tuple[IndexPath, IndexConfiguration],
 ) -> None:
-    index_path, index_configuration = random_index
+    index_path, index_configuration = random_semantic_index
+    retrieved_index_configuration = document_index.index_configuration(index_path)
+
+    assert retrieved_index_configuration == index_configuration
+
+
+def test_instructable_indexes_in_namespace_are_returned(
+    document_index: DocumentIndexClient,
+    random_instructable_index: tuple[IndexPath, IndexConfiguration],
+) -> None:
+    index_path, index_configuration = random_instructable_index
     retrieved_index_configuration = document_index.index_configuration(index_path)
 
     assert retrieved_index_configuration == index_configuration

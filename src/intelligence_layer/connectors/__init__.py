@@ -63,10 +63,12 @@ from .document_index.document_index import FilterOps as FilterOps
 from .document_index.document_index import Filters as Filters
 from .document_index.document_index import IndexConfiguration as IndexConfiguration
 from .document_index.document_index import IndexPath as IndexPath
+from .document_index.document_index import InstructableEmbed as InstructableEmbed
 from .document_index.document_index import InternalError as InternalError
 from .document_index.document_index import InvalidInput as InvalidInput
 from .document_index.document_index import ResourceNotFound as ResourceNotFound
 from .document_index.document_index import SearchQuery as SearchQuery
+from .document_index.document_index import SemanticEmbed as SemanticEmbed
 from .limited_concurrency_client import (
     AlephAlphaClientProtocol as AlephAlphaClientProtocol,
 )

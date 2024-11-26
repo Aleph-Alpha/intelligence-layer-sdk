@@ -2,7 +2,8 @@
 ## Unreleased
 
 ### Features
-...
+- You can now customise the embedding model when creating an index using the `DocumentIndexClient`.
+- You can now use the `InstructableEmbed` embedding strategy when creating an index using the `DocumentIndexClient`. See the `document_index.ipynb` notebook for more information and an example.
 
 ### Fixes
 ...
@@ -11,7 +12,10 @@
 ...
 
 ### Breaking Changes
-...
+- The way you configure indexes in the `DocumentIndexClient` has changed. See the `document_index.ipynb` notebook for more information.
+    - The `EmbeddingType` alias has been renamed to `Representation` to better align with the underlying API.
+    - The `embedding_type` field has been removed from the `IndexConfiguration` class. You now configure embedding-related parameters via the `embedding` field.
+    - You now always need to specify an embedding model when creating an index. Previously, this was always `luminous-base`.
 
 ## 7.3.1
 ### Features
