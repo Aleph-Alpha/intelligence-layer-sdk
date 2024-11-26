@@ -2,14 +2,22 @@
 ## Unreleased
 
 ### Features
-- You can now customise the embedding model when creating an index using the `DocumentIndexClient`.
-- You can now use the `InstructableEmbed` embedding strategy when creating an index using the `DocumentIndexClient`. See the `document_index.ipynb` notebook for more information and an example.
+...
 
 ### Fixes
 ...
 
 ### Deprecations
 ...
+
+### Breaking Changes
+...
+
+## 8.0.0
+
+### Features
+- You can now customise the embedding model when creating an index using the `DocumentIndexClient`.
+- You can now use the `InstructableEmbed` embedding strategy when creating an index using the `DocumentIndexClient`. See the `document_index.ipynb` notebook for more information and an example.
 
 ### Breaking Changes
 - The way you configure indexes in the `DocumentIndexClient` has changed. See the `document_index.ipynb` notebook for more information.
