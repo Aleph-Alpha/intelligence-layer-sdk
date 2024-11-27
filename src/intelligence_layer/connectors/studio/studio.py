@@ -157,6 +157,10 @@ class PostBenchmarkLineagesRequest(RootModel[Sequence[BenchmarkLineage]]):
     pass
 
 
+class PostBenchmarkLineagesResponse(RootModel[Sequence[str]]):
+    pass
+
+
 # class PostBenchmarkLineageRequest
 
 
@@ -469,7 +473,7 @@ class StudioClient:
             return None
         return GetBenchmarkResponse.model_validate(response_text)
 
-    def create_benchmark_execution(
+    def submit_benchmark_execution(
         self, benchmark_id: str, data: PostBenchmarkExecution
     ) -> str:
         url = urljoin(
@@ -489,7 +493,7 @@ class StudioClient:
         benchmark_lineages: PostBenchmarkLineagesRequest,
         benchmark_id: str,
         execution_id: str,
-    ) -> str:
+    ) -> PostBenchmarkLineagesResponse:
         url = urljoin(
             self.url,
             f"/api/projects/{self.project_id}/evaluation/benchmarks/{benchmark_id}/executions/{execution_id}/lineages",
@@ -502,7 +506,7 @@ class StudioClient:
         )
 
         self._raise_for_status(response)
-        return str(response.json())
+        return PostBenchmarkLineagesResponse(response.json())
 
     def _raise_for_status(self, response: requests.Response) -> None:
         try:

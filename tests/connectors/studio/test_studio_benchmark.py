@@ -10,12 +10,16 @@ from requests import HTTPError
 
 from intelligence_layer.connectors.studio.studio import (
     AggregationLogicIdentifier,
+    BenchmarkLineage,
     EvaluationLogicIdentifier,
     PostBenchmarkExecution,
+    PostBenchmarkLineagesRequest,
     StudioClient,
     StudioDataset,
     StudioExample,
 )
+from intelligence_layer.core.tracer.in_memory_tracer import InMemoryTracer
+from intelligence_layer.core.tracer.tracer import ExportedSpan
 from intelligence_layer.evaluation.aggregation.aggregator import AggregationLogic
 from intelligence_layer.evaluation.benchmark.studio_benchmark import (
     create_aggregation_logic_identifier,
@@ -25,6 +29,11 @@ from intelligence_layer.evaluation.dataset.domain import Example
 from intelligence_layer.evaluation.evaluation.evaluator.evaluator import (
     SingleOutputEvaluationLogic,
 )
+from tests.connectors.studio.test_studio import TracerTestTask
+
+
+class DummyExample(Example[str, str]):
+    data: str
 
 
 class DummyEvaluation(BaseModel):
@@ -60,6 +69,14 @@ class DummyAggregationLogic(AggregationLogic[DummyEvaluation, DummyAggregation])
         return DummyAggregation(num_evaluations=len(list(evaluations)))
 
 
+class DummyBenchmarkLineage(BenchmarkLineage[str, str, str, DummyEvaluation]):
+    pass
+
+
+class DummyPostBenchmarkLineagesRequest(PostBenchmarkLineagesRequest):
+    pass
+
+
 @fixture
 def studio_dataset(
     studio_client: StudioClient, examples: Sequence[StudioExample[str, str]]
@@ -75,6 +92,38 @@ def evaluation_logic_identifier() -> EvaluationLogicIdentifier:
 @fixture
 def aggregation_logic_identifier() -> AggregationLogicIdentifier:
     return create_aggregation_logic_identifier(DummyAggregationLogic())
+
+
+@fixture
+def test_trace() -> Sequence[ExportedSpan]:
+    tracer = InMemoryTracer()
+    task = TracerTestTask()
+    task.run("my input", tracer)
+    return tracer.export_for_viewing()
+
+
+@fixture
+def with_uploaded_test_trace(
+    test_trace: Sequence[ExportedSpan], studio_client: StudioClient
+) -> str:
+    trace_id = studio_client.submit_trace(test_trace)
+    return trace_id
+
+
+@fixture
+def with_uploaded_benchmark(
+    studio_client: StudioClient,
+    studio_dataset: str,
+    evaluation_logic_identifier: EvaluationLogicIdentifier,
+    aggregation_logic_identifier: AggregationLogicIdentifier,
+) -> str:
+    benchmark_id = studio_client.submit_benchmark(
+        studio_dataset,
+        evaluation_logic_identifier,
+        aggregation_logic_identifier,
+        "benchmark_name",
+    )
+    return benchmark_id
 
 
 def test_create_benchmark(
@@ -110,18 +159,12 @@ def test_create_benchmark_with_non_existing_dataset(
 def test_get_benchmark(
     studio_client: StudioClient,
     studio_dataset: str,
-    evaluation_logic_identifier: EvaluationLogicIdentifier,
-    aggregation_logic_identifier: AggregationLogicIdentifier,
+    with_uploaded_benchmark: str,
 ) -> None:
     dummy_evaluation_logic = """return DummyEvaluation(result="success")"""
     benchmark_name = "benchmark_name"
 
-    benchmark_id = studio_client.submit_benchmark(
-        studio_dataset,
-        evaluation_logic_identifier,
-        aggregation_logic_identifier,
-        benchmark_name,
-    )
+    benchmark_id = with_uploaded_benchmark
 
     benchmark = studio_client.get_benchmark(benchmark_id)
     assert benchmark
@@ -138,16 +181,9 @@ def test_get_non_existing_benchmark(studio_client: StudioClient) -> None:
 
 def test_can_create_benchmark_execution(
     studio_client: StudioClient,
-    studio_dataset: str,
-    evaluation_logic_identifier: EvaluationLogicIdentifier,
-    aggregation_logic_identifier: AggregationLogicIdentifier,
+    with_uploaded_benchmark: str,
 ) -> None:
-    benchmark_id = studio_client.submit_benchmark(
-        studio_dataset,
-        evaluation_logic_identifier,
-        aggregation_logic_identifier,
-        "benchmark_name",
-    )
+    benchmark_id = with_uploaded_benchmark
 
     example_request = PostBenchmarkExecution(
         name="name",
@@ -171,8 +207,67 @@ def test_can_create_benchmark_execution(
         statistics=DummyAggregatedEvaluation(score=1.0).model_dump_json(),
     )
 
-    benchmark_execution_id = studio_client.create_benchmark_execution(
+    benchmark_execution_id = studio_client.submit_benchmark_execution(
         benchmark_id=benchmark_id, data=example_request
     )
 
     assert UUID(benchmark_execution_id)
+
+
+def test_submit_benchmark_lineage_uploads_single_lineage(
+    studio_client: StudioClient,
+    with_uploaded_test_trace: str,
+    with_uploaded_benchmark: str,
+) -> None:
+    trace_id = with_uploaded_test_trace
+    benchmark_id = with_uploaded_benchmark
+
+    example_request = PostBenchmarkExecution(
+        name="name",
+        description="Test benchmark execution",
+        labels={"performance", "testing"},
+        metadata={"project": "AI Testing", "team": "QA"},
+        start=datetime.now(),
+        end=datetime.now(),
+        run_start=datetime.now(),
+        run_end=datetime.now(),
+        run_successful_count=10,
+        run_failed_count=2,
+        run_success_avg_latency=120,
+        run_success_avg_token_count=300,
+        eval_start=datetime.now(),
+        eval_end=datetime.now(),
+        eval_successful_count=8,
+        eval_failed_count=1,
+        aggregation_start=datetime.now(),
+        aggregation_end=datetime.now(),
+        statistics=DummyAggregatedEvaluation(score=1.0).model_dump_json(),
+    )
+
+    benchmark_execution_id = studio_client.submit_benchmark_execution(
+        benchmark_id=benchmark_id, data=example_request
+    )
+    lineages = DummyPostBenchmarkLineagesRequest(
+        [
+            DummyBenchmarkLineage(
+                trace_id=trace_id,
+                input="input",
+                expected_output="output",
+                example_metadata={"key3": "value3"},
+                output="output",
+                evaluation={"key5": "value5"},
+                run_latency=1,
+                run_tokens=3,
+            ),
+        ]
+    )
+
+    lineage_ids = studio_client.submit_benchmark_lineages(
+        benchmark_lineages=lineages,
+        benchmark_id=benchmark_id,
+        execution_id=benchmark_execution_id,
+    )
+
+    assert len(lineage_ids.root) == len(lineages.root)
+    for lineage_id in lineage_ids.root:
+        assert UUID(lineage_id)

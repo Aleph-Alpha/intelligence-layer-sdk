@@ -140,7 +140,7 @@ class StudioBenchmark(Benchmark):
             statistics=aggregation_overview.statistics.model_dump_json(),
         )
 
-        benchmark_execution_id = self.client.create_benchmark_execution(
+        benchmark_execution_id = self.client.submit_benchmark_execution(
             benchmark_id=self.id, data=data
         )
 

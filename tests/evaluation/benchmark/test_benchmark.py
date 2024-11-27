@@ -240,6 +240,7 @@ def test_execute_benchmark(
         labels={"label"},
     )
 
-    mock_studio_client.create_benchmark_execution.assert_called_once()  # type: ignore
-    assert mock_studio_client.submit_trace.call_count == 4  # type: ignorei
+    mock_studio_client.submit_benchmark_execution.assert_called_once()  # type: ignore
+    assert mock_studio_client.submit_trace.call_count == 4  # type: ignore
     mock_studio_client.submit_benchmark_lineages.assert_called_once()  # type: ignore
+
