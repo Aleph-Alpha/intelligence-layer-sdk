@@ -3,6 +3,7 @@
 
 ### Features
 - Introduce `Benchmark` and `StudioBenchmark`
+  - `Benchmark` allows you to evaluate and compare the performance of different `Task`s  with a fixed evaluation logic, aggregation logic and `Dataset`.
   - Add `how_to_execute_a_benchmark.ipynb` to how-tos
   - Add `studio.ipynb` to notebooks to show how one can debug a `Task` with Studio
 - Introduce `BenchmarkRepository`and `StudioBenchmarkRepository`
