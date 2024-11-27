@@ -1,4 +1,5 @@
 import inspect
+from collections.abc import Sequence
 from datetime import datetime
 from http import HTTPStatus
 from typing import Any, Optional
@@ -9,6 +10,7 @@ from tqdm import tqdm
 
 from intelligence_layer.connectors.studio.studio import (
     AggregationLogicIdentifier,
+    BenchmarkLineage,
     EvaluationLogicIdentifier,
     PostBenchmarkExecution,
     StudioClient,
@@ -38,6 +40,9 @@ from intelligence_layer.evaluation.evaluation.evaluator.evaluator import (
 )
 from intelligence_layer.evaluation.evaluation.in_memory_evaluation_repository import (
     InMemoryEvaluationRepository,
+)
+from intelligence_layer.evaluation.infrastructure.repository_navigator import (
+    EvaluationLineage,
 )
 from intelligence_layer.evaluation.run.in_memory_run_repository import (
     InMemoryRunRepository,
@@ -139,12 +144,55 @@ class StudioBenchmark(Benchmark):
             benchmark_id=self.id, data=data
         )
 
-        evaluation_lineages = self.evaluator.evaluation_lineages(evaluation_overview.id)
+        evaluation_lineages = list(
+            self.evaluator.evaluation_lineages(evaluation_overview.id)
+        )
+        trace_ids = []
         for lineage in tqdm(evaluation_lineages, desc="Submitting traces to Studio"):
             trace = lineage.tracers[0]
             assert trace
-            self.client.submit_trace(trace.export_for_viewing())
+            trace_id = self.client.submit_trace(trace.export_for_viewing())
+            trace_ids.append(trace_id)
+
+        benchmark_lineages = self._create_benchmark_lineages(
+            eval_lineages=evaluation_lineages,
+            trace_ids=trace_ids,
+        )
+        self.client.submit_benchmark_lineages(
+            benchmark_lineages=benchmark_lineages,
+            execution_id=benchmark_execution_id,
+            benchmark_id=self.id,
+        )
+
         return benchmark_execution_id
+
+    def _create_benchmark_lineages(
+        self,
+        eval_lineages: list[
+            EvaluationLineage[Input, ExpectedOutput, Output, Evaluation]
+        ],
+        trace_ids: list[str],
+    ) -> Sequence[BenchmarkLineage]:
+        return [
+            self._create_benchmark_lineage(eval_lineage, trace_id)
+            for eval_lineage, trace_id in zip(eval_lineages, trace_ids, strict=True)
+        ]
+
+    def _create_benchmark_lineage(
+        self,
+        eval_lineage: EvaluationLineage[Input, ExpectedOutput, Output, Evaluation],
+        trace_id: str,
+    ) -> BenchmarkLineage:
+        return BenchmarkLineage(
+            trace_id=trace_id,
+            input=eval_lineage.example.input,
+            expected_output=eval_lineage.example.expected_output,
+            example_metadata=eval_lineage.example.metadata,
+            output=eval_lineage.outputs[0].output,
+            evaluation=eval_lineage.evaluation.result,
+            run_latency=0,  # TODO: Implement this
+            run_tokens=0,  # TODO: Implement this
+        )
 
 
 class StudioBenchmarkRepository(BenchmarkRepository):
@@ -161,7 +209,7 @@ class StudioBenchmarkRepository(BenchmarkRepository):
         description: Optional[str] = None,
     ) -> StudioBenchmark:
         try:
-            benchmark_id = self.client.create_benchmark(
+            benchmark_id = self.client.submit_benchmark(
                 dataset_id,
                 create_evaluation_logic_identifier(eval_logic),
                 create_aggregation_logic_identifier(aggregation_logic),

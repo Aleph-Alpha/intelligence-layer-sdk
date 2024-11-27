@@ -8,7 +8,7 @@ from urllib.parse import urljoin
 from uuid import uuid4
 
 import requests
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, RootModel
 from requests.exceptions import ConnectionError, MissingSchema
 
 from intelligence_layer.connectors import JsonSerializable
@@ -24,6 +24,8 @@ from intelligence_layer.core.tracer.tracer import (  # Import to be fixed with P
 
 Input = TypeVar("Input", bound=PydanticSerializable)
 ExpectedOutput = TypeVar("ExpectedOutput", bound=PydanticSerializable)
+Output = TypeVar("Output", bound=PydanticSerializable)
+Evaluation = TypeVar("Evaluation", bound=BaseModel, covariant=True)
 
 
 class StudioProject(BaseModel):
@@ -138,6 +140,24 @@ class GetDatasetExamplesResponse(BaseModel, Generic[Input, ExpectedOutput]):
     size: int
     num_pages: int
     items: Sequence[StudioExample[Input, ExpectedOutput]]
+
+
+class BenchmarkLineage(BaseModel, Generic[Input, Output, ExpectedOutput, Evaluation]):
+    trace_id: str
+    input: Input
+    expected_output: ExpectedOutput
+    output: Output
+    example_metadata: Optional[dict[str, Any]] = None
+    evaluation: Any
+    run_latency: int
+    run_tokens: int
+
+
+class PostBenchmarkLineagesRequest(RootModel[Sequence[BenchmarkLineage]]):
+    pass
+
+
+# class PostBenchmarkLineageRequest
 
 
 class StudioClient:
@@ -403,7 +423,7 @@ class StudioClient:
                 if page is None:
                     break
 
-    def create_benchmark(
+    def submit_benchmark(
         self,
         dataset_id: str,
         eval_logic: EvaluationLogicIdentifier,
@@ -459,6 +479,26 @@ class StudioClient:
 
         response = requests.post(
             url, headers=self._headers, data=data.model_dump_json()
+        )
+
+        self._raise_for_status(response)
+        return str(response.json())
+
+    def submit_benchmark_lineages(
+        self,
+        benchmark_lineages: PostBenchmarkLineagesRequest,
+        benchmark_id: str,
+        execution_id: str,
+    ) -> str:
+        url = urljoin(
+            self.url,
+            f"/api/projects/{self.project_id}/evaluation/benchmarks/{benchmark_id}/executions/{execution_id}/lineages",
+        )
+
+        response = requests.post(
+            url,
+            headers=self._headers,
+            data=benchmark_lineages.model_dump_json(),
         )
 
         self._raise_for_status(response)

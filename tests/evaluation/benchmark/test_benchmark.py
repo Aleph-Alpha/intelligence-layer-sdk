@@ -140,7 +140,7 @@ def test_create_benchmark(
     aggregation_logic: DummyAggregationLogic,
 ) -> None:
     dataset_id = "fake_dataset_id"
-    mock_studio_client.create_benchmark.return_value = str(uuid4())  # type: ignore
+    mock_studio_client.submit_benchmark.return_value = str(uuid4())  # type: ignore
 
     benchmark = studio_benchmark_repository.create_benchmark(
         dataset_id, evaluation_logic, aggregation_logic, "benchmark_name"
@@ -148,7 +148,7 @@ def test_create_benchmark(
     uuid = UUID(benchmark.id)
     assert uuid
     assert benchmark.dataset_id == dataset_id
-    studio_benchmark_repository.client.create_benchmark.assert_called_once()  # type: ignore
+    studio_benchmark_repository.client.submit_benchmark.assert_called_once()  # type: ignore
 
 
 def test_create_benchmark_with_non_existing_dataset(
@@ -161,7 +161,7 @@ def test_create_benchmark_with_non_existing_dataset(
     response = Response()
     response.status_code = 400
 
-    mock_studio_client.create_benchmark.side_effect = HTTPError(  # type: ignore
+    mock_studio_client.submit_benchmark.side_effect = HTTPError(  # type: ignore
         "400 Client Error: Bad Request for url", response=response
     )
 
@@ -218,6 +218,7 @@ def test_execute_benchmark(
     task,
 ) -> None:
     mock_studio_client.get_benchmark.return_value = get_benchmark_response  # type: ignore
+    mock_studio_client.submit_trace.return_value = str(uuid4())  # type: ignore
     examples = [
         StudioExample(input="input0", expected_output="expected_output0"),
         StudioExample(input="input1", expected_output="expected_output1"),
@@ -240,4 +241,5 @@ def test_execute_benchmark(
     )
 
     mock_studio_client.create_benchmark_execution.assert_called_once()  # type: ignore
-    assert mock_studio_client.submit_trace.call_count == 4  # type: ignore
+    assert mock_studio_client.submit_trace.call_count == 4  # type: ignorei
+    mock_studio_client.submit_benchmark_lineages.assert_called_once()  # type: ignore

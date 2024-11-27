@@ -83,7 +83,7 @@ def test_create_benchmark(
     evaluation_logic_identifier: EvaluationLogicIdentifier,
     aggregation_logic_identifier: AggregationLogicIdentifier,
 ) -> None:
-    benchmark_id = studio_client.create_benchmark(
+    benchmark_id = studio_client.submit_benchmark(
         studio_dataset,
         evaluation_logic_identifier,
         aggregation_logic_identifier,
@@ -99,7 +99,7 @@ def test_create_benchmark_with_non_existing_dataset(
     aggregation_logic_identifier: AggregationLogicIdentifier,
 ) -> None:
     with pytest.raises(HTTPError, match=str(HTTPStatus.BAD_REQUEST.value)):
-        studio_client.create_benchmark(
+        studio_client.submit_benchmark(
             "fake_id",
             evaluation_logic_identifier,
             aggregation_logic_identifier,
@@ -116,7 +116,7 @@ def test_get_benchmark(
     dummy_evaluation_logic = """return DummyEvaluation(result="success")"""
     benchmark_name = "benchmark_name"
 
-    benchmark_id = studio_client.create_benchmark(
+    benchmark_id = studio_client.submit_benchmark(
         studio_dataset,
         evaluation_logic_identifier,
         aggregation_logic_identifier,
@@ -142,7 +142,7 @@ def test_can_create_benchmark_execution(
     evaluation_logic_identifier: EvaluationLogicIdentifier,
     aggregation_logic_identifier: AggregationLogicIdentifier,
 ) -> None:
-    benchmark_id = studio_client.create_benchmark(
+    benchmark_id = studio_client.submit_benchmark(
         studio_dataset,
         evaluation_logic_identifier,
         aggregation_logic_identifier,
