@@ -19,8 +19,13 @@ from intelligence_layer.connectors.document_index.document_index import (
     InvalidInput,
     ResourceNotFound,
     SearchQuery,
+    SemanticEmbed,
 )
-from tests.conftest_document_index import random_embedding_config, retry
+from tests.conftest_document_index import (
+    random_embedding_config,
+    random_identifier,
+    retry,
+)
 
 
 @pytest.mark.internal
@@ -752,3 +757,42 @@ def test_document_indexes_works(
     document_index: DocumentIndexClient, random_collection: CollectionPath
 ) -> None:
     document_index.progress(random_collection)
+
+
+def test_retrieve_chunks(
+    document_index: DocumentIndexClient,
+    random_collection: CollectionPath,
+    document_index_namespace: str,
+) -> None:
+    index_name = random_identifier()
+    index_path = IndexPath(namespace=document_index_namespace, index=index_name)
+    index_configuration = IndexConfiguration(
+        chunk_size=512,
+        chunk_overlap=0,
+        embedding=SemanticEmbed(
+            representation="asymmetric",
+            model_name="luminous-base",
+        ),
+    )
+    document_index.create_index(index_path, index_configuration)
+    document_index.assign_index_to_collection(random_collection, index_name)
+
+    document_path = DocumentPath(
+        collection_path=random_collection,
+        document_name="document-with-chunks",
+    )
+    document_contents = DocumentContents(
+        contents=[
+            # because chunk size is 512, this item will be split into 2 chunks
+            " token" * 750,
+            "final chunk",
+        ],
+    )
+    document_index.add_document(document_path, document_contents)
+
+    @retry
+    def chunks() -> None:
+        chunks = document_index.chunks(document_path, index_name)
+        assert len(chunks) == 3
+
+    chunks()
