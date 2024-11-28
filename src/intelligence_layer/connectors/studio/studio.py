@@ -1,3 +1,4 @@
+import gzip
 import json
 import os
 from collections import defaultdict, deque
@@ -159,9 +160,6 @@ class PostBenchmarkLineagesRequest(RootModel[Sequence[BenchmarkLineage]]):
 
 class PostBenchmarkLineagesResponse(RootModel[Sequence[str]]):
     pass
-
-
-# class PostBenchmarkLineageRequest
 
 
 class StudioClient:
@@ -493,22 +491,67 @@ class StudioClient:
         benchmark_lineages: Sequence[BenchmarkLineage],
         benchmark_id: str,
         execution_id: str,
+        max_payload_size: int = 50 * 1024 * 1024,
     ) -> PostBenchmarkLineagesResponse:
+        all_responses = []
+        remaining_lineages = list(benchmark_lineages)
+
+        converted_lineage_sizes = [
+            len(lineage.model_dump_json().encode("utf-8"))
+            for lineage in benchmark_lineages
+        ]
+
+        while remaining_lineages:
+            batch = []
+            current_size = 0
+            # Build batch while checking size
+            for lineage, size in zip(
+                remaining_lineages, converted_lineage_sizes, strict=True
+            ):
+                if current_size + size <= max_payload_size:
+                    batch.append(lineage)
+                    current_size += size
+                else:
+                    break
+
+            if batch:
+                # Send batch
+                response = self._send_compressed_batch(
+                    batch, benchmark_id, execution_id
+                )
+                all_responses.extend(response)
+
+            else:  # Only reached if a lineage is too big for the request
+                print("Lineage exceeds maximum of upload size", lineage)
+                batch.append(lineage)
+
+            remaining_lineages = remaining_lineages[len(batch) :]
+            converted_lineage_sizes = converted_lineage_sizes[len(batch) :]
+
+        return PostBenchmarkLineagesResponse(all_responses)
+
+    def _send_compressed_batch(
+        self, batch: list[BenchmarkLineage], benchmark_id: str, execution_id: str
+    ) -> list[str]:
         url = urljoin(
             self.url,
             f"/api/projects/{self.project_id}/evaluation/benchmarks/{benchmark_id}/executions/{execution_id}/lineages",
         )
 
-        request_data = self._create_post_bechnmark_lineages_request(benchmark_lineages)
+        request_data = self._create_post_bechnmark_lineages_request(batch)
+        json_data = request_data.model_dump_json()
+        compressed_data = gzip.compress(json_data.encode("utf-8"))
+
+        headers = {**self._headers, "Content-Encoding": "gzip"}
 
         response = requests.post(
             url,
-            headers=self._headers,
-            data=request_data.model_dump_json(),
+            headers=headers,
+            data=compressed_data,
         )
 
         self._raise_for_status(response)
-        return PostBenchmarkLineagesResponse(response.json())
+        return response.json()
 
     def _create_post_bechnmark_lineages_request(
         self, benchmark_lineages: Sequence[BenchmarkLineage]

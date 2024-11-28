@@ -85,6 +85,31 @@ def studio_dataset(
 
 
 @fixture
+def post_benchmark_execution() -> PostBenchmarkExecution:
+    return PostBenchmarkExecution(
+        name="name",
+        description="Test benchmark execution",
+        labels={"performance", "testing"},
+        metadata={"project": "AI Testing", "team": "QA"},
+        start=datetime.now(),
+        end=datetime.now(),
+        run_start=datetime.now(),
+        run_end=datetime.now(),
+        run_successful_count=10,
+        run_failed_count=2,
+        run_success_avg_latency=120,
+        run_success_avg_token_count=300,
+        eval_start=datetime.now(),
+        eval_end=datetime.now(),
+        eval_successful_count=8,
+        eval_failed_count=1,
+        aggregation_start=datetime.now(),
+        aggregation_end=datetime.now(),
+        statistics=DummyAggregatedEvaluation(score=1.0).model_dump_json(),
+    )
+
+
+@fixture
 def evaluation_logic_identifier() -> EvaluationLogicIdentifier:
     return create_evaluation_logic_identifier(DummyEvaluationLogic())
 
@@ -124,6 +149,21 @@ def with_uploaded_benchmark(
         "benchmark_name",
     )
     return benchmark_id
+
+
+@fixture
+def with_uploaded_benchmark_execution(
+    studio_client: StudioClient,
+    studio_dataset: str,
+    evaluation_logic_identifier: EvaluationLogicIdentifier,
+    aggregation_logic_identifier: AggregationLogicIdentifier,
+    with_uploaded_benchmark: str,
+    post_benchmark_execution: PostBenchmarkExecution,
+) -> str:
+    benchmark_execution_id = studio_client.submit_benchmark_execution(
+        benchmark_id=with_uploaded_benchmark, data=post_benchmark_execution
+    )
+    return benchmark_execution_id
 
 
 def test_create_benchmark(
@@ -182,30 +222,11 @@ def test_get_non_existing_benchmark(studio_client: StudioClient) -> None:
 def test_can_create_benchmark_execution(
     studio_client: StudioClient,
     with_uploaded_benchmark: str,
+    post_benchmark_execution: PostBenchmarkExecution,
 ) -> None:
     benchmark_id = with_uploaded_benchmark
 
-    example_request = PostBenchmarkExecution(
-        name="name",
-        description="Test benchmark execution",
-        labels={"performance", "testing"},
-        metadata={"project": "AI Testing", "team": "QA"},
-        start=datetime.now(),
-        end=datetime.now(),
-        run_start=datetime.now(),
-        run_end=datetime.now(),
-        run_successful_count=10,
-        run_failed_count=2,
-        run_success_avg_latency=120,
-        run_success_avg_token_count=300,
-        eval_start=datetime.now(),
-        eval_end=datetime.now(),
-        eval_successful_count=8,
-        eval_failed_count=1,
-        aggregation_start=datetime.now(),
-        aggregation_end=datetime.now(),
-        statistics=DummyAggregatedEvaluation(score=1.0).model_dump_json(),
-    )
+    example_request = post_benchmark_execution
 
     benchmark_execution_id = studio_client.submit_benchmark_execution(
         benchmark_id=benchmark_id, data=example_request
@@ -218,35 +239,12 @@ def test_submit_benchmark_lineage_uploads_single_lineage(
     studio_client: StudioClient,
     with_uploaded_test_trace: str,
     with_uploaded_benchmark: str,
+    with_uploaded_benchmark_execution: str,
 ) -> None:
     trace_id = with_uploaded_test_trace
     benchmark_id = with_uploaded_benchmark
+    benchmark_execution_id = with_uploaded_benchmark_execution
 
-    example_request = PostBenchmarkExecution(
-        name="name",
-        description="Test benchmark execution",
-        labels={"performance", "testing"},
-        metadata={"project": "AI Testing", "team": "QA"},
-        start=datetime.now(),
-        end=datetime.now(),
-        run_start=datetime.now(),
-        run_end=datetime.now(),
-        run_successful_count=10,
-        run_failed_count=2,
-        run_success_avg_latency=120,
-        run_success_avg_token_count=300,
-        eval_start=datetime.now(),
-        eval_end=datetime.now(),
-        eval_successful_count=8,
-        eval_failed_count=1,
-        aggregation_start=datetime.now(),
-        aggregation_end=datetime.now(),
-        statistics=DummyAggregatedEvaluation(score=1.0).model_dump_json(),
-    )
-
-    benchmark_execution_id = studio_client.submit_benchmark_execution(
-        benchmark_id=benchmark_id, data=example_request
-    )
     lineages = [
         DummyBenchmarkLineage(
             trace_id=trace_id,
@@ -269,3 +267,94 @@ def test_submit_benchmark_lineage_uploads_single_lineage(
     assert len(lineage_ids.root) == len(lineages)
     for lineage_id in lineage_ids.root:
         assert UUID(lineage_id)
+
+
+def test_batch_upload_sends_multiple_requests(
+    studio_client: StudioClient,
+    with_uploaded_test_trace: str,
+    with_uploaded_benchmark: str,
+    with_uploaded_benchmark_execution: str,
+    post_benchmark_execution: PostBenchmarkExecution,
+) -> None:
+    trace_id = with_uploaded_test_trace
+    benchmark_id = with_uploaded_benchmark
+    benchmark_execution_id = with_uploaded_benchmark_execution
+
+    lineages = [
+        DummyBenchmarkLineage(
+            trace_id=trace_id,
+            input="input",
+            expected_output="output",
+            example_metadata={"key3": "value3"},
+            output="output",
+            evaluation={"key5": "value5"},
+            run_latency=1,
+            run_tokens=3,
+        ),
+        DummyBenchmarkLineage(
+            trace_id=trace_id,
+            input="input2",
+            expected_output="output2",
+            example_metadata={"key4": "value4"},
+            output="output2",
+            evaluation={"key5": "value5"},
+            run_latency=1,
+            run_tokens=3,
+        ),
+    ]
+
+    lineage_ids = studio_client.submit_benchmark_lineages(
+        benchmark_lineages=lineages,
+        benchmark_id=benchmark_id,
+        execution_id=benchmark_execution_id,
+        max_payload_size=len(lineages[1].model_dump_json().encode("utf-8"))
+        + 1,  # to enforce making to requests for the lineages
+    )
+
+    assert len(lineage_ids.root) == len(lineages)
+    for lineage_id in lineage_ids.root:
+        assert UUID(lineage_id)
+
+
+def test_submit_lineage_skips_lineages_exceeding_request_size(
+    studio_client: StudioClient,
+    with_uploaded_test_trace: str,
+    with_uploaded_benchmark: str,
+    with_uploaded_benchmark_execution: str,
+) -> None:
+    trace_id = with_uploaded_test_trace
+    benchmark_id = with_uploaded_benchmark
+    benchmark_execution_id = with_uploaded_benchmark_execution
+
+    lineages = [
+        DummyBenchmarkLineage(
+            trace_id=trace_id,
+            input="input",
+            expected_output="output",
+            example_metadata={"key3": "value3"},
+            output="output",
+            evaluation={"key5": "value5"},
+            run_latency=1,
+            run_tokens=3,
+        ),
+        DummyBenchmarkLineage(
+            trace_id=trace_id,
+            input="input input2 input3 input4 input5",
+            expected_output="output output output output",
+            example_metadata={"key3": "value3"},
+            output="output output output output",
+            evaluation={"key5": "value5"},
+            run_latency=1,
+            run_tokens=3,
+        ),
+    ]
+
+    lineage_ids = studio_client.submit_benchmark_lineages(
+        benchmark_lineages=lineages,
+        benchmark_id=benchmark_id,
+        execution_id=benchmark_execution_id,
+        max_payload_size=len(lineages[0].model_dump_json().encode("utf-8"))
+        + 1,  # to enforce only upload of first lineage
+    )
+
+    assert len(lineage_ids.root) == 1
