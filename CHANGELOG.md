@@ -17,7 +17,7 @@
 ...
 
 ### Breaking Changes
-...
+ - The env variable `POSTGRES_HOST` is split into `POSTGRES_HOST` and `POSTGRES_PORT`. This affects all classes interacting with Studio and the `InstructionFinetuningDataRepository`.
 
 ## 8.0.0
 

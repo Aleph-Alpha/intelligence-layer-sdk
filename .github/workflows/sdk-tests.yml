@@ -142,7 +142,8 @@ jobs:
         ports:
           - "8000:8000"
         env:
-          DATABASE_URL: "postgres:5432"
+          POSTGRES_HOST: "postgres"
+          POSTGRES_PORT: "5432"
           POSTGRES_DB: "il_sdk"
           POSTGRES_USER: "il_sdk"
           POSTGRES_PASSWORD: "test"
@@ -189,7 +190,8 @@ jobs:
           ARGILLA_API_KEY: "argilla.apikey"
           CLIENT_URL: ${{ secrets.CLIENT_URL }}
           STUDIO_URL: "http://localhost:8000/"
-          POSTGRES_HOST: "localhost:5433"
+          POSTGRES_HOST: "localhost"
+          POSTGRES_PORT: "5433"
           POSTGRES_DB: "il_sdk"
           POSTGRES_USER: "il_sdk"
           POSTGRES_PASSWORD: "test"
@@ -228,7 +230,8 @@ jobs:
         ports:
           - "8001:8000"
         env:
-          DATABASE_URL: "postgres:5432"
+          POSTGRES_HOST: "postgres"
+          POSTGRES_PORT: "5432"
           POSTGRES_DB: "il_sdk"
           POSTGRES_USER: "il_sdk"
           POSTGRES_PASSWORD: "test"
