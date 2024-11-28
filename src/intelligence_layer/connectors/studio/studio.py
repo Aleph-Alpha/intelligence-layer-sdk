@@ -490,7 +490,7 @@ class StudioClient:
 
     def submit_benchmark_lineages(
         self,
-        benchmark_lineages: PostBenchmarkLineagesRequest,
+        benchmark_lineages: Sequence[BenchmarkLineage],
         benchmark_id: str,
         execution_id: str,
     ) -> PostBenchmarkLineagesResponse:
@@ -499,14 +499,21 @@ class StudioClient:
             f"/api/projects/{self.project_id}/evaluation/benchmarks/{benchmark_id}/executions/{execution_id}/lineages",
         )
 
+        request_data = self._create_post_bechnmark_lineages_request(benchmark_lineages)
+
         response = requests.post(
             url,
             headers=self._headers,
-            data=benchmark_lineages.model_dump_json(),
+            data=request_data.model_dump_json(),
         )
 
         self._raise_for_status(response)
         return PostBenchmarkLineagesResponse(response.json())
+
+    def _create_post_bechnmark_lineages_request(
+        self, benchmark_lineages: Sequence[BenchmarkLineage]
+    ) -> PostBenchmarkLineagesRequest:
+        return PostBenchmarkLineagesRequest(root=benchmark_lineages)
 
     def _raise_for_status(self, response: requests.Response) -> None:
         try:

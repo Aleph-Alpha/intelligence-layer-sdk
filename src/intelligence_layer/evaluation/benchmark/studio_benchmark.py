@@ -172,7 +172,7 @@ class StudioBenchmark(Benchmark):
             EvaluationLineage[Input, ExpectedOutput, Output, Evaluation]
         ],
         trace_ids: list[str],
-    ) -> Sequence[BenchmarkLineage]:
+    ) -> Sequence[BenchmarkLineage[Input, Output, ExpectedOutput, Evaluation]]:
         return [
             self._create_benchmark_lineage(eval_lineage, trace_id)
             for eval_lineage, trace_id in zip(eval_lineages, trace_ids, strict=True)

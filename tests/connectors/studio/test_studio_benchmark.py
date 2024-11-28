@@ -247,20 +247,18 @@ def test_submit_benchmark_lineage_uploads_single_lineage(
     benchmark_execution_id = studio_client.submit_benchmark_execution(
         benchmark_id=benchmark_id, data=example_request
     )
-    lineages = DummyPostBenchmarkLineagesRequest(
-        [
-            DummyBenchmarkLineage(
-                trace_id=trace_id,
-                input="input",
-                expected_output="output",
-                example_metadata={"key3": "value3"},
-                output="output",
-                evaluation={"key5": "value5"},
-                run_latency=1,
-                run_tokens=3,
-            ),
-        ]
-    )
+    lineages = [
+        DummyBenchmarkLineage(
+            trace_id=trace_id,
+            input="input",
+            expected_output="output",
+            example_metadata={"key3": "value3"},
+            output="output",
+            evaluation={"key5": "value5"},
+            run_latency=1,
+            run_tokens=3,
+        ),
+    ]
 
     lineage_ids = studio_client.submit_benchmark_lineages(
         benchmark_lineages=lineages,
@@ -268,6 +266,6 @@ def test_submit_benchmark_lineage_uploads_single_lineage(
         execution_id=benchmark_execution_id,
     )
 
-    assert len(lineage_ids.root) == len(lineages.root)
+    assert len(lineage_ids.root) == len(lineages)
     for lineage_id in lineage_ids.root:
         assert UUID(lineage_id)

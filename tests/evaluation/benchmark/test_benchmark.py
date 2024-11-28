@@ -243,4 +243,3 @@ def test_execute_benchmark(
     mock_studio_client.submit_benchmark_execution.assert_called_once()  # type: ignore
     assert mock_studio_client.submit_trace.call_count == 4  # type: ignore
     mock_studio_client.submit_benchmark_lineages.assert_called_once()  # type: ignore
-
