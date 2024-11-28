@@ -47,8 +47,10 @@ def postgres_instruction_finetuning_data_repository() -> (
     db_user = os.getenv("POSTGRES_USER")
     db_pw = os.getenv("POSTGRES_PASSWORD")
     db_host = os.getenv("POSTGRES_HOST")
+    db_port = os.getenv("POSTGRES_PORT")
+
     db_name = os.getenv("POSTGRES_DB")
-    db_url = f"postgresql://{db_user}:{db_pw}@{db_host}/{db_name}"
+    db_url = f"postgresql://{db_user}:{db_pw}@{db_host}:{db_port}/{db_name}"
 
     return PostgresInstructionFinetuningDataRepository(db_url)
 
