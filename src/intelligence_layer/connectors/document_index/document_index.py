@@ -190,13 +190,12 @@ class DocumentPath(BaseModel, frozen=True):
 
 
 class DocumentInfo(BaseModel):
-    """Presents an overview of a document.
+    """Information about a document.
 
     Args:
-        document_path: Path to a document.
-        created: When this version of the document was created.
-            Equivalent to when it was last updated.
-        version: How many times the document was updated.
+        document_path: Path to the document. The path uniquely identifies the document among all managed documents.
+        created: When this version of the document was created. Equivalent to when it was last updated.
+        version: The version of the document, i.e., how many times the document was updated.
     """
 
     document_path: DocumentPath
@@ -832,17 +831,17 @@ class DocumentIndexClient:
         collection_path: CollectionPath,
         filter_query_params: Optional[DocumentFilterQueryParams] = None,
     ) -> Sequence[DocumentInfo]:
-        """List all documents within a collection.
+        """Lists the information of documents in a collection. This includes the document name, creation timestamp and version number.
 
         Note:
-            Does not return each document's content.
+            This does not return document contents.
 
         Args:
             collection_path: Path to the collection of interest.
             filter_query_params: Query parameters to filter the results.
 
         Returns:
-            Overview of all documents within the collection.
+           Information of documents in the collection.
         """
         if filter_query_params is None:
             filter_query_params = DocumentFilterQueryParams(
