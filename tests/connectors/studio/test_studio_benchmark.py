@@ -166,6 +166,21 @@ def with_uploaded_benchmark_execution(
     return benchmark_execution_id
 
 
+def dummy_lineage(
+    trace_id: str, input: str = "input", output: str = "output"
+) -> DummyBenchmarkLineage:
+    return DummyBenchmarkLineage(
+        trace_id=trace_id,
+        input=input,
+        expected_output="output",
+        example_metadata={"key3": "value3"},
+        output=output,
+        evaluation={"key5": "value5"},
+        run_latency=1,
+        run_tokens=3,
+    )
+
+
 def test_create_benchmark(
     studio_client: StudioClient,
     studio_dataset: str,
@@ -235,41 +250,7 @@ def test_can_create_benchmark_execution(
     assert UUID(benchmark_execution_id)
 
 
-def test_submit_benchmark_lineage_uploads_single_lineage(
-    studio_client: StudioClient,
-    with_uploaded_test_trace: str,
-    with_uploaded_benchmark: str,
-    with_uploaded_benchmark_execution: str,
-) -> None:
-    trace_id = with_uploaded_test_trace
-    benchmark_id = with_uploaded_benchmark
-    benchmark_execution_id = with_uploaded_benchmark_execution
-
-    lineages = [
-        DummyBenchmarkLineage(
-            trace_id=trace_id,
-            input="input",
-            expected_output="output",
-            example_metadata={"key3": "value3"},
-            output="output",
-            evaluation={"key5": "value5"},
-            run_latency=1,
-            run_tokens=3,
-        ),
-    ]
-
-    lineage_ids = studio_client.submit_benchmark_lineages(
-        benchmark_lineages=lineages,
-        benchmark_id=benchmark_id,
-        execution_id=benchmark_execution_id,
-    )
-
-    assert len(lineage_ids.root) == len(lineages)
-    for lineage_id in lineage_ids.root:
-        assert UUID(lineage_id)
-
-
-def test_batch_upload_sends_multiple_requests(
+def test_can_submit_lineages(
     studio_client: StudioClient,
     with_uploaded_test_trace: str,
     with_uploaded_benchmark: str,
@@ -281,26 +262,10 @@ def test_batch_upload_sends_multiple_requests(
     benchmark_execution_id = with_uploaded_benchmark_execution
 
     lineages = [
-        DummyBenchmarkLineage(
-            trace_id=trace_id,
-            input="input",
-            expected_output="output",
-            example_metadata={"key3": "value3"},
-            output="output",
-            evaluation={"key5": "value5"},
-            run_latency=1,
-            run_tokens=3,
+        dummy_lineage(
+            trace_id,
         ),
-        DummyBenchmarkLineage(
-            trace_id=trace_id,
-            input="input2",
-            expected_output="output2",
-            example_metadata={"key4": "value4"},
-            output="output2",
-            evaluation={"key5": "value5"},
-            run_latency=1,
-            run_tokens=3,
-        ),
+        dummy_lineage(trace_id, "slightly longer input", "slightly_longer_output"),
     ]
 
     lineage_ids = studio_client.submit_benchmark_lineages(
@@ -327,25 +292,11 @@ def test_submit_lineage_skips_lineages_exceeding_request_size(
     benchmark_execution_id = with_uploaded_benchmark_execution
 
     lineages = [
-        DummyBenchmarkLineage(
-            trace_id=trace_id,
-            input="input",
-            expected_output="output",
-            example_metadata={"key3": "value3"},
-            output="output",
-            evaluation={"key5": "value5"},
-            run_latency=1,
-            run_tokens=3,
-        ),
-        DummyBenchmarkLineage(
-            trace_id=trace_id,
+        dummy_lineage(trace_id),
+        dummy_lineage(
+            trace_id,
             input="input input2 input3 input4 input5",
-            expected_output="output output output output",
-            example_metadata={"key3": "value3"},
             output="output output output output",
-            evaluation={"key5": "value5"},
-            run_latency=1,
-            run_tokens=3,
         ),
     ]
 
@@ -354,7 +305,14 @@ def test_submit_lineage_skips_lineages_exceeding_request_size(
         benchmark_id=benchmark_id,
         execution_id=benchmark_execution_id,
         max_payload_size=len(lineages[0].model_dump_json().encode("utf-8"))
-        + 1,  # to enforce only upload of first lineage
+        + 1,  # to enforce second lineage exceeds
     )
 
+    fetched_lineage = studio_client.get_benchmark_lineage(
+        benchmark_id=benchmark_id,
+        execution_id=benchmark_execution_id,
+        lineage_id=lineage_ids.root[0],
+    )
     assert len(lineage_ids.root) == 1
+    assert fetched_lineage
+    assert fetched_lineage.input == lineages[0].input

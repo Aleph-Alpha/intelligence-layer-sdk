@@ -162,6 +162,19 @@ class PostBenchmarkLineagesResponse(RootModel[Sequence[str]]):
     pass
 
 
+class GetBenchmarkLineageResponse(BaseModel):
+    id: str
+    trace_id: str
+    benchmark_execution_id: str
+    input: Any
+    expected_output: Any
+    example_metadata: Optional[dict[str, Any]] = None
+    output: Any
+    evaluation: Any
+    run_latency: int
+    run_tokens: int
+
+
 class StudioClient:
     """Client for communicating with Studio.
 
@@ -491,12 +504,24 @@ class StudioClient:
         benchmark_lineages: Sequence[BenchmarkLineage],
         benchmark_id: str,
         execution_id: str,
-        max_payload_size: int = 50 * 1024 * 1024,
+        max_payload_size: int = 50
+        * 1024
+        * 1024,  # Maximum request size handled by Studio
     ) -> PostBenchmarkLineagesResponse:
+        """Submit benchmark lineages in batches to avoid exceeding the maximum payload size.
+
+        Args:
+            benchmark_lineages: List of :class: `BenchmarkLineages` to submit.
+            benchmark_id: ID of the benchmark.
+            execution_id: ID of the execution.
+            max_payload_size: Maximum size of the payload in bytes. Defaults to 50MB.
+
+        Returns:
+            Response containing the results of the submissions.
+        """
         all_responses = []
         remaining_lineages = list(benchmark_lineages)
-
-        converted_lineage_sizes = [
+        lineage_sizes = [
             len(lineage.model_dump_json().encode("utf-8"))
             for lineage in benchmark_lineages
         ]
@@ -505,9 +530,7 @@ class StudioClient:
             batch = []
             current_size = 0
             # Build batch while checking size
-            for lineage, size in zip(
-                remaining_lineages, converted_lineage_sizes, strict=True
-            ):
+            for lineage, size in zip(remaining_lineages, lineage_sizes, strict=True):
                 if current_size + size <= max_payload_size:
                     batch.append(lineage)
                     current_size += size
@@ -524,11 +547,27 @@ class StudioClient:
             else:  # Only reached if a lineage is too big for the request
                 print("Lineage exceeds maximum of upload size", lineage)
                 batch.append(lineage)
-
             remaining_lineages = remaining_lineages[len(batch) :]
-            converted_lineage_sizes = converted_lineage_sizes[len(batch) :]
+            lineage_sizes = lineage_sizes[len(batch) :]
 
         return PostBenchmarkLineagesResponse(all_responses)
+
+    def get_benchmark_lineage(
+        self, benchmark_id: str, execution_id: str, lineage_id: str
+    ) -> GetBenchmarkLineageResponse | None:
+        url = urljoin(
+            self.url,
+            f"/api/projects/{self.project_id}/evaluation/benchmarks/{benchmark_id}/executions/{execution_id}/lineages/{lineage_id}",
+        )
+        response = requests.get(
+            url,
+            headers=self._headers,
+        )
+        self._raise_for_status(response)
+        response_text = response.json()
+        if response_text is None:
+            return None
+        return GetBenchmarkLineageResponse.model_validate(response_text)
 
     def _send_compressed_batch(
         self, batch: list[BenchmarkLineage], benchmark_id: str, execution_id: str
@@ -538,8 +577,7 @@ class StudioClient:
             f"/api/projects/{self.project_id}/evaluation/benchmarks/{benchmark_id}/executions/{execution_id}/lineages",
         )
 
-        request_data = self._create_post_bechnmark_lineages_request(batch)
-        json_data = request_data.model_dump_json()
+        json_data = PostBenchmarkLineagesRequest(root=batch).model_dump_json()
         compressed_data = gzip.compress(json_data.encode("utf-8"))
 
         headers = {**self._headers, "Content-Encoding": "gzip"}
@@ -552,11 +590,6 @@ class StudioClient:
 
         self._raise_for_status(response)
         return response.json()
-
-    def _create_post_bechnmark_lineages_request(
-        self, benchmark_lineages: Sequence[BenchmarkLineage]
-    ) -> PostBenchmarkLineagesRequest:
-        return PostBenchmarkLineagesRequest(root=benchmark_lineages)
 
     def _raise_for_status(self, response: requests.Response) -> None:
         try:
