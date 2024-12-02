@@ -1,3 +1,4 @@
+import gzip
 import json
 import os
 from collections import defaultdict, deque
@@ -8,7 +9,7 @@ from urllib.parse import urljoin
 from uuid import uuid4
 
 import requests
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, RootModel
 from requests.exceptions import ConnectionError, MissingSchema
 
 from intelligence_layer.connectors import JsonSerializable
@@ -24,6 +25,8 @@ from intelligence_layer.core.tracer.tracer import (  # Import to be fixed with P
 
 Input = TypeVar("Input", bound=PydanticSerializable)
 ExpectedOutput = TypeVar("ExpectedOutput", bound=PydanticSerializable)
+Output = TypeVar("Output", bound=PydanticSerializable)
+Evaluation = TypeVar("Evaluation", bound=BaseModel, covariant=True)
 
 
 class StudioProject(BaseModel):
@@ -138,6 +141,38 @@ class GetDatasetExamplesResponse(BaseModel, Generic[Input, ExpectedOutput]):
     size: int
     num_pages: int
     items: Sequence[StudioExample[Input, ExpectedOutput]]
+
+
+class BenchmarkLineage(BaseModel, Generic[Input, Output, ExpectedOutput, Evaluation]):
+    trace_id: str
+    input: Input
+    expected_output: ExpectedOutput
+    output: Output
+    example_metadata: Optional[dict[str, Any]] = None
+    evaluation: Any
+    run_latency: int
+    run_tokens: int
+
+
+class PostBenchmarkLineagesRequest(RootModel[Sequence[BenchmarkLineage]]):
+    pass
+
+
+class PostBenchmarkLineagesResponse(RootModel[Sequence[str]]):
+    pass
+
+
+class GetBenchmarkLineageResponse(BaseModel):
+    id: str
+    trace_id: str
+    benchmark_execution_id: str
+    input: Any
+    expected_output: Any
+    example_metadata: Optional[dict[str, Any]] = None
+    output: Any
+    evaluation: Any
+    run_latency: int
+    run_tokens: int
 
 
 class StudioClient:
@@ -403,7 +438,7 @@ class StudioClient:
                 if page is None:
                     break
 
-    def create_benchmark(
+    def submit_benchmark(
         self,
         dataset_id: str,
         eval_logic: EvaluationLogicIdentifier,
@@ -449,7 +484,7 @@ class StudioClient:
             return None
         return GetBenchmarkResponse.model_validate(response_text)
 
-    def create_benchmark_execution(
+    def submit_benchmark_execution(
         self, benchmark_id: str, data: PostBenchmarkExecution
     ) -> str:
         url = urljoin(
@@ -463,6 +498,98 @@ class StudioClient:
 
         self._raise_for_status(response)
         return str(response.json())
+
+    def submit_benchmark_lineages(
+        self,
+        benchmark_lineages: Sequence[BenchmarkLineage],
+        benchmark_id: str,
+        execution_id: str,
+        max_payload_size: int = 50
+        * 1024
+        * 1024,  # Maximum request size handled by Studio
+    ) -> PostBenchmarkLineagesResponse:
+        """Submit benchmark lineages in batches to avoid exceeding the maximum payload size.
+
+        Args:
+            benchmark_lineages: List of :class: `BenchmarkLineages` to submit.
+            benchmark_id: ID of the benchmark.
+            execution_id: ID of the execution.
+            max_payload_size: Maximum size of the payload in bytes. Defaults to 50MB.
+
+        Returns:
+            Response containing the results of the submissions.
+        """
+        all_responses = []
+        remaining_lineages = list(benchmark_lineages)
+        lineage_sizes = [
+            len(lineage.model_dump_json().encode("utf-8"))
+            for lineage in benchmark_lineages
+        ]
+
+        while remaining_lineages:
+            batch = []
+            current_size = 0
+            # Build batch while checking size
+            for lineage, size in zip(remaining_lineages, lineage_sizes, strict=True):
+                if current_size + size <= max_payload_size:
+                    batch.append(lineage)
+                    current_size += size
+                else:
+                    break
+
+            if batch:
+                # Send batch
+                response = self._send_compressed_batch(
+                    batch, benchmark_id, execution_id
+                )
+                all_responses.extend(response)
+
+            else:  # Only reached if a lineage is too big for the request
+                print("Lineage exceeds maximum of upload size", lineage)
+                batch.append(lineage)
+            remaining_lineages = remaining_lineages[len(batch) :]
+            lineage_sizes = lineage_sizes[len(batch) :]
+
+        return PostBenchmarkLineagesResponse(all_responses)
+
+    def get_benchmark_lineage(
+        self, benchmark_id: str, execution_id: str, lineage_id: str
+    ) -> GetBenchmarkLineageResponse | None:
+        url = urljoin(
+            self.url,
+            f"/api/projects/{self.project_id}/evaluation/benchmarks/{benchmark_id}/executions/{execution_id}/lineages/{lineage_id}",
+        )
+        response = requests.get(
+            url,
+            headers=self._headers,
+        )
+        self._raise_for_status(response)
+        response_text = response.json()
+        if response_text is None:
+            return None
+        return GetBenchmarkLineageResponse.model_validate(response_text)
+
+    def _send_compressed_batch(
+        self, batch: list[BenchmarkLineage], benchmark_id: str, execution_id: str
+    ) -> list[str]:
+        url = urljoin(
+            self.url,
+            f"/api/projects/{self.project_id}/evaluation/benchmarks/{benchmark_id}/executions/{execution_id}/lineages",
+        )
+
+        json_data = PostBenchmarkLineagesRequest(root=batch).model_dump_json()
+        compressed_data = gzip.compress(json_data.encode("utf-8"))
+
+        headers = {**self._headers, "Content-Encoding": "gzip"}
+
+        response = requests.post(
+            url,
+            headers=headers,
+            data=compressed_data,
+        )
+
+        self._raise_for_status(response)
+        return response.json()
 
     def _raise_for_status(self, response: requests.Response) -> None:
         try:
