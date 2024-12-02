@@ -1077,3 +1077,30 @@ def test_document_indexes_works(
     document_index: DocumentIndexClient, random_collection_path: CollectionPath
 ) -> None:
     document_index.progress(random_collection_path)
+
+
+def test_retrieve_chunks(
+    document_index: DocumentIndexClient, random_collection_path: CollectionPath
+) -> None:
+    document_path = DocumentPath(
+        collection_path=random_collection_path,
+        document_name="document-with-chunks",
+    )
+    document_contents = DocumentContents(
+        contents=[
+            # because chunk size is 512, this item will be split into 2 chunks
+            " token" * 750,
+            "final chunk",
+        ],
+    )
+    document_index.add_document(document_path, document_contents)
+
+    index_name = "ci-intelligence-layer"
+    document_index.assign_index_to_collection(random_collection_path, index_name)
+
+    @retry
+    def chunks() -> None:
+        chunks = document_index.chunks(document_path, index_name)
+        assert len(chunks) == 3
+
+    chunks()
