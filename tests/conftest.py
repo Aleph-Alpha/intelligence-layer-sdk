@@ -1,3 +1,4 @@
+import os
 from collections.abc import Sequence
 from os import getenv
 from pathlib import Path
@@ -50,7 +51,9 @@ def client(token: str) -> AlephAlphaClientProtocol:
         token: AA Token
     """
     return LimitedConcurrencyClient(
-        Client(token), max_concurrency=10, max_retry_time=2 * 60
+        Client(token, host=os.environ["CLIENT_URL"]),
+        max_concurrency=10,
+        max_retry_time=10,
     )
 
 
@@ -61,7 +64,14 @@ def luminous_control_model(client: AlephAlphaClientProtocol) -> LuminousControlM
 
 @fixture(scope="session")
 def pharia_1_chat_model(client: AlephAlphaClientProtocol) -> Pharia1ChatModel:
-    return Pharia1ChatModel("Pharia-1-LLM-7B-control", client)
+    return Pharia1ChatModel("pharia-1-llm-7b-control", client)
+
+
+@fixture(scope="session")
+def document_index(token: str) -> DocumentIndexClient:
+    return DocumentIndexClient(
+        token, base_document_index_url=os.environ["DOCUMENT_INDEX_URL"]
+    )
 
 
 @fixture
@@ -99,11 +109,6 @@ def symmetric_in_memory_retriever(
         k=2,
         retriever_type=RetrieverType.SYMMETRIC,
     )
-
-
-@fixture
-def document_index(token: str) -> DocumentIndexClient:
-    return DocumentIndexClient(token)
 
 
 @fixture

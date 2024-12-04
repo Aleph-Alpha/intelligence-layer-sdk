@@ -125,13 +125,14 @@ def document_index_namespace() -> str:
 
 
 @fixture(scope="session", autouse=True)
-def _teardown(token: str, document_index_namespace: str) -> Iterator[None]:
+def _teardown(
+    document_index: DocumentIndexClient, document_index_namespace: str
+) -> Iterator[None]:
     yield
 
     # Cleanup leftover resources from previous runs.
     timestamp_threshold = datetime.now(timezone.utc) - timedelta(hours=1)
 
-    document_index = DocumentIndexClient(token)
     collections = document_index.list_collections(document_index_namespace)
     for collection_path in collections:
         if is_outdated_identifier(collection_path.collection, timestamp_threshold):
@@ -188,13 +189,11 @@ def random_collection_path(
 
 @fixture(scope="session")
 def read_only_collection_path(
-    token: str,
+    document_index: DocumentIndexClient,
     document_index_namespace: str,
     document_contents_with_metadata: list[DocumentContents],
     filter_index_config: dict[str, dict[str, str]],
 ) -> Iterator[CollectionPath]:
-    document_index = DocumentIndexClient(token)
-
     name = random_identifier()
     collection_path = CollectionPath(
         namespace=document_index_namespace, collection=name
@@ -359,7 +358,9 @@ def test_document_index_sets_no_authorization_header_when_token_is_none() -> Non
 
 
 @pytest.mark.internal
-def test_document_index_lists_namespaces(document_index: DocumentIndexClient) -> None:
+def test_document_index_lists_namespaces(
+    document_index: DocumentIndexClient,
+) -> None:
     namespaces = document_index.list_namespaces()
 
     assert "aleph-alpha" in namespaces
@@ -537,7 +538,8 @@ def test_document_path_from_string(
 
 
 def test_document_list_all_documents(
-    document_index: DocumentIndexClient, read_only_collection_path: CollectionPath
+    document_index: DocumentIndexClient,
+    read_only_collection_path: CollectionPath,
 ) -> None:
     filter_result = document_index.documents(read_only_collection_path)
 
@@ -545,7 +547,8 @@ def test_document_list_all_documents(
 
 
 def test_document_list_max_n_documents(
-    document_index: DocumentIndexClient, read_only_collection_path: CollectionPath
+    document_index: DocumentIndexClient,
+    read_only_collection_path: CollectionPath,
 ) -> None:
     filter_query_params = DocumentFilterQueryParams(max_documents=1, starts_with=None)
 
@@ -628,7 +631,8 @@ def test_instructable_indexes_in_namespace_are_returned(
 
 
 def test_indexes_for_collection_are_returned(
-    document_index: DocumentIndexClient, read_only_collection_path: CollectionPath
+    document_index: DocumentIndexClient,
+    read_only_collection_path: CollectionPath,
 ) -> None:
     index_names = document_index.list_assigned_index_names(read_only_collection_path)
     assert "ci-intelligence-layer" in index_names
