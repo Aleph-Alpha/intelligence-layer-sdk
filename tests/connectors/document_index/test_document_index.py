@@ -83,13 +83,14 @@ def random_alphanumeric_string(length: int = 20) -> str:
 def random_identifier() -> str:
     name = random_alphanumeric_string(10)
     timestamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S")
-    return f"ci-il-{name}-{timestamp}"
+    return f"intelligence-layer-ci-{name}-{timestamp}"
 
 
 def is_outdated_identifier(identifier: str, timestamp_threshold: datetime) -> bool:
     # match the format that is defined in random_identifier()
     matched = re.match(
-        r"^ci-il-[a-zA-Z0-9]{20}-(?P<timestamp>\d{8}T\d{6})$", identifier
+        r"^intelligence-layer-ci-[a-zA-Z0-9]{10}-(?P<timestamp>\d{8}T\d{6})$",
+        identifier,
     )
     if matched is None:
         return False
