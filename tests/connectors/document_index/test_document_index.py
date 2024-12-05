@@ -53,8 +53,8 @@ def retry(
 
 def retry(
     func: Callable[P, R] | None = None,
-    max_retries: int = 25,
-    seconds_delay: float = 0.2,
+    max_retries: int = 60,
+    seconds_delay: float = 0.5,
 ) -> Callable[[Callable[P, R]], Callable[P, R]] | Callable[P, R]:
     def decorator(func: Callable[P, R]) -> Callable[P, R]:
         @wraps(func)
