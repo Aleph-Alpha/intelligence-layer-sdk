@@ -24,8 +24,8 @@ class IndexPath(BaseModel, frozen=True):
     """Path to an index.
 
     Args:
-        namespace: Holds collections.
-        index: The name of the index, holds a config.
+        namespace: The namespace to which this index belongs.
+        index: The name of the index.
     """
 
     namespace: str
