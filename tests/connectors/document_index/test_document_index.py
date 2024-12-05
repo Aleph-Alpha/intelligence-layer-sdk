@@ -304,29 +304,6 @@ def random_index(
 
 
 @fixture
-def random_filter_index(
-    document_index: DocumentIndexClient, document_index_namespace: str
-) -> Iterator[str]:
-    name = random_identifier()
-    field_name = random_identifier()
-    field_type = random.choice(["string", "integer", "float", "boolean", "date_time"])
-
-    try:
-        document_index.create_filter_index_in_namespace(
-            namespace=document_index_namespace,
-            filter_index_name=name,
-            field_name=field_name,
-            field_type=field_type,  # type:ignore[arg-type],
-        )
-
-        yield name
-    finally:
-        document_index.delete_filter_index_from_namespace(
-            document_index_namespace, name
-        )
-
-
-@fixture
 def random_collection(
     document_index: DocumentIndexClient,
     document_index_namespace: str,
