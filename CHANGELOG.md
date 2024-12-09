@@ -10,6 +10,7 @@
 - Add `create_project` bool to `StudioClient.__init__()` to enable users to automatically create their Studio projects
 - Add progressbar to the `Runner` to be able to track the `Run`
 - Add `StudioClient.submit_benchmark_lineages` function and include it in `StudioClient.submit_benchmark_execution`
+- Add `HybridQdrantInMemoryRetriever` enabling hybrid search for in-memory Qdrant collections
 
 ### Fixes
 ...
