@@ -13,6 +13,7 @@ from intelligence_layer.connectors import (
     DocumentChunk,
     DocumentIndexClient,
     DocumentIndexRetriever,
+    HybridQdrantInMemoryRetriever,
     LimitedConcurrencyClient,
     QdrantInMemoryRetriever,
     RetrieverType,
@@ -94,6 +95,32 @@ def symmetric_in_memory_retriever(
     in_memory_retriever_documents: Sequence[Document],
 ) -> QdrantInMemoryRetriever:
     return QdrantInMemoryRetriever(
+        in_memory_retriever_documents,
+        client=client,
+        k=2,
+        retriever_type=RetrieverType.SYMMETRIC,
+    )
+
+
+@fixture
+def hybrid_asymmetric_in_memory_retriever(
+    client: AlephAlphaClientProtocol,
+    in_memory_retriever_documents: Sequence[Document],
+) -> HybridQdrantInMemoryRetriever:
+    return HybridQdrantInMemoryRetriever(
+        in_memory_retriever_documents,
+        client=client,
+        k=2,
+        retriever_type=RetrieverType.ASYMMETRIC,
+    )
+
+
+@fixture
+def hybrid_symmetric_in_memory_retriever(
+    client: AlephAlphaClientProtocol,
+    in_memory_retriever_documents: Sequence[Document],
+) -> HybridQdrantInMemoryRetriever:
+    return HybridQdrantInMemoryRetriever(
         in_memory_retriever_documents,
         client=client,
         k=2,

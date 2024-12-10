@@ -20,30 +20,36 @@ def in_memory_retriever_documents() -> Sequence[Document]:
 
 
 def test_asymmetric_in_memory_retriever(
-    asymmetric_in_memory_retriever: HybridQdrantInMemoryRetriever,
+    hybrid_asymmetric_in_memory_retriever: HybridQdrantInMemoryRetriever,
     in_memory_retriever_documents: Sequence[Document],
 ) -> None:
     query = "Do you like hot weather?"
-    documents = asymmetric_in_memory_retriever.get_relevant_documents_with_scores(query)
+    documents = (
+        hybrid_asymmetric_in_memory_retriever.get_relevant_documents_with_scores(query)
+    )
     assert in_memory_retriever_documents[0] == to_document(documents[0].document_chunk)
     assert len(documents) <= 2
 
 
 def test_symmetric_in_memory_retriever(
-    symmetric_in_memory_retriever: HybridQdrantInMemoryRetriever,
+    hybrid_symmetric_in_memory_retriever: HybridQdrantInMemoryRetriever,
     in_memory_retriever_documents: Sequence[Document],
 ) -> None:
     query = "I hate drizzle"
-    documents = symmetric_in_memory_retriever.get_relevant_documents_with_scores(query)
+    documents = hybrid_symmetric_in_memory_retriever.get_relevant_documents_with_scores(
+        query
+    )
     assert in_memory_retriever_documents[1] == to_document(documents[0].document_chunk)
     assert len(documents) <= 2
 
 
 def test_hybrid_in_memory_retriever(
-    hybrid_in_memory_retriever: HybridQdrantInMemoryRetriever,
+    hybrid_hybrid_in_memory_retriever: HybridQdrantInMemoryRetriever,
     in_memory_retriever_documents: Sequence[Document],
 ) -> None:
     query = "Summer rain"
-    documents = hybrid_in_memory_retriever.get_relevant_documents_with_scores(query)
+    documents = hybrid_hybrid_in_memory_retriever.get_relevant_documents_with_scores(
+        query
+    )
     assert in_memory_retriever_documents[3] == to_document(documents[0].document_chunk)
     assert len(documents) <= 2
