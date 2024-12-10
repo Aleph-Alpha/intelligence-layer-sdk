@@ -103,9 +103,7 @@ class HybridQdrantInMemoryRetriever(QdrantInMemoryRetriever):
     def get_filtered_documents_with_scores(
         self, query: str, filter: Optional[models.Filter]
     ) -> Sequence[SearchResult[int]]:
-        """
-        Retrieves documents that match the given query and filter conditions, using both dense and
-        sparse embeddings.
+        """Retrieves documents that match the given query and filter conditions, using hybrid search.
 
         This method performs a hybrid search by embedding the query into dense and sparse vectors.
         It then executes search requests for both vector types and combines the results using the
@@ -157,8 +155,7 @@ class HybridQdrantInMemoryRetriever(QdrantInMemoryRetriever):
     def get_relevant_documents_with_scores(
         self, query: str
     ) -> Sequence[SearchResult[int]]:
-        """
-        Search for relevant documents given a query using hybrid search (dense + sparse retrieval).
+        """Search for relevant documents given a query using hybrid search (dense + sparse retrieval).
 
         This method performs a hybrid search by embedding the query into dense and sparse vectors.
         It then executes search requests for both vector types and combines the results using the

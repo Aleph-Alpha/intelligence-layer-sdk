@@ -11,6 +11,10 @@ from pytest import fixture
 from intelligence_layer.connectors import (
     AlephAlphaClientProtocol,
     Document,
+    DocumentChunk,
+    DocumentIndexClient,
+    DocumentIndexRetriever,
+    HybridQdrantInMemoryRetriever,
     LimitedConcurrencyClient,
     QdrantInMemoryRetriever,
     RetrieverType,
@@ -100,6 +104,54 @@ def symmetric_in_memory_retriever(
         k=2,
         retriever_type=RetrieverType.SYMMETRIC,
     )
+
+
+@fixture
+def hybrid_asymmetric_in_memory_retriever(
+    client: AlephAlphaClientProtocol,
+    in_memory_retriever_documents: Sequence[Document],
+) -> HybridQdrantInMemoryRetriever:
+    return HybridQdrantInMemoryRetriever(
+        in_memory_retriever_documents,
+        client=client,
+        k=2,
+        retriever_type=RetrieverType.ASYMMETRIC,
+    )
+
+
+@fixture
+def hybrid_symmetric_in_memory_retriever(
+    client: AlephAlphaClientProtocol,
+    in_memory_retriever_documents: Sequence[Document],
+) -> HybridQdrantInMemoryRetriever:
+    return HybridQdrantInMemoryRetriever(
+        in_memory_retriever_documents,
+        client=client,
+        k=2,
+        retriever_type=RetrieverType.SYMMETRIC,
+    )
+
+
+@fixture
+def document_index(token: str) -> DocumentIndexClient:
+    return DocumentIndexClient(token)
+
+
+@fixture
+def document_index_retriever(
+    document_index: DocumentIndexClient,
+) -> DocumentIndexRetriever:
+    return DocumentIndexRetriever(
+        document_index,
+        index_name="asymmetric",
+        namespace="aleph-alpha",
+        collection="wikipedia-de",
+        k=2,
+    )
+
+
+def to_document(document_chunk: DocumentChunk) -> Document:
+    return Document(text=document_chunk.text, metadata=document_chunk.metadata)
 
 
 @fixture
