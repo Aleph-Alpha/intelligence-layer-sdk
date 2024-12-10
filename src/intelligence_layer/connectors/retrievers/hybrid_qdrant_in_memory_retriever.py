@@ -31,13 +31,13 @@ class HybridQdrantInMemoryRetriever(QdrantInMemoryRetriever):
     Args:
         documents: The sequence of documents to be made searchable.
         k: The (top) number of documents to be returned by search.
-        client: Aleph Alpha client instance for running model related API calls.
-        threshold: The minimum value of the fusion rank score (combined cosine similarity and keyword similarity).
-        retriever_type: The type of retriever to be instantiated.
-            Should be `ASYMMETRIC` for most query-document retrieveal use cases, `SYMMETRIC` is optimized
-            for similar document retrieval.
-        distance_metric: The distance metric to be used for vector comparison.
-        sparse_model_name: The name of the sparse embedding model from `fastemebed` to be used.
+        client: Aleph Alpha client instance for running model related API calls. Defaults to `LimitedConcurrencyClient.from_env()`.
+        threshold: The minimum value of the fusion rank score (combined cosine similarity and keyword similarity). Defaults to 0.0.
+        retriever_type: The type of retriever to be instantiated. Should be `ASYMMETRIC` for most query-document retrieveal use cases, `SYMMETRIC` is optimized
+            for similar document retrieval. Defaults to `ASYMMETRIC`.
+        distance_metric: The distance metric to be used for vector comparison. Defaults to `Distance.COSINE`.
+        sparse_model_name: The name of the sparse embedding model from `fastemebed` to be used. Defaults to `"bm25"`.
+        max_workers: The maximum number of workers to use for concurrent processing. Defaults to 10.
 
     Example:
         >>> from intelligence_layer.connectors import LimitedConcurrencyClient, Document, HybridQdrantInMemoryRetriever
@@ -48,8 +48,6 @@ class HybridQdrantInMemoryRetriever(QdrantInMemoryRetriever):
         >>> documents = retriever.get_relevant_documents_with_scores(query)
     """
 
-    MAX_WORKERS = 10
-
     def __init__(
         self,
         documents: Sequence[Document],
@@ -59,6 +57,7 @@ class HybridQdrantInMemoryRetriever(QdrantInMemoryRetriever):
         retriever_type: RetrieverType = RetrieverType.ASYMMETRIC,
         distance_metric: Distance = Distance.COSINE,
         sparse_model_name: str = "bm25",
+        max_workers: int = 10,
     ) -> None:
         self._client = client or LimitedConcurrencyClient.from_env()
         self._search_client = QdrantClient(":memory:")
@@ -67,6 +66,7 @@ class HybridQdrantInMemoryRetriever(QdrantInMemoryRetriever):
         self._threshold = threshold
         self._query_representation, self._document_representation = retriever_type.value
         self._distance_metric = distance_metric
+        self._max_workers = max_workers
 
         self._search_client.set_sparse_model(sparse_model_name)
         self._sparse_vector_field_name = "text-sparse"
@@ -171,7 +171,9 @@ class HybridQdrantInMemoryRetriever(QdrantInMemoryRetriever):
         return self.get_filtered_documents_with_scores(query, filter=None)
 
     def _add_texts_to_memory(self, documents: Sequence[Document]) -> None:
-        with ThreadPoolExecutor(max_workers=self.MAX_WORKERS) as executor:
+        with ThreadPoolExecutor(
+            max_workers=min(len(documents), self._max_workers)
+        ) as executor:
             dense_embeddings = list(
                 executor.map(
                     lambda doc: self._embed(doc.text, self._document_representation),
