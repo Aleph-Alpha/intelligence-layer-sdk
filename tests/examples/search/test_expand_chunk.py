@@ -8,10 +8,14 @@ from intelligence_layer.connectors import (
     BaseRetriever,
     Document,
     DocumentChunk,
-    DocumentIndexRetriever,
-    DocumentPath,
     QdrantInMemoryRetriever,
     SearchResult,
+)
+from intelligence_layer.connectors.limited_concurrency_client import (
+    AlephAlphaClientProtocol,
+)
+from intelligence_layer.connectors.retrievers.qdrant_in_memory_retriever import (
+    RetrieverType,
 )
 from intelligence_layer.core import LuminousControlModel, NoOpTracer
 from intelligence_layer.examples import ExpandChunks, ExpandChunksInput
@@ -177,26 +181,27 @@ def test_expand_chunk_works_for_multiple_chunks(
 
 
 def test_expand_chunk_is_fast_with_large_document(
-    document_index_retriever: DocumentIndexRetriever,
+    client: AlephAlphaClientProtocol,
     luminous_control_model: LuminousControlModel,
     no_op_tracer: NoOpTracer,
 ) -> None:
+    retriever = QdrantInMemoryRetriever(
+        [Document(text="""test text\n""" * 100)],
+        client=client,
+        k=2,
+        retriever_type=RetrieverType.ASYMMETRIC,
+    )
     expand_chunk_input = ExpandChunksInput(
-        document_id=DocumentPath(
-            collection_path=document_index_retriever._collection_path,
-            document_name="Chronik der COVID-19-Pandemie in den Vereinigten Staaten 2020",
-        ),
+        document_id=0,
         chunks_found=[
             DocumentChunk(
-                text="",
-                start=0,
-                end=50,
+                text="test text\n" * 10,
+                start=50,
+                end=60,
             )
         ],
     )
-    expand_chunk_task = ExpandChunks(
-        document_index_retriever, luminous_control_model, 256
-    )
+    expand_chunk_task = ExpandChunks(retriever, luminous_control_model, 256)
 
     time = datetime.now()
     output = expand_chunk_task.run(expand_chunk_input, no_op_tracer)
