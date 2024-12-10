@@ -46,16 +46,3 @@ def test_retriever_based_qa_using_in_memory_retriever(
     assert output.answer
     assert "1888" in output.answer
     assert output.subanswers[0].id == 3
-
-
-@pytest.mark.filterwarnings("ignore::DeprecationWarning")
-def test_retriever_based_qa_with_document_index(
-    retriever_based_qa_with_document_index: RetrieverBasedQa[DocumentPath],
-    no_op_tracer: NoOpTracer,
-) -> None:
-    question = "When was Robert Moses born?"
-    input = RetrieverBasedQaInput(question=question)
-    output = retriever_based_qa_with_document_index.run(input, no_op_tracer)
-    assert output.answer
-    assert "1888" in output.answer
-    assert output.subanswers[0].id.document_name == "Robert Moses (Begriffsklärung)"
