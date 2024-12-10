@@ -128,7 +128,6 @@ class HybridQdrantInMemoryRetriever(QdrantInMemoryRetriever):
             limit=self._k,
             filter=filter,
             with_payload=True,
-            score_threshold=self._threshold,
         )
         sparse_request = models.SearchRequest(
             vector=models.NamedSparseVector(
@@ -150,7 +149,11 @@ class HybridQdrantInMemoryRetriever(QdrantInMemoryRetriever):
             [dense_request_response, sparse_request_response], limit=self._k
         )
 
-        return [self._point_to_search_result(point) for point in search_result]
+        return [
+            self._point_to_search_result(point)
+            for point in search_result
+            if point.score >= self._threshold
+        ]
 
     def get_relevant_documents_with_scores(
         self, query: str
