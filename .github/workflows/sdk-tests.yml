@@ -147,9 +147,9 @@ jobs:
           POSTGRES_DB: "il_sdk"
           POSTGRES_USER: "il_sdk"
           POSTGRES_PASSWORD: "test"
-          AUTHORIZATION_SERVICE_URL: "none"
+          AUTHORIZATION_SERVICE_URL: ${{ secrets.AUTHORIZATION_SERVICE_URL }}
           AA_TOKEN: ${{ secrets.AA_TOKEN }}
-          API_SCHEDULER_URL: "https://api.aleph-alpha.com"
+          API_SCHEDULER_URL: ${{ secrets.CLIENT_URL }}
           DATA_SERVICE_URL: ${{secrets.DATA_SERVICE_URL}}
         credentials:
           username: "unused"
@@ -235,9 +235,9 @@ jobs:
           POSTGRES_DB: "il_sdk"
           POSTGRES_USER: "il_sdk"
           POSTGRES_PASSWORD: "test"
-          AUTHORIZATION_SERVICE_URL: "none"
+          AUTHORIZATION_SERVICE_URL: ${{ secrets.AUTHORIZATION_SERVICE_URL }}
           AA_TOKEN: ${{ secrets.AA_TOKEN }}
-          API_SCHEDULER_URL: "https://api.aleph-alpha.com"
+          API_SCHEDULER_URL: ${{ secrets.CLIENT_URL }}
           DATA_SERVICE_URL: ${{secrets.DATA_SERVICE_URL}}
         credentials:
           username: "unused"
