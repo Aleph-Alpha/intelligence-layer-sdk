@@ -1,4 +1,8 @@
-"""Utilities for working with IPython/Jupyter notebooks."""
+"""This code was taken from https://github.com/wandb/weave.
+
+It follows the Apache License Version 2.0 January 2004 (http://www.apache.org/licenses/LICENSE-2.0)
+Modified on 16.12.2024
+"""
 
 import ast
 import inspect
