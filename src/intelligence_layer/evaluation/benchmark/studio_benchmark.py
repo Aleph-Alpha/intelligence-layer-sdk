@@ -220,6 +220,10 @@ class StudioBenchmarkRepository(BenchmarkRepository):
         except requests.HTTPError as e:
             if e.response.status_code == HTTPStatus.BAD_REQUEST:
                 raise ValueError(f"Dataset with ID {dataset_id} not found") from e
+            else:
+                raise ValueError(
+                    "An error occurred when attempting to create a benchmark."
+                ) from e
 
         return StudioBenchmark(
             benchmark_id,
