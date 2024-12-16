@@ -1,3 +1,4 @@
+import os
 from collections.abc import Sequence
 from os import getenv
 from pathlib import Path
@@ -10,9 +11,6 @@ from pytest import fixture
 from intelligence_layer.connectors import (
     AlephAlphaClientProtocol,
     Document,
-    DocumentChunk,
-    DocumentIndexClient,
-    DocumentIndexRetriever,
     LimitedConcurrencyClient,
     QdrantInMemoryRetriever,
     RetrieverType,
@@ -32,6 +30,7 @@ from intelligence_layer.evaluation import (
     InMemoryRunRepository,
     RunOverview,
 )
+from tests.conftest_document_index import *  # noqa: F403 - we import everything here to get the file to be "appended" to this file and thus making all fixtures available
 
 
 @fixture(scope="session")
@@ -43,14 +42,16 @@ def token() -> str:
 
 
 @fixture(scope="session")
-def client(token: str) -> AlephAlphaClientProtocol:
-    """Provide fixture for api.
+def inference_url() -> str:
+    return os.environ["CLIENT_URL"]
 
-    Args:
-        token: AA Token
-    """
+
+@fixture(scope="session")
+def client(token: str, inference_url: str) -> AlephAlphaClientProtocol:
     return LimitedConcurrencyClient(
-        Client(token), max_concurrency=10, max_retry_time=2 * 60
+        Client(token, host=inference_url),
+        max_concurrency=10,
+        max_retry_time=10,
     )
 
 
@@ -61,7 +62,7 @@ def luminous_control_model(client: AlephAlphaClientProtocol) -> LuminousControlM
 
 @fixture(scope="session")
 def pharia_1_chat_model(client: AlephAlphaClientProtocol) -> Pharia1ChatModel:
-    return Pharia1ChatModel("Pharia-1-LLM-7B-control", client)
+    return Pharia1ChatModel("pharia-1-llm-7b-control", client)
 
 
 @fixture
@@ -99,28 +100,6 @@ def symmetric_in_memory_retriever(
         k=2,
         retriever_type=RetrieverType.SYMMETRIC,
     )
-
-
-@fixture
-def document_index(token: str) -> DocumentIndexClient:
-    return DocumentIndexClient(token)
-
-
-@fixture
-def document_index_retriever(
-    document_index: DocumentIndexClient,
-) -> DocumentIndexRetriever:
-    return DocumentIndexRetriever(
-        document_index,
-        index_name="asymmetric",
-        namespace="aleph-alpha",
-        collection="wikipedia-de",
-        k=2,
-    )
-
-
-def to_document(document_chunk: DocumentChunk) -> Document:
-    return Document(text=document_chunk.text, metadata=document_chunk.metadata)
 
 
 @fixture

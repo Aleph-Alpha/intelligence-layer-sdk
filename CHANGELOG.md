@@ -19,6 +19,9 @@
 
 ### Breaking Changes
  - The env variable `POSTGRES_HOST` is split into `POSTGRES_HOST` and `POSTGRES_PORT`. This affects all classes interacting with Studio and the `InstructionFinetuningDataRepository`.
+ - The following env variables now need to be set (previously pointed to defaults)
+   - `CLIENT_URL` - URL of your inference stack
+   - `DOCUMENT_INDEX_URL` - URL of the document index
 
 ## 8.0.0
 

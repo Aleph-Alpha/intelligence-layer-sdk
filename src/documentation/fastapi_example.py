@@ -65,7 +65,7 @@ load_dotenv()
 def client() -> Client:
     return Client(
         token=os.environ["AA_TOKEN"],
-        host=os.getenv("AA_CLIENT_BASE_URL", "https://api.aleph-alpha.com"),
+        host=os.environ["CLIENT_URL"],
     )
 
 
@@ -78,7 +78,7 @@ def default_model(
 def summary_task(
     model: Annotated[LuminousControlModel, Depends(default_model)],
 ) -> SteerableSingleChunkSummarize:
-    return SteerableSingleChunkSummarize(model)
+    return SteerableSingleChunkSummarize(model=model)
 
 
 @app.post(

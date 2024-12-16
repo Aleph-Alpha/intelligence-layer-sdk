@@ -71,22 +71,6 @@ class RetrieverBasedQa(
         retriever: Used to access and return a set of texts.
         multi_chunk_qa: The task that is used to generate an answer for a single chunk (retrieved through
             the retriever). Defaults to :class:`MultipleChunkQa` .
-
-    Example:
-        >>> import os
-        >>> from intelligence_layer.connectors import DocumentIndexClient
-        >>> from intelligence_layer.connectors import DocumentIndexRetriever
-        >>> from intelligence_layer.core import InMemoryTracer
-        >>> from intelligence_layer.examples import RetrieverBasedQa, RetrieverBasedQaInput
-
-
-        >>> token = os.getenv("AA_TOKEN")
-        >>> document_index = DocumentIndexClient(token)
-        >>> retriever = DocumentIndexRetriever(document_index, "asymmetric", "aleph-alpha", "wikipedia-de", 3)
-        >>> task = RetrieverBasedQa(retriever)
-        >>> input_data = RetrieverBasedQaInput(question="When was Rome founded?")
-        >>> tracer = InMemoryTracer()
-        >>> output = task.run(input_data, tracer)
     """
 
     def __init__(
