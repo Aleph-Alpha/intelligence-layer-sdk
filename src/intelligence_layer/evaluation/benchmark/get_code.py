@@ -58,6 +58,7 @@ def get_class_source(cls: type) -> str:
 
     raise ValueError(f"Class '{class_name}' not found in the notebook")
 
+
 def get_source_notebook_safe(logic: EvaluationLogic | AggregationLogic) -> str:
     # In ipython, we can't use inspect.getsource on classes defined in the notebook
     logic_class = type(logic)
