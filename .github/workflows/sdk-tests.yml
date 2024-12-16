@@ -190,6 +190,7 @@ jobs:
           ARGILLA_API_KEY: "argilla.apikey"
           CLIENT_URL: ${{ secrets.CLIENT_URL }}
           STUDIO_URL: "http://localhost:8000/"
+          DOCUMENT_INDEX_URL: ${{secrets.DOCUMENT_INDEX_URL}}
           POSTGRES_HOST: "localhost"
           POSTGRES_PORT: "5433"
           POSTGRES_DB: "il_sdk"
@@ -274,5 +275,6 @@ jobs:
           ARGILLA_API_KEY: "argilla.apikey"
           CLIENT_URL: ${{ secrets.CLIENT_URL }}
           STUDIO_URL: "http://localhost:8001"
+          DOCUMENT_INDEX_URL: ${{secrets.DOCUMENT_INDEX_URL}}
         run: |
           ./scripts/notebook_runner.sh
