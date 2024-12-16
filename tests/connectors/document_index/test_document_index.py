@@ -20,7 +20,7 @@ from intelligence_layer.connectors.document_index.document_index import (
     ResourceNotFound,
     SearchQuery,
 )
-from tests.conftest import random_embedding_config, retry
+from tests.conftest_document_index import random_embedding_config, retry
 
 
 @pytest.mark.internal
@@ -344,7 +344,6 @@ def test_assign_filter_indexes_to_collection(
     assigned_indexes = document_index.list_assigned_filter_index_names(
         collection_path, index_name
     )
-
     assert all(
         filter_index in assigned_indexes for filter_index in filter_index_configs
     )

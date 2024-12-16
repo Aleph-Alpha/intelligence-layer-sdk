@@ -20,7 +20,7 @@ from intelligence_layer.examples import (
     SearchInput,
     SearchOutput,
 )
-from tests.conftest import to_document
+from tests.conftest_document_index import to_document
 
 
 @fixture
