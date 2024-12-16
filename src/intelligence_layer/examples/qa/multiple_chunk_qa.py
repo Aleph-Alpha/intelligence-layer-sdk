@@ -141,15 +141,15 @@ class MultipleChunkQa(Task[MultipleChunkQaInput, MultipleChunkQaOutput]):
         >>> from intelligence_layer.connectors import (
         ...     LimitedConcurrencyClient,
         ... )
-        >>> from intelligence_layer.core import Language, InMemoryTracer
+        >>> from intelligence_layer.core import Language, InMemoryTracer, LuminousControlModel
         >>> from intelligence_layer.core.chunk import TextChunk
         >>> from intelligence_layer.examples import (
         ...     MultipleChunkQa,
         ...     MultipleChunkQaInput,
         ... )
 
-
-        >>> task = MultipleChunkQa()
+        >>> model = LuminousControlModel("luminous-base-control")
+        >>> task = MultipleChunkQa(merge_answers_model=model)
         >>> input = MultipleChunkQaInput(
         ...     chunks=[TextChunk("Tina does not like pizza."), TextChunk("Mike is a big fan of pizza.")],
         ...     question="Who likes pizza?",

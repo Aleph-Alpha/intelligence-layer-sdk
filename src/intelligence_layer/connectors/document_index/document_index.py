@@ -438,36 +438,6 @@ class DocumentIndexClient:
     Args:
         token: A valid token for the document index API.
         base_document_index_url: The url of the document index' API.
-
-    Example:
-        >>> import os
-
-        >>> from intelligence_layer.connectors import (
-        ...     CollectionPath,
-        ...     DocumentContents,
-        ...     DocumentIndexClient,
-        ...     DocumentPath,
-        ...     SearchQuery,
-        ... )
-
-        >>> document_index = DocumentIndexClient(os.getenv("AA_TOKEN"))
-        >>> collection_path = CollectionPath(
-        ...     namespace="aleph-alpha", collection="wikipedia-de"
-        ... )
-        >>> document_index.create_collection(collection_path)
-        >>> document_index.add_document(
-        ...     document_path=DocumentPath(
-        ...         collection_path=collection_path, document_name="Fun facts about Germany"
-        ...     ),
-        ...     contents=DocumentContents.from_text("Germany is a country located in ..."),
-        ... )
-        >>> search_result = document_index.search(
-        ...     collection_path=collection_path,
-        ...     index_name="asymmetric",
-        ...     search_query=SearchQuery(
-        ...         query="What is the capital of Germany", max_results=4, min_score=0.5
-        ...     ),
-        ... )
     """
 
     def __init__(
