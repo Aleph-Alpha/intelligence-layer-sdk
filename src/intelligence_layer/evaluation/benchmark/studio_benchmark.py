@@ -1,4 +1,3 @@
-import inspect
 from collections.abc import Sequence
 from datetime import datetime
 from http import HTTPStatus
@@ -29,6 +28,7 @@ from intelligence_layer.evaluation.benchmark.benchmark import (
     Benchmark,
     BenchmarkRepository,
 )
+from intelligence_layer.evaluation.benchmark.get_code import get_source_notebook_safe
 from intelligence_layer.evaluation.dataset.domain import ExpectedOutput
 from intelligence_layer.evaluation.dataset.studio_dataset_repository import (
     StudioDatasetRepository,
@@ -269,7 +269,7 @@ def create_evaluation_logic_identifier(
         evaluation_logic=eval_logic,
     )
     return EvaluationLogicIdentifier(
-        logic=inspect.getsource(type(eval_logic)),
+        logic=get_source_notebook_safe(eval_logic),
         input_schema=type_to_schema(evaluator.input_type()),
         output_schema=type_to_schema(evaluator.output_type()),
         expected_output_schema=type_to_schema(evaluator.expected_output_type()),
@@ -287,7 +287,7 @@ def create_aggregation_logic_identifier(
         aggregation_logic=aggregation_logic,
     )
     return AggregationLogicIdentifier(
-        logic=inspect.getsource(type(aggregation_logic)),
+        logic=get_source_notebook_safe(aggregation_logic),
         evaluation_schema=type_to_schema(aggregator.evaluation_type()),
         aggregation_schema=type_to_schema(aggregator.aggregated_evaluation_type()),
     )
