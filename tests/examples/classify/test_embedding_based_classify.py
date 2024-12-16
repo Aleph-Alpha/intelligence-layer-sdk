@@ -22,7 +22,7 @@ from intelligence_layer.examples.classify.embedding_based_classify import (
     QdrantSearch,
     QdrantSearchInput,
 )
-from tests.conftest import to_document
+from tests.conftest_document_index import to_document
 
 
 @fixture

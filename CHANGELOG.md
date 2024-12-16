@@ -10,6 +10,7 @@
 - Add `create_project` bool to `StudioClient.__init__()` to enable users to automatically create their Studio projects
 - Add progressbar to the `Runner` to be able to track the `Run`
 - Add `StudioClient.submit_benchmark_lineages` function and include it in `StudioClient.submit_benchmark_execution`
+- Add method `DocumentIndexClient.chunks()` for retrieving all text chunks of a document.
 
 ### Fixes
 ...
@@ -19,6 +20,9 @@
 
 ### Breaking Changes
  - The env variable `POSTGRES_HOST` is split into `POSTGRES_HOST` and `POSTGRES_PORT`. This affects all classes interacting with Studio and the `InstructionFinetuningDataRepository`.
+ - The following env variables now need to be set (previously pointed to defaults)
+   - `CLIENT_URL` - URL of your inference stack
+   - `DOCUMENT_INDEX_URL` - URL of the document index
 
 ## 8.0.0
 
