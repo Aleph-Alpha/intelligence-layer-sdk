@@ -6,7 +6,7 @@ from intelligence_layer.connectors.retrievers.base_retriever import Document
 from intelligence_layer.connectors.retrievers.qdrant_in_memory_retriever import (
     QdrantInMemoryRetriever,
 )
-from tests.conftest import to_document
+from tests.conftest_document_index import to_document
 
 
 @fixture

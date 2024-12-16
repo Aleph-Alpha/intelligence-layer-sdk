@@ -55,11 +55,11 @@ class LongContextQa(Task[LongContextQaInput, MultipleChunkQaOutput]):
         model: The model used in the task.
 
     Example:
-        >>> from intelligence_layer.core import InMemoryTracer
+        >>> from intelligence_layer.core import InMemoryTracer, LuminousControlModel
         >>> from intelligence_layer.examples import LongContextQa, LongContextQaInput
 
-
-        >>> task = LongContextQa()
+        >>> model = LuminousControlModel("luminous-base-control")
+        >>> task = LongContextQa(model=model)
         >>> input = LongContextQaInput(text="Lengthy text goes here...",
         ...                             question="Where does the text go?")
         >>> tracer = InMemoryTracer()

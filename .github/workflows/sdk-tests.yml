@@ -147,9 +147,9 @@ jobs:
           POSTGRES_DB: "il_sdk"
           POSTGRES_USER: "il_sdk"
           POSTGRES_PASSWORD: "test"
-          AUTHORIZATION_SERVICE_URL: "none"
+          AUTHORIZATION_SERVICE_URL: ${{ secrets.AUTHORIZATION_SERVICE_URL }}
           AA_TOKEN: ${{ secrets.AA_TOKEN }}
-          API_SCHEDULER_URL: "https://api.aleph-alpha.com"
+          API_SCHEDULER_URL: ${{ secrets.CLIENT_URL }}
           DATA_SERVICE_URL: ${{secrets.DATA_SERVICE_URL}}
         credentials:
           username: "unused"
@@ -190,6 +190,7 @@ jobs:
           ARGILLA_API_KEY: "argilla.apikey"
           CLIENT_URL: ${{ secrets.CLIENT_URL }}
           STUDIO_URL: "http://localhost:8000/"
+          DOCUMENT_INDEX_URL: ${{secrets.DOCUMENT_INDEX_URL}}
           POSTGRES_HOST: "localhost"
           POSTGRES_PORT: "5433"
           POSTGRES_DB: "il_sdk"
@@ -235,9 +236,9 @@ jobs:
           POSTGRES_DB: "il_sdk"
           POSTGRES_USER: "il_sdk"
           POSTGRES_PASSWORD: "test"
-          AUTHORIZATION_SERVICE_URL: "none"
+          AUTHORIZATION_SERVICE_URL: ${{ secrets.AUTHORIZATION_SERVICE_URL }}
           AA_TOKEN: ${{ secrets.AA_TOKEN }}
-          API_SCHEDULER_URL: "https://api.aleph-alpha.com"
+          API_SCHEDULER_URL: ${{ secrets.CLIENT_URL }}
           DATA_SERVICE_URL: ${{secrets.DATA_SERVICE_URL}}
         credentials:
           username: "unused"
@@ -274,5 +275,6 @@ jobs:
           ARGILLA_API_KEY: "argilla.apikey"
           CLIENT_URL: ${{ secrets.CLIENT_URL }}
           STUDIO_URL: "http://localhost:8001"
+          DOCUMENT_INDEX_URL: ${{secrets.DOCUMENT_INDEX_URL}}
         run: |
           ./scripts/notebook_runner.sh
