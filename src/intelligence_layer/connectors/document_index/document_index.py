@@ -293,16 +293,15 @@ class SearchQuery(BaseModel):
         query: Actual text to be searched with.
         max_results: Max number of search results to be retrieved by the query.
             Must be larger than 0.
-        min_score: Filter out results with a similarity score below this value.
-            Must be between 0 and 1.
-            For searches on hybrid indexes, the Document Index applies the min_score
-            to the semantic results before fusion of result sets. As fusion re-scores results,
+        min_score: Filter out results with a similarity score below this value. Must be between
+            -1 and 1. For searches on hybrid indexes, the Document Index applies the min_score to
+            the semantic results before fusion of result sets. As fusion re-scores results,
             returned scores may exceed this value.
     """
 
     query: str
     max_results: int = Field(ge=0, default=1)
-    min_score: float = Field(ge=0.0, le=1.0, default=0.0)
+    min_score: float = Field(ge=-1.0, le=1.0, default=0.0)
     filters: Optional[list[Filters]] = None
 
 
