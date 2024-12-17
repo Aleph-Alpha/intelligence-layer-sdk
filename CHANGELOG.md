@@ -16,7 +16,7 @@
 - Add metadata filter `FilterOps.IS_NULL`, that allows to filter fields based on whether their value is null.
 
 ### Fixes
-...
+- The Document Index `SearchQuery` now correctly allows searches with a negative `min_score`.
 
 ### Deprecations
 ...
