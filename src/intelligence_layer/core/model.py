@@ -261,7 +261,7 @@ class AlephAlphaModel(LanguageModel):
         )
         if name not in [model["name"] for model in self._client.models()]:
             warnings.warn(
-                "The provided model is not a recommended model for this model class."
+                "The provided model is not a recommended model for this model class. "
                 "Make sure that the model you have selected is suited to be use for the prompt template used in this model class."
             )
         self._complete: Task[CompleteInput, CompleteOutput] = _Complete(
@@ -414,7 +414,7 @@ class ControlModel(AlephAlphaModel, ABC):
     ) -> None:
         if name not in self.RECOMMENDED_MODELS or name == "":
             warnings.warn(
-                "The provided model is not a recommended model for this model class."
+                "The provided model is not a recommended model for this model class. "
                 "Make sure that the model you have selected is suited to be use for the prompt template used in this model class."
             )
         super().__init__(name, client)
