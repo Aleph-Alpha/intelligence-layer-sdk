@@ -475,7 +475,10 @@ def test_search_with_null_filter_without(
             search_query,
         )
         assert len(results) == 2
-        assert {r.document_path.document_name for r in results} == {"document-1", "document-2"}
+        assert {r.document_path.document_name for r in results} == {
+            "document-1",
+            "document-2",
+        }
 
     search()
 
