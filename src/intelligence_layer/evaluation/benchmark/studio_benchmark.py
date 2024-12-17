@@ -16,6 +16,7 @@ from intelligence_layer.connectors.studio.studio import (
 )
 from intelligence_layer.core import Input, Output
 from intelligence_layer.core.task import Task
+from intelligence_layer.core.tracer.tracer import ExportedSpan
 from intelligence_layer.evaluation.aggregation.aggregator import (
     AggregationLogic,
     Aggregator,
@@ -29,6 +30,10 @@ from intelligence_layer.evaluation.benchmark.benchmark import (
     BenchmarkRepository,
 )
 from intelligence_layer.evaluation.benchmark.get_code import get_source_notebook_safe
+from intelligence_layer.evaluation.benchmark.trace_information import (
+    extract_latency_from_trace,
+    extract_token_count_from_trace,
+)
 from intelligence_layer.evaluation.dataset.domain import ExpectedOutput
 from intelligence_layer.evaluation.dataset.studio_dataset_repository import (
     StudioDatasetRepository,
@@ -149,9 +154,8 @@ class StudioBenchmark(Benchmark):
         )
         trace_ids = []
         for lineage in tqdm(evaluation_lineages, desc="Submitting traces to Studio"):
-            trace = lineage.tracers[0]
-            assert trace
-            trace_id = self.client.submit_trace(trace.export_for_viewing())
+            trace = self._trace_from_lineage(lineage)
+            trace_id = self.client.submit_trace(trace)
             trace_ids.append(trace_id)
 
         benchmark_lineages = self._create_benchmark_lineages(
@@ -165,6 +169,14 @@ class StudioBenchmark(Benchmark):
         )
 
         return benchmark_execution_id
+
+    def _trace_from_lineage(
+        self, eval_lineage: EvaluationLineage[Input, ExpectedOutput, Output, Evaluation]
+    ) -> Sequence[ExportedSpan]:
+        # since we have 1 output only in this scenario, we expected to have exactly 1 tracer
+        trace = eval_lineage.tracers[0]
+        assert trace, "eval lineages always should have at least 1 tracer"
+        return trace.export_for_viewing()
 
     def _create_benchmark_lineages(
         self,
@@ -183,6 +195,7 @@ class StudioBenchmark(Benchmark):
         eval_lineage: EvaluationLineage[Input, ExpectedOutput, Output, Evaluation],
         trace_id: str,
     ) -> BenchmarkLineage:
+        trace = self._trace_from_lineage(eval_lineage)
         return BenchmarkLineage(
             trace_id=trace_id,
             input=eval_lineage.example.input,
@@ -190,8 +203,8 @@ class StudioBenchmark(Benchmark):
             example_metadata=eval_lineage.example.metadata,
             output=eval_lineage.outputs[0].output,
             evaluation=eval_lineage.evaluation.result,
-            run_latency=0,  # TODO: Implement this
-            run_tokens=0,  # TODO: Implement this
+            run_latency=extract_latency_from_trace(trace),
+            run_tokens=extract_token_count_from_trace(trace),
         )
 
 

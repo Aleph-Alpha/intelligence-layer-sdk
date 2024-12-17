@@ -1,5 +1,6 @@
 from datetime import datetime
-from typing import Optional
+from typing import Optional, cast
+from unittest.mock import Mock, patch
 from uuid import UUID, uuid4
 
 import pytest
@@ -8,6 +9,7 @@ from pytest import fixture
 from requests import HTTPError, Response
 
 from intelligence_layer.connectors.studio.studio import (
+    BenchmarkLineage,
     GetBenchmarkResponse,
     StudioClient,
     StudioExample,
@@ -140,7 +142,8 @@ def test_create_benchmark(
     aggregation_logic: DummyAggregationLogic,
 ) -> None:
     dataset_id = "fake_dataset_id"
-    mock_studio_client.submit_benchmark.return_value = str(uuid4())  # type: ignore
+    mock_submit_benchmark = cast(Mock, mock_studio_client.submit_benchmark)
+    mock_submit_benchmark.return_value = str(uuid4())
 
     benchmark = studio_benchmark_repository.create_benchmark(
         dataset_id, evaluation_logic, aggregation_logic, "benchmark_name"
@@ -148,7 +151,7 @@ def test_create_benchmark(
     uuid = UUID(benchmark.id)
     assert uuid
     assert benchmark.dataset_id == dataset_id
-    studio_benchmark_repository.client.submit_benchmark.assert_called_once()  # type: ignore
+    mock_submit_benchmark.assert_called_once()
 
 
 def test_create_benchmark_with_non_existing_dataset(
@@ -161,7 +164,7 @@ def test_create_benchmark_with_non_existing_dataset(
     response = Response()
     response.status_code = 400
 
-    mock_studio_client.submit_benchmark.side_effect = HTTPError(  # type: ignore
+    cast(Mock, mock_studio_client.submit_benchmark).side_effect = HTTPError(
         "400 Client Error: Bad Request for url", response=response
     )
 
@@ -180,7 +183,7 @@ def test_get_benchmark(
     datatset_id: str,
 ) -> None:
     benchmark_id = "benchmark_id"
-    mock_studio_client.get_benchmark.return_value = get_benchmark_response  # type: ignore
+    cast(Mock, mock_studio_client.get_benchmark).return_value = get_benchmark_response
 
     benchmark = studio_benchmark_repository.get_benchmark(
         benchmark_id, evaluation_logic, aggregation_logic
@@ -199,7 +202,7 @@ def test_get_non_existing_benchmark(
     evaluation_logic: DummyEvaluationLogic,
     aggregation_logic: DummyAggregationLogic,
 ) -> None:
-    mock_studio_client.get_benchmark.return_value = None  # type: ignore
+    cast(Mock, mock_studio_client.get_benchmark).return_value = None
 
     assert (
         studio_benchmark_repository.get_benchmark(
@@ -209,29 +212,39 @@ def test_get_non_existing_benchmark(
     )
 
 
+@patch(
+    "intelligence_layer.evaluation.benchmark.studio_benchmark.extract_token_count_from_trace"
+)
 def test_execute_benchmark(
+    mock_extract_tokens: Mock,
     studio_benchmark_repository: StudioBenchmarkRepository,
     mock_studio_client: StudioClient,
     evaluation_logic: DummyEvaluationLogic,
     get_benchmark_response: GetBenchmarkResponse,
     aggregation_logic: DummyAggregationLogic,
-    task,
+    task: DummyTask,
 ) -> None:
-    mock_studio_client.get_benchmark.return_value = get_benchmark_response  # type: ignore
-    mock_studio_client.submit_trace.return_value = str(uuid4())  # type: ignore
+    mock_submit_trace = cast(Mock, mock_studio_client.submit_trace)
+    mock_submit_trace.return_value = str(uuid4())
+    mock_submit_execution = cast(Mock, mock_studio_client.submit_benchmark_execution)
+
+    expected_generated_tokens = 100
+    mock_extract_tokens.return_value = expected_generated_tokens
+
+    cast(Mock, mock_studio_client.get_benchmark).return_value = get_benchmark_response
     examples = [
         StudioExample(input="input0", expected_output="expected_output0"),
         StudioExample(input="input1", expected_output="expected_output1"),
         StudioExample(input="input2", expected_output="expected_output2"),
         StudioExample(input="input3", expected_output="expected_output3"),
     ]
-
-    mock_studio_client.get_dataset_examples.return_value = examples  # type: ignore
+    cast(Mock, mock_studio_client.get_dataset_examples).return_value = examples
     benchmark = studio_benchmark_repository.get_benchmark(
         "benchmark_id", evaluation_logic, aggregation_logic
     )
-
     assert benchmark
+
+    # when
     benchmark.execute(
         task,
         name="name",
@@ -240,6 +253,14 @@ def test_execute_benchmark(
         labels={"label"},
     )
 
-    mock_studio_client.submit_benchmark_execution.assert_called_once()  # type: ignore
-    assert mock_studio_client.submit_trace.call_count == 4  # type: ignore
-    mock_studio_client.submit_benchmark_lineages.assert_called_once()  # type: ignore
+    # then
+    mock_submit_execution.assert_called_once()
+    assert mock_submit_trace.call_count == 4
+    uploaded_lineages = cast(
+        Mock, mock_studio_client.submit_benchmark_lineages
+    ).call_args[1]["benchmark_lineages"]
+    for lineage in uploaded_lineages:
+        lineage = cast(BenchmarkLineage, lineage)
+        assert lineage.run_latency > 0
+        # this assumes that each lineage consists of traces that only have a single span
+        assert lineage.run_tokens == expected_generated_tokens
