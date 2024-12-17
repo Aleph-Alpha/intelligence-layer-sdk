@@ -367,6 +367,38 @@ class DocumentSearchResult(BaseModel):
         )
 
 
+class DocumentChunk(BaseModel):
+    """A chunk of a document.
+
+    Note:
+        Currently only supports text-only documents.
+
+    Args:
+        document_path: Path to the document that the chunk originates from.
+        section: Content of the chunk.
+        position: Position of the chunk within the document.
+    """
+
+    document_path: DocumentPath
+    section: str
+    position: DocumentTextPosition
+
+    @classmethod
+    def _from_chunk_response(cls, chunk_response: Mapping[str, Any]) -> "DocumentChunk":
+        assert chunk_response["start"]["item"] == chunk_response["end"]["item"]
+        assert chunk_response["section"][0]["modality"] == "text"
+
+        return cls(
+            document_path=DocumentPath.from_json(chunk_response["document_path"]),
+            section=chunk_response["section"][0]["text"],
+            position=DocumentTextPosition(
+                item=chunk_response["start"]["item"],
+                start_position=chunk_response["start"]["position"],
+                end_position=chunk_response["end"]["position"],
+            ),
+        )
+
+
 class DocumentIndexError(RuntimeError):
     """Raised in case of any `DocumentIndexClient`-related errors.
 
@@ -879,6 +911,31 @@ class DocumentIndexClient:
         response = requests.post(url, data=dumps(data), headers=self.headers)
         self._raise_for_status(response)
         return [DocumentSearchResult._from_search_response(r) for r in response.json()]
+
+    def chunks(
+        self, document_path: DocumentPath, index_name: str
+    ) -> Sequence[DocumentChunk]:
+        """Retrieve all chunks of an indexed document.
+
+        If the document is still indexing, a ResourceNotFound error is raised.
+
+        Args:
+            document_path: Path to the document.
+            index_name: Name of the index to retrieve chunks from.
+
+        Returns:
+            List of all chunks of the indexed document.
+        """
+        url_suffix = f"collections/{document_path.collection_path.namespace}/{document_path.collection_path.collection}/docs/{document_path.encoded_document_name()}/indexes/{index_name}/chunks"
+        url = urljoin(self._base_document_index_url, url_suffix)
+
+        response = requests.get(url, headers=self.headers)
+        self._raise_for_status(response)
+        return [
+            DocumentChunk._from_chunk_response(r)
+            for r in response.json()
+            if len(r["section"]) > 0 and r["section"][0]["modality"] == "text"
+        ]
 
     def _raise_for_status(self, response: requests.Response) -> None:
         try:
