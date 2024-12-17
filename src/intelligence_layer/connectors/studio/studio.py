@@ -122,8 +122,8 @@ class PostBenchmarkExecution(BaseModel):
     run_end: datetime
     run_successful_count: int
     run_failed_count: int
-    run_success_avg_latency: int
-    run_success_avg_token_count: int
+    run_success_avg_latency: float
+    run_success_avg_token_count: float
     # Eval Overview
     eval_start: datetime
     eval_end: datetime
