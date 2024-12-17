@@ -227,6 +227,7 @@ class FilterOps(Enum):
     BEFORE = "before"
     AT_OR_BEFORE = "at_or_before"
     EQUAL_TO = "equal_to"
+    IS_NULL = "is_null"
 
 
 class FilterField(BaseModel):
