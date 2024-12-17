@@ -408,6 +408,81 @@ def test_search_with_string_filter(
     search()
 
 
+def test_search_with_null_filter(
+    document_index: DocumentIndexClient,
+    read_only_populated_collection: tuple[CollectionPath, IndexPath],
+) -> None:
+    search_query = SearchQuery(
+        query="Pemberton",
+        max_results=10,
+        min_score=0.5,
+        filters=[
+            Filters(
+                filter_type="with",
+                fields=[
+                    FilterField(
+                        field_name="option-field",
+                        field_value=True,
+                        criteria=FilterOps.IS_NULL,
+                    )
+                ],
+            )
+        ],
+    )
+
+    @retry
+    def search() -> None:
+        collection_path, index_path = read_only_populated_collection
+        results = document_index.search(
+            collection_path,
+            index_path.index,
+            search_query,
+        )
+        assert len(results) == 1
+        assert results[0].document_path.document_name == "document-0"
+
+    search()
+
+
+def test_search_with_null_filter_without(
+    document_index: DocumentIndexClient,
+    read_only_populated_collection: tuple[CollectionPath, IndexPath],
+) -> None:
+    search_query = SearchQuery(
+        query="Pemberton",
+        max_results=10,
+        min_score=0.5,
+        filters=[
+            Filters(
+                filter_type="without",
+                fields=[
+                    FilterField(
+                        field_name="option-field",
+                        field_value=True,
+                        criteria=FilterOps.IS_NULL,
+                    )
+                ],
+            )
+        ],
+    )
+
+    @retry
+    def search() -> None:
+        collection_path, index_path = read_only_populated_collection
+        results = document_index.search(
+            collection_path,
+            index_path.index,
+            search_query,
+        )
+        assert len(results) == 2
+        assert {r.document_path.document_name for r in results} == {
+            "document-1",
+            "document-2",
+        }
+
+    search()
+
+
 def test_search_with_integer_filter(
     document_index: DocumentIndexClient,
     read_only_populated_collection: tuple[CollectionPath, IndexPath],

@@ -10,10 +10,13 @@
 - Add `create_project` bool to `StudioClient.__init__()` to enable users to automatically create their Studio projects
 - Add progressbar to the `Runner` to be able to track the `Run`
 - Add `StudioClient.submit_benchmark_lineages` function and include it in `StudioClient.submit_benchmark_execution`
+
+#### DocumentIndexClient 
 - Add method `DocumentIndexClient.chunks()` for retrieving all text chunks of a document.
+- Add metadata filter `FilterOps.IS_NULL`, that allows to filter fields based on whether their value is null.
 
 ### Fixes
-...
+- The Document Index `SearchQuery` now correctly allows searches with a negative `min_score`.
 
 ### Deprecations
 ...

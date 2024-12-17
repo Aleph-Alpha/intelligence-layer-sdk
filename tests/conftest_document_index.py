@@ -158,6 +158,7 @@ def document_contents_with_metadata() -> list[DocumentContents]:
 
     metadata_1: JsonSerializable = {
         "string-field": "example_string_1",
+        "option-field": None,
         "integer-field": 123,
         "float-field": 123.45,
         "boolean-field": True,
@@ -168,6 +169,7 @@ def document_contents_with_metadata() -> list[DocumentContents]:
 
     metadata_2: JsonSerializable = {
         "string-field": "example_string_2",
+        "option-field": "example_string_2",
         "integer-field": 456,
         "float-field": 678.90,
         "boolean-field": False,
@@ -178,6 +180,7 @@ def document_contents_with_metadata() -> list[DocumentContents]:
 
     metadata_3: JsonSerializable = {
         "string-field": "example_string_3",
+        "option-field": "example_string_3",
         "integer-field": 789,
         "float-field": 101112.13,
         "boolean-field": True,
@@ -235,6 +238,10 @@ def filter_index_configs(
     configs = {
         random_identifier(): {
             "field-name": "string-field",
+            "field-type": "string",
+        },
+        random_identifier(): {
+            "field-name": "option-field",
             "field-type": "string",
         },
         random_identifier(): {
