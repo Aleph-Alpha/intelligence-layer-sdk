@@ -13,7 +13,7 @@
 - Add method `DocumentIndexClient.chunks()` for retrieving all text chunks of a document.
 
 ### Fixes
-...
+- The Document Index `SearchQuery` now correctly allows searches with a negative `min_score`.
 
 ### Deprecations
 ...
