@@ -10,9 +10,9 @@ from intelligence_layer.connectors.studio.studio import (
     StudioExample,
 )
 from intelligence_layer.core import Input
-from intelligence_layer.evaluation import (
+from intelligence_layer.evaluation.dataset.dataset_repository import DatasetRepository
+from intelligence_layer.evaluation.dataset.domain import (
     Dataset,
-    DatasetRepository,
     Example,
     ExpectedOutput,
 )
