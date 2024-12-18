@@ -36,7 +36,7 @@ class HybridQdrantInMemoryRetriever(QdrantInMemoryRetriever):
         retriever_type: The type of retriever to be instantiated. Should be `ASYMMETRIC` for most query-document retrieveal use cases, `SYMMETRIC` is optimized
             for similar document retrieval. Defaults to `ASYMMETRIC`.
         distance_metric: The distance metric to be used for vector comparison. Defaults to `Distance.COSINE`.
-        sparse_model_name: The name of the sparse embedding model from `fastemebed` to be used. Defaults to `"bm25"`.
+        sparse_model_name: The name of the sparse embedding model from `fastemebed` to be used. Defaults to `"Qdrant/bm25"`.
         max_workers: The maximum number of workers to use for concurrent processing. Defaults to 10.
 
     Example:
@@ -56,7 +56,7 @@ class HybridQdrantInMemoryRetriever(QdrantInMemoryRetriever):
         threshold: float = 0.0,
         retriever_type: RetrieverType = RetrieverType.ASYMMETRIC,
         distance_metric: Distance = Distance.COSINE,
-        sparse_model_name: str = "bm25",
+        sparse_model_name: str = "Qdrant/bm25",
         max_workers: int = 10,
     ) -> None:
         self._client = client or LimitedConcurrencyClient.from_env()
@@ -79,8 +79,16 @@ class HybridQdrantInMemoryRetriever(QdrantInMemoryRetriever):
 
         self._search_client.create_collection(
             collection_name=self._collection_name,
-            vectors_config=VectorParams(size=128, distance=self._distance_metric),
-            sparse_vectors_config=self._search_client.get_fastembed_sparse_vector_params(),
+            vectors_config={
+                self._dense_vector_field_name: VectorParams(
+                    size=128, distance=self._distance_metric
+                )
+            },
+            sparse_vectors_config={
+                self._sparse_vector_field_name: self._search_client.get_fastembed_sparse_vector_params()[  # type: ignore[index]
+                    str(self._search_client.get_sparse_vector_field_name())
+                ]
+            },
         )
 
         self._add_texts_to_memory(documents)

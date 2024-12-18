@@ -13,7 +13,7 @@ from tests.conftest import to_document
 @fixture
 def in_memory_retriever_documents() -> Sequence[Document]:
     return [
-        Document(text="Summer is warm"),
+        Document(text="Summer is warm but I like it"),
         Document(text="I do not like rain"),
         Document(text="We are so back"),
         Document(text="Summer rain is rejuvenating"),
