@@ -2,6 +2,7 @@ from collections.abc import Sequence
 
 from pytest import fixture
 
+from intelligence_layer.connectors import AlephAlphaClientProtocol, RetrieverType
 from intelligence_layer.connectors.retrievers.base_retriever import Document
 from intelligence_layer.connectors.retrievers.hybrid_qdrant_in_memory_retriever import (
     HybridQdrantInMemoryRetriever,
@@ -17,6 +18,32 @@ def in_memory_retriever_documents() -> Sequence[Document]:
         Document(text="We are so back"),
         Document(text="Summer rain is rejuvenating"),
     ]
+
+
+@fixture
+def hybrid_asymmetric_in_memory_retriever(
+    client: AlephAlphaClientProtocol,
+    in_memory_retriever_documents: Sequence[Document],
+) -> HybridQdrantInMemoryRetriever:
+    return HybridQdrantInMemoryRetriever(
+        in_memory_retriever_documents,
+        client=client,
+        k=2,
+        retriever_type=RetrieverType.ASYMMETRIC,
+    )
+
+
+@fixture
+def hybrid_symmetric_in_memory_retriever(
+    client: AlephAlphaClientProtocol,
+    in_memory_retriever_documents: Sequence[Document],
+) -> HybridQdrantInMemoryRetriever:
+    return HybridQdrantInMemoryRetriever(
+        in_memory_retriever_documents,
+        client=client,
+        k=2,
+        retriever_type=RetrieverType.SYMMETRIC,
+    )
 
 
 def test_asymmetric_in_memory_retriever(
@@ -44,12 +71,12 @@ def test_symmetric_in_memory_retriever(
 
 
 def test_hybrid_in_memory_retriever(
-    hybrid_hybrid_in_memory_retriever: HybridQdrantInMemoryRetriever,
+    hybrid_asymmetric_in_memory_retriever: HybridQdrantInMemoryRetriever,
     in_memory_retriever_documents: Sequence[Document],
 ) -> None:
     query = "Summer rain"
-    documents = hybrid_hybrid_in_memory_retriever.get_relevant_documents_with_scores(
-        query
+    documents = (
+        hybrid_asymmetric_in_memory_retriever.get_relevant_documents_with_scores(query)
     )
     assert in_memory_retriever_documents[3] == to_document(documents[0].document_chunk)
     assert len(documents) <= 2
