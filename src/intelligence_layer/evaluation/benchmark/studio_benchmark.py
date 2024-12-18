@@ -181,7 +181,7 @@ class StudioBenchmark(Benchmark):
 
         benchmark_lineages = self._create_benchmark_lineages(
             eval_lineages=evaluation_lineages,
-            trace_ids=trace_ids,
+            traces=run_traces,
         )
 
         self.client.submit_benchmark_lineages(
@@ -230,21 +230,20 @@ class StudioBenchmark(Benchmark):
         eval_lineages: list[
             EvaluationLineage[Input, ExpectedOutput, Output, Evaluation]
         ],
-        trace_ids: list[str],
+        traces: list[Sequence[ExportedSpan]],
     ) -> Sequence[BenchmarkLineage[Input, Output, ExpectedOutput, Evaluation]]:
         return [
-            self._create_benchmark_lineage(eval_lineage, trace_id)
-            for eval_lineage, trace_id in zip(eval_lineages, trace_ids, strict=True)
+            self._create_benchmark_lineage(eval_lineage, trace)
+            for eval_lineage, trace in zip(eval_lineages, traces, strict=True)
         ]
 
     def _create_benchmark_lineage(
         self,
         eval_lineage: EvaluationLineage[Input, ExpectedOutput, Output, Evaluation],
-        trace_id: str,
+        trace: Sequence[ExportedSpan],
     ) -> BenchmarkLineage:
-        trace = self._trace_from_lineage(eval_lineage)
         return BenchmarkLineage(
-            trace_id=trace_id,
+            trace_id=str(trace[0].context.trace_id),
             input=eval_lineage.example.input,
             expected_output=eval_lineage.example.expected_output,
             example_metadata=eval_lineage.example.metadata,
