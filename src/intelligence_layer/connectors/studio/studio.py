@@ -122,8 +122,8 @@ class PostBenchmarkExecution(BaseModel):
     run_end: datetime
     run_successful_count: int
     run_failed_count: int
-    run_success_avg_latency: int
-    run_success_avg_token_count: int
+    run_success_avg_latency: float
+    run_success_avg_token_count: float
     # Eval Overview
     eval_start: datetime
     eval_end: datetime
@@ -143,7 +143,7 @@ class GetDatasetExamplesResponse(BaseModel, Generic[Input, ExpectedOutput]):
     items: Sequence[StudioExample[Input, ExpectedOutput]]
 
 
-class BenchmarkLineage(BaseModel, Generic[Input, Output, ExpectedOutput, Evaluation]):
+class BenchmarkLineage(BaseModel, Generic[Input, ExpectedOutput, Output, Evaluation]):
     trace_id: str
     input: Input
     expected_output: ExpectedOutput
