@@ -313,7 +313,11 @@ def test_execute_benchmark_on_empty_examples_uploads_example_and_calculates_corr
     assert mock_submit_trace.call_count == 0
 
 
+@patch(
+    "intelligence_layer.evaluation.benchmark.studio_benchmark.extract_token_count_from_trace"
+)
 def test_execute_benchmark_failing_examples_calculates_correctly(
+    mock_extract_tokens: Mock,
     studio_benchmark_repository: StudioBenchmarkRepository,
     mock_studio_client: StudioClient,
     evaluation_logic: DummyEvaluationLogic,
@@ -332,6 +336,9 @@ def test_execute_benchmark_failing_examples_calculates_correctly(
     benchmark = studio_benchmark_repository.get_benchmark(
         "benchmark_id", evaluation_logic, aggregation_logic
     )
+
+    expected_generated_tokens = 0
+    mock_extract_tokens.return_value = expected_generated_tokens + 1
     assert benchmark
 
     # when
@@ -349,7 +356,7 @@ def test_execute_benchmark_failing_examples_calculates_correctly(
         PostBenchmarkExecution, mock_submit_execution.call_args[1]["data"]
     )
     assert uploaded_execution.run_success_avg_latency == 0
-    assert uploaded_execution.run_success_avg_token_count == 0
+    assert uploaded_execution.run_success_avg_token_count == expected_generated_tokens
     assert uploaded_execution.run_successful_count == 0
 
     assert mock_submit_trace.call_count == 0

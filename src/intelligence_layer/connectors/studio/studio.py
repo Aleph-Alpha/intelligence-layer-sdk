@@ -143,7 +143,7 @@ class GetDatasetExamplesResponse(BaseModel, Generic[Input, ExpectedOutput]):
     items: Sequence[StudioExample[Input, ExpectedOutput]]
 
 
-class BenchmarkLineage(BaseModel, Generic[Input, Output, ExpectedOutput, Evaluation]):
+class BenchmarkLineage(BaseModel, Generic[Input, ExpectedOutput, Output, Evaluation]):
     trace_id: str
     input: Input
     expected_output: ExpectedOutput

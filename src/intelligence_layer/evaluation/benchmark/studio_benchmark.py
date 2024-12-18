@@ -1,4 +1,3 @@
-import inspect
 import itertools
 from collections.abc import Sequence
 from datetime import datetime
@@ -181,7 +180,9 @@ class StudioBenchmark(Benchmark):
 
         benchmark_lineages = self._create_benchmark_lineages(
             eval_lineages=evaluation_lineages,
-            traces=run_traces,
+            trace_ids=trace_ids,
+            latencies_per_trace=latency_per_trace,
+            tokens_per_trace=tokens_per_trace,
         )
 
         self.client.submit_benchmark_lineages(
@@ -230,27 +231,39 @@ class StudioBenchmark(Benchmark):
         eval_lineages: list[
             EvaluationLineage[Input, ExpectedOutput, Output, Evaluation]
         ],
-        traces: list[Sequence[ExportedSpan]],
-    ) -> Sequence[BenchmarkLineage[Input, Output, ExpectedOutput, Evaluation]]:
+        trace_ids: list[str],
+        latencies_per_trace: list[int],
+        tokens_per_trace: list[int],
+    ) -> Sequence[BenchmarkLineage[Input, ExpectedOutput, Output, Evaluation]]:
         return [
-            self._create_benchmark_lineage(eval_lineage, trace)
-            for eval_lineage, trace in zip(eval_lineages, traces, strict=True)
+            self._create_benchmark_lineage(
+                eval_lineage, trace_id, run_latency, run_tokens
+            )
+            for eval_lineage, trace_id, run_latency, run_tokens in zip(
+                eval_lineages,
+                trace_ids,
+                latencies_per_trace,
+                tokens_per_trace,
+                strict=True,
+            )
         ]
 
     def _create_benchmark_lineage(
         self,
         eval_lineage: EvaluationLineage[Input, ExpectedOutput, Output, Evaluation],
-        trace: Sequence[ExportedSpan],
+        trace_id: str,
+        run_latency: int,
+        run_tokens: int,
     ) -> BenchmarkLineage:
         return BenchmarkLineage(
-            trace_id=str(trace[0].context.trace_id),
+            trace_id=trace_id,
             input=eval_lineage.example.input,
             expected_output=eval_lineage.example.expected_output,
             example_metadata=eval_lineage.example.metadata,
             output=eval_lineage.outputs[0].output,
             evaluation=eval_lineage.evaluation.result,
-            run_latency=extract_latency_from_trace(trace),
-            run_tokens=extract_token_count_from_trace(trace),
+            run_latency=run_latency,
+            run_tokens=run_tokens,
         )
 
 
