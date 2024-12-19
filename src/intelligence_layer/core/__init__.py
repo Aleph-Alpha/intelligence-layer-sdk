@@ -5,6 +5,7 @@ from .chunk import ChunkWithIndices as ChunkWithIndices
 from .chunk import ChunkWithIndicesOutput as ChunkWithIndicesOutput
 from .chunk import ChunkWithStartEndIndices as ChunkWithStartEndIndices
 from .chunk import TextChunk as TextChunk
+from .decorators import trace as trace
 from .detect_language import DetectLanguage as DetectLanguage
 from .detect_language import DetectLanguageInput as DetectLanguageInput
 from .detect_language import DetectLanguageOutput as DetectLanguageOutput
