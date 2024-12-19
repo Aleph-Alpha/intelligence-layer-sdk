@@ -1,5 +1,17 @@
 # Changelog
+
 ## Unreleased
+...
+### Features
+...
+### Fixes
+...
+### Deprecations
+...
+### Breaking Changes
+...
+
+## 9.0.0
 
 ### Features
 - Introduce `Benchmark` and `StudioBenchmark`
