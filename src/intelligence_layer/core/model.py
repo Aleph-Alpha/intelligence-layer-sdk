@@ -380,9 +380,7 @@ def _tokenizer_no_whitespace_prefix(
         copied_tokenizer.pre_tokenizer.add_prefix_space = False
         return copied_tokenizer
 
-    raise ValueError(
-        "Tokenizer does not support `.pre_tokenizer` and thus `.add_prefix_space` option."
-    )
+    return tokenizer
 
 
 @lru_cache(maxsize=10)
