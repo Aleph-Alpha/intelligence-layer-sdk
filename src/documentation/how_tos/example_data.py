@@ -112,6 +112,7 @@ class ExampleData:
     run_overview_2: RunOverview
     evaluation_overview_1: EvaluationOverview
     evaluation_overview_2: EvaluationOverview
+    studio_project_name: str
 
 
 def example_data() -> ExampleData:
@@ -159,6 +160,7 @@ def example_data() -> ExampleData:
     example_data.run_overview_2 = run_overview_2
     example_data.evaluation_overview_1 = evaluation_overview_1
     example_data.evaluation_overview_2 = evaluation_overview_2
+    example_data.studio_project_name = "My Example Project"
 
     return example_data
 

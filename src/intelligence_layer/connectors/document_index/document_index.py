@@ -24,8 +24,8 @@ class IndexPath(BaseModel, frozen=True):
     """Path to an index.
 
     Args:
-        namespace: Holds collections.
-        index: The name of the index, holds a config.
+        namespace: The namespace to which this index belongs.
+        index: The name of the index.
     """
 
     namespace: str
@@ -227,6 +227,7 @@ class FilterOps(Enum):
     BEFORE = "before"
     AT_OR_BEFORE = "at_or_before"
     EQUAL_TO = "equal_to"
+    IS_NULL = "is_null"
 
 
 class FilterField(BaseModel):
@@ -293,16 +294,15 @@ class SearchQuery(BaseModel):
         query: Actual text to be searched with.
         max_results: Max number of search results to be retrieved by the query.
             Must be larger than 0.
-        min_score: Filter out results with a similarity score below this value.
-            Must be between 0 and 1.
-            For searches on hybrid indexes, the Document Index applies the min_score
-            to the semantic results before fusion of result sets. As fusion re-scores results,
+        min_score: Filter out results with a similarity score below this value. Must be between
+            -1 and 1. For searches on hybrid indexes, the Document Index applies the min_score to
+            the semantic results before fusion of result sets. As fusion re-scores results,
             returned scores may exceed this value.
     """
 
     query: str
     max_results: int = Field(ge=0, default=1)
-    min_score: float = Field(ge=0.0, le=1.0, default=0.0)
+    min_score: float = Field(ge=-1.0, le=1.0, default=0.0)
     filters: Optional[list[Filters]] = None
 
 
@@ -363,6 +363,38 @@ class DocumentSearchResult(BaseModel):
                 item=search_response["start"]["item"],
                 start_position=search_response["start"]["position"],
                 end_position=search_response["end"]["position"],
+            ),
+        )
+
+
+class DocumentChunk(BaseModel):
+    """A chunk of a document.
+
+    Note:
+        Currently only supports text-only documents.
+
+    Args:
+        document_path: Path to the document that the chunk originates from.
+        section: Content of the chunk.
+        position: Position of the chunk within the document.
+    """
+
+    document_path: DocumentPath
+    section: str
+    position: DocumentTextPosition
+
+    @classmethod
+    def _from_chunk_response(cls, chunk_response: Mapping[str, Any]) -> "DocumentChunk":
+        assert chunk_response["start"]["item"] == chunk_response["end"]["item"]
+        assert chunk_response["section"][0]["modality"] == "text"
+
+        return cls(
+            document_path=DocumentPath.from_json(chunk_response["document_path"]),
+            section=chunk_response["section"][0]["text"],
+            position=DocumentTextPosition(
+                item=chunk_response["start"]["item"],
+                start_position=chunk_response["start"]["position"],
+                end_position=chunk_response["end"]["position"],
             ),
         )
 
@@ -438,36 +470,6 @@ class DocumentIndexClient:
     Args:
         token: A valid token for the document index API.
         base_document_index_url: The url of the document index' API.
-
-    Example:
-        >>> import os
-
-        >>> from intelligence_layer.connectors import (
-        ...     CollectionPath,
-        ...     DocumentContents,
-        ...     DocumentIndexClient,
-        ...     DocumentPath,
-        ...     SearchQuery,
-        ... )
-
-        >>> document_index = DocumentIndexClient(os.getenv("AA_TOKEN"))
-        >>> collection_path = CollectionPath(
-        ...     namespace="aleph-alpha", collection="wikipedia-de"
-        ... )
-        >>> document_index.create_collection(collection_path)
-        >>> document_index.add_document(
-        ...     document_path=DocumentPath(
-        ...         collection_path=collection_path, document_name="Fun facts about Germany"
-        ...     ),
-        ...     contents=DocumentContents.from_text("Germany is a country located in ..."),
-        ... )
-        >>> search_result = document_index.search(
-        ...     collection_path=collection_path,
-        ...     index_name="asymmetric",
-        ...     search_query=SearchQuery(
-        ...         query="What is the capital of Germany", max_results=4, min_score=0.5
-        ...     ),
-        ... )
     """
 
     def __init__(
@@ -909,6 +911,31 @@ class DocumentIndexClient:
         response = requests.post(url, data=dumps(data), headers=self.headers)
         self._raise_for_status(response)
         return [DocumentSearchResult._from_search_response(r) for r in response.json()]
+
+    def chunks(
+        self, document_path: DocumentPath, index_name: str
+    ) -> Sequence[DocumentChunk]:
+        """Retrieve all chunks of an indexed document.
+
+        If the document is still indexing, a ResourceNotFound error is raised.
+
+        Args:
+            document_path: Path to the document.
+            index_name: Name of the index to retrieve chunks from.
+
+        Returns:
+            List of all chunks of the indexed document.
+        """
+        url_suffix = f"collections/{document_path.collection_path.namespace}/{document_path.collection_path.collection}/docs/{document_path.encoded_document_name()}/indexes/{index_name}/chunks"
+        url = urljoin(self._base_document_index_url, url_suffix)
+
+        response = requests.get(url, headers=self.headers)
+        self._raise_for_status(response)
+        return [
+            DocumentChunk._from_chunk_response(r)
+            for r in response.json()
+            if len(r["section"]) > 0 and r["section"][0]["modality"] == "text"
+        ]
 
     def _raise_for_status(self, response: requests.Response) -> None:
         try:

@@ -116,7 +116,7 @@ The tutorials aim to guide you through implementing several common use-cases wit
 
 ### Setup LLM access
 
-The tutorials require access to an LLM endpoint. You can choose between using the Aleph Alpha API (`https://api.aleph-alpha.com`) or an on-premise setup by configuring the appropriate environment variables. To configure the environment variables, create a `.env` file in the root directory of the project and copy the contents of the `.env.sample` file into it.
+The tutorials require access to an LLM endpoint. You can choose between using the Aleph Alpha API (`https://api.aleph-alpha.com`) or an on-premise setup by configuring the appropriate environment variables. To configure the environment variables, create a `.env` file in the root directory of the project and copy the contents of the `.env.example` file into it.
 
 To use the **Aleph Alpha API**, that is set as the default host URL, set the `AA_TOKEN` variable to your [Aleph Alpha access token,](https://docs.aleph-alpha.com/docs/account/#create-a-new-token) and you are good to go.
 

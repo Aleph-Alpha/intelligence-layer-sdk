@@ -71,8 +71,7 @@ services:
     env_file: ".env" # mainly for AA-TOKEN, DB User/PW
     environment:
       POSTGRES_HOST: postgres
-      AUTHORIZATION_SERVICE_URL: "none"
-      API_SCHEDULER_URL: "https://api.aleph-alpha.com"
+      API_SCHEDULER_URL: ${CLIENT_URL}
   postgres:
     image: postgres:15
     ports:

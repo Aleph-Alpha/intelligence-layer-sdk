@@ -1,4 +1,3 @@
-import os
 from pathlib import Path
 
 from aleph_alpha_client import Client, CompletionRequest, CompletionResponse
@@ -29,10 +28,10 @@ short_text = """The brown bear (Ursus arctos) is a large bear species found acro
 
 
 @fixture
-def recursive_counting_client() -> RecursiveCountingClient:
-    aa_token = os.getenv("AA_TOKEN")
-    assert aa_token
-    return RecursiveCountingClient(aa_token)
+def recursive_counting_client(
+    token: str, inference_url: str
+) -> RecursiveCountingClient:
+    return RecursiveCountingClient(token, host=inference_url)
 
 
 @fixture

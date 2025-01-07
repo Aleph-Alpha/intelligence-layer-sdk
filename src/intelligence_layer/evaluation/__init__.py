@@ -23,6 +23,10 @@ from .aggregation.hugging_face_aggregation_repository import (
 from .aggregation.in_memory_aggregation_repository import (
     InMemoryAggregationRepository as InMemoryAggregationRepository,
 )
+from .benchmark.studio_benchmark import StudioBenchmark as StudioBenchmark
+from .benchmark.studio_benchmark import (
+    StudioBenchmarkRepository as StudioBenchmarkRepository,
+)
 from .dataset.dataset_repository import DatasetRepository as DatasetRepository
 from .dataset.domain import Dataset as Dataset
 from .dataset.domain import Example as Example

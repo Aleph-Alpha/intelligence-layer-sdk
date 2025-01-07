@@ -142,9 +142,9 @@ class LimitedConcurrencyClient:
             assert token, "Define environment variable AA_TOKEN with a valid token for the Aleph Alpha API"
         if host is None:
             host = getenv("CLIENT_URL")
-            if not host:
-                host = "https://api.aleph-alpha.com"
-                print(f"No CLIENT_URL specified in environment, using default: {host}.")
+            assert (
+                host
+            ), "Define CLIENT_URL with a valid url pointing towards your inference API."
 
         return cls(Client(token, host=host))
 

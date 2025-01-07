@@ -104,11 +104,10 @@ class SingleChunkQa(Task[SingleChunkQaInput, SingleChunkQaOutput]):
 
     Example:
         >>> import os
-        >>> from intelligence_layer.core import Language, InMemoryTracer
-        >>> from intelligence_layer.core import TextChunk
+        >>> from intelligence_layer.core import Language, InMemoryTracer, TextChunk, LuminousControlModel
         >>> from intelligence_layer.examples import SingleChunkQa, SingleChunkQaInput
-        >>>
-        >>> task = SingleChunkQa()
+        >>> model = LuminousControlModel("luminous-base-control")
+        >>> task = SingleChunkQa(model=model)
         >>> input = SingleChunkQaInput(
         ...     chunk=TextChunk("Tina does not like pizza. However, Mike does."),
         ...     question="Who likes pizza?",

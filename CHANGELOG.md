@@ -1,5 +1,17 @@
 # Changelog
+
 ## Unreleased
+...
+### Features
+...
+### Fixes
+...
+### Deprecations
+...
+### Breaking Changes
+...
+
+## 9.0.0
 
 ### Features
 - Introduce `Benchmark` and `StudioBenchmark`
@@ -11,14 +23,21 @@
 - Add progressbar to the `Runner` to be able to track the `Run`
 - Add `StudioClient.submit_benchmark_lineages` function and include it in `StudioClient.submit_benchmark_execution`
 
+#### DocumentIndexClient 
+- Add method `DocumentIndexClient.chunks()` for retrieving all text chunks of a document.
+- Add metadata filter `FilterOps.IS_NULL`, that allows to filter fields based on whether their value is null.
+
 ### Fixes
-...
+- The Document Index `SearchQuery` now correctly allows searches with a negative `min_score`.
 
 ### Deprecations
 ...
 
 ### Breaking Changes
  - The env variable `POSTGRES_HOST` is split into `POSTGRES_HOST` and `POSTGRES_PORT`. This affects all classes interacting with Studio and the `InstructionFinetuningDataRepository`.
+ - The following env variables now need to be set (previously pointed to defaults)
+   - `CLIENT_URL` - URL of your inference stack
+   - `DOCUMENT_INDEX_URL` - URL of the document index
 
 ## 8.0.0
 
