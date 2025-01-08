@@ -45,7 +45,7 @@ pre-commit = "^4.0.1"
 # tests
 pytest = "^8.3"
 pytest-xdist = "^3.6.1"
-nbconvert = "^7.16.4"
+nbconvert = "^7.16.5"
 
 # typing
 httpx = "*"
