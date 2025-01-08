@@ -5016,13 +5016,13 @@ files = [
 
 [[package]]
 name = "sacrebleu"
-version = "2.4.3"
+version = "2.5.1"
 description = "Hassle-free computation of shareable, comparable, and reproducible BLEU, chrF, and TER scores"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "sacrebleu-2.4.3-py3-none-any.whl", hash = "sha256:a976fd6998d8ced267a722120ec7fc47083c8e9745d8808ccee6424464a0aa31"},
-    {file = "sacrebleu-2.4.3.tar.gz", hash = "sha256:e734b1e0baeaea6ade0fefc9d23bac3df50bf15775d8b78edc108db63654192a"},
+    {file = "sacrebleu-2.5.1-py3-none-any.whl", hash = "sha256:7c9f7ee75bec3a5bf19dd87112dfd654952130e403ad30c48298fb7da3212d5d"},
+    {file = "sacrebleu-2.5.1.tar.gz", hash = "sha256:1a088cc1c74ffaff0759c3191a85db09eecfa7a52e09be244e319d8d64e2fb11"},
 ]
 
 [package.dependencies]
@@ -6304,4 +6304,4 @@ type = ["pytest-mypy"]
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.10,<3.13"
-content-hash = "371ade494ea6ec3774a844cdb47a546d27ba0030f857e88f57c275f463a1f8ba"
+content-hash = "258d7c85db079fd5cf332ada4393ba3687fc83ad5269756f25523ac1d9af024b"
