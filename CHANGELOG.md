@@ -11,6 +11,10 @@
 ### Breaking Changes
 ...
 
+## 9.0.1
+### Fixes
+ - Fixes an incompatibility where models with tokenizer with no whitespace prefix could not be used for qa examples. Now, no error will be thrown.
+
 ## 9.0.0
 
 ### Features
