@@ -82,6 +82,9 @@ from .retrievers.base_retriever import SearchResult as SearchResult
 from .retrievers.document_index_retriever import (
     DocumentIndexRetriever as DocumentIndexRetriever,
 )
+from .retrievers.hybrid_qdrant_in_memory_retriever import (
+    HybridQdrantInMemoryRetriever as HybridQdrantInMemoryRetriever,
+)
 from .retrievers.qdrant_in_memory_retriever import (
     QdrantInMemoryRetriever as QdrantInMemoryRetriever,
 )
