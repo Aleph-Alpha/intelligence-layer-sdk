@@ -191,6 +191,7 @@ jobs:
           CLIENT_URL: ${{ secrets.CLIENT_URL }}
           STUDIO_URL: "http://localhost:8000/"
           DOCUMENT_INDEX_URL: ${{secrets.DOCUMENT_INDEX_URL}}
+          PHARIA_KERNEL_URL: https://pharia-kernel.product.pharia.com
           POSTGRES_HOST: "localhost"
           POSTGRES_PORT: "5433"
           POSTGRES_DB: "il_sdk"
@@ -225,7 +226,7 @@ jobs:
         env:
           POSTGRES_DB: "il_sdk"
           POSTGRES_USER: "il_sdk"
-          POSTGRES_PASSWORD: "test"    
+          POSTGRES_PASSWORD: "test"
       studio-backend:
         image: registry.gitlab.aleph-alpha.de/product/studio/backend:latest
         ports:
