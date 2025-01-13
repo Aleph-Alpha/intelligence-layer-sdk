@@ -1,6 +1,5 @@
 from collections.abc import Sequence
 from concurrent.futures import ThreadPoolExecutor
-from typing import Optional
 
 from qdrant_client import QdrantClient
 from qdrant_client.http.models import Distance, PointStruct, VectorParams, models
@@ -109,7 +108,7 @@ class HybridQdrantInMemoryRetriever(QdrantInMemoryRetriever):
         return sparse_query_vector
 
     def get_filtered_documents_with_scores(
-        self, query: str, filter: Optional[models.Filter]
+        self, query: str, filter: models.Filter | None
     ) -> Sequence[SearchResult[int]]:
         """Retrieves documents that match the given query and filter conditions, using hybrid search.
 
@@ -119,7 +118,7 @@ class HybridQdrantInMemoryRetriever(QdrantInMemoryRetriever):
 
         Args:
             query: The text query to search for.
-            filter: An optional filter to apply to the search results.
+            filter: If not None, a filter to apply to the search results.
 
         Returns:
             All documents that correspond to the query and pass the filter,
