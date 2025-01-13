@@ -297,7 +297,7 @@ class StudioBenchmarkRepository(BenchmarkRepository):
                 raise ValueError(f"Dataset with ID {dataset_id} not found") from e
             if e.response.status_code == HTTPStatus.CONFLICT:
                 raise ValueError(
-                    f"""Benchmark with name "{name}" already exists. Names of Benchmarks need to be unique in a Project."""
+                    f"""Benchmark with name "{name}" already exists. Names of Benchmarks in the same Project must be unique."""
                 ) from e
             else:
                 raise ValueError(

@@ -231,7 +231,7 @@ def test_create_benchmark_with_name_already_exists(
 
     with pytest.raises(
         ValueError,
-        match=f"""Benchmark with name "{name}" already exists. Names of Benchmarks need to be unique in a Project.""",
+        match=f"""Benchmark with name "{name}" already exists. Names of Benchmarks in the same Project must be unique.""",
     ):
         studio_benchmark_repository.create_benchmark(
             dataset_id, evaluation_logic, aggregation_logic, name
