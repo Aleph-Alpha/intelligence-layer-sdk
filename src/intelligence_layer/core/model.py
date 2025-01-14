@@ -606,7 +606,7 @@ class Llama3InstructModel(ControlModel):
 
     RECOMMENDED_MODELS: ClassVar[list[str]] = [
         "llama-3.1-8b-instruct",
-        "llama-3.1-70b-instruct",
+        "llama-3.3-70b-instruct",
     ]
 
     def __init__(
