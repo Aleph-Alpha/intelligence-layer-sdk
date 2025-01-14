@@ -6,7 +6,7 @@
 ...
 
 ### Fixes
- - Add warning to `PromptBasedClassify` and `PromptBasedClassifyWithDefinitions` about being cautious when using them with models families other than luminous
+ - Add warning to `PromptBasedClassify` and `PromptBasedClassifyWithDefinitions` to be cautious when using them with model families other than luminous
 
 ### Deprecations
 ...
