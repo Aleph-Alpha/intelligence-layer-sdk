@@ -50,7 +50,7 @@ Reply with only the class label."""
         self._model = model or LuminousControlModel("luminous-base-control")
         if not isinstance(self._model, LuminousControlModel):
             warnings.warn(
-                "PromptBasedClassifyWithDefinitions was build for luminous models. LLama models may not work correctly."
+                "PromptBasedClassifyWithDefinitions was build for luminous models. LLama models may not work correctly. "
                 "Proceed with caution and testing.",
                 UserWarning,
             )
