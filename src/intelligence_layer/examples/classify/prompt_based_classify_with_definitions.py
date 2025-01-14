@@ -1,3 +1,4 @@
+import warnings
 from collections.abc import Sequence
 from math import exp
 
@@ -47,6 +48,12 @@ Reply with only the class label."""
         super().__init__()
         self._labels_with_definitions = labels_with_definitions
         self._model = model or LuminousControlModel("luminous-base-control")
+        if not isinstance(self._model, LuminousControlModel):
+            warnings.warn(
+                "PromptBasedClassifyWithDefinitions was build for luminous models. LLama models may not work correctly."
+                "Proceed with caution and testing.",
+                UserWarning,
+            )
         self._instruction = instruction
 
     def do_run(
