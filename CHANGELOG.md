@@ -3,7 +3,7 @@
 ## Unreleased
 ...
 ### Features
-...
++- Add `HybridQdrantInMemoryRetriever` enabling hybrid search for in-memory Qdrant collections
 
 ### Fixes
  - Add warning to `PromptBasedClassify` and `PromptBasedClassifyWithDefinitions` to be cautious when using them with model families other than luminous
