@@ -214,6 +214,30 @@ def test_get_non_existing_benchmark(
     )
 
 
+def test_create_benchmark_with_name_already_exists(
+    studio_benchmark_repository: StudioBenchmarkRepository,
+    mock_studio_client: StudioClient,
+    evaluation_logic: DummyEvaluationLogic,
+    aggregation_logic: DummyAggregationLogic,
+) -> None:
+    dataset_id = str(uuid4())
+    response = Response()
+    response.status_code = 409
+    name = "benchmark_name"
+
+    cast(Mock, mock_studio_client.submit_benchmark).side_effect = HTTPError(
+        "409 Client Error: Database key constraint violated", response=response
+    )
+
+    with pytest.raises(
+        ValueError,
+        match=f"""Benchmark with name "{name}" already exists. Names of Benchmarks in the same Project must be unique.""",
+    ):
+        studio_benchmark_repository.create_benchmark(
+            dataset_id, evaluation_logic, aggregation_logic, name
+        )
+
+
 @patch(
     "intelligence_layer.evaluation.benchmark.studio_benchmark.extract_token_count_from_trace"
 )

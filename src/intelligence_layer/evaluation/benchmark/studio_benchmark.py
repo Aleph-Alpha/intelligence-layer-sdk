@@ -290,8 +290,15 @@ class StudioBenchmarkRepository(BenchmarkRepository):
                 metadata,
             )
         except requests.HTTPError as e:
-            if e.response.status_code == HTTPStatus.BAD_REQUEST:
+            if (
+                e.response.status_code == HTTPStatus.BAD_REQUEST
+                or e.response.status_code == HTTPStatus.NOT_FOUND
+            ):
                 raise ValueError(f"Dataset with ID {dataset_id} not found") from e
+            if e.response.status_code == HTTPStatus.CONFLICT:
+                raise ValueError(
+                    f"""Benchmark with name "{name}" already exists. Names of Benchmarks in the same Project must be unique."""
+                ) from e
             else:
                 raise ValueError(
                     "An error occurred when attempting to create a benchmark."
