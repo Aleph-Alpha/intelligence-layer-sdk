@@ -42,6 +42,18 @@ class Task(ABC, Generic[Input, Output]):
         Output: Interface of the output returned by the task.
     """
 
+    _tracer: Tracer
+    _current_task_span: TaskSpan
+
+    @property
+    def current_task_span(self) -> TaskSpan:
+        """The current task span for this task."""
+        return self._current_task_span
+
+    @current_task_span.setter
+    def current_task_span(self, task_span: TaskSpan) -> None:
+        self._current_task_span = task_span
+
     @abstractmethod
     def do_run(self, input: Input, task_span: TaskSpan) -> Output:
         """The implementation for this use case.
@@ -74,7 +86,9 @@ class Task(ABC, Generic[Input, Output]):
         Returns:
             Generic output defined by the task implementation.
         """
+        self._tracer = tracer
         with tracer.task_span(type(self).__name__, input) as task_span:
+            self._current_task_span = task_span
             output = self.do_run(input, task_span)
             task_span.record_output(output)
             return output
