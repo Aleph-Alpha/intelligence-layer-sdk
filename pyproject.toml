@@ -39,7 +39,7 @@ psycopg2-binary = "^2.9.9"
 # lint & format
 mypy = "^1.13.0"
 nbqa = "^1.9.1"
-ruff = "^0.8.3"
+ruff = "^0.9.1"
 pre-commit = "^4.0.1"
 
 # tests
