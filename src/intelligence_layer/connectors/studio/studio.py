@@ -231,7 +231,7 @@ class StudioClient:
         if create_project:
             project_id = self._get_project(self._project_name)
             if project_id is None:
-                self.create_project(self._project_name)
+                self.create_project(self._project_name, reuse_existing=True)
             self._project_id = project_id
 
     def _check_connection(self) -> None:
@@ -282,7 +282,12 @@ class StudioClient:
         except StopIteration:
             return None
 
-    def create_project(self, project: str, description: Optional[str] = None) -> int:
+    def create_project(
+        self,
+        project: str,
+        description: Optional[str] = None,
+        reuse_existing: bool = False,
+    ) -> int:
         """Creates a project in Studio.
 
         Projects are uniquely identified by the user provided name.
@@ -290,6 +295,8 @@ class StudioClient:
         Args:
             project: User provided name of the project.
             description: Description explaining the usage of the project. Defaults to None.
+            reuse_existing: Reuse project with specified name if already existing. Defaults to False.
+
 
         Returns:
             The ID of the newly created project.
@@ -303,6 +310,12 @@ class StudioClient:
         )
         match response.status_code:
             case 409:
+                if reuse_existing:
+                    fetched_project = self._get_project(project)
+                    assert (
+                        fetched_project is not None
+                    ), "Project already exists but not allowed to be used."
+                    return fetched_project
                 raise ValueError("Project already exists")
             case _:
                 response.raise_for_status()

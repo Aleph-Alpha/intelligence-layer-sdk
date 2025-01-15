@@ -5,7 +5,10 @@ from _pytest.fixtures import FixtureRequest
 from pytest import fixture
 
 from intelligence_layer.core import InMemoryTracer, NoOpTracer, TextChunk
-from intelligence_layer.core.model import Llama3InstructModel, LuminousControlModel
+from intelligence_layer.core.model import (
+    Llama3InstructModel,
+    LuminousControlModel,
+)
 from intelligence_layer.evaluation import (
     Aggregator,
     DatasetRepository,
@@ -38,10 +41,9 @@ def prompt_based_classify_luminous(
 
 
 @fixture
-def prompt_based_classify_llama3(
-    luminous_control_model: Llama3InstructModel,
-) -> PromptBasedClassify:
-    return PromptBasedClassify(Llama3InstructModel())
+def prompt_based_classify_llama3() -> PromptBasedClassify:
+    # We use 70b here because there are issues with 3.1 8b with the classify
+    return PromptBasedClassify(Llama3InstructModel(name="llama-3.3-70b-instruct"))
 
 
 @fixture
@@ -194,7 +196,7 @@ def test_prompt_based_classify_emotion_classification(
 ) -> None:
     prompt_based_classify = request.getfixturevalue(prompt_based_classify_model)
     classify_input = ClassifyInput(
-        chunk=TextChunk("I love my job"),
+        chunk=TextChunk("I love my job, I'm really happy with it :D"),
         labels=frozenset({"happy", "sad", "frustrated", "angry"}),
     )
 

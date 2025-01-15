@@ -17,7 +17,7 @@ pydantic = "2.10.*"
 aleph-alpha-client = ">=7.1.0"
 python-dotenv = "*"
 semantic-text-splitter = "^0.20.1"
-qdrant-client = "^1.12.1"
+qdrant-client = {version = "1.12.2", extras = ["fastembed"]}
 rich = "^13.9.4"
 datasets = "^3.2.0"
 requests = "^2.32.3"
@@ -39,7 +39,7 @@ psycopg2-binary = "^2.9.9"
 # lint & format
 mypy = "^1.13.0"
 nbqa = "^1.9.1"
-ruff = "^0.8.3"
+ruff = "^0.9.1"
 pre-commit = "^4.0.1"
 
 # tests
