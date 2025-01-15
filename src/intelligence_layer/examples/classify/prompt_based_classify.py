@@ -1,5 +1,6 @@
 import math
 import re
+import warnings
 from collections.abc import Iterable, Mapping, Sequence
 from typing import Optional
 
@@ -10,7 +11,6 @@ from intelligence_layer.core import (
     Echo,
     EchoInput,
     EchoOutput,
-    Llama3InstructModel,
     LuminousControlModel,
     RichPrompt,
     Task,
@@ -18,6 +18,7 @@ from intelligence_layer.core import (
     Token,
     TokenWithLogProb,
 )
+from intelligence_layer.core.model import ControlModel
 from intelligence_layer.examples.classify.classify import (
     ClassifyInput,
     Probability,
@@ -75,12 +76,18 @@ Reply with only the class label."""
 
     def __init__(
         self,
-        model: (LuminousControlModel | Llama3InstructModel | None) = None,
+        model: ControlModel | None = None,
         echo: Task[EchoInput, EchoOutput] | None = None,
         instruction: str = INSTRUCTION,
     ) -> None:
         super().__init__()
         self._model = model or LuminousControlModel("luminous-base-control")
+        if not isinstance(self._model, LuminousControlModel):
+            warnings.warn(
+                "PromptBasedClassify was build for luminous models. LLama models may not work correctly. "
+                "Proceed with caution and testing.",
+                UserWarning,
+            )
         self._echo_task = echo or Echo(self._model)
         self.instruction = instruction
 
