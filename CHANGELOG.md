@@ -3,7 +3,8 @@
 ## Unreleased
 ...
 ### Features
-+- Add `HybridQdrantInMemoryRetriever` enabling hybrid search for in-memory Qdrant collections
+- New Pharia Kernel connector for calling Skills from a Task
+- Add `HybridQdrantInMemoryRetriever` enabling hybrid search for in-memory Qdrant collections
 
 ### Fixes
  - Add warning to `PromptBasedClassify` and `PromptBasedClassifyWithDefinitions` to be cautious when using them with model families other than luminous
