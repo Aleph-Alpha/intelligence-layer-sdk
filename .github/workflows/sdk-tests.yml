@@ -94,8 +94,8 @@ jobs:
           POSTGRES_DB: "il_sdk"
           POSTGRES_USER: "il_sdk"
           POSTGRES_PASSWORD: "test"
-          POSTGRES_HOST: "postgres"
-          POSTGRES_PORT: "5432"
+          POSTGRES_HOST: "localhost"
+          POSTGRES_PORT: "5433"
 
           AUTHORIZATION_SERVICE_URL: ${{ secrets.AUTHORIZATION_SERVICE_URL }}
           AA_TOKEN: ${{ secrets.AA_TOKEN }}
