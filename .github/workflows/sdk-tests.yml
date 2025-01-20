@@ -17,6 +17,8 @@ jobs:
     timeout-minutes: ${{inputs.timeout}}
     runs-on: ${{inputs.runner}}
     steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
       - uses: ./.github/composites/python-setup
 
       - name: set PY for pre-commit
@@ -33,6 +35,8 @@ jobs:
     timeout-minutes: ${{inputs.timeout}}
     runs-on: ${{inputs.runner}}
     steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
       - uses: ./.github/composites/python-setup
 
       - name: Run doctest
@@ -101,6 +105,8 @@ jobs:
           username: "unused"
           password: ${{ secrets.GL_STUDIO_CONTAINER_TOKEN }}
     steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
       - uses: ./.github/composites/python-setup
 
       - name: Run pytest
@@ -168,6 +174,8 @@ jobs:
           username: "unused"
           password: ${{ secrets.GL_STUDIO_CONTAINER_TOKEN }}
     steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
       - uses: ./.github/composites/python-setup
 
       - name: Run Notebooks
