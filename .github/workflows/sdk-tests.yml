@@ -4,49 +4,23 @@ on:
       runner:
         type: string
         default: "ubuntu-latest"
-    secrets:
-      AA_TOKEN:
-        required: true
-      HUGGING_FACE_TOKEN:
-        required: true
+      timeout:
+        type: number
+        default: 15 # mins
+
+defaults:
+  run:
+    shell: bash
+
 jobs:
   lint:
-    defaults:
-      run:
-        shell: bash
-    timeout-minutes: 15
+    timeout-minutes: ${{inputs.timeout}}
     runs-on: ${{inputs.runner}}
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.10"
-
-      - name: Install and configure Poetry
-        uses: snok/install-poetry@v1
-        with:
-          virtualenvs-create: true
-          virtualenvs-in-project: true
-          installer-parallel: true
-
-      - name: Load cached venv
-        id: cached-poetry-dependencies
-        uses: actions/cache@v4
-        with:
-          path: .venv
-          key: venv-${{ runner.os }}-${{ steps.setup-python.outputs.python-version }}-${{ hashFiles('**/poetry.lock') }}
-
-      - name: Install dependencies
-        if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
-        run: |
-          poetry config installer.max-workers 10
-          poetry install --no-interaction
+      - uses: ./.github/composites/python-setup
 
       - name: set PY for pre-commit
         run: echo "PY=$(python -VV | sha256sum | cut -d' ' -f1)" >> $GITHUB_ENV
-
       - uses: actions/cache@v4
         with:
           path: ~/.cache/pre-commit
@@ -56,37 +30,11 @@ jobs:
         run: |
           ./scripts/lint.sh
   doctest:
-    defaults:
-      run:
-        shell: bash
-    timeout-minutes: 15
+    timeout-minutes: ${{inputs.timeout}}
     runs-on: ${{inputs.runner}}
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.10"
+      - uses: ./.github/composites/python-setup
 
-      - name: Install and configure Poetry
-        uses: snok/install-poetry@v1
-        with:
-          virtualenvs-create: true
-          virtualenvs-in-project: true
-          installer-parallel: true
-
-      - name: Load cached venv
-        id: cached-poetry-dependencies
-        uses: actions/cache@v4
-        with:
-          path: .venv
-          key: venv-${{ runner.os }}-${{ steps.setup-python.outputs.python-version }}-${{ hashFiles('**/poetry.lock') }}
-
-      - name: Install dependencies
-        if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
-        run: |
-          poetry config installer.max-workers 10
-          poetry install --no-interaction
       - name: Run doctest
         env:
           AA_TOKEN: ${{ secrets.AA_TOKEN }}
@@ -95,10 +43,7 @@ jobs:
         run: ./scripts/doctest.sh
 
   test:
-    defaults:
-      run:
-        shell: bash
-    timeout-minutes: 15
+    timeout-minutes: ${{inputs.timeout}}
     runs-on: ${{inputs.runner}}
     services:
       argilla-elastic-search:
@@ -138,15 +83,16 @@ jobs:
           POSTGRES_USER: "il_sdk"
           POSTGRES_PASSWORD: "test"
       studio-backend:
-        image: registry.gitlab.aleph-alpha.de/product/studio/backend:latest
+        image: registry.gitlab.aleph-alpha.de/product/studio/backend:v0.0.65
         ports:
           - "8000:8000"
         env:
-          POSTGRES_HOST: "postgres"
-          POSTGRES_PORT: "5432"
           POSTGRES_DB: "il_sdk"
           POSTGRES_USER: "il_sdk"
           POSTGRES_PASSWORD: "test"
+          POSTGRES_HOST: "postgres"
+          POSTGRES_PORT: "5432"
+
           AUTHORIZATION_SERVICE_URL: ${{ secrets.AUTHORIZATION_SERVICE_URL }}
           AA_TOKEN: ${{ secrets.AA_TOKEN }}
           API_SCHEDULER_URL: ${{ secrets.CLIENT_URL }}
@@ -155,36 +101,20 @@ jobs:
           username: "unused"
           password: ${{ secrets.GL_STUDIO_CONTAINER_TOKEN }}
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.10"
-
-      - name: Install and configure Poetry
-        uses: snok/install-poetry@v1
-        with:
-          virtualenvs-create: true
-          virtualenvs-in-project: true
-          installer-parallel: true
-
-      - name: Load cached venv
-        id: cached-poetry-dependencies
-        uses: actions/cache@v4
-        with:
-          path: .venv
-          key: venv-${{ runner.os }}-${{ steps.setup-python.outputs.python-version }}-${{ hashFiles('**/poetry.lock') }}
-
-      - name: Install dependencies
-        if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
-        run: |
-          poetry config installer.max-workers 10
-          poetry install --no-interaction --without docs
+      - uses: ./.github/composites/python-setup
 
       - name: Run pytest
         env:
+          POSTGRES_DB: "il_sdk"
+          POSTGRES_USER: "il_sdk"
+          POSTGRES_PASSWORD: "test"
+          POSTGRES_HOST: "postgres"
+          POSTGRES_PORT: "5432"
+
+          AUTHORIZATION_SERVICE_URL: ${{ secrets.AUTHORIZATION_SERVICE_URL }}
           AA_TOKEN: ${{ secrets.AA_TOKEN }}
+          DATA_SERVICE_URL: ${{secrets.DATA_SERVICE_URL}}
+
           HUGGING_FACE_TOKEN: ${{ secrets.HUGGING_FACE_TOKEN }}
           ARGILLA_API_URL: "http://localhost:6900/"
           ARGILLA_API_KEY: "argilla.apikey"
@@ -192,18 +122,10 @@ jobs:
           STUDIO_URL: "http://localhost:8000/"
           DOCUMENT_INDEX_URL: ${{secrets.DOCUMENT_INDEX_URL}}
           PHARIA_KERNEL_URL: https://pharia-kernel.product.pharia.com
-          POSTGRES_HOST: "localhost"
-          POSTGRES_PORT: "5433"
-          POSTGRES_DB: "il_sdk"
-          POSTGRES_USER: "il_sdk"
-          POSTGRES_PASSWORD: "test"
         run: |
           ./scripts/test.sh
   run-notebooks:
-    defaults:
-      run:
-        shell: bash
-    timeout-minutes: 15
+    timeout-minutes: ${{inputs.timeout}}
     runs-on: ${{inputs.runner}}
     services:
       argilla-elastic-search:
@@ -228,15 +150,16 @@ jobs:
           POSTGRES_USER: "il_sdk"
           POSTGRES_PASSWORD: "test"
       studio-backend:
-        image: registry.gitlab.aleph-alpha.de/product/studio/backend:latest
+        image: registry.gitlab.aleph-alpha.de/product/studio/backend:v0.0.65
         ports:
           - "8001:8000"
         env:
-          POSTGRES_HOST: "postgres"
-          POSTGRES_PORT: "5432"
           POSTGRES_DB: "il_sdk"
           POSTGRES_USER: "il_sdk"
           POSTGRES_PASSWORD: "test"
+          POSTGRES_HOST: "postgres"
+          POSTGRES_PORT: "5432"
+
           AUTHORIZATION_SERVICE_URL: ${{ secrets.AUTHORIZATION_SERVICE_URL }}
           AA_TOKEN: ${{ secrets.AA_TOKEN }}
           API_SCHEDULER_URL: ${{ secrets.CLIENT_URL }}
@@ -245,30 +168,9 @@ jobs:
           username: "unused"
           password: ${{ secrets.GL_STUDIO_CONTAINER_TOKEN }}
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.10"
-      - name: Install and configure Poetry
-        uses: snok/install-poetry@v1
-        with:
-          virtualenvs-create: true
-          virtualenvs-in-project: true
-          installer-parallel: true
+      - uses: ./.github/composites/python-setup
 
-      - name: Load cached venv
-        id: cached-poetry-dependencies
-        uses: actions/cache@v4
-        with:
-          path: .venv
-          key: venv-${{ runner.os }}-${{ steps.setup-python.outputs.python-version }}-${{ hashFiles('**/poetry.lock') }}
-      - name: Install dependencies
-        if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
-        run: |
-          poetry config installer.max-workers 10
-          poetry install --no-interaction
-      - name: Configure Poetry for notebooks and run
+      - name: Run Notebooks
         env:
           AA_TOKEN: ${{ secrets.AA_TOKEN }}
           HUGGING_FACE_TOKEN: ${{ secrets.HUGGING_FACE_TOKEN }}
