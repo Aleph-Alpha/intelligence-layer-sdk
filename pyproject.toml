@@ -16,7 +16,7 @@ python = ">=3.10,<3.13"
 pydantic = "2.10.*"
 aleph-alpha-client = ">=7.1.0"
 python-dotenv = "*"
-semantic-text-splitter = "^0.20.1"
+semantic-text-splitter = "^0.22.0"
 qdrant-client = {version = "1.13.0", extras = ["fastembed"]}
 rich = "^13.9.4"
 datasets = "^3.2.0"
