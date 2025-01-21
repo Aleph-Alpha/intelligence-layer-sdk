@@ -3,7 +3,17 @@
 ## Unreleased
 ...
 ### Features
-- New Pharia Kernel connector for calling Skills from a Task
+...
+### Fixes
+...
+### Deprecations
+...
+### Breaking Changes
+
+## 9.1.0
+...
+### Features
+- New Pharia Kernel connector (`KernelTask`) for calling Skills from a Task
 - Add `HybridQdrantInMemoryRetriever` enabling hybrid search for in-memory Qdrant collections
 
 ### Fixes
