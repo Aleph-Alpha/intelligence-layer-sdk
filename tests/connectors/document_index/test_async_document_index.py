@@ -257,19 +257,19 @@ async def test_indexes_for_collection_are_returned_async(
 @pytest.mark.internal
 async def test_create_filter_indexes_in_namespace_async(
     async_document_index: AsyncDocumentIndexClient,
-    document_index_namespace: str,
+    async_document_index_namespace: str,
     filter_index_configs: dict[str, dict[str, str]],
 ) -> None:
     async with async_document_index as client:
         for index_name, index_config in filter_index_configs.items():
             await client.create_filter_index_in_namespace(
-                namespace=document_index_namespace,
+                namespace=async_document_index_namespace,
                 filter_index_name=index_name,
                 field_name=index_config["field-name"],
                 field_type=index_config["field-type"],  # type:ignore[arg-type]
             )
 
-        indexes = await client.list_filter_indexes_in_namespace(document_index_namespace)
+        indexes = await client.list_filter_indexes_in_namespace(async_document_index_namespace)
         assert all(filter_index in indexes for filter_index in filter_index_configs)
 
 
@@ -833,10 +833,10 @@ async def test_document_indexes_works_async(
 async def test_retrieve_chunks_async(
     async_document_index: AsyncDocumentIndexClient,
     random_collection: CollectionPath,
-    document_index_namespace: str,
+    async_document_index_namespace: str,
 ) -> None:
     index_name = random_identifier()
-    index_path = IndexPath(namespace=document_index_namespace, index=index_name)
+    index_path = IndexPath(namespace=async_document_index_namespace, index=index_name)
     index_configuration = IndexConfiguration(
         chunk_size=512,
         chunk_overlap=0,
