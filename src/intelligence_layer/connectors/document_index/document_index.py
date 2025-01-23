@@ -7,7 +7,9 @@ from json import dumps
 from typing import Annotated, Any, Literal, Optional, TypeAlias, Union
 from urllib.parse import quote, urljoin
 
+import aiohttp
 import requests
+from aiohttp import ClientSession
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 from pydantic.types import StringConstraints
 from requests import HTTPError
@@ -947,3 +949,519 @@ class DocumentIndexClient:
             raise exception_factory(
                 response.text, HTTPStatus(response.status_code)
             ) from e
+
+
+class AsyncDocumentIndexClient:
+    """Asynchronous client for the Document Index allowing handling documents and search.
+
+    Document Index is a tool for managing collections of documents, enabling operations such as creation, deletion, listing, and searching.
+    Documents can be stored either in the cloud or in a local deployment.
+
+    Attributes:
+        token: A valid token for the document index API.
+        base_document_index_url: The URL of the Document Index API.
+
+    Example:
+        >>> import os
+        >>> import asyncio
+        >>> from intelligence_layer.connectors import (
+        ...     CollectionPath,
+        ...     DocumentContents,
+        ...     AsyncDocumentIndexClient,
+        ...     DocumentPath,
+        ...     SearchQuery,
+        ... )
+
+        >>> async def main():
+        ...     async with AsyncDocumentIndexClient(os.getenv("AA_TOKEN")) as document_index:
+        ...         collection_path = CollectionPath(
+        ...             namespace="aleph-alpha", collection="wikipedia-de"
+        ...         )
+        ...         await document_index.create_collection(collection_path)
+        ...         await document_index.add_document(
+        ...             document_path=DocumentPath(
+        ...                 collection_path=collection_path, document_name="Fun facts about Germany"
+        ...             ),
+        ...             contents=DocumentContents.from_text("Germany is a country located in ..."),
+        ...         )
+        ...         search_result = await document_index.search(
+        ...             collection_path=collection_path,
+        ...             index_name="asymmetric",
+        ...             search_query=SearchQuery(
+        ...                 query="What is the capital of Germany", max_results=4, min_score=0.5
+        ...             ),
+        ...         )
+        ...         print(search_result)
+
+        >>> asyncio.run(main())
+    """
+
+    def __init__(
+        self,
+        token: str | None,
+        base_document_index_url: str = "https://document-index.aleph-alpha.com",
+    ) -> None:
+        self._base_document_index_url = base_document_index_url
+        self.headers = {
+            "Content-Type": "application/json",
+            "Accept": "application/json",
+            **({"Authorization": f"Bearer {token}"} if token is not None else {}),
+        }
+        self.session: Optional[ClientSession] = None
+
+    async def __aenter__(self) -> Self:
+        self.session = aiohttp.ClientSession()
+        return self
+
+    async def __aexit__(self, exc_type, exc_val, exc_tb) -> None:
+        if self.session:
+            await self.session.close()
+
+    async def list_namespaces(self) -> Sequence[str]:
+        """Lists all available namespaces.
+
+        Returns:
+            List of all available namespaces.
+        """
+        url = urljoin(self._base_document_index_url, "namespaces")
+        async with self.session.get(url, headers=self.headers) as response:
+            await self._raise_for_status(response)
+            data = await response.json()
+            return [str(namespace) for namespace in data]
+
+    async def create_collection(self, collection_path: CollectionPath) -> None:
+        """Creates a collection at the path.
+
+        Note:
+            Collection's name must be unique within a namespace.
+
+        Args:
+            collection_path: Path to the collection of interest.
+        """
+        url = urljoin(self._base_document_index_url, "collections")
+        payload = collection_path.dict()
+        async with self.session.post(
+            url, json=payload, headers=self.headers
+        ) as response:
+            await self._raise_for_status(response)
+
+    async def delete_collection(self, collection_path: CollectionPath) -> None:
+        """Deletes the collection at the path.
+
+        Args:
+            collection_path: Path to the collection of interest.
+        """
+        url = urljoin(
+            self._base_document_index_url,
+            f"collections/{collection_path.namespace}/{collection_path.collection}",
+        )
+        async with self.session.delete(url, headers=self.headers) as response:
+            await self._raise_for_status(response)
+
+    async def list_collections(self, namespace: str) -> Sequence[CollectionPath]:
+        """Lists all collections within a namespace.
+
+        Args:
+            namespace: For a collection of documents.
+                Typically corresponds to an organization.
+
+        Returns:
+            List of all `CollectionPath` instances in the given namespace.
+        """
+        url = urljoin(
+            self._base_document_index_url, f"namespaces/{namespace}/collections"
+        )
+        async with self.session.get(url, headers=self.headers) as response:
+            await self._raise_for_status(response)
+            data = await response.json()
+            return [CollectionPath(**collection) for collection in data]
+
+    async def list_indexes(self, namespace: str) -> Sequence[IndexPath]:
+        """Lists all indexes within a namespace.
+
+        Args:
+            namespace: For a collection of documents.
+                Typically corresponds to an organization.
+
+        Returns:
+            List of all `IndexPath` instances in the given namespace.
+        """
+        url = urljoin(self._base_document_index_url, f"namespaces/{namespace}/indexes")
+        async with self.session.get(url, headers=self.headers) as response:
+            await self._raise_for_status(response)
+            data = await response.json()
+            return [IndexPath(**index) for index in data]
+
+    async def create_index(
+        self, index_path: IndexPath, index_configuration: IndexConfiguration
+    ) -> None:
+        """Creates an index in a namespace.
+
+        Args:
+            index_path: Path to the index.
+            index_configuration: Configuration of the index to be created.
+        """
+        url = urljoin(
+            self._base_document_index_url,
+            f"indexes/{index_path.namespace}/{index_path.index}",
+        )
+        payload = index_configuration.dict()
+        async with self.session.post(
+            url, json=payload, headers=self.headers
+        ) as response:
+            await self._raise_for_status(response)
+
+    async def delete_index(self, index_path: IndexPath) -> None:
+        """Delete an index in a namespace.
+
+        Args:
+            index_path: Path to the index.
+        """
+        url = urljoin(
+            self._base_document_index_url,
+            f"indexes/{index_path.namespace}/{index_path.index}",
+        )
+        async with self.session.delete(url, headers=self.headers) as response:
+            await self._raise_for_status(response)
+
+    async def create_filter_index_in_namespace(
+        self,
+        namespace: str,
+        filter_index_name: str,
+        field_name: str,
+        field_type: Literal["string", "integer", "float", "boolean", "datetime"],
+    ) -> None:
+        """Create a filter index in a specified namespace.
+
+        Args:
+            namespace (str): The namespace in which to create the filter index.
+            filter_index_name (str): The name of the filter index to create.
+            field_name (str): The name of the field to index.
+            field_type (Literal["string", "integer", "float", "boolean", "datetime"]): The type of the field to index.
+
+        Returns:
+            None
+        """
+        url = urljoin(
+            self._base_document_index_url, f"namespaces/{namespace}/filter_indexes"
+        )
+        payload = {
+            "name": filter_index_name,
+            "field_name": field_name,
+            "field_type": field_type,
+        }
+        async with self.session.post(
+            url, json=payload, headers=self.headers
+        ) as response:
+            await self._raise_for_status(response)
+
+    async def index_configuration(self, index_path: IndexPath) -> IndexConfiguration:
+        """Retrieve the configuration of an index in a namespace given its name.
+
+        Args:
+            index_path: Path to the index.
+
+        Returns:
+            Configuration of the index.
+        """
+        url = urljoin(
+            self._base_document_index_url,
+            f"indexes/{index_path.namespace}/{index_path.index}/config",
+        )
+        async with self.session.get(url, headers=self.headers) as response:
+            await self._raise_for_status(response)
+            data = await response.json()
+            return IndexConfiguration(**data)
+
+    async def assign_index_to_collection(
+        self, collection_path: CollectionPath, index_name: str
+    ) -> None:
+        """Assign an index to a collection.
+
+        Args:
+            collection_path: Path to the collection of interest.
+            index_name: Name of the index.
+        """
+        url = urljoin(
+            self._base_document_index_url,
+            f"collections/{collection_path.namespace}/{collection_path.collection}/assign_index",
+        )
+        payload = {"index_name": index_name}
+        async with self.session.post(
+            url, json=payload, headers=self.headers
+        ) as response:
+            await self._raise_for_status(response)
+
+    async def assign_filter_index_to_search_index(
+        self, collection_path: CollectionPath, index_name: str, filter_index_name: str
+    ) -> None:
+        """Assign an existing filter index to an assigned search index.
+
+        Args:
+            collection_path: Path to the collection of interest.
+            index_name: Name of the index to assign the filter index to.
+            filter_index_name: Name of the filter index.
+        """
+        url = urljoin(
+            self._base_document_index_url,
+            f"collections/{collection_path.namespace}/{collection_path.collection}/indexes/{index_name}/assign_filter_index",
+        )
+        payload = {"filter_index_name": filter_index_name}
+        async with self.session.post(
+            url, json=payload, headers=self.headers
+        ) as response:
+            await self._raise_for_status(response)
+
+    async def unassign_filter_index_from_search_index(
+        self, collection_path: CollectionPath, index_name: str, filter_index_name: str
+    ) -> None:
+        """Unassign a filter index from an assigned search index.
+
+        Args:
+            collection_path: Path to the collection of interest.
+            index_name: Name of the index to unassign the filter index from.
+            filter_index_name: Name of the filter index.
+        """
+        url = urljoin(
+            self._base_document_index_url,
+            f"collections/{collection_path.namespace}/{collection_path.collection}/indexes/{index_name}/unassign_filter_index",
+        )
+        payload = {"filter_index_name": filter_index_name}
+        async with self.session.post(
+            url, json=payload, headers=self.headers
+        ) as response:
+            await self._raise_for_status(response)
+
+    async def delete_index_from_collection(
+        self, collection_path: CollectionPath, index_name: str
+    ) -> None:
+        """Delete an index from a collection.
+
+        Args:
+            index_name: Name of the index.
+            collection_path: Path to the collection of interest.
+        """
+        url = urljoin(
+            self._base_document_index_url,
+            f"collections/{collection_path.namespace}/{collection_path.collection}/indexes/{index_name}",
+        )
+        async with self.session.delete(url, headers=self.headers) as response:
+            await self._raise_for_status(response)
+
+    async def delete_filter_index_from_namespace(
+        self, namespace: str, filter_index_name: str
+    ) -> None:
+        """Delete a filter index from a namespace.
+
+        Args:
+            namespace: The namespace to delete the filter index from.
+            filter_index_name: The name of the filter index to delete.
+        """
+        url = urljoin(
+            self._base_document_index_url,
+            f"namespaces/{namespace}/filter_indexes/{filter_index_name}",
+        )
+        async with self.session.delete(url, headers=self.headers) as response:
+            await self._raise_for_status(response)
+
+    async def progress(self, collection_path: CollectionPath) -> int:
+        """Get the number of unembedded documents in a collection.
+
+        Args:
+            collection_path: Path to the collection of interest.
+
+        Returns:
+            The number of unembedded documents in a collection.
+        """
+        url = urljoin(
+            self._base_document_index_url,
+            f"collections/{collection_path.namespace}/{collection_path.collection}/progress",
+        )
+        async with self.session.get(url, headers=self.headers) as response:
+            await self._raise_for_status(response)
+            data = await response.json()
+            return data.get("progress", 0)
+
+    async def list_assigned_index_names(
+        self, collection_path: CollectionPath
+    ) -> Sequence[str]:
+        """List all indexes assigned to a collection.
+
+        Args:
+            collection_path: Path to the collection of interest.
+
+        Returns:
+            List of all indexes that are assigned to the collection.
+        """
+        url = urljoin(
+            self._base_document_index_url,
+            f"collections/{collection_path.namespace}/{collection_path.collection}/assigned_indexes",
+        )
+        async with self.session.get(url, headers=self.headers) as response:
+            await self._raise_for_status(response)
+            data = await response.json()
+            return [index["name"] for index in data]
+
+    async def list_assigned_filter_index_names(
+        self, collection_path: CollectionPath, index_name: str
+    ) -> Sequence[str]:
+        """List all filter-indexes assigned to a search index in a collection.
+
+        Args:
+            collection_path: Path to the collection of interest.
+            index_name: Search index to check.
+
+        Returns:
+            List of all filter-indexes that are assigned to the collection.
+        """
+        url = urljoin(
+            self._base_document_index_url,
+            f"collections/{collection_path.namespace}/{collection_path.collection}/indexes/{index_name}/assigned_filter_indexes",
+        )
+        async with self.session.get(url, headers=self.headers) as response:
+            await self._raise_for_status(response)
+            data = await response.json()
+            return [filter_index["name"] for filter_index in data]
+
+    async def list_filter_indexes_in_namespace(self, namespace: str) -> Sequence[str]:
+        """List all filter indexes in a namespace.
+
+        Args:
+            namespace: The namespace to list filter indexes in.
+
+        Returns:
+            List of all filter indexes in the namespace.
+        """
+        url = urljoin(
+            self._base_document_index_url, f"namespaces/{namespace}/filter_indexes"
+        )
+        async with self.session.get(url, headers=self.headers) as response:
+            await self._raise_for_status(response)
+            data = await response.json()
+            return [filter_index["name"] for filter_index in data]
+
+    async def add_document(
+        self,
+        document_path: DocumentPath,
+        contents: DocumentContents,
+    ) -> None:
+        """Add a document to a collection.
+
+        Note:
+            If a document with the same `document_path` exists, it will be updated with the new `contents`.
+
+        Args:
+            document_path: Consists of `collection_path` and name of document to be created.
+            contents: Actual content of the document.
+                Currently only supports text.
+        """
+        url = urljoin(
+            self._base_document_index_url,
+            f"documents/{document_path.collection_path.namespace}/{document_path.collection_path.collection}/{document_path.document_name}",
+        )
+        payload = contents.dict()
+        async with self.session.post(
+            url, json=payload, headers=self.headers
+        ) as response:
+            await self._raise_for_status(response)
+
+    async def delete_document(self, document_path: DocumentPath) -> None:
+        """Delete a document from a collection.
+
+        Args:
+            document_path: Consists of `collection_path` and name of document to be deleted.
+        """
+        url = urljoin(
+            self._base_document_index_url,
+            f"documents/{document_path.collection_path.namespace}/{document_path.collection_path.collection}/{document_path.document_name}",
+        )
+        async with self.session.delete(url, headers=self.headers) as response:
+            await self._raise_for_status(response)
+
+    async def document(self, document_path: DocumentPath) -> DocumentContents:
+        """Retrieve a document from a collection.
+
+        Args:
+            document_path: Consists of `collection_path` and name of document to be retrieved.
+
+        Returns:
+            Content of the retrieved document.
+        """
+        url = urljoin(
+            self._base_document_index_url,
+            f"documents/{document_path.collection_path.namespace}/{document_path.collection_path.collection}/{document_path.document_name}",
+        )
+        async with self.session.get(url, headers=self.headers) as response:
+            await self._raise_for_status(response)
+            data = await response.json()
+            return DocumentContents(**data)
+
+    async def documents(
+        self,
+        collection_path: CollectionPath,
+        filter_query_params: Optional[DocumentFilterQueryParams] = None,
+    ) -> Sequence[DocumentInfo]:
+        """List all documents within a collection.
+
+        Note:
+            Does not return each document's content.
+
+        Args:
+            collection_path: Path to the collection of interest.
+            filter_query_params: Query parameters to filter the results.
+
+        Returns:
+            Overview of all documents within the collection.
+        """
+        url = urljoin(
+            self._base_document_index_url,
+            f"collections/{collection_path.namespace}/{collection_path.collection}/documents",
+        )
+        params = (
+            filter_query_params.dict(exclude_none=True) if filter_query_params else {}
+        )
+        async with self.session.get(
+            url, headers=self.headers, params=params
+        ) as response:
+            await self._raise_for_status(response)
+            data = await response.json()
+            return [DocumentInfo(**doc) for doc in data]
+
+    async def search(
+        self,
+        collection_path: CollectionPath,
+        index_name: str,
+        search_query: SearchQuery,
+    ) -> Sequence[DocumentSearchResult]:
+        """Search through a collection with a `search_query`.
+
+        Args:
+            collection_path: Path to the collection of interest.
+            index_name: Name of the index to search with.
+            search_query: The query to search with.
+
+        Returns:
+            Result of the search operation. Will be empty if nothing was retrieved.
+        """
+        url = urljoin(
+            self._base_document_index_url,
+            f"search/{collection_path.namespace}/{collection_path.collection}/{index_name}",
+        )
+        payload = search_query.dict()
+        async with self.session.post(
+            url, json=payload, headers=self.headers
+        ) as response:
+            await self._raise_for_status(response)
+            data = await response.json()
+            return [DocumentSearchResult(**result) for result in data]
+
+    async def _raise_for_status(self, response: aiohttp.ClientResponse) -> None:
+        if response.status >= 400:
+            try:
+                error_text = await response.text()
+            except Exception:
+                error_text = "No error message provided."
+            exception_factory = _status_code_to_exception.get(
+                HTTPStatus(response.status), InternalError
+            )
+            raise exception_factory(error_text, HTTPStatus(response.status))

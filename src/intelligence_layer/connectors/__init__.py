@@ -47,6 +47,9 @@ from .data.models import (
 from .data.models import (
     DataStageCreate as DataStageCreate,
 )
+from .document_index.document_index import (
+    AsyncDocumentIndexClient as AsyncDocumentIndexClient,
+)
 from .document_index.document_index import CollectionPath as CollectionPath
 from .document_index.document_index import ConstraintViolation as ConstraintViolation
 from .document_index.document_index import DocumentContents as DocumentContents
@@ -75,10 +78,14 @@ from .limited_concurrency_client import (
 from .limited_concurrency_client import (
     LimitedConcurrencyClient as LimitedConcurrencyClient,
 )
+from .retrievers.base_retriever import AsyncBaseRetriever as AsyncBaseRetriever
 from .retrievers.base_retriever import BaseRetriever as BaseRetriever
 from .retrievers.base_retriever import Document as Document
 from .retrievers.base_retriever import DocumentChunk as DocumentChunk
 from .retrievers.base_retriever import SearchResult as SearchResult
+from .retrievers.document_index_retriever import (
+    AsyncDocumentIndexRetriever as AsyncDocumentIndexRetriever,
+)
 from .retrievers.document_index_retriever import (
     DocumentIndexRetriever as DocumentIndexRetriever,
 )
