@@ -1447,13 +1447,39 @@ class AsyncDocumentIndexClient:
             self._base_document_index_url,
             f"search/{collection_path.namespace}/{collection_path.collection}/{index_name}",
         )
-        payload = search_query.dict()
+        payload = search_query.model_dump()
         async with self.session.post(
             url, json=payload, headers=self.headers
         ) as response:
             await self._raise_for_status(response)
             data = await response.json()
             return [DocumentSearchResult(**result) for result in data]
+        
+    async def chunks(
+        self, document_path: DocumentPath, index_name: str
+    ) -> Sequence[DocumentChunk]:
+        """Retrieve all chunks of an indexed document.
+
+        If the document is still indexing, a ResourceNotFound error is raised.
+
+        Args:
+            document_path: Path to the document.
+            index_name: Name of the index to retrieve chunks from.
+
+        Returns:
+            List of all chunks of the indexed document.
+        """
+        url_suffix = f"collections/{document_path.collection_path.namespace}/{document_path.collection_path.collection}/docs/{document_path.encoded_document_name()}/indexes/{index_name}/chunks"
+        url = urljoin(self._base_document_index_url, url_suffix)
+
+        async with self.session.get(url, headers=self.headers) as response:
+            await self._raise_for_status(response)
+            data = await response.json()
+            return [
+                DocumentChunk._from_chunk_response(r)
+                for r in data
+                if len(r["section"]) > 0 and r["section"][0]["modality"] == "text"
+            ]
 
     async def _raise_for_status(self, response: aiohttp.ClientResponse) -> None:
         if response.status >= 400:

@@ -17,7 +17,7 @@ def test_document_index_retriever(
 @pytest.mark.asyncio
 @pytest.mark.internal
 async def test_async_document_index_retriever(
-    retriever: AsyncDocumentIndexRetriever,
+    async_document_index_retriever: AsyncDocumentIndexRetriever,
 ) -> None:
-    documents = await retriever.get_relevant_documents_with_scores("Coca-Cola")
+    documents = await async_document_index_retriever.get_relevant_documents_with_scores("Coca-Cola")
     assert len(documents) > 0

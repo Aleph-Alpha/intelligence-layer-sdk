@@ -91,12 +91,14 @@ verbosity_assertions = 1
 markers = [
     "internal: marks tests as internal (deselect with '-k \"not internal\"')",
     "docker: the test depends on having a docker container running.",
+    "asyncio: marks test relevant to asnycio methods",
 ]
 addopts = "--capture=tee-sys"
 filterwarnings = [ #ignore: message : warning : location ?
     'ignore:.*\`general_plain_validator_function\` is deprecated.*',
     'ignore::DeprecationWarning:.*importlib._bootstrap.*',
 ]
+asyncio_default_fixture_loop_scope = "function"
 
 [tool.ruff]
 target-version = "py310"
