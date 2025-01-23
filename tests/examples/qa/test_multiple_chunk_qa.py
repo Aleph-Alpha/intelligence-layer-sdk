@@ -18,8 +18,8 @@ RELATED_CHUNK_WITHOUT_ANSWER = TextChunk(
     "In addition to his goal-scoring instinct, Nicolas also stood out for his strong character on the pitch, and these two qualities combined eventually drew the "
     "attention of Mr. Fort, the then president of the Gallia Club, who signed him as a centre-forward in 1916. "
 )
-RELATED_QUESTION = "What is the name of Paul Nicolas' brother?"
-IMPORTANT_PART_OF_CORRECT_ANSWER = "Henri"
+RELATED_QUESTION = "At what age did Paul Nicolas lose his mother?"
+IMPORTANT_PART_OF_CORRECT_ANSWER = "3"
 UNRELATED_QUESTION = "What is the the capital of Germany?"
 
 
@@ -47,7 +47,7 @@ def test_multiple_chunk_qa_with_mulitple_chunks(
     )
 
 
-def test_multiple_chunk_qa_with_mulitple_chunks_explainability_disabled(
+def test_multiple_chunk_qa_with_multiple_chunks_explainability_disabled(
     multiple_chunk_qa: MultipleChunkQa,
 ) -> None:
     chunks: Sequence[TextChunk] = [
@@ -79,7 +79,7 @@ def test_multiple_chunk_qa_without_answer(multiple_chunk_qa: MultipleChunkQa) ->
 def test_multiple_chunk_qa_with_spanish_question(
     multiple_chunk_qa: MultipleChunkQa,
 ) -> None:
-    question = "¿Cómo se llama el hermano de Paul Nicola?"
+    question = "¿A qué edad perdió Paul Nicolas a su madre?"
     chunks = [CHUNK_CONTAINING_ANSWER, CHUNK_CONTAINING_ANSWER]
 
     input = MultipleChunkQaInput(
@@ -89,4 +89,4 @@ def test_multiple_chunk_qa_with_spanish_question(
 
     assert len(output.subanswers) == len(chunks)
     assert output.answer
-    assert "hermano" in output.answer
+    assert "3" in output.answer
