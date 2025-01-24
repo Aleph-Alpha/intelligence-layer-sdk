@@ -2,10 +2,11 @@ from collections.abc import Iterable, Sequence
 from typing import Any
 from uuid import UUID
 
+from pydantic import BaseModel
 from pytest import fixture
 
 from intelligence_layer.connectors import StudioClient
-from intelligence_layer.connectors.studio.studio import StudioDataset
+from intelligence_layer.connectors.studio.studio import StudioDataset, StudioExample
 from intelligence_layer.evaluation.dataset.domain import Example
 from intelligence_layer.evaluation.dataset.in_memory_dataset_repository import (
     InMemoryDatasetRepository,
@@ -13,6 +14,27 @@ from intelligence_layer.evaluation.dataset.in_memory_dataset_repository import (
 from intelligence_layer.evaluation.dataset.studio_dataset_repository import (
     StudioDatasetRepository,
 )
+
+
+class PydanticType(BaseModel):
+    data: int
+
+
+@fixture
+def examples() -> Sequence[StudioExample[PydanticType, PydanticType]]:
+    return [
+        StudioExample(input=PydanticType(data=i), expected_output=PydanticType(data=i))
+        for i in range(2)
+    ]
+
+
+@fixture
+def many_examples() -> Sequence[StudioExample[PydanticType, PydanticType]]:
+    examples = [
+        StudioExample(input=PydanticType(data=i), expected_output=PydanticType(data=i))
+        for i in range(201)
+    ]
+    return examples
 
 
 @fixture
@@ -37,7 +59,7 @@ def with_uploaded_dataset(
 
 def test_can_upload_dataset_with_minimal_request_body(
     studio_client: StudioClient,
-    examples: Sequence[Example[str, str]],
+    examples: Sequence[Example],
 ) -> None:
     dataset_repo = InMemoryDatasetRepository()
     dataset = dataset_repo.create_dataset(examples, "my_dataset")
@@ -54,7 +76,7 @@ def test_can_upload_dataset_with_minimal_request_body(
 
 def test_can_upload_dataset_with_complete_request_body(
     studio_client: StudioClient,
-    examples: Sequence[Example[str, str]],
+    examples: Sequence[Example[PydanticType, PydanticType]],
     labels: set[str],
     metadata: dict[str, Any],
 ) -> None:
@@ -74,12 +96,14 @@ def test_can_upload_dataset_with_complete_request_body(
 
 def test_get_many_dataset_examples(
     studio_client: StudioClient,
-    many_examples: Iterable[Example[str, str]],
+    many_examples: Iterable[Example[PydanticType, PydanticType]],
     with_uploaded_dataset: StudioDataset,
 ) -> None:
     received_examples = StudioDatasetRepository.map_to_many_example(
         studio_client.get_dataset_examples(
-            with_uploaded_dataset.id, input_type=str, expected_output_type=str
+            with_uploaded_dataset.id,
+            input_type=PydanticType,
+            expected_output_type=PydanticType,
         )
     )
 
