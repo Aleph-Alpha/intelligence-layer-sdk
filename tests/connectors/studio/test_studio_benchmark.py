@@ -32,44 +32,66 @@ from intelligence_layer.evaluation.evaluation.evaluator.evaluator import (
 from tests.connectors.studio.test_studio import TracerTestTask
 
 
-class DummyExample(Example[str, str]):
-    data: str
+class DummyInput(BaseModel):
+    input_data: dict[str, int]
+
+
+class DummyExpectedOutput(BaseModel):
+    expected_output: dict[str, int]
+
+
+class DummyOutput(BaseModel):
+    output: dict[str, DummyInput]
+
+
+class DummyExample(Example[DummyInput, DummyExpectedOutput]):
+    pass
 
 
 class DummyEvaluation(BaseModel):
-    result: str
+    input: DummyInput
+    expected: DummyExpectedOutput
+    output: DummyOutput
+
+
+class DummyAggregation(BaseModel):
+    num_evaluations: int
+    descriptors: str
 
 
 class DummyAggregatedEvaluation(BaseModel):
-    score: float
+    score: dict[str, float]
 
 
 class DummyEvaluationLogic(
     SingleOutputEvaluationLogic[
-        str,
-        str,
-        None,
+        DummyInput,
+        DummyOutput,
+        DummyExpectedOutput,
         DummyEvaluation,
     ]
 ):
     def do_evaluate_single_output(
         self,
-        example: Example[str, None],
-        output: str,
+        example: Example[DummyInput, DummyExpectedOutput],
+        output: DummyOutput,
     ) -> DummyEvaluation:
-        return DummyEvaluation(result="success")
-
-
-class DummyAggregation(BaseModel):
-    num_evaluations: int
+        return DummyEvaluation(
+            input=example.input, expected=example.expected_output, output=output
+        )
 
 
 class DummyAggregationLogic(AggregationLogic[DummyEvaluation, DummyAggregation]):
     def aggregate(self, evaluations: Iterable[DummyEvaluation]) -> DummyAggregation:
-        return DummyAggregation(num_evaluations=len(list(evaluations)))
+        return DummyAggregation(
+            num_evaluations=len(list(evaluations)),
+            descriptors="".join(str(eval.output) for eval in evaluations),
+        )
 
 
-class DummyBenchmarkLineage(BenchmarkLineage[str, str, str, DummyEvaluation]):
+class DummyBenchmarkLineage(
+    BenchmarkLineage[DummyInput, DummyExpectedOutput, DummyOutput, DummyEvaluation]
+):
     pass
 
 
@@ -105,7 +127,9 @@ def post_benchmark_execution() -> PostBenchmarkExecution:
         eval_failed_count=1,
         aggregation_start=datetime.now(),
         aggregation_end=datetime.now(),
-        statistics=DummyAggregatedEvaluation(score=1.0).model_dump_json(),
+        statistics=DummyAggregation(
+            num_evaluations=1, descriptors="empty"
+        ).model_dump_json(),
     )
 
 
@@ -169,12 +193,13 @@ def with_uploaded_benchmark_execution(
 def dummy_lineage(
     trace_id: str, input: str = "input", output: str = "output"
 ) -> DummyBenchmarkLineage:
+    created_input = DummyInput(input_data={input: 1})
     return DummyBenchmarkLineage(
         trace_id=trace_id,
-        input=input,
-        expected_output="output",
+        input=created_input,
+        expected_output=DummyExpectedOutput(expected_output={"expected": 2}),
         example_metadata={"key3": "value3"},
-        output=output,
+        output=DummyOutput(output={output: created_input}),
         evaluation={"key5": "value5"},
         run_latency=1,
         run_tokens=3,
@@ -216,7 +241,6 @@ def test_get_benchmark(
     studio_dataset: str,
     with_uploaded_benchmark: str,
 ) -> None:
-    dummy_evaluation_logic = """return DummyEvaluation(result="success")"""
     benchmark_name = "benchmark_name"
 
     benchmark_id = with_uploaded_benchmark
@@ -224,7 +248,7 @@ def test_get_benchmark(
     benchmark = studio_client.get_benchmark(benchmark_id)
     assert benchmark
     assert benchmark.dataset_id == studio_dataset
-    assert dummy_evaluation_logic in benchmark.evaluation_logic.logic
+    assert "DummyEvaluation" in benchmark.evaluation_logic.logic
     assert benchmark.project_id == studio_client.project_id
     assert benchmark.name == benchmark_name
 
@@ -315,4 +339,4 @@ def test_submit_lineage_skips_lineages_exceeding_request_size(
     )
     assert len(lineage_ids.root) == 1
     assert fetched_lineage
-    assert fetched_lineage.input == lineages[0].input
+    assert fetched_lineage.input == lineages[0].input.model_dump()

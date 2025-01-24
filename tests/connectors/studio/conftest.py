@@ -1,11 +1,10 @@
-from collections.abc import Sequence
 from unittest.mock import Mock
 from uuid import uuid4
 
 from dotenv import load_dotenv
 from pytest import fixture
 
-from intelligence_layer.connectors.studio.studio import StudioClient, StudioExample
+from intelligence_layer.connectors.studio.studio import StudioClient
 
 
 @fixture
@@ -20,21 +19,3 @@ def studio_client() -> StudioClient:
 @fixture
 def mock_studio_client() -> Mock:
     return Mock(spec=StudioClient)
-
-
-@fixture
-def examples() -> Sequence[StudioExample[str, str]]:
-    return [
-        StudioExample(input="input_str", expected_output="output_str"),
-        StudioExample(input="input_str2", expected_output="output_str2"),
-    ]
-
-
-@fixture
-def many_examples() -> Sequence[StudioExample[str, str]]:
-    examples = []
-    for i in range(201):
-        examples.append(
-            StudioExample(input=f"input_str_{i}", expected_output=f"output_str_{i}")
-        )
-    return examples
