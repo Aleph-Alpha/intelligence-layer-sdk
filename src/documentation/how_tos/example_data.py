@@ -21,6 +21,7 @@ from intelligence_layer.evaluation import (
     Runner,
     RunOverview,
     RunRepository,
+    SingleOutputEvaluationLogic,
     SuccessfulExampleOutput,
 )
 
@@ -32,6 +33,44 @@ class DummyExample(Example[str, str]):
 class DummyTask(Task[str, str]):
     def do_run(self, input: str, task_span: TaskSpan) -> str:
         return f"{input} -> output"
+
+
+class DummyEvaluation(BaseModel):
+    eval: str
+
+
+class ComplexDummyInput(BaseModel):
+    input_data: dict[str, int]
+
+
+class ComplexDummyExpectedOutput(BaseModel):
+    expected_output: dict[str, int]
+
+
+class ComplexDummyOutput(BaseModel):
+    output: str
+    input: ComplexDummyInput
+
+
+class ComplexDummyExample(Example[ComplexDummyInput, ComplexDummyExpectedOutput]):
+    pass
+
+
+class ComplexDummyTask(Task[ComplexDummyInput, ComplexDummyOutput]):
+    def do_run(
+        self, input: ComplexDummyInput, task_span: TaskSpan
+    ) -> ComplexDummyOutput:
+        return ComplexDummyOutput(output="output", input=input)
+
+
+class ComplexDummyEvaluation(BaseModel):
+    input: ComplexDummyInput
+    expected: ComplexDummyExpectedOutput
+    output: ComplexDummyOutput
+
+
+class ComplexDummyAggregation(BaseModel):
+    evals: list[ComplexDummyEvaluation]
 
 
 EXAMPLE_1_INPUT = "input1"
@@ -49,10 +88,6 @@ class DummyTaskCanFail(Task[str, str]):
         return f"{input} -> output"
 
 
-class DummyEvaluation(BaseModel):
-    eval: str
-
-
 class DummyEvaluationLogic(EvaluationLogic[str, str, str, DummyEvaluation]):
     def do_evaluate(
         self, example: Example[str, str], *output: SuccessfulExampleOutput[str]
@@ -60,6 +95,29 @@ class DummyEvaluationLogic(EvaluationLogic[str, str, str, DummyEvaluation]):
         output_str = "(" + (", ".join(o.output for o in output)) + ")"
         return DummyEvaluation(
             eval=f"{example.input}, {example.expected_output}, {output_str} -> evaluation"
+        )
+
+
+class ComplexDummyEvaluationLogic(
+    SingleOutputEvaluationLogic[
+        ComplexDummyInput,
+        ComplexDummyOutput,
+        ComplexDummyExpectedOutput,
+        ComplexDummyEvaluation,
+    ]
+):
+    def do_evaluate_single_output(
+        self,
+        example: Example[ComplexDummyInput, ComplexDummyExpectedOutput],
+        output: ComplexDummyOutput,
+    ) -> ComplexDummyEvaluation:
+        print(
+            example.input.input_data,
+            example.expected_output.expected_output,
+            output.output,
+        )
+        return ComplexDummyEvaluation(
+            input=example.input, expected=example.expected_output, output=output
         )
 
 
@@ -100,8 +158,18 @@ class DummyAggregationLogic(AggregationLogic[DummyEvaluation, DummyAggregation])
         return DummyAggregation(num_evaluations=len(list(evaluations)))
 
 
+class ComplexDummyAggregationLogic(
+    AggregationLogic[ComplexDummyEvaluation, ComplexDummyAggregation]
+):
+    def aggregate(
+        self, evaluations: Iterable[ComplexDummyEvaluation]
+    ) -> ComplexDummyAggregation:
+        return ComplexDummyAggregation(evals=list(evaluations))
+
+
 class ExampleData:
     examples: Sequence[DummyExample]
+    complex_examples: Sequence[ComplexDummyExample]
     dataset_repository: InMemoryDatasetRepository
     run_repository: InMemoryRunRepository
     evaluation_repository: InMemoryEvaluationRepository
@@ -120,6 +188,26 @@ def example_data() -> ExampleData:
         DummyExample(input="input0", expected_output="expected_output0", data="data0"),
         DummyExample(
             input=EXAMPLE_1_INPUT, expected_output="expected_output1", data="data1"
+        ),
+    ]
+    complex_examples = [
+        ComplexDummyExample(
+            input=ComplexDummyInput(input_data={"a": 1, "b": 2}),
+            expected_output=ComplexDummyExpectedOutput(
+                expected_output={"c": 3, "d": 4}
+            ),
+        ),
+        ComplexDummyExample(
+            input=ComplexDummyInput(input_data={"x": 10, "y": 20}),
+            expected_output=ComplexDummyExpectedOutput(
+                expected_output={"p": 30, "q": 40}
+            ),
+        ),
+        ComplexDummyExample(
+            input=ComplexDummyInput(input_data={"foo": 100, "bar": 200}),
+            expected_output=ComplexDummyExpectedOutput(
+                expected_output={"baz": 300, "qux": 400}
+            ),
         ),
     ]
 
@@ -150,6 +238,7 @@ def example_data() -> ExampleData:
 
     example_data = ExampleData()
     example_data.examples = examples
+    example_data.complex_examples = complex_examples
     example_data.dataset_repository = dataset_repository
     example_data.run_repository = run_repository
     example_data.evaluation_repository = evaluation_repository
