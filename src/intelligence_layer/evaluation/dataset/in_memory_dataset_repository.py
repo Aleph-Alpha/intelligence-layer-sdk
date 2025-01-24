@@ -38,9 +38,14 @@ class InMemoryDatasetRepository(DatasetRepository):
         if id is not None:
             dataset.id = id
         if dataset.id in self._datasets_and_examples:
-            raise ValueError(
-                f"Created random dataset ID already exists for dataset {dataset}. This should not happen."
-            )
+            if id:
+                raise ValueError(
+                    f"Cannot create dataset with given ID '{dataset.id}', already exists."
+                )
+            else:
+                raise ValueError(
+                    f"Newly assigned random dataset ID {dataset.id} already exists. This should not happen."
+                )
 
         examples_casted = cast(
             Sequence[Example[PydanticSerializable, PydanticSerializable]],
