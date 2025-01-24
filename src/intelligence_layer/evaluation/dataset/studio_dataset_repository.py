@@ -161,7 +161,10 @@ class StudioDatasetRepository(DatasetRepository):
             )
 
         return self._in_memory_dataset_repository.examples(
-            dataset_id, input_type, expected_output_type
+            dataset_id,
+            input_type,
+            expected_output_type,
+            examples_to_skip=examples_to_skip,
         )
 
     @staticmethod
