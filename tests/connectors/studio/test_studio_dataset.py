@@ -99,12 +99,10 @@ def test_get_many_dataset_examples(
     many_examples: Iterable[Example[PydanticType, PydanticType]],
     with_uploaded_dataset: StudioDataset,
 ) -> None:
-    received_examples = StudioDatasetRepository.map_to_many_example(
-        studio_client.get_dataset_examples(
-            with_uploaded_dataset.id,
-            input_type=PydanticType,
-            expected_output_type=PydanticType,
-        )
+    received_examples = studio_client.get_dataset_examples(
+        with_uploaded_dataset.id,
+        input_type=PydanticType,
+        expected_output_type=PydanticType,
     )
 
     for received_example, given_example in zip(

@@ -171,7 +171,13 @@ class StudioDatasetRepository(DatasetRepository):
     def map_to_studio_example(
         example_to_map: Example[Input, ExpectedOutput],
     ) -> StudioExample[Input, ExpectedOutput]:
-        return StudioExample(**example_to_map.model_dump())
+        # (**.model_dump) get rids of typing information, so we manually assign
+        return StudioExample(
+            input=example_to_map.input,
+            expected_output=example_to_map.expected_output,
+            id=example_to_map.id,
+            metadata=example_to_map.metadata,
+        )
 
     @staticmethod
     def map_to_many_studio_example(
@@ -190,6 +196,7 @@ class StudioDatasetRepository(DatasetRepository):
     def map_to_example(
         example_to_map: StudioExample[Input, ExpectedOutput],
     ) -> Example[Input, ExpectedOutput]:
+        # (**.model_dump) get rids of typing information, so we manually assign
         return Example[Input, ExpectedOutput](
             input=example_to_map.input,
             expected_output=example_to_map.expected_output,
