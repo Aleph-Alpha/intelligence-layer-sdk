@@ -1038,10 +1038,12 @@ class AsyncDocumentIndexClient:
         Args:
             collection_path: Path to the collection of interest.
         """
-        url = urljoin(self._base_document_index_url, "collections")
-        payload = collection_path.dict()
-        async with self.session.post(
-            url, json=payload, headers=self.headers
+        url_suffix = (
+            f"/collections/{collection_path.namespace}/{collection_path.collection}"
+        )
+        url = urljoin(self._base_document_index_url, url_suffix)
+        async with self.session.put(
+            url, headers=self.headers
         ) as response:
             await self._raise_for_status(response)
 
@@ -1051,10 +1053,10 @@ class AsyncDocumentIndexClient:
         Args:
             collection_path: Path to the collection of interest.
         """
-        url = urljoin(
-            self._base_document_index_url,
-            f"collections/{collection_path.namespace}/{collection_path.collection}",
+        url_suffix = (
+            f"collections/{collection_path.namespace}/{collection_path.collection}"
         )
+        url = urljoin(self._base_document_index_url, url_suffix)
         async with self.session.delete(url, headers=self.headers) as response:
             await self._raise_for_status(response)
 
@@ -1068,13 +1070,15 @@ class AsyncDocumentIndexClient:
         Returns:
             List of all `CollectionPath` instances in the given namespace.
         """
-        url = urljoin(
-            self._base_document_index_url, f"namespaces/{namespace}/collections"
-        )
+        url_suffix = f"collections/{namespace}"
+        url = urljoin(self._base_document_index_url, url_suffix)
         async with self.session.get(url, headers=self.headers) as response:
             await self._raise_for_status(response)
             data = await response.json()
-            return [CollectionPath(**collection) for collection in data]
+            return [
+                CollectionPath(namespace=namespace, collection=collection)
+                for collection in data
+            ]
 
     async def list_indexes(self, namespace: str) -> Sequence[IndexPath]:
         """Lists all indexes within a namespace.
@@ -1086,11 +1090,14 @@ class AsyncDocumentIndexClient:
         Returns:
             List of all `IndexPath` instances in the given namespace.
         """
-        url = urljoin(self._base_document_index_url, f"namespaces/{namespace}/indexes")
+        url_suffix = f"indexes/{namespace}"
+        url = urljoin(self._base_document_index_url, url_suffix)
         async with self.session.get(url, headers=self.headers) as response:
             await self._raise_for_status(response)
             data = await response.json()
-            return [IndexPath(**index) for index in data]
+            return [
+                IndexPath(namespace=namespace, index=index) for index in data
+            ]
 
     async def create_index(
         self, index_path: IndexPath, index_configuration: IndexConfiguration
@@ -1101,13 +1108,18 @@ class AsyncDocumentIndexClient:
             index_path: Path to the index.
             index_configuration: Configuration of the index to be created.
         """
-        url = urljoin(
-            self._base_document_index_url,
-            f"indexes/{index_path.namespace}/{index_path.index}",
-        )
-        payload = index_configuration.dict()
-        async with self.session.post(
-            url, json=payload, headers=self.headers
+        url_suffix = f"indexes/{index_path.namespace}/{index_path.index}"
+        url = urljoin(self._base_document_index_url, url_suffix)
+
+        data = {
+            "chunk_size": index_configuration.chunk_size,
+            "chunk_overlap": index_configuration.chunk_overlap,
+            "hybrid_index": index_configuration.hybrid_index,
+            "embedding": index_configuration.embedding.model_dump(),
+        }
+
+        async with self.session.put(
+            url, data=dumps(data), headers=self.headers
         ) as response:
             await self._raise_for_status(response)
 
@@ -1117,10 +1129,8 @@ class AsyncDocumentIndexClient:
         Args:
             index_path: Path to the index.
         """
-        url = urljoin(
-            self._base_document_index_url,
-            f"indexes/{index_path.namespace}/{index_path.index}",
-        )
+        url_suffix = f"indexes/{index_path.namespace}/{index_path.index}"
+        url = urljoin(self._base_document_index_url, url_suffix)
         async with self.session.delete(url, headers=self.headers) as response:
             await self._raise_for_status(response)
 
@@ -1142,17 +1152,16 @@ class AsyncDocumentIndexClient:
         Returns:
             None
         """
-        url = urljoin(
-            self._base_document_index_url, f"namespaces/{namespace}/filter_indexes"
-        )
-        payload = {
-            "name": filter_index_name,
-            "field_name": field_name,
-            "field_type": field_type,
-        }
-        async with self.session.post(
-            url, json=payload, headers=self.headers
-        ) as response:
+        if not re.match(r"^[a-zA-Z0-9\-.]+$", filter_index_name):
+            raise ValueError(
+                "Filter index name can only contain alphanumeric characters (a-z, A-Z, -, . and 0-9)."
+            )
+        if len(filter_index_name) > 50:
+            raise ValueError("Filter index name cannot be longer than 50 characters.")
+
+        url = f"{self._base_document_index_url}/filter_indexes/{namespace}/{filter_index_name}"
+        data = {"field_name": field_name, "field_type": field_type}
+        async with self.session.put(url, data=dumps(data), headers=self.headers) as response:
             await self._raise_for_status(response)
 
     async def index_configuration(self, index_path: IndexPath) -> IndexConfiguration:
@@ -1164,14 +1173,17 @@ class AsyncDocumentIndexClient:
         Returns:
             Configuration of the index.
         """
-        url = urljoin(
-            self._base_document_index_url,
-            f"indexes/{index_path.namespace}/{index_path.index}/config",
-        )
+        url_suffix = f"indexes/{index_path.namespace}/{index_path.index}"
+        url = urljoin(self._base_document_index_url, url_suffix)
         async with self.session.get(url, headers=self.headers) as response:
             await self._raise_for_status(response)
-            data = await response.json()
-            return IndexConfiguration(**data)
+            response_json: Mapping[str, Any] = await response.json()
+            return IndexConfiguration(
+                chunk_overlap=response_json["chunk_overlap"],
+                chunk_size=response_json["chunk_size"],
+                hybrid_index=response_json.get("hybrid_index"),
+                embedding=response_json["embedding"],
+            )
 
     async def assign_index_to_collection(
         self, collection_path: CollectionPath, index_name: str
@@ -1182,13 +1194,10 @@ class AsyncDocumentIndexClient:
             collection_path: Path to the collection of interest.
             index_name: Name of the index.
         """
-        url = urljoin(
-            self._base_document_index_url,
-            f"collections/{collection_path.namespace}/{collection_path.collection}/assign_index",
-        )
-        payload = {"index_name": index_name}
-        async with self.session.post(
-            url, json=payload, headers=self.headers
+        url_suffix = f"collections/{collection_path.namespace}/{collection_path.collection}/indexes/{index_name}"
+        url = urljoin(self._base_document_index_url, url_suffix)
+        async with self.session.put(
+            url, headers=self.headers
         ) as response:
             await self._raise_for_status(response)
 
@@ -1202,13 +1211,9 @@ class AsyncDocumentIndexClient:
             index_name: Name of the index to assign the filter index to.
             filter_index_name: Name of the filter index.
         """
-        url = urljoin(
-            self._base_document_index_url,
-            f"collections/{collection_path.namespace}/{collection_path.collection}/indexes/{index_name}/assign_filter_index",
-        )
-        payload = {"filter_index_name": filter_index_name}
-        async with self.session.post(
-            url, json=payload, headers=self.headers
+        url = f"{self._base_document_index_url}/collections/{collection_path.namespace}/{collection_path.collection}/indexes/{index_name}/filter_indexes/{filter_index_name}"
+        async with self.session.put(
+            url, headers=self.headers
         ) as response:
             await self._raise_for_status(response)
 
@@ -1222,13 +1227,9 @@ class AsyncDocumentIndexClient:
             index_name: Name of the index to unassign the filter index from.
             filter_index_name: Name of the filter index.
         """
-        url = urljoin(
-            self._base_document_index_url,
-            f"collections/{collection_path.namespace}/{collection_path.collection}/indexes/{index_name}/unassign_filter_index",
-        )
-        payload = {"filter_index_name": filter_index_name}
-        async with self.session.post(
-            url, json=payload, headers=self.headers
+        url = f"{self._base_document_index_url}/collections/{collection_path.namespace}/{collection_path.collection}/indexes/{index_name}/filter_indexes/{filter_index_name}"
+        async with self.session.delete(
+            url, headers=self.headers
         ) as response:
             await self._raise_for_status(response)
 
@@ -1241,10 +1242,8 @@ class AsyncDocumentIndexClient:
             index_name: Name of the index.
             collection_path: Path to the collection of interest.
         """
-        url = urljoin(
-            self._base_document_index_url,
-            f"collections/{collection_path.namespace}/{collection_path.collection}/indexes/{index_name}",
-        )
+        url_suffix = f"collections/{collection_path.namespace}/{collection_path.collection}/indexes/{index_name}"
+        url = urljoin(self._base_document_index_url, url_suffix)
         async with self.session.delete(url, headers=self.headers) as response:
             await self._raise_for_status(response)
 
@@ -1257,10 +1256,7 @@ class AsyncDocumentIndexClient:
             namespace: The namespace to delete the filter index from.
             filter_index_name: The name of the filter index to delete.
         """
-        url = urljoin(
-            self._base_document_index_url,
-            f"namespaces/{namespace}/filter_indexes/{filter_index_name}",
-        )
+        url = f"{self._base_document_index_url}/filter_indexes/{namespace}/{filter_index_name}"
         async with self.session.delete(url, headers=self.headers) as response:
             await self._raise_for_status(response)
 
@@ -1273,14 +1269,11 @@ class AsyncDocumentIndexClient:
         Returns:
             The number of unembedded documents in a collection.
         """
-        url = urljoin(
-            self._base_document_index_url,
-            f"collections/{collection_path.namespace}/{collection_path.collection}/progress",
-        )
+        url = f"{self._base_document_index_url}/collections/{collection_path.namespace}/{collection_path.collection}/progress"
         async with self.session.get(url, headers=self.headers) as response:
             await self._raise_for_status(response)
-            data = await response.json()
-            return data.get("progress", 0)
+            data = await response.text()
+            return int(data)
 
     async def list_assigned_index_names(
         self, collection_path: CollectionPath
@@ -1293,14 +1286,12 @@ class AsyncDocumentIndexClient:
         Returns:
             List of all indexes that are assigned to the collection.
         """
-        url = urljoin(
-            self._base_document_index_url,
-            f"collections/{collection_path.namespace}/{collection_path.collection}/assigned_indexes",
-        )
+        url_suffix = f"collections/{collection_path.namespace}/{collection_path.collection}/indexes"
+        url = urljoin(self._base_document_index_url, url_suffix)
         async with self.session.get(url, headers=self.headers) as response:
             await self._raise_for_status(response)
             data = await response.json()
-            return [index["name"] for index in data]
+            return [str(index_name) for index_name in data]
 
     async def list_assigned_filter_index_names(
         self, collection_path: CollectionPath, index_name: str
@@ -1314,14 +1305,11 @@ class AsyncDocumentIndexClient:
         Returns:
             List of all filter-indexes that are assigned to the collection.
         """
-        url = urljoin(
-            self._base_document_index_url,
-            f"collections/{collection_path.namespace}/{collection_path.collection}/indexes/{index_name}/assigned_filter_indexes",
-        )
+        url = f"{self._base_document_index_url}/collections/{collection_path.namespace}/{collection_path.collection}/indexes/{index_name}/filter_indexes"
         async with self.session.get(url, headers=self.headers) as response:
             await self._raise_for_status(response)
             data = await response.json()
-            return [filter_index["name"] for filter_index in data]
+            return [str(filter_index_name) for filter_index_name in data]
 
     async def list_filter_indexes_in_namespace(self, namespace: str) -> Sequence[str]:
         """List all filter indexes in a namespace.
@@ -1332,13 +1320,11 @@ class AsyncDocumentIndexClient:
         Returns:
             List of all filter indexes in the namespace.
         """
-        url = urljoin(
-            self._base_document_index_url, f"namespaces/{namespace}/filter_indexes"
-        )
+        url = f"{self._base_document_index_url}/filter_indexes/{namespace}"
         async with self.session.get(url, headers=self.headers) as response:
             await self._raise_for_status(response)
             data = await response.json()
-            return [filter_index["name"] for filter_index in data]
+            return [str(filter_index_name) for filter_index_name in data]
 
     async def add_document(
         self,
@@ -1355,13 +1341,10 @@ class AsyncDocumentIndexClient:
             contents: Actual content of the document.
                 Currently only supports text.
         """
-        url = urljoin(
-            self._base_document_index_url,
-            f"documents/{document_path.collection_path.namespace}/{document_path.collection_path.collection}/{document_path.document_name}",
-        )
-        payload = contents.dict()
-        async with self.session.post(
-            url, json=payload, headers=self.headers
+        url_suffix = f"collections/{document_path.collection_path.namespace}/{document_path.collection_path.collection}/docs/{document_path.encoded_document_name()}"
+        url = urljoin(self._base_document_index_url, url_suffix)
+        async with self.session.put(
+            url, data=dumps(contents._to_modalities_json()), headers=self.headers
         ) as response:
             await self._raise_for_status(response)
 
@@ -1371,10 +1354,8 @@ class AsyncDocumentIndexClient:
         Args:
             document_path: Consists of `collection_path` and name of document to be deleted.
         """
-        url = urljoin(
-            self._base_document_index_url,
-            f"documents/{document_path.collection_path.namespace}/{document_path.collection_path.collection}/{document_path.document_name}",
-        )
+        url_suffix = f"/collections/{document_path.collection_path.namespace}/{document_path.collection_path.collection}/docs/{document_path.encoded_document_name()}"
+        url = urljoin(self._base_document_index_url, url_suffix)
         async with self.session.delete(url, headers=self.headers) as response:
             await self._raise_for_status(response)
 
@@ -1387,14 +1368,13 @@ class AsyncDocumentIndexClient:
         Returns:
             Content of the retrieved document.
         """
-        url = urljoin(
-            self._base_document_index_url,
-            f"documents/{document_path.collection_path.namespace}/{document_path.collection_path.collection}/{document_path.document_name}",
-        )
+        url_suffix = f"collections/{document_path.collection_path.namespace}/{document_path.collection_path.collection}/docs/{document_path.encoded_document_name()}"
+        url = urljoin(self._base_document_index_url, url_suffix)
+
         async with self.session.get(url, headers=self.headers) as response:
             await self._raise_for_status(response)
             data = await response.json()
-            return DocumentContents(**data)
+            return DocumentContents._from_modalities_json(data)
 
     async def documents(
         self,
@@ -1413,19 +1393,26 @@ class AsyncDocumentIndexClient:
         Returns:
             Overview of all documents within the collection.
         """
-        url = urljoin(
-            self._base_document_index_url,
-            f"collections/{collection_path.namespace}/{collection_path.collection}/documents",
+        if filter_query_params is None:
+            filter_query_params = DocumentFilterQueryParams(
+                max_documents=None, starts_with=None
+            )
+
+        url_suffix = (
+            f"collections/{collection_path.namespace}/{collection_path.collection}/docs"
         )
-        params = (
-            filter_query_params.dict(exclude_none=True) if filter_query_params else {}
-        )
-        async with self.session.get(
-            url, headers=self.headers, params=params
-        ) as response:
+        url = urljoin(self._base_document_index_url, url_suffix)
+
+        query_params = {}
+        if filter_query_params.max_documents:
+            query_params["max_documents"] = str(filter_query_params.max_documents)
+        if filter_query_params.starts_with:
+            query_params["starts_with"] = filter_query_params.starts_with
+
+        async with self.session.get(url=url, params=query_params, headers=self.headers) as response:
             await self._raise_for_status(response)
             data = await response.json()
-            return [DocumentInfo(**doc) for doc in data]
+            return [DocumentInfo.from_list_documents_response(r) for r in data]
 
     async def search(
         self,
@@ -1443,17 +1430,37 @@ class AsyncDocumentIndexClient:
         Returns:
             Result of the search operation. Will be empty if nothing was retrieved.
         """
-        url = urljoin(
-            self._base_document_index_url,
-            f"search/{collection_path.namespace}/{collection_path.collection}/{index_name}",
-        )
-        payload = search_query.model_dump()
-        async with self.session.post(
-            url, json=payload, headers=self.headers
-        ) as response:
+        url_suffix = f"collections/{collection_path.namespace}/{collection_path.collection}/indexes/{index_name}/search"
+        url = urljoin(self._base_document_index_url, url_suffix)
+
+        filters: list[dict[str, Any]] = [{"with": [{"modality": "text"}]}]
+        if search_query.filters:
+            for metadata_filter in search_query.filters:
+                filters.append(
+                    {
+                        f"{metadata_filter.filter_type}": [
+                            {
+                                "metadata": {
+                                    "field": filter_field.field_name,
+                                    f"{filter_field.criteria.value}": filter_field.field_value,
+                                }
+                            }
+                            for filter_field in metadata_filter.fields
+                        ]
+                    }
+                )
+
+        data = {
+            "query": [{"modality": "text", "text": search_query.query}],
+            "max_results": search_query.max_results,
+            "min_score": search_query.min_score,
+            "filters": filters,
+        }
+
+        async with self.session.post(url, data=dumps(data), headers=self.headers) as response:
             await self._raise_for_status(response)
             data = await response.json()
-            return [DocumentSearchResult(**result) for result in data]
+            return [DocumentSearchResult._from_search_response(r) for r in data]
         
     async def chunks(
         self, document_path: DocumentPath, index_name: str

@@ -50,10 +50,9 @@ def document_index(token: str) -> DocumentIndexClient:
 
 
 @pytest_asyncio.fixture()
-def async_document_index(token: str) -> AsyncDocumentIndexClient:
-    return AsyncDocumentIndexClient(
-        token, base_document_index_url=os.environ["DOCUMENT_INDEX_URL"]
-    )
+async def async_document_index(token: str) -> AsyncIterator[AsyncDocumentIndexClient]:
+    async with AsyncDocumentIndexClient(token, base_document_index_url=os.environ["DOCUMENT_INDEX_URL"]) as client:
+        yield client
 
 
 def to_document(document_chunk: DocumentChunk) -> Document:
@@ -258,9 +257,9 @@ def document_index_namespace(document_index: DocumentIndexClient) -> Iterable[st
 
 
 @pytest_asyncio.fixture()
-async def async_document_index_namespace(async_document_index: AsyncDocumentIndexClient) -> AsyncGenerator[str, Any]:
+async def async_document_index_namespace(async_document_index: AsyncDocumentIndexClient) -> AsyncIterator[str]:
     yield "Search"
-    _async_teardown(async_document_index, "Search")
+    await _async_teardown(async_document_index, "Search")
 
 
 def _teardown(
@@ -293,30 +292,29 @@ def _teardown(
 
 async def _async_teardown(
     async_document_index: AsyncDocumentIndexClient, document_index_namespace: str
-) -> AsyncIterator[None]:
-    yield
+) -> None:
 
     # Cleanup leftover resources from previous runs.
     timestamp_threshold = datetime.now(timezone.utc) - timedelta(hours=1)
+    async with async_document_index as client:
+        collections = await client.list_collections(document_index_namespace)
+        for collection_path in collections:
+            if is_outdated_identifier(collection_path.collection, timestamp_threshold):
+                await client.delete_collection(collection_path)
 
-    collections = await async_document_index.list_collections(document_index_namespace)
-    for collection_path in collections:
-        if is_outdated_identifier(collection_path.collection, timestamp_threshold):
-            await async_document_index.delete_collection(collection_path)
+        indexes = await client.list_indexes(document_index_namespace)
+        for index_path in indexes:
+            if is_outdated_identifier(index_path.index, timestamp_threshold):
+                await client.delete_index(index_path)
 
-    indexes = await async_document_index.list_indexes(document_index_namespace)
-    for index_path in indexes:
-        if is_outdated_identifier(index_path.index, timestamp_threshold):
-            await async_document_index.delete_index(index_path)
-
-    filter_indexes = await async_document_index.list_filter_indexes_in_namespace(
-        document_index_namespace
-    )
-    for filter_index in filter_indexes:
-        if is_outdated_identifier(filter_index, timestamp_threshold):
-            await async_document_index.delete_filter_index_from_namespace(
-                document_index_namespace, filter_index
-            )
+        filter_indexes = await client.list_filter_indexes_in_namespace(
+            document_index_namespace
+        )
+        for filter_index in filter_indexes:
+            if is_outdated_identifier(filter_index, timestamp_threshold):
+                await client.delete_filter_index_from_namespace(
+                    document_index_namespace, filter_index
+                )
 
 
 @fixture(scope="session")
@@ -395,14 +393,12 @@ async def async_filter_index_configs(
     }
 
     for name, config in configs.items():
-        async with async_document_index as client:
-            await client.create_filter_index_in_namespace(
-                namespace=async_document_index_namespace,
-                filter_index_name=name,
-                field_name=config["field-name"],
-                field_type=config["field-type"],  # type:ignore[arg-type]
-            )
-
+        await async_document_index.create_filter_index_in_namespace(
+            namespace=async_document_index_namespace,
+            filter_index_name=name,
+            field_name=config["field-name"],
+            field_type=config["field-type"],  # type:ignore[arg-type]
+        )
     return configs
 
 
@@ -556,7 +552,6 @@ async def async_random_collection(
     )
     try:
         await async_document_index.create_collection(collection_path)
-
         yield collection_path
     finally:
         await async_document_index.delete_collection(collection_path)
@@ -685,51 +680,51 @@ async def async_read_only_populated_collection(
     document_contents_with_metadata: list[DocumentContents],
     async_filter_index_configs: dict[str, dict[str, str]],
 ) -> AsyncIterator[tuple[CollectionPath, IndexPath]]:
-    index_name = random_identifier()
-    index_path = IndexPath(namespace=async_document_index_namespace, index=index_name)
-    index_configuration = IndexConfiguration(
-        chunk_size=512,
-        chunk_overlap=0,
-        hybrid_index="bm25",
-        embedding=SemanticEmbed(
-            representation="asymmetric",
-            model_name="luminous-base",
-        ),
-    )
-
-    collection_name = random_identifier()
-    collection_path = CollectionPath(
-        namespace=async_document_index_namespace, collection=collection_name
-    )
-
-    try:
-        await async_document_index.create_collection(collection_path)
-        await async_document_index.create_index(index_path, index_configuration)
-        await async_document_index.assign_index_to_collection(collection_path, index_name)
-
-        for name in async_filter_index_configs:
-            await async_document_index.assign_filter_index_to_search_index(
-                collection_path=collection_path,
-                index_name=index_name,
-                filter_index_name=name,
-            )
-        await _async_add_documents_to_document_index(
-            async_document_index, document_contents_with_metadata, index_name, collection_path
+    async with async_document_index as client:
+        collection_name = random_identifier()
+        collection_path = CollectionPath(
+            namespace=async_document_index_namespace, collection=collection_name
         )
+        index_name = random_identifier()
+        index_path = IndexPath(namespace=async_document_index_namespace, index=index_name)
+        index_configuration = IndexConfiguration(
+            chunk_size=512,
+            chunk_overlap=0,
+            hybrid_index="bm25",
+            embedding=SemanticEmbed(
+                representation="asymmetric",
+                model_name="luminous-base",
+            ),
+        )
+        try:
+            await client.create_collection(collection_path)
+            await client.create_index(index_path, index_configuration)
+            await client.assign_index_to_collection(collection_path, index_name)
 
-        yield collection_path, index_path
-    finally:
-        await async_document_index.delete_collection(collection_path)
-
-        @async_retry
-        async def clean_up_indexes() -> None:
-            await async_document_index.delete_index(index_path)
-            for filter_index_name in async_filter_index_configs:
-                await async_document_index.delete_filter_index_from_namespace(
-                    async_document_index_namespace, filter_index_name
+            for name in async_filter_index_configs:
+                await client.assign_filter_index_to_search_index(
+                    collection_path=collection_path,
+                    index_name=index_name,
+                    filter_index_name=name,
                 )
 
-        await clean_up_indexes()
+            await _async_add_documents_to_document_index(
+                client, document_contents_with_metadata, index_name, collection_path
+            )
+            yield collection_path, index_path
+
+        finally:
+            await client.delete_collection(collection_path)
+
+            @async_retry
+            async def clean_up_indexes() -> None:
+                await client.delete_index(index_path)
+                for filter_index_name in async_filter_index_configs:
+                    await client.delete_filter_index_from_namespace(
+                        async_document_index_namespace, filter_index_name
+                    )
+
+            await clean_up_indexes()
 
 
 @fixture
@@ -767,14 +762,17 @@ async def async_random_searchable_collection(
     async_document_index: AsyncDocumentIndexClient,
     document_contents_with_metadata: list[DocumentContents],
     async_random_index: tuple[IndexPath, IndexConfiguration],
-    async_random_collection: CollectionPath,
+    async_document_index_namespace: str,
 ) -> AsyncIterator[tuple[CollectionPath, IndexPath]]:
     index_path, _ = async_random_index
     index_name = index_path.index
-    collection_path = async_random_collection
+    collection_name = random_identifier()
+    collection_path = CollectionPath(
+        namespace=async_document_index_namespace, collection=collection_name
+    )
 
     try:
-        # Assign index
+        await async_document_index.create_collection(collection_path)
         await async_document_index.assign_index_to_collection(collection_path, index_name)
 
         await _async_add_documents_to_document_index(
