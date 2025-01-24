@@ -42,7 +42,7 @@ def get_benchmark_response(datatset_id: str) -> GetBenchmarkResponse:
     aggregation_identifier = create_aggregation_logic_identifier(aggregation_logic)
     return GetBenchmarkResponse(
         id="id",
-        project_id=0,
+        project_id=str(uuid4()),
         dataset_id=datatset_id,
         name="name",
         description="description",
