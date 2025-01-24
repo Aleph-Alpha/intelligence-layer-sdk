@@ -6,6 +6,7 @@ from uuid import uuid4
 
 import pytest
 from fsspec.implementations.memory import MemoryFileSystem  # type: ignore
+from pydantic import ValidationError
 from pytest import FixtureRequest, fixture, mark, raises
 
 from intelligence_layer.connectors.base.json_serializable import (
@@ -425,3 +426,42 @@ def test_example_raises_error_for_not_existing_dataset_id(
             DummyStringInput,
             DummyStringOutput,
         )
+
+
+@mark.parametrize("repository_fixture", test_repository_fixtures)
+def test_creating_with_json_and_reading_with_actual_type_works(
+    repository_fixture: str,
+    request: FixtureRequest,
+    dummy_string_example: Example[DummyStringInput, DummyStringOutput],
+) -> None:
+    dataset_repository: DatasetRepository = request.getfixturevalue(repository_fixture)
+    json_example = Example(
+        input=dummy_string_example.input.model_dump(),
+        expected_output=dummy_string_example.expected_output.model_dump(),
+    )
+    dataset = dataset_repository.create_dataset(
+        examples=[json_example], dataset_name="test-dataset"
+    )
+
+    new_example = next(
+        iter(
+            dataset_repository.examples(dataset.id, DummyStringInput, DummyStringOutput)
+        )
+    )
+
+    assert dummy_string_example.input == new_example.input
+    assert dummy_string_example.expected_output == new_example.expected_output
+
+
+@mark.parametrize("repository_fixture", test_repository_fixtures)
+def test_retrieving_with_wrong_types_gives_error(
+    repository_fixture: str,
+    request: FixtureRequest,
+    dummy_string_example: Example[DummyStringInput, DummyStringOutput],
+) -> None:
+    dataset_repository: DatasetRepository = request.getfixturevalue(repository_fixture)
+    dataset = dataset_repository.create_dataset(
+        examples=[dummy_string_example], dataset_name="test-dataset"
+    )
+    with pytest.raises(ValidationError):
+        next(iter(dataset_repository.examples(dataset.id, int, int)))

@@ -1,5 +1,7 @@
 from collections.abc import Iterable, Sequence
-from typing import Optional, cast
+from typing import Any, Optional, TypeVar, cast
+
+from pydantic import TypeAdapter
 
 from intelligence_layer.connectors.base.json_serializable import (
     SerializableDict,
@@ -66,6 +68,15 @@ class InMemoryDatasetRepository(DatasetRepository):
     def dataset_ids(self) -> Iterable[str]:
         return sorted(list(self._datasets_and_examples.keys()))
 
+    T = TypeVar("T")
+
+    @staticmethod
+    def _convert_to_type(data: Any, desired_type: T) -> T:
+        if type(data) is desired_type:
+            return data
+        else:
+            return TypeAdapter(desired_type).validate_python(data)
+
     def example(
         self,
         dataset_id: str,
@@ -89,14 +100,23 @@ class InMemoryDatasetRepository(DatasetRepository):
             raise ValueError(
                 f"Repository does not contain a dataset with id: {dataset_id}"
             )
-        return cast(
-            Iterable[Example[Input, ExpectedOutput]],
-            sorted(
-                [
-                    example
-                    for example in self._datasets_and_examples[dataset_id][1]
-                    if example.id not in examples_to_skip
-                ],
-                key=lambda example: example.id,
-            ),
+        examples: list[Example[Input, ExpectedOutput]] = []
+        for example in self._datasets_and_examples[dataset_id][1]:
+            if example.id in examples_to_skip:
+                continue
+            converted_input = self._convert_to_type(example.input, input_type)
+            converted_expected_output = self._convert_to_type(
+                example.expected_output, expected_output_type
+            )
+            examples.append(
+                Example[input_type, expected_output_type](  # type: ignore
+                    id=example.id,
+                    input=converted_input,
+                    expected_output=converted_expected_output,
+                    metadata=example.metadata,
+                )
+            )
+        return sorted(
+            examples,
+            key=lambda example: example.id,
         )
