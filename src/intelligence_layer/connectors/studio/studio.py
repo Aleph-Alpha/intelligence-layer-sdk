@@ -9,7 +9,7 @@ from urllib.parse import urljoin
 from uuid import uuid4
 
 import requests
-from pydantic import BaseModel, Field, RootModel
+from pydantic import BaseModel, Field, RootModel, field_validator
 from requests.exceptions import ConnectionError, MissingSchema
 
 from intelligence_layer.connectors import JsonSerializable
@@ -96,7 +96,7 @@ class PostBenchmarkRequest(BaseModel):
 
 class GetBenchmarkResponse(BaseModel):
     id: str
-    project_id: int
+    project_id: str
     dataset_id: str
     name: str
     description: str | None
@@ -108,6 +108,10 @@ class GetBenchmarkResponse(BaseModel):
     last_executed_at: datetime | None
     created_by: str | None
     updated_by: str | None
+
+    @field_validator("project_id", mode="before")
+    def transform_id_to_str(cls, value) -> str:
+        return str(value)
 
 
 class PostBenchmarkExecution(BaseModel):
@@ -226,7 +230,7 @@ class StudioClient:
         self.url = StudioClient.get_url(studio_url)
         self._check_connection()
         self._project_name = project
-        self._project_id: int | None = None
+        self._project_id: str | None = None
 
         if create_project:
             project_id = self._get_project(self._project_name)
@@ -256,7 +260,7 @@ class StudioClient:
             ) from None
 
     @property
-    def project_id(self) -> int:
+    def project_id(self) -> str:
         if self._project_id is None:
             project_id = self._get_project(self._project_name)
             if project_id is None:
@@ -266,7 +270,7 @@ class StudioClient:
             self._project_id = project_id
         return self._project_id
 
-    def _get_project(self, project: str) -> int | None:
+    def _get_project(self, project_name: str) -> str | None:
         url = urljoin(self.url, "/api/projects")
         response = requests.get(
             url,
@@ -276,24 +280,24 @@ class StudioClient:
         all_projects = response.json()
         try:
             project_of_interest = next(
-                proj for proj in all_projects if proj["name"] == project
+                proj for proj in all_projects if proj["name"] == project_name
             )
-            return int(project_of_interest["id"])
+            return str(project_of_interest["id"])
         except StopIteration:
             return None
 
     def create_project(
         self,
-        project: str,
+        project_name: str,
         description: Optional[str] = None,
         reuse_existing: bool = False,
-    ) -> int:
+    ) -> str:
         """Creates a project in Studio.
 
         Projects are uniquely identified by the user provided name.
 
         Args:
-            project: User provided name of the project.
+            project_name: User provided name of the project.
             description: Description explaining the usage of the project. Defaults to None.
             reuse_existing: Reuse project with specified name if already existing. Defaults to False.
 
@@ -302,7 +306,7 @@ class StudioClient:
             The ID of the newly created project.
         """
         url = urljoin(self.url, "/api/projects")
-        data = StudioProject(name=project, description=description)
+        data = StudioProject(name=project_name, description=description)
         response = requests.post(
             url,
             data=data.model_dump_json(),
@@ -311,7 +315,7 @@ class StudioClient:
         match response.status_code:
             case 409:
                 if reuse_existing:
-                    fetched_project = self._get_project(project)
+                    fetched_project = self._get_project(project_name)
                     assert (
                         fetched_project is not None
                     ), "Project already exists but not allowed to be used."
@@ -319,7 +323,7 @@ class StudioClient:
                 raise ValueError("Project already exists")
             case _:
                 response.raise_for_status()
-        return int(response.text)
+        return response.text
 
     def submit_trace(self, data: Sequence[ExportedSpan]) -> str:
         """Sends the provided spans to Studio as a singular trace.
