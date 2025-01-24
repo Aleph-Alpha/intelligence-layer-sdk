@@ -2,9 +2,7 @@
 ## Unreleased
 ...
 ### Features
- - `AsyncDocumentIndexClient` for using the DI via coroutines.
- - Added `AsyncDocumentIndexRetriever` and `AsyncBaseRetriever` for inheritance and extensions
- - Async methods and classes are dropin-replacements for the blocking calls for users who are comfortable with async programming.
+ - Introduced `AsyncDocumentIndexClient` and `AsyncDocumentIndexRetriever` as drop-in replacements for their blocking counterparts, enabling coroutine-based, non-blocking document indexing and retrieval.
 ### Fixes
  - `InMemoryDatasetRepository` now has a more descriptive error message when creating a dataset fails because of an ID clash
  - `StudioClient` now deserializes and serializes examples while maintaining type information, which was previously dropped.
