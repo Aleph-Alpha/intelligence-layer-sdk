@@ -4927,13 +4927,13 @@ cffi = {version = "*", markers = "implementation_name == \"pypy\""}
 
 [[package]]
 name = "qdrant-client"
-version = "1.13.0"
+version = "1.13.2"
 description = "Client library for the Qdrant vector search engine"
 optional = false
 python-versions = ">=3.9"
 files = [
-    {file = "qdrant_client-1.13.0-py3-none-any.whl", hash = "sha256:63a063d5232618b609f2c438caf6f3afd3bd110dd80d01be20c596e516efab6b"},
-    {file = "qdrant_client-1.13.0.tar.gz", hash = "sha256:9708e3194081619b38194c99e7c369064e3f3f328d8a8ef1d71a87425a5ddf0c"},
+    {file = "qdrant_client-1.13.2-py3-none-any.whl", hash = "sha256:db97e759bd3f8d483a383984ba4c2a158eef56f2188d83df7771591d43de2201"},
+    {file = "qdrant_client-1.13.2.tar.gz", hash = "sha256:c8cce87ce67b006f49430a050a35c85b78e3b896c0c756dafc13bdeca543ec13"},
 ]
 
 [package.dependencies]
@@ -6579,4 +6579,4 @@ type = ["pytest-mypy"]
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.10,<3.13"
-content-hash = "6a2a14326de8826bf5c14873899995e7db03ce6325d38b40fbd5f3a0e803aa38"
+content-hash = "c56e5e8180a19e65f7b903865ff10d2269bc53ba409054f76bb65320244b854e"
