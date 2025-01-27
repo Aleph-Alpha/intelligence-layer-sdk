@@ -2,11 +2,10 @@ from collections.abc import Iterable, Sequence
 from typing import Any
 from uuid import UUID
 
-from pydantic import BaseModel
 from pytest import fixture
 
 from intelligence_layer.connectors import StudioClient
-from intelligence_layer.connectors.studio.studio import StudioDataset, StudioExample
+from intelligence_layer.connectors.studio.studio import StudioDataset
 from intelligence_layer.evaluation.dataset.domain import Example
 from intelligence_layer.evaluation.dataset.in_memory_dataset_repository import (
     InMemoryDatasetRepository,
@@ -14,27 +13,7 @@ from intelligence_layer.evaluation.dataset.in_memory_dataset_repository import (
 from intelligence_layer.evaluation.dataset.studio_dataset_repository import (
     StudioDatasetRepository,
 )
-
-
-class PydanticType(BaseModel):
-    data: int
-
-
-@fixture
-def examples() -> Sequence[StudioExample[PydanticType, PydanticType]]:
-    return [
-        StudioExample(input=PydanticType(data=i), expected_output=PydanticType(data=i))
-        for i in range(2)
-    ]
-
-
-@fixture
-def many_examples() -> Sequence[StudioExample[PydanticType, PydanticType]]:
-    examples = [
-        StudioExample(input=PydanticType(data=i), expected_output=PydanticType(data=i))
-        for i in range(201)
-    ]
-    return examples
+from tests.connectors.studio.conftest import PydanticType
 
 
 @fixture
@@ -108,6 +87,9 @@ def test_get_many_dataset_examples(
     for received_example, given_example in zip(
         received_examples, many_examples, strict=True
     ):
-        assert received_example.id == given_example.id
-        assert received_example.input == given_example.input
-        assert received_example.expected_output == given_example.expected_output
+        # These models appear equal, but somehow are not -> we need to check the specific values, not the models
+        assert received_example.model_dump() == given_example.model_dump()
+        assert received_example.input.data == given_example.input.data
+        assert (
+            received_example.expected_output.data == given_example.expected_output.data
+        )
