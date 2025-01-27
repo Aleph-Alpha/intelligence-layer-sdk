@@ -20,7 +20,11 @@ from intelligence_layer.evaluation import (
 from intelligence_layer.evaluation.dataset.hugging_face_dataset_repository import (
     HuggingFaceDatasetRepository,
 )
-from tests.evaluation.conftest import DummyStringInput, DummyStringOutput
+from tests.evaluation.conftest import (
+    DummyStringExpectedOutput,
+    DummyStringInput,
+    DummyStringOutput,
+)
 
 
 @fixture
@@ -146,7 +150,7 @@ def test_dataset_repository_can_create_and_store_a_dataset(
         dataset_repository.examples(
             dataset.id,
             input_type=DummyStringInput,
-            expected_output_type=DummyStringOutput,
+            expected_output_type=DummyStringExpectedOutput,
         )
     )
 
@@ -361,7 +365,7 @@ def test_examples_raises_value_error_for_not_existing_dataset_id(
 
     with pytest.raises(ValueError):
         dataset_repository.examples(
-            "not_existing_dataset_id", DummyStringInput, type(None)
+            "not_existing_dataset_id", DummyStringInput, DummyStringExpectedOutput
         )
 
 
@@ -372,7 +376,7 @@ def test_examples_raises_value_error_for_not_existing_dataset_id(
 def test_example_returns_example_for_existing_dataset_id_and_example_id(
     repository_fixture: str,
     request: FixtureRequest,
-    dummy_string_example: Example[DummyStringInput, DummyStringOutput],
+    dummy_string_example: Example[DummyStringInput, DummyStringExpectedOutput],
 ) -> None:
     dataset_repository: DatasetRepository = request.getfixturevalue(repository_fixture)
     dataset = dataset_repository.create_dataset(
@@ -380,7 +384,7 @@ def test_example_returns_example_for_existing_dataset_id_and_example_id(
     )
 
     example = dataset_repository.example(
-        dataset.id, dummy_string_example.id, DummyStringInput, DummyStringOutput
+        dataset.id, dummy_string_example.id, DummyStringInput, DummyStringExpectedOutput
     )
 
     assert example == dummy_string_example
@@ -390,7 +394,7 @@ def test_example_returns_example_for_existing_dataset_id_and_example_id(
 def test_example_returns_none_for_not_existant_example_id(
     repository_fixture: str,
     request: FixtureRequest,
-    dummy_string_example: Example[DummyStringInput, DummyStringOutput],
+    dummy_string_example: Example[DummyStringInput, DummyStringExpectedOutput],
 ) -> None:
     dataset_repository: DatasetRepository = request.getfixturevalue(repository_fixture)
     dataset = dataset_repository.create_dataset(
@@ -398,7 +402,10 @@ def test_example_returns_none_for_not_existant_example_id(
     )
 
     examples = dataset_repository.example(
-        dataset.id, "not_existing_example_id", DummyStringInput, DummyStringOutput
+        dataset.id,
+        "not_existing_example_id",
+        DummyStringInput,
+        DummyStringExpectedOutput,
     )
 
     assert examples is None
@@ -477,7 +484,7 @@ def test_retrieving_with_none_types_works(
 def test_creating_with_json_and_reading_with_actual_type_works(
     repository_fixture: str,
     request: FixtureRequest,
-    dummy_string_example: Example[DummyStringInput, DummyStringOutput],
+    dummy_string_example: Example[DummyStringInput, DummyStringExpectedOutput],
 ) -> None:
     dataset_repository: DatasetRepository = request.getfixturevalue(repository_fixture)
     json_example = Example(
@@ -491,7 +498,9 @@ def test_creating_with_json_and_reading_with_actual_type_works(
 
     new_example = next(
         iter(
-            dataset_repository.examples(dataset.id, DummyStringInput, DummyStringOutput)
+            dataset_repository.examples(
+                dataset.id, DummyStringInput, DummyStringExpectedOutput
+            )
         )
     )
 
@@ -504,7 +513,7 @@ def test_creating_with_json_and_reading_with_actual_type_works(
 def test_retrieving_with_wrong_types_gives_error(
     repository_fixture: str,
     request: FixtureRequest,
-    dummy_string_example: Example[DummyStringInput, DummyStringOutput],
+    dummy_string_example: Example[DummyStringInput, DummyStringExpectedOutput],
 ) -> None:
     dataset_repository: DatasetRepository = request.getfixturevalue(repository_fixture)
     dataset = dataset_repository.create_dataset(

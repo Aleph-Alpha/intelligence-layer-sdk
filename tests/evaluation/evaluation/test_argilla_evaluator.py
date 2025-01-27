@@ -29,6 +29,7 @@ from intelligence_layer.evaluation import (
 )
 from tests.evaluation.conftest import (
     DummyStringEvaluation,
+    DummyStringExpectedOutput,
     DummyStringInput,
     DummyStringOutput,
     DummyStringTask,
@@ -99,7 +100,7 @@ class DummyStringTaskArgillaEvaluationLogic(
     ArgillaEvaluationLogic[
         DummyStringInput,
         DummyStringOutput,
-        DummyStringOutput,
+        DummyStringExpectedOutput,
         DummyStringEvaluation,
     ]
 ):
@@ -118,7 +119,7 @@ class DummyStringTaskArgillaEvaluationLogic(
 
     def to_record(
         self,
-        example: Example[DummyStringInput, DummyStringOutput],
+        example: Example[DummyStringInput, DummyStringExpectedOutput],
         *output: SuccessfulExampleOutput[DummyStringOutput],
     ) -> RecordDataSequence:
         assert len(output) == 1
@@ -277,7 +278,7 @@ def string_argilla_evaluator(
 ) -> ArgillaEvaluator[
     DummyStringInput,
     DummyStringOutput,
-    DummyStringOutput,
+    DummyStringExpectedOutput,
     DummyStringEvaluation,
 ]:
     evaluator = ArgillaEvaluator(
@@ -308,7 +309,7 @@ def string_argilla_runner(
 
 def test_argilla_evaluator_can_submit_evals_to_argilla(
     string_argilla_runner: Runner[DummyStringInput, DummyStringOutput],
-    string_dataset_id: str,
+    dummy_string_dataset_id: str,
     in_memory_dataset_repository: InMemoryDatasetRepository,
     in_memory_run_repository: InMemoryRunRepository,
     async_in_memory_evaluation_repository: AsyncInMemoryEvaluationRepository,
@@ -324,7 +325,7 @@ def test_argilla_evaluator_can_submit_evals_to_argilla(
         workspace_id="workspace-id",
     )
 
-    run_overview = string_argilla_runner.run_dataset(string_dataset_id)
+    run_overview = string_argilla_runner.run_dataset(dummy_string_dataset_id)
 
     partial_evaluation_overview = evaluator.submit(run_overview.id)
     assert partial_evaluation_overview.submitted_evaluation_count == 1
@@ -387,12 +388,12 @@ def test_argilla_evaluator_correctly_lists_failed_eval_counts(
 
 def test_argilla_evaluator_abort_on_error_works(
     string_argilla_runner: Runner[DummyStringInput, DummyStringOutput],
-    string_dataset_id: str,
+    dummy_string_dataset_id: str,
     in_memory_dataset_repository: DatasetRepository,
     in_memory_run_repository: InMemoryRunRepository,
     async_in_memory_evaluation_repository: AsyncInMemoryEvaluationRepository,
 ) -> None:
-    run_overview = string_argilla_runner.run_dataset(string_dataset_id)
+    run_overview = string_argilla_runner.run_dataset(dummy_string_dataset_id)
 
     evaluator = ArgillaEvaluator(
         in_memory_dataset_repository,
@@ -429,7 +430,7 @@ def test_argilla_aggregation_logic_works() -> None:
 
 def test_argilla_evaluator_has_distinct_names_for_datasets(
     string_argilla_runner: Runner[DummyStringInput, DummyStringOutput],
-    string_dataset_id: str,
+    dummy_string_dataset_id: str,
     in_memory_dataset_repository: InMemoryDatasetRepository,
     in_memory_run_repository: InMemoryRunRepository,
     async_in_memory_evaluation_repository: AsyncInMemoryEvaluationRepository,
@@ -446,7 +447,7 @@ def test_argilla_evaluator_has_distinct_names_for_datasets(
         workspace_id,
     )
 
-    run_overview = string_argilla_runner.run_dataset(string_dataset_id)
+    run_overview = string_argilla_runner.run_dataset(dummy_string_dataset_id)
     evaluator.submit(run_overview.id)
     evaluator.submit(run_overview.id)
 
@@ -456,7 +457,7 @@ def test_argilla_evaluator_has_distinct_names_for_datasets(
 
 def test_argilla_evaluator_can_take_name(
     string_argilla_runner: Runner[DummyStringInput, DummyStringOutput],
-    string_dataset_id: str,
+    dummy_string_dataset_id: str,
     in_memory_dataset_repository: InMemoryDatasetRepository,
     in_memory_run_repository: InMemoryRunRepository,
     async_in_memory_evaluation_repository: AsyncInMemoryEvaluationRepository,
@@ -474,7 +475,7 @@ def test_argilla_evaluator_can_take_name(
     )
 
     dataset_name = str(uuid4())
-    run_overview = string_argilla_runner.run_dataset(string_dataset_id)
+    run_overview = string_argilla_runner.run_dataset(dummy_string_dataset_id)
     dataset_id = evaluator.submit(run_overview.id, dataset_name=dataset_name).id
 
     assert len(dummy_client._datasets) == 1

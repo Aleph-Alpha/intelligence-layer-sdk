@@ -1,4 +1,5 @@
 from collections.abc import Iterable, Sequence
+from typing import Any
 
 import pytest
 
@@ -13,16 +14,21 @@ from intelligence_layer.evaluation import (
     Runner,
 )
 from intelligence_layer.evaluation.run.file_run_repository import FileRunRepository
-from tests.evaluation.conftest import FAIL_IN_TASK_INPUT, DummyTask
+from tests.evaluation.conftest import (
+    FAIL_IN_TASK_INPUT,
+    DummyStringExpectedOutput,
+    DummyStringInput,
+    DummyStringTask,
+)
 
 
 def test_runner_runs_dataset(
     in_memory_dataset_repository: InMemoryDatasetRepository,
     in_memory_run_repository: InMemoryRunRepository,
-    sequence_examples: Iterable[Example[str, None]],
+    sequence_examples: Iterable[Example[DummyStringInput, DummyStringExpectedOutput]],
 ) -> None:
     examples = list(sequence_examples)
-    task = DummyTask()
+    task = DummyStringTask()
     runner = Runner(
         task, in_memory_dataset_repository, in_memory_run_repository, "dummy-runner"
     )
@@ -41,7 +47,7 @@ def test_runner_runs_dataset(
         example.id for example in examples
     )
 
-    failed_runs = list(runner.failed_runs(overview.id, type(None)))
+    failed_runs = list(runner.failed_runs(overview.id, Any))  # type: ignore
     assert len(failed_runs) == 1
     assert failed_runs[0].example.id == examples[1].id
 
@@ -49,10 +55,10 @@ def test_runner_runs_dataset(
 def test_runner_works_without_description(
     in_memory_dataset_repository: InMemoryDatasetRepository,
     in_memory_run_repository: InMemoryRunRepository,
-    sequence_examples: Iterable[Example[str, None]],
+    sequence_examples: Iterable[Example[DummyStringInput, DummyStringExpectedOutput]],
 ) -> None:
     examples = list(sequence_examples)
-    task = DummyTask()
+    task = DummyStringTask()
     runner = Runner(task, in_memory_dataset_repository, in_memory_run_repository, "")
 
     dataset_id = in_memory_dataset_repository.create_dataset(
@@ -65,10 +71,10 @@ def test_runner_works_without_description(
 def test_runner_has_correct_description(
     in_memory_dataset_repository: InMemoryDatasetRepository,
     in_memory_run_repository: InMemoryRunRepository,
-    sequence_examples: Iterable[Example[str, None]],
+    sequence_examples: Iterable[Example[DummyStringInput, DummyStringExpectedOutput]],
 ) -> None:
     examples = list(sequence_examples)
-    task = DummyTask()
+    task = DummyStringTask()
     runner = Runner(task, in_memory_dataset_repository, in_memory_run_repository, "foo")
 
     dataset_id = in_memory_dataset_repository.create_dataset(
@@ -84,9 +90,9 @@ def test_runner_has_correct_description(
 def test_runner_aborts_on_error(
     in_memory_dataset_repository: InMemoryDatasetRepository,
     in_memory_run_repository: InMemoryRunRepository,
-    sequence_examples: Iterable[Example[str, None]],
+    sequence_examples: Iterable[Example[DummyStringInput, DummyStringExpectedOutput]],
 ) -> None:
-    task = DummyTask()
+    task = DummyStringTask()
     runner = Runner(
         task, in_memory_dataset_repository, in_memory_run_repository, "dummy-runner"
     )
@@ -101,9 +107,9 @@ def test_runner_aborts_on_error(
 def test_runner_resumes_after_error_in_task(
     in_memory_dataset_repository: InMemoryDatasetRepository,
     file_run_repository: FileRunRepository,
-    sequence_examples: Iterable[Example[str, None]],
+    sequence_examples: Iterable[Example[DummyStringInput, DummyStringExpectedOutput]],
 ) -> None:
-    task = DummyTask()
+    task = DummyStringTask()
     runner = Runner(
         task, in_memory_dataset_repository, file_run_repository, "dummy-runner"
     )
@@ -114,7 +120,7 @@ def test_runner_resumes_after_error_in_task(
 
     fail_example_id = ""
     for example in sequence_examples:
-        if example.input != FAIL_IN_TASK_INPUT:
+        if example.input.input != FAIL_IN_TASK_INPUT:
             continue
         fail_example_id = example.id
     assert fail_example_id != ""
@@ -129,12 +135,12 @@ def test_runner_resumes_after_error_in_task(
     assert recovery_data
     assert fail_example_id not in recovery_data.finished_examples
 
-    examples: Sequence[Example[str, None]] = (
+    examples: Sequence[Example[DummyStringInput, DummyStringExpectedOutput]] = (
         in_memory_dataset_repository._datasets_and_examples[dataset_id][1]  # type: ignore
     )
     for example in examples:
-        if example.input == FAIL_IN_TASK_INPUT:
-            example.input = "do_not_fail_me"
+        if example.input.input == FAIL_IN_TASK_INPUT:
+            example.input.input = "do_not_fail_me"
 
     runner.run_dataset(
         dataset_id,
@@ -151,14 +157,22 @@ def test_runner_runs_n_examples(
     in_memory_dataset_repository: InMemoryDatasetRepository,
     in_memory_run_repository: InMemoryRunRepository,
 ) -> None:
-    task = DummyTask()
+    task = DummyStringTask()
     tracer = InMemoryTracer()
     runner = Runner(
         task, in_memory_dataset_repository, in_memory_run_repository, "dummy-runner"
     )
     examples = [
-        Example(input="success", expected_output=None, id="example-1"),
-        Example(input=FAIL_IN_TASK_INPUT, expected_output=None, id="example-2"),
+        Example(
+            input=DummyStringInput(input="success"),
+            expected_output=DummyStringExpectedOutput(),
+            id="example-1",
+        ),
+        Example(
+            input=DummyStringInput(input=FAIL_IN_TASK_INPUT),
+            expected_output=DummyStringExpectedOutput(),
+            id="example-2",
+        ),
     ]
 
     dataset_id = in_memory_dataset_repository.create_dataset(
@@ -180,10 +194,10 @@ def test_runner_runs_n_examples(
 def test_runner_run_overview_has_default_metadata_and_labels(
     in_memory_dataset_repository: InMemoryDatasetRepository,
     in_memory_run_repository: InMemoryRunRepository,
-    sequence_examples: Iterable[Example[str, None]],
+    sequence_examples: Iterable[Example[DummyStringInput, DummyStringExpectedOutput]],
 ) -> None:
     examples = list(sequence_examples)
-    task = DummyTask()
+    task = DummyStringTask()
     runner = Runner(task, in_memory_dataset_repository, in_memory_run_repository, "foo")
 
     dataset_id = in_memory_dataset_repository.create_dataset(
@@ -199,13 +213,13 @@ def test_runner_run_overview_has_default_metadata_and_labels(
 def test_runner_run_overview_has_specified_metadata_and_labels(
     in_memory_dataset_repository: InMemoryDatasetRepository,
     in_memory_run_repository: InMemoryRunRepository,
-    sequence_examples: Iterable[Example[str, None]],
+    sequence_examples: Iterable[Example[DummyStringInput, DummyStringExpectedOutput]],
 ) -> None:
     run_labels = {"test-label"}
     run_metadata: SerializableDict = dict({"test_key": "test-value"})
 
     examples = list(sequence_examples)
-    task = DummyTask()
+    task = DummyStringTask()
     runner = Runner(task, in_memory_dataset_repository, in_memory_run_repository, "foo")
 
     dataset_id = in_memory_dataset_repository.create_dataset(
@@ -220,11 +234,11 @@ def test_runner_run_overview_has_specified_metadata_and_labels(
 def test_run_is_already_computed_works(
     in_memory_dataset_repository: InMemoryDatasetRepository,
     in_memory_run_repository: InMemoryRunRepository,
-    sequence_examples: Iterable[Example[str, None]],
+    sequence_examples: Iterable[Example[DummyStringInput, DummyStringExpectedOutput]],
 ) -> None:
     old_model = "old_model"
     examples = list(sequence_examples)
-    task = DummyTask()
+    task = DummyStringTask()
     runner = Runner(task, in_memory_dataset_repository, in_memory_run_repository, "foo")
     dataset_id = in_memory_dataset_repository.create_dataset(
         examples=examples, dataset_name=""

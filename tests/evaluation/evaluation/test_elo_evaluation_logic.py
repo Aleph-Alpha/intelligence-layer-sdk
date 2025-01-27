@@ -50,7 +50,6 @@ class DummyEloQaEvalLogic(
         second: SuccessfulExampleOutput[SingleChunkQaOutput],
         example: Example[SingleChunkQaInput, SingleChunkQaOutput],
     ) -> MatchOutcome:
-        _ = example
         if first.run_id < second.run_id:
             return MatchOutcome.A_WINS
         elif first.run_id > second.run_id:
@@ -122,8 +121,10 @@ def qa_setup(
     qa_input = SingleChunkQaInput(
         chunk=qa_input_text, question="What is micromachining?", language=Language("en")
     )
-    expected_output = "Surface micromachining builds microstructures by deposition and etching structural layers over a substrate."
-    #
+    expected_output = SingleChunkQaOutput(
+        answer="Surface micromachining builds microstructures by deposition and etching structural layers over a substrate.",
+        highlights=[],
+    )
     example_id = "some-example-id"
     dataset_id = in_memory_dataset_repository.create_dataset(
         examples=[
