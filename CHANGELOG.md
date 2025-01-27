@@ -9,6 +9,8 @@
 ### Deprecations
 ...
 ### Breaking Changes
+ - `EloQaEvaluationLogic` now has an expected output type of `None` instead of `SingleChunkQaOutput`. The information was unused.
+   - If you have pipelines that define data to be processed by this logic OR if you subclass from this specific logic, you may need to adapt it.
 
 ## 9.1.0
 ...

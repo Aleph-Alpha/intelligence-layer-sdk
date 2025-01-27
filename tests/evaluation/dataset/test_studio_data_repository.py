@@ -126,8 +126,12 @@ def test_studio_client_is_only_called_once_when_examples_are_called(
     mock_get_examples: Mock = mock_studio_client.get_dataset_examples  # type: ignore
 
     mock_get_examples.return_value = sequence_examples
-    studio_dataset_repository.examples(dataset_id, DummyStringInput, DummyStringExpectedOutput)
-    studio_dataset_repository.examples(dataset_id, DummyStringInput, DummyStringExpectedOutput)
+    studio_dataset_repository.examples(
+        dataset_id, DummyStringInput, DummyStringExpectedOutput
+    )
+    studio_dataset_repository.examples(
+        dataset_id, DummyStringInput, DummyStringExpectedOutput
+    )
 
     mock_get_examples.assert_called_once()
 
