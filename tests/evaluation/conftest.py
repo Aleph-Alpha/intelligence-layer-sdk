@@ -60,13 +60,13 @@ class DummyEvaluationLogic(
     SingleOutputEvaluationLogic[
         str,
         str,
-        None,
+        str,
         DummyEvaluation,
     ]
 ):
     def do_evaluate_single_output(
         self,
-        example: Example[str, None],
+        example: Example[str, str],
         output: str,
     ) -> DummyEvaluation:
         if output == FAIL_IN_EVAL_INPUT:
