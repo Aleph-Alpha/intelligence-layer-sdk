@@ -428,6 +428,51 @@ def test_example_raises_error_for_not_existing_dataset_id(
         )
 
 
+def assert_dataset_examples_works_with_type(
+    dataset_repository: DatasetRepository, value: Any, type: type | None
+) -> None:
+    data = Example(
+        input=value,
+        expected_output=value,
+        metadata=None,
+    )
+    dataset = dataset_repository.create_dataset(
+        examples=[data], dataset_name="test-dataset"
+    )
+    received_data = next(iter(dataset_repository.examples(dataset.id, type, type)))  # type: ignore
+    assert data == received_data
+
+
+@mark.parametrize("repository_fixture", test_repository_fixtures)
+def test_retrieving_with_int_types_works(
+    repository_fixture: str,
+    request: FixtureRequest,
+) -> None:
+    value = 1
+    dataset_repository: DatasetRepository = request.getfixturevalue(repository_fixture)
+    assert_dataset_examples_works_with_type(dataset_repository, value, int)
+
+
+@mark.parametrize("repository_fixture", test_repository_fixtures)
+def test_retrieving_with_str_types_works(
+    repository_fixture: str,
+    request: FixtureRequest,
+) -> None:
+    value = "1"
+    dataset_repository: DatasetRepository = request.getfixturevalue(repository_fixture)
+    assert_dataset_examples_works_with_type(dataset_repository, value, str)
+
+
+@mark.parametrize("repository_fixture", test_repository_fixtures)
+def test_retrieving_with_none_types_works(
+    repository_fixture: str,
+    request: FixtureRequest,
+) -> None:
+    value = None
+    dataset_repository: DatasetRepository = request.getfixturevalue(repository_fixture)
+    assert_dataset_examples_works_with_type(dataset_repository, value, None)
+
+
 @mark.parametrize("repository_fixture", test_repository_fixtures)
 def test_creating_with_json_and_reading_with_actual_type_works(
     repository_fixture: str,
@@ -438,6 +483,7 @@ def test_creating_with_json_and_reading_with_actual_type_works(
     json_example = Example(
         input=dummy_string_example.input.model_dump(),
         expected_output=dummy_string_example.expected_output.model_dump(),
+        metadata=dummy_string_example.metadata,
     )
     dataset = dataset_repository.create_dataset(
         examples=[json_example], dataset_name="test-dataset"
@@ -451,6 +497,7 @@ def test_creating_with_json_and_reading_with_actual_type_works(
 
     assert dummy_string_example.input == new_example.input
     assert dummy_string_example.expected_output == new_example.expected_output
+    assert dummy_string_example.metadata == new_example.metadata
 
 
 @mark.parametrize("repository_fixture", test_repository_fixtures)
@@ -465,3 +512,23 @@ def test_retrieving_with_wrong_types_gives_error(
     )
     with pytest.raises(ValidationError):
         next(iter(dataset_repository.examples(dataset.id, int, int)))
+
+
+@mark.parametrize("repository_fixture", test_repository_fixtures)
+def test_retrieving_with_none_always_works(
+    repository_fixture: str,
+    request: FixtureRequest,
+) -> None:
+    none_example = Example(
+        input=None,
+        expected_output=None,
+        metadata=None,
+    )
+    dataset_repository: DatasetRepository = request.getfixturevalue(repository_fixture)
+    dataset = dataset_repository.create_dataset(
+        examples=[none_example], dataset_name="test-dataset"
+    )
+    new_example: Example[None, None] = next(
+        iter(dataset_repository.examples(dataset.id, None, None))  # type: ignore
+    )
+    assert new_example.input is None

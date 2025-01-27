@@ -17,7 +17,7 @@ pydantic = "2.10.*"
 aleph-alpha-client = ">=7.1.0"
 python-dotenv = "*"
 semantic-text-splitter = "^0.22.0"
-qdrant-client = {version = "1.13.2", extras = ["fastembed"]}
+qdrant-client = { version = "1.13.2", extras = ["fastembed"] }
 rich = "^13.9.4"
 datasets = "^3.2.0"
 requests = "^2.32.3"
@@ -80,6 +80,7 @@ files = "src,tests"
 strict = "True"
 
 [tool.pytest.ini_options]
+verbosity_assertions = 1
 markers = [
     "internal: marks tests as internal (deselect with '-k \"not internal\"')",
     "docker: the test depends on having a docker container running.",
