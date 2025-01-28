@@ -8,6 +8,7 @@ from intelligence_layer.evaluation.evaluation.domain import (
     Evaluation,
     EvaluationOverview,
     ExampleEvaluation,
+    FailedExampleEvaluation,
     PartialEvaluationOverview,
 )
 from intelligence_layer.evaluation.evaluation.evaluation_repository import (
@@ -62,7 +63,9 @@ class FileSystemEvaluationRepository(EvaluationRepository, FileSystemBasedReposi
 
     def example_evaluation(
         self, evaluation_id: str, example_id: str, evaluation_type: type[Evaluation]
-    ) -> Optional[ExampleEvaluation[Evaluation]]:
+    ) -> Optional[
+        ExampleEvaluation[Evaluation] | ExampleEvaluation[FailedExampleEvaluation]
+    ]:
         file_path = self._example_result_path(evaluation_id, example_id)
         if not self.exists(file_path.parent):
             raise ValueError(
@@ -77,14 +80,18 @@ class FileSystemEvaluationRepository(EvaluationRepository, FileSystemBasedReposi
 
     def example_evaluations(
         self, evaluation_id: str, evaluation_type: type[Evaluation]
-    ) -> Sequence[ExampleEvaluation[Evaluation]]:
+    ) -> Sequence[
+        ExampleEvaluation[Evaluation] | ExampleEvaluation[FailedExampleEvaluation]
+    ]:
         path = self._eval_directory(evaluation_id)
         if not self.exists(path):
             raise ValueError(
                 f"Repository does not contain an evaluation with id: {evaluation_id}"
             )
 
-        example_evaluations: list[ExampleEvaluation[Evaluation]] = []
+        example_evaluations: list[
+            ExampleEvaluation[Evaluation] | ExampleEvaluation[FailedExampleEvaluation]
+        ] = []
         for file_name in self.file_names(path):
             evaluation = self.example_evaluation(
                 evaluation_id, file_name, evaluation_type
