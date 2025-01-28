@@ -11,7 +11,11 @@ from intelligence_layer.core.tracer.tracer import Tracer
 from intelligence_layer.evaluation.infrastructure.file_system_based_repository import (
     FileSystemBasedRepository,
 )
-from intelligence_layer.evaluation.run.domain import ExampleOutput, RunOverview
+from intelligence_layer.evaluation.run.domain import (
+    ExampleOutput,
+    FailedExampleRun,
+    RunOverview,
+)
 from intelligence_layer.evaluation.run.run_repository import RecoveryData, RunRepository
 
 
@@ -84,7 +88,7 @@ class FileSystemRunRepository(RunRepository, FileSystemBasedRepository):
 
     def example_output(
         self, run_id: str, example_id: str, output_type: type[Output]
-    ) -> Optional[ExampleOutput[Output]]:
+    ) -> Optional[ExampleOutput[Output] | ExampleOutput[FailedExampleRun]]:
         file_path = self._example_output_path(run_id, example_id)
         if not self.exists(file_path):
             warnings.warn(
@@ -99,7 +103,7 @@ class FileSystemRunRepository(RunRepository, FileSystemBasedRepository):
 
     def example_outputs(
         self, run_id: str, output_type: type[Output]
-    ) -> Iterable[ExampleOutput[Output]]:
+    ) -> Iterable[ExampleOutput[Output] | ExampleOutput[FailedExampleRun]]:
         path = self._run_output_directory(run_id)
         if not self.exists(path):
             warnings.warn(

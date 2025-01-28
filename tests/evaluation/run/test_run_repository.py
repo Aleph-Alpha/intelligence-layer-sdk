@@ -7,7 +7,7 @@ from _pytest.fixtures import FixtureRequest
 from pydantic import BaseModel, ValidationError
 from pytest import fixture, mark
 
-from intelligence_layer.core import CompositeTracer, InMemoryTracer, utc_now
+from intelligence_layer.core import CompositeTracer, InMemoryTracer, Output, utc_now
 from intelligence_layer.evaluation import ExampleOutput, RunOverview, RunRepository
 from intelligence_layer.evaluation.run.domain import FailedExampleRun
 from intelligence_layer.evaluation.run.run_repository import RecoveryData
@@ -39,11 +39,21 @@ def run_overviews() -> Sequence[RunOverview]:
     return run_overviews
 
 
+def get_example_via_both_retrieval_methods(
+    run_repository: RunRepository,
+    run_id: str,
+    example_id: str,
+    output_type: type[Output],
+) -> Iterable[ExampleOutput[Output] | ExampleOutput[FailedExampleRun] | None]:
+    yield run_repository.example_output(run_id, example_id, output_type)
+    yield next(iter(run_repository.example_outputs(run_id, output_type)))
+
+
 @mark.parametrize(
     "repository_fixture",
     test_repository_fixtures,
 )
-def test_run_repository_stores_and_returns_example_output(
+def test_stores_and_returns_example_output(
     repository_fixture: str,
     request: FixtureRequest,
 ) -> None:
@@ -53,19 +63,17 @@ def test_run_repository_stores_and_returns_example_output(
     example_output = ExampleOutput(run_id=run_id, example_id=example_id, output=None)
 
     run_repository.store_example_output(example_output)
-    stored_example_output = run_repository.example_output(
-        run_id, example_id, type(None)
-    )
+    for stored_example_output in get_example_via_both_retrieval_methods(
+        run_repository, run_id, example_id, type(None)
+    ):
+        assert stored_example_output == example_output
 
-    assert stored_example_output == example_output
 
-
-@mark.skip("TODO: fix this for consistency")
 @mark.parametrize(
     "repository_fixture",
     test_repository_fixtures,
 )
-def test_run_repository_example_output_creating_with_dict_subtype_and_reading_with_actual_type_works(
+def test_example_output_creating_with_dict_subtype_and_reading_with_actual_type_works(
     repository_fixture: str,
     request: FixtureRequest,
 ) -> None:
@@ -81,18 +89,48 @@ def test_run_repository_example_output_creating_with_dict_subtype_and_reading_wi
     )
 
     run_repository.store_example_output(example_output)
-    stored_example_output = run_repository.example_output(run_id, example_id, TestClass)
-    assert stored_example_output is not None
-    assert type(stored_example_output.output) is TestClass
-    assert stored_example_output.output.data == "test-data"
+    for stored_example_output in get_example_via_both_retrieval_methods(
+        run_repository, run_id, example_id, TestClass
+    ):
+        assert stored_example_output is not None
+        assert type(stored_example_output.output) is TestClass
+        assert stored_example_output.output.data == "test-data"
 
 
-@mark.skip("TODO: fix this for consistency")
 @mark.parametrize(
     "repository_fixture",
     test_repository_fixtures,
 )
-def test_run_repository_example_output_does_not_work_with_incorrect_types(
+def test_example_output_can_retrieve_failed_examples(
+    repository_fixture: str,
+    request: FixtureRequest,
+) -> None:
+    class TestClass(BaseModel):
+        data: str
+
+    run_repository: RunRepository = request.getfixturevalue(repository_fixture)
+    run_id = "run-id"
+    example_id = "example-id"
+    data = FailedExampleRun(error_message="error")
+    example_output = ExampleOutput(
+        run_id=run_id,
+        example_id=example_id,
+        output=data,
+    )
+
+    run_repository.store_example_output(example_output)
+    for stored_example_output in get_example_via_both_retrieval_methods(
+        run_repository, run_id, example_id, TestClass
+    ):
+        assert stored_example_output is not None
+        assert stored_example_output.output == data
+
+
+@mark.parametrize(
+    "repository_fixture",
+    test_repository_fixtures,
+)
+def test_example_output_does_not_work_with_incorrect_types(
     repository_fixture: str,
     request: FixtureRequest,
 ) -> None:
@@ -104,6 +142,9 @@ def test_run_repository_example_output_does_not_work_with_incorrect_types(
     run_repository.store_example_output(example_output)
     with pytest.raises(ValidationError):
         run_repository.example_output(run_id, example_id, str)
+
+    with pytest.raises(ValidationError):
+        next(iter(run_repository.example_outputs(run_id, str)))
 
 
 @mark.parametrize(
@@ -233,7 +274,7 @@ def test_run_example_outputs_returns_sorted_run_example_outputs(
     "repository_fixture",
     test_repository_fixtures,
 )
-def test_run_repository_stores_and_returns_a_run_overview(
+def test_stores_and_returns_a_run_overview(
     repository_fixture: str, request: FixtureRequest, run_overview: RunOverview
 ) -> None:
     run_repository: RunRepository = request.getfixturevalue(repository_fixture)

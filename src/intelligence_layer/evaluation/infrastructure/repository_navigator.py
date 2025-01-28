@@ -21,19 +21,21 @@ from intelligence_layer.evaluation.evaluation.domain import (
 from intelligence_layer.evaluation.evaluation.evaluation_repository import (
     EvaluationRepository,
 )
-from intelligence_layer.evaluation.run.domain import ExampleOutput
+from intelligence_layer.evaluation.run.domain import ExampleOutput, FailedExampleRun
 from intelligence_layer.evaluation.run.run_repository import RunRepository
+
+EXAMPLE_OUTPUT_TYPE = ExampleOutput[Output] | ExampleOutput[FailedExampleRun]
 
 
 class RunLineage(Generic[Input, ExpectedOutput, Output]):
     example: Example[Input, ExpectedOutput]
-    output: ExampleOutput[Output]
+    output: EXAMPLE_OUTPUT_TYPE
     tracer: Optional[Tracer]
 
     def __init__(
         self,
         example: Example[Input, ExpectedOutput],
-        output: ExampleOutput[Output],
+        output: EXAMPLE_OUTPUT_TYPE,
         tracer: Optional[Tracer] = None,
     ) -> None:
         self.example = example
@@ -77,14 +79,14 @@ def run_lineages_to_pandas(
 
 class EvaluationLineage(Generic[Input, ExpectedOutput, Output, Evaluation]):
     example: Example[Input, ExpectedOutput]
-    outputs: Sequence[ExampleOutput[Output]]
+    outputs: Sequence[EXAMPLE_OUTPUT_TYPE]
     evaluation: ExampleEvaluation[Evaluation]
     tracers: Sequence[Optional[Tracer]]
 
     def __init__(
         self,
         example: Example[Input, ExpectedOutput],
-        outputs: Sequence[ExampleOutput[Output]],
+        outputs: Sequence[EXAMPLE_OUTPUT_TYPE],
         evaluation: ExampleEvaluation[Evaluation],
         tracers: Sequence[Optional[Tracer]],
     ) -> None:

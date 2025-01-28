@@ -121,7 +121,7 @@ class RunRepository(ABC):
     @abstractmethod
     def example_output(
         self, run_id: str, example_id: str, output_type: type[Output]
-    ) -> Optional[ExampleOutput[Output]]:
+    ) -> Optional[ExampleOutput[Output] | ExampleOutput[FailedExampleRun]]:
         """Returns :class:`ExampleOutput` for the given run ID and example ID.
 
         Args:
@@ -137,7 +137,7 @@ class RunRepository(ABC):
     @abstractmethod
     def example_outputs(
         self, run_id: str, output_type: type[Output]
-    ) -> Iterable[ExampleOutput[Output]]:
+    ) -> Iterable[ExampleOutput[Output] | ExampleOutput[FailedExampleRun]]:
         """Returns all :class:`ExampleOutput` for a given run ID sorted by their example ID.
 
         Args:
@@ -174,11 +174,11 @@ class RunRepository(ABC):
             :class:`Iterable` of :class:`ExampleOutput`s.
         """
         results = self.example_outputs(run_id, output_type)
-        return (r for r in results if not isinstance(r.output, FailedExampleRun))
+        return (r for r in results if not isinstance(r.output, FailedExampleRun))  # type: ignore
 
     def failed_example_outputs(
         self, run_id: str, output_type: type[Output]
-    ) -> Iterable[ExampleOutput[Output]]:
+    ) -> Iterable[ExampleOutput[FailedExampleRun]]:
         """Returns all :class:`ExampleOutput` for failed example runs with a given run-overview ID sorted by their example ID.
 
         Args:
@@ -189,7 +189,7 @@ class RunRepository(ABC):
             :class:`Iterable` of :class:`ExampleOutput`s.
         """
         results = self.example_outputs(run_id, output_type)
-        return (r for r in results if isinstance(r.output, FailedExampleRun))
+        return (r for r in results if isinstance(r.output, FailedExampleRun))  # type: ignore
 
     @abstractmethod
     def example_tracer(self, run_id: str, example_id: str) -> Optional[Tracer]:
