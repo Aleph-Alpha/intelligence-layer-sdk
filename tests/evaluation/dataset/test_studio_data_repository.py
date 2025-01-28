@@ -56,10 +56,10 @@ def assertExamplesAreEqual(
     first_it: Iterable[Example | StudioExample],
     second_it: Iterable[Example | StudioExample],
 ):
-    for first, it in zip(first_it, second_it, strict=True):
-        assert first.id == it.id
-        assert first.input == it.input
-        assert first.expected_output == it.expected_output
+    for first, second in zip(first_it, second_it, strict=True):
+        assert first.id == second.id
+        assert first.input == second.input
+        assert first.expected_output == second.expected_output
 
 
 def test_map_to_many_examples_works_properly(

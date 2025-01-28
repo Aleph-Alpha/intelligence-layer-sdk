@@ -42,7 +42,7 @@ class InMemoryDatasetRepository(DatasetRepository):
         if dataset.id in self._datasets_and_examples:
             if id:
                 raise ValueError(
-                    f"Cannot create dataset with given ID '{dataset.id}', already exists."
+                    f"Cannot create dataset - dataset with given ID '{dataset.id}' already exists."
                 )
             else:
                 raise ValueError(

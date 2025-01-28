@@ -71,29 +71,29 @@ class AggregationOverview(BaseModel, Generic[AggregatedEvaluation], frozen=True)
         if self.crashed_during_evaluation_count > 0:
             raise EvaluationFailed(self.id, self.crashed_during_evaluation_count)
 
-    # def __repr__(self) -> str:
-    #     return self.__str__()
+    def __repr__(self) -> str:
+        return self.__str__()
 
-    # def __str__(self) -> str:
-    #     res = (
-    #         f"Aggregation Overview ID = {self.id}\n"
-    #         f"Start time = {self.start}\n"
-    #         f"End time = {self.end}\n"
-    #         f"Successful example count = {self.successful_evaluation_count}\n"
-    #         f"Count of examples crashed during evaluation = {self.failed_evaluation_count}\n"
-    #         f'Description = "{self.description}"\n'
-    #         f"Labels = {self.labels}\n"
-    #         f"Metadata = {self.metadata}\n"
-    #     )
+    def __str__(self) -> str:
+        res = (
+            f"Aggregation Overview ID = {self.id}\n"
+            f"Start time = {self.start}\n"
+            f"End time = {self.end}\n"
+            f"Successful example count = {self.successful_evaluation_count}\n"
+            f"Count of examples crashed during evaluation = {self.failed_evaluation_count}\n"
+            f'Description = "{self.description}"\n'
+            f"Labels = {self.labels}\n"
+            f"Metadata = {self.metadata}\n"
+        )
 
-    #     res += f"IDs of aggregated Evaluation Overviews = {[evaluation_overview.id for evaluation_overview in self.evaluation_overviews]}\n"
-    #     res += f"IDs of aggregated Run Overviews = {self.run_ids}\n"
+        res += f"IDs of aggregated Evaluation Overviews = {[evaluation_overview.id for evaluation_overview in self.evaluation_overviews]}\n"
+        res += f"IDs of aggregated Run Overviews = {self.run_ids}\n"
 
-    #     res += "Statistics = {\n"
-    #     res += f"{self.statistics}\n"
-    #     res += "}\n"
+        res += "Statistics = {\n"
+        res += f"{self.statistics}\n"
+        res += "}\n"
 
-    #     return res
+        return res
 
-    # def __hash__(self) -> int:
-    #     return hash(self.id)
+    def __hash__(self) -> int:
+        return hash(self.id)

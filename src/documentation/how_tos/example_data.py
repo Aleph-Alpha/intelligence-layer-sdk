@@ -30,61 +30,16 @@ class DummyExample(Example[str, str]):
     data: str
 
 
-class DummyTask(Task[str, str]):
-    def do_run(self, input: str, task_span: TaskSpan) -> str:
-        return f"{input} -> output"
-
-
 class DummyEvaluation(BaseModel):
     eval: str
 
 
-class ComplexDummyInput(BaseModel):
-    input_data: dict[str, int]
+class DummyAggregation(BaseModel):
+    num_evaluations: int
 
 
-class ComplexDummyExpectedOutput(BaseModel):
-    expected_output: dict[str, int]
-
-
-class ComplexDummyOutput(BaseModel):
-    output: str
-    input: ComplexDummyInput
-
-
-class ComplexDummyExample(Example[ComplexDummyInput, ComplexDummyExpectedOutput]):
-    pass
-
-
-class ComplexDummyTask(Task[ComplexDummyInput, ComplexDummyOutput]):
-    def do_run(
-        self, input: ComplexDummyInput, task_span: TaskSpan
-    ) -> ComplexDummyOutput:
-        return ComplexDummyOutput(output="output", input=input)
-
-
-class ComplexDummyEvaluation(BaseModel):
-    input: ComplexDummyInput
-    expected: ComplexDummyExpectedOutput
-    output: ComplexDummyOutput
-
-
-class ComplexDummyAggregation(BaseModel):
-    evals: list[ComplexDummyEvaluation]
-
-
-EXAMPLE_1_INPUT = "input1"
-
-
-class DummyTaskCanFail(Task[str, str]):
-    def __init__(self) -> None:
-        super().__init__()
-        self._raise_exception = True
-
+class DummyTask(Task[str, str]):
     def do_run(self, input: str, task_span: TaskSpan) -> str:
-        if input == EXAMPLE_1_INPUT and self._raise_exception:
-            self._raise_exception = False
-            raise Exception("Some random failure in the system.")
         return f"{input} -> output"
 
 
@@ -96,6 +51,45 @@ class DummyEvaluationLogic(EvaluationLogic[str, str, str, DummyEvaluation]):
         return DummyEvaluation(
             eval=f"{example.input}, {example.expected_output}, {output_str} -> evaluation"
         )
+
+
+class DummyAggregationLogic(AggregationLogic[DummyEvaluation, DummyAggregation]):
+    def aggregate(self, evaluations: Iterable[DummyEvaluation]) -> DummyAggregation:
+        return DummyAggregation(num_evaluations=len(list(evaluations)))
+
+
+class ComplexDummyInput(BaseModel):
+    input_data: dict[str, int]
+
+
+class ComplexDummyExpectedOutput(BaseModel):
+    expected_output: dict[str, int]
+
+
+class ComplexDummyExample(Example[ComplexDummyInput, ComplexDummyExpectedOutput]):
+    pass
+
+
+class ComplexDummyOutput(BaseModel):
+    output: str
+    input: ComplexDummyInput
+
+
+class ComplexDummyEvaluation(BaseModel):
+    input: ComplexDummyInput
+    expected_output: ComplexDummyExpectedOutput
+    output: ComplexDummyOutput
+
+
+class ComplexDummyAggregation(BaseModel):
+    evals: list[ComplexDummyEvaluation]
+
+
+class ComplexDummyTask(Task[ComplexDummyInput, ComplexDummyOutput]):
+    def do_run(
+        self, input: ComplexDummyInput, task_span: TaskSpan
+    ) -> ComplexDummyOutput:
+        return ComplexDummyOutput(output="output", input=input)
 
 
 class ComplexDummyEvaluationLogic(
@@ -111,14 +105,32 @@ class ComplexDummyEvaluationLogic(
         example: Example[ComplexDummyInput, ComplexDummyExpectedOutput],
         output: ComplexDummyOutput,
     ) -> ComplexDummyEvaluation:
-        print(
-            example.input.input_data,
-            example.expected_output.expected_output,
-            output.output,
-        )
         return ComplexDummyEvaluation(
-            input=example.input, expected=example.expected_output, output=output
+            input=example.input, expected_output=example.expected_output, output=output
         )
+
+
+class ComplexDummyAggregationLogic(
+    AggregationLogic[ComplexDummyEvaluation, ComplexDummyAggregation]
+):
+    def aggregate(
+        self, evaluations: Iterable[ComplexDummyEvaluation]
+    ) -> ComplexDummyAggregation:
+        return ComplexDummyAggregation(evals=list(evaluations))
+
+
+class DummyTaskCanFail(Task[str, str]):
+    EXAMPLE_FAILURE_INPUT = "input1"
+
+    def __init__(self) -> None:
+        super().__init__()
+        self._raise_exception = True
+
+    def do_run(self, input: str, task_span: TaskSpan) -> str:
+        if input == self.EXAMPLE_FAILURE_INPUT and self._raise_exception:
+            self._raise_exception = False
+            raise Exception("Some random failure in the system.")
+        return f"{input} -> output"
 
 
 class DummyEloEvaluationLogic(EloEvaluationLogic[str, str, str]):
@@ -149,24 +161,6 @@ class DummyEloEvaluationLogic(EloEvaluationLogic[str, str, str]):
         )
 
 
-class DummyAggregation(BaseModel):
-    num_evaluations: int
-
-
-class DummyAggregationLogic(AggregationLogic[DummyEvaluation, DummyAggregation]):
-    def aggregate(self, evaluations: Iterable[DummyEvaluation]) -> DummyAggregation:
-        return DummyAggregation(num_evaluations=len(list(evaluations)))
-
-
-class ComplexDummyAggregationLogic(
-    AggregationLogic[ComplexDummyEvaluation, ComplexDummyAggregation]
-):
-    def aggregate(
-        self, evaluations: Iterable[ComplexDummyEvaluation]
-    ) -> ComplexDummyAggregation:
-        return ComplexDummyAggregation(evals=list(evaluations))
-
-
 class ExampleData:
     examples: Sequence[DummyExample]
     complex_examples: Sequence[ComplexDummyExample]
@@ -187,7 +181,9 @@ def example_data() -> ExampleData:
     examples = [
         DummyExample(input="input0", expected_output="expected_output0", data="data0"),
         DummyExample(
-            input=EXAMPLE_1_INPUT, expected_output="expected_output1", data="data1"
+            input=DummyTaskCanFail.EXAMPLE_FAILURE_INPUT,
+            expected_output="expected_output1",
+            data="data1",
         ),
     ]
     complex_examples = [
@@ -201,12 +197,6 @@ def example_data() -> ExampleData:
             input=ComplexDummyInput(input_data={"x": 10, "y": 20}),
             expected_output=ComplexDummyExpectedOutput(
                 expected_output={"p": 30, "q": 40}
-            ),
-        ),
-        ComplexDummyExample(
-            input=ComplexDummyInput(input_data={"foo": 100, "bar": 200}),
-            expected_output=ComplexDummyExpectedOutput(
-                expected_output={"baz": 300, "qux": 400}
             ),
         ),
     ]

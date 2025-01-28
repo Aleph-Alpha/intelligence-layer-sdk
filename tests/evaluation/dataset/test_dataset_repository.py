@@ -451,33 +451,17 @@ def assert_dataset_examples_works_with_type(
 
 
 @mark.parametrize("repository_fixture", test_repository_fixtures)
+@mark.parametrize(
+    "value, value_type", [(1, int), ("1", str), (None, type(None)), (False, bool)]
+)
 def test_retrieving_with_int_types_works(
     repository_fixture: str,
+    value: Any,
+    value_type: type,
     request: FixtureRequest,
 ) -> None:
-    value = 1
     dataset_repository: DatasetRepository = request.getfixturevalue(repository_fixture)
-    assert_dataset_examples_works_with_type(dataset_repository, value, int)
-
-
-@mark.parametrize("repository_fixture", test_repository_fixtures)
-def test_retrieving_with_str_types_works(
-    repository_fixture: str,
-    request: FixtureRequest,
-) -> None:
-    value = "1"
-    dataset_repository: DatasetRepository = request.getfixturevalue(repository_fixture)
-    assert_dataset_examples_works_with_type(dataset_repository, value, str)
-
-
-@mark.parametrize("repository_fixture", test_repository_fixtures)
-def test_retrieving_with_none_types_works(
-    repository_fixture: str,
-    request: FixtureRequest,
-) -> None:
-    value = None
-    dataset_repository: DatasetRepository = request.getfixturevalue(repository_fixture)
-    assert_dataset_examples_works_with_type(dataset_repository, value, None)
+    assert_dataset_examples_works_with_type(dataset_repository, value, value_type)
 
 
 @mark.parametrize("repository_fixture", test_repository_fixtures)
@@ -521,23 +505,3 @@ def test_retrieving_with_wrong_types_gives_error(
     )
     with pytest.raises(ValidationError):
         next(iter(dataset_repository.examples(dataset.id, int, int)))
-
-
-@mark.parametrize("repository_fixture", test_repository_fixtures)
-def test_retrieving_with_none_always_works(
-    repository_fixture: str,
-    request: FixtureRequest,
-) -> None:
-    none_example = Example(
-        input=None,
-        expected_output=None,
-        metadata=None,
-    )
-    dataset_repository: DatasetRepository = request.getfixturevalue(repository_fixture)
-    dataset = dataset_repository.create_dataset(
-        examples=[none_example], dataset_name="test-dataset"
-    )
-    new_example: Example[None, None] = next(
-        iter(dataset_repository.examples(dataset.id, None, None))  # type: ignore
-    )
-    assert new_example.input is None
