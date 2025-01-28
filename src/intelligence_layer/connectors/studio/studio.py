@@ -288,7 +288,7 @@ class StudioClient:
 
     def create_project(
         self,
-        project_name: str,
+        project: str,
         description: Optional[str] = None,
         reuse_existing: bool = False,
     ) -> str:
@@ -297,7 +297,7 @@ class StudioClient:
         Projects are uniquely identified by the user provided name.
 
         Args:
-            project_name: User provided name of the project.
+            project: User provided name of the project.
             description: Description explaining the usage of the project. Defaults to None.
             reuse_existing: Reuse project with specified name if already existing. Defaults to False.
 
@@ -306,7 +306,7 @@ class StudioClient:
             The ID of the newly created project.
         """
         url = urljoin(self.url, "/api/projects")
-        data = StudioProject(name=project_name, description=description)
+        data = StudioProject(name=project, description=description)
         response = requests.post(
             url,
             data=data.model_dump_json(),
@@ -315,7 +315,7 @@ class StudioClient:
         match response.status_code:
             case 409:
                 if reuse_existing:
-                    fetched_project = self._get_project(project_name)
+                    fetched_project = self._get_project(project)
                     assert (
                         fetched_project is not None
                     ), "Project already exists but not allowed to be used."
