@@ -6,8 +6,7 @@ import pandas as pd
 import rich
 from rich.tree import Tree
 
-from intelligence_layer.core import Tracer
-from intelligence_layer.core.task import Input, Output
+from intelligence_layer.core import Input, Output, Tracer
 from intelligence_layer.evaluation.aggregation.domain import (
     AggregatedEvaluation,
     AggregationOverview,
@@ -17,6 +16,7 @@ from intelligence_layer.evaluation.dataset.domain import Example, ExpectedOutput
 from intelligence_layer.evaluation.evaluation.domain import (
     Evaluation,
     ExampleEvaluation,
+    FailedExampleEvaluation,
 )
 from intelligence_layer.evaluation.evaluation.evaluation_repository import (
     EvaluationRepository,
@@ -77,17 +77,22 @@ def run_lineages_to_pandas(
     return df
 
 
+EXAMPLE_EVAL_TYPE = (
+    ExampleEvaluation[Evaluation] | ExampleEvaluation[FailedExampleEvaluation]
+)
+
+
 class EvaluationLineage(Generic[Input, ExpectedOutput, Output, Evaluation]):
     example: Example[Input, ExpectedOutput]
     outputs: Sequence[EXAMPLE_OUTPUT_TYPE]
-    evaluation: ExampleEvaluation[Evaluation]
+    evaluation: EXAMPLE_EVAL_TYPE
     tracers: Sequence[Optional[Tracer]]
 
     def __init__(
         self,
         example: Example[Input, ExpectedOutput],
         outputs: Sequence[EXAMPLE_OUTPUT_TYPE],
-        evaluation: ExampleEvaluation[Evaluation],
+        evaluation: EXAMPLE_EVAL_TYPE,
         tracers: Sequence[Optional[Tracer]],
     ) -> None:
         self.example = example

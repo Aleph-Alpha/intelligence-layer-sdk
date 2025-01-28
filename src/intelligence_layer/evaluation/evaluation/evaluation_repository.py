@@ -42,7 +42,7 @@ class SerializedExampleEvaluation(BaseModel):
 
     def to_example_result(
         self, evaluation_type: type[Evaluation]
-    ) -> ExampleEvaluation[Evaluation]:
+    ) -> ExampleEvaluation[Evaluation] | ExampleEvaluation[FailedExampleEvaluation]:
         if self.is_exception:
             return ExampleEvaluation(
                 evaluation_id=self.evaluation_id,
@@ -134,7 +134,9 @@ class EvaluationRepository(ABC):
     @abstractmethod
     def example_evaluation(
         self, evaluation_id: str, example_id: str, evaluation_type: type[Evaluation]
-    ) -> Optional[ExampleEvaluation[Evaluation]]:
+    ) -> Optional[
+        ExampleEvaluation[Evaluation] | ExampleEvaluation[FailedExampleEvaluation]
+    ]:
         """Returns an :class:`ExampleEvaluation` for the given evaluation overview ID and example ID.
 
         Args:
@@ -151,7 +153,9 @@ class EvaluationRepository(ABC):
     @abstractmethod
     def example_evaluations(
         self, evaluation_id: str, evaluation_type: type[Evaluation]
-    ) -> Sequence[ExampleEvaluation[Evaluation]]:
+    ) -> Sequence[
+        ExampleEvaluation[Evaluation] | ExampleEvaluation[FailedExampleEvaluation]
+    ]:
         """Returns all :class:`ExampleEvaluation`s for the given evaluation overview ID sorted by their example ID.
 
         Args:
@@ -178,11 +182,11 @@ class EvaluationRepository(ABC):
             A :class:`Sequence` of successful :class:`ExampleEvaluation`s.
         """
         results = self.example_evaluations(evaluation_id, evaluation_type)
-        return [r for r in results if not isinstance(r.result, FailedExampleEvaluation)]
+        return [r for r in results if not isinstance(r.result, FailedExampleEvaluation)]  # type: ignore
 
     def failed_example_evaluations(
         self, evaluation_id: str, evaluation_type: type[Evaluation]
-    ) -> Sequence[ExampleEvaluation[Evaluation]]:
+    ) -> Sequence[ExampleEvaluation[FailedExampleEvaluation]]:
         """Returns all failed :class:`ExampleEvaluation`s for the given evaluation overview ID sorted by their example ID.
 
         Args:
@@ -194,4 +198,4 @@ class EvaluationRepository(ABC):
             A :class:`Sequence` of failed :class:`ExampleEvaluation`s.
         """
         results = self.example_evaluations(evaluation_id, evaluation_type)
-        return [r for r in results if isinstance(r.result, FailedExampleEvaluation)]
+        return [r for r in results if isinstance(r.result, FailedExampleEvaluation)]  # type: ignore

@@ -1,6 +1,6 @@
 from collections import defaultdict
 from collections.abc import Sequence
-from typing import Optional, cast
+from typing import Optional
 
 from pydantic import BaseModel
 
@@ -8,6 +8,7 @@ from intelligence_layer.evaluation.evaluation.domain import (
     Evaluation,
     EvaluationOverview,
     ExampleEvaluation,
+    FailedExampleEvaluation,
     PartialEvaluationOverview,
 )
 from intelligence_layer.evaluation.evaluation.evaluation_repository import (
@@ -46,23 +47,45 @@ class InMemoryEvaluationRepository(EvaluationRepository):
     ) -> None:
         self._example_evaluations[evaluation.evaluation_id].append(evaluation)
 
+    def _generate_evaluation_from_internal_evaluation(
+        self,
+        internal_evaluation: ExampleEvaluation[BaseModel],
+        evaluation_type: type[Evaluation],
+    ) -> ExampleEvaluation[Evaluation] | ExampleEvaluation[FailedExampleEvaluation]:
+        if (
+            type(internal_evaluation.result) is evaluation_type
+            or type(internal_evaluation.result) is FailedExampleEvaluation
+        ):
+            return internal_evaluation  # type: ignore
+        return ExampleEvaluation[Evaluation](
+            evaluation_id=internal_evaluation.evaluation_id,
+            example_id=internal_evaluation.example_id,
+            result=evaluation_type.model_validate(internal_evaluation.result),
+        )
+
     def example_evaluation(
         self, evaluation_id: str, example_id: str, evaluation_type: type[Evaluation]
-    ) -> Optional[ExampleEvaluation[Evaluation]]:
+    ) -> Optional[
+        ExampleEvaluation[Evaluation] | ExampleEvaluation[FailedExampleEvaluation]
+    ]:
         results = self.example_evaluations(evaluation_id, evaluation_type)
         filtered = (result for result in results if result.example_id == example_id)
         return next(filtered, None)
 
     def example_evaluations(
         self, evaluation_id: str, evaluation_type: type[Evaluation]
-    ) -> Sequence[ExampleEvaluation[Evaluation]]:
+    ) -> Sequence[
+        ExampleEvaluation[Evaluation] | ExampleEvaluation[FailedExampleEvaluation]
+    ]:
         if evaluation_id not in self._example_evaluations:
             raise ValueError(
                 f"Repository does not contain an evaluation with id: {evaluation_id}"
             )
 
         example_evaluations = [
-            cast(ExampleEvaluation[Evaluation], example_evaluation)
+            self._generate_evaluation_from_internal_evaluation(
+                example_evaluation, evaluation_type
+            )
             for example_evaluation in self._example_evaluations[evaluation_id]
         ]
         return sorted(example_evaluations, key=lambda i: i.example_id)

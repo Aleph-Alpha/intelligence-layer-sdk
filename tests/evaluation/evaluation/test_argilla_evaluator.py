@@ -339,7 +339,7 @@ def test_argilla_evaluator_can_submit_evals_to_argilla(
     assert (
         len(
             async_in_memory_evaluation_repository.example_evaluations(
-                eval_overview.id, DummyStringOutput
+                eval_overview.id, DummyStringEvaluation
             )
         )
         == 1

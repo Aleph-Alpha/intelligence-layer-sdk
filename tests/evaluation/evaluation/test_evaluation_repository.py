@@ -4,11 +4,12 @@ from uuid import uuid4
 
 import pytest
 from _pytest.fixtures import FixtureRequest
-from pydantic import ValidationError
+from pydantic import BaseModel, ValidationError
 from pytest import fixture, mark
 
 from intelligence_layer.core import utc_now
 from intelligence_layer.evaluation import (
+    Evaluation,
     EvaluationOverview,
     EvaluationRepository,
     ExampleEvaluation,
@@ -78,6 +79,18 @@ def evaluation_overviews(run_overview: RunOverview) -> Iterable[EvaluationOvervi
     return evaluation_overviews
 
 
+def get_example_via_both_retrieval_methods(
+    evaluation_repository: EvaluationRepository,
+    run_id: str,
+    example_id: str,
+    output_type: type[Evaluation],
+) -> Iterable[
+    ExampleEvaluation[Evaluation] | ExampleEvaluation[FailedExampleEvaluation] | None
+]:
+    yield evaluation_repository.example_evaluation(run_id, example_id, output_type)
+    yield next(iter(evaluation_repository.example_evaluations(run_id, output_type)))
+
+
 @mark.parametrize(
     "repository_fixture",
     test_repository_fixtures,
@@ -122,6 +135,29 @@ def test_evaluation_overview_ids_returns_all_sorted_ids(
     "repository_fixture",
     test_repository_fixtures,
 )
+def test_evaluation_repository_stores_and_returns_an_example_evaluation(
+    repository_fixture: str,
+    request: FixtureRequest,
+    successful_example_evaluation: ExampleEvaluation[DummyEvaluation],
+) -> None:
+    evaluation_repository: EvaluationRepository = request.getfixturevalue(
+        repository_fixture
+    )
+
+    evaluation_repository.store_example_evaluation(successful_example_evaluation)
+    for example_evaluation in get_example_via_both_retrieval_methods(
+        evaluation_repository,
+        successful_example_evaluation.evaluation_id,
+        successful_example_evaluation.example_id,
+        DummyEvaluation,
+    ):
+        assert example_evaluation == successful_example_evaluation
+
+
+@mark.parametrize(
+    "repository_fixture",
+    test_repository_fixtures,
+)
 def test_example_evaluation_returns_none_if_example_id_does_not_exist(
     repository_fixture: str,
     request: FixtureRequest,
@@ -141,7 +177,6 @@ def test_example_evaluation_returns_none_if_example_id_does_not_exist(
     assert stored_example_evaluation is None
 
 
-@mark.skip("TODO: fix this for consistency")
 @mark.parametrize(
     "repository_fixture",
     test_repository_fixtures,
@@ -151,6 +186,9 @@ def test_example_evaluation_does_not_work_with_incorrect_types(
     request: FixtureRequest,
     successful_example_evaluation: ExampleEvaluation[DummyEvaluation],
 ) -> None:
+    class InvalidType(BaseModel):
+        data: str
+
     evaluation_repository: EvaluationRepository = request.getfixturevalue(
         repository_fixture
     )
@@ -159,8 +197,14 @@ def test_example_evaluation_does_not_work_with_incorrect_types(
     with pytest.raises(ValidationError):
         evaluation_repository.example_evaluation(
             successful_example_evaluation.evaluation_id,
-            "not-existing-example-id",
-            str,  # type: ignore
+            successful_example_evaluation.example_id,
+            InvalidType,
+        )
+
+    with pytest.raises(ValidationError):
+        evaluation_repository.example_evaluations(
+            successful_example_evaluation.evaluation_id,
+            InvalidType,
         )
 
 
@@ -190,29 +234,11 @@ def test_example_evaluation_throws_if_evaluation_id_does_not_exist(
             "not-existing-example-id",
             DummyEvaluation,
         )
-
-
-@mark.parametrize(
-    "repository_fixture",
-    test_repository_fixtures,
-)
-def test_evaluation_repository_stores_and_returns_an_example_evaluation(
-    repository_fixture: str,
-    request: FixtureRequest,
-    successful_example_evaluation: ExampleEvaluation[DummyEvaluation],
-) -> None:
-    evaluation_repository: EvaluationRepository = request.getfixturevalue(
-        repository_fixture
-    )
-
-    evaluation_repository.store_example_evaluation(successful_example_evaluation)
-    example_evaluation = evaluation_repository.example_evaluation(
-        successful_example_evaluation.evaluation_id,
-        successful_example_evaluation.example_id,
-        DummyEvaluation,
-    )
-
-    assert example_evaluation == successful_example_evaluation
+    with pytest.raises(ValueError):
+        evaluation_repository.example_evaluations(
+            "not-existing-eval-id",
+            DummyEvaluation,
+        )
 
 
 @mark.parametrize(
@@ -236,30 +262,13 @@ def test_evaluation_repository_stores_and_returns_a_failed_example_evaluation(
     )
 
     evaluation_repository.store_example_evaluation(failed_example_evaluation)
-    example_evaluation = evaluation_repository.example_evaluation(
+    for example_evaluation in get_example_via_both_retrieval_methods(
+        evaluation_repository,
         evaluation_id,
         failed_example_evaluation.example_id,
         FailedExampleEvaluation,
-    )
-
-    assert example_evaluation == failed_example_evaluation
-
-
-@mark.parametrize(
-    "repository_fixture",
-    test_repository_fixtures,
-)
-def test_example_evaluations_returns_an_error_for_not_existing_evaluation_id(
-    repository_fixture: str,
-    request: FixtureRequest,
-) -> None:
-    evaluation_repository: EvaluationRepository = request.getfixturevalue(
-        repository_fixture
-    )
-    with pytest.raises(ValueError):
-        evaluation_repository.example_evaluations(
-            "not-existing-evaluation-id", DummyEvaluation
-        )
+    ):
+        assert example_evaluation == failed_example_evaluation
 
 
 @mark.parametrize(
