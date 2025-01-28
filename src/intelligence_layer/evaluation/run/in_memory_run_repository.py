@@ -1,11 +1,17 @@
 import warnings
 from collections import defaultdict
 from collections.abc import Iterable, Sequence
-from typing import Optional, cast
+from typing import Any, Optional, cast
+
+from pydantic import TypeAdapter
 
 from intelligence_layer.core import InMemoryTracer, Output, PydanticSerializable
 from intelligence_layer.core.tracer.tracer import Tracer
-from intelligence_layer.evaluation.run.domain import ExampleOutput, RunOverview
+from intelligence_layer.evaluation.run.domain import (
+    ExampleOutput,
+    FailedExampleRun,
+    RunOverview,
+)
 from intelligence_layer.evaluation.run.run_repository import RecoveryData, RunRepository
 
 
@@ -50,9 +56,32 @@ class InMemoryRunRepository(RunRepository):
             cast(ExampleOutput[PydanticSerializable], example_output)
         )
 
+    @staticmethod
+    def _convert_to_type(data: Any, desired_type: type[Output]) -> Output:
+        if type(data) is desired_type:
+            return data
+        else:
+            return TypeAdapter(desired_type).validate_python(data)
+
+    def _generate_output_from_internal_output(
+        self,
+        internal_output: ExampleOutput[PydanticSerializable],
+        output_type: type[Output],
+    ) -> ExampleOutput[Output] | ExampleOutput[FailedExampleRun]:
+        if (
+            type(internal_output.output) is output_type
+            or type(internal_output.output) is FailedExampleRun
+        ):
+            return internal_output  # type: ignore
+        return ExampleOutput[Output](
+            run_id=internal_output.run_id,
+            example_id=internal_output.example_id,
+            output=self._convert_to_type(internal_output.output, output_type),
+        )
+
     def example_output(
         self, run_id: str, example_id: str, output_type: type[Output]
-    ) -> Optional[ExampleOutput[Output]]:
+    ) -> Optional[ExampleOutput[Output] | ExampleOutput[FailedExampleRun]]:
         if run_id not in self._example_outputs:
             warnings.warn(
                 f'Repository does not contain a run with id: "{run_id}"', UserWarning
@@ -61,12 +90,14 @@ class InMemoryRunRepository(RunRepository):
 
         for example_output in self._example_outputs[run_id]:
             if example_output.example_id == example_id:
-                return cast(ExampleOutput[Output], example_output)
+                return self._generate_output_from_internal_output(
+                    example_output, output_type
+                )
         return None
 
     def example_outputs(
         self, run_id: str, output_type: type[Output]
-    ) -> Iterable[ExampleOutput[Output]]:
+    ) -> Iterable[ExampleOutput[Output] | ExampleOutput[FailedExampleRun]]:
         if run_id not in self._example_outputs and run_id not in self._run_overviews:
             warnings.warn(
                 f'Repository does not contain a run with id: "{run_id}"', UserWarning
@@ -74,7 +105,7 @@ class InMemoryRunRepository(RunRepository):
             return []
 
         return (
-            cast(ExampleOutput[Output], example_output)
+            self._generate_output_from_internal_output(example_output, output_type)
             for example_output in sorted(
                 self._example_outputs[run_id],
                 key=lambda example_output: example_output.example_id,
