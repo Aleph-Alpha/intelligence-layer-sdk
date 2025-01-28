@@ -11,6 +11,12 @@
 
 ### Deprecations
 ...
+### Breaking Changes
+ - `StudioClient` now handles project_id as a string instead of an integer. This is only relevant when you handle project ids (not names) manually.
+ - `InMemoryDatasetRepository` now returns the exact types given by users when retrieving `Example`. Previously, it disregarded the types it was given and returned what was saved.
+   -  This is in line with how the other repositories work.
+ - `EloQaEvaluationLogic` now has an expected output type of `None` instead of `SingleChunkQaOutput`. The information was unused.
+   - If you have pipelines that define data to be processed by this logic OR if you subclass from this specific logic, you may need to adapt it.
 
 ### Breaking Changes
 -  `InMemoryDatasetRepository`, `InMemoryRunRepository`, `InMemoryEvaluationRepository`, and `InMemoryAggregationRepository` now either return the exact types given by users when retrieving example-related data or fail. Specifically, this means that passing the wrong type when retrieving data will now fail with a `ValidationError`. Previously, the repositories disregarded the types they were given and returned whatever object was saved.
