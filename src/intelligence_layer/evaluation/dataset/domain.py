@@ -43,7 +43,7 @@ class Example(BaseModel, Generic[Input, ExpectedOutput]):
         return (
             f"Example ID = {self.id}\n"
             f"Input = {self.input}\n"
-            f'Expected output = "{self.expected_output}"\n'
+            f"Expected output = {self.expected_output}\n"
             f"Metadata = {self.metadata}\n"
         )
 

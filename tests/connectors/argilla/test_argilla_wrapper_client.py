@@ -398,66 +398,11 @@ def test_client_can_load_existing_dataset(
     assert created_dataset_id == ensured_dataset_id
 
 
-# eval data from https://docs.argilla.io/en/latest/practical_guides/create_update_dataset/suggestions_and_responses.html#format-responses
-@pytest.mark.docker
-@pytest.mark.parametrize(
-    ("question", "eval_data"),
-    [
-        (rg.TextQuestion(name="text"), {"text": "some text"}),
-        (
-            rg.LabelQuestion(
-                name="label",
-                labels={"YES": "Shown Yes", "NO": "Shown No"},
-                visible_labels=None,
-            ),
-            {"label": "YES"},
-        ),
-        (
-            rg.MultiLabelQuestion(
-                name="multilabel",
-                labels={"a": "Shown A", "b": "Shown B"},
-                visible_labels=None,
-            ),
-            {"multilabel": ["a", "b"]},
-        ),
-        # (
-        #     rg.RankingQuestion(name="rank", values=["reply 1", "reply 2"]),
-        #     {
-        #         "rank": [
-        #            "reply 2",
-        #            "reply 1"
-        #         ]
-        #     },
-        # ),
-        (
-            rg.RatingQuestion(name="rating", values=[1, 3, 5]),
-            {"rating": 3},
-        ),
-        (
-            rg.SpanQuestion(
-                name="test",
-                field="field",
-                labels=["a", "b", "c"],
-                allow_overlapping=False,
-                visible_labels=None,
-            ),
-            {
-                "test": [
-                    {
-                        "start": 0,
-                        "end": 3,
-                        "label": "a",
-                    }
-                ]
-            },
-        ),
-    ],
-)
-def test_works_with_all_question_types(
+def assert_question_works(
     argilla_client: ArgillaWrapperClient,
     workspace_name: str,
     question: Any,
-    eval_data: dict[str, Any],
+    question_data: dict[str, Any],
 ) -> None:
     # given
     fields = [
@@ -477,9 +422,91 @@ def test_works_with_all_question_types(
     )
     record = next(iter(argilla_client.records(dataset_id)))
     argilla_client._create_evaluation(
-        dataset_id=dataset_id, record_id=record.id, data=eval_data
+        dataset_id=dataset_id, record_id=record.id, data=question_data
     )
     results = list(argilla_client.evaluations(dataset_id=dataset_id))
     # then
 
     assert len(results) == 1
+
+
+def test_text_question_works(
+    argilla_client: ArgillaWrapperClient,
+    workspace_name: str,
+):
+    assert_question_works(
+        argilla_client,
+        workspace_name,
+        rg.TextQuestion(name="text"),
+        {"text": "some text"},
+    )
+
+
+def test_label_question_works(
+    argilla_client: ArgillaWrapperClient,
+    workspace_name: str,
+):
+    assert_question_works(
+        argilla_client,
+        workspace_name,
+        rg.LabelQuestion(
+            name="label",
+            labels={"YES": "Shown Yes", "NO": "Shown No"},
+            visible_labels=None,
+        ),
+        {"label": "YES"},
+    )
+
+
+def test_multi_label_question_works(
+    argilla_client: ArgillaWrapperClient,
+    workspace_name: str,
+):
+    assert_question_works(
+        argilla_client,
+        workspace_name,
+        rg.MultiLabelQuestion(
+            name="multilabel",
+            labels={"a": "Shown A", "b": "Shown B"},
+            visible_labels=None,
+        ),
+        {"multilabel": ["a", "b"]},
+    )
+
+
+def test_rating_question_works(
+    argilla_client: ArgillaWrapperClient,
+    workspace_name: str,
+):
+    assert_question_works(
+        argilla_client,
+        workspace_name,
+        rg.RatingQuestion(name="rating", values=[1, 3, 5]),
+        {"rating": 3},
+    )
+
+
+def test_span_question_works(
+    argilla_client: ArgillaWrapperClient,
+    workspace_name: str,
+):
+    assert_question_works(
+        argilla_client,
+        workspace_name,
+        rg.SpanQuestion(
+            name="test",
+            field="field",
+            labels=["a", "b", "c"],
+            allow_overlapping=False,
+            visible_labels=None,
+        ),
+        {
+            "test": [
+                {
+                    "start": 0,
+                    "end": 3,
+                    "label": "a",
+                }
+            ]
+        },
+    )

@@ -13,6 +13,7 @@ from intelligence_layer.evaluation.dataset.in_memory_dataset_repository import (
 from intelligence_layer.evaluation.dataset.studio_dataset_repository import (
     StudioDatasetRepository,
 )
+from tests.connectors.studio.conftest import PydanticType
 
 
 @fixture
@@ -37,7 +38,7 @@ def with_uploaded_dataset(
 
 def test_can_upload_dataset_with_minimal_request_body(
     studio_client: StudioClient,
-    examples: Sequence[Example[str, str]],
+    examples: Sequence[Example],
 ) -> None:
     dataset_repo = InMemoryDatasetRepository()
     dataset = dataset_repo.create_dataset(examples, "my_dataset")
@@ -54,7 +55,7 @@ def test_can_upload_dataset_with_minimal_request_body(
 
 def test_can_upload_dataset_with_complete_request_body(
     studio_client: StudioClient,
-    examples: Sequence[Example[str, str]],
+    examples: Sequence[Example[PydanticType, PydanticType]],
     labels: set[str],
     metadata: dict[str, Any],
 ) -> None:
@@ -74,18 +75,21 @@ def test_can_upload_dataset_with_complete_request_body(
 
 def test_get_many_dataset_examples(
     studio_client: StudioClient,
-    many_examples: Iterable[Example[str, str]],
+    many_examples: Iterable[Example[PydanticType, PydanticType]],
     with_uploaded_dataset: StudioDataset,
 ) -> None:
-    received_examples = StudioDatasetRepository.map_to_many_example(
-        studio_client.get_dataset_examples(
-            with_uploaded_dataset.id, input_type=str, expected_output_type=str
-        )
+    received_examples = studio_client.get_dataset_examples(
+        with_uploaded_dataset.id,
+        input_type=PydanticType,
+        expected_output_type=PydanticType,
     )
 
     for received_example, given_example in zip(
         received_examples, many_examples, strict=True
     ):
-        assert received_example.id == given_example.id
-        assert received_example.input == given_example.input
-        assert received_example.expected_output == given_example.expected_output
+        # These models appear equal, but somehow are not -> we need to check the specific values, not the models
+        assert received_example.model_dump() == given_example.model_dump()
+        assert received_example.input.data == given_example.input.data
+        assert (
+            received_example.expected_output.data == given_example.expected_output.data
+        )

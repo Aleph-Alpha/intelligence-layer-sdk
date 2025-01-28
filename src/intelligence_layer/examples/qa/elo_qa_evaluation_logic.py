@@ -22,7 +22,7 @@ from intelligence_layer.examples.qa.single_chunk_qa import (
 
 
 class EloQaEvaluationLogic(
-    EloEvaluationLogic[SingleChunkQaInput, SingleChunkQaOutput, SingleChunkQaOutput]
+    EloEvaluationLogic[SingleChunkQaInput, SingleChunkQaOutput, None]
 ):
     INPUT_TEMPLATE = """
 Your task is to compare two answers to an instruction on one metric.
@@ -61,7 +61,7 @@ Response: Answer """
         self,
         first: SuccessfulExampleOutput[SingleChunkQaOutput],
         second: SuccessfulExampleOutput[SingleChunkQaOutput],
-        example: Example[SingleChunkQaInput, SingleChunkQaOutput],
+        example: Example[SingleChunkQaInput, None],
     ) -> MatchOutcome:
         grading_input = self._create_grading_input(first, second, example)
 
@@ -78,7 +78,7 @@ Response: Answer """
     def _create_grading_input(
         first: SuccessfulExampleOutput[SingleChunkQaOutput],
         second: SuccessfulExampleOutput[SingleChunkQaOutput],
-        example: Example[SingleChunkQaInput, SingleChunkQaOutput],
+        example: Example[SingleChunkQaInput, None],
     ) -> EloGradingInput:
         qa_instruction = Template(
             QA_INSTRUCTIONS[Language("en")].unformatted_instruction

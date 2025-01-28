@@ -2,8 +2,10 @@ from collections.abc import Iterable
 from unittest.mock import patch
 from uuid import uuid4
 
+import pytest
 from _pytest.fixtures import FixtureRequest
 from fsspec.implementations.memory import MemoryFileSystem  # type: ignore
+from pydantic import ValidationError
 from pytest import fixture, mark
 
 from intelligence_layer.core import utc_now
@@ -88,6 +90,25 @@ def test_aggregation_repository_stores_and_returns_an_aggregation_overview(
     )
 
     assert stored_aggregation_overview == aggregation_overview
+
+
+@mark.skip("TODO: fix this for consistency between repositories")
+@mark.parametrize(
+    "repository_fixture",
+    test_repository_fixtures,
+)
+def test_aggregation_repository_aggregation_overview_does_not_work_with_incorrect_types(
+    repository_fixture: str,
+    request: FixtureRequest,
+    aggregation_overview: AggregationOverview[DummyAggregatedEvaluation],
+) -> None:
+    aggregation_repository: AggregationRepository = request.getfixturevalue(
+        repository_fixture
+    )
+
+    aggregation_repository.store_aggregation_overview(aggregation_overview)
+    with pytest.raises(ValidationError):
+        aggregation_repository.aggregation_overview(aggregation_overview.id, str)  # type: ignore
 
 
 @mark.parametrize(

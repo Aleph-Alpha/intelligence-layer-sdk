@@ -2,11 +2,10 @@ from collections.abc import Iterable
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from inspect import get_annotations
 from itertools import islice
-from typing import Generic, Optional, cast
+from typing import Any, Generic, Optional, cast
 from uuid import uuid4
 
 from dict_hash import dict_hash
-from pydantic import JsonValue
 from tqdm import tqdm
 
 from intelligence_layer.connectors.base.json_serializable import (
@@ -134,7 +133,7 @@ class Runner(Generic[Input, Output]):
         examples = self._dataset_repository.examples(
             dataset_id,
             self.input_type(),
-            JsonValue,  # type: ignore
+            Any,  # type: ignore
             examples_to_skip=finished_examples,
         )
         if examples is None:

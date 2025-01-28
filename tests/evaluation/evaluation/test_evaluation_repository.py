@@ -4,6 +4,7 @@ from uuid import uuid4
 
 import pytest
 from _pytest.fixtures import FixtureRequest
+from pydantic import ValidationError
 from pytest import fixture, mark
 
 from intelligence_layer.core import utc_now
@@ -138,6 +139,29 @@ def test_example_evaluation_returns_none_if_example_id_does_not_exist(
     )
 
     assert stored_example_evaluation is None
+
+
+@mark.skip("TODO: fix this for consistency")
+@mark.parametrize(
+    "repository_fixture",
+    test_repository_fixtures,
+)
+def test_example_evaluation_does_not_work_with_incorrect_types(
+    repository_fixture: str,
+    request: FixtureRequest,
+    successful_example_evaluation: ExampleEvaluation[DummyEvaluation],
+) -> None:
+    evaluation_repository: EvaluationRepository = request.getfixturevalue(
+        repository_fixture
+    )
+    evaluation_repository.store_example_evaluation(successful_example_evaluation)
+
+    with pytest.raises(ValidationError):
+        evaluation_repository.example_evaluation(
+            successful_example_evaluation.evaluation_id,
+            "not-existing-example-id",
+            str,  # type: ignore
+        )
 
 
 @mark.parametrize(

@@ -3,6 +3,7 @@ from unittest.mock import Mock
 from uuid import uuid4
 
 from dotenv import load_dotenv
+from pydantic import BaseModel
 from pytest import fixture
 
 from intelligence_layer.connectors.studio.studio import StudioClient, StudioExample
@@ -22,19 +23,26 @@ def mock_studio_client() -> Mock:
     return Mock(spec=StudioClient)
 
 
+class PydanticType(BaseModel):
+    data: int
+
+
 @fixture
-def examples() -> Sequence[StudioExample[str, str]]:
+def examples() -> Sequence[StudioExample[PydanticType, PydanticType]]:
     return [
-        StudioExample(input="input_str", expected_output="output_str"),
-        StudioExample(input="input_str2", expected_output="output_str2"),
+        StudioExample[PydanticType, PydanticType](
+            input=PydanticType(data=i), expected_output=PydanticType(data=i)
+        )
+        for i in range(2)
     ]
 
 
 @fixture
-def many_examples() -> Sequence[StudioExample[str, str]]:
-    examples = []
-    for i in range(201):
-        examples.append(
-            StudioExample(input=f"input_str_{i}", expected_output=f"output_str_{i}")
+def many_examples() -> Sequence[StudioExample[PydanticType, PydanticType]]:
+    examples = [
+        StudioExample[PydanticType, PydanticType](
+            input=PydanticType(data=i), expected_output=PydanticType(data=i)
         )
+        for i in range(201)
+    ]
     return examples

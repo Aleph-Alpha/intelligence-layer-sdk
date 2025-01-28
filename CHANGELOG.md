@@ -5,10 +5,15 @@
 ### Features
 ...
 ### Fixes
-...
+ - `InMemoryDatasetRepository` now has a more descriptive error message when creating a dataset fails because of an ID clash
+ - `StudioClient` now deserializes and serializes examples while maintaining type information, which was previously dropped.
 ### Deprecations
 ...
 ### Breaking Changes
+ - `InMemoryDatasetRepository` now returns the exact types given by users when retrieving `Example`. Previously, it disregarded the types it was given and returned what was saved.
+   -  This is in line with how the other repositories work.
+ - `EloQaEvaluationLogic` now has an expected output type of `None` instead of `SingleChunkQaOutput`. The information was unused.
+   - If you have pipelines that define data to be processed by this logic OR if you subclass from this specific logic, you may need to adapt it.
 
 ## 9.1.0
 ...

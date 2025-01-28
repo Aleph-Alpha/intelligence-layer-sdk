@@ -166,11 +166,11 @@ class GetBenchmarkLineageResponse(BaseModel):
     id: str
     trace_id: str
     benchmark_execution_id: str
-    input: Any
-    expected_output: Any
-    example_metadata: Optional[dict[str, Any]] = None
-    output: Any
-    evaluation: Any
+    input: JsonSerializable
+    expected_output: JsonSerializable
+    example_metadata: Optional[dict[str, JsonSerializable]] = None
+    output: JsonSerializable
+    evaluation: JsonSerializable
     run_latency: int
     run_tokens: int
 

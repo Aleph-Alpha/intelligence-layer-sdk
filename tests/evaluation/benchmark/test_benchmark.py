@@ -118,7 +118,7 @@ def test_extract_types_from_eval_logic(evaluation_logic: DummyEvaluationLogic) -
     assert dummy_type in created_identifier.logic
 
     assert created_identifier.input_schema["type"] == "string"
-    assert created_identifier.expected_output_schema["type"] == "null"
+    assert created_identifier.expected_output_schema["type"] == "string"
 
     assert created_identifier.evaluation_schema["type"] == "object"
     assert (
@@ -354,7 +354,7 @@ def test_execute_benchmark_failing_examples_calculates_correctly(
 
     cast(Mock, mock_studio_client.get_benchmark).return_value = get_benchmark_response
     examples = [
-        StudioExample(input=FAIL_IN_TASK_INPUT, expected_output="expected_output0"),
+        StudioExample(input=FAIL_IN_TASK_INPUT, expected_output="expected_output_0"),
     ]
     cast(Mock, mock_studio_client.get_dataset_examples).return_value = examples
     benchmark = studio_benchmark_repository.get_benchmark(

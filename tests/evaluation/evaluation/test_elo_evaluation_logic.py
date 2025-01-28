@@ -32,7 +32,7 @@ from intelligence_layer.examples import SingleChunkQaInput, SingleChunkQaOutput
 
 
 class DummyEloQaEvalLogic(
-    EloEvaluationLogic[SingleChunkQaInput, SingleChunkQaOutput, SingleChunkQaOutput]
+    EloEvaluationLogic[SingleChunkQaInput, SingleChunkQaOutput, None]
 ):
     def __init__(
         self,
@@ -48,9 +48,8 @@ class DummyEloQaEvalLogic(
         self,
         first: SuccessfulExampleOutput[SingleChunkQaOutput],
         second: SuccessfulExampleOutput[SingleChunkQaOutput],
-        example: Example[SingleChunkQaInput, SingleChunkQaOutput],
+        example: Example[SingleChunkQaInput, None],
     ) -> MatchOutcome:
-        _ = example
         if first.run_id < second.run_id:
             return MatchOutcome.A_WINS
         elif first.run_id > second.run_id:
@@ -75,9 +74,9 @@ def elo_evaluator(
     in_memory_run_repository: InMemoryRunRepository,
     in_memory_evaluation_repository: InMemoryEvaluationRepository,
     dummy_eval_logic: EvaluationLogic[
-        SingleChunkQaInput, SingleChunkQaOutput, SingleChunkQaOutput, Matches
+        SingleChunkQaInput, SingleChunkQaOutput, None, Matches
     ],
-) -> Evaluator[SingleChunkQaInput, SingleChunkQaOutput, SingleChunkQaOutput, Matches]:
+) -> Evaluator[SingleChunkQaInput, SingleChunkQaOutput, None, Matches]:
     return Evaluator(
         in_memory_dataset_repository,
         in_memory_run_repository,
@@ -118,12 +117,11 @@ def qa_setup(
     qa_input_text = TextChunk(
         """Surface micromachining builds microstructures by deposition and etching structural layers over a substrate.[1] This is different from Bulk micromachining, in which a silicon substrate wafer is selectively etched to produce structures."""
     )
-    #
+
     qa_input = SingleChunkQaInput(
         chunk=qa_input_text, question="What is micromachining?", language=Language("en")
     )
-    expected_output = "Surface micromachining builds microstructures by deposition and etching structural layers over a substrate."
-    #
+    expected_output = None
     example_id = "some-example-id"
     dataset_id = in_memory_dataset_repository.create_dataset(
         examples=[
@@ -159,9 +157,7 @@ def qa_setup(
 
 def test_evaluate_runs_creates_correct_matches_for_elo_qa_eval(
     qa_setup: Sequence[str],
-    elo_evaluator: Evaluator[
-        SingleChunkQaInput, SingleChunkQaOutput, SingleChunkQaOutput, Matches
-    ],
+    elo_evaluator: Evaluator[SingleChunkQaInput, SingleChunkQaOutput, None, Matches],
 ) -> None:
     run_ids = qa_setup
     evaluation_overview = elo_evaluator.evaluate_runs(*run_ids)

@@ -4,6 +4,7 @@ from uuid import uuid4
 
 import pytest
 from _pytest.fixtures import FixtureRequest
+from pydantic import BaseModel, ValidationError
 from pytest import fixture, mark
 
 from intelligence_layer.core import CompositeTracer, InMemoryTracer, utc_now
@@ -57,6 +58,52 @@ def test_run_repository_stores_and_returns_example_output(
     )
 
     assert stored_example_output == example_output
+
+
+@mark.skip("TODO: fix this for consistency")
+@mark.parametrize(
+    "repository_fixture",
+    test_repository_fixtures,
+)
+def test_run_repository_example_output_creating_with_dict_subtype_and_reading_with_actual_type_works(
+    repository_fixture: str,
+    request: FixtureRequest,
+) -> None:
+    class TestClass(BaseModel):
+        data: str
+
+    run_repository: RunRepository = request.getfixturevalue(repository_fixture)
+    run_id = "run-id"
+    example_id = "example-id"
+    data = "test-data"
+    example_output = ExampleOutput(
+        run_id=run_id, example_id=example_id, output=TestClass(data=data).model_dump()
+    )
+
+    run_repository.store_example_output(example_output)
+    stored_example_output = run_repository.example_output(run_id, example_id, TestClass)
+    assert stored_example_output is not None
+    assert type(stored_example_output.output) is TestClass
+    assert stored_example_output.output.data == "test-data"
+
+
+@mark.skip("TODO: fix this for consistency")
+@mark.parametrize(
+    "repository_fixture",
+    test_repository_fixtures,
+)
+def test_run_repository_example_output_does_not_work_with_incorrect_types(
+    repository_fixture: str,
+    request: FixtureRequest,
+) -> None:
+    run_repository: RunRepository = request.getfixturevalue(repository_fixture)
+    run_id = "run-id"
+    example_id = "example-id"
+    example_output = ExampleOutput(run_id=run_id, example_id=example_id, output=None)
+
+    run_repository.store_example_output(example_output)
+    with pytest.raises(ValidationError):
+        run_repository.example_output(run_id, example_id, str)
 
 
 @mark.parametrize(
