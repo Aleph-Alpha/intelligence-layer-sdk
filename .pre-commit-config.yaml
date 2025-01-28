@@ -24,7 +24,9 @@ repos:
     hooks:
       - id: nbstripout
         files: ".ipynb"
-        args: [
+        args:
+          [
+            --drop-empty-cells,
             --extra-keys=metadata.kernelspec metadata.language_info.codemirror_mode.version metadata.language_info.pygments_lexer metadata.language_info.version,
           ]
 
