@@ -195,6 +195,7 @@ jobs:
     continue-on-error: true
     env:
       DOCUMENT_INDEX_URL: ${{secrets.DOCUMENT_INDEX_URL}}
+      AA_TOKEN: ${{ secrets.AA_TOKEN }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
