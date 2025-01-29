@@ -4,16 +4,18 @@
 ### Features
  - Introduced `AsyncDocumentIndexClient` and `AsyncDocumentIndexRetriever` as drop-in replacements for their blocking counterparts, enabling coroutine-based, non-blocking document indexing and retrieval.
 ### Fixes
- - `InMemoryDatasetRepository` now has a more descriptive error message when creating a dataset fails because of an ID clash
- - `StudioClient` now deserializes and serializes examples while maintaining type information, which was previously dropped.
+- `InMemoryDatasetRepository` now has a more descriptive error message when creating a dataset fails due to an ID clash.
+- `StudioClient` now deserializes and serializes examples while maintaining type information, which was previously dropped.
+- `RunRepository` and `EvaluationRepository` now more accurately reflect their actual return types in their signatures. Previously, it was not obvious that failed examples could be returned.
+
 ### Deprecations
 ...
-### Breaking Changes
- - `InMemoryDatasetRepository` now returns the exact types given by users when retrieving `Example`. Previously, it disregarded the types it was given and returned what was saved.
-   -  This is in line with how the other repositories work.
- - `EloQaEvaluationLogic` now has an expected output type of `None` instead of `SingleChunkQaOutput`. The information was unused.
-   - If you have pipelines that define data to be processed by this logic OR if you subclass from this specific logic, you may need to adapt it.
 
+### Breaking Changes
+-  `InMemoryDatasetRepository`, `InMemoryRunRepository`, `InMemoryEvaluationRepository`, and `InMemoryAggregationRepository` now either return the exact types given by users when retrieving example-related data or fail. Specifically, this means that passing the wrong type when retrieving data will now fail with a `ValidationError`. Previously, the repositories disregarded the types they were given and returned whatever object was saved.
+  -  This is in line with how the other repositories work.
+-  `EloQaEvaluationLogic` now has an expected output type of `None` instead of `SingleChunkQaOutput`. The information was unused.
+  -  If you have pipelines that define data to be processed by this logic, or if you subclass from this specific logic, you may need to adapt it.
 ## 9.1.0
 ...
 ### Features
