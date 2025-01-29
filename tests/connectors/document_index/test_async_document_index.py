@@ -2,7 +2,6 @@ from datetime import datetime, timezone
 from http import HTTPStatus
 
 import pytest
-from pydantic import ValidationError
 from pytest import raises
 
 from intelligence_layer.connectors.document_index.document_index import (
@@ -21,7 +20,10 @@ from intelligence_layer.connectors.document_index.document_index import (
     SearchQuery,
     SemanticEmbed,
 )
-from tests.conftest_document_index import random_embedding_config, random_identifier, async_retry
+from tests.conftest_document_index import (
+    async_retry,
+    random_identifier,
+)
 
 
 @pytest.mark.internal
@@ -37,7 +39,6 @@ def test_document_index_sets_no_authorization_header_when_token_is_none() -> Non
     assert "Authorization" not in async_document_index.headers
 
 
-@pytest.mark.asyncio
 @pytest.mark.internal
 async def test_document_index_lists_namespaces_async(
     async_document_index: AsyncDocumentIndexClient,
@@ -47,17 +48,18 @@ async def test_document_index_lists_namespaces_async(
     assert async_document_index_namespace in namespaces
 
 
-@pytest.mark.asyncio
 @pytest.mark.internal
 @async_retry(max_retries=5, seconds_delay=1)
 async def test_document_index_gets_collection_async(
-    async_document_index: AsyncDocumentIndexClient, async_random_collection: CollectionPath
+    async_document_index: AsyncDocumentIndexClient,
+    async_random_collection: CollectionPath,
 ) -> None:
-    collections = await async_document_index.list_collections(async_random_collection.namespace)
+    collections = await async_document_index.list_collections(
+        async_random_collection.namespace
+    )
     assert async_random_collection in collections
 
 
-@pytest.mark.asyncio
 @pytest.mark.internal
 @pytest.mark.parametrize(
     "document_name",
@@ -77,12 +79,12 @@ async def test_document_index_adds_document_async(
     await async_document_index.add_document(document_path, document_contents)
 
     assert any(
-        d.document_path == document_path for d in await async_document_index.documents(async_random_collection)
+        d.document_path == document_path
+        for d in await async_document_index.documents(async_random_collection)
     )
     assert document_contents == await async_document_index.document(document_path)
 
 
-@pytest.mark.asyncio
 @pytest.mark.internal
 async def test_document_index_searches_async(
     async_document_index: AsyncDocumentIndexClient,
@@ -105,7 +107,6 @@ async def test_document_index_searches_async(
     await search()
 
 
-@pytest.mark.asyncio
 @pytest.mark.internal
 @pytest.mark.parametrize(
     "document_name",
@@ -131,7 +132,6 @@ async def test_document_index_deletes_document_async(
     assert not any(d.document_path == document_path for d in document_paths)
 
 
-@pytest.mark.asyncio
 @pytest.mark.internal
 async def test_document_index_raises_on_getting_non_existing_document_async(
     async_document_index: AsyncDocumentIndexClient, async_document_index_namespace: str
@@ -146,22 +146,21 @@ async def test_document_index_raises_on_getting_non_existing_document_async(
         await async_document_index.document(non_existing_document)
     assert exception_info.value.status_code == HTTPStatus.NOT_FOUND
     assert (
-        non_existing_document.collection_path.namespace
-        in exception_info.value.message
+        non_existing_document.collection_path.namespace in exception_info.value.message
     )
 
 
-@pytest.mark.asyncio
 @pytest.mark.internal
 async def test_document_list_all_documents_async(
     async_document_index: AsyncDocumentIndexClient,
     async_read_only_populated_collection: tuple[CollectionPath, IndexPath],
 ) -> None:
-    filter_result = await async_document_index.documents(async_read_only_populated_collection[0])
+    filter_result = await async_document_index.documents(
+        async_read_only_populated_collection[0]
+    )
     assert len(filter_result) == 3
 
 
-@pytest.mark.asyncio
 @pytest.mark.internal
 async def test_document_list_max_n_documents_async(
     async_document_index: AsyncDocumentIndexClient,
@@ -174,10 +173,10 @@ async def test_document_list_max_n_documents_async(
     assert len(filter_result) == 1
 
 
-@pytest.mark.asyncio
 @pytest.mark.internal
 async def test_document_list_documents_with_matching_prefix_async(
-    async_document_index: AsyncDocumentIndexClient, async_random_collection: CollectionPath
+    async_document_index: AsyncDocumentIndexClient,
+    async_random_collection: CollectionPath,
 ) -> None:
     await async_document_index.add_document(
         document_path=DocumentPath(
@@ -196,35 +195,38 @@ async def test_document_list_documents_with_matching_prefix_async(
         max_documents=None, starts_with=prefix
     )
 
-    filter_result = await async_document_index.documents(async_random_collection, filter_query_params)
+    filter_result = await async_document_index.documents(
+        async_random_collection, filter_query_params
+    )
 
     assert len(filter_result) == 1
     assert filter_result[0].document_path.document_name.startswith(prefix)
 
 
-@pytest.mark.asyncio
 @pytest.mark.internal
 async def test_semantic_indexes_in_namespace_are_returned_async(
     async_document_index: AsyncDocumentIndexClient,
     async_random_semantic_index: tuple[IndexPath, IndexConfiguration],
 ) -> None:
     index_path, index_configuration = async_random_semantic_index
-    retrieved_index_configuration = await async_document_index.index_configuration(index_path)
+    retrieved_index_configuration = await async_document_index.index_configuration(
+        index_path
+    )
     assert retrieved_index_configuration == index_configuration
 
 
-@pytest.mark.asyncio
 @pytest.mark.internal
 async def test_instructable_indexes_in_namespace_are_returned_async(
     async_document_index: AsyncDocumentIndexClient,
     async_random_instructable_index: tuple[IndexPath, IndexConfiguration],
 ) -> None:
     index_path, index_configuration = async_random_instructable_index
-    retrieved_index_configuration = await async_document_index.index_configuration(index_path)
+    retrieved_index_configuration = await async_document_index.index_configuration(
+        index_path
+    )
     assert retrieved_index_configuration == index_configuration
 
 
-@pytest.mark.asyncio
 @pytest.mark.internal
 async def test_indexes_for_collection_are_returned_async(
     async_document_index: AsyncDocumentIndexClient,
@@ -236,7 +238,6 @@ async def test_indexes_for_collection_are_returned_async(
     assert async_read_only_populated_collection[1].index in index_names
 
 
-@pytest.mark.asyncio
 @pytest.mark.internal
 async def test_create_filter_indexes_in_namespace_async(
     async_document_index: AsyncDocumentIndexClient,
@@ -251,11 +252,12 @@ async def test_create_filter_indexes_in_namespace_async(
             field_type=index_config["field-type"],  # type:ignore[arg-type]
         )
 
-    indexes = await async_document_index.list_filter_indexes_in_namespace(async_document_index_namespace)
+    indexes = await async_document_index.list_filter_indexes_in_namespace(
+        async_document_index_namespace
+    )
     assert all(filter_index in indexes for filter_index in async_filter_index_configs)
 
 
-@pytest.mark.asyncio
 @pytest.mark.internal
 async def test_create_filter_index_invalid_name_async(
     async_document_index: AsyncDocumentIndexClient, async_document_index_namespace: str
@@ -270,7 +272,6 @@ async def test_create_filter_index_invalid_name_async(
         )
 
 
-@pytest.mark.asyncio
 @pytest.mark.internal
 async def test_create_filter_index_name_too_long_async(
     async_document_index: AsyncDocumentIndexClient, async_document_index_namespace: str
@@ -284,7 +285,6 @@ async def test_create_filter_index_name_too_long_async(
     )
 
 
-@pytest.mark.asyncio
 @pytest.mark.internal
 async def test_assign_filter_indexes_to_collection_async(
     async_document_index: AsyncDocumentIndexClient,
@@ -309,7 +309,6 @@ async def test_assign_filter_indexes_to_collection_async(
     )
 
 
-@pytest.mark.asyncio
 @pytest.mark.internal
 async def test_document_index_adds_documents_with_metadata_async(
     async_document_index: AsyncDocumentIndexClient,
@@ -330,7 +329,6 @@ async def test_document_index_adds_documents_with_metadata_async(
         assert doc_content == await async_document_index.document(document_path)
 
 
-@pytest.mark.asyncio
 @pytest.mark.internal
 async def test_search_with_string_filter_async(
     async_document_index: AsyncDocumentIndexClient,
@@ -365,7 +363,6 @@ async def test_search_with_string_filter_async(
     await search()
 
 
-@pytest.mark.asyncio
 @pytest.mark.internal
 async def test_search_with_null_filter_async(
     async_document_index: AsyncDocumentIndexClient,
@@ -401,7 +398,6 @@ async def test_search_with_null_filter_async(
     await search()
 
 
-@pytest.mark.asyncio
 @pytest.mark.internal
 async def test_search_with_null_filter_without_async(
     async_document_index: AsyncDocumentIndexClient,
@@ -440,7 +436,6 @@ async def test_search_with_null_filter_without_async(
     await search()
 
 
-@pytest.mark.asyncio
 @pytest.mark.internal
 async def test_search_with_integer_filter_async(
     async_document_index: AsyncDocumentIndexClient,
@@ -476,7 +471,6 @@ async def test_search_with_integer_filter_async(
     await search()
 
 
-@pytest.mark.asyncio
 @pytest.mark.internal
 async def test_search_with_float_filter_async(
     async_document_index: AsyncDocumentIndexClient,
@@ -513,7 +507,6 @@ async def test_search_with_float_filter_async(
     await search()
 
 
-@pytest.mark.asyncio
 @pytest.mark.internal
 async def test_search_with_boolean_filter_async(
     async_document_index: AsyncDocumentIndexClient,
@@ -549,7 +542,6 @@ async def test_search_with_boolean_filter_async(
     await search()
 
 
-@pytest.mark.asyncio
 @pytest.mark.internal
 async def test_search_with_datetime_filter_async(
     async_document_index: AsyncDocumentIndexClient,
@@ -585,7 +577,6 @@ async def test_search_with_datetime_filter_async(
     await search()
 
 
-@pytest.mark.asyncio
 @pytest.mark.internal
 async def test_search_with_invalid_datetime_filter_async(
     async_document_index: AsyncDocumentIndexClient,
@@ -610,11 +601,12 @@ async def test_search_with_invalid_datetime_filter_async(
     )
     with raises(InvalidInput):
         await async_document_index.search(
-            async_read_only_populated_collection[0], async_read_only_populated_collection[1].index, search_query
+            async_read_only_populated_collection[0],
+            async_read_only_populated_collection[1].index,
+            search_query,
         )
 
 
-@pytest.mark.asyncio
 @pytest.mark.internal
 async def test_search_with_multiple_filters_async(
     async_document_index: AsyncDocumentIndexClient,
@@ -655,7 +647,6 @@ async def test_search_with_multiple_filters_async(
     await search()
 
 
-@pytest.mark.asyncio
 @pytest.mark.internal
 async def test_search_with_filter_type_without_async(
     async_document_index: AsyncDocumentIndexClient,
@@ -690,7 +681,6 @@ async def test_search_with_filter_type_without_async(
     await search()
 
 
-@pytest.mark.asyncio
 @pytest.mark.internal
 async def test_search_with_filter_type_without_and_with_async(
     async_document_index: AsyncDocumentIndexClient,
@@ -737,7 +727,6 @@ async def test_search_with_filter_type_without_and_with_async(
     await search()
 
 
-@pytest.mark.asyncio
 @pytest.mark.internal
 async def test_search_with_filter_type_with_one_of_async(
     async_document_index: AsyncDocumentIndexClient,
@@ -784,15 +773,14 @@ async def test_search_with_filter_type_with_one_of_async(
     await search()
 
 
-@pytest.mark.asyncio
 @pytest.mark.internal
 async def test_document_indexes_works_async(
-    async_document_index: AsyncDocumentIndexClient, async_random_collection: CollectionPath
+    async_document_index: AsyncDocumentIndexClient,
+    async_random_collection: CollectionPath,
 ) -> None:
     await async_document_index.progress(async_random_collection)
 
 
-@pytest.mark.asyncio
 @pytest.mark.internal
 async def test_retrieve_chunks_async(
     async_document_index: AsyncDocumentIndexClient,
@@ -809,9 +797,11 @@ async def test_retrieve_chunks_async(
             model_name="luminous-base",
         ),
     )
-    
+
     await async_document_index.create_index(index_path, index_configuration)
-    await async_document_index.assign_index_to_collection(async_random_collection, index_name)
+    await async_document_index.assign_index_to_collection(
+        async_random_collection, index_name
+    )
 
     document_path = DocumentPath(
         collection_path=async_random_collection,
@@ -828,7 +818,6 @@ async def test_retrieve_chunks_async(
 
     @async_retry
     async def chunks() -> None:
-        
         chunks = await async_document_index.chunks(document_path, index_name)
         assert len(chunks) == 3
 

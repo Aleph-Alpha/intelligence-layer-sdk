@@ -77,7 +77,6 @@ jupyter = "^1.1.1"
 # language-detection = ["lingua-language-detector", "pycountry"]
 
 
-
 [tool.poetry.group.extras.dependencies]
 pytest = "^8.3.4"
 asyncio = "^3.4.3"
@@ -91,7 +90,6 @@ verbosity_assertions = 1
 markers = [
     "internal: marks tests as internal (deselect with '-k \"not internal\"')",
     "docker: the test depends on having a docker container running.",
-    "asyncio: marks test relevant to asnycio methods",
 ]
 addopts = "--capture=tee-sys"
 filterwarnings = [ #ignore: message : warning : location ?

@@ -1,23 +1,23 @@
+import asyncio
 import os
 import random
 import re
 import string
-from collections.abc import Callable, Iterable, Iterator, AsyncIterator, AsyncGenerator
-from contextlib import contextmanager, asynccontextmanager
+from collections.abc import AsyncIterator, Awaitable, Callable, Iterable, Iterator
+from contextlib import asynccontextmanager, contextmanager
 from datetime import datetime, timedelta, timezone
 from functools import wraps
 from time import sleep
-from typing import ParamSpec, TypeVar, get_args, overload, Any, Awaitable
-import asyncio
+from typing import ParamSpec, TypeVar, get_args, overload
 
-from pytest import fixture
 import pytest_asyncio
+from pytest import fixture
 
 from intelligence_layer.connectors import (
-    DocumentIndexClient,
-    DocumentIndexRetriever,
     AsyncDocumentIndexClient,
     AsyncDocumentIndexRetriever,
+    DocumentIndexClient,
+    DocumentIndexRetriever,
 )
 from intelligence_layer.connectors.base.json_serializable import JsonSerializable
 from intelligence_layer.connectors.document_index.document_index import (
@@ -51,7 +51,9 @@ def document_index(token: str) -> DocumentIndexClient:
 
 @pytest_asyncio.fixture()
 async def async_document_index(token: str) -> AsyncIterator[AsyncDocumentIndexClient]:
-    async with AsyncDocumentIndexClient(token, base_document_index_url=os.environ["DOCUMENT_INDEX_URL"]) as client:
+    async with AsyncDocumentIndexClient(
+        token, base_document_index_url=os.environ["DOCUMENT_INDEX_URL"]
+    ) as client:
         yield client
 
 
@@ -101,8 +103,7 @@ def async_retry(
     *,
     max_retries: int = 3,
     seconds_delay: float = 0.0,
-) -> Callable[[Callable[P, Awaitable[R]]], Callable[P, Awaitable[R]]]:
-    ...
+) -> Callable[[Callable[P, Awaitable[R]]], Callable[P, Awaitable[R]]]: ...
 
 
 @overload
@@ -111,8 +112,7 @@ def async_retry(
     *,
     max_retries: int = 3,
     seconds_delay: float = 0.0,
-) -> Callable[P, Awaitable[R]]:
-    ...
+) -> Callable[P, Awaitable[R]]: ...
 
 
 def async_retry(
@@ -120,7 +120,10 @@ def async_retry(
     *,
     max_retries: int = 60,
     seconds_delay: float = 0.5,
-) -> Callable[[Callable[P, Awaitable[R]]], Callable[P, Awaitable[R]]] | Callable[P, Awaitable[R]]:
+) -> (
+    Callable[[Callable[P, Awaitable[R]]], Callable[P, Awaitable[R]]]
+    | Callable[P, Awaitable[R]]
+):
     def decorator(f: Callable[P, Awaitable[R]]) -> Callable[P, Awaitable[R]]:
         @wraps(f)
         async def wrapper(*args: P.args, **kwargs: P.kwargs) -> R:
@@ -257,7 +260,9 @@ def document_index_namespace(document_index: DocumentIndexClient) -> Iterable[st
 
 
 @pytest_asyncio.fixture()
-async def async_document_index_namespace(async_document_index: AsyncDocumentIndexClient) -> AsyncIterator[str]:
+async def async_document_index_namespace(
+    async_document_index: AsyncDocumentIndexClient,
+) -> AsyncIterator[str]:
     yield "Search"
     await _async_teardown(async_document_index, "Search")
 
@@ -293,7 +298,6 @@ def _teardown(
 async def _async_teardown(
     async_document_index: AsyncDocumentIndexClient, document_index_namespace: str
 ) -> None:
-
     # Cleanup leftover resources from previous runs.
     timestamp_threshold = datetime.now(timezone.utc) - timedelta(hours=1)
     async with async_document_index as client:
@@ -475,7 +479,9 @@ async def async_random_instructable_index(
     async_document_index: AsyncDocumentIndexClient, async_document_index_namespace: str
 ) -> AsyncIterator[tuple[IndexPath, IndexConfiguration]]:
     async with async_random_index_with_embedding_config(
-        async_document_index, async_document_index_namespace, random_instructable_embed()
+        async_document_index,
+        async_document_index_namespace,
+        random_instructable_embed(),
     ) as index:
         yield index
 
@@ -686,7 +692,9 @@ async def async_read_only_populated_collection(
             namespace=async_document_index_namespace, collection=collection_name
         )
         index_name = random_identifier()
-        index_path = IndexPath(namespace=async_document_index_namespace, index=index_name)
+        index_path = IndexPath(
+            namespace=async_document_index_namespace, index=index_name
+        )
         index_configuration = IndexConfiguration(
             chunk_size=512,
             chunk_overlap=0,
@@ -773,10 +781,15 @@ async def async_random_searchable_collection(
 
     try:
         await async_document_index.create_collection(collection_path)
-        await async_document_index.assign_index_to_collection(collection_path, index_name)
+        await async_document_index.assign_index_to_collection(
+            collection_path, index_name
+        )
 
         await _async_add_documents_to_document_index(
-            async_document_index, document_contents_with_metadata, index_name, collection_path
+            async_document_index,
+            document_contents_with_metadata,
+            index_name,
+            collection_path,
         )
 
         yield collection_path, index_path
@@ -810,7 +823,9 @@ def async_document_index_retriever(
     async_document_index: AsyncDocumentIndexClient,
 ) -> AsyncDocumentIndexRetriever:
     return AsyncDocumentIndexRetriever(
-        async_document_index, index_name=async_read_only_populated_collection[1].index,
+        async_document_index,
+        index_name=async_read_only_populated_collection[1].index,
         namespace=async_read_only_populated_collection[0].namespace,
-        collection=async_read_only_populated_collection[0].collection, k=2
+        collection=async_read_only_populated_collection[0].collection,
+        k=2,
     )
