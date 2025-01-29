@@ -97,6 +97,7 @@ filterwarnings = [ #ignore: message : warning : location ?
     'ignore::DeprecationWarning:.*importlib._bootstrap.*',
 ]
 asyncio_default_fixture_loop_scope = "function"
+asyncio_mode = "auto"
 
 [tool.ruff]
 target-version = "py310"
