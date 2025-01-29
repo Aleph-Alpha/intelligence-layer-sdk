@@ -43,18 +43,14 @@ class SerializedExampleEvaluation(BaseModel):
     def to_example_result(
         self, evaluation_type: type[Evaluation]
     ) -> ExampleEvaluation[Evaluation] | ExampleEvaluation[FailedExampleEvaluation]:
-        if self.is_exception:
-            return ExampleEvaluation(
-                evaluation_id=self.evaluation_id,
-                example_id=self.example_id,
-                result=FailedExampleEvaluation.model_validate_json(self.json_result),
-            )
-        else:
-            return ExampleEvaluation(
-                evaluation_id=self.evaluation_id,
-                example_id=self.example_id,
-                result=evaluation_type.model_validate_json(self.json_result),
-            )
+        expected_result_type = (
+            FailedExampleEvaluation if self.is_exception else evaluation_type
+        )
+        return ExampleEvaluation(
+            evaluation_id=self.evaluation_id,
+            example_id=self.example_id,
+            result=expected_result_type.model_validate_json(self.json_result),
+        )
 
 
 class EvaluationRepository(ABC):
