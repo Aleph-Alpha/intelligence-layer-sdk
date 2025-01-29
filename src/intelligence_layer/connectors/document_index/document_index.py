@@ -971,25 +971,22 @@ class AsyncDocumentIndexClient:
         >>> async def main():
         ...     async with AsyncDocumentIndexClient(os.getenv("AA_TOKEN")) as document_index:
         ...         collection_path = CollectionPath(
-        ...             namespace="aleph-alpha", collection="wikipedia-de"
+        ...             namespace="my-namespace", collection="previously-created-collection"
         ...         )
-        ...         await document_index.create_collection(collection_path)
-        ...         await document_index.add_document(
-        ...             document_path=DocumentPath(
-        ...                 collection_path=collection_path, document_name="Fun facts about Germany"
-        ...             ),
-        ...             contents=DocumentContents.from_text("Germany is a country located in ..."),
-        ...         )
-        ...         search_result = await document_index.search(
-        ...             collection_path=collection_path,
-        ...             index_name="asymmetric",
-        ...             search_query=SearchQuery(
-        ...                 query="What is the capital of Germany", max_results=4, min_score=0.5
-        ...             ),
-        ...         )
-        ...         print(search_result)
-
+        ...         try:
+        ...             search_result = await document_index.search(
+        ...                 collection_path=collection_path,
+        ...                 index_name="asymmetric",
+        ...                 search_query=SearchQuery(
+        ...                     query="What is the capital of Germany", max_results=4, min_score=0.5
+        ...                 ),
+        ...             )
+        ...             print(search_result)
+        ...         except Exception:
+        ...             # some error handling here
+        ...             pass
         >>> asyncio.run(main())
+
     """
 
     def __init__(
