@@ -12,9 +12,11 @@ from pytest import FixtureRequest, fixture, mark, raises
 from intelligence_layer.connectors.base.json_serializable import (
     SerializableDict,
 )
+from intelligence_layer.core import Input
 from intelligence_layer.evaluation import (
     DatasetRepository,
     Example,
+    ExpectedOutput,
     FileDatasetRepository,
 )
 from intelligence_layer.evaluation.dataset.hugging_face_dataset_repository import (
@@ -51,6 +53,21 @@ def mocked_hugging_face_dataset_repository(
         )
         repo._file_system = temp_file_system
         return repo
+
+
+def get_example_via_both_retrieval_methods(
+    dataset_repository: DatasetRepository,
+    dataset_id: str,
+    example_id: str,
+    input_type: type[Input],
+    expected_output_type: type[ExpectedOutput],
+) -> Iterable[Example[Input, ExpectedOutput] | None]:
+    yield dataset_repository.example(
+        dataset_id, example_id, input_type, expected_output_type
+    )
+    yield next(
+        iter(dataset_repository.examples(dataset_id, input_type, expected_output_type))
+    )
 
 
 test_repository_fixtures = [
@@ -105,7 +122,7 @@ def test_dataset_repository_create_dataset_sets_default_values(
     "repository_fixture",
     test_repository_fixtures,
 )
-def test_dataset_repository_create_dataset_explicit_values_overwrite_defaults(
+def test_create_dataset_explicit_values_overwrite_defaults(
     repository_fixture: str,
     request: FixtureRequest,
     dummy_string_example: Example[DummyStringInput, DummyStringOutput],
@@ -135,7 +152,7 @@ def test_dataset_repository_create_dataset_explicit_values_overwrite_defaults(
     "repository_fixture",
     test_repository_fixtures,
 )
-def test_dataset_repository_can_create_and_store_a_dataset(
+def test_can_create_and_store_a_dataset(
     repository_fixture: str,
     request: FixtureRequest,
     dummy_string_example: Example[DummyStringInput, DummyStringOutput],
@@ -164,7 +181,7 @@ def test_dataset_repository_can_create_and_store_a_dataset(
     "repository_fixture",
     test_repository_fixtures,
 )
-def test_dataset_repository_ensures_unique_dataset_ids(
+def test_ensures_unique_dataset_ids(
     _mock_uuid4: Any,  # this is necessary as otherwise the other fixtures aren't found
     repository_fixture: str,
     request: FixtureRequest,
@@ -436,18 +453,24 @@ def test_example_raises_error_for_not_existing_dataset_id(
 
 
 def assert_dataset_examples_works_with_type(
-    dataset_repository: DatasetRepository, value: Any, type: type | None
+    dataset_repository: DatasetRepository, value: Any, type: type[Input]
 ) -> None:
-    data = Example(
+    expected_example = Example(
         input=value,
         expected_output=value,
         metadata=None,
     )
     dataset = dataset_repository.create_dataset(
-        examples=[data], dataset_name="test-dataset"
+        examples=[expected_example], dataset_name="test-dataset"
     )
-    received_data = next(iter(dataset_repository.examples(dataset.id, type, type)))  # type: ignore
-    assert data == received_data
+    for example in get_example_via_both_retrieval_methods(
+        dataset_repository,
+        dataset.id,
+        expected_example.id,
+        type,
+        type,
+    ):
+        assert example == expected_example
 
 
 @mark.parametrize("repository_fixture", test_repository_fixtures)
@@ -465,7 +488,7 @@ def test_retrieving_with_int_types_works(
 
 
 @mark.parametrize("repository_fixture", test_repository_fixtures)
-def test_creating_with_json_and_reading_with_actual_type_works(
+def test_example_creating_with_json_and_reading_with_actual_type_works(
     repository_fixture: str,
     request: FixtureRequest,
     dummy_string_example: Example[DummyStringInput, DummyStringExpectedOutput],
@@ -480,21 +503,21 @@ def test_creating_with_json_and_reading_with_actual_type_works(
         examples=[json_example], dataset_name="test-dataset"
     )
 
-    new_example = next(
-        iter(
-            dataset_repository.examples(
-                dataset.id, DummyStringInput, DummyStringExpectedOutput
-            )
-        )
-    )
-
-    assert dummy_string_example.input == new_example.input
-    assert dummy_string_example.expected_output == new_example.expected_output
-    assert dummy_string_example.metadata == new_example.metadata
+    for new_example in get_example_via_both_retrieval_methods(
+        dataset_repository,
+        dataset.id,
+        json_example.id,
+        DummyStringInput,
+        DummyStringExpectedOutput,
+    ):
+        assert new_example is not None
+        assert new_example.input == dummy_string_example.input
+        assert new_example.expected_output == dummy_string_example.expected_output
+        assert new_example.metadata == dummy_string_example.metadata
 
 
 @mark.parametrize("repository_fixture", test_repository_fixtures)
-def test_retrieving_with_wrong_types_gives_error(
+def test_example_retrieving_with_wrong_types_gives_error(
     repository_fixture: str,
     request: FixtureRequest,
     dummy_string_example: Example[DummyStringInput, DummyStringExpectedOutput],
@@ -503,5 +526,8 @@ def test_retrieving_with_wrong_types_gives_error(
     dataset = dataset_repository.create_dataset(
         examples=[dummy_string_example], dataset_name="test-dataset"
     )
+    with pytest.raises(ValidationError):
+        dataset_repository.example(dataset.id, dummy_string_example.id, int, int)
+
     with pytest.raises(ValidationError):
         next(iter(dataset_repository.examples(dataset.id, int, int)))
