@@ -90,6 +90,7 @@ verbosity_assertions = 1
 markers = [
     "internal: marks tests as internal (deselect with '-k \"not internal\"')",
     "docker: the test depends on having a docker container running.",
+    "document_index: tests for the document index client and the async document index client",
 ]
 addopts = "--capture=tee-sys"
 filterwarnings = [ #ignore: message : warning : location ?
