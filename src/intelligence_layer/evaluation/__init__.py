@@ -6,6 +6,7 @@ from .aggregation.aggregator import AggregationLogic as AggregationLogic
 from .aggregation.aggregator import Aggregator as Aggregator
 from .aggregation.domain import AggregatedEvaluation as AggregatedEvaluation
 from .aggregation.domain import AggregationOverview as AggregationOverview
+from .aggregation.elo_aggregation import AggregatedComparison as AggregatedComparison
 from .aggregation.elo_aggregation import (
     ComparisonEvaluationAggregationLogic as ComparisonEvaluationAggregationLogic,
 )
