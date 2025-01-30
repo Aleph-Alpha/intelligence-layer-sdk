@@ -6,7 +6,7 @@ from collections.abc import Iterable, Sequence
 from datetime import datetime
 from typing import Any, Generic, Optional, TypeVar
 from urllib.parse import urljoin
-from uuid import uuid4
+from uuid import UUID, uuid4
 
 import requests
 from pydantic import BaseModel, Field, RootModel, field_validator
@@ -111,7 +111,9 @@ class GetBenchmarkResponse(BaseModel):
 
     @field_validator("project_id", mode="before")
     def transform_id_to_str(cls, value) -> str:
-        return str(value)
+        if type(value) is int or type(value) is UUID:
+            return str(value)
+        return value
 
 
 class PostBenchmarkExecution(BaseModel):
