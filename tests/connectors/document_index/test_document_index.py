@@ -27,6 +27,8 @@ from tests.conftest_document_index import (
     retry,
 )
 
+pytestmark = pytest.mark.document_index
+
 
 @pytest.mark.internal
 def test_document_index_sets_authorization_header_for_given_token() -> None:

@@ -1,9 +1,8 @@
 # Changelog
-
 ## Unreleased
 ...
 ### Features
-...
+ - Introduced `AsyncDocumentIndexClient` and `AsyncDocumentIndexRetriever` as drop-in replacements for their blocking counterparts, enabling coroutine-based, non-blocking document indexing and retrieval.
 ### Fixes
  - `InMemoryDatasetRepository` now has a more descriptive error message when creating a dataset fails because of an ID clash
  - `StudioClient` now deserializes and serializes examples while maintaining type information, which was previously dropped.

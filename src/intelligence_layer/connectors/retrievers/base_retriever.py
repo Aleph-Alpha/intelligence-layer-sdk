@@ -68,3 +68,22 @@ class BaseRetriever(ABC, Generic[ID]):
     @abstractmethod
     def get_full_document(self, id: ID) -> Optional[Document]:
         pass
+
+
+class AsyncBaseRetriever(ABC, Generic[ID]):
+    """General interface for any asynchronous retriever.
+
+    Asynchronous retrievers are used to find texts given a user query.
+    Each Retriever implementation owns its own logic for retrieval.
+    For comparison purposes, we assume scores in the `SearchResult` instances to be between 0 and 1.
+    """
+
+    @abstractmethod
+    async def get_relevant_documents_with_scores(
+        self, query: str
+    ) -> Sequence[SearchResult[ID]]:
+        pass
+
+    @abstractmethod
+    async def get_full_document(self, id: ID) -> Optional[Document]:
+        pass

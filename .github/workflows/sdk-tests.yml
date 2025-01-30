@@ -189,3 +189,20 @@ jobs:
           DOCUMENT_INDEX_URL: ${{secrets.DOCUMENT_INDEX_URL}}
         run: |
           ./scripts/notebook_runner.sh
+  document-index:
+    timeout-minutes: ${{inputs.timeout}}
+    runs-on: ${{inputs.runner}}
+    continue-on-error: true
+    env:
+      DOCUMENT_INDEX_URL: ${{secrets.DOCUMENT_INDEX_URL}}
+      AA_TOKEN: ${{ secrets.AA_TOKEN }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - uses: ./.github/composites/python-setup
+      - name: Run client tests
+        run: |
+          TQDM_DISABLE=1 poetry run pytest -m "document_index and not asyncio"
+      - name: Run async client tests
+        run: |
+          TQDM_DISABLE=1 poetry run pytest -m "document_index and asyncio"

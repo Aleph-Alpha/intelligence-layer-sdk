@@ -2,6 +2,7 @@ from collections.abc import Sequence
 from typing import Optional
 
 from intelligence_layer.connectors.document_index.document_index import (
+    AsyncDocumentIndexClient,
     CollectionPath,
     DocumentIndexClient,
     DocumentPath,
@@ -10,6 +11,7 @@ from intelligence_layer.connectors.document_index.document_index import (
     SearchQuery,
 )
 from intelligence_layer.connectors.retrievers.base_retriever import (
+    AsyncBaseRetriever,
     BaseRetriever,
     Document,
     DocumentChunk,
@@ -100,4 +102,66 @@ class DocumentIndexRetriever(BaseRetriever[DocumentPath]):
 
     def get_full_document(self, id: DocumentPath) -> Document:
         contents = self._document_index.document(id)
+        return Document(text="\n".join(contents.contents), metadata=contents.metadata)
+
+
+class AsyncDocumentIndexRetriever(AsyncBaseRetriever[DocumentPath]):
+    def __init__(
+        self,
+        document_index: AsyncDocumentIndexClient,
+        index_name: str,
+        namespace: str,
+        collection: str,
+        k: int = 1,
+        threshold: float = 0.0,
+    ) -> None:
+        self._document_index = document_index
+        self._index_name = index_name
+        self._collection_path = CollectionPath(
+            namespace=namespace, collection=collection
+        )
+        self._k = k
+        self._threshold = threshold
+
+    async def _get_absolute_position(
+        self, id: DocumentPath, document_text_position: DocumentTextPosition
+    ) -> dict[str, int]:
+        doc = await self._document_index.document(id)
+
+        previous_item_length = sum(
+            len(text) for text in doc.contents[0 : document_text_position.item]
+        )
+
+        start = previous_item_length + document_text_position.start_position
+        end = previous_item_length + document_text_position.end_position
+
+        return {"start": start, "end": end}
+
+    async def get_relevant_documents_with_scores(
+        self, query: str, filters: Optional[list[Filters]] = None
+    ) -> Sequence[SearchResult[DocumentPath]]:
+        search_query = SearchQuery(
+            query=query, max_results=self._k, min_score=self._threshold, filters=filters
+        )
+        response = await self._document_index.search(
+            self._collection_path, self._index_name, search_query
+        )
+        relevant_chunks = [
+            SearchResult(
+                id=result.document_path,
+                score=result.score,
+                document_chunk=DocumentChunk(
+                    text=result.section,
+                    **await self._get_absolute_position(
+                        id=result.document_path,
+                        document_text_position=result.chunk_position,
+                    ),
+                ),
+            )
+            for result in response
+        ]
+        return relevant_chunks
+
+    async def get_full_document(self, id: DocumentPath) -> Document:
+        contents = await self._document_index.document(id)
         return Document(text="\n".join(contents.contents), metadata=contents.metadata)
