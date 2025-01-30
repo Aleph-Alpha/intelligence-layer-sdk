@@ -24,7 +24,7 @@ requests = "^2.32.3"
 pycountry = "24.6.1"
 opentelemetry-api = "^1.29.0"
 opentelemetry-sdk = "^1.29.0"
-huggingface-hub = "^0.27.1"
+huggingface-hub = "^0.28.0"
 opentelemetry-exporter-otlp-proto-http = "1.29.0"
 # summary grader
 rouge-score = "^0.1.2"
