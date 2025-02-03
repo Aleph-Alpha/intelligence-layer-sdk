@@ -3,7 +3,6 @@ from datetime import datetime
 from typing import Optional, Union
 from uuid import UUID
 
-import rich
 from pydantic import BaseModel, Field, SerializeAsAny
 from rich.panel import Panel
 from rich.syntax import Syntax
@@ -71,11 +70,6 @@ class InMemoryTracer(Tracer):
             tree.add(log._rich_render_())
 
         return tree
-
-    def _ipython_display_(self) -> None:
-        """Default rendering for Jupyter notebooks."""
-        if not self.submit_to_trace_viewer():
-            rich.print(self._rich_render_())
 
     def export_for_viewing(self) -> Sequence[ExportedSpan]:
         exported_root_spans: list[ExportedSpan] = []

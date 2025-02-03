@@ -183,15 +183,3 @@ def set_env(name: str, value: str | None) -> Iterator[None]:
     finally:
         os.environ.clear()
         os.environ.update(old_environ)
-
-
-def test_in_memory_tracer_submit_to_trace_viewer_doesnt_crash_if_it_cant_reach_the_trace_viewer() -> (
-    None
-):
-    # note that this test sets the environment variable, which might
-    # become a problem with multi-worker tests
-    ENV_VARIABLE_NAME = "TRACE_VIEWER_URL"
-    # ensure that the code works even with the variable is not set
-    with set_env(ENV_VARIABLE_NAME, None):
-        expected = InMemoryTracer()
-        expected._ipython_display_()

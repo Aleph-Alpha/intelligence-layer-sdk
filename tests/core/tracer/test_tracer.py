@@ -14,7 +14,6 @@ from intelligence_layer.core import (
     Tracer,
     utc_now,
 )
-from intelligence_layer.core.task import Task
 from tests.core.tracer.conftest import SpecificTestException
 
 
@@ -254,23 +253,6 @@ def test_spans_cannot_be_used_as_context_twice(
     with pytest.raises(ValueError):  # noqa: SIM117
         with span:
             pass
-
-
-@pytest.mark.docker
-@pytest.mark.parametrize(
-    "tracer_fixture",
-    tracer_fixtures,
-)
-def test_tracer_can_be_submitted_to_trace_viewer(
-    tracer_fixture: str,
-    request: pytest.FixtureRequest,
-    tracer_test_task: Task[str, str],
-) -> None:
-    tracer: Tracer = request.getfixturevalue(tracer_fixture)
-
-    tracer_test_task.run(input="input", tracer=tracer)
-
-    assert tracer.submit_to_trace_viewer()
 
 
 @pytest.mark.skip("Not yet implemented")

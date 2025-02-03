@@ -51,10 +51,6 @@ services:
   # export GITHUB_TOKEN=...
   # echo $GITHUB_TOKEN | docker login ghcr.io -u your_email@for_github --password-stdin
   # docker compose pull to update containers
-  trace_viewer:
-    image: ghcr.io/aleph-alpha/trace-viewer-trace-viewer:main
-    ports:
-      - 3000:3000
 
   # export GITLAB_TOKEN=...
   # (optional) export GITLAB_TOKEN=$(op item get YOUR_TOKEN --format json --fields password | jq .value | tr -d '"')
