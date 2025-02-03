@@ -1,4 +1,4 @@
-name: Artifactory Deployment of PyPi and trace-viewer
+name: Artifactory Deployment of PyPi
 
 on:
   workflow_dispatch: {}

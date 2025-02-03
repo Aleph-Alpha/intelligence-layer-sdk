@@ -162,7 +162,7 @@ class Tracer(ABC):
 
     @abstractmethod
     def export_for_viewing(self) -> Sequence[ExportedSpan]:
-        """Converts the trace to a format that can be read by the trace viewer.
+        """Converts the trace to a format that can be read by Pharia Studio.
 
         The format is inspired by the OpenTelemetry Format, but does not abide by it.
         Specifically, it cuts away unused concepts, such as links.
