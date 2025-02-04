@@ -71,13 +71,7 @@ jobs:
           - "4317:4317"
           - "4318:4318"
           - "16686:16686"
-      trace-viewer:
-        image: ghcr.io/aleph-alpha/trace-viewer-trace-viewer:main
-        credentials:
-          username: "unused"
-          password: ${{ secrets.GH_PAT }}
-        ports:
-          - "3000:3000"
+     
       postgres:
         image: postgres:15
         ports:

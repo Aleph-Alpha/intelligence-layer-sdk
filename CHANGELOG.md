@@ -16,6 +16,9 @@
   -  This is in line with how the other repositories work.
 -  `EloQaEvaluationLogic` now has an expected output type of `None` instead of `SingleChunkQaOutput`. The information was unused.
   -  If you have pipelines that define data to be processed by this logic, or if you subclass from this specific logic, you may need to adapt it.
+  - `log_probs` in the `CompletionInput` of the `do_run` method been set to 20 instead of the prior value of 30
+- The legacy `Trace Viewer` has now been removed along with all references to it.
+
 ## 9.1.0
 ...
 ### Features

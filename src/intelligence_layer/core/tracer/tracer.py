@@ -1,6 +1,4 @@
-import os
 import traceback
-import warnings
 from abc import ABC, abstractmethod
 from collections.abc import Mapping, Sequence
 from contextlib import AbstractContextManager
@@ -8,11 +6,8 @@ from datetime import datetime, timezone
 from enum import Enum
 from types import TracebackType
 from typing import TYPE_CHECKING, Literal, Optional, Union
-from urllib.parse import urljoin
 from uuid import UUID, uuid4
 
-import requests
-import rich
 from pydantic import BaseModel, Field, RootModel, SerializeAsAny
 from typing_extensions import Self, TypeAliasType
 
@@ -104,40 +99,6 @@ class ExportedSpan(BaseModel):
 ExportedSpanList = RootModel[Sequence[ExportedSpan]]
 
 
-def submit_to_trace_viewer(exported_spans: Sequence[ExportedSpan]) -> bool:
-    """Submits the trace to the UI for visualization.
-
-    Args:
-        exported_spans: The exported spans to submit to the trace viewer.
-
-    Returns:
-        Boolean indicating whether the trace was submitted successfully.
-
-    """
-    trace_viewer_url = os.getenv("TRACE_VIEWER_URL", "http://localhost:3000")
-    trace_viewer_trace_upload = urljoin(trace_viewer_url, "/trace")
-    try:
-        res = requests.post(
-            trace_viewer_trace_upload,
-            headers={
-                "Content-Type": "application/json",
-                "Accept": "application/json",
-            },
-            json=ExportedSpanList(exported_spans).model_dump(mode="json"),
-        )
-        if res.status_code != 200:
-            raise requests.HTTPError(res.status_code)
-        rich.print(
-            f"Open the [link={trace_viewer_url}]Trace Viewer[/link] to view the trace."
-        )
-        return True
-    except requests.ConnectionError:
-        print(
-            f"Trace viewer not found under {trace_viewer_url}.\nConsider running it for a better viewing experience.\nIf it is, set `TRACE_VIEWER_URL` in the environment."
-        )
-        return False
-
-
 class Tracer(ABC):
     """Provides a consistent way to instrument a :class:`Task` with logging for each step of the workflow.
 
@@ -201,7 +162,7 @@ class Tracer(ABC):
 
     @abstractmethod
     def export_for_viewing(self) -> Sequence[ExportedSpan]:
-        """Converts the trace to a format that can be read by the trace viewer.
+        """Converts the trace to a format that can be read by Pharia Studio.
 
         The format is inspired by the OpenTelemetry Format, but does not abide by it.
         Specifically, it cuts away unused concepts, such as links.
@@ -210,13 +171,6 @@ class Tracer(ABC):
             A list of spans which includes the current span and all its child spans.
         """
         ...
-
-    def submit_to_trace_viewer(self) -> bool:
-        warnings.warn(
-            "TraceViewer will be removed soon. Use the Studio Trace functionality instead.",
-            DeprecationWarning,
-        )
-        return submit_to_trace_viewer(self.export_for_viewing())
 
 
 class ErrorValue(BaseModel):
