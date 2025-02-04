@@ -40,7 +40,7 @@ aiohttp = "^3.11.11"
 # lint & format
 mypy = "^1.13.0"
 nbqa = "^1.9.1"
-ruff = "^0.9.3"
+ruff = "^0.9.4"
 pre-commit = "^4.1.0"
 
 # tests
