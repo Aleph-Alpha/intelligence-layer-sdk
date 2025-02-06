@@ -69,7 +69,7 @@ class FileTracer(PersistentTracer):
         return task
 
     def traces(self, trace_id: Optional[str] = None) -> InMemoryTracer:
-        with self._log_file_path.open("r") as f:
+        with self._log_file_path.open("r", encoding="utf-8") as f:
             traces = (LogLine.model_validate(loads(line)) for line in f)
             filtered_traces = (
                 (line for line in traces if line.trace_id == trace_id)

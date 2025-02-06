@@ -7,6 +7,7 @@
 - `InMemoryDatasetRepository` now has a more descriptive error message when creating a dataset fails due to an ID clash.
 - `StudioClient` now deserializes and serializes examples while maintaining type information, which was previously dropped.
 - `RunRepository` and `EvaluationRepository` now more accurately reflect their actual return types in their signatures. Previously, it was not obvious that failed examples could be returned.
+- `FileTracer.traces` now uses "utf-8" encoding to read the persisted trace file. Previously, the machines default encoding was used, which could lead to a mismatch between the encoding used for writing and reading.
 
 ### Deprecations
 ...
