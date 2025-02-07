@@ -2,7 +2,7 @@ import os
 import warnings
 
 from dotenv import load_dotenv
-from huggingface_hub import HfApi  # type: ignore
+from huggingface_hub import HfApi
 
 
 def clean_up_dangling_hf_repos(hugging_face_token: str) -> None:

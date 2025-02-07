@@ -1,6 +1,6 @@
 from pathlib import Path
 
-import huggingface_hub  # type: ignore
+import huggingface_hub
 
 from intelligence_layer.evaluation.infrastructure.file_system_based_repository import (
     FileSystemBasedRepository,
