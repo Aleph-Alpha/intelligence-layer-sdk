@@ -1,7 +1,7 @@
 from collections.abc import Iterable
 from uuid import uuid4
 
-import huggingface_hub  # type: ignore
+import huggingface_hub
 from _pytest.fixtures import fixture
 
 from intelligence_layer.core import utc_now

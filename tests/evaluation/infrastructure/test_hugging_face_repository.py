@@ -1,4 +1,4 @@
-import huggingface_hub  # type: ignore
+import huggingface_hub
 
 from intelligence_layer.evaluation.infrastructure.hugging_face_repository import (
     HuggingFaceRepository,
