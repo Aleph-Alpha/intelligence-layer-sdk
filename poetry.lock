@@ -5323,6 +5323,7 @@ files = [
 ]
 
 [package.dependencies]
+fastembed = {version = "0.5.1", optional = true, markers = "extra == \"fastembed\""}
 grpcio = ">=1.41.0"
 grpcio-tools = ">=1.41.0"
 httpx = {version = ">=0.20.0", extras = ["http2"]}
@@ -7115,4 +7116,4 @@ type = ["pytest-mypy"]
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.10,<3.13"
-content-hash = "242389a234f0228436ce9a7fa57114ef445c02c0daded28d905a972ba2134d30"
+content-hash = "8b7c71e00d27ca465ff49120b5486293b04bc9bfa2240f97de6c188ce98c0b89"
