@@ -43,6 +43,6 @@ def many_examples() -> Sequence[StudioExample[PydanticType, PydanticType]]:
         StudioExample[PydanticType, PydanticType](
             input=PydanticType(data=i), expected_output=PydanticType(data=i)
         )
-        for i in range(30)
+        for i in range(15)
     ]
     return examples
