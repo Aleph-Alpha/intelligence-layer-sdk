@@ -16,7 +16,7 @@ def test_kernel_connector() -> None:
         answer: str | None
 
     task = KernelTask(
-        skill="app/super_rag",
+        skill="playground/super_rag",
         input_model=Input,
         output_model=Output,
     )
