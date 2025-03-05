@@ -57,7 +57,7 @@ services:
   # echo $GITLAB_TOKEN | docker login registry.gitlab.aleph-alpha.de -u your_email@for_gitlab --password-stdin
   # docker compose pull to update containers
   studio-backend:
-    image: registry.gitlab.aleph-alpha.de/product/studio/backend:v0.0.65
+    image: registry.gitlab.aleph-alpha.de/product/studio/backend:v0.1.4
     ports:
       - 8000:8000
     depends_on:

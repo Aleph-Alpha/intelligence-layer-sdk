@@ -284,6 +284,9 @@ class StudioClient:
             project_of_interest = next(
                 proj for proj in all_projects if proj["name"] == project_name
             )
+            # Studio API service < v0.1.0 does not have a "project_id" field
+            if "project_id" in project_of_interest:
+                return str(project_of_interest["project_id"])
             return str(project_of_interest["id"])
         except StopIteration:
             return None
