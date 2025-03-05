@@ -328,7 +328,7 @@ class StudioClient:
                 raise ValueError("Project already exists")
             case _:
                 response.raise_for_status()
-        return response.text
+        return str(response.json())
 
     def submit_trace(self, data: Sequence[ExportedSpan]) -> str:
         """Sends the provided spans to Studio as a singular trace.
