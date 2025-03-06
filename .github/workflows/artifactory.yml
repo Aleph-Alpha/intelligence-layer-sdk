@@ -32,6 +32,6 @@ jobs:
         run: |
           poetry build
           poetry config repositories.artifactory $ARTIFACTORY_URL/artifactory/api/pypi/$ARTIFACTORY_PYPI_REPOSITORY
-          export POETRY_HTTP_BASIC_ARTIFACTORY_PASSWORD=$(.github/workflows/get_jfrog_access_token.sh)
-          export POETRY_HTTP_BASIC_ARTIFACTORY_USERNAME=$(.github/workflows/get_jfrog_access_token_subject.sh $POETRY_HTTP_BASIC_ARTIFACTORY_PASSWORD)
+          export POETRY_HTTP_BASIC_ARTIFACTORY_PASSWORD=$(.github/composites/get_jfrog_access_token.sh)
+          export POETRY_HTTP_BASIC_ARTIFACTORY_USERNAME=$(.github/composites/get_jfrog_access_token_subject.sh $POETRY_HTTP_BASIC_ARTIFACTORY_PASSWORD)
           poetry publish -r artifactory
