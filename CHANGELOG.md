@@ -1,30 +1,41 @@
 # Changelog
 ## Unreleased
 ...
+
 ### Features
- - Introduced `AsyncDocumentIndexClient` and `AsyncDocumentIndexRetriever` as drop-in replacements for their blocking counterparts, enabling coroutine-based, non-blocking document indexing and retrieval.
+...
+
 ### Fixes
-- `InMemoryDatasetRepository` now has a more descriptive error message when creating a dataset fails due to an ID clash.
-- `StudioClient` now deserializes and serializes examples while maintaining type information, which was previously dropped.
-- `RunRepository` and `EvaluationRepository` now more accurately reflect their actual return types in their signatures. Previously, it was not obvious that failed examples could be returned.
-- `FileTracer.traces` now uses "utf-8" encoding to read the persisted trace file. Previously, the machines default encoding was used, which could lead to a mismatch between the encoding used for writing and reading.
+...
 
 ### Deprecations
 ...
-### Breaking Changes
- - `StudioClient` now handles project_id as a string instead of an integer. This is only relevant when you handle project ids (not names) manually.
- - `InMemoryDatasetRepository` now returns the exact types given by users when retrieving `Example`. Previously, it disregarded the types it was given and returned what was saved.
-   -  This is in line with how the other repositories work.
- - `EloQaEvaluationLogic` now has an expected output type of `None` instead of `SingleChunkQaOutput`. The information was unused.
-   - If you have pipelines that define data to be processed by this logic OR if you subclass from this specific logic, you may need to adapt it.
 
 ### Breaking Changes
--  `InMemoryDatasetRepository`, `InMemoryRunRepository`, `InMemoryEvaluationRepository`, and `InMemoryAggregationRepository` now either return the exact types given by users when retrieving example-related data or fail. Specifically, this means that passing the wrong type when retrieving data will now fail with a `ValidationError`. Previously, the repositories disregarded the types they were given and returned whatever object was saved.
-  -  This is in line with how the other repositories work.
--  `EloQaEvaluationLogic` now has an expected output type of `None` instead of `SingleChunkQaOutput`. The information was unused.
-  -  If you have pipelines that define data to be processed by this logic, or if you subclass from this specific logic, you may need to adapt it.
-  - `log_probs` in the `CompletionInput` of the `do_run` method been set to 20 instead of the prior value of 30
-- The legacy `Trace Viewer` has now been removed along with all references to it.
+...
+
+## 10.0.0
+
+### Features
+  - Introduced `AsyncDocumentIndexClient` and `AsyncDocumentIndexRetriever` as drop-in replacements for their blocking counterparts, enabling coroutine-based, non-blocking document indexing and retrieval.
+### Fixes
+  - `InMemoryDatasetRepository` now has a more descriptive error message when creating a dataset fails due to an ID clash.
+  - `StudioClient` now deserializes and serializes examples while maintaining type information, which was previously dropped.
+  - `RunRepository` and `EvaluationRepository` now more accurately reflect their actual return types in their signatures. Previously, it was not obvious that failed examples could be returned.
+  - `FileTracer.traces` now uses "utf-8" encoding to read the persisted trace file. Previously, the machines default encoding was used, which could lead to a mismatch between the encoding used for writing and reading.
+
+### Breaking Changes
+  - `StudioClient` now handles project_id as a string instead of an integer. This is only relevant when you handle project ids (not names) manually.
+  - `InMemoryDatasetRepository` now returns the exact types given by users when retrieving `Example`. Previously, it disregarded the types it was given and returned what was saved.
+    -  This is in line with how the other repositories work.
+  - `EloQaEvaluationLogic` now has an expected output type of `None` instead of `SingleChunkQaOutput`. The information was unused.
+   - If you have pipelines that define data to be processed by this logic OR if you subclass from this specific logic, you may need to adapt it.
+  -  `InMemoryDatasetRepository`, `InMemoryRunRepository`, `InMemoryEvaluationRepository`, and `InMemoryAggregationRepository` now either return the exact types given by users when retrieving example-related data or fail. Specifically, this means that passing the wrong type when retrieving data will now fail with a `ValidationError`. Previously, the repositories disregarded the types they were given and returned whatever object was saved.
+    -  This is in line with how the other repositories work.
+  -  `EloQaEvaluationLogic` now has an expected output type of `None` instead of `SingleChunkQaOutput`. The information was unused.
+    -  If you have pipelines that define data to be processed by this logic, or if you subclass from this specific logic, you may need to adapt it.
+    - `log_probs` in the `CompletionInput` of the `do_run` method been set to 20 instead of the prior value of 30
+  - The legacy `Trace Viewer` has now been removed along with all references to it.
 
 ## 9.1.0
 ...
