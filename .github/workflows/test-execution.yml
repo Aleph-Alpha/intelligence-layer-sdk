@@ -16,3 +16,6 @@ jobs:
   python-tests:
     uses: ./.github/workflows/sdk-tests.yml
     secrets: inherit
+  document-index-python-tests:
+    uses: ./.github/workflows/document-index-tests.yml
+    secrets: inherit
