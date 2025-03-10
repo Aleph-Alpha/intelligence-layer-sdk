@@ -80,7 +80,7 @@ class HybridQdrantInMemoryRetriever(QdrantInMemoryRetriever):
             collection_name=self._collection_name,
             vectors_config={
                 self._dense_vector_field_name: VectorParams(
-                    size=128, distance=self._distance_metric
+                    size=4608, distance=self._distance_metric
                 )
             },
             sparse_vectors_config={
