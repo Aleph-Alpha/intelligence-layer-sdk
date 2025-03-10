@@ -1,0 +1,16 @@
+name: Document Index Tests
+
+on:
+  schedule:
+    - cron: '0 16 * * *'  # Runs daily at 16:00 UTC
+  pull_request:
+  workflow_dispatch:  # Allows manual trigger
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  python-tests:
+    uses: ./.github/workflows/document-index-tests.yml
+    secrets: inherit
