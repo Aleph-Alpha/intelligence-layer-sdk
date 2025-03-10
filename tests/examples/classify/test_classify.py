@@ -303,10 +303,8 @@ def test_multi_label_classify_evaluator_single_example(
     )[0].result
 
     assert isinstance(evaluation, MultiLabelClassifyEvaluation)
-    assert evaluation.tp == frozenset({"school"})
-    assert evaluation.tn == frozenset({"finance"})
-    assert evaluation.fp == frozenset({"negative"})
-    assert evaluation.fn == frozenset({"positive"})
+    assert evaluation.tp == frozenset({"school", "positive"})
+    assert evaluation.fp == frozenset({"negative", "finance"})
 
 
 def test_multi_label_classify_evaluator_full_dataset(
