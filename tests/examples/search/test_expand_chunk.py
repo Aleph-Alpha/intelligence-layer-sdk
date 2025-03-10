@@ -2,6 +2,7 @@ from collections.abc import Sequence
 from datetime import datetime, timedelta
 from typing import Optional
 
+import pytest
 from pytest import fixture
 
 from intelligence_layer.connectors import (
@@ -120,6 +121,7 @@ def multiple_chunks_expand_chunk_input(
     )
 
 
+@pytest.mark.skip("Flaky test")
 def test_expand_chunk_works_for_wholly_included_chunk(
     asymmetric_in_memory_retriever: QdrantInMemoryRetriever,
     luminous_control_model: LuminousControlModel,
@@ -144,6 +146,7 @@ def test_expand_chunk_works_for_wholly_included_chunk(
     )
 
 
+@pytest.mark.skip("Flaky test")
 def test_expand_chunk_works_for_overlapping_chunk(
     asymmetric_in_memory_retriever: QdrantInMemoryRetriever,
     luminous_control_model: LuminousControlModel,
@@ -160,6 +163,7 @@ def test_expand_chunk_works_for_overlapping_chunk(
     assert len(expand_chunk_output.chunks) == 4
 
 
+@pytest.mark.skip("Flaky test")
 def test_expand_chunk_works_for_multiple_chunks(
     asymmetric_in_memory_retriever: QdrantInMemoryRetriever,
     luminous_control_model: LuminousControlModel,

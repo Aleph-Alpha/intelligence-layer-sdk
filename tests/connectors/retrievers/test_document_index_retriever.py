@@ -7,6 +7,7 @@ from intelligence_layer.connectors.retrievers.document_index_retriever import (
 
 pytestmark = pytest.mark.document_index
 
+
 @pytest.mark.internal
 def test_document_index_retriever(
     document_index_retriever: DocumentIndexRetriever,
