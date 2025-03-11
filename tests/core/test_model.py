@@ -61,7 +61,7 @@ def test_model_without_input(model: ControlModel, no_op_tracer: NoOpTracer) -> N
 
 def test_aa_model(base_model: AlephAlphaModel, no_op_tracer: NoOpTracer) -> None:
     prompt = Prompt.from_text("The capital of Germany is")
-    input = CompleteInput(prompt=prompt)
+    input = CompleteInput(prompt=prompt, maximum_tokens=50)
 
     output = base_model.complete(input, no_op_tracer)
     assert "Berlin" in output.completion

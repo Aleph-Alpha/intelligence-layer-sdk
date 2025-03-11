@@ -83,7 +83,7 @@ class QdrantInMemoryRetriever(BaseRetriever[int]):
 
         self._search_client.create_collection(
             collection_name=self._collection_name,
-            vectors_config=VectorParams(size=128, distance=self._distance_metric),
+            vectors_config=VectorParams(size=4608, distance=self._distance_metric),
         )
 
         self._add_texts_to_memory(documents)
@@ -104,11 +104,10 @@ class QdrantInMemoryRetriever(BaseRetriever[int]):
         embedding_request = SemanticEmbeddingRequest(
             prompt=Prompt.from_text(text),
             representation=representation,
-            compress_to_size=128,
             normalize=True,
         )
         return self._client.semantic_embed(
-            request=embedding_request, model="luminous-base"
+            request=embedding_request, model="pharia-1-embedding-4608-control"
         ).embedding
 
     @staticmethod
