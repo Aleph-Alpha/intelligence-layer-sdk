@@ -13,7 +13,7 @@ defaults:
     shell: bash
 
 jobs:
-  run-notebooks:
+  document-index-notebooks:
     timeout-minutes: ${{inputs.timeout}}
     runs-on: ${{inputs.runner}}
       
@@ -28,7 +28,7 @@ jobs:
           DOCUMENT_INDEX_URL: ${{secrets.DOCUMENT_INDEX_URL}}
         run: |
           ./scripts/notebook_runner_document_index.sh
-  document-index:
+  document-index-tests:
     timeout-minutes: ${{inputs.timeout}}
     runs-on: ${{inputs.runner}}
     continue-on-error: true

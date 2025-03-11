@@ -2,8 +2,18 @@ name: Document Index Tests
 
 on:
   schedule:
-    - cron: '0 8 * * *'  # Runs daily at 8:00 UTC
+    - cron: '0 5 * * *'  # Runs daily at 8:00 UTC
   workflow_dispatch:  # Allows manual trigger
+  push:
+    branches:
+      - main
+    paths:
+      - "src/intelligence_layer/connectors/document_index/**"
+      - "tests/connectors/document_index/**"
+  pull_request:
+    paths:
+      - "src/intelligence_layer/connectors/document_index/**"
+      - "tests/connectors/document_index/**"
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
