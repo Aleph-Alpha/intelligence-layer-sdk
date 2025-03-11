@@ -22,6 +22,10 @@ HybridIndex: TypeAlias = Literal["bm25"] | None
 EmbeddingConfig: TypeAlias = Union["SemanticEmbed", "InstructableEmbed"]
 
 
+class TestDIPipeline:
+    pass
+
+
 class IndexPath(BaseModel, frozen=True):
     """Path to an index.
 
