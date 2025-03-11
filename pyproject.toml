@@ -38,7 +38,7 @@ aiohttp = "^3.11.11"
 
 [tool.poetry.group.dev.dependencies]
 # lint & format
-mypy = "^1.13.0"
+mypy = "^1.15.0"
 nbqa = "^1.9.1"
 ruff = "^0.9.7"
 pre-commit = "^4.1.0"
