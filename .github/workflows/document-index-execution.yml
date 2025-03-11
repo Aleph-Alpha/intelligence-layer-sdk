@@ -2,7 +2,7 @@ name: Document Index Tests
 
 on:
   schedule:
-    - cron: '0 5 * * *'  # Runs daily at 8:00 UTC
+    - cron: '0 5 * * *'  # Runs daily at 5:00 UTC
   workflow_dispatch:  # Allows manual trigger
   push:
     branches:
