@@ -25,6 +25,7 @@ jobs:
       - name: Run Notebooks
         env:
           AA_TOKEN: ${{ secrets.AA_TOKEN }}
+          CLIENT_URL: ${{ secrets.CLIENT_URL }}
           DOCUMENT_INDEX_URL: ${{secrets.DOCUMENT_INDEX_URL}}
         run: |
           ./scripts/notebook_runner_document_index.sh
