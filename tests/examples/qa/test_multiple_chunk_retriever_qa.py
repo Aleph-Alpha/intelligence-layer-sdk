@@ -12,14 +12,14 @@ from intelligence_layer.examples import (
 
 @fixture
 def multiple_chunk_retriever_qa(
-    luminous_control_model: LuminousControlModel,
+    llama_control_model: LuminousControlModel,
     asymmetric_in_memory_retriever: QdrantInMemoryRetriever,
 ) -> MultipleChunkRetrieverQa[int]:
     return MultipleChunkRetrieverQa(
         retriever=asymmetric_in_memory_retriever,
-        model=luminous_control_model,
+        model=llama_control_model,
         expand_chunks=ExpandChunks(
-            asymmetric_in_memory_retriever, luminous_control_model, 256
+            asymmetric_in_memory_retriever, llama_control_model, 256
         ),
     )
 

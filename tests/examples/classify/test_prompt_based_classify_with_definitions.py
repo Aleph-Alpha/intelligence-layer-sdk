@@ -26,11 +26,11 @@ def labels_with_definitions() -> Sequence[LabelWithDefinition]:
 
 @fixture
 def prompt_based_classify_with_definitions(
-    luminous_control_model: LuminousControlModel,
+    llama_control_model: LuminousControlModel,
     labels_with_definitions: Sequence[LabelWithDefinition],
 ) -> PromptBasedClassifyWithDefinitions:
     return PromptBasedClassifyWithDefinitions(
-        labels_with_definitions, luminous_control_model
+        labels_with_definitions, llama_control_model
     )
 
 

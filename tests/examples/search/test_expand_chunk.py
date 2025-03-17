@@ -122,12 +122,12 @@ def multiple_chunks_expand_chunk_input(
 
 def test_expand_chunk_works_for_wholly_included_chunk(
     asymmetric_in_memory_retriever: QdrantInMemoryRetriever,
-    luminous_control_model: LuminousControlModel,
+    llama_control_model: LuminousControlModel,
     wholly_included_expand_chunk_input: ExpandChunksInput[int],
     no_op_tracer: NoOpTracer,
 ) -> None:
     expand_chunk_task = ExpandChunks(
-        asymmetric_in_memory_retriever, luminous_control_model, 256
+        asymmetric_in_memory_retriever, llama_control_model, 256
     )
     expand_chunk_output = expand_chunk_task.run(
         wholly_included_expand_chunk_input, no_op_tracer
@@ -146,12 +146,12 @@ def test_expand_chunk_works_for_wholly_included_chunk(
 
 def test_expand_chunk_works_for_overlapping_chunk(
     asymmetric_in_memory_retriever: QdrantInMemoryRetriever,
-    luminous_control_model: LuminousControlModel,
+    llama_control_model: LuminousControlModel,
     overlapping_expand_chunk_input: ExpandChunksInput[int],
     no_op_tracer: NoOpTracer,
 ) -> None:
     expand_chunk_task = ExpandChunks(
-        asymmetric_in_memory_retriever, luminous_control_model, 256
+        asymmetric_in_memory_retriever, llama_control_model, 256
     )
     expand_chunk_output = expand_chunk_task.run(
         overlapping_expand_chunk_input, no_op_tracer
@@ -162,12 +162,12 @@ def test_expand_chunk_works_for_overlapping_chunk(
 
 def test_expand_chunk_works_for_multiple_chunks(
     asymmetric_in_memory_retriever: QdrantInMemoryRetriever,
-    luminous_control_model: LuminousControlModel,
+    llama_control_model: LuminousControlModel,
     multiple_chunks_expand_chunk_input: ExpandChunksInput[int],
     no_op_tracer: NoOpTracer,
 ) -> None:
     expand_chunk_task = ExpandChunks(
-        asymmetric_in_memory_retriever, luminous_control_model, 256
+        asymmetric_in_memory_retriever, llama_control_model, 256
     )
     expand_chunk_output = expand_chunk_task.run(
         multiple_chunks_expand_chunk_input, no_op_tracer
@@ -182,7 +182,7 @@ def test_expand_chunk_works_for_multiple_chunks(
 
 def test_expand_chunk_is_fast_with_large_document(
     client: AlephAlphaClientProtocol,
-    luminous_control_model: LuminousControlModel,
+    llama_control_model: LuminousControlModel,
     no_op_tracer: NoOpTracer,
 ) -> None:
     retriever = QdrantInMemoryRetriever(
@@ -201,7 +201,7 @@ def test_expand_chunk_is_fast_with_large_document(
             )
         ],
     )
-    expand_chunk_task = ExpandChunks(retriever, luminous_control_model, 256)
+    expand_chunk_task = ExpandChunks(retriever, llama_control_model, 256)
 
     time = datetime.now()
     output = expand_chunk_task.run(expand_chunk_input, no_op_tracer)
@@ -226,7 +226,7 @@ class FakeRetriever(BaseRetriever[str]):
 
 
 def test_expand_chunks_works_if_chunk_of_interest_is_outside_first_large_chunk(
-    luminous_control_model: LuminousControlModel,
+    llama_control_model: LuminousControlModel,
     no_op_tracer: NoOpTracer,
 ) -> None:
     # given
@@ -244,7 +244,7 @@ def test_expand_chunks_works_if_chunk_of_interest_is_outside_first_large_chunk(
     max_chunk_size = 10
     expand_chunk_task = ExpandChunks(
         FakeRetriever(result=full_text),
-        luminous_control_model,
+        llama_control_model,
         max_chunk_size=max_chunk_size,
     )
     res = expand_chunk_task.run(task_input, no_op_tracer)

@@ -16,11 +16,11 @@ from intelligence_layer.connectors import (
     RetrieverType,
 )
 from intelligence_layer.core import (
-    LuminousControlModel,
     NoOpTracer,
     Pharia1ChatModel,
     utc_now,
 )
+from intelligence_layer.core.model import Llama3InstructModel
 from intelligence_layer.evaluation import (
     AsyncInMemoryEvaluationRepository,
     EvaluationOverview,
@@ -56,8 +56,8 @@ def client(token: str, inference_url: str) -> AlephAlphaClientProtocol:
 
 
 @fixture(scope="session")
-def luminous_control_model(client: AlephAlphaClientProtocol) -> LuminousControlModel:
-    return LuminousControlModel("luminous-base-control", client)
+def llama_control_model(client: AlephAlphaClientProtocol) -> Llama3InstructModel:
+    return Llama3InstructModel("llama-3.1-8b-instruct", client)
 
 
 @fixture(scope="session")

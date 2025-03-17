@@ -40,13 +40,11 @@ In this timeless land, the cycle of challenge and triumph continued, each genera
 
 
 def test_chunk_with_indices(
-    luminous_control_model: LuminousControlModel,
+    llama_control_model: LuminousControlModel,
     chunk_input: ChunkInput,
     no_op_tracer: NoOpTracer,
 ) -> None:
-    chunk_with_indices = ChunkWithIndices(
-        luminous_control_model, max_tokens_per_chunk=128
-    )
+    chunk_with_indices = ChunkWithIndices(llama_control_model, max_tokens_per_chunk=128)
 
     output = chunk_with_indices.do_run(chunk_input, no_op_tracer)
 

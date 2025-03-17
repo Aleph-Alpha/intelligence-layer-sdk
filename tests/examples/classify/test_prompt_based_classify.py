@@ -35,9 +35,9 @@ from intelligence_layer.examples.classify.prompt_based_classify import (
 
 @fixture
 def prompt_based_classify_luminous(
-    luminous_control_model: LuminousControlModel,
+    llama_control_model: LuminousControlModel,
 ) -> PromptBasedClassify:
-    return PromptBasedClassify(luminous_control_model)
+    return PromptBasedClassify(llama_control_model)
 
 
 @fixture

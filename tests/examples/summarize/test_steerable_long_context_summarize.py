@@ -28,17 +28,17 @@ def test_steerable_long_context_summarize_en(
 
 
 def test_steerable_long_context_summarize_adapts_to_instruction(
-    luminous_control_model: LuminousControlModel,
+    llama_control_model: LuminousControlModel,
     long_text: str,
 ) -> None:
     input = LongContextSummarizeInput(text=long_text)
     steerable_long_context_summarize_keyword = SteerableLongContextSummarize(
         summarize=SteerableSingleChunkSummarize(
-            luminous_control_model,
+            llama_control_model,
             max_generated_tokens=128,
             instruction_configs={Language("en"): "Summarize using bullet points."},
         ),
-        chunk=Chunk(luminous_control_model, max_tokens_per_chunk=512),
+        chunk=Chunk(llama_control_model, max_tokens_per_chunk=512),
     )
 
     output = steerable_long_context_summarize_keyword.run(input, NoOpTracer())

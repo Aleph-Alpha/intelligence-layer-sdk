@@ -8,15 +8,15 @@ from intelligence_layer.examples import MultipleChunkQa, SingleChunkQa
 
 
 @fixture
-def single_chunk_qa(luminous_control_model: LuminousControlModel) -> SingleChunkQa:
-    return SingleChunkQa(luminous_control_model)
+def single_chunk_qa(llama_control_model: LuminousControlModel) -> SingleChunkQa:
+    return SingleChunkQa(llama_control_model)
 
 
 @fixture
 def multiple_chunk_qa(
-    single_chunk_qa: SingleChunkQa, luminous_control_model: LuminousControlModel
+    single_chunk_qa: SingleChunkQa, llama_control_model: LuminousControlModel
 ) -> MultipleChunkQa:
-    return MultipleChunkQa(single_chunk_qa, merge_answers_model=luminous_control_model)
+    return MultipleChunkQa(single_chunk_qa, merge_answers_model=llama_control_model)
 
 
 @fixture
