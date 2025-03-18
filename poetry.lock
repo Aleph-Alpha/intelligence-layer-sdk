@@ -266,14 +266,14 @@ files = [
 
 [[package]]
 name = "argilla"
-version = "2.7.0"
+version = "2.8.0"
 description = "The Argilla python server SDK"
 optional = false
 python-versions = ">=3.9"
 groups = ["main"]
 files = [
-    {file = "argilla-2.7.0-py3-none-any.whl", hash = "sha256:662f642d4aa027740e69217b095a9fe68b7e32e9e26208087eab68c4162a94eb"},
-    {file = "argilla-2.7.0.tar.gz", hash = "sha256:4efdee75c73c4222ab5095d020a6a75b0a1da3674e8a102654e9ba93e9293a09"},
+    {file = "argilla-2.8.0-py3-none-any.whl", hash = "sha256:d78264a92c8a7137232ea26042d68aec56bce96c47b26a079ee218182bf89cbb"},
+    {file = "argilla-2.8.0.tar.gz", hash = "sha256:4364d58d8bfd51880efefc6ab08eb17983ffbede3807420536f4bbd6662afa37"},
 ]
 
 [package.dependencies]
@@ -6895,4 +6895,4 @@ type = ["pytest-mypy"]
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.10,<3.13"
-content-hash = "4ecf58b8e083b5cd4f61d724d275498f911d3a1d851233501ad51828a8730755"
+content-hash = "74d2553efa361bba4a6d018ba1d5b2397e3ad383777ad137ad21494a6eac78ed"
