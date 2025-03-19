@@ -60,6 +60,7 @@ def client(token: str, inference_url: str) -> AlephAlphaClientProtocol:
 def llama_control_model(client: AlephAlphaClientProtocol) -> Llama3InstructModel:
     return Llama3InstructModel("llama-3.1-8b-instruct", client)
 
+
 @fixture(scope="session")
 def luminous_control_model(client: AlephAlphaClientProtocol) -> LuminousControlModel:
     return LuminousControlModel("luminous-base-control", client)
