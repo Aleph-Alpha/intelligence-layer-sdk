@@ -3,7 +3,7 @@ from intelligence_layer.core import (
     ChunkInput,
     ChunkOutput,
     ControlModel,
-    Llama3InstructModel,
+    LuminousControlModel,
     Task,
     TaskSpan,
 )
@@ -47,7 +47,7 @@ class SteerableLongContextSummarize(
         model: ControlModel | None = None,
     ) -> None:
         super().__init__()
-        model = model or Llama3InstructModel("llama-3.1-8b-instruct")
+        model = model or LuminousControlModel("luminous-base-control")
         self._summarize = summarize or SteerableSingleChunkSummarize(
             model, max_generated_tokens=512
         )

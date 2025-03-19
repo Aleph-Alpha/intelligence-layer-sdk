@@ -4,7 +4,7 @@ from intelligence_layer.core import (
     CompleteInput,
     ControlModel,
     Language,
-    Llama3InstructModel,
+    LuminousControlModel,
     Task,
     TaskSpan,
 )
@@ -37,7 +37,7 @@ class SteerableSingleChunkSummarize(Task[SingleChunkSummarizeInput, SummarizeOut
         max_generated_tokens: int = 256,
         instruction_configs: Mapping[Language, str] = INSTRUCTION_CONFIGS,
     ) -> None:
-        self._model = model or Llama3InstructModel("llama-3.1-8b-instruct")
+        self._model = model or LuminousControlModel("luminous-base-control")
         self._max_generated_tokens = max_generated_tokens
         self._instruction_configs = instruction_configs
 

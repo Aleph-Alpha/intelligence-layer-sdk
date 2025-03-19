@@ -8,7 +8,7 @@ from intelligence_layer.core import (
     CompleteOutput,
     ControlModel,
     Language,
-    Llama3InstructModel,
+    LuminousControlModel,
     Task,
     TaskSpan,
     TextChunk,
@@ -170,8 +170,8 @@ class MultipleChunkQa(Task[MultipleChunkQaInput, MultipleChunkQaOutput]):
         ] = MERGE_ANSWERS_INSTRUCT_CONFIGS,
     ):
         super().__init__()
-        self._model = merge_answers_model or Llama3InstructModel(
-            "llama-3.1-8b-instruct"
+        self._model = merge_answers_model or LuminousControlModel(
+            "luminous-supreme-control"
         )
         self._single_chunk_qa = single_chunk_qa or SingleChunkQa(self._model)
         self._merge_answers_instruct_configs = merge_answers_instruct_configs

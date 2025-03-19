@@ -9,7 +9,7 @@ from intelligence_layer.core import (
     CompleteInput,
     CompleteOutput,
     ControlModel,
-    Llama3InstructModel,
+    LuminousControlModel,
     Task,
     TaskSpan,
     TextChunk,
@@ -47,8 +47,8 @@ Reply with only the class label."""
     ) -> None:
         super().__init__()
         self._labels_with_definitions = labels_with_definitions
-        self._model = model or Llama3InstructModel("llama-3.1-8b-instruct")
-        if not isinstance(self._model, Llama3InstructModel):
+        self._model = model or LuminousControlModel("luminous-base-control")
+        if not isinstance(self._model, LuminousControlModel):
             warnings.warn(
                 "PromptBasedClassifyWithDefinitions was build for luminous models. LLama models may not work correctly. "
                 "Proceed with caution and testing.",
