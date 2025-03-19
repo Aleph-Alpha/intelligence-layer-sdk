@@ -187,14 +187,14 @@ files = [
 
 [[package]]
 name = "aleph-alpha-client"
-version = "9.1.0"
+version = "10.0.0"
 description = "python client to interact with Aleph Alpha api endpoints"
 optional = false
 python-versions = "<3.13,>=3.9"
 groups = ["main"]
 files = [
-    {file = "aleph_alpha_client-9.1.0-py3-none-any.whl", hash = "sha256:abddd0bd3ac707da466807b0e25a2d709ade92a5e82bd5e76f5fa5c6395c9946"},
-    {file = "aleph_alpha_client-9.1.0.tar.gz", hash = "sha256:dc445491377ff0c52368ecb08143bd9901539d0130ff22363536a828cce819ef"},
+    {file = "aleph_alpha_client-10.0.0-py3-none-any.whl", hash = "sha256:b4c152eb32a6d789fd55006622b1523741396795d3955b6edbcaee94489e452b"},
+    {file = "aleph_alpha_client-10.0.0.tar.gz", hash = "sha256:d76ce2307ae39c066c382abd0d90c10b90f7866206c04814975598ec892f8227"},
 ]
 
 [package.dependencies]
@@ -211,10 +211,7 @@ typing-extensions = ">=4.5.0"
 urllib3 = ">=1.26"
 
 [package.extras]
-dev = ["ipykernel", "mypy", "nbconvert", "pre-commit", "pytest", "pytest-aiohttp", "pytest-cov", "pytest-dotenv", "pytest-httpserver", "ruff", "types-Pillow", "types-tqdm"]
-docs = ["sphinx", "sphinx_rtd_theme"]
-test = ["pytest", "pytest-aiohttp", "pytest-cov", "pytest-dotenv", "pytest-httpserver"]
-types = ["mypy", "types-Pillow", "types-requests", "types-tqdm"]
+docs = ["sphinx (>=6.1.3)", "sphinx-rtd-theme (>=1.2.1)"]
 
 [[package]]
 name = "annotated-types"
