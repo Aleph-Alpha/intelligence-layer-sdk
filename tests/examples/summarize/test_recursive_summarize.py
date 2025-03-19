@@ -3,7 +3,7 @@ from pathlib import Path
 from aleph_alpha_client import Client, CompletionRequest, CompletionResponse
 from pytest import fixture
 
-from intelligence_layer.core import Chunk, LuminousControlModel, NoOpTracer
+from intelligence_layer.core import Chunk, Llama3InstructModel, NoOpTracer
 from intelligence_layer.examples import RecursiveSummarize
 from intelligence_layer.examples.summarize.recursive_summarize import (
     RecursiveSummarizeInput,
@@ -81,8 +81,8 @@ def test_recursive_summarize_stops_when_num_partial_summaries_stays_same_with_em
 def test_recursive_summarize_stops_after_one_chunk(
     recursive_counting_client: RecursiveCountingClient,
 ) -> None:
-    model = LuminousControlModel(
-        name="luminous-base-control", client=recursive_counting_client
+    model = Llama3InstructModel(
+        name="llama-3.1-8b-instruct", client=recursive_counting_client
     )
 
     long_context_high_compression_summarize = SteerableLongContextSummarize(

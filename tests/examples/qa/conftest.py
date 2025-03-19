@@ -3,7 +3,8 @@ from collections.abc import Sequence
 from pytest import fixture
 
 from intelligence_layer.connectors import Document
-from intelligence_layer.core import LuminousControlModel
+from intelligence_layer.core import Llama3InstructModel
+from intelligence_layer.core.model import LuminousControlModel
 from intelligence_layer.examples import MultipleChunkQa, SingleChunkQa
 
 
@@ -14,9 +15,9 @@ def single_chunk_qa(luminous_control_model: LuminousControlModel) -> SingleChunk
 
 @fixture
 def multiple_chunk_qa(
-    single_chunk_qa: SingleChunkQa, luminous_control_model: LuminousControlModel
+    single_chunk_qa: SingleChunkQa, llama_control_model: Llama3InstructModel
 ) -> MultipleChunkQa:
-    return MultipleChunkQa(single_chunk_qa, merge_answers_model=luminous_control_model)
+    return MultipleChunkQa(single_chunk_qa, merge_answers_model=llama_control_model)
 
 
 @fixture

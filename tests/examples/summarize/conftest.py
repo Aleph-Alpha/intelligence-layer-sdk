@@ -1,6 +1,6 @@
 from pytest import fixture
 
-from intelligence_layer.core import Chunk, LuminousControlModel, TextChunk
+from intelligence_layer.core import Chunk, Llama3InstructModel, TextChunk
 from intelligence_layer.examples.summarize.steerable_long_context_summarize import (
     SteerableLongContextSummarize,
 )
@@ -11,9 +11,9 @@ from intelligence_layer.examples.summarize.steerable_single_chunk_summarize impo
 
 @fixture
 def steerable_single_chunk_summarize(
-    luminous_control_model: LuminousControlModel,
+    llama_control_model: Llama3InstructModel,
 ) -> SteerableSingleChunkSummarize:
-    return SteerableSingleChunkSummarize(luminous_control_model)
+    return SteerableSingleChunkSummarize(llama_control_model)
 
 
 @fixture
@@ -25,13 +25,13 @@ def chunk() -> TextChunk:
 
 @fixture
 def steerable_long_context_summarize(
-    luminous_control_model: LuminousControlModel,
+    llama_control_model: Llama3InstructModel,
 ) -> SteerableLongContextSummarize:
     return SteerableLongContextSummarize(
         summarize=SteerableSingleChunkSummarize(
-            luminous_control_model, max_generated_tokens=128
+            llama_control_model, max_generated_tokens=128
         ),
-        chunk=Chunk(luminous_control_model, max_tokens_per_chunk=1024),
+        chunk=Chunk(llama_control_model, max_tokens_per_chunk=1024),
     )
 
 

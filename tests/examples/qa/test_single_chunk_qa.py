@@ -2,7 +2,7 @@ import pytest
 
 from intelligence_layer.core import (
     Language,
-    LuminousControlModel,
+    Llama3InstructModel,
     NoOpTracer,
     TextChunk,
     TextHighlight,
@@ -75,7 +75,7 @@ def test_language_not_supported_exception(single_chunk_qa: SingleChunkQa) -> Non
 
 @pytest.mark.skip
 def test_qa_with_logit_bias_for_no_answer(
-    luminous_control_model: LuminousControlModel,
+    llama_control_model: Llama3InstructModel,
 ) -> None:
     first_token = "no"
     max_tokens = 5
@@ -87,7 +87,7 @@ def test_qa_with_logit_bias_for_no_answer(
         )
     }
     single_chunk_qa = SingleChunkQa(
-        luminous_control_model, instruction_config=config, maximum_tokens=max_tokens
+        llama_control_model, instruction_config=config, maximum_tokens=max_tokens
     )
 
     input = SingleChunkQaInput(
@@ -104,7 +104,7 @@ def test_qa_with_logit_bias_for_no_answer(
 
 
 def test_qa_highlights_will_not_become_out_of_bounds(
-    luminous_control_model: LuminousControlModel,
+    llama_control_model: Llama3InstructModel,
 ) -> None:
     input_text = """Zubereitung
 Ein Hotdog besteht aus einem erwärmten Brühwürstchen in einem länglichen, meist weichen Weizenbrötchen, das üblicherweise getoastet oder gedämpft wird. Das Hotdogbrötchen wird zur Hälfte der Länge nach aufgeschnitten und ggf. erhitzt. Danach legt man das heiße Würstchen hinein und garniert es mit den Saucen (Ketchup, Senf, Mayonnaise usw.). Häufig werden auch noch weitere Zugaben, etwa Röstzwiebeln, Essiggurken, Sauerkraut oder Krautsalat in das Brötchen gegeben.
@@ -118,9 +118,9 @@ Weltweit bekannt sind die Hotdog-Stände der schwedischen Möbelhauskette IKEA, 
 In den USA wird der Hotdog meist auf einem Roller Grill gegart. So bekommt die Wurst einen besonderen Grillgeschmack. Amerikanische Hotdogs werden mit speziellen Pickled Gherkins (Gurkenscheiben) und Relishes (Sweet Relish, Hot Pepper Relish oder Corn Relish), häufig mit mildem Senf (Yellow Mustard, die populärste Hotdog-Zutat) oder mit Ketchup serviert. Auch eine Garnitur aus warmem Sauerkraut ist möglich (Nathan’s Famous in New York)."""
     qa_task = SingleChunkQa(
         text_highlight=TextHighlight(
-            model=luminous_control_model, granularity=None, clamp=True
+            model=llama_control_model, granularity=None, clamp=True
         ),
-        model=luminous_control_model,
+        model=llama_control_model,
     )
     input = SingleChunkQaInput(
         chunk=TextChunk(input_text),

@@ -16,6 +16,7 @@ from intelligence_layer.connectors import (
     RetrieverType,
 )
 from intelligence_layer.core import (
+    Llama3InstructModel,
     LuminousControlModel,
     NoOpTracer,
     Pharia1ChatModel,
@@ -53,6 +54,11 @@ def client(token: str, inference_url: str) -> AlephAlphaClientProtocol:
         max_concurrency=10,
         max_retry_time=10,
     )
+
+
+@fixture(scope="session")
+def llama_control_model(client: AlephAlphaClientProtocol) -> Llama3InstructModel:
+    return Llama3InstructModel("llama-3.1-8b-instruct", client)
 
 
 @fixture(scope="session")

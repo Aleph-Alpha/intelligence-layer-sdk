@@ -2,7 +2,7 @@ from collections.abc import Sequence
 
 from pytest import fixture
 
-from intelligence_layer.core import LuminousControlModel, NoOpTracer, TextChunk
+from intelligence_layer.core import Llama3InstructModel, NoOpTracer, TextChunk
 from intelligence_layer.examples import (
     ClassifyInput,
     LabelWithDefinition,
@@ -26,11 +26,11 @@ def labels_with_definitions() -> Sequence[LabelWithDefinition]:
 
 @fixture
 def prompt_based_classify_with_definitions(
-    luminous_control_model: LuminousControlModel,
+    llama_control_model: Llama3InstructModel,
     labels_with_definitions: Sequence[LabelWithDefinition],
 ) -> PromptBasedClassifyWithDefinitions:
     return PromptBasedClassifyWithDefinitions(
-        labels_with_definitions, luminous_control_model
+        labels_with_definitions, llama_control_model
     )
 
 

@@ -1,7 +1,7 @@
 from pytest import fixture
 
 from intelligence_layer.core import NoOpTracer
-from intelligence_layer.core.model import LuminousControlModel
+from intelligence_layer.core.model import ControlModel
 from intelligence_layer.examples.qa.long_context_qa import (
     LongContextQa,
     LongContextQaInput,
@@ -46,8 +46,8 @@ Moses was a highly influential figure in the initiation of many of the reforms t
 
 
 @fixture
-def long_context_qa(luminous_control_model: LuminousControlModel) -> LongContextQa:
-    return LongContextQa(model=luminous_control_model)
+def long_context_qa(llama_control_model: ControlModel) -> LongContextQa:
+    return LongContextQa(model=llama_control_model)
 
 
 def test_qa_with_answer(long_context_qa: LongContextQa) -> None:
