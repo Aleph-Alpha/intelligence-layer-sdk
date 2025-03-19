@@ -11,7 +11,7 @@ from intelligence_layer.core import (
     Echo,
     EchoInput,
     EchoOutput,
-    LuminousControlModel,
+    Llama3InstructModel,
     RichPrompt,
     Task,
     TaskSpan,
@@ -81,8 +81,8 @@ Reply with only the class label."""
         instruction: str = INSTRUCTION,
     ) -> None:
         super().__init__()
-        self._model = model or LuminousControlModel("luminous-base-control")
-        if not isinstance(self._model, LuminousControlModel):
+        self._model = model or Llama3InstructModel("llama-3.1-8b-instruct")
+        if not isinstance(self._model, Llama3InstructModel):
             warnings.warn(
                 "PromptBasedClassify was build for luminous models. LLama models may not work correctly. "
                 "Proceed with caution and testing.",

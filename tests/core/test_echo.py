@@ -15,13 +15,14 @@ from intelligence_layer.core.model import (
     AlephAlphaModel,
     CompleteInput,
     CompleteOutput,
+    ControlModel,
     LuminousControlModel,
 )
 
 
 @fixture
-def echo_task(luminous_control_model: LuminousControlModel) -> Echo:
-    return Echo(luminous_control_model)
+def echo_task(llama_control_model: ControlModel) -> Echo:
+    return Echo(llama_control_model)
 
 
 @fixture

@@ -9,7 +9,7 @@ from intelligence_layer.core import (
     CompleteOutput,
     ControlModel,
     Language,
-    LuminousControlModel,
+    Llama3InstructModel,
     RichPrompt,
     Task,
     TaskSpan,
@@ -125,7 +125,7 @@ class SingleChunkQa(Task[SingleChunkQaInput, SingleChunkQaOutput]):
         maximum_tokens: int = 256,
     ):
         super().__init__()
-        self._model = model or LuminousControlModel("luminous-supreme-control")
+        self._model = model or Llama3InstructModel("llama-3.1-8b-instruct")
         self._text_highlight = text_highlight or TextHighlight(self._model, clamp=True)
         self._instruction_config = instruction_config
         self._maximum_tokens = maximum_tokens

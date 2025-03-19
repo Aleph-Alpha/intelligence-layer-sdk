@@ -35,9 +35,9 @@ def text_highlight(
 
 @fixture
 def text_highlight_with_clamp(
-    luminous_control_model: ControlModel,
+    llama_control_model: ControlModel,
 ) -> TextHighlight:
-    return TextHighlight(luminous_control_model, clamp=True)
+    return TextHighlight(llama_control_model, clamp=True)
 
 
 # To test with multimodal input, we also need a base model.
@@ -300,8 +300,8 @@ class FakeHighlightModel(LuminousControlModel):
 
 
 @fixture
-def fake_highlight_model(luminous_control_model: ControlModel) -> ControlModel:
-    return FakeHighlightModel(luminous_control_model)
+def fake_highlight_model(llama_control_model: ControlModel) -> ControlModel:
+    return FakeHighlightModel(llama_control_model)
 
 
 @pytest.mark.parametrize(

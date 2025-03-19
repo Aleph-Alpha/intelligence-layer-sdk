@@ -7,7 +7,7 @@ from intelligence_layer.connectors import AlephAlphaClientProtocol
 from intelligence_layer.core import (
     ControlModel,
     Language,
-    LuminousControlModel,
+    Llama3InstructModel,
     NoOpTracer,
     TextChunk,
     Tracer,
@@ -60,7 +60,7 @@ class DummyEloQaEvalLogic(
 
 @fixture
 def model(client: AlephAlphaClientProtocol) -> ControlModel:
-    return LuminousControlModel(client=client, name="luminous-base-control")
+    return Llama3InstructModel(client=client, name="llama-3.1-8b-instruct")
 
 
 @fixture

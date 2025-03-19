@@ -17,7 +17,8 @@ from intelligence_layer.connectors.limited_concurrency_client import (
 from intelligence_layer.connectors.retrievers.qdrant_in_memory_retriever import (
     RetrieverType,
 )
-from intelligence_layer.core import LuminousControlModel, NoOpTracer
+from intelligence_layer.core import Llama3InstructModel, NoOpTracer
+from intelligence_layer.core.model import LuminousControlModel
 from intelligence_layer.examples import ExpandChunks, ExpandChunksInput
 
 
@@ -122,12 +123,12 @@ def multiple_chunks_expand_chunk_input(
 
 def test_expand_chunk_works_for_wholly_included_chunk(
     asymmetric_in_memory_retriever: QdrantInMemoryRetriever,
-    luminous_control_model: LuminousControlModel,
+    llama_control_model: Llama3InstructModel,
     wholly_included_expand_chunk_input: ExpandChunksInput[int],
     no_op_tracer: NoOpTracer,
 ) -> None:
     expand_chunk_task = ExpandChunks(
-        asymmetric_in_memory_retriever, luminous_control_model, 256
+        asymmetric_in_memory_retriever, llama_control_model, 256
     )
     expand_chunk_output = expand_chunk_task.run(
         wholly_included_expand_chunk_input, no_op_tracer
@@ -146,12 +147,12 @@ def test_expand_chunk_works_for_wholly_included_chunk(
 
 def test_expand_chunk_works_for_overlapping_chunk(
     asymmetric_in_memory_retriever: QdrantInMemoryRetriever,
-    luminous_control_model: LuminousControlModel,
+    llama_control_model: Llama3InstructModel,
     overlapping_expand_chunk_input: ExpandChunksInput[int],
     no_op_tracer: NoOpTracer,
 ) -> None:
     expand_chunk_task = ExpandChunks(
-        asymmetric_in_memory_retriever, luminous_control_model, 256
+        asymmetric_in_memory_retriever, llama_control_model, 256
     )
     expand_chunk_output = expand_chunk_task.run(
         overlapping_expand_chunk_input, no_op_tracer
@@ -162,12 +163,12 @@ def test_expand_chunk_works_for_overlapping_chunk(
 
 def test_expand_chunk_works_for_multiple_chunks(
     asymmetric_in_memory_retriever: QdrantInMemoryRetriever,
-    luminous_control_model: LuminousControlModel,
+    llama_control_model: Llama3InstructModel,
     multiple_chunks_expand_chunk_input: ExpandChunksInput[int],
     no_op_tracer: NoOpTracer,
 ) -> None:
     expand_chunk_task = ExpandChunks(
-        asymmetric_in_memory_retriever, luminous_control_model, 256
+        asymmetric_in_memory_retriever, llama_control_model, 256
     )
     expand_chunk_output = expand_chunk_task.run(
         multiple_chunks_expand_chunk_input, no_op_tracer
@@ -182,7 +183,7 @@ def test_expand_chunk_works_for_multiple_chunks(
 
 def test_expand_chunk_is_fast_with_large_document(
     client: AlephAlphaClientProtocol,
-    luminous_control_model: LuminousControlModel,
+    llama_control_model: Llama3InstructModel,
     no_op_tracer: NoOpTracer,
 ) -> None:
     retriever = QdrantInMemoryRetriever(
@@ -201,7 +202,7 @@ def test_expand_chunk_is_fast_with_large_document(
             )
         ],
     )
-    expand_chunk_task = ExpandChunks(retriever, luminous_control_model, 256)
+    expand_chunk_task = ExpandChunks(retriever, llama_control_model, 256)
 
     time = datetime.now()
     output = expand_chunk_task.run(expand_chunk_input, no_op_tracer)

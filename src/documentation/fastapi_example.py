@@ -10,7 +10,7 @@ from fastapi import Depends, FastAPI, HTTPException, Request, Response
 from fastapi.datastructures import URL
 
 from intelligence_layer.connectors import AlephAlphaClientProtocol
-from intelligence_layer.core import LuminousControlModel, NoOpTracer, Task
+from intelligence_layer.core import Llama3InstructModel, NoOpTracer, Task
 from intelligence_layer.examples import (
     SingleChunkSummarizeInput,
     SteerableSingleChunkSummarize,
@@ -71,12 +71,12 @@ def client() -> Client:
 
 def default_model(
     app_client: Annotated[AlephAlphaClientProtocol, Depends(client)],
-) -> LuminousControlModel:
-    return LuminousControlModel(client=app_client)
+) -> Llama3InstructModel:
+    return Llama3InstructModel(client=app_client)
 
 
 def summary_task(
-    model: Annotated[LuminousControlModel, Depends(default_model)],
+    model: Annotated[Llama3InstructModel, Depends(default_model)],
 ) -> SteerableSingleChunkSummarize:
     return SteerableSingleChunkSummarize(model=model)
 
