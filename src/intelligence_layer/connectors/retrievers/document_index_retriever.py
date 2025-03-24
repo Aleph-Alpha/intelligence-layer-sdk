@@ -1,6 +1,6 @@
+import asyncio
 from collections.abc import Sequence
 from typing import Optional
-import asyncio
 
 from intelligence_layer.connectors.document_index.document_index import (
     AsyncDocumentIndexClient,
