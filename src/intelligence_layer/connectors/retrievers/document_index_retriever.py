@@ -147,12 +147,19 @@ class AsyncDocumentIndexRetriever(AsyncBaseRetriever[DocumentPath]):
         response = await self._document_index.search(
             self._collection_path, self._index_name, search_query
         )
-        position_tasks = [self._get_absolute_position(result.document_path, result.chunk_position) for result in response]
+        position_tasks = [
+            self._get_absolute_position(result.document_path, result.chunk_position)
+            for result in response
+        ]
         positions = await asyncio.gather(*position_tasks)
 
         relevant_chunks = [
-            SearchResult(id=result.document_path, score=result.score, document_chunk=DocumentChunk(text=result.section, **position))
-            for result, position in zip(response, positions)
+            SearchResult(
+                id=result.document_path,
+                score=result.score,
+                document_chunk=DocumentChunk(text=result.section, **position),
+            )
+            for result, position in zip(response, positions, strict=False)
         ]
         return relevant_chunks
 
