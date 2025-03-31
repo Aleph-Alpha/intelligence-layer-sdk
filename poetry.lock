@@ -187,14 +187,14 @@ files = [
 
 [[package]]
 name = "aleph-alpha-client"
-version = "10.0.0"
+version = "10.0.1"
 description = "python client to interact with Aleph Alpha api endpoints"
 optional = false
 python-versions = "<3.13,>=3.9"
 groups = ["main"]
 files = [
-    {file = "aleph_alpha_client-10.0.0-py3-none-any.whl", hash = "sha256:b4c152eb32a6d789fd55006622b1523741396795d3955b6edbcaee94489e452b"},
-    {file = "aleph_alpha_client-10.0.0.tar.gz", hash = "sha256:d76ce2307ae39c066c382abd0d90c10b90f7866206c04814975598ec892f8227"},
+    {file = "aleph_alpha_client-10.0.1-py3-none-any.whl", hash = "sha256:ae726ccbe59d8391f5ea0cd079377b87d919a479a84200bef990cd8d17c89bbc"},
+    {file = "aleph_alpha_client-10.0.1.tar.gz", hash = "sha256:1ac3f9e73a465eae04d63c64caa5c3cc185fe24d9009824a90c3089a5dee0b54"},
 ]
 
 [package.dependencies]
@@ -209,9 +209,6 @@ tokenizers = ">=0.13.2"
 tqdm = ">=4.62.0"
 typing-extensions = ">=4.5.0"
 urllib3 = ">=1.26"
-
-[package.extras]
-docs = ["sphinx (>=6.1.3)", "sphinx-rtd-theme (>=1.2.1)"]
 
 [[package]]
 name = "annotated-types"
