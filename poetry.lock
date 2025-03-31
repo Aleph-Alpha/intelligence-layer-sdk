@@ -5532,23 +5532,22 @@ ko = ["mecab-ko (>=1.0.0,<=1.0.1)", "mecab-ko-dic (>=1.0,<2.0)"]
 
 [[package]]
 name = "semantic-text-splitter"
-version = "0.24.1"
+version = "0.25.1"
 description = "Split text into semantic chunks, up to a desired chunk size. Supports calculating length by characters and tokens, and is callable from Rust and Python."
 optional = false
 python-versions = ">=3.9"
 groups = ["main"]
 files = [
-    {file = "semantic_text_splitter-0.24.1-cp39-abi3-macosx_10_12_x86_64.whl", hash = "sha256:8c70448e1ca4cea8ba3e3b0a7ee71ab6e920f02ad0ea9b3da08af1389ad8b21f"},
-    {file = "semantic_text_splitter-0.24.1-cp39-abi3-macosx_11_0_arm64.whl", hash = "sha256:ce90108e35faf520258acf04e09f15bd5441a85e5a1b91117a37671df531b418"},
-    {file = "semantic_text_splitter-0.24.1-cp39-abi3-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:d7181bf4b03bc3819a7a948cc7a7ca1e597cee868552238ae16fe2bd24362dda"},
-    {file = "semantic_text_splitter-0.24.1-cp39-abi3-manylinux_2_17_armv7l.manylinux2014_armv7l.whl", hash = "sha256:0141107e37651888033d622f06d3efd2d5f9d2affd1207bd63b0790e791f3cea"},
-    {file = "semantic_text_splitter-0.24.1-cp39-abi3-manylinux_2_17_i686.manylinux2014_i686.whl", hash = "sha256:73fa618e822c330e4a5999e9d8af3b56d92870d087caf8eeab6eb496cf1fc11d"},
-    {file = "semantic_text_splitter-0.24.1-cp39-abi3-manylinux_2_17_ppc64le.manylinux2014_ppc64le.whl", hash = "sha256:85be9d6cf447837556a1e48bda77841c8124000a3985321ebef2ea487ed9275a"},
-    {file = "semantic_text_splitter-0.24.1-cp39-abi3-manylinux_2_17_s390x.manylinux2014_s390x.whl", hash = "sha256:5cdc37ccf410aad2d5026087ae366d0c67a86d609832dde04a0637a175381c42"},
-    {file = "semantic_text_splitter-0.24.1-cp39-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:4c0c3f7d2c2973f830bbcce86553f4751ece46272889b07365543585bc24e56a"},
-    {file = "semantic_text_splitter-0.24.1-cp39-abi3-win32.whl", hash = "sha256:37b63a2e76e8c5d63113a54e65901530c2214255a0225e77c4017410c7f0f5a3"},
-    {file = "semantic_text_splitter-0.24.1-cp39-abi3-win_amd64.whl", hash = "sha256:e5ca1c36fcdf390855b0ea74376c029d2f9a10d5f6b8bb268a4a321a3b77e91b"},
-    {file = "semantic_text_splitter-0.24.1.tar.gz", hash = "sha256:54094290759bc36414b400106837fd5b77c9e8ff68d9b826cfcacf3c781c145e"},
+    {file = "semantic_text_splitter-0.25.1-cp39-abi3-macosx_10_12_x86_64.whl", hash = "sha256:8ab01a18e9cf3cfb675c919a7588de59ee0aa1a6162f1a5721df0877943f0b34"},
+    {file = "semantic_text_splitter-0.25.1-cp39-abi3-macosx_11_0_arm64.whl", hash = "sha256:4807141c0fbe8bc6e0eab63033751afe25c6db4a8c7b726b9b1c8862c5540e40"},
+    {file = "semantic_text_splitter-0.25.1-cp39-abi3-manylinux_2_28_aarch64.whl", hash = "sha256:364a01a5b7f494c84f6d54574339ab26e036635851b082f1375398ef835b589c"},
+    {file = "semantic_text_splitter-0.25.1-cp39-abi3-manylinux_2_28_armv7l.whl", hash = "sha256:12017a83118130ff910e65649571dbbd2a474a55fe11d9d633d5b8afd4990251"},
+    {file = "semantic_text_splitter-0.25.1-cp39-abi3-manylinux_2_28_ppc64le.whl", hash = "sha256:9995edc7702ed040623504ba08599a596b414da7fbb6cbb3e954cfd08dc84ba6"},
+    {file = "semantic_text_splitter-0.25.1-cp39-abi3-manylinux_2_28_s390x.whl", hash = "sha256:36a45e98bd11e0ba1765be397bb2996bda1d6bb17b4d46ed06a701635aea3ede"},
+    {file = "semantic_text_splitter-0.25.1-cp39-abi3-manylinux_2_28_x86_64.whl", hash = "sha256:a53aead5966a5c9e181f4f27c1a7e1e5ea58e38074069980897e92b1ad7964c7"},
+    {file = "semantic_text_splitter-0.25.1-cp39-abi3-win32.whl", hash = "sha256:7ec804fe3652cc1e68eedba6c9fd39384bbb9e511ad487f0e20a604d8045d387"},
+    {file = "semantic_text_splitter-0.25.1-cp39-abi3-win_amd64.whl", hash = "sha256:12300954b2e76d49e2536c34eb1fc3c12f8500c78ad013b798b30183752e9b36"},
+    {file = "semantic_text_splitter-0.25.1.tar.gz", hash = "sha256:8d5e54e54d9ede799d46231f408475cd4f6ed0173b8b263d343ddbae1abb7286"},
 ]
 
 [package.extras]
@@ -6871,4 +6870,4 @@ type = ["pytest-mypy"]
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.10,<3.13"
-content-hash = "9473d10248e03bc736946d9291677940f083462618c2906edd57e2b293570be7"
+content-hash = "6b720dc9b009eb09fb6637e6dde1d5e611cb01545dc9f8812705670e59933c2f"
