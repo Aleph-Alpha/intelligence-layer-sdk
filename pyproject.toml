@@ -32,7 +32,7 @@ sacrebleu = "^2.5.1"
 lingua-language-detector = "^2.1.0"
 argilla = "^2.8.0"
 dict-hash = "^1.3.6"
-sqlalchemy = "^2.0.39"
+sqlalchemy = "^2.0.40"
 psycopg2-binary = "^2.9.9"
 aiohttp = "^3.11.14"
 
