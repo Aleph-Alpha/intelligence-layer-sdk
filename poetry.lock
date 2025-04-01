@@ -1836,25 +1836,6 @@ test = ["flufl.flake8", "importlib-resources (>=1.3)", "jaraco.test (>=5.4)", "p
 type = ["pytest-mypy"]
 
 [[package]]
-name = "importlib-resources"
-version = "6.5.2"
-description = "Read resources from Python packages"
-optional = false
-python-versions = ">=3.9"
-files = [
-    {file = "importlib_resources-6.5.2-py3-none-any.whl", hash = "sha256:789cfdc3ed28c78b67a06acb8126751ced69a3d5f79c095a98298cd8a760ccec"},
-    {file = "importlib_resources-6.5.2.tar.gz", hash = "sha256:185f87adef5bcc288449d98fb4fba07cea78bc036455dd44c5fc4a2fe78fed2c"},
-]
-
-[package.extras]
-check = ["pytest-checkdocs (>=2.4)", "pytest-ruff (>=0.2.1)"]
-cover = ["pytest-cov"]
-doc = ["furo", "jaraco.packaging (>=9.3)", "jaraco.tidelift (>=1.4)", "rst.linker (>=1.9)", "sphinx (>=3.5)", "sphinx-lint"]
-enabler = ["pytest-enabler (>=2.2)"]
-test = ["jaraco.test (>=5.4)", "pytest (>=6,!=8.1.*)", "zipp (>=3.17)"]
-type = ["pytest-mypy"]
-
-[[package]]
 name = "iniconfig"
 version = "2.1.0"
 description = "brain-dead simple config-ini parsing"
@@ -4673,22 +4654,20 @@ dev = ["backports.zoneinfo", "black", "build", "freezegun", "mdx_truly_sane_list
 
 [[package]]
 name = "python-liquid"
-version = "1.13.0"
+version = "2.0.1"
 description = "A Python engine for the Liquid template language."
 optional = false
 python-versions = ">=3.7"
 files = [
-    {file = "python_liquid-1.13.0-py3-none-any.whl", hash = "sha256:843ed7b8af00c1480d1bf402553ed07bdddce130ebbf4b1fefc84bb2e076f5d4"},
-    {file = "python_liquid-1.13.0.tar.gz", hash = "sha256:c158fbaad6dd41c49de7cff34e3611bff7211326fb3049322d27673e1d66e166"},
+    {file = "python_liquid-2.0.1-py3-none-any.whl", hash = "sha256:8ddbf0b85992f84c4a9680d883a87b170d38af5a820072c980138301cbc5a5e1"},
+    {file = "python_liquid-2.0.1.tar.gz", hash = "sha256:9bf589ea11c690ed598866929b05f2cacc81bd8a9647a2049d2648a5088cf613"},
 ]
 
 [package.dependencies]
-importlib-resources = ">=5.10.0"
+babel = ">=2"
+markupsafe = ">=3"
 python-dateutil = ">=2.8.1"
-typing-extensions = ">=4.2.0"
-
-[package.extras]
-autoescape = ["markupsafe (>=2,<3)"]
+pytz = "*"
 
 [[package]]
 name = "pytz"
@@ -6604,4 +6583,4 @@ type = ["pytest-mypy"]
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.10,<3.13"
-content-hash = "ae55f30c99a0935668ec6fb9375ee183ee62680253a5cd3d307cbac8aadfabc9"
+content-hash = "a58689195716444a4c11487e6e53fa8a30809601433e1a0d55b9feb12c60048d"

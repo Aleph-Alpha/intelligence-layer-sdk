@@ -14,14 +14,12 @@ from typing import (
 from uuid import UUID, uuid4
 
 from aleph_alpha_client.prompt import Image, Prompt, PromptItem, Text, Tokens
-from liquid import BoundTemplate, Context, Environment
+from liquid import BoundTemplate, Environment, RenderContext, Token
+from liquid import TokenStream as AstTokenStream
 from liquid.ast import BlockNode, Node
-from liquid.context import Namespace
+from liquid.builtin.expressions import parse_identifier, tokenize
 from liquid.exceptions import LiquidTypeError
-from liquid.expressions.common import parse_unchained_identifier
-from liquid.expressions.filtered.lex import tokenize
-from liquid.expressions.stream import TokenStream as AstTokenStream
-from liquid.parse import expect, get_parser
+from liquid.parser import get_parser
 from liquid.stream import TokenStream
 from liquid.tag import Tag
 from liquid.token import TOKEN_EOF, TOKEN_EXPRESSION, TOKEN_TAG
@@ -97,42 +95,43 @@ class PromptRangeTag(Tag):
         self.parser = get_parser(env)
 
     def parse(self, stream: TokenStream) -> Node:
-        expect(stream, TOKEN_TAG, PROMPT_RANGE_TAG)
+        stream.expect(TOKEN_TAG, PROMPT_RANGE_TAG)
         stream.next_token()
-        expect(stream, TOKEN_EXPRESSION)
+        stream.expect(TOKEN_EXPRESSION)
 
         name = str(
-            parse_unchained_identifier(AstTokenStream(tokenize(stream.current.value)))
+            parse_identifier(
+                self.env,
+                AstTokenStream(tokenize(stream.current.value, stream.current)),
+            )
         )
         stream.next_token()
         block = self.parser.parse_block(stream, (PROMPT_RANGE_END_TAG, TOKEN_EOF))
-        expect(stream, TOKEN_TAG, value=PROMPT_RANGE_END_TAG)
-        return PromptRangeNode(block, name)
+        stream.expect(TOKEN_TAG, value=PROMPT_RANGE_END_TAG)
+        return PromptRangeNode(block, name, stream.current)
 
 
-class PromptRangeContext(Context):
+class PromptRangeContext(RenderContext):
     """A liquid `Context` with some additional state used by the `PromptRangeNode`."""
 
     def __init__(
         self,
-        env: Environment,
-        globals: Optional[Namespace] = None,
+        template: BoundTemplate,
+        globals: Optional[Mapping[str, object]] = None,
         disabled_tags: Optional[list[str]] = None,
         copy_depth: int = 0,
-        parent_context: Optional[Context] = None,
+        parent_context: Optional[RenderContext] = None,
         loop_iteration_carry: int = 1,
         local_namespace_size_carry: int = 0,
-        template: Optional[BoundTemplate] = None,
     ):
         super().__init__(
-            env,
-            globals,
-            disabled_tags,
-            copy_depth,
-            parent_context,
-            loop_iteration_carry,
-            local_namespace_size_carry,
             template,
+            globals=globals,
+            disabled_tags=disabled_tags,
+            copy_depth=copy_depth,
+            parent_context=parent_context,
+            loop_iteration_carry=loop_iteration_carry,
+            local_namespace_size_carry=local_namespace_size_carry,
         )
         self._placeholder_range_names: dict[Placeholder, str] = {}
 
@@ -146,22 +145,23 @@ class PromptRangeContext(Context):
 class PromptRangeNode(Node):
     """A liquid `Node` representing a promptrange."""
 
-    def __init__(self, inner: BlockNode, name: str) -> None:
-        super().__init__()
+    def __init__(self, inner: BlockNode, name: str, token: Token) -> None:
+        super().__init__(token=token)
         self.inner = inner
         self.name = name
         self.placeholder = Placeholder(uuid4())
 
-    def render_to_output(self, context: Context, buffer: TextIO) -> Optional[bool]:
+    def render_to_output(self, context: RenderContext, buffer: TextIO) -> int:
         if not isinstance(context, PromptRangeContext):
             raise LiquidTypeError(
-                f"Context not of expected type: {PromptRangeContext} (is: {type(context)})"
+                f"Context not of expected type: {PromptRangeContext} (is: {type(context)})",
+                token=self.token,
             )
         context.add_placeholder_range(self.placeholder, self.name)
         buffer.write(str(self.placeholder))
         self.inner.render(context, buffer)
         buffer.write(str(self.placeholder))
-        return True
+        return 1
 
 
 class PromptTemplate:
@@ -292,9 +292,8 @@ class PromptTemplate:
             The rendered prompt as a `RichPrompt`
         """
         context = PromptRangeContext(
-            self._template.env,
+            self._template,
             globals=self._template.make_globals(kwargs),
-            template=self._template,
         )
         buffer = self._template._get_buffer()
         self._template.render_with_context(context, buffer, **kwargs)
