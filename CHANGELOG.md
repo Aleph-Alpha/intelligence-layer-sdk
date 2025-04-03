@@ -12,6 +12,10 @@
 ...
 
 ### Breaking Changes
+...
+
+### 11.0.0
+### Breaking Changes
 - `QdrantInMemoryRetriever` and `HybridQdrantInMemoryRetriever` now use `pharia-1-embedding-4608-control` as embedding model with an embedding size of 4608.
 
 ## 10.0.0
