@@ -6301,14 +6301,14 @@ setuptools = "*"
 
 [[package]]
 name = "types-tqdm"
-version = "4.67.0.20250401"
+version = "4.67.0.20250404"
 description = "Typing stubs for tqdm"
 optional = false
 python-versions = ">=3.9"
 groups = ["dev"]
 files = [
-    {file = "types_tqdm-4.67.0.20250401-py3-none-any.whl", hash = "sha256:04598e1807aaa4ce14efdd1e3bb3ad0dc766625945ec59fb2fd9317f3ad389d9"},
-    {file = "types_tqdm-4.67.0.20250401.tar.gz", hash = "sha256:773f8f85add7e5ffe880c8cceb94f59acf53e5923da024c91757d6a39ee9b83f"},
+    {file = "types_tqdm-4.67.0.20250404-py3-none-any.whl", hash = "sha256:4a9b897eb4036f757240f4cb4a794f296265c04de46fdd058e453891f0186eed"},
+    {file = "types_tqdm-4.67.0.20250404.tar.gz", hash = "sha256:e9997c655ffbba3ab78f4418b5511c05a54e76824d073d212166dc73aa56c768"},
 ]
 
 [package.dependencies]
