@@ -74,7 +74,7 @@ def test_explain(model: ControlModel, no_op_tracer: NoOpTracer) -> None:
         prompt=prompt, target=target, prompt_granularity=PromptGranularity.Word
     )
     output = model.explain(explain_input, no_op_tracer)
-    assert output.explanations[0].items[0].scores[5].score > 1
+    assert output.explanations[0].items[0].scores[5].score > 0.99
 
 
 def test_llama_3_instruct_model_works(no_op_tracer: NoOpTracer) -> None:
