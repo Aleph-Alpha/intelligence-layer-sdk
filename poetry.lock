@@ -459,7 +459,7 @@ version = "2.17.0"
 description = "Internationalization utilities"
 optional = false
 python-versions = ">=3.8"
-groups = ["dev", "docs"]
+groups = ["main", "dev", "docs"]
 files = [
     {file = "babel-2.17.0-py3-none-any.whl", hash = "sha256:4d0b53093fdfb4b21c92b5213dba5a1b23885afa8383709427046b21c366e5f2"},
     {file = "babel-2.17.0.tar.gz", hash = "sha256:0c54cffb19f690cdcc52a3b50bcbf71e07a808d1c80d549f2459b9d2cf0afb9d"},
@@ -1915,26 +1915,6 @@ test = ["flufl.flake8", "importlib-resources (>=1.3) ; python_version < \"3.9\""
 type = ["pytest-mypy"]
 
 [[package]]
-name = "importlib-resources"
-version = "6.5.2"
-description = "Read resources from Python packages"
-optional = false
-python-versions = ">=3.9"
-groups = ["main"]
-files = [
-    {file = "importlib_resources-6.5.2-py3-none-any.whl", hash = "sha256:789cfdc3ed28c78b67a06acb8126751ced69a3d5f79c095a98298cd8a760ccec"},
-    {file = "importlib_resources-6.5.2.tar.gz", hash = "sha256:185f87adef5bcc288449d98fb4fba07cea78bc036455dd44c5fc4a2fe78fed2c"},
-]
-
-[package.extras]
-check = ["pytest-checkdocs (>=2.4)", "pytest-ruff (>=0.2.1) ; sys_platform != \"cygwin\""]
-cover = ["pytest-cov"]
-doc = ["furo", "jaraco.packaging (>=9.3)", "jaraco.tidelift (>=1.4)", "rst.linker (>=1.9)", "sphinx (>=3.5)", "sphinx-lint"]
-enabler = ["pytest-enabler (>=2.2)"]
-test = ["jaraco.test (>=5.4)", "pytest (>=6,!=8.1.*)", "zipp (>=3.17)"]
-type = ["pytest-mypy"]
-
-[[package]]
 name = "iniconfig"
 version = "2.1.0"
 description = "brain-dead simple config-ini parsing"
@@ -2799,7 +2779,7 @@ version = "3.0.2"
 description = "Safely add untrusted strings to HTML/XML markup."
 optional = false
 python-versions = ">=3.9"
-groups = ["dev", "docs"]
+groups = ["main", "dev", "docs"]
 files = [
     {file = "MarkupSafe-3.0.2-cp310-cp310-macosx_10_9_universal2.whl", hash = "sha256:7e94c425039cde14257288fd61dcfb01963e658efbc0ff54f5306b06054700f8"},
     {file = "MarkupSafe-3.0.2-cp310-cp310-macosx_11_0_arm64.whl", hash = "sha256:9e2d922824181480953426608b81967de705c3cef4d1af983af849d7bd619158"},
@@ -4853,23 +4833,21 @@ dev = ["backports.zoneinfo ; python_version < \"3.9\"", "black", "build", "freez
 
 [[package]]
 name = "python-liquid"
-version = "1.13.0"
+version = "2.0.1"
 description = "A Python engine for the Liquid template language."
 optional = false
 python-versions = ">=3.7"
 groups = ["main"]
 files = [
-    {file = "python_liquid-1.13.0-py3-none-any.whl", hash = "sha256:843ed7b8af00c1480d1bf402553ed07bdddce130ebbf4b1fefc84bb2e076f5d4"},
-    {file = "python_liquid-1.13.0.tar.gz", hash = "sha256:c158fbaad6dd41c49de7cff34e3611bff7211326fb3049322d27673e1d66e166"},
+    {file = "python_liquid-2.0.1-py3-none-any.whl", hash = "sha256:8ddbf0b85992f84c4a9680d883a87b170d38af5a820072c980138301cbc5a5e1"},
+    {file = "python_liquid-2.0.1.tar.gz", hash = "sha256:9bf589ea11c690ed598866929b05f2cacc81bd8a9647a2049d2648a5088cf613"},
 ]
 
 [package.dependencies]
-importlib-resources = ">=5.10.0"
+babel = ">=2"
+markupsafe = ">=3"
 python-dateutil = ">=2.8.1"
-typing-extensions = ">=4.2.0"
-
-[package.extras]
-autoescape = ["markupsafe (>=2,<3)"]
+pytz = "*"
 
 [[package]]
 name = "pytz"
@@ -6865,4 +6843,4 @@ type = ["pytest-mypy"]
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.10,<3.13"
-content-hash = "452f34a3dca6f351f8bb14234f602f15b92cfb56c8f95ca90425697f10ea8c8b"
+content-hash = "e92adafbb2717c9bc9eae2b3992c2253a4d87c8fb93e343c7f3f4e4bb4fac1c1"
