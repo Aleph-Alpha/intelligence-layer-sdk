@@ -5534,22 +5534,22 @@ ko = ["mecab-ko (>=1.0.0,<=1.0.1)", "mecab-ko-dic (>=1.0,<2.0)"]
 
 [[package]]
 name = "semantic-text-splitter"
-version = "0.25.1"
+version = "0.26.0"
 description = "Split text into semantic chunks, up to a desired chunk size. Supports calculating length by characters and tokens, and is callable from Rust and Python."
 optional = false
 python-versions = ">=3.9"
 groups = ["main"]
 files = [
-    {file = "semantic_text_splitter-0.25.1-cp39-abi3-macosx_10_12_x86_64.whl", hash = "sha256:8ab01a18e9cf3cfb675c919a7588de59ee0aa1a6162f1a5721df0877943f0b34"},
-    {file = "semantic_text_splitter-0.25.1-cp39-abi3-macosx_11_0_arm64.whl", hash = "sha256:4807141c0fbe8bc6e0eab63033751afe25c6db4a8c7b726b9b1c8862c5540e40"},
-    {file = "semantic_text_splitter-0.25.1-cp39-abi3-manylinux_2_28_aarch64.whl", hash = "sha256:364a01a5b7f494c84f6d54574339ab26e036635851b082f1375398ef835b589c"},
-    {file = "semantic_text_splitter-0.25.1-cp39-abi3-manylinux_2_28_armv7l.whl", hash = "sha256:12017a83118130ff910e65649571dbbd2a474a55fe11d9d633d5b8afd4990251"},
-    {file = "semantic_text_splitter-0.25.1-cp39-abi3-manylinux_2_28_ppc64le.whl", hash = "sha256:9995edc7702ed040623504ba08599a596b414da7fbb6cbb3e954cfd08dc84ba6"},
-    {file = "semantic_text_splitter-0.25.1-cp39-abi3-manylinux_2_28_s390x.whl", hash = "sha256:36a45e98bd11e0ba1765be397bb2996bda1d6bb17b4d46ed06a701635aea3ede"},
-    {file = "semantic_text_splitter-0.25.1-cp39-abi3-manylinux_2_28_x86_64.whl", hash = "sha256:a53aead5966a5c9e181f4f27c1a7e1e5ea58e38074069980897e92b1ad7964c7"},
-    {file = "semantic_text_splitter-0.25.1-cp39-abi3-win32.whl", hash = "sha256:7ec804fe3652cc1e68eedba6c9fd39384bbb9e511ad487f0e20a604d8045d387"},
-    {file = "semantic_text_splitter-0.25.1-cp39-abi3-win_amd64.whl", hash = "sha256:12300954b2e76d49e2536c34eb1fc3c12f8500c78ad013b798b30183752e9b36"},
-    {file = "semantic_text_splitter-0.25.1.tar.gz", hash = "sha256:8d5e54e54d9ede799d46231f408475cd4f6ed0173b8b263d343ddbae1abb7286"},
+    {file = "semantic_text_splitter-0.26.0-cp39-abi3-macosx_10_12_x86_64.whl", hash = "sha256:1c96381d17204ad64e865e6ce56a256b813c2f751d96cf4a50978aa59014f53a"},
+    {file = "semantic_text_splitter-0.26.0-cp39-abi3-macosx_11_0_arm64.whl", hash = "sha256:2950dfcb8e619f733388badf6578249ff36245aef9dfe7b6dfde83b938ad565c"},
+    {file = "semantic_text_splitter-0.26.0-cp39-abi3-manylinux_2_28_aarch64.whl", hash = "sha256:2fcbf7f0c523d4f73652b24c76157ef58dfc38e3524d600e9344ccc159fa21d1"},
+    {file = "semantic_text_splitter-0.26.0-cp39-abi3-manylinux_2_28_armv7l.whl", hash = "sha256:47deaee1f4930f3a2ab76036662fc453a4c1b25dc31dc8444cd26c7cede5c74d"},
+    {file = "semantic_text_splitter-0.26.0-cp39-abi3-manylinux_2_28_ppc64le.whl", hash = "sha256:a18f1cc2761d0688b1128918ab293a5baa5439a17e31b820db459c48781530aa"},
+    {file = "semantic_text_splitter-0.26.0-cp39-abi3-manylinux_2_28_s390x.whl", hash = "sha256:fdacefeda6340e1f87d3a50b6f9fb5365e26c90558c0c87cbd03a9f80e48ca31"},
+    {file = "semantic_text_splitter-0.26.0-cp39-abi3-manylinux_2_28_x86_64.whl", hash = "sha256:506568cc924d5e77d06ff26586fcb259de254546e561d0526d6490fba6a7d3ee"},
+    {file = "semantic_text_splitter-0.26.0-cp39-abi3-win32.whl", hash = "sha256:0c63b1af6d9a15816a57558f61615f3a6b9215c186531544c7d7d8d17f7c5366"},
+    {file = "semantic_text_splitter-0.26.0-cp39-abi3-win_amd64.whl", hash = "sha256:1ea41fa9c06cc9e658b471f60f01b6f86fb2a869482bcef0e802abf18a49a911"},
+    {file = "semantic_text_splitter-0.26.0.tar.gz", hash = "sha256:928655e355dc1cdec296d8fba3403291fdcf6d0888922c01dbd31026ae9dea57"},
 ]
 
 [package.extras]
@@ -6887,4 +6887,4 @@ type = ["pytest-mypy"]
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.10,<3.13"
-content-hash = "5804d931bf0868c001abef0eb6ed69c53c9b0f4718ae0da62e8caab4310491fc"
+content-hash = "af6e05974a1a19bda9bbccf2e003ff77e9355a60f27eb7dfac2f178caa3f29bb"
