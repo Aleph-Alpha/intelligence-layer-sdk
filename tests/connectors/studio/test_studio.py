@@ -59,7 +59,7 @@ def metadata() -> dict[str, Any]:
 
 @fixture
 def studio_client() -> Generator[StudioClient]:
-    client = StudioClient(project="IL-default-project", create_project=True)
+    client = StudioClient(project=str(uuid4()), create_project=True)
     yield client
     client._delete_project(client.project_id)
 
@@ -77,7 +77,9 @@ def test_create_project_on_init_if_not_exists() -> None:
     client._delete_project(client.project_id)
 
 
-def test_can_create_the_same_project_twice(studio_client: StudioClient) -> None:
+def test_can_create_two_distinct_projects_with_same_name(
+    studio_client: StudioClient,
+) -> None:
     project_name = str(uuid4())
     id1 = studio_client.create_project(project_name)
     id2 = studio_client.create_project(project_name)
