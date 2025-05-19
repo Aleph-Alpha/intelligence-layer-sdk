@@ -310,6 +310,12 @@ class StudioClient:
         Returns:
             The ID of the newly created project.
         """
+        if reuse_existing:
+            fetched_project = self._get_project(project)
+            assert (
+                fetched_project is not None
+            ), "Project already exists but not allowed to be used."
+            return fetched_project
         url = urljoin(self.url, "/api/projects")
         data = StudioProject(name=project, description=description)
         response = requests.post(
@@ -317,17 +323,7 @@ class StudioClient:
             data=data.model_dump_json(),
             headers=self._headers,
         )
-        match response.status_code:
-            case 409:
-                if reuse_existing:
-                    fetched_project = self._get_project(project)
-                    assert (
-                        fetched_project is not None
-                    ), "Project already exists but not allowed to be used."
-                    return fetched_project
-                raise ValueError("Project already exists")
-            case _:
-                response.raise_for_status()
+        response.raise_for_status()
         return str(response.json())
 
     def submit_trace(self, data: Sequence[ExportedSpan]) -> str:
