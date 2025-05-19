@@ -81,7 +81,7 @@ jobs:
           POSTGRES_USER: "il_sdk"
           POSTGRES_PASSWORD: "test"
       studio-backend:
-        image: registry.gitlab.aleph-alpha.de/product/studio/backend:v0.1.6
+        image: registry.gitlab.aleph-alpha.de/product/studio/backend:v0.2.6
         ports:
           - "8000:8000"
         env:
@@ -150,7 +150,7 @@ jobs:
           POSTGRES_USER: "il_sdk"
           POSTGRES_PASSWORD: "test"
       studio-backend:
-        image: registry.gitlab.aleph-alpha.de/product/studio/backend:v0.1.6
+        image: registry.gitlab.aleph-alpha.de/product/studio/backend:v0.2.6
         ports:
           - "8001:8000"
         env:

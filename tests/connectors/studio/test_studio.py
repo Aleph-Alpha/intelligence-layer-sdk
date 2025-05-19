@@ -68,12 +68,12 @@ def test_create_project_on_init_if_not_exists() -> None:
     assert client.project_id is not None
 
 
-def test_cannot_create_the_same_project_twice() -> None:
+def test_can_create_the_same_project_twice() -> None:
     project_name = str(uuid4())
     client = StudioClient(project="IL-default-project")
-    client.create_project(project_name)
-    with pytest.raises(ValueError, match="already exists"):
-        client.create_project(project_name)
+    id1 = client.create_project(project_name)
+    id2 = client.create_project(project_name)
+    assert id1 != id2
 
 
 def test_creating_same_projects_can_reuse_existing_project_if_told_to() -> None:
