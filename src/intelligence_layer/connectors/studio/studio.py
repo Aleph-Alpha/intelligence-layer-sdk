@@ -312,10 +312,8 @@ class StudioClient:
         """
         if reuse_existing:
             fetched_project = self._get_project(project)
-            assert (
-                fetched_project is not None
-            ), "Project already exists but not allowed to be used."
-            return fetched_project
+            if fetched_project is not None:
+                return fetched_project
         url = urljoin(self.url, "/api/projects")
         data = StudioProject(name=project, description=description)
         response = requests.post(
