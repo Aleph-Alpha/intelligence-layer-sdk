@@ -88,6 +88,21 @@ def test_can_create_two_distinct_projects_with_same_name(
     studio_client._delete_project(id2)
 
 
+def test_cannot_instantiate_client_with_two_projects_with_same_name(
+    studio_client: StudioClient,
+) -> None:
+    project_name = str(uuid4())
+    id1 = studio_client.create_project(project_name)
+    id2 = studio_client.create_project(project_name)
+    assert id1 != id2
+    with pytest.raises(
+        ValueError, match=f"Multiple projects with name '{project_name}' found"
+    ):
+        StudioClient(project=project_name)
+    studio_client._delete_project(id1)
+    studio_client._delete_project(id2)
+
+
 def test_creating_same_projects_can_reuse_existing_project_if_told_to(
     studio_client: StudioClient,
 ) -> None:
