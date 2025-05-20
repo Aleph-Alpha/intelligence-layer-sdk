@@ -328,16 +328,6 @@ class StudioClient:
         self,
         project_id: str,
     ) -> None:
-        """Deletes project in Studio.
-
-        Projects are uniquely identified by the user provided name.
-
-        Args:
-            project_id: UUID of the project.
-
-        Returns:
-            The ID of the newly created project.
-        """
         url = urljoin(self.url, f"/api/projects/{project_id}")
         response = requests.delete(
             url,
