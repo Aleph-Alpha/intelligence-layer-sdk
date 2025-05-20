@@ -12,7 +12,7 @@
 ...
 
 ### Breaking Changes
-...
+- `StudioClient` raises `ValueError` when instantiated with project name that belongs to multiple projects.
 
 ### 11.0.0
 ### Breaking Changes
