@@ -1,12 +1,13 @@
 import os
 import time
-from collections.abc import Sequence
+from collections.abc import Generator, Sequence
 from typing import Any
 from unittest.mock import patch
 from uuid import uuid4
 
 import pytest
 from pytest import fixture
+from requests import HTTPError
 
 from intelligence_layer.connectors import StudioClient
 from intelligence_layer.core import ExportedSpan, InMemoryTracer, Task, TaskSpan
@@ -56,6 +57,13 @@ def metadata() -> dict[str, Any]:
     return {"key": "value"}
 
 
+@fixture
+def studio_client() -> Generator[StudioClient]:
+    client = StudioClient(project=str(uuid4()), create_project=True)
+    yield client
+    client._delete_project(client.project_id)
+
+
 def test_cannot_connect_to_non_existing_project() -> None:
     project_name = "non-existing-project"
     with pytest.raises(ValueError, match=project_name):
@@ -66,22 +74,34 @@ def test_create_project_on_init_if_not_exists() -> None:
     project_name = str(uuid4())
     client = StudioClient(project=project_name, create_project=True)
     assert client.project_id is not None
+    client._delete_project(client.project_id)
 
 
-def test_cannot_create_the_same_project_twice() -> None:
+def test_can_create_two_distinct_projects_with_same_name(
+    studio_client: StudioClient,
+) -> None:
     project_name = str(uuid4())
-    client = StudioClient(project="IL-default-project")
-    client.create_project(project_name)
-    with pytest.raises(ValueError, match="already exists"):
-        client.create_project(project_name)
+    id1 = studio_client.create_project(project_name)
+    id2 = studio_client.create_project(project_name)
+    assert id1 != id2
+    studio_client._delete_project(id1)
+    studio_client._delete_project(id2)
 
 
-def test_creating_same_projects_can_reuse_existing_project_if_told_to() -> None:
+def test_creating_same_projects_can_reuse_existing_project_if_told_to(
+    studio_client: StudioClient,
+) -> None:
     project_name = str(uuid4())
-    client = StudioClient(project="IL-default-project")
-    id1 = client.create_project(project_name)
-    id2 = client.create_project(project_name, reuse_existing=True)
+    id1 = studio_client.create_project(project_name)
+    id2 = studio_client.create_project(project_name, reuse_existing=True)
     assert id1 == id2
+    studio_client._delete_project(id1)
+
+
+def test_delete_raises_error_when_project_not_exist() -> None:
+    client = StudioClient(project="IL-default-project")
+    with pytest.raises(HTTPError, match="404"):
+        client._delete_project(str(uuid4()))
 
 
 def test_can_upload_trace(

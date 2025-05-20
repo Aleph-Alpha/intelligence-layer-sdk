@@ -56,18 +56,6 @@ services:
   # (optional) export GITLAB_TOKEN=$(op item get YOUR_TOKEN --format json --fields password | jq .value | tr -d '"')
   # echo $GITLAB_TOKEN | docker login registry.gitlab.aleph-alpha.de -u your_email@for_gitlab --password-stdin
   # docker compose pull to update containers
-  studio-backend:
-    image: registry.gitlab.aleph-alpha.de/product/studio/backend:v0.1.6
-    ports:
-      - 8000:8000
-    depends_on:
-      postgres:
-        condition: service_started
-        restart: true
-    env_file: ".env" # mainly for AA-TOKEN, DB User/PW
-    environment:
-      POSTGRES_HOST: postgres
-      API_SCHEDULER_URL: ${CLIENT_URL}
   postgres:
     image: postgres:15
     ports:
