@@ -232,13 +232,12 @@ class StudioClient:
         self.url = StudioClient.get_url(studio_url)
         self._check_connection()
         self._project_name = project
-        self._project_id: str | None = None
+        self._project_id: str | None = self._get_project(self._project_name)
 
-        if create_project:
-            project_id = self._get_project(self._project_name)
-            if project_id is None:
-                self.create_project(self._project_name, reuse_existing=True)
-            self._project_id = project_id
+        if create_project and self._project_id is None:
+            self._project_id = self.create_project(
+                self._project_name, reuse_existing=True
+            )
 
     def _check_connection(self) -> None:
         try:
@@ -280,16 +279,23 @@ class StudioClient:
         )
         response.raise_for_status()
         all_projects = response.json()
-        try:
-            project_of_interest = next(
-                proj for proj in all_projects if proj["name"] == project_name
-            )
-            # Studio API service < v0.1.0 does not have a "project_id" field
-            if "project_id" in project_of_interest:
-                return str(project_of_interest["project_id"])
-            return str(project_of_interest["id"])
-        except StopIteration:
+
+        matching_projects = [
+            proj for proj in all_projects if proj["name"] == project_name
+        ]
+
+        if not matching_projects:
             return None
+        if len(matching_projects) > 1:
+            raise ValueError(
+                f"Multiple projects with name '{project_name}' found. Please make sure project names available to you are unique. E.g. rename/delete the duplicated project"
+            )
+
+        project_of_interest = matching_projects[0]
+        # Studio API service < v0.1.0 does not have a "project_id" field
+        if "project_id" in project_of_interest:
+            return str(project_of_interest["project_id"])
+        return str(project_of_interest["id"])
 
     def create_project(
         self,
