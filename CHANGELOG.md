@@ -19,7 +19,6 @@
 - `StudioClient` raises `ValueError` when instantiated with project name that belongs to multiple projects.
 
 ## 11.0.0
-## 11.0.0
 ### Breaking Changes
 - `QdrantInMemoryRetriever` and `HybridQdrantInMemoryRetriever` now use `pharia-1-embedding-4608-control` as embedding model with an embedding size of 4608.
 
