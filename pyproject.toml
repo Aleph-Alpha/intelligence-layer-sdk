@@ -46,7 +46,7 @@ pre-commit = "^4.2.0"
 
 # tests
 pytest = "^8.3"
-pytest-xdist = "^3.6.1"
+pytest-xdist = "^3.7.0"
 nbconvert = "^7.16.6"
 
 # typing
