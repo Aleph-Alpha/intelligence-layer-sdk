@@ -58,7 +58,7 @@ types-setuptools = "*"
 types-decorator = "*"
 types-requests = "*"
 types-tqdm = "*"
-pandas-stubs = "^2.2.3.250308"
+pandas-stubs = "^2.2.3.250527"
 
 # docs
 sphinx-rtd-theme = "^3.0.2"
