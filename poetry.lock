@@ -192,14 +192,14 @@ files = [
 
 [[package]]
 name = "aleph-alpha-client"
-version = "10.2.1"
+version = "10.2.2"
 description = "python client to interact with Aleph Alpha api endpoints"
 optional = false
-python-versions = "<3.13,>=3.9"
+python-versions = "<3.14,>=3.9"
 groups = ["main"]
 files = [
-    {file = "aleph_alpha_client-10.2.1-py3-none-any.whl", hash = "sha256:740310eb913c54aa78134114cf88b849d32392a2d82366babce3c3e19dddae38"},
-    {file = "aleph_alpha_client-10.2.1.tar.gz", hash = "sha256:ecfc0f11388f44c2fad7c9ada309c2fc5152914c6435442f20a433eb7472f17f"},
+    {file = "aleph_alpha_client-10.2.2-py3-none-any.whl", hash = "sha256:f63e85751afd6d671b9a8dcbb0498be760073fea682ea604aa96a77f2985fe10"},
+    {file = "aleph_alpha_client-10.2.2.tar.gz", hash = "sha256:526f5f4fd0f1a875b693f93cea8d43189fe7b9c1fc4594b3a5b3876120d257c2"},
 ]
 
 [package.dependencies]
