@@ -177,7 +177,7 @@ class Runner(Generic[Input, Output]):
         start = utc_now()
 
         with ThreadPoolExecutor(max_workers=max_workers) as executor:
-            futures = [executor.submit(run, example) for example in examples]
+            futures = [executor.submit(run, example) for example in examples]  # type: ignore
             with tqdm(total=len(futures)) as pbar:
                 pbar.set_description("Running Task")
                 for future in as_completed(futures):

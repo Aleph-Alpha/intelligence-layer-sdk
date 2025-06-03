@@ -1462,7 +1462,7 @@ class AsyncDocumentIndexClient:
         ) as response:
             await self._raise_for_status(response)
             data = await response.json()
-            return [DocumentSearchResult._from_search_response(r) for r in data]  # type: ignore
+            return [DocumentSearchResult._from_search_response(r) for r in data]
 
     async def chunks(
         self, document_path: DocumentPath, index_name: str
