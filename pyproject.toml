@@ -39,7 +39,7 @@ python-liquid = "^1.13.0"
 
 [tool.poetry.group.dev.dependencies]
 # lint & format
-mypy = "^1.15.0"
+mypy = "^1.16.0"
 nbqa = "^1.9.1"
 ruff = "^0.11.11"
 pre-commit = "^4.2.0"
