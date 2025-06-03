@@ -45,7 +45,7 @@ ruff = "^0.11.11"
 pre-commit = "^4.2.0"
 
 # tests
-pytest = "^8.3"
+pytest = "^8.4"
 pytest-xdist = "^3.7.0"
 nbconvert = "^7.16.6"
 
@@ -79,7 +79,7 @@ jupyter = "^1.1.1"
 
 
 [tool.poetry.group.extras.dependencies]
-pytest = "^8.3.5"
+pytest = "^8.4.0"
 asyncio = "^3.4.3"
 
 [tool.mypy]
