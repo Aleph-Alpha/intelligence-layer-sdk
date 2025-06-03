@@ -287,13 +287,13 @@ def test_models_warn_about_non_recommended_models(
     client: AlephAlphaClientProtocol,
 ) -> None:
     with pytest.warns(UserWarning):
-        assert Llama3InstructModel(client=client, name="luminous-base")  # type: ignore
+        assert Llama3InstructModel(client=client, name="luminous-base")
 
     with pytest.warns(UserWarning):
-        assert AlephAlphaModel(client=client, name="No model")  # type: ignore
+        assert AlephAlphaModel(client=client, name="No model")
 
     with pytest.warns(UserWarning):
-        assert Pharia1ChatModel(client=client, name="No model")  # type: ignore
+        assert Pharia1ChatModel(client=client, name="No model")
 
 
 class DummyModelClient(AlephAlphaClientProtocol):
