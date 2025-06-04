@@ -1,6 +1,6 @@
 import itertools
 from collections.abc import Sequence
-from datetime import datetime
+from datetime import datetime, timezone
 from http import HTTPStatus
 from typing import Any, Optional
 
@@ -99,7 +99,7 @@ class StudioBenchmark(Benchmark):
         labels: Optional[set[str]] = None,
         metadata: Optional[dict[str, Any]] = None,
     ) -> str:
-        start = datetime.now()
+        start = datetime.now(timezone.utc)
 
         runner = Runner(
             task,
@@ -122,7 +122,7 @@ class StudioBenchmark(Benchmark):
             metadata=metadata,
         )
 
-        end = datetime.now()
+        end = datetime.now(timezone.utc)
 
         evaluation_lineages = list(
             self.evaluator.evaluation_lineages(evaluation_overview.id)
