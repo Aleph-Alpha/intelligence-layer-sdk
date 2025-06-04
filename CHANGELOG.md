@@ -6,13 +6,16 @@
 ...
 
 ### Fixes
-- Time conversion issue when creating and sending `BenchmarkExecutions` to Studio.
+...
 
 ### Deprecations
 ...
 
 ### Breaking Changes
 ...
+## 12.0.1
+### Fixes
+- Time conversion issue when creating and sending `BenchmarkExecutions` to Studio.
 
 ## 12.0.0
 ### Breaking Changes
