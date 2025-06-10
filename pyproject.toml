@@ -20,7 +20,7 @@ semantic-text-splitter = "^0.27.0"
 qdrant-client = { version = "1.13.3", extras = ["fastembed"] }
 rich = "^14.0.0"
 datasets = "^3.6.0"
-requests = "^2.32.3"
+requests = "^2.32.4"
 pycountry = "24.6.1"
 opentelemetry-api = "^1.29.0"
 opentelemetry-sdk = "^1.29.0"
