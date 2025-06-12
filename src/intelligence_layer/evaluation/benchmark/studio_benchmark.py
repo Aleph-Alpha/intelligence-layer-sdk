@@ -109,7 +109,11 @@ class StudioBenchmark(Benchmark):
             f"benchmark-{self.id}-runner",
         )
         run_overview = runner.run_dataset(
-            self.dataset_id, description=description, labels=labels, metadata=metadata, max_workers=max_workers
+            self.dataset_id,
+            description=description,
+            labels=labels,
+            metadata=metadata,
+            max_workers=max_workers,
         )
 
         evaluation_overview = self.evaluator.evaluate_runs(
