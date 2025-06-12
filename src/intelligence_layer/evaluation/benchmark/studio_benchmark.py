@@ -98,6 +98,7 @@ class StudioBenchmark(Benchmark):
         description: Optional[str] = None,
         labels: Optional[set[str]] = None,
         metadata: Optional[dict[str, Any]] = None,
+        max_workers: int = 10,
     ) -> str:
         start = datetime.now(timezone.utc)
 
@@ -108,7 +109,7 @@ class StudioBenchmark(Benchmark):
             f"benchmark-{self.id}-runner",
         )
         run_overview = runner.run_dataset(
-            self.dataset_id, description=description, labels=labels, metadata=metadata
+            self.dataset_id, description=description, labels=labels, metadata=metadata, max_workers=max_workers
         )
 
         evaluation_overview = self.evaluator.evaluate_runs(
