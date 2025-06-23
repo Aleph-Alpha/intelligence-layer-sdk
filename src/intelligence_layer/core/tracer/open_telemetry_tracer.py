@@ -1,4 +1,5 @@
 from collections.abc import Sequence
+from contextvars import Token
 from datetime import datetime
 from typing import Optional
 
@@ -69,7 +70,7 @@ class OpenTelemetrySpan(Span, OpenTelemetryTracer):
         self,
         span: OpenTSpan,
         tracer: OpenTTracer,
-        token: object,
+        token: Token,
         context: Optional[Context] = None,
     ) -> None:
         OpenTelemetryTracer.__init__(self, tracer)
