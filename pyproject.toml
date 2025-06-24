@@ -37,12 +37,6 @@ psycopg2-binary = "^2.9.9"
 aiohttp = "^3.12.12"
 python-liquid = "^1.13.0"
 
-# exporter is OPTIONAL – won’t be pulled in unless the extra is requested
-opentelemetry-exporter-otlp-proto-http = { version = "^1.34.1", optional = true }
-
-[tool.poetry.extras]
-otel-http = ["opentelemetry-exporter-otlp-proto-http"]
-
 
 [tool.poetry.group.dev.dependencies]
 # lint & format
@@ -55,6 +49,8 @@ pre-commit = "^4.2.0"
 pytest = "^8.4"
 pytest-xdist = "^3.7.0"
 nbconvert = "^7.16.6"
+opentelemetry-exporter-otlp-proto-http = "^1.34.1"
+
 
 # typing
 httpx = "*"
