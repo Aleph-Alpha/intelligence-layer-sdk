@@ -1695,21 +1695,21 @@ hyperframe = ">=6.1,<7"
 
 [[package]]
 name = "hf-xet"
-version = "1.1.2"
+version = "1.1.5"
 description = "Fast transfer of large files with the Hugging Face Hub."
 optional = false
 python-versions = ">=3.8"
 groups = ["main"]
 markers = "platform_machine == \"x86_64\" or platform_machine == \"amd64\" or platform_machine == \"arm64\" or platform_machine == \"aarch64\""
 files = [
-    {file = "hf_xet-1.1.2-cp37-abi3-macosx_10_12_x86_64.whl", hash = "sha256:dfd1873fd648488c70735cb60f7728512bca0e459e61fcd107069143cd798469"},
-    {file = "hf_xet-1.1.2-cp37-abi3-macosx_11_0_arm64.whl", hash = "sha256:29b584983b2d977c44157d9241dcf0fd50acde0b7bff8897fe4386912330090d"},
-    {file = "hf_xet-1.1.2-cp37-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:6b29ac84298147fe9164cc55ad994ba47399f90b5d045b0b803b99cf5f06d8ec"},
-    {file = "hf_xet-1.1.2-cp37-abi3-manylinux_2_28_aarch64.whl", hash = "sha256:d921ba32615676e436a0d15e162331abc9ed43d440916b1d836dc27ce1546173"},
-    {file = "hf_xet-1.1.2-cp37-abi3-musllinux_1_2_aarch64.whl", hash = "sha256:d9b03c34e13c44893ab6e8fea18ee8d2a6878c15328dd3aabedbdd83ee9f2ed3"},
-    {file = "hf_xet-1.1.2-cp37-abi3-musllinux_1_2_x86_64.whl", hash = "sha256:01b18608955b3d826307d37da8bd38b28a46cd2d9908b3a3655d1363274f941a"},
-    {file = "hf_xet-1.1.2-cp37-abi3-win_amd64.whl", hash = "sha256:3562902c81299b09f3582ddfb324400c6a901a2f3bc854f83556495755f4954c"},
-    {file = "hf_xet-1.1.2.tar.gz", hash = "sha256:3712d6d4819d3976a1c18e36db9f503e296283f9363af818f50703506ed63da3"},
+    {file = "hf_xet-1.1.5-cp37-abi3-macosx_10_12_x86_64.whl", hash = "sha256:f52c2fa3635b8c37c7764d8796dfa72706cc4eded19d638331161e82b0792e23"},
+    {file = "hf_xet-1.1.5-cp37-abi3-macosx_11_0_arm64.whl", hash = "sha256:9fa6e3ee5d61912c4a113e0708eaaef987047616465ac7aa30f7121a48fc1af8"},
+    {file = "hf_xet-1.1.5-cp37-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:fc874b5c843e642f45fd85cda1ce599e123308ad2901ead23d3510a47ff506d1"},
+    {file = "hf_xet-1.1.5-cp37-abi3-manylinux_2_28_aarch64.whl", hash = "sha256:dbba1660e5d810bd0ea77c511a99e9242d920790d0e63c0e4673ed36c4022d18"},
+    {file = "hf_xet-1.1.5-cp37-abi3-musllinux_1_2_aarch64.whl", hash = "sha256:ab34c4c3104133c495785d5d8bba3b1efc99de52c02e759cf711a91fd39d3a14"},
+    {file = "hf_xet-1.1.5-cp37-abi3-musllinux_1_2_x86_64.whl", hash = "sha256:83088ecea236d5113de478acb2339f92c95b4fb0462acaa30621fac02f5a534a"},
+    {file = "hf_xet-1.1.5-cp37-abi3-win_amd64.whl", hash = "sha256:73e167d9807d166596b4b2f0b585c6d5bd84a26dea32843665a8b58f6edba245"},
+    {file = "hf_xet-1.1.5.tar.gz", hash = "sha256:69ebbcfd9ec44fdc2af73441619eeb06b94ee34511bbcf57cd423820090f5694"},
 ]
 
 [package.extras]
@@ -1777,20 +1777,20 @@ zstd = ["zstandard (>=0.18.0)"]
 
 [[package]]
 name = "huggingface-hub"
-version = "0.32.4"
+version = "0.34.1"
 description = "Client library to download and publish models, datasets and other repos on the huggingface.co hub"
 optional = false
 python-versions = ">=3.8.0"
 groups = ["main"]
 files = [
-    {file = "huggingface_hub-0.32.4-py3-none-any.whl", hash = "sha256:37abf8826b38d971f60d3625229221c36e53fe58060286db9baf619cfbf39767"},
-    {file = "huggingface_hub-0.32.4.tar.gz", hash = "sha256:f61d45cd338736f59fb0e97550b74c24ee771bcc92c05ae0766b9116abe720be"},
+    {file = "huggingface_hub-0.34.1-py3-none-any.whl", hash = "sha256:60d843dcb7bc335145b20e7d2f1dfe93910f6787b2b38a936fb772ce2a83757c"},
+    {file = "huggingface_hub-0.34.1.tar.gz", hash = "sha256:6978ed89ef981de3c78b75bab100a214843be1cc9d24f8e9c0dc4971808ef1b1"},
 ]
 
 [package.dependencies]
 filelock = "*"
 fsspec = ">=2023.5.0"
-hf-xet = {version = ">=1.1.2,<2.0.0", markers = "platform_machine == \"x86_64\" or platform_machine == \"amd64\" or platform_machine == \"arm64\" or platform_machine == \"aarch64\""}
+hf-xet = {version = ">=1.1.3,<2.0.0", markers = "platform_machine == \"x86_64\" or platform_machine == \"amd64\" or platform_machine == \"arm64\" or platform_machine == \"aarch64\""}
 packaging = ">=20.9"
 pyyaml = ">=5.1"
 requests = "*"
@@ -1798,16 +1798,16 @@ tqdm = ">=4.42.1"
 typing-extensions = ">=3.7.4.3"
 
 [package.extras]
-all = ["InquirerPy (==0.3.4)", "Jinja2", "Pillow", "aiohttp", "authlib (>=1.3.2)", "fastapi", "gradio (>=4.0.0)", "httpx", "itsdangerous", "jedi", "libcst (==1.4.0)", "mypy (==1.15.0) ; python_version >= \"3.9\"", "mypy (>=1.14.1,<1.15.0) ; python_version == \"3.8\"", "numpy", "pytest (>=8.1.1,<8.2.2)", "pytest-asyncio", "pytest-cov", "pytest-env", "pytest-mock", "pytest-rerunfailures", "pytest-vcr", "pytest-xdist", "ruff (>=0.9.0)", "soundfile", "types-PyYAML", "types-requests", "types-simplejson", "types-toml", "types-tqdm", "types-urllib3", "typing-extensions (>=4.8.0)", "urllib3 (<2.0)"]
+all = ["InquirerPy (==0.3.4)", "Jinja2", "Pillow", "aiohttp", "authlib (>=1.3.2)", "fastapi", "gradio (>=4.0.0)", "httpx", "itsdangerous", "jedi", "libcst (>=1.4.0)", "mypy (==1.15.0) ; python_version >= \"3.9\"", "mypy (>=1.14.1,<1.15.0) ; python_version == \"3.8\"", "numpy", "pytest (>=8.1.1,<8.2.2)", "pytest-asyncio", "pytest-cov", "pytest-env", "pytest-mock", "pytest-rerunfailures", "pytest-vcr", "pytest-xdist", "ruff (>=0.9.0)", "soundfile", "types-PyYAML", "types-requests", "types-simplejson", "types-toml", "types-tqdm", "types-urllib3", "typing-extensions (>=4.8.0)", "urllib3 (<2.0)"]
 cli = ["InquirerPy (==0.3.4)"]
-dev = ["InquirerPy (==0.3.4)", "Jinja2", "Pillow", "aiohttp", "authlib (>=1.3.2)", "fastapi", "gradio (>=4.0.0)", "httpx", "itsdangerous", "jedi", "libcst (==1.4.0)", "mypy (==1.15.0) ; python_version >= \"3.9\"", "mypy (>=1.14.1,<1.15.0) ; python_version == \"3.8\"", "numpy", "pytest (>=8.1.1,<8.2.2)", "pytest-asyncio", "pytest-cov", "pytest-env", "pytest-mock", "pytest-rerunfailures", "pytest-vcr", "pytest-xdist", "ruff (>=0.9.0)", "soundfile", "types-PyYAML", "types-requests", "types-simplejson", "types-toml", "types-tqdm", "types-urllib3", "typing-extensions (>=4.8.0)", "urllib3 (<2.0)"]
+dev = ["InquirerPy (==0.3.4)", "Jinja2", "Pillow", "aiohttp", "authlib (>=1.3.2)", "fastapi", "gradio (>=4.0.0)", "httpx", "itsdangerous", "jedi", "libcst (>=1.4.0)", "mypy (==1.15.0) ; python_version >= \"3.9\"", "mypy (>=1.14.1,<1.15.0) ; python_version == \"3.8\"", "numpy", "pytest (>=8.1.1,<8.2.2)", "pytest-asyncio", "pytest-cov", "pytest-env", "pytest-mock", "pytest-rerunfailures", "pytest-vcr", "pytest-xdist", "ruff (>=0.9.0)", "soundfile", "types-PyYAML", "types-requests", "types-simplejson", "types-toml", "types-tqdm", "types-urllib3", "typing-extensions (>=4.8.0)", "urllib3 (<2.0)"]
 fastai = ["fastai (>=2.4)", "fastcore (>=1.3.27)", "toml"]
 hf-transfer = ["hf-transfer (>=0.1.4)"]
 hf-xet = ["hf-xet (>=1.1.2,<2.0.0)"]
 inference = ["aiohttp"]
 mcp = ["aiohttp", "mcp (>=1.8.0)", "typer"]
 oauth = ["authlib (>=1.3.2)", "fastapi", "httpx", "itsdangerous"]
-quality = ["libcst (==1.4.0)", "mypy (==1.15.0) ; python_version >= \"3.9\"", "mypy (>=1.14.1,<1.15.0) ; python_version == \"3.8\"", "ruff (>=0.9.0)"]
+quality = ["libcst (>=1.4.0)", "mypy (==1.15.0) ; python_version >= \"3.9\"", "mypy (>=1.14.1,<1.15.0) ; python_version == \"3.8\"", "ruff (>=0.9.0)"]
 tensorflow = ["graphviz", "pydot", "tensorflow"]
 tensorflow-testing = ["keras (<3.0)", "tensorflow"]
 testing = ["InquirerPy (==0.3.4)", "Jinja2", "Pillow", "aiohttp", "authlib (>=1.3.2)", "fastapi", "gradio (>=4.0.0)", "httpx", "itsdangerous", "jedi", "numpy", "pytest (>=8.1.1,<8.2.2)", "pytest-asyncio", "pytest-cov", "pytest-env", "pytest-mock", "pytest-rerunfailures", "pytest-vcr", "pytest-xdist", "soundfile", "urllib3 (<2.0)"]
@@ -6943,4 +6943,4 @@ type = ["pytest-mypy"]
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.10,<3.13"
-content-hash = "d0ede41d42b5055bb0407edae762e53ba90311e3e4bb616595e0213b87f5f1e6"
+content-hash = "3eb587a682684e5c6a7d59a49e1e940f338c4916f5c534dec0a420c32ba139d7"
