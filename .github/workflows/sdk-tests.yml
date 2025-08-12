@@ -18,7 +18,7 @@ jobs:
     runs-on: ${{inputs.runner}}
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
       - uses: ./.github/composites/python-setup
 
       - name: set PY for pre-commit
@@ -36,7 +36,7 @@ jobs:
     runs-on: ${{inputs.runner}}
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
       - uses: ./.github/composites/python-setup
 
       - name: Run doctest
@@ -82,7 +82,7 @@ jobs:
           POSTGRES_PASSWORD: "test"
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
       - uses: ./.github/composites/python-setup
 
       - name: Run pytest
@@ -133,7 +133,7 @@ jobs:
           POSTGRES_PASSWORD: "test"
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
       - uses: ./.github/composites/python-setup
 
       - name: Run Notebooks
