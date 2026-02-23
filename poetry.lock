@@ -6991,4 +6991,4 @@ otel-http = ["opentelemetry-exporter-otlp-proto-http"]
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.10,<3.15"
-content-hash = "abedeffd85ad12531254c4713e862d482f4bafe0c306204ec6bdad099b567a0e"
+content-hash = "759eb0cfb4f4adc2451e5371bdba9ccb9cf28d21d64d4fddb8855adf7c8bb402"
